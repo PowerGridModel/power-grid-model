@@ -309,12 +309,12 @@ TEST_CASE("Incremental update y-bus") {
     };
     param_sym.branch_param = {
         //  ff,    ft,    tf,   tt
-        {1.0i, 2.0i, 3.0i, 4.0i},    // { 1,  0 }
-        {5.0, 6.0, 7.0, 8.0},        // { 1,  2 }
-        {9.0i, 10.0i, 11.0i, 12.0i}, // { 2,  3 }
-        {13.0, 14.0, 15.0, 16.0},    // { 3,  2 }
-        {17.0, 18.0, 19.0, 20.0},    // { 0,  1 }
-        {1000i, 0.0, 0.0, 0.0}       // { 2, -1 }
+        {1.0i, 2.0i, 3.0i, 4.0i},    // (1, 0)
+        {5.0, 6.0, 7.0, 8.0},        // (1, 2)
+        {9.0i, 10.0i, 11.0i, 12.0i}, // (2, 3)
+        {13.0, 14.0, 15.0, 16.0},    // (3, 2)
+        {17.0, 18.0, 19.0, 20.0},    // (0, 1)
+        {1000i, 0.0, 0.0, 0.0}       // (2, -1)
     };
     topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
@@ -351,12 +351,12 @@ TEST_CASE("Incremental update y-bus") {
     // Swap based params
     param_sym_update.branch_param = {
         //   ff,    ft,   tf,   tt
-        {2.0i, 2.0i, 3.0i, 4.0i},    // {1,  0}
-        {5.0, 7.0, 7.0, 8.0},        // {1,  2}
-        {9.0i, 10.0i, 11.0i, 14.0i}, // {2,  3}
-        {13.0, 14.0, 17.0, 16.0},    // {3,  2}
-        {17.0, 18.0, 19.0, 20.0},    // {0,  1}
-        {1001.0i, 0.0, 0.0, 0.0}     // {2, -1}
+        {2.0i, 2.0i, 3.0i, 4.0i},    // (1, 0)
+        {5.0, 7.0, 7.0, 8.0},        // (1, 2)
+        {9.0i, 10.0i, 11.0i, 14.0i}, // (2, 3)
+        {13.0, 14.0, 17.0, 16.0},    // (3, 2)
+        {17.0, 18.0, 19.0, 20.0},    // (0, 1)
+        {1001.0i, 0.0, 0.0, 0.0}     // (2,-1)
     };
     param_sym_update.shunt_param = {101.0i, 200.0i};
 
@@ -423,7 +423,6 @@ TEST_CASE("Incremental update y-bus") {
 
         auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
 
-        // ybus::update_admittance_increment (model_parameter, increment_indices, is_decrement)
         ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
