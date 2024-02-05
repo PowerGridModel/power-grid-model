@@ -214,7 +214,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         std::ranges::fill(x_, default_unknown);
     }
 
-    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_values,
                                 ComplexValueVector<sym> const& current_u) {
         MathModelParam<sym> const& param = y_bus.math_model_param();
         IdxVector const& row_indptr = y_bus.row_indptr_lu();
@@ -254,76 +254,87 @@ template <bool sym> class NewtonRaphsonSESolver {
 
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
-                // Diagonal block is being cleared outside this loop
-                if (row != col) {
+                if (row == col) {
+                    // fill block with voltage measurement, only diagonal
+                    process_voltage_measurements(diag_block, rhs_block, measured_values, row);
+                } else {
+                    // Diagonal block is being cleared outside this loop
                     block.clear();
                 }
-                // fill block with voltage measurement, only diagonal
-                if (row == col) {
-                    process_voltage_measurements(block, rhs_block, measured_value, row);
-                }
+
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
                      element_idx != y_bus.y_bus_entry_indptr()[data_idx + 1]; ++element_idx) {
                     Idx const obj = y_bus.y_bus_element()[element_idx].idx;
                     YBusElementType const type = y_bus.y_bus_element()[element_idx].element_type;
-                    if (type == YBusElementType::shunt) {
-                        if (measured_value.has_shunt(obj)) {
+
+                    switch (type) {
+                    case YBusElementType::shunt:
+                        if (measured_values.has_shunt(obj)) {
                             auto const& ys = param.shunt_param[obj];
-                            auto const& measured_power = measured_value.shunt_power(obj);
+                            auto const& measured_power = measured_values.shunt_power(obj);
                             process_shunt_measurement(block, rhs_block, ys, u_state, measured_power);
                         }
-                    } else if (type == YBusElementType::bft || type == YBusElementType::btf) {
+                        break;
+                    case YBusElementType::bft:
+                        [[fallthrough]];
+                    case YBusElementType::btf: {
                         auto const& y_branch = param.branch_param[obj];
-                        if (measured_value.has_branch_from(obj)) {
+                        if (measured_values.has_branch_from(obj)) {
                             auto const ij_voltage_order = (type == YBusElementType::bft);
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
                                                        u_state, ij_voltage_order,
-                                                       measured_value.branch_from_power(obj));
+                                                       measured_values.branch_from_power(obj));
                         }
-                        if (measured_value.has_branch_to(obj)) {
+                        if (measured_values.has_branch_to(obj)) {
                             auto const ij_voltage_order = (type == YBusElementType::btf);
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
-                                                       u_state, ij_voltage_order, measured_value.branch_to_power(obj));
+                                                       u_state, ij_voltage_order, measured_values.branch_to_power(obj));
                         }
-                    } else {
+                        break;
+                    }
+                    default:
                         assert(type == YBusElementType::bff || type == YBusElementType::btt);
+                        break;
                     }
                 }
 
                 // fill block with injection measurement constraints
-                if (measured_value.has_bus_injection(row)) {
+                if (measured_values.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
                     process_injection_row(block, diag_block, rhs_block, yij, u_state);
-
-                    // R_ii = -variance, only diagonal
                     if (row == col) {
-                        auto const& injection = measured_value.bus_injection(row);
-                        // assign variance to diagonal of 3x3 tensor, for asym
-                        rhs_block.tau_p() += injection.value.real();
-                        rhs_block.tau_q() += injection.value.imag();
-                        block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
-                        block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.q_variance}};
+                        process_injection_diagonal(block, rhs_block, measured_values.bus_injection(row));
                     }
                 } else {
-                    // virtually remove constraints from equation
-                    // Q_ij = 0
-                    // R_ii = -1.0, only diagonal
-                    // assign -1.0 to diagonal of 3x3 tensor, for asym
                     if (row == col) {
-                        block.r_P_theta() = RealTensor<sym>{-1.0};
-                        block.r_Q_v() = RealTensor<sym>{-1.0};
+                        virtually_remove_constraints(block);
                     }
                 }
             }
         }
 
-        // loop all transpose entry for QT
-        // assign the transpose of the transpose entry of Q
         fill_qt_process_lagrange_multiplier(y_bus);
 
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
+    }
+
+    void virtually_remove_constraints(NRSEGainBlock<sym>& block) {
+        // Q_ij = 0
+        // R_ii = -1.0, only diagonal
+        // assign -1.0 to diagonal of 3x3 tensor, for asym
+        block.r_P_theta() = RealTensor<sym>{-1.0};
+        block.r_Q_v() = RealTensor<sym>{-1.0};
+    }
+
+    void process_injection_diagonal(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& injection) {
+        // R_ii = -variance, only diagonal
+        // assign variance to diagonal of 3x3 tensor, for asym
+        rhs_block.tau_p() += injection.value.real();
+        rhs_block.tau_q() += injection.value.imag();
+        block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
+        block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.q_variance}};
     }
 
     /**
@@ -335,7 +346,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param block LHS(r, c)
      * @param diag_block LHS(r, r)
      * @param rhs_block RHS(r)
-     * @param yij
+     * @param yij admittance of (row with injection, c)
      * @param u_state Voltage state of iteration
      */
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
@@ -401,8 +412,8 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param block G_(r, c)
      * @param diag_block G_(r, r)
      * @param rhs_block RHS(r)
-     * @param y_xi_xi
-     * @param y_xi_mu
+     * @param y_xi_xi shunt admittance near to branch measurement
+     * @param y_xi_mu admittance from the branch measurement to other bus
      * @param u_state Voltage state of iteration voltage state vector
      * @param order bool to determine if (chi, psi) = (row, col) or (col, row)
      * @param measured_power
@@ -484,31 +495,31 @@ template <bool sym> class NewtonRaphsonSESolver {
      *
      * @param block LHS(row, col), ie. LHS(row, row)
      * @param rhs_block RHS(row)
-     * @param measured_value
-     * @param bus
+     * @param measured_values
+     * @param bus bus with voltage measurement
      */
     void process_voltage_measurements(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
-                                      MeasuredValues<sym> const& measured_value, Idx const& bus) {
-        if (!measured_value.has_voltage(bus)) {
+                                      MeasuredValues<sym> const& measured_values, Idx const& bus) {
+        if (!measured_values.has_voltage(bus)) {
             return;
         }
 
         // G += 1.0 / variance
         // for 3x3 tensor, fill diagonal
-        auto const w_v = RealTensor<sym>{1.0 / measured_value.voltage_var(bus)};
-        auto const abs_measured_v = detail::cabs_or_real<sym>(measured_value.voltage(bus));
+        auto const w_v = RealTensor<sym>{1.0 / measured_values.voltage_var(bus)};
+        auto const abs_measured_v = detail::cabs_or_real<sym>(measured_values.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
-        auto const virtual_angle_measurement_bus = measured_value.has_voltage(math_topo_->slack_bus)
+        auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_->slack_bus)
                                                        ? math_topo_->slack_bus
-                                                       : measured_value.first_voltage_measurement();
+                                                       : measured_values.first_voltage_measurement();
 
         RealTensor<sym> w_theta{};
         RealValue<sym> delta_theta{};
-        if (measured_value.has_angle_measurement(bus)) {
-            delta_theta = RealValue<sym>{arg(measured_value.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
+        if (measured_values.has_angle_measurement(bus)) {
+            delta_theta = RealValue<sym>{arg(measured_values.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
             w_theta = RealTensor<sym>{1.0};
-        } else if (bus == virtual_angle_measurement_bus && !measured_value.has_angle()) {
+        } else if (bus == virtual_angle_measurement_bus && !measured_values.has_angle()) {
             delta_theta = arg(ComplexValue<sym>{1.0}) - RealValue<sym>{x_[bus].theta()};
             w_theta = RealTensor<sym>{1.0};
         }
@@ -646,10 +657,10 @@ template <bool sym> class NewtonRaphsonSESolver {
             // accumulate the unknown variable
             x_[bus].theta() += delta_x_rhs_[bus].theta() - RealValue<sym>{angle_offset};
             x_[bus].v() += delta_x_rhs_[bus].v();
-            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).p_variance)) {
+            if (measured_values.has_bus_injection(bus) && all_zero(measured_values.bus_injection(bus).p_variance)) {
                 x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
             }
-            if (measured_values.has_bus_injection(bus) && any_zero(measured_values.bus_injection(bus).q_variance)) {
+            if (measured_values.has_bus_injection(bus) && all_zero(measured_values.bus_injection(bus).q_variance)) {
                 x_[bus].phi_q() += delta_x_rhs_[bus].phi_q();
             }
 

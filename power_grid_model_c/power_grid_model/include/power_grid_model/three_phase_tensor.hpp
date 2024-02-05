@@ -305,6 +305,10 @@ inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || i
 inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
 inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
 
+// all_zero
+inline auto all_zero(std::floating_point auto value) { return value == 0.0; }
+inline auto all_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).all(); }
+
 // update real values
 //
 // RealValue is only updated when the update value is not nan
