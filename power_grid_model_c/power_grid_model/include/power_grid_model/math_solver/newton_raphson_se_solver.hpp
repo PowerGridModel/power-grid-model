@@ -350,12 +350,8 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const f_x_complex_abs_ui_inv_row = dot(u_state.abs_ui_inv, f_x_complex_row);
         auto const injection_jac_diagonal = jacobian_diagonal_component(f_x_complex_abs_ui_inv_row, f_x_complex_row);
         add_injection_jacobian(diag_block, injection_jac_diagonal);
-        if (!any_zero(injection.p_variance)) {
-            rhs_block.tau_p() -= real(f_x_complex_row);
-        }
-        if (!any_zero(injection.q_variance)) {
-            rhs_block.tau_q() -= imag(f_x_complex_row);
-        }
+        rhs_block.tau_p() -= real(f_x_complex_row);
+        rhs_block.tau_q() -= imag(f_x_complex_row);
     }
 
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& yii,
