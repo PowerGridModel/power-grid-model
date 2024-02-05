@@ -307,7 +307,7 @@ template <bool sym> class YBus {
     MathModelTopology const& math_topology() const { return *math_topology_; }
     MathModelParam<sym> const& math_model_param() const { return *math_model_param_; }
 
-    ComplexTensorVector<sym> const& admittance() const { return *admittance_; }
+    ComplexTensorVector<sym> const& admittance() const { return admittance_; }
     IdxVector const& bus_entry() const { return y_bus_struct_->bus_entry; }
     IdxVector const& lu_diag() const { return y_bus_struct_->diag_lu; }
     IdxVector const& map_lu_y_bus() const { return y_bus_struct_->map_lu_y_bus; }
@@ -539,18 +539,6 @@ template <bool sym> class YBus {
         std::ranges::for_each(parameters_changed_callbacks_, [param_changed](auto const& key_and_callback) {
             key_and_callback.second(param_changed);
         });
-    }
-
-    void copy_admittance() {
-        assert(admittance_ != nullptr);
-
-        ComplexTensorVector<sym> admittance(nnz());
-        if (Idx(admittance_->size()) == nnz()) {
-            std::ranges::copy(*admittance_, admittance.begin());
-        }
-
-        // move to shared ownership
-        admittance_ = std::make_shared<ComplexTensorVector<sym>>(std::move(admittance));
     }
 };
 
