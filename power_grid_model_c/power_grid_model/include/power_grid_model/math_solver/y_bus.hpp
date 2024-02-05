@@ -334,7 +334,8 @@ template <bool sym> class YBus {
         // overwrite the old cached parameters
         math_model_param_ = math_model_param;
         // construct admittance data
-        ComplexTensorVector<sym> admittance(nnz());
+        admittance_ = ComplexTensorVector<sym>(nnz());
+
         auto const& branch_param = math_model_param_->branch_param;
         auto const& shunt_param = math_model_param_->shunt_param;
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
@@ -358,12 +359,10 @@ template <bool sym> class YBus {
                 }
             }
             // assign
-            admittance[entry] = entry_admittance;
+            admittance_[entry] = entry_admittance;
             map_admittance_param_branch_.push_back(entry_param_branch);
             map_admittance_param_shunt_.push_back(entry_param_shunt);
         }
-        // move to shared ownership
-        admittance_ = std::make_shared<ComplexTensorVector<sym>>(std::move(admittance));
 
         parameters_changed(true);
     }
@@ -398,11 +397,6 @@ template <bool sym> class YBus {
         // swap the old cached parameters
         math_model_param_ = math_model_param;
 
-        if (admittance_.use_count() != 1) {
-            copy_admittance();
-        }
-        assert(admittance_ != nullptr);
-
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
         auto const& math_param_shunt = math_model_param_->shunt_param;
@@ -425,7 +419,7 @@ template <bool sym> class YBus {
                 }
             }
             // assign
-            (*admittance_)[entry] = entry_admittance;
+            admittance_[entry] = entry_admittance;
         }
 
         parameters_changed(true);
@@ -523,7 +517,7 @@ template <bool sym> class YBus {
     std::shared_ptr<YBusStructure const> y_bus_struct_;
 
     // admittance
-    std::shared_ptr<ComplexTensorVector<sym>> admittance_;
+    ComplexTensorVector<sym> admittance_;
 
     // cache math topology
     std::shared_ptr<MathModelTopology const> math_topology_;
