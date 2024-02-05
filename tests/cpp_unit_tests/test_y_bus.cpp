@@ -19,31 +19,28 @@ using math_solver::YBusStructure;
 } // namespace
 
 TEST_CASE("Test y bus") {
-    /*
-    test Y bus struct
-    [
-            x, x, 0, 0
-            x, x, x, 0
-            0, x, x, x
-            0, 0, x, x
-    ]
+    //     test Y bus struct
+    //     [
+    //             x, x, 0, 0
+    //             x, x, x, 0
+    //             0, x, x, x
+    //             0, 0, x, x
+    //     ]
 
-     [0]   = Node
---0--> = Branch (from --id--> to)
- -X-   = Open switch / not connected
+    //      [0]   = Node
+    // --0--> = Branch (from --id--> to)
+    //  -X-   = Open switch / not connected
 
-    Topology:
+    //     Topology:
 
-  --- 4 ---               ----- 3 -----
- |         |             |             |
- |         v             v             |
-[0]       [1] --- 1 --> [2] --- 2 --> [3]
- ^         |             |
- |         |             5
-  --- 0 ---              |
-                         X
-    */
-
+    //   --- 4 ---               ----- 3 -----
+    //  |         |             |             |
+    //  |         v             v             |
+    // [0]       [1] --- 1 --> [2] --- 2 --> [3]
+    //  ^         |             |
+    //  |         |             5
+    //   --- 0 ---              |
+    //                          X
     MathModelTopology topo{};
     MathModelParam<true> param_sym;
     topo.phase_shift.resize(4, 0.0);
@@ -67,13 +64,12 @@ TEST_CASE("Test y bus") {
     // output
     IdxVector row_indptr = {0, 2, 5, 8, 10};
 
-    /* Use col_indices to find the location in Y bus
-     *  e.g. col_indices = {0, 1, 0} results in Y bus:
-     * [
-     *	x, x
-     *   x, 0
-     * ]
-     */
+    // Use col_indices to find the location in Y bus
+    //  e.g. col_indices = {0, 1, 0} results in Y bus:
+    // [
+    //	x, x
+    //   x, 0
+    // ]
     IdxVector col_indices = {// Culumn col_indices for each non-zero element in Y bus.
                              0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
     Idx nnz = 10; // Number of non-zero elements in Y bus
@@ -234,18 +230,14 @@ TEST_CASE("Test one bus system") {
 }
 
 TEST_CASE("Test fill-in y bus") {
-    /*
-     * struct
-     * [1] --0--> [0] --1--> [2]
-     * extra fill-in: (1, 2) by removing node 0
-     *
-     * [
-     *   0, 1, 2
-     *   3, 4, f
-     *   5, f, 6
-     * ]
-     */
-
+    // [1] --0--> [0] --1--> [2]
+    // extra fill-in: (1, 2) by removing node 0
+    //
+    // [
+    //   0, 1, 2
+    //   3, 4, f
+    //   5, f, 6
+    // ]
     MathModelTopology topo{};
     topo.phase_shift.resize(3, 0.0);
     topo.branch_bus_idx = {
@@ -282,7 +274,6 @@ TEST_CASE("Test fill-in y bus") {
 }
 
 TEST_CASE("Incremental update y-bus") {
-    /*
     // test Y bus struct
     // [
     //         x, x, 0, 0
@@ -305,8 +296,6 @@ TEST_CASE("Incremental update y-bus") {
     //  |         |             5
     //   --- 0 ---              |
     //                          X
-    */
-
     MathModelTopology topo{};
     MathModelParam<true> param_sym;
     topo.phase_shift.resize(4, 0.0);
@@ -318,14 +307,16 @@ TEST_CASE("Incremental update y-bus") {
         {0, 1}, // branch 4 from node 0 to 1
         {2, -1} // branch 5 from node 2 to "not connected"
     };
-    param_sym.branch_param = {                             //  ff,    ft,    tf,   tt
-                              {1.0i, 2.0i, 3.0i, 4.0i},    // { 1,  0 }
-                              {5.0, 6.0, 7.0, 8.0},        // { 1,  2 }
-                              {9.0i, 10.0i, 11.0i, 12.0i}, // { 2,  3 }
-                              {13.0, 14.0, 15.0, 16.0},    // { 3,  2 }
-                              {17.0, 18.0, 19.0, 20.0},    // { 0,  1 }
-                              {1000i, 0.0, 0.0, 0.0}};     // { 2, -1 }
-    topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}};  // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
+    param_sym.branch_param = {
+        //  ff,    ft,    tf,   tt
+        {1.0i, 2.0i, 3.0i, 4.0i},    // { 1,  0 }
+        {5.0, 6.0, 7.0, 8.0},        // { 1,  2 }
+        {9.0i, 10.0i, 11.0i, 12.0i}, // { 2,  3 }
+        {13.0, 14.0, 15.0, 16.0},    // { 3,  2 }
+        {17.0, 18.0, 19.0, 20.0},    // { 0,  1 }
+        {1000i, 0.0, 0.0, 0.0}       // { 2, -1 }
+    };
+    topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
 
     // get shared ptr
@@ -357,24 +348,16 @@ TEST_CASE("Incremental update y-bus") {
     };
 
     MathModelParam<true> param_sym_update;
-    /* Ditched delta based update param
-    param_sym_update.branch_param = {                        //   ff,    ft,   tf,   tt
-                                     {1.0i, 0.0, 0.0, 0.0},  // {1,  0}
-                                     {0.0, 1.0, 0.0, 0.0},   // {1,  2}
-                                     {0.0, 0.0, 0.0, 2.0i},  // {2,  3}
-                                     {0.0, 0.0, 2.0, 0.0},   // {3,  2}
-                                     {0.0, 0.0, 0.0, 0.0},   // {0,  1}
-                                     {1.0i, 0.0, 0.0, 0.0}}; // {2, -1}
-    param_sym_update.shunt_param = {1.0i, 0.0i};
-    */
     // Swap based params
-    param_sym_update.branch_param = {                             //   ff,    ft,   tf,   tt
-                                     {2.0i, 2.0i, 3.0i, 4.0i},    // {1,  0}
-                                     {5.0, 7.0, 7.0, 8.0},        // {1,  2}
-                                     {9.0i, 10.0i, 11.0i, 14.0i}, // {2,  3}
-                                     {13.0, 14.0, 17.0, 16.0},    // {3,  2}
-                                     {17.0, 18.0, 19.0, 20.0},    // {0,  1}
-                                     {1001.0i, 0.0, 0.0, 0.0}};   // {2, -1}
+    param_sym_update.branch_param = {
+        //   ff,    ft,   tf,   tt
+        {2.0i, 2.0i, 3.0i, 4.0i},    // {1,  0}
+        {5.0, 7.0, 7.0, 8.0},        // {1,  2}
+        {9.0i, 10.0i, 11.0i, 14.0i}, // {2,  3}
+        {13.0, 14.0, 17.0, 16.0},    // {3,  2}
+        {17.0, 18.0, 19.0, 20.0},    // {0,  1}
+        {1001.0i, 0.0, 0.0, 0.0}     // {2, -1}
+    };
     param_sym_update.shunt_param = {101.0i, 200.0i};
 
     const ComplexTensorVector<true> admittance_sym_2 = {
@@ -440,15 +423,13 @@ TEST_CASE("Incremental update y-bus") {
 
         auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
 
-        /* ybus::update_admittance_increment (model_parameter, increment_indices, is_decrement)*/
+        // ybus::update_admittance_increment (model_parameter, increment_indices, is_decrement)
         ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
 }
 
-/*
-TODO:
-- test counting_sort_element()
-*/
+// TODO:
+// - test counting_sort_element()
 
 } // namespace power_grid_model

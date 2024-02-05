@@ -404,11 +404,9 @@ template <bool sym> class YBus {
         auto const& math_param_shunt = math_model_param_->shunt_param;
         auto const& math_param_branch = math_model_param_->branch_param;
 
-        // construct affected entries
-        auto const affected_entries = increments_to_entries(math_model_param_incrmt);
-
         // process and update affected entries
-        for (auto const entry : affected_entries) {
+        for (auto const affected_entries = increments_to_entries(math_model_param_incrmt);
+             auto const entry : affected_entries) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
