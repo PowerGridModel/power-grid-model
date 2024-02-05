@@ -277,6 +277,8 @@ struct YBusStructure {
 // See also "Node Admittance Matrix" in "State Estimation Alliander"
 template <bool sym> class YBus {
   public:
+    using ParamChangedCallback = std::function<void(bool param_changed)>;
+
     YBus(std::shared_ptr<MathModelTopology const> const& topo_ptr,
          std::shared_ptr<MathModelParam<sym> const> const& param,
          std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
@@ -361,7 +363,9 @@ template <bool sym> class YBus {
             map_admittance_param_shunt_.push_back(entry_param_shunt);
         }
         // move to shared ownership
-        admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
+        admittance_ = std::make_shared<ComplexTensorVector<sym>>(std::move(admittance));
+
+        parameters_changed(true);
     }
 
     IdxVector increments_to_entries(auto const& math_model_param_incrmt) {
@@ -391,14 +395,14 @@ template <bool sym> class YBus {
      */
     void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                                      MathModelParamIncrement const& math_model_param_incrmt) {
-
         // swap the old cached parameters
         math_model_param_ = math_model_param;
 
-        // construct admittance data
-        ComplexTensorVector<sym> admittance(nnz());
-        assert(Idx(admittance_->size()) == nnz());
-        std::ranges::copy(*admittance_, admittance.begin());
+        if (admittance_.use_count() != 1) {
+            copy_admittance();
+        }
+        assert(admittance_ != nullptr);
+
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
         auto const& math_param_shunt = math_model_param_->shunt_param;
@@ -421,10 +425,10 @@ template <bool sym> class YBus {
                 }
             }
             // assign
-            admittance[entry] = entry_admittance;
+            (*admittance_)[entry] = entry_admittance;
         }
-        // move to shared ownership
-        admittance_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(admittance));
+
+        parameters_changed(true);
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
@@ -493,12 +497,31 @@ template <bool sym> class YBus {
         return shunt_flow;
     }
 
+    /// @brief register a new callback to signal a parameter change
+    /// @param callback the callback to register
+    /// @return the unique key referencing this callback (used for unregistering)
+    uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
+        static uint64_t num_added = 0;
+
+        auto const new_key = num_added++;
+        assert(!parameters_changed_callbacks_.contains(new_key));
+        parameters_changed_callbacks_.insert(std::make_pair(new_key, std::move(callback)));
+        return new_key;
+    }
+
+    /// @brief unregister a callback to signal a parameter change
+    /// @param key the unique key referencing the callback (returned by register_parameters_changed_callback)
+    void unregister_parameters_changed_callback(uint64_t key) {
+        assert(parameters_changed_callbacks_.contains(key));
+        parameters_changed_callbacks_.erase(key);
+    }
+
   private:
     // csr structure
     std::shared_ptr<YBusStructure const> y_bus_struct_;
 
     // admittance
-    std::shared_ptr<ComplexTensorVector<sym> const> admittance_;
+    std::shared_ptr<ComplexTensorVector<sym>> admittance_;
 
     // cache math topology
     std::shared_ptr<MathModelTopology const> math_topology_;
@@ -513,6 +536,26 @@ template <bool sym> class YBus {
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch_{};
     std::vector<IdxVector> map_admittance_param_shunt_{};
+
+    std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
+
+    void parameters_changed(bool param_changed) const {
+        std::ranges::for_each(parameters_changed_callbacks_, [param_changed](auto const& key_and_callback) {
+            key_and_callback.second(param_changed);
+        });
+    }
+
+    void copy_admittance() {
+        assert(admittance_ != nullptr);
+
+        ComplexTensorVector<sym> admittance(nnz());
+        if (Idx(admittance_->size()) == nnz()) {
+            std::ranges::copy(*admittance_, admittance.begin());
+        }
+
+        // move to shared ownership
+        admittance_ = std::make_shared<ComplexTensorVector<sym>>(std::move(admittance));
+    }
 };
 
 template class YBus<true>;

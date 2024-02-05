@@ -80,7 +80,6 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
           rhs_u_(y_bus.size()),
-          y_data_ptr_(nullptr),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
@@ -89,7 +88,7 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
-        if (y_data_ptr_ != &y_bus.admittance()) {
+        if (parameters_changed_) {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
             detail::copy_y_bus<sym>(y_bus, mat_data);
 
@@ -106,9 +105,8 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
             // move pre-factorized version into shared ptr
             mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
             perm_ = std::make_shared<BlockPermArray const>(std::move(perm));
-            // cache pointer
-            y_data_ptr_ = &y_bus.admittance();
         }
+        parameters_changed_ = false;
     }
 
     // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
@@ -146,13 +144,15 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
         return max_dev;
     }
 
+    void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
+
   private:
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
-    ComplexTensorVector<sym> const* y_data_ptr_;
     // sparse solver
     SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
+    bool parameters_changed_ = true;
 
     void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {

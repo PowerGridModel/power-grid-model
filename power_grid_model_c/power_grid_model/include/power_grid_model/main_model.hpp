@@ -1271,11 +1271,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
             assert(n_math_solvers_ == static_cast<Idx>(state_.math_topology.size()));
+            assert(n_math_solvers_ == get_y_bus<sym>().size());
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
             std::ranges::transform(state_.math_topology, std::back_inserter(solvers),
                                    [](auto math_topo) { return MathSolver<sym>{std::move(math_topo)}; });
+            for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
+                get_y_bus<sym>()[idx].register_parameters_changed_callback(
+                    [solver = std::ref(solvers[idx])](bool changed) { solver.get().parameters_changed(changed); });
+            }
         } else if (!is_parameter_up_to_date<sym>()) {
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
             std::vector<MathModelParamIncrement> const math_param_increments = get_math_param_increment<sym>();
