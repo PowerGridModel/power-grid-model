@@ -111,6 +111,13 @@ template <bool sym> class NewtonRaphsonSESolver {
             this->dQ_dv += other.dQ_dv;
             return *this;
         }
+        NRSEJacobian& operator-=(NRSEJacobian const& other) {
+            this->dP_dt -= other.dP_dt;
+            this->dP_dv -= other.dP_dv;
+            this->dQ_dt -= other.dQ_dt;
+            this->dQ_dv -= other.dQ_dv;
+            return *this;
+        }
     };
 
   public:
@@ -294,11 +301,11 @@ template <bool sym> class NewtonRaphsonSESolver {
                 // fill block with injection measurement constraints
                 if (measured_value.has_bus_injection(row)) {
                     auto const& yij = y_bus.admittance()[data_idx];
-                    auto const& injection = measured_value.bus_injection(row);
-                    process_injection_row(block, diag_block, rhs_block, yij, u_state, injection);
+                    process_injection_row(block, diag_block, rhs_block, yij, u_state);
 
                     // R_ii = -variance, only diagonal
                     if (row == col) {
+                        auto const& injection = measured_value.bus_injection(row);
                         // assign variance to diagonal of 3x3 tensor, for asym
                         rhs_block.tau_p() += injection.value.real();
                         rhs_block.tau_q() += injection.value.imag();
@@ -339,7 +346,7 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param u_state
      */
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                               auto const& yij, auto const& u_state, auto const& injection) {
+                               auto const& yij, auto const& u_state) {
         auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
         auto const nl_ui_uj_yij = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
         auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij);
@@ -362,7 +369,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_yii);
 
         auto jac_block = calculate_jacobian(hm_ui_ui_yii, nl_ui_ui_yii);
-        jac_block += jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
+        jac_block -= jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
         auto const& block_F_T_k_w = transpose_multiply_weight(jac_block, measured_power);
         multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, jac_block);
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
