@@ -111,13 +111,6 @@ template <bool sym> class NewtonRaphsonSESolver {
             this->dQ_dv += other.dQ_dv;
             return *this;
         }
-        NRSEJacobian& operator-=(NRSEJacobian const& other) {
-            this->dP_dt -= other.dP_dt;
-            this->dP_dv -= other.dP_dv;
-            this->dQ_dt -= other.dQ_dt;
-            this->dQ_dv -= other.dQ_dv;
-            return *this;
-        }
     };
 
   public:
@@ -373,12 +366,12 @@ template <bool sym> class NewtonRaphsonSESolver {
      */
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& ys,
                                    auto const& u_state, auto const& measured_power) {
-        auto const hm_ui_ui_yii = hm_complex_form(-ys, u_state.ui_ui_conj);
-        auto const nl_ui_ui_yii = dot(hm_ui_ui_yii, u_state.abs_ui_inv);
-        auto const f_x_complex = sum_row(hm_ui_ui_yii);
-        auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_yii);
+        auto const hm_ui_ui_ys = hm_complex_form(-ys, u_state.ui_ui_conj);
+        auto const nl_ui_ui_ys = dot(hm_ui_ui_ys, u_state.abs_ui_inv);
+        auto const f_x_complex = sum_row(hm_ui_ui_ys);
+        auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_ys);
 
-        auto jac_block = calculate_jacobian(hm_ui_ui_yii, nl_ui_ui_yii);
+        auto jac_block = calculate_jacobian(hm_ui_ui_ys, nl_ui_ui_ys);
         jac_block += jacobian_diagonal_component(f_x_complex_abs_ui_inv, f_x_complex);
         auto const& block_F_T_k_w = transpose_multiply_weight(jac_block, measured_power);
         multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, jac_block);
