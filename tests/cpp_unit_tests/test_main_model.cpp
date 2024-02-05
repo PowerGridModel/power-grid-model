@@ -149,7 +149,7 @@ struct State {
     std::vector<SymLoadGenUpdate> sym_load_update{{7, 1, 1.0e6, nan}};
     std::vector<AsymLoadGenUpdate> asym_load_update{{8, 0, RealValue<false>{nan}, RealValue<false>{nan}}};
     std::vector<ShuntUpdate> shunt_update{{9, 0, nan, 0.02, nan, 0.02}};
-    std::vector<ShuntUpdate> shunt_update_2{{6, 0, nan, 0.01, nan, 0.01}}; // used for test case alternat compute mode
+    std::vector<ShuntUpdate> shunt_update_2{{6, 0, nan, 0.01, nan, 0.01}}; // used for test case alternate compute mode
     std::vector<SourceUpdate> source_update{{10, 1, test::u1, nan}};
     std::vector<BranchUpdate> link_update{{5, 1, 0}};
     std::vector<FaultUpdate> fault_update{{30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
@@ -962,95 +962,81 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
 }
 
 TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update, cached_update) {
+    constexpr auto check_sym = [](MainModel const& model_, std::vector<MathOutput<true>> const& math_output_) {
+        State state_;
+        model_.output_result<Node>(math_output_, state_.sym_node.begin());
+        model_.output_result<Branch>(math_output_, state_.sym_branch.begin());
+        model_.output_result<Appliance>(math_output_, state_.sym_appliance.begin());
+
+        CHECK(state_.sym_node[0].u_pu == doctest::Approx(1.05));
+        CHECK(state_.sym_node[1].u_pu == doctest::Approx(test::u1));
+        CHECK(state_.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state_.sym_branch[0].i_from == doctest::Approx(test::i));
+        CHECK(state_.sym_appliance[0].i == doctest::Approx(test::i));
+        CHECK(state_.sym_appliance[1].i == doctest::Approx(0.0));
+        CHECK(state_.sym_appliance[2].i == doctest::Approx(test::i_load * 2 + test::i_shunt));
+        CHECK(state_.sym_appliance[3].i == doctest::Approx(0.0));
+        CHECK(state_.sym_appliance[4].i == doctest::Approx(0.0));
+    };
+    constexpr auto check_asym = [](MainModel const& model_, std::vector<MathOutput<false>> const& math_output_) {
+        State state_;
+        model_.output_result<Node>(math_output_, state_.asym_node.begin());
+        model_.output_result<Branch>(math_output_, state_.asym_branch.begin());
+        model_.output_result<Appliance>(math_output_, state_.asym_appliance.begin());
+        CHECK(state_.asym_node[0].u_pu(0) == doctest::Approx(1.05));
+        CHECK(state_.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
+        CHECK(state_.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state_.asym_branch[0].i_from(0) == doctest::Approx(test::i));
+        CHECK(state_.asym_appliance[0].i(1) == doctest::Approx(test::i));
+        CHECK(state_.asym_appliance[1].i(2) == doctest::Approx(0.0));
+        CHECK(state_.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2 + test::i_shunt));
+        CHECK(state_.asym_appliance[3].i(1) == doctest::Approx(0.0));
+        CHECK(state_.asym_appliance[4].i(2) == doctest::Approx(0.0));
+    };
+
     State state;
     auto main_model = default_model(state);
 
     state.sym_load_update[0].p_specified = 2.5e6;
 
-    ConstDataset const update_data_1{
+    ConstDataset const update_data{
         {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
         {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
         {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
 
     // This will lead to no topo change but param change
-    main_model.update_component<typename settings::update_type>(update_data_1);
+    main_model.update_component<typename settings::update_type>(update_data);
 
-    SUBCASE("compute mode: sym 1") {
-        auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
-        main_model.output_result<Node>(math_output, state.sym_node.begin());
-        main_model.output_result<Branch>(math_output, state.sym_branch.begin());
-        main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
-        CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
-        CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2 + test::i_shunt));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
+    auto const math_output_sym_1 = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+    check_sym(main_model, math_output_sym_1);
+
+    auto const math_output_asym_1 = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
+    check_asym(main_model, math_output_asym_1);
+
+    SUBCASE("No new update") {
+        // Math state may be fully cached
     }
-    SUBCASE("compute mode: asym 1") {
-        auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
-        main_model.output_result<Node>(math_output, state.asym_node.begin());
-        main_model.output_result<Branch>(math_output, state.asym_branch.begin());
-        main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
-        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
-        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2 + test::i_shunt));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
+    if constexpr (std::same_as<typename settings::update_type, regular_update>) {
+        SUBCASE("No new parameter change") {
+            // Math state may be fully cached due to no change
+            main_model.update_component<typename settings::update_type>(update_data);
+        }
+    }
+    SUBCASE("With parameter change") {
+        // Restore to original state and re-apply same update: causes param change for cached update
+        main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+        main_model.update_component<typename settings::update_type>(update_data);
     }
 
-    // Restore to original state, no topo change or param change
-    main_model.restore_components(main_model.get_sequence_idx_map(update_data_1));
+    auto const math_output_asym_2 = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
+    check_asym(main_model, math_output_asym_2);
 
-    ConstDataset const update_data_2{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
-        {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
+    auto const math_output_sym_2 = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
+    check_sym(main_model, math_output_sym_2);
 
-    // This will lead to no topo change but param change
-    main_model.update_component<typename settings::update_type>(update_data_2);
-
-    SUBCASE("compute mode: asym 2") {
-        auto const math_output = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::linear);
-        main_model.output_result<Node>(math_output, state.asym_node.begin());
-        main_model.output_result<Branch>(math_output, state.asym_branch.begin());
-        main_model.output_result<Appliance>(math_output, state.asym_appliance.begin());
-        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
-        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2 + test::i_shunt));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
-    }
-
-    SUBCASE("compute mode: sym 2") {
-        auto const math_output = main_model.calculate_power_flow<true>(1e-8, 20, CalculationMethod::linear);
-        main_model.output_result<Node>(math_output, state.sym_node.begin());
-        main_model.output_result<Branch>(math_output, state.sym_branch.begin());
-        main_model.output_result<Appliance>(math_output, state.sym_appliance.begin());
-        CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
-        CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2 + test::i_shunt));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
-    }
-
-    main_model.restore_components(main_model.get_sequence_idx_map(update_data_2));
+    main_model.restore_components(main_model.get_sequence_idx_map(update_data));
 }
+
 TEST_CASE("Test main model - runtime dispatch") {
     State state;
     auto main_model = default_model(state);

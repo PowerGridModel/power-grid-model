@@ -749,7 +749,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename Component, math_output_type MathOutputType, std::forward_iterator ResIt>
-    ResIt output_result(std::vector<MathOutputType> const& math_output, ResIt res_it) {
+    ResIt output_result(std::vector<MathOutputType> const& math_output, ResIt res_it) const {
         assert(construction_complete_);
         return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
     }
@@ -784,7 +784,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    CalculationInfo calculation_info() { return calculation_info_; }
+    CalculationInfo calculation_info() const { return calculation_info_; }
 
   private:
     CalculationInfo calculation_info_; // needs to be first due to padding override
