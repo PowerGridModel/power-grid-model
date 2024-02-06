@@ -256,9 +256,9 @@ class ThreeWindingTransformer : public Branch3 {
     ///                             T2
     ///                            /
     /// node_1 -- T1 -- dummy_node
-    ///                            \
+    ///                            \ 
     ///                             T3
-    ///                              \
+    ///                              \ 
     ///                             node_3
     ///
     /// - Each two winding transformer has a dummy id (2) and dummy nodes (0 and 1).
