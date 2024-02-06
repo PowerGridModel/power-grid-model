@@ -6,9 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_SE_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_SE_SOLVER_HPP
 
-/*
-Newton Raphson state estimation solver
-*/
+// Newton Raphson state estimation solver
 
 #include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
@@ -312,41 +310,41 @@ template <bool sym> class NewtonRaphsonSESolver {
             }
         }
 
-        fill_qt_process_lagrange_multiplier(y_bus);
+        fill_qt(y_bus);
+        process_lagrange_multiplier(y_bus);
 
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
+    /// Q_ij = 0
+    /// R_ii = -1.0, only diagonal
+    /// assign -1.0 to diagonal of 3x3 tensor, for asym
     void virtually_remove_constraints(NRSEGainBlock<sym>& block) {
-        // Q_ij = 0
-        // R_ii = -1.0, only diagonal
-        // assign -1.0 to diagonal of 3x3 tensor, for asym
         block.r_P_theta() = RealTensor<sym>{-1.0};
         block.r_Q_v() = RealTensor<sym>{-1.0};
     }
 
+    /// R_ii = -variance, only diagonal
+    /// assign variance to diagonal of 3x3 tensor, for asym
     void process_injection_diagonal(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& injection) {
-        // R_ii = -variance, only diagonal
-        // assign variance to diagonal of 3x3 tensor, for asym
         rhs_block.tau_p() += injection.value.real();
         rhs_block.tau_q() += injection.value.imag();
         block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
         block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.q_variance}};
     }
 
-    /**
-     * @brief Processes common part of all elements to fill from an injection measurement.
-     * Also includes zero injection constraint.
-     * This would be H, N, M, L at (row, col) block and partially the second part of the (row, row) block using the same
-     * H and M but multiplied by abs_ui_inv.
-     *
-     * @param block LHS(r, c)
-     * @param diag_block LHS(r, r)
-     * @param rhs_block RHS(r)
-     * @param yij admittance of (row with injection, c)
-     * @param u_state Voltage state of iteration
-     */
+    /// @brief Processes common part of all elements to fill from an injection measurement.
+    ///
+    /// Also includes zero injection constraint.
+    /// This would be H, N, M, L at (row, col) block and partially the second part of the (row, row) block using the
+    /// same H and M but multiplied by abs_ui_inv.
+    ///
+    /// @param block LHS(r, c)
+    /// @param diag_block LHS(r, r)
+    /// @param rhs_block RHS(r)
+    /// @param yij admittance of (row with injection, c)
+    /// @param u_state Voltage state of iteration
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                auto const& yij, auto const& u_state) {
         auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
@@ -363,16 +361,14 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.tau_q() -= imag(f_x_complex_row);
     }
 
-    /**
-     * @brief Adds contribution of G(i, i) form the shunt.
-     * Note: The sign of Y_s is inverted per injection direction.
-     *
-     * @param block LHS(i, i)
-     * @param rhs_block RHS(i)
-     * @param ys shunt admittance related to the shunt measurement
-     * @param u_state Voltage state of iteration Voltage state of iteration
-     * @param measured_power measured shunt power
-     */
+    /// @brief Adds contribution of G(i, i) form the shunt.
+    /// Note: The sign of Y_s is inverted per injection direction.
+    ///
+    /// @param block LHS(i, i)
+    /// @param rhs_block RHS(i)
+    /// @param ys shunt admittance related to the shunt measurement
+    /// @param u_state Voltage state of iteration Voltage state of iteration
+    /// @param measured_power measured shunt power
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& ys,
                                    auto const& u_state, auto const& measured_power) {
         auto const hm_ui_ui_ys = hm_complex_form(-ys, u_state.ui_ui_conj);
@@ -387,35 +383,33 @@ template <bool sym> class NewtonRaphsonSESolver {
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
-    /**
-     * @brief Adds contribution of branch measurements to the G_(r, r), G_(r, c) and eta_r blocks,
-     *  given the iteration passes through (r, c) ie. row, col
-     *
-     * When iterating via (row, col), have 4 cases regarding branch measurements:
-     *      if y_type == yft
-     *          if from_measurement,
-     *              xi = f, mu = t, chi = row, psi = col
-     *          if to_measurement,
-     *              xi = t, mu = f, chi = col, psi = row
-     *      if y_type == ytf &
-     *          if from_measurement,
-     *              xi = f, mu = t, chi = col, psi = row
-     *          if to_measurement,
-     *              xi = t, mu = f, chi = row, psi = col
-     *
-     * f_P_(x) = -M(U_chi, U_chi, Y_xi_xi) - M(U_chi, U_psi, Y_xi_mu)
-     * f_Q_(x) = H(U_chi, U_chi, Y_xi_xi) + H(U_chi, U_psi, Y_xi_mu)
-     *
-     *
-     * @param block G_(r, c)
-     * @param diag_block G_(r, r)
-     * @param rhs_block RHS(r)
-     * @param y_xi_xi shunt admittance near to branch measurement
-     * @param y_xi_mu admittance from the branch measurement to other bus
-     * @param u_state Voltage state of iteration voltage state vector
-     * @param order bool to determine if (chi, psi) = (row, col) or (col, row)
-     * @param measured_power
-     */
+    /// @brief Adds contribution of branch measurements to the G_(r, r), G_(r, c) and eta_r blocks,
+    ///  given the iteration passes through (r, c) ie. row, col
+    ///
+    /// When iterating via (row, col), have 4 cases regarding branch measurements:
+    ///      if y_type == yft
+    ///          if from_measurement,
+    ///              xi = f, mu = t, chi = row, psi = col
+    ///          if to_measurement,
+    ///              xi = t, mu = f, chi = col, psi = row
+    ///      if y_type == ytf &
+    ///          if from_measurement,
+    ///              xi = f, mu = t, chi = col, psi = row
+    ///          if to_measurement,
+    ///              xi = t, mu = f, chi = row, psi = col
+    ///
+    /// f_P_(x) = -M(U_chi, U_chi, Y_xi_xi) - M(U_chi, U_psi, Y_xi_mu)
+    /// f_Q_(x) = H(U_chi, U_chi, Y_xi_xi) + H(U_chi, U_psi, Y_xi_mu)
+    ///
+    ///
+    /// @param block G_(r, c)
+    /// @param diag_block G_(r, r)
+    /// @param rhs_block RHS(r)
+    /// @param y_xi_xi shunt admittance near to branch measurement
+    /// @param y_xi_mu admittance from the branch measurement to other bus
+    /// @param u_state Voltage state of iteration voltage state vector
+    /// @param order bool to determine if (chi, psi) = (row, col) or (col, row)
+    /// @param measured_power
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                     const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, auto const order,
                                     const auto& measured_power) {
@@ -451,22 +445,30 @@ template <bool sym> class NewtonRaphsonSESolver {
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
-    /**
-     * @brief Fill Q^T(j,i) of LHS(i, j) from the Q(j, i) of LHS(j, i).
-     * Also process Lagrange Multiplier eta_i(i) = sum( Q^T(j,i) * phi(j) ) for j = 1 to n_bus
-     *
-     * @param y_bus
-     */
-    void fill_qt_process_lagrange_multiplier(YBus<sym> const& y_bus) {
+    /// @brief Fill Q^T(j,i) of LHS(i, j) from the Q(j, i) of LHS(j, i).
+    ///
+    /// @param y_bus
+    void fill_qt(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
             [this](Idx row, Idx col, Idx data_idx, Idx data_idx_transpose) {
                 auto& block = data_gain_[data_idx];
-                auto& rhs_block = delta_x_rhs_[row];
 
                 block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
                 block.qt_P_v() = data_gain_[data_idx_transpose].q_Q_theta();
                 block.qt_Q_theta() = data_gain_[data_idx_transpose].q_P_v();
                 block.qt_Q_v() = data_gain_[data_idx_transpose].q_Q_v();
+            },
+            y_bus);
+    }
+
+    /// @brief Process Lagrange Multiplier eta_i(i) = sum( Q^T(j,i) * phi(j) ) for j = 1 to n_bus
+    ///
+    /// @param y_bus
+    void process_lagrange_multiplier(YBus<sym> const& y_bus) {
+        iterate_matrix_skip_fills(
+            [this](Idx row, Idx col, Idx data_idx, Idx data_idx_transpose) {
+                auto& block = data_gain_[data_idx];
+                auto& rhs_block = delta_x_rhs_[row];
 
                 rhs_block.eta_theta() +=
                     dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_P_v(), x_[col].phi_q());
@@ -495,18 +497,16 @@ template <bool sym> class NewtonRaphsonSESolver {
         }
     }
 
-    /**
-     * @brief G(row,row) += w_k
-     * eta(row) += w_k . (z_k - f_k(x))
-     *
-     * In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
-     * angle measurement of zero. w_theta = 1.0 by default for all measurements
-     *
-     * @param block LHS(row, col), ie. LHS(row, row)
-     * @param rhs_block RHS(row)
-     * @param measured_values
-     * @param bus bus with voltage measurement
-     */
+    /// @brief G(row,row) += w_k
+    /// eta(row) += w_k . (z_k - f_k(x))
+    ///
+    /// In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
+    /// angle measurement of zero. w_theta = 1.0 by default for all measurements
+    ///
+    /// @param block LHS(row, col), ie. LHS(row, row)
+    /// @param rhs_block RHS(row)
+    /// @param measured_values
+    /// @param bus bus with voltage measurement
     void process_voltage_measurements(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
                                       MeasuredValues<sym> const& measured_values, Idx const& bus) {
         if (!measured_values.has_voltage(bus)) {
@@ -539,14 +539,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         rhs_block.eta_v() += dot(w_v, delta_v);
     }
 
-    /**
-     * @brief The second part to add to the F_k(u1, u1, y11) block for shunt flow.
-     * The members are -D[Q], D[P] . D[V]^-1, D[P], D[Q] . D[V]^-1,
-     *
-     * @param f_x_complex_v_inv (P_i + j * Q_i) / abs(u1)
-     * @param f_x_complex P_i + j * Q_i
-     * @return  second part of F_k block
-     */
+    /// @brief The second part to add to the F_k(u1, u1, y11) block for shunt flow.
+    /// The members are -D[Q], D[P] . D[V]^-1, D[P], D[Q] . D[V]^-1,
+    ///
+    /// @param f_x_complex_v_inv (P_i + j * Q_i) / abs(u1)
+    /// @param f_x_complex P_i + j * Q_i
+    /// @return  second part of F_k block
     static NRSEJacobian jacobian_diagonal_component(ComplexValue<sym> const& f_x_complex_v_inv,
                                                     ComplexValue<sym> const& f_x_complex) {
         NRSEJacobian jacobian{};
@@ -557,14 +555,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         return jacobian;
     }
 
-    /**
-     * @brief Calculate F_k(u1, u2, y12)^T . W_k. Hence first transpose, then dot product.
-     * where W_k = [[p_variance, 0], [0, q_variance]]
-     *
-     * @param jac_block F_k(u1, u2, y12)
-     * @param power_sensor object with members p_variance and q_variance
-     * @return  F_k(u1, u2, y12)^T . W
-     */
+    /// @brief Calculate F_k(u1, u2, y12)^T . W_k. Hence first transpose, then dot product.
+    /// where W_k = [[p_variance, 0], [0, q_variance]]
+    ///
+    /// @param jac_block F_k(u1, u2, y12)
+    /// @param power_sensor object with members p_variance and q_variance
+    /// @return  F_k(u1, u2, y12)^T . W
     NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block,
                                            PowerSensorCalcParam<sym> const& power_sensor) {
         auto const w_p = diagonal_inverse(power_sensor.p_variance);
@@ -578,14 +574,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         return product;
     }
 
-    /**
-     * @brief Matrix multiply F_{k,1}^T . w_k and F_{k,2}^T.
-     * Then add the product to G of LHS(row, col)
-     *
-     * @param lhs_block LHS(row, col)
-     * @param f_T_k_w F_{k,1}^T . w_k
-     * @param f_i_or_j F_{k,2}^T
-     */
+    /// @brief Matrix multiply F_{k,1}^T . w_k and F_{k,2}^T.
+    /// Then add the product to G of LHS(row, col)
+    ///
+    /// @param lhs_block LHS(row, col)
+    /// @param f_T_k_w F_{k,1}^T . w_k
+    /// @param f_i_or_j F_{k,2}^T
     static void multiply_add_jacobian_blocks_lhs(NRSEGainBlock<sym>& lhs_block, NRSEJacobian const& f_T_k_w,
                                                  NRSEJacobian const& f_i_or_j) {
         lhs_block.g_P_theta() += dot(f_T_k_w.dP_dt, f_i_or_j.dP_dt) + dot(f_T_k_w.dP_dv, f_i_or_j.dQ_dt);
@@ -594,15 +588,13 @@ template <bool sym> class NewtonRaphsonSESolver {
         lhs_block.g_Q_v() += dot(f_T_k_w.dQ_dt, f_i_or_j.dP_dv) + dot(f_T_k_w.dQ_dv, f_i_or_j.dQ_dv);
     }
 
-    /**
-     * @brief Matrix multiply F_{k,1}^T . w_k and (z_k - f_k(x)).
-     * Then add the product to eta of RHS(row)
-     *
-     * @param rhs_block RHS(row)
-     * @param f_T_k_w F_{k,1}^T . w_k
-     * @param power_sensor measurement
-     * @param f_x_complex calculated power
-     */
+    /// @brief Matrix multiply F_{k,1}^T . w_k and (z_k - f_k(x)).
+    /// Then add the product to eta of RHS(row)
+    ///
+    /// @param rhs_block RHS(row)
+    /// @param f_T_k_w F_{k,1}^T . w_k
+    /// @param power_sensor measurement
+    /// @param f_x_complex calculated power
     static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& f_T_k_w,
                                                  PowerSensorCalcParam<sym> const& power_sensor,
                                                  ComplexValue<sym> const& f_x_complex) {
@@ -618,14 +610,12 @@ template <bool sym> class NewtonRaphsonSESolver {
         block.q_Q_v() += jacobian_block.dQ_dv;
     }
 
-    /**
-     * @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
-     * The 4 members are H, N, M, L in the order.
-     *
-     * @param hm_complex hm_complex
-     * @param nl_complex hm_complex / abs(u2)
-     * @return  F_k(u1, u2, y12)
-     */
+    /// @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
+    /// The 4 members are H, N, M, L in the order.
+    ///
+    /// @param hm_complex hm_complex
+    /// @param nl_complex hm_complex / abs(u2)
+    /// @return  F_k(u1, u2, y12)
     static NRSEJacobian calculate_jacobian(ComplexTensor<sym> const& hm_complex, ComplexTensor<sym> const& nl_complex) {
         NRSEJacobian jacobian{};
         jacobian.dP_dt = imag(hm_complex);
@@ -635,13 +625,11 @@ template <bool sym> class NewtonRaphsonSESolver {
         return jacobian;
     }
 
-    /**
-     * @brief Helper function for all G cos and B sin calculations
-     *
-     * @param yij admittance y12
-     * @param ui_uj_conj vector outer product of u1 and conj(u2)
-     * @return  -M(u1, u2, y12) + j * H(u1, u2, y12)
-     */
+    /// @brief Helper function for all G cos and B sin calculations
+    ///
+    /// @param yij admittance y12
+    /// @param ui_uj_conj vector outer product of u1 and conj(u2)
+    /// @return  -M(u1, u2, y12) + j * H(u1, u2, y12)
     static ComplexTensor<sym> hm_complex_form(ComplexTensor<sym> const& yij, ComplexTensor<sym> const& ui_uj_conj) {
         return conj(yij) * ui_uj_conj;
     }
