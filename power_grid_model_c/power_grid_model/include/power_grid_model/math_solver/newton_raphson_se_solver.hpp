@@ -450,7 +450,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// @param y_bus
     void fill_qt(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
-            [this](Idx row, Idx col, Idx data_idx, Idx data_idx_transpose) {
+            [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
                 auto& block = data_gain_[data_idx];
 
                 block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
@@ -466,7 +466,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// @param y_bus
     void process_lagrange_multiplier(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
-            [this](Idx row, Idx col, Idx data_idx, Idx data_idx_transpose) {
+            [this](Idx row, Idx col, Idx data_idx, Idx /* data_idx_transpose */) {
                 auto& block = data_gain_[data_idx];
                 auto& rhs_block = delta_x_rhs_[row];
 
