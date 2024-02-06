@@ -59,22 +59,30 @@ inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContain
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
-                                     ForwardIterator end, std::vector<Idx2D> const& sequence_idx = {}) {
+                                     ForwardIterator end, OutputIterator changed_it,
+                                     std::vector<Idx2D> const& sequence_idx = {}) {
     using UpdateType = typename Component::UpdateType;
 
-    UpdateChange changed;
+    UpdateChange state_changed;
 
     detail::iterate_component_sequence<Component>(
-        [&changed, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
+        [&state_changed, &changed_it, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
             auto& comp = state.components.template get_item<Component>(sequence_single);
-            changed = changed || comp.update(update_data);
+            auto const comp_changed = comp.update(update_data);
+
+            state_changed = state_changed || comp_changed;
+
+            if (comp_changed.param || comp_changed.topo) {
+                *changed_it++ = sequence_single;
+            }
         },
         begin, end, sequence_idx);
 
-    return changed;
+    return state_changed;
 }
 
 // template to get the inverse update for components
@@ -97,22 +105,41 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 }
 
 template <bool sym>
-inline void update_y_bus(YBus<sym>& y_bus, std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
-    y_bus.update_admittance(math_model_param);
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
+    auto& y_bus_vec = [&math_state]() -> auto& {
+        if constexpr (sym) {
+            return math_state.y_bus_vec_sym;
+        } else {
+            return math_state.y_bus_vec_asym;
+        }
+    }
+    ();
+
+    assert(y_bus_vec.size() == math_model_params.size());
+
+    for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
+        y_bus_vec[i].update_admittance(std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])));
+    }
 }
 
 template <bool sym>
 inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
-                         Idx n_math_solvers) {
-    for (Idx i = 0; i != n_math_solvers; ++i) {
+                         std::vector<MathModelParamIncrement> const& math_model_param_increments) {
+    auto& y_bus_vec = [&math_state]() -> auto& {
         if constexpr (sym) {
-            update_y_bus(math_state.y_bus_vec_sym[i],
-                         std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])));
-
+            return math_state.y_bus_vec_sym;
         } else {
-            update_y_bus(math_state.y_bus_vec_asym[i],
-                         std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])));
+            return math_state.y_bus_vec_asym;
         }
+    }
+    ();
+
+    assert(y_bus_vec.size() == math_model_params.size());
+
+    for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
+        y_bus_vec[i].update_admittance_increment(
+            std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])),
+            math_model_param_increments[i]);
     }
 }
 

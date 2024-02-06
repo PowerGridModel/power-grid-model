@@ -159,6 +159,11 @@ template <bool sym> struct MathModelParam {
     ComplexTensorVector<sym> source_param;
 };
 
+struct MathModelParamIncrement {
+    std::vector<Idx> branch_param_to_change; // indices of changed branch_param
+    std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
+};
+
 template <bool sym> struct PowerFlowInput {
     ComplexVector source;                // Complex u_ref of each source
     ComplexValueVector<sym> s_injection; // Specified injection power of each load_gen

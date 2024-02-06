@@ -98,6 +98,12 @@ template <bool sym> class MathSolver {
         iterative_linear_se_solver_.reset();
     }
 
+    void parameters_changed(bool changed) {
+        if (iterative_current_pf_solver_.has_value()) {
+            iterative_current_pf_solver_->parameters_changed(changed);
+        }
+    }
+
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type

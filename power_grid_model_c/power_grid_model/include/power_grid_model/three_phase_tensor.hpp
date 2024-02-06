@@ -100,7 +100,6 @@ template <bool sym>
 using RealDiagonalTensor = std::conditional_t<sym, double, three_phase_tensor::DiagonalTensor<double>>;
 template <bool sym>
 using ComplexDiagonalTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
-
 template <bool sym> using RealValue = std::conditional_t<sym, double, three_phase_tensor::Vector<double>>;
 template <bool sym>
 using ComplexValue = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
