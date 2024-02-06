@@ -191,19 +191,21 @@ template <bool sym> class NewtonRaphsonSESolver {
         reset_unknown();
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            x_[bus].theta() = mean_angle_shift + math_topo_->phase_shift[bus];
+            auto& estimated_result = x_[bus];
+
+            estimated_result.theta() = mean_angle_shift + math_topo_->phase_shift[bus];
             if (measured_values.has_voltage(bus)) {
                 if (measured_values.has_angle_measurement(bus)) {
-                    x_[bus].theta() = arg(measured_values.voltage(bus));
+                    estimated_result.theta() = arg(measured_values.voltage(bus));
                 }
-                x_[bus].v() = detail::cabs_or_real<sym>(measured_values.voltage(bus));
+                estimated_result.v() = detail::cabs_or_real<sym>(measured_values.voltage(bus));
             }
-            initial_u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
+            initial_u[bus] = estimated_result.v() * exp(1.0i * estimated_result.theta());
         }
     }
 
     void reset_unknown() {
-        static auto const default_unknown = [] {
+        auto const default_unknown = [] {
             NRSERhs<sym> x;
             x.v() = 1.0;
             x.theta() = 0.0;
@@ -306,10 +308,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                     if (row == col) {
                         process_injection_diagonal(block, rhs_block, measured_values.bus_injection(row));
                     }
-                } else {
-                    if (row == col) {
-                        virtually_remove_constraints(block);
-                    }
+                } else if (row == col) {
+                    virtually_remove_constraints(block);
                 }
             }
         }
@@ -654,18 +654,23 @@ template <bool sym> class NewtonRaphsonSESolver {
         }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
+            auto& estimated_result = x_[bus];
+            auto& estimated_delta = delta_x_rhs_[bus];
+
             // accumulate the unknown variable
-            x_[bus].theta() += delta_x_rhs_[bus].theta() - RealValue<sym>{angle_offset};
-            x_[bus].v() += delta_x_rhs_[bus].v();
-            if (measured_values.has_bus_injection(bus) && all_zero(measured_values.bus_injection(bus).p_variance)) {
-                x_[bus].phi_p() += delta_x_rhs_[bus].phi_p();
-            }
-            if (measured_values.has_bus_injection(bus) && all_zero(measured_values.bus_injection(bus).q_variance)) {
-                x_[bus].phi_q() += delta_x_rhs_[bus].phi_q();
+            estimated_result.theta() += estimated_delta.theta() - RealValue<sym>{angle_offset};
+            estimated_result.v() += estimated_delta.v();
+            if (measured_values.has_bus_injection(bus)) {
+                if (all_zero(measured_values.bus_injection(bus).p_variance)) {
+                    estimated_result.phi_p() += estimated_delta.phi_p();
+                }
+                if (all_zero(measured_values.bus_injection(bus).q_variance)) {
+                    estimated_result.phi_q() += estimated_delta.phi_q();
+                }
             }
 
             auto const old_u = u[bus];
-            u[bus] = x_[bus].v() * exp(1.0i * x_[bus].theta());
+            u[bus] = estimated_result.v() * exp(1.0i * estimated_result.theta());
             // get dev of last iteration, get max
             double const dev = max_val(cabs(u[bus] - old_u));
             max_dev = std::max(dev, max_dev);

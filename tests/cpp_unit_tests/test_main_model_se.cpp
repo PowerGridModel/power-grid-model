@@ -236,24 +236,23 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     main_model.output_result<Line>(math_output, line_output.begin());
                     main_model.output_result<SymPowerSensor>(math_output, power_sensor_output.begin());
 
-                    CHECK(shunt_output[0].p == doctest::Approx(1800.0).epsilon(0.01).scale(1e3));
-                    CHECK(shunt_output[0].q == doctest::Approx(180.0).epsilon(0.01).scale(1e3));
+                    CHECK(shunt_output[0].p == doctest::Approx(1800.0).epsilon(0.01));
+                    CHECK(shunt_output[0].q == doctest::Approx(180.0).epsilon(0.01));
 
-                    CHECK(line_output[0].p_from == doctest::Approx(1800.0).epsilon(0.01).scale(1e3));
-                    CHECK(line_output[0].q_from == doctest::Approx(180.0).epsilon(0.01).scale(1e3));
-                    CHECK(line_output[0].p_to == doctest::Approx(-1800.0).epsilon(0.01).scale(1e3));
-                    CHECK(line_output[0].q_to == doctest::Approx(-180.0).epsilon(0.01).scale(1e3));
+                    CHECK(line_output[0].p_from == doctest::Approx(1800.0).epsilon(0.01));
+                    CHECK(line_output[0].q_from == doctest::Approx(180.0).epsilon(0.01));
+                    CHECK(line_output[0].p_to == doctest::Approx(-1800.0).epsilon(0.01));
+                    CHECK(line_output[0].q_to == doctest::Approx(-180.0).epsilon(0.01));
 
-                    CHECK(power_sensor_output[0].p_residual == doctest::Approx(0.0).epsilon(0.01).scale(1e3)); // shunt
-                    CHECK(power_sensor_output[0].q_residual == doctest::Approx(0.0).epsilon(0.01).scale(1e3)); // shunt
-                    CHECK(power_sensor_output[1].p_residual ==
-                          doctest::Approx(0.0).epsilon(0.01).scale(1e3)); // branch_from
-                    CHECK(power_sensor_output[1].q_residual ==
-                          doctest::Approx(0.0).epsilon(0.01).scale(1e3)); // branch_from
-                    CHECK(power_sensor_output[2].p_residual ==
-                          doctest::Approx(0.0).epsilon(0.01).scale(1e3)); // branch_to
-                    CHECK(power_sensor_output[2].q_residual ==
-                          doctest::Approx(0.0).epsilon(0.01).scale(1e3)); // branch_to
+                    // dealing with orders of magnitude kW / kVA and precision at W / VA level
+                    auto const zero_at_order_of_magnitude = doctest::Approx(0.0).scale(1e3).epsilon(0.001);
+
+                    CHECK(power_sensor_output[0].p_residual == zero_at_order_of_magnitude); // shunt
+                    CHECK(power_sensor_output[0].q_residual == zero_at_order_of_magnitude); // shunt
+                    CHECK(power_sensor_output[1].p_residual == zero_at_order_of_magnitude); // branch_from
+                    CHECK(power_sensor_output[1].q_residual == zero_at_order_of_magnitude); // branch_from
+                    CHECK(power_sensor_output[2].p_residual == zero_at_order_of_magnitude); // branch_to
+                    CHECK(power_sensor_output[2].q_residual == zero_at_order_of_magnitude); // branch_to
                 }
             }
         }
