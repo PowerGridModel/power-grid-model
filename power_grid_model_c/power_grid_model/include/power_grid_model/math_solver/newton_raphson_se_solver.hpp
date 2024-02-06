@@ -225,20 +225,18 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
+            NRSERhs<sym>& rhs_block = delta_x_rhs_[row];
+            NRSEGainBlock<sym>& diag_block = data_gain_[lu_diag[row]];
+
+            rhs_block.clear();
+            diag_block.clear();
+
             NRSEVoltageState u_state{};
             u_state.ui = current_u[row];
             u_state.abs_ui_inv = diagonal_inverse(x_[row].v());
             u_state.ui_ui_conj = vector_outer_product(u_state.ui, conj(u_state.ui));
 
-            NRSERhs<sym>& rhs_block = delta_x_rhs_[row];
-            rhs_block.clear();
-
-            // get a reference and reset block to zero
-            NRSEGainBlock<sym>& diag_block = data_gain_[lu_diag[row]];
-            diag_block.clear();
-
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
-
                 // get data idx of y bus,
                 // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
@@ -460,28 +458,39 @@ template <bool sym> class NewtonRaphsonSESolver {
      * @param y_bus
      */
     void fill_qt_process_lagrange_multiplier(YBus<sym> const& y_bus) {
-        auto const& row_indptr = y_bus.row_indptr_lu();
-        // loop data index, all rows and columns
-        for (Idx row = 0; row != n_bus_; ++row) {
-            auto& rhs_block = delta_x_rhs_[row];
-            for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
-                // skip for fill-in
-                if (y_bus.map_lu_y_bus()[data_idx_lu] == -1) {
-                    continue;
-                }
+        iterate_matrix_skip_fills(
+            [this](Idx row, Idx col, Idx data_idx, Idx data_idx_transpose) {
+                auto& block = data_gain_[data_idx];
+                auto& rhs_block = delta_x_rhs_[row];
 
-                Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
-                Idx const col = y_bus.col_indices_lu()[data_idx_lu];
-                auto& block = data_gain_[data_idx_lu];
-
-                block.qt_P_theta() = data_gain_[data_idx_tranpose].q_P_theta();
-                block.qt_P_v() = data_gain_[data_idx_tranpose].q_Q_theta();
-                block.qt_Q_theta() = data_gain_[data_idx_tranpose].q_P_v();
-                block.qt_Q_v() = data_gain_[data_idx_tranpose].q_Q_v();
+                block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
+                block.qt_P_v() = data_gain_[data_idx_transpose].q_Q_theta();
+                block.qt_Q_theta() = data_gain_[data_idx_transpose].q_P_v();
+                block.qt_Q_v() = data_gain_[data_idx_transpose].q_Q_v();
 
                 rhs_block.eta_theta() +=
                     dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_P_v(), x_[col].phi_q());
                 rhs_block.eta_v() += dot(block.qt_Q_theta(), x_[col].phi_p()) + dot(block.qt_Q_v(), x_[col].phi_q());
+            },
+            y_bus);
+    }
+
+    template <typename Func>
+        requires std::invocable<Func, Idx /*row*/, Idx /*col*/, Idx /*data_idx*/, Idx /*data_idx_transpose*/>
+    void iterate_matrix_skip_fills(Func func, YBus<sym> const& y_bus) {
+        auto const& row_indptr = y_bus.row_indptr_lu();
+        // loop data index, all rows and columns
+        for (Idx row = 0; row != n_bus_; ++row) {
+            for (Idx data_idx = row_indptr[row]; data_idx != row_indptr[row + 1]; ++data_idx) {
+                // skip for fill-in
+                if (y_bus.map_lu_y_bus()[data_idx] == -1) {
+                    continue;
+                }
+
+                Idx const col = y_bus.col_indices_lu()[data_idx];
+                Idx const data_idx_transpose = y_bus.lu_transpose_entry()[data_idx];
+
+                func(row, col, data_idx, data_idx_transpose);
             }
         }
     }
