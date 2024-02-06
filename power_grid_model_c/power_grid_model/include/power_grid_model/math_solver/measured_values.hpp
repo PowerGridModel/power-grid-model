@@ -333,8 +333,8 @@ template <bool sym> class MeasuredValues {
                 // only direct injection
                 power_main_value_.push_back(direct_injection_measurement);
             }
-        } else if (uncertain_direct_injection || all_zero(appliance_injection_measurement.p_variance) ||
-                   all_zero(appliance_injection_measurement.q_variance)) {
+        } else if (uncertain_direct_injection || any_zero(appliance_injection_measurement.p_variance) ||
+                   any_zero(appliance_injection_measurement.q_variance)) {
             // only appliance injection if
             //    there is no direct injection measurement,
             //    or we have zero injection
