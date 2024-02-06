@@ -121,22 +121,20 @@ void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMat
 } // namespace
 
 TEST_CASE("Test math solver") {
-    /*
-    network, v means voltage measured, p means power measured, pp means double measured
-    variance always 1.0
-                                                          shunt0 (ys) (p)
-     (pp)                     (y0, ys0)           (y1)         |
-    source --yref-- bus0(vp) -p-branch0-pp- bus1 --branch1-p-  bus2(vv)
-                     |                      |                   |
-                  load012                load345 (p)          load6 (not connected) (p, rubbish value)
-                                          for const z,
-                                       rubbish value for load3/4
+    /// network, v means voltage measured, p means power measured, pp means double measured
+    /// variance always 1.0
+    ///                                                       shunt0 (ys) (p)
+    ///  (pp)                     (y0, ys0)           (y1)         |
+    /// source --yref-- bus0(vp) -p-branch0-pp- bus1 --branch1-p-  bus2(vv)
+    ///                  |                      |                   |
+    ///               load012                load345 (p)          load6 (not connected) (p, rubbish value)
+    ///                                       for const z,
+    ///                                    rubbish value for load3/4
+    /// uref = 1.10
+    /// u0 = 1.08 -1deg
+    /// u1 = 0.97 -4deg
+    /// u2 = 0.90 -37deg
 
-    uref = 1.10
-    u0 = 1.08 -1deg
-    u1 = 0.97 -4deg
-    u2 = 0.90 -37deg
-    */
     // build topo
     double const shift_val = deg_30;
     MathModelTopology topo;
@@ -1032,13 +1030,11 @@ TEST_CASE("Short circuit solver") {
 }
 
 TEST_CASE("Math solver, zero variance test") {
-    /*
-    network, v means voltage measured
-    variance always 1.0
+    /// network, v means voltage measured
+    /// variance always 1.0
 
-    bus_1 --branch0-- bus_0(v) --yref-- source
-    bus_1 = bus_0 = 1.0
-    */
+    /// bus_1 --branch0-- bus_0(v) --yref-- source
+    /// bus_1 = bus_0 = 1.0
     MathModelTopology topo;
     topo.slack_bus_ = 1;
     topo.phase_shift = {0.0, 0.0};
@@ -1073,14 +1069,11 @@ TEST_CASE("Math solver, zero variance test") {
 }
 
 TEST_CASE("Math solver, measurements") {
-    /*
-    network
-
-     bus_0 --branch_0-- bus_1
-        |                    |
-    source_0               load_0
-
-    */
+    /// network
+    ///
+    /// bus_0 --branch_0-- bus_1
+    ///    |                    |
+    /// source_0               load_0
     MathModelTopology topo;
     topo.slack_bus_ = 0;
     topo.phase_shift = {0.0, 0.0};
@@ -1109,14 +1102,11 @@ TEST_CASE("Math solver, measurements") {
     MathOutput<true> output;
 
     SUBCASE("Source and branch") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(v) -(p)-branch_0-- bus_1
-            |                       |
-        source_0(p)               load_0
-
-        */
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(v) -(p)-branch_0-- bus_1
+        ///    |                       |
+        /// source_0(p)               load_0
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
@@ -1135,14 +1125,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Load and branch") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(v) --branch_0-(p)- bus_1
-           |                        |
-        source_0                 load_0(p)
-
-        */
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(v) --branch_0-(p)- bus_1
+        ///    |                        |
+        /// source_0                 load_0(p)
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
@@ -1161,14 +1148,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Node injection and source") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(vp) -(p)-branch_0-- bus_1
-            |                        |
-        source_0(p)                load_0
-
-        */
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(vp) -(p)-branch_0-- bus_1
+        ///     |                        |
+        /// source_0(p)                load_0
         topo.power_sensors_per_bus = {from_sparse, {0, 1, 1}};
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
@@ -1189,14 +1173,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Node injection, source and branch") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(vp) -(p)-branch_0-- bus_1
-            |                        |
-        source_0(p)                load_0
-
-        */
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(vp) -(p)-branch_0-- bus_1
+        ///     |                        |
+        /// source_0(p)                load_0
         topo.power_sensors_per_bus = {from_sparse, {0, 1, 1}};
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
@@ -1217,14 +1198,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Node injection, load and branch") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(v) --branch_0-(p)- bus_1(p)
-           |                        |
-        source_0                 load_0(p)
-
-        */
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(v) --branch_0-(p)- bus_1(p)
+        ///    |                        |
+        /// source_0                 load_0(p)
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
@@ -1245,15 +1223,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Load and gen") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(v) --branch_0-- bus_1
-           |                    /   \
-        source_0          load_0(p)  gen_1(p)
-
-        */
-
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(v) --branch_0-- bus_1
+        ///    |                    /   \
+        /// source_0          load_0(p)  gen_1(p)
         topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
 
@@ -1273,14 +1247,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Node injection, load and gen") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(v) --branch_0-- bus_1(p)
-           |                    /   \
-        source_0          load_0(p)  gen_1(p)
-        */
-
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(v) --branch_0-- bus_1(p)
+        ///    |                    /   \
+        /// source_0          load_0(p)  gen_1(p)
         topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
         topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
@@ -1302,14 +1273,11 @@ TEST_CASE("Math solver, measurements") {
     }
 
     SUBCASE("Node injection, load and gen with different variances") {
-        /*
-        network, v means voltage measured, p means power measured
-
-         bus_0(v) --branch_0-- bus_1(p)
-           |                    /   \
-        source_0          load_0(p)  gen_1(p)
-        */
-
+        /// network, v means voltage measured, p means power measured
+        ///
+        ///  bus_0(v) --branch_0-- bus_1(p)
+        ///    |                    /   \
+        /// source_0          load_0(p)  gen_1(p)
         topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
         topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};

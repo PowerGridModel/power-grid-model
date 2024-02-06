@@ -6,29 +6,26 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_LINEAR_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_LINEAR_PF_SOLVER_HPP
 
-/*
-Linear PF solver for constant impedance
-
-Model load as constant impedance/element_admittance
-I_inj =  -U * Y_load
-S_inj = U * conj(I_inj) = - U * conj(U) * conj(Y_load) = -V^2 * conj(Y_load)
-S_base = -conj(Y_load)
-Y_load = -conj(S_base)
-YBus_diag += Y_load
-YBus_diag += -conj(S_base)
-
-Linear equation
-[YBus] [U] = [rhs] = [I]
-
-if no source
-    rhs_i = 0
-if there are sources
-    rhs_i = I_i = sum{j as source} (- Y_source_j * U_i + Y_source_j * U_ref_j)
-    reform equation
-    YBus_diag_i += sum{j as source} (Y_source_j)
-    rhs_i +=  sum{j as source} (Y_source_j * U_ref_j)
-
-*/
+/// Linear PF solver for constant impedance
+///
+/// Model load as constant impedance/element_admittance
+/// I_inj =  -U * Y_load
+/// S_inj = U * conj(I_inj) = - U * conj(U) * conj(Y_load) = -V^2 * conj(Y_load)
+/// S_base = -conj(Y_load)
+/// Y_load = -conj(S_base)
+/// YBus_diag += Y_load
+/// YBus_diag += -conj(S_base)
+///
+/// Linear equation
+/// [YBus] [U] = [rhs] = [I]
+///
+/// if no source
+///     rhs_i = 0
+/// if there are sources
+///     rhs_i = I_i = sum{j as source} (- Y_source_j * U_i + Y_source_j * U_ref_j)
+///     reform equation
+///     YBus_diag_i += sum{j as source} (Y_source_j)
+///     rhs_i +=  sum{j as source} (Y_source_j * U_ref_j)
 
 #include "common_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"

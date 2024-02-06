@@ -6,145 +6,142 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
 
-/*
-Newton Raphson Power Flow
-
-****** Voltage
-U_i = V_i * exp(1j * theta_i) = U_i_r + 1j * U_i_i
-U_i_r = V_i * cos(theta_i)
-U_i_i = V_i * sin(theta_i)
-
-****** Admittance matrix
-Yij = Gij + 1j * Bij
-
-****** Object function:
-
-f(theta, V) = PQ_sp - PQ_cal = del_pq = 0
-sp = specified
-cal = calculated
-
-PQ_sp = [P_sp_0, Q_sp_0, P_sp_1, Q_sp_1, ...]^T
-PQ_cal = [P_cal_0, Q_cal_0, P_cal_1, Q_cal_1, ...]^T
-
-
-****** Solution: use Newton-Raphson iteration
-The modified Jacobian derivative
-Jf = [
-     [Jf00, Jf01, Jf02, ..., ]
-     [Jf10, Jf11, Jf12, ..., ],
-     ...
-    ]
-
-J = -Jf
-  J_ij =
-     [[dP_cal_i/dtheta_j, dP_cal_i/dV_j * V_j],
-      [dQ_cal_i/dtheta_j, dQ_cal_i/dV_j * V_j]]
-    -
-     [[dP_sp_i/dtheta_j, dP_sp_i/dV_j * V_j],
-      [dQ_sp_i/dtheta_j, dQ_sp_i/dV_j * V_j]]
-
-Iteration increment
-del_x = [del_theta_0, del_V_0/V_0, del_theta_1, del_V_1/V_1, ...]^T = - (Jf)^-1 * del_pq = J^-1 * del_pq
-
-theta_i_(k+1) = theta_i_(k) + del_theta_i
-V_i_(k+1) = V_i_k + (del_V_i/V_i) * V_i
-
-
-****** Calculation process
-set J[...] = 0
-set del_pq[...] = 0
-
-
-*** intermediate variable H, N, M, L into J, as incomplete J
-
-symbol @* : outer product of two vectors https://en.wikipedia.org/wiki/Outer_product
-     x1 = [a, b]^T, x2 = [c, d]^T, x1 @* x2 = [[ac, ad], [bc, bd]]
-symbol .* : elementwise multiply of two matrices/tensors or vector
-
-theta_ij =
-    for symmetric: theta_i - theta_j
-    for asymmetric: [
-                     [theta_i_a - theta_j_a, theta_i_a - theta_j_b, theta_i_a - theta_j_c],
-                     [theta_i_b - theta_j_a, theta_i_b - theta_j_b, theta_i_b - theta_j_c],
-                     [theta_i_c - theta_j_a, theta_i_c - theta_j_b, theta_i_c - theta_j_c]
-                    ]
-diag(Vi) * cos(theta_ij) * diag(Vj) = Ui_r @* Uj_r + Ui_i @* Uj_i = cij
-diag(Vi) * sin(theta_ij) * diag(Vj) = Ui_i @* Uj_r - Ui_r @* Uj_i = sij
-
-Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-    = Gij .* sij - Bij .* cij
-Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
-    = Gij .* cij + Bij .* sij
-Mij = - Nij
-Lij = Hij
-
-save to J_ij = [
-                   [Hij, Nij],
-                   [Mij, Lij]
-               ]
-
-*** PQ_cal
-P_cal_i = sum{j} (Nij * I)
-Q_cal_i = sum{j} (Hij * I)
-I =
-    symmetric: 1
-    asymmetric: [1, 1, 1]^T
-set
-del_pq_i = -[P_cal_i, Q_cal_i]
-
-*** modify J into complete Jacobian for PQ_cal
-correction for diagonal
-Jii.H += diag(-Q_cal_i)
-Jii.N -= diag(-P_cal_i)
-Jii.M -= diag(-P_i)
-Jii.L -= diag(-Q_cal_i)
-
-*** calculate PQ_sp, and dPQ_sp/(dtheta, dV)
-
-** for load/generation
-PQ_sp =
-    PQ_base for constant pq
-    PQ_base * V for constant i
-    PQ_base * V^2 for constant z
-del_pq += PQ_sp
-
-dPQ_sp/dtheta = 0
-dPQ_sp/dV_i * V =
-    0 for constant pq
-    PQ_base * V for constant i (dPQ_sp/dV = PQ_base)
-    PQ_base * 2 * V^2 for constant z (dPQ_sp/dV = PQ_base * 2 * V)
-J.N -= diag(dP_sp/dV .* V)
-J.L -= diag(dQ_sp/dV .* V)
-
-** for source
-A mini two bus equivalent system is built to solve the problem
-
-bus_m (network) ---Y--- bus_s (voltage_source)
-element_admittance matrix [[Y -Y], [-Y, Y]]
-voltage at bus_s is known as U_ref
-voltage at bus_m is U_m
-
-The PQ_sp for the bus_m in the network, is in this case the negative of the power injection for this fictional 2-bus
-network
-
-* Calculate HNML for mm, ms, using the same formula, then calculate the other quantities
-P_cal_m = (Nmm + Nms) * I
-Q_cal_m = (Hmm + Hms) * I
-dP_cal_m/dtheta = Hmm - diag(Q_cal_m)
-dP_cal_m/dV = Nmm + diag(P_cal_m)
-dQ_cal_m/dtheta = Mmm + diag(P_cal_m)
-dQ_cal_m/dV = Lmm + diag(Q_cal_m)
-
-* negate the value and add into the main matrices
-PQ_sp = -PQ_cal_m
-del_pq -= PQ_cal_m
-
-J.H -= -dP_cal_m/dtheta
-J.N -= -dP_cal_m/dV
-J.M -= -dQ_cal_m/dtheta
-J.L -= -dQ_cal_m/dV
-
-*/
+/// Newton Raphson Power Flow
+///
+/// ****** Voltage
+/// U_i = V_i * exp(1j * theta_i) = U_i_r + 1j * U_i_i
+/// U_i_r = V_i * cos(theta_i)
+/// U_i_i = V_i * sin(theta_i)
+///
+/// ****** Admittance matrix
+/// Yij = Gij + 1j * Bij
+///
+/// ****** Object function:
+///
+/// f(theta, V) = PQ_sp - PQ_cal = del_pq = 0
+/// sp = specified
+/// cal = calculated
+///
+/// PQ_sp = [P_sp_0, Q_sp_0, P_sp_1, Q_sp_1, ...]^T
+/// PQ_cal = [P_cal_0, Q_cal_0, P_cal_1, Q_cal_1, ...]^T
+///
+///
+/// ****** Solution: use Newton-Raphson iteration
+/// The modified Jacobian derivative
+/// Jf = [
+///      [Jf00, Jf01, Jf02, ..., ]
+///      [Jf10, Jf11, Jf12, ..., ],
+///      ...
+///     ]
+///
+/// J = -Jf
+///   J_ij =
+///      [[dP_cal_i/dtheta_j, dP_cal_i/dV_j * V_j],
+///       [dQ_cal_i/dtheta_j, dQ_cal_i/dV_j * V_j]]
+///     -
+///      [[dP_sp_i/dtheta_j, dP_sp_i/dV_j * V_j],
+///       [dQ_sp_i/dtheta_j, dQ_sp_i/dV_j * V_j]]
+///
+/// Iteration increment
+/// del_x = [del_theta_0, del_V_0/V_0, del_theta_1, del_V_1/V_1, ...]^T = - (Jf)^-1 * del_pq = J^-1 * del_pq
+///
+/// theta_i_(k+1) = theta_i_(k) + del_theta_i
+/// V_i_(k+1) = V_i_k + (del_V_i/V_i) * V_i
+///
+///
+/// ****** Calculation process
+/// set J[...] = 0
+/// set del_pq[...] = 0
+///
+///
+/// *** intermediate variable H, N, M, L into J, as incomplete J
+///
+/// symbol @* : outer product of two vectors https://en.wikipedia.org/wiki/Outer_product
+///      x1 = [a, b]^T, x2 = [c, d]^T, x1 @* x2 = [[ac, ad], [bc, bd]]
+/// symbol .* : elementwise multiply of two matrices/tensors or vector
+///
+/// theta_ij =
+///     for symmetric: theta_i - theta_j
+///     for asymmetric: [
+///                      [theta_i_a - theta_j_a, theta_i_a - theta_j_b, theta_i_a - theta_j_c],
+///                      [theta_i_b - theta_j_a, theta_i_b - theta_j_b, theta_i_b - theta_j_c],
+///                      [theta_i_c - theta_j_a, theta_i_c - theta_j_b, theta_i_c - theta_j_c]
+///                     ]
+/// diag(Vi) * cos(theta_ij) * diag(Vj) = Ui_r @* Uj_r + Ui_i @* Uj_i = cij
+/// diag(Vi) * sin(theta_ij) * diag(Vj) = Ui_i @* Uj_r - Ui_r @* Uj_i = sij
+///
+/// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
+///     = Gij .* sij - Bij .* cij
+/// Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
+///     = Gij .* cij + Bij .* sij
+/// Mij = - Nij
+/// Lij = Hij
+///
+/// save to J_ij = [
+///                    [Hij, Nij],
+///                    [Mij, Lij]
+///                ]
+///
+/// *** PQ_cal
+/// P_cal_i = sum{j} (Nij * I)
+/// Q_cal_i = sum{j} (Hij * I)
+/// I =
+///     symmetric: 1
+///     asymmetric: [1, 1, 1]^T
+/// set
+/// del_pq_i = -[P_cal_i, Q_cal_i]
+///
+/// *** modify J into complete Jacobian for PQ_cal
+/// correction for diagonal
+/// Jii.H += diag(-Q_cal_i)
+/// Jii.N -= diag(-P_cal_i)
+/// Jii.M -= diag(-P_i)
+/// Jii.L -= diag(-Q_cal_i)
+///
+/// *** calculate PQ_sp, and dPQ_sp/(dtheta, dV)
+///
+/// ** for load/generation
+/// PQ_sp =
+///     PQ_base for constant pq
+///     PQ_base * V for constant i
+///     PQ_base * V^2 for constant z
+/// del_pq += PQ_sp
+///
+/// dPQ_sp/dtheta = 0
+/// dPQ_sp/dV_i * V =
+///     0 for constant pq
+///     PQ_base * V for constant i (dPQ_sp/dV = PQ_base)
+///     PQ_base * 2 * V^2 for constant z (dPQ_sp/dV = PQ_base * 2 * V)
+/// J.N -= diag(dP_sp/dV .* V)
+/// J.L -= diag(dQ_sp/dV .* V)
+///
+/// ** for source
+/// A mini two bus equivalent system is built to solve the problem
+///
+/// bus_m (network) ---Y--- bus_s (voltage_source)
+/// element_admittance matrix [[Y -Y], [-Y, Y]]
+/// voltage at bus_s is known as U_ref
+/// voltage at bus_m is U_m
+///
+/// The PQ_sp for the bus_m in the network, is in this case the negative of the power injection for this fictional 2-bus
+/// network
+///
+/// * Calculate HNML for mm, ms, using the same formula, then calculate the other quantities
+/// P_cal_m = (Nmm + Nms) * I
+/// Q_cal_m = (Hmm + Hms) * I
+/// dP_cal_m/dtheta = Hmm - diag(Q_cal_m)
+/// dP_cal_m/dV = Nmm + diag(P_cal_m)
+/// dQ_cal_m/dtheta = Mmm + diag(P_cal_m)
+/// dQ_cal_m/dV = Lmm + diag(Q_cal_m)
+///
+/// * negate the value and add into the main matrices
+/// PQ_sp = -PQ_cal_m
+/// del_pq -= PQ_cal_m
+///
+/// J.H -= -dP_cal_m/dtheta
+/// J.N -= -dP_cal_m/dV
+/// J.M -= -dQ_cal_m/dtheta
+/// J.L -= -dQ_cal_m/dV
 
 #include "block_matrix.hpp"
 #include "iterative_pf_solver.hpp"

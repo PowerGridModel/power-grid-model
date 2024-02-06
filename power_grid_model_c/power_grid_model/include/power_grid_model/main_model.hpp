@@ -263,9 +263,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         state_.comp_coup = {};
     }
 
-    /*
-    the the sequence indexer given an input array of ID's for a given component type
-    */
+    /// the the sequence indexer given an input array of ID's for a given component type
     void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         using GetIndexerFunc = void (*)(MainModelState const& state, ID const* id_begin, Idx size, Idx* indexer_begin);
 
@@ -392,18 +390,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
-    /*
-    run the calculation function in batch on the provided update data.
-
-    The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
-
-    threading
-        < 0 sequential
-        = 0 parallel, use number of hardware threads
-        > 0 specify number of parallel threads
-    raise a BatchCalculationError if any of the calculations in the batch raised an exception
-    */
+    /// run the calculation function in batch on the provided update data.
+    ///
+    /// The calculation function should be able to run standalone.
+    /// It should output to the provided result_data if the trailing argument is not ignore_output.
+    ///
+    /// threading
+    ///     < 0 sequential
+    ///     = 0 parallel, use number of hardware threads
+    ///     > 0 specify number of parallel threads
+    /// raise a BatchCalculationError if any of the calculations in the batch raised an exception
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data,
@@ -978,54 +974,53 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr auto include_all = [](Idx) { return true; };
 
-    /** This is a heavily templated member function because it operates on many different variables of many different
-     * types, but the essence is ever the same: filling one member (vector) of the calculation calc_input struct
-     * (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as the
-     * corresponding component are stored in the component topology. There is one such struct for each sub graph / math
-     * model and all of them are filled within the same function call (i.e. Notice that calc_input is a vector).
-     *
-     *  1. For each component, check if it should be included.
-     *     By default, all component are included, except for some cases, like power sensors. For power sensors, the
-     *     list of component contains all power sensors, but the preparation should only be done for one type of power
-     *     sensors at a time. Therefore, `included` will be a lambda function, such as:
-     *
-     *       [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; }
-     *
-     *  2. Find the original component in the topology and retrieve its calculation parameters.
-     *
-     *  3. Fill the calculation parameters of the right math model.
-     *
-     *  @tparam CalcStructOut
-     *      The calculation input type (soa) for the desired calculation (e.g. PowerFlowInput<sym> or
-     *StateEstimationInput<sym>).
-     *
-     * @tparam CalcParamOut
-     *      The data type for the desired calculation for the given ComponentIn (e.g. SourceCalcParam<sym> or
-     *      VoltageSensorCalcParam<sym>).
-     *
-     * @tparam comp_vect
-     *      The (pre-allocated and resized) vector of CalcParamOuts which shall be filled with component specific
-     *      calculation parameters. Note that this is a pointer to member
-     *
-     * @tparam ComponentIn
-     * 	    The component type for which we are collecting calculation parameters
-     *
-     * @tparam PredicateIn
-     * 	    The lambda function type. The actual type depends on the captured variables, and will be automatically
-     * 	    deduced.
-     *
-     * @param component[in]
-     *      The vector of component math indices to consider (e.g. state_.topo_comp_coup->source).
-     *      When idx.group = -1, the original component is not assigned to a math model, so we can skip it.
-     *
-     * @param calc_input[out]
-     *		Although this variable is called `input`, it is actually the output of this function, it stored the
-     *		calculation parameters for each math model, for each component of type ComponentIn.
-     *
-     * @param include
-     *      A lambda function (Idx i -> bool) which returns true if the component at Idx i should be included.
-     * 	    The default lambda `include_all` always returns `true`.
-     */
+    /// @brief This is a heavily templated member function because it operates on many different variables of many
+    /// different types, but the essence is ever the same: filling one member (vector) of the calculation calc_input
+    /// struct (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as the
+    /// corresponding component are stored in the component topology. There is one such struct for each sub graph / math
+    /// model and all of them are filled within the same function call (i.e. Notice that calc_input is a vector).
+    ///
+    /// 1. For each component, check if it should be included.
+    ///    By default, all component are included, except for some cases, like power sensors. For power sensors, the
+    ///    list of component contains all power sensors, but the preparation should only be done for one type of power
+    ///    sensors at a time. Therefore, `included` will be a lambda function, such as:
+    ///
+    ///    [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; }
+    ///
+    /// 2. Find the original component in the topology and retrieve its calculation parameters.
+    ///
+    /// 3. Fill the calculation parameters of the right math model.
+    ///
+    /// @tparam CalcStructOut
+    ///         The calculation input type (soa) for the desired calculation (e.g. PowerFlowInput<sym> or
+    ///         StateEstimationInput<sym>).
+    ///
+    /// @tparam CalcParamOut
+    ///         The data type for the desired calculation for the given ComponentIn (e.g. SourceCalcParam<sym> or
+    ///         VoltageSensorCalcParam<sym>).
+    ///
+    /// @tparam comp_vect
+    ///         The (pre-allocated and resized) vector of CalcParamOuts which shall be filled with component specific
+    ///         calculation parameters. Note that this is a pointer to member
+    ///
+    /// @tparam ComponentIn
+    ///         The component type for which we are collecting calculation parameters
+    ///
+    /// @tparam PredicateIn
+    ///        The lambda function type. The actual type depends on the captured variables, and will be automatically
+    ///        deduced.
+    ///
+    /// @param component[in]
+    ///        The vector of component math indices to consider (e.g. state_.topo_comp_coup->source).
+    ///        When idx.group = -1, the original component is not assigned to a math model, so we can skip it.
+    ///
+    /// @param calc_input[out]
+    ///        Although this variable is called `input`, it is actually the output of this function, it stored the
+    ///        parameters for each math model, for each component of type ComponentIn.
+    ///
+    /// @param include
+    ///        A lambda function (Idx i -> bool) which returns true if the component at Idx i should be included.
+    ///        The default lambda `include_all` always returns `true`.
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = decltype(include_all)>

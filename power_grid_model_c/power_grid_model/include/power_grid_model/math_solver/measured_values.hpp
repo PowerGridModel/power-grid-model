@@ -6,9 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_MEASURED_VALUES_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_MEASURED_VALUES_HPP
 
-/*
-Collect all measured Values
-*/
+// Collect all measured Values
 
 #include "../calculation_parameters.hpp"
 #include "../three_phase_tensor.hpp"
@@ -185,35 +183,33 @@ template <bool sym> class MeasuredValues {
 
     constexpr MathModelTopology const& math_topology() const { return *math_topology_; }
 
+    /// @brief The main purpose of this function is to aggregate all voltage and power sensor values to
+    ///     one voltage sensor value per bus.
+    ///     one injection power sensor value per bus.
+    ///     one power sensor value per shunt (in injection reference direction, note shunt itself is not considered as
+    /// injection element).
+    ///
+    ///
+    /// This function loops through all buses
+    /// For each bus all voltage sensor measurements are combined in a weighted average, which is appended to
+    /// voltage_main_value_. For each bus, for all connected components, all power sensor measurements (per component
+    /// (shunt, load_gen, source)) are combined in a weighted average, which is appended to power_main_value_ (for
+    /// shunt) or extra_value_ (for load_gen and source). E.g. a value in extra_value contains the weighted average of
+    /// all sensors connected to one component. The extra_value_ of all load_gen and source, connected to the bus, are
+    /// added and appended to appliace_injection_measurement.
+    ///
+    /// We combine all the available load_gen and source measurements into appliance_injection_measurement by summing
+    /// them up, and store it in bus_appliance_injection_. If all the connected load_gen and source are measured, we
+    /// further combine the appliance_injection_measurement into the (if available) direct bus injection measurement,
+    /// and put it into power_main_value_.
+    ///
+    /// NOTE: if all load_gen and source are not connected (disconnected). It is a zero injection constraint,
+    /// which is considered as a measurement in the main_value_ with zero variance.
+    ///
+    /// The voltage values in voltage_main_value_ can be found using idx_voltage.
+    /// The power values in power_main_value_ can be found using bus_injection_ (for combined load_gen and source)
+    /// and idx_shunt_power_ (for shunt).
     void process_bus_related_measurements(StateEstimationInput<sym> const& input) {
-        /*
-        The main purpose of this function is to aggregate all voltage and power sensor values to
-            one voltage sensor value per bus.
-            one injection power sensor value per bus.
-            one power sensor value per shunt (in injection reference direction, note shunt itself is not considered as
-        injection element).
-
-
-        This function loops through all buses
-        For each bus all voltage sensor measurements are combined in a weighted average, which is appended to
-        voltage_main_value_. For each bus, for all connected components, all power sensor measurements (per component
-        (shunt, load_gen, source)) are combined in a weighted average, which is appended to power_main_value_ (for
-        shunt) or extra_value_ (for load_gen and source). E.g. a value in extra_value contains the weighted average of
-        all sensors connected to one component. The extra_value_ of all load_gen and source, connected to the bus, are
-        added and appended to appliace_injection_measurement.
-
-        We combine all the available load_gen and source measurements into appliance_injection_measurement by summing
-        them up, and store it in bus_appliance_injection_. If all the connected load_gen and source are measured, we
-        further combine the appliance_injection_measurement into the (if available) direct bus injection measurement,
-        and put it into power_main_value_.
-
-        NOTE: if all load_gen and source are not connected (disconnected). It is a zero injection constraint,
-        which is considered as a measurement in the main_value_ with zero variance.
-
-        The voltage values in voltage_main_value_ can be found using idx_voltage.
-        The power values in power_main_value_ can be found using bus_injection_ (for combined load_gen and source)
-        and idx_shunt_power_ (for shunt).
-        */
         process_voltage_measurements(input);
         process_appliance_measurements(input);
     }
@@ -350,26 +346,24 @@ template <bool sym> class MeasuredValues {
         measurements.q_variance += appliance_measurement.q_variance;
     }
 
+    /// @brief The main purpose of this function is to aggregate all power sensor values to one power sensor value per
+    /// branch side.
+    ///
+    /// This function loops through all branches.
+    /// The branch_bus_idx contains the from and to bus indexes of the branch, or disconnected if the branch is not
+    /// connected at that side. For each branch the checker checks if the from and to side are connected by checking if
+    /// branch_bus_idx = disconnected.
+    ///
+    /// If the branch_bus_idx = disconnected, idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
+    /// If the side is connected, but there are no measurements in this branch side
+    /// idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
+    /// Else, idx_branch_to_power_/idx_branch_from_power_ is set to the index of the aggregated data in
+    /// power_main_value_.
+    ///
+    /// All measurement values for a single side of a branch are combined in a weighted average, which is appended to
+    /// power_main_value_. The values in power_main_value_ can be found using
+    /// idx_branch_to_power_/idx_branch_from_power_.
     void process_branch_measurements(StateEstimationInput<sym> const& input) {
-        /*
-        The main purpose of this function is to aggregate all power sensor values to one power sensor value per branch
-        side.
-
-        This function loops through all branches.
-        The branch_bus_idx contains the from and to bus indexes of the branch, or disconnected if the branch is not
-        connected at that side. For each branch the checker checks if the from and to side are connected by checking if
-        branch_bus_idx = disconnected.
-
-        If the branch_bus_idx = disconnected, idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
-        If the side is connected, but there are no measurements in this branch side
-        idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
-        Else, idx_branch_to_power_/idx_branch_from_power_ is set to the index of the aggregated data in
-        power_main_value_.
-
-        All measurement values for a single side of a branch are combined in a weighted average, which is appended to
-        power_main_value_. The values in power_main_value_ can be found using
-        idx_branch_to_power_/idx_branch_from_power_.
-        */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
         static constexpr auto branch_to_checker = [](BranchIdx x) { return x[1] != -1; };

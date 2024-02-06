@@ -243,34 +243,32 @@ class ThreeWindingTransformer : public Branch3 {
         return std::make_tuple(pk_T1, pk_T2, pk_T3);
     }
 
-    /*
-    A three winding transformer can be modelled as three two winding transformers, between the three nodes and the
-    dummy node:
-        - T1: node 1 -> dummy node
-        - T2: node 2 -> dummy node
-        - T3: node 3 -> dummy node
-
-    The three two winding transformers look as follows:
-
-                                node_2
-                                 /
-                                T2
-                               /
-    node_1 -- T1 -- dummy_node
-                               \
-                                T3
-                                 \
-                                node_3
-
-    - Each two winding transformer has a dummy id (2) and dummy nodes (0 and 1).
-    - The from status is the actual status of the threewinding transformer with teh corresponding node,
-      the to status is always true.
-    - The voltage at the dummy node is the same as on node 1
-    - i0 and p0 are only applicable to T1
-    - T1 will always be YNyn0 transformer
-    - The voltage levels will be calculated in advance, so tap_pos/min/max/nom/size can all be set to zero
-    - uk and pk are calculated in advance, so uk_min/max and pk_min/max can be set to nan
-    */
+    /// A three winding transformer can be modelled as three two winding transformers, between the three nodes and the
+    /// dummy node:
+    ///     - T1: node 1 -> dummy node
+    ///     - T2: node 2 -> dummy node
+    ///     - T3: node 3 -> dummy node
+    ///
+    /// The three two winding transformers look as follows:
+    ///
+    ///                             node_2
+    ///                              /
+    ///                             T2
+    ///                            /
+    /// node_1 -- T1 -- dummy_node
+    ///                            \
+    ///                             T3
+    ///                              \
+    ///                             node_3
+    ///
+    /// - Each two winding transformer has a dummy id (2) and dummy nodes (0 and 1).
+    /// - The from status is the actual status of the threewinding transformer with teh corresponding node,
+    ///   the to status is always true.
+    /// - The voltage at the dummy node is the same as on node 1
+    /// - i0 and p0 are only applicable to T1
+    /// - T1 will always be YNyn0 transformer
+    /// - The voltage levels will be calculated in advance, so tap_pos/min/max/nom/size can all be set to zero
+    /// - uk and pk are calculated in advance, so uk_min/max and pk_min/max can be set to nan
     std::array<Transformer, 3> convert_to_two_winding_transformers() const {
         // off nominal tap ratio
         auto const [u1, u2, u3] = [this]() {

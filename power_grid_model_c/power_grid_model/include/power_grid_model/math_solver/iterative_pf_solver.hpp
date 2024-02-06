@@ -6,9 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_PF_SOLVER_HPP
 
-/*
- * Class to house common functions of newton raphson and iterative current method
- */
+// Class to house common functions of newton raphson and iterative current method
 
 // Check if all includes needed
 #include "common_solver_functions.hpp"

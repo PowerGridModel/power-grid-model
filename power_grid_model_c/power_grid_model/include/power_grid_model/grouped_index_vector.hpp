@@ -17,20 +17,17 @@
 
 #include <ranges>
 
-/*
-A data-structure for iterating through the indptr, ie. sparse representation of data.
-Indptr can be eg: [0, 3, 6, 7]
-This means that:
-objects 0, 1, 2 are coupled to index 0
-objects 3, 4, 5 are coupled to index 1
-objects 6 is coupled to index 2
-
-Another intuitive way to look at this for python developers is like list of lists: [[0, 1, 2], [3, 4, 5], [6]].
-
-DenseGroupedIdxVector is a vector of element to group. ie. [0, 1, 1, 4] would denote that [[0], [1, 2], [], [], [3]]
-The input, ie. [0, 1, 3] should be strictly increasing
-
-*/
+/// A data-structure for iterating through the indptr, ie. sparse representation of data.
+/// Indptr can be eg: [0, 3, 6, 7]
+/// This means that:
+/// objects 0, 1, 2 are coupled to index 0
+/// objects 3, 4, 5 are coupled to index 1
+/// objects 6 is coupled to index 2
+///
+/// Another intuitive way to look at this for python developers is like list of lists: [[0, 1, 2], [3, 4, 5], [6]].
+///
+/// DenseGroupedIdxVector is a vector of element to group. ie. [0, 1, 1, 4] would denote that [[0], [1, 2], [], [], [3]]
+/// The input, ie. [0, 1, 3] should be strictly increasing
 
 namespace power_grid_model {
 

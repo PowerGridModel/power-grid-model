@@ -399,41 +399,35 @@ TEST_CASE("Test main model - individual output (symmetric)") {
             state.sym_node[2].q ==
             doctest::Approx(state.sym_appliance[1].q - state.sym_appliance[2].q - state.sym_appliance[3].q).scale(2e3));
 
-        /*
-        TODO
-        - u
-        - angle
-        */
+        /// TODO
+        /// - u
+        /// - angle
     }
 
     SUBCASE("Line, sym output") {
         main_model.output_result<Line>(res, state.sym_line.begin());
 
         CHECK(state.sym_line[0].i_from == doctest::Approx(test::i));
-        /*
-        TODO
-        - i_to
-        - p_from
-        - p_to
-        - q_from
-        - q_to
-        */
+        /// TODO
+        /// - i_to
+        /// - p_from
+        /// - p_to
+        /// - q_from
+        /// - q_to
     }
 
     SUBCASE("Link, sym output") {
         main_model.output_result<Link>(res, state.sym_link.begin());
 
         CHECK(state.sym_link[0].i_from == doctest::Approx(test::i));
-        /*
-        TODO
-        - i_to
-        - p_from
-        - p_to
-        - q_from
-        - q_to
-        - s_from
-        - s_to
-        */
+        /// TODO
+        /// - i_to
+        /// - p_from
+        /// - p_to
+        /// - q_from
+        /// - q_to
+        /// - s_from
+        /// - s_to
     }
 
     SUBCASE("Source, sym output") {
@@ -442,36 +436,30 @@ TEST_CASE("Test main model - individual output (symmetric)") {
 
         CHECK(state.sym_source[0].i == doctest::Approx(test::i));
         CHECK(state.sym_source[1].i == doctest::Approx(0.0));
-        /*
-        TODO
-        - p
-        - q
-        - s
-        */
+        /// TODO
+        /// - p
+        /// - q
+        /// - s
     }
 
     SUBCASE("SymLoad, sym output") {
         main_model.output_result<SymLoad>(res, state.sym_load_sym.begin());
 
         CHECK(state.sym_load_sym[0].i == doctest::Approx(test::i_load));
-        /*
-        TODO
-        - p
-        - q
-        - s
-        */
+        /// TODO
+        /// - p
+        /// - q
+        /// - s
     }
 
     SUBCASE("AsymLoad, sym output") {
         main_model.output_result<AsymLoad>(res, state.sym_load_asym.begin());
 
         CHECK(state.sym_load_asym[0].i == doctest::Approx(test::i_load));
-        /*
-        TODO
-        - p
-        - q
-        - s
-        */
+        /// TODO
+        /// - p
+        /// - q
+        /// - s
     }
 
     SUBCASE("Shunt, sym output") {
@@ -573,16 +561,14 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
 
     auto const res = main_model.calculate_power_flow<false>(1e-8, 20, CalculationMethod::newton_raphson);
 
-    /*
-    TODO:
-    - test node
-    - test line
-    - test link
-    - test source
-    - test sym load
-    - test asym load
-    - test shunt
-    */
+    /// TODO:
+    /// - test node
+    /// - test line
+    /// - test link
+    /// - test source
+    /// - test sym load
+    /// - test asym load
+    /// - test shunt
 
     SUBCASE("Node, asym output") {
         main_model.output_result<Node>(res, state.asym_node.begin());

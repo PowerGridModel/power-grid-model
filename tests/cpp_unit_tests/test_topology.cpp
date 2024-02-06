@@ -8,85 +8,83 @@
 
 #include <ostream>
 
-/*
- *  [0]   = Node / Bus
- * --0--> = Branch (from --id--> to)
- * -(b0)- = Virtual node, representing Branch3,
- *          the sequence within the branch 3 is indicated by $0 $1 $2
- *  -X-   = Open switch / not connected
- *  s0    = source
- *  s0X   = disconnected source
- *  lg0   = load_gen
- *  h0    = shunt
- *  +v0   = voltage sensor
- *  +p0   = power sensor
- *  +p?0  = components power sensor (e.g. +ps1 = source power sensor 1)
- *          (f = branch_from, t = branch_to, s = source, h = shunt, l = load, g = generator, b = bus)
- *
- * Topology:
- *                                               7 -> [5+v4+p17:          ]
- *                                              /     [s1+p1+p12,lg2+p4+p8]     [6:h1+p5+p9] -X-4-> [7] -3-> [8+v5]
- *      0 ----->+p13 [1+v1:lg3+p7]             /     /                     \        /                  \        /
- *     /          +p14\            5 ---X--- [4] <- 6                       $2     $1                   $1     $2
- *    /                $0         /          ^                               \    /                      \    /
- *   /                  \        v          /                                 (b2)                        (b1)
- *  [0:s0,lg0]         (b0)-$2- [2+v0+v2]  /                                   |                           |
- *   +p0+p11            /    +p15         X                                    $0                          $0
- *    \                $1                /         [9:s2X+p3,h2]               X                           |
- *     \          +p16/                 /                                     [10]                        [11:lg1+p6]
- *      1 -->+p2+p10 [3+v3:s3X,h0] -- 2
- *
- *
- * Math model #0:                       Math model #1:
- *
- *      0 ----->+pt0 [2+v3:lg0+pg0]             1 -> [3+v0+pb0:s0+ps0+ps1,lg0+pl0+pl1]         [0:h1+ps0+ps1]
- *     /          +pf2\             3 --X      /     /                                \       /
- *    /                4           /         [2] <- 0                                  3     4
- *   /                  v         v                                                     v   v
- *  [4:s0,lg1]          [3] <-6- [0+v0+v1]                                               [1]
- *   +pf0+pf1           ^     +pf4                                                        ^
- *    \                5                                                                  2
- *     \          +pf3/                                                                 X
- *      1 ->+pt1+pt2 [1+v2:h0] -- 2 --X
- *
- * Extra fill-in:
- * (3, 4)  by removing node 1
- *
- *
- * Topology for cycle reodering
- *
- *
- *   [5]  <---4--[4] <--3- [3]
- *    ^ \         ^       /  ^
- *    |   9----   |     /    |
- *    5        \  6   10     2
- *    |         v |  v       |
- * [0:s0] --0--> [1] --1--> [2]
- *    ^        ^    <- 12-   ^
- *    |   -11-/     parallel |
- *    7  /                   |
- *    | /                    |
- *   [6] -----------------8--
- *
- * Math model after reodering
- *
- *   [1]  <---4--[6] <--3- [2]
- *    ^ \         ^       /  ^
- *    |   9----   |     /    |
- *    5        \  6   10     2
- *    |         v |  v       |
- * [3:s0] --0--> [5] --1--> [4]
- *    ^        ^    <- 12-   ^
- *    |   -11-/     parallel |
- *    7  /                   |
- *    | /                    |
- *   [0] -----------------8--
- *
- * Extra fill-in:
- * (3, 4)  by removing node 0
- * (3, 6)  by removing node 1
- * (4, 6)  by removing node 2
- */
+///  [0]   = Node / Bus
+/// --0--> = Branch (from --id--> to)
+/// -(b0)- = Virtual node, representing Branch3,
+///          the sequence within the branch 3 is indicated by $0 $1 $2
+///  -X-   = Open switch / not connected
+///  s0    = source
+///  s0X   = disconnected source
+///  lg0   = load_gen
+///  h0    = shunt
+///  +v0   = voltage sensor
+///  +p0   = power sensor
+///  +p?0  = components power sensor (e.g. +ps1 = source power sensor 1)
+///          (f = branch_from, t = branch_to, s = source, h = shunt, l = load, g = generator, b = bus)
+///
+/// Topology:
+///                                               7 -> [5+v4+p17:          ]
+///                                              /     [s1+p1+p12,lg2+p4+p8]     [6:h1+p5+p9] -X-4-> [7] -3-> [8+v5]
+///      0 ----->+p13 [1+v1:lg3+p7]             /     /                     \        /                  \        /
+///     /          +p14\            5 ---X--- [4] <- 6                       $2     $1                   $1     $2
+///    /                $0         /          ^                               \    /                      \    /
+///   /                  \        v          /                                 (b2)                        (b1)
+///  [0:s0,lg0]         (b0)-$2- [2+v0+v2]  /                                   |                           |
+///   +p0+p11            /    +p15         X                                    $0                          $0
+///    \                $1                /         [9:s2X+p3,h2]               X                           |
+///     \          +p16/                 /                                     [10]                        [11:lg1+p6]
+///      1 -->+p2+p10 [3+v3:s3X,h0] -- 2
+///
+///
+/// Math model #0:                       Math model #1:
+///
+///      0 ----->+pt0 [2+v3:lg0+pg0]             1 -> [3+v0+pb0:s0+ps0+ps1,lg0+pl0+pl1]         [0:h1+ps0+ps1]
+///     /          +pf2\             3 --X      /     /                                \       /
+///    /                4           /         [2] <- 0                                  3     4
+///   /                  v         v                                                     v   v
+///  [4:s0,lg1]          [3] <-6- [0+v0+v1]                                               [1]
+///   +pf0+pf1           ^     +pf4                                                        ^
+///    \                5                                                                  2
+///     \          +pf3/                                                                 X
+///      1 ->+pt1+pt2 [1+v2:h0] -- 2 --X
+///
+/// Extra fill-in:
+/// (3, 4)  by removing node 1
+///
+///
+/// Topology for cycle reodering
+///
+///
+///   [5]  <---4--[4] <--3- [3]
+///    ^ \         ^       /  ^
+///    |   9----   |     /    |
+///    5        \  6   10     2
+///    |         v |  v       |
+/// [0:s0] --0--> [1] --1--> [2]
+///    ^        ^    <- 12-   ^
+///    |   -11-/     parallel |
+///    7  /                   |
+///    | /                    |
+///   [6] -----------------8--
+///
+/// Math model after reodering
+///
+///   [1]  <---4--[6] <--3- [2]
+///    ^ \         ^       /  ^
+///    |   9----   |     /    |
+///    5        \  6   10     2
+///    |         v |  v       |
+/// [3:s0] --0--> [5] --1--> [4]
+///    ^        ^    <- 12-   ^
+///    |   -11-/     parallel |
+///    7  /                   |
+///    | /                    |
+///   [0] -----------------8--
+///
+/// Extra fill-in:
+/// (3, 4)  by removing node 0
+/// (3, 6)  by removing node 1
+/// (4, 6)  by removing node 2
 
 namespace power_grid_model {
 

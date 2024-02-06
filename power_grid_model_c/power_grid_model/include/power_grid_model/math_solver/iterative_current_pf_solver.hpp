@@ -7,52 +7,48 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 
-/*
-Iterative Power Flow
-
-Description:
-    The algorithm similar to jacobi way of solving linear equations.
-    Only I_inj is calculated fresh on each iteration based on latest values of U.
-    Linear equation here: I_inj = YU
-
-Prefactorization:
-    If the Y bus matrix does not change, then there is no need for factorizing it again to solve linear equations.
-    Hence it is done only once in the first iteration and same result is used in subsequent iterations.
-    Same factorization is also used in subsequent batches
-
-Steps:
-    Initialize U with averaged u_ref, ie source voltage and phase shifts accounted
-    Initialize solver
-    while maximum deviation > error tolerance
-        Calculate I_inj with U of previous iteration as per load/gen types.
-        Solve YU = I_inj using prefactorization.
-        Find maximum deviation in voltage buses U
-        Update U
-    Calculate output values from U result
-
-    Initialize solver:
-        Source admittance is not included in Y bus matrix here. Include that to complete the Y bus matrix.
-        Invalidate prefactorization if parameters change, ie y bus values changes
-
-    Calculating Injected current:
-        Initialize I_inj = 0
-        For each bus i
-            For source on bus i, I_inj_i = y_ref * u_uref
-            For Loads on bus i:
-                If type is constant PQ: I_inj_i += conj(S_inj_j/U_i)
-                If type is constant impedance: I_inj_i += conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i
-                If type is constant current: I_inj_i += conj(S_inj_j*abs(U_i)/U_i)
-
-Nomenclature:
-    I_inj : Injected current
-    S_inj : Injected power
-    Y : Y bus matrix
-    U : Bus Voltage
-    u_ref : reference voltage for source
-    y_ref : Source admittance
-
-
-*/
+// Iterative Power Flow
+//
+// Description:
+//     The algorithm similar to jacobi way of solving linear equations.
+//     Only I_inj is calculated fresh on each iteration based on latest values of U.
+//     Linear equation here: I_inj = YU
+//
+// Prefactorization:
+//     If the Y bus matrix does not change, then there is no need for factorizing it again to solve linear equations.
+//     Hence it is done only once in the first iteration and same result is used in subsequent iterations.
+//     Same factorization is also used in subsequent batches
+//
+// Steps:
+//     Initialize U with averaged u_ref, ie source voltage and phase shifts accounted
+//     Initialize solver
+//     while maximum deviation > error tolerance
+//         Calculate I_inj with U of previous iteration as per load/gen types.
+//         Solve YU = I_inj using prefactorization.
+//         Find maximum deviation in voltage buses U
+//         Update U
+//     Calculate output values from U result
+//
+//     Initialize solver:
+//         Source admittance is not included in Y bus matrix here. Include that to complete the Y bus matrix.
+//         Invalidate prefactorization if parameters change, ie y bus values changes
+//
+//     Calculating Injected current:
+//         Initialize I_inj = 0
+//         For each bus i
+//             For source on bus i, I_inj_i = y_ref * u_uref
+//             For Loads on bus i:
+//                 If type is constant PQ: I_inj_i += conj(S_inj_j/U_i)
+//                 If type is constant impedance: I_inj_i += conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i
+//                 If type is constant current: I_inj_i += conj(S_inj_j*abs(U_i)/U_i)
+//
+// Nomenclature:
+//     I_inj : Injected current
+//     S_inj : Injected power
+//     Y : Y bus matrix
+//     U : Bus Voltage
+//     u_ref : reference voltage for source
+//     y_ref : Source admittance
 
 #include "block_matrix.hpp"
 #include "common_solver_functions.hpp"

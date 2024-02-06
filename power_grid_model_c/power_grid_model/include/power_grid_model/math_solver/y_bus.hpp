@@ -386,12 +386,10 @@ template <bool sym> class YBus {
         return affected_entries;
     }
 
-    /**
-     * @brief Updates the admittance of the y_bus according to what's changed in math_model.
-     *
-     * @param math_model_param Shared pointer to the constant math_model parameters.
-     * @param math_model_param_incrmt Shared pointer to the constant mathematical model parameters .
-     */
+    /// @brief Updates the admittance of the y_bus according to what's changed in math_model.
+    ///
+    /// @param math_model_param Shared pointer to the constant math_model parameters.
+    /// @param math_model_param_incrmt Shared pointer to the constant mathematical model parameters .
     void update_admittance_increment(std::shared_ptr<MathModelParam<sym> const> const& math_model_param,
                                      MathModelParamIncrement const& math_model_param_incrmt) {
         // swap the old cached parameters
