@@ -242,7 +242,7 @@ template <bool sym> class MeasuredValues {
 
         // assign a meaningful mean angle shift, if at least one voltage has angle measurement
         if (has_angle()) {
-            mean_angle_shift_ = angle_cum / static_cast<RealValue<sym> const>(n_voltage_angle_measurements_);
+            mean_angle_shift_ = angle_cum / RealValue<sym>{static_cast<double>(n_voltage_angle_measurements_)};
         }
 
         static constexpr auto const is_measured = [](auto const& value) { return value >= 0; };
