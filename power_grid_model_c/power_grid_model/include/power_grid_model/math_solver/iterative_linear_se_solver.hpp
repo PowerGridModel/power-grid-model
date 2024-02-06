@@ -6,9 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
 
-/*
-iterative linear state estimation solver
-*/
+// iterative linear state estimation solver
 
 #include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
@@ -46,12 +44,10 @@ template <bool sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false,
 template <bool sym> using ILSERhs = ILSEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
-/*
-[
-   [G, QH]
-   [Q, R ]
-]
-*/
+// [
+//    [G, QH]
+//    [Q, R ]
+// ]
 template <bool sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
@@ -189,7 +185,7 @@ template <bool sym> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += Ys^H * (variance^-1) * Ys
+                            // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
                             block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
                                              diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance),
@@ -282,7 +278,7 @@ template <bool sym> class IterativeLinearSESolver {
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
-                        // eta -= Ys^H * (variance^-1) * i_shunt
+                        // eta += (-Ys)^H * (variance^-1) * i_shunt
                         rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
                                                diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
                     }

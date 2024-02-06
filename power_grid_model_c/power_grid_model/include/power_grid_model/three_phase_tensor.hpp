@@ -76,7 +76,7 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
 
 template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> {
   public:
-    DiagonalTensor() { (*this) = Eigen3DiagonalTensor<T>::Zero(); }
+    DiagonalTensor() { (*this).setZero(); }
     // additional constructors
     explicit DiagonalTensor(T const& x) : Eigen3DiagonalTensor<T>{x, x, x} {}
     explicit DiagonalTensor(Vector<T> const& v) : Eigen3DiagonalTensor<T>{v(0), v(1), v(2)} {}
@@ -303,6 +303,10 @@ inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || i
 // any_zero
 inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
 inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
+
+// all_zero
+inline auto all_zero(std::floating_point auto value) { return value == 0.0; }
+inline auto all_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).all(); }
 
 // update real values
 //
