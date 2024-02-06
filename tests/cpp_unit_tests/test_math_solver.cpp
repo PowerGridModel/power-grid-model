@@ -1129,7 +1129,6 @@ TEST_CASE("Math solver, zero variance test") {
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
     }
     SUBCASE("Newton-Raphson") {
-        // TODO(mgovers): to be added in #478
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
     }
 
