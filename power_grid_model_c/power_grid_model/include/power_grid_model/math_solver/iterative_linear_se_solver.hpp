@@ -6,9 +6,7 @@
 #ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
 #define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
 
-/*
-iterative linear state estimation solver
-*/
+// iterative linear state estimation solver
 
 #include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
@@ -46,12 +44,10 @@ template <bool sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false,
 template <bool sym> using ILSERhs = ILSEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
-/*
-[
-   [G, QH]
-   [Q, R ]
-]
-*/
+// [
+//    [G, QH]
+//    [Q, R ]
+// ]
 template <bool sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
