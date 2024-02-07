@@ -159,7 +159,7 @@ enum PGM_CalculationType {
 enum PGM_CalculationMethod {
     PGM_default_method = -128, /**< the default method for each calculation type, e.g. Newton-Raphson for power flow */
     PGM_linear = 0,            /**< linear constant impedance method for power flow */
-    PGM_newton_raphson = 1,    /**< Newton-Raphson method for power flow */
+    PGM_newton_raphson = 1,    /**< Newton-Raphson method for power flow or state estimation */
     PGM_iterative_linear = 2,  /**< iterative linear method for state estimation */
     PGM_iterative_current = 3, /**< linear current method for power flow */
     PGM_linear_current = 4,    /**< iterative constant impedance method for power flow */
