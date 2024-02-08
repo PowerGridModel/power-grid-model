@@ -45,8 +45,8 @@ template <bool sym> using NRSERhs = NRSEUnknown<sym>;
 
 // class of 4*4 (12*12) se gain block
 // [
-//    [G, QT]
-//    [Q, R ]
+//    [G, Q^T]
+//    [Q, R  ]
 // ]
 template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
@@ -79,6 +79,7 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
 
 // solver
 template <bool sym> class NewtonRaphsonSESolver {
+    enum class Order { row_major = 0, column_major = 1 };
 
     struct NRSEVoltageState {
         ComplexTensor<sym> ui_ui_conj{};
@@ -90,10 +91,18 @@ template <bool sym> class NewtonRaphsonSESolver {
         RealDiagonalTensor<sym> abs_ui_inv{};
         RealDiagonalTensor<sym> abs_uj_inv{};
 
-        auto& u_chi_u_chi_conj(bool ij_voltage_order) const { return ij_voltage_order ? ui_ui_conj : uj_uj_conj; }
-        auto& u_chi_u_psi_conj(bool ij_voltage_order) const { return ij_voltage_order ? ui_uj_conj : uj_ui_conj; }
-        auto& abs_u_chi_inv(bool ij_voltage_order) const { return ij_voltage_order ? abs_ui_inv : abs_uj_inv; }
-        auto& abs_u_psi_inv(bool ij_voltage_order) const { return ij_voltage_order ? abs_uj_inv : abs_ui_inv; }
+        auto const& u_chi_u_chi_conj(Order ij_voltage_order) const {
+            return ij_voltage_order == Order::row_major ? ui_ui_conj : uj_uj_conj;
+        }
+        auto const& u_chi_u_psi_conj(Order ij_voltage_order) const {
+            return ij_voltage_order == Order::row_major ? ui_uj_conj : uj_ui_conj;
+        }
+        auto const& abs_u_chi_inv(Order ij_voltage_order) const {
+            return ij_voltage_order == Order::row_major ? abs_ui_inv : abs_uj_inv;
+        }
+        auto const& abs_u_psi_inv(Order ij_voltage_order) const {
+            return ij_voltage_order == Order::row_major ? abs_uj_inv : abs_ui_inv;
+        }
     };
 
     struct NRSEJacobian {
@@ -279,13 +288,15 @@ template <bool sym> class NewtonRaphsonSESolver {
                     case YBusElementType::btf: {
                         auto const& y_branch = param.branch_param[obj];
                         if (measured_values.has_branch_from(obj)) {
-                            auto const ij_voltage_order = (type == YBusElementType::bft);
+                            auto const ij_voltage_order =
+                                (type == YBusElementType::bft) ? Order::row_major : Order::column_major;
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
                                                        u_state, ij_voltage_order,
                                                        measured_values.branch_from_power(obj));
                         }
                         if (measured_values.has_branch_to(obj)) {
-                            auto const ij_voltage_order = (type == YBusElementType::btf);
+                            auto const ij_voltage_order =
+                                (type == YBusElementType::btf) ? Order::row_major : Order::column_major;
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
                                                        u_state, ij_voltage_order, measured_values.branch_to_power(obj));
                         }
@@ -383,7 +394,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
     }
 
-    /// @brief Adds contribution of branch measurements to the G_(r, r), G_(r, c) and eta_r blocks,
+    /// @brief Adds contribution of branch measurements to the G(r, r), G(r, c) and eta_r blocks,
     ///  given the iteration passes through (r, c) ie. row, col
     ///
     /// When iterating via (row, col), have 4 cases regarding branch measurements:
@@ -402,16 +413,16 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// f_Q_(x) = H(U_chi, U_chi, Y_xi_xi) + H(U_chi, U_psi, Y_xi_mu)
     ///
     ///
-    /// @param block G_(r, c)
-    /// @param diag_block G_(r, r)
+    /// @param block G(r, c)
+    /// @param diag_block G(r, r)
     /// @param rhs_block RHS(r)
     /// @param y_xi_xi shunt admittance near to branch measurement
     /// @param y_xi_mu admittance from the branch measurement to other bus
     /// @param u_state Voltage state of iteration voltage state vector
-    /// @param order bool to determine if (chi, psi) = (row, col) or (col, row)
+    /// @param order Order enum to determine if (chi, psi) = (row, col) or (col, row)
     /// @param measured_power
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, auto const order,
+                                    const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, Order const order,
                                     const auto& measured_power) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
         auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
@@ -426,7 +437,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         block_rr_or_cc += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
         auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu);
 
-        if (order) {
+        if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr, measured_power,
                                        f_x_complex);
         } else {
@@ -461,7 +472,7 @@ template <bool sym> class NewtonRaphsonSESolver {
             y_bus);
     }
 
-    /// @brief Process Lagrange Multiplier eta_i(i) = sum( Q^T(j,i) * phi(j) ) for j = 1 to n_bus
+    /// @brief Process Lagrange multiplier eta_i(i) = sum( Q^T(j,i) * phi(j) ) for j = 1 to n_bus
     ///
     /// @param y_bus
     void process_lagrange_multiplier(YBus<sym> const& y_bus) {
@@ -497,7 +508,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         }
     }
 
-    /// @brief G(row,row) += w_k
+    /// @brief G(row, row) += w_k
     /// eta(row) += w_k . (z_k - f_k(x))
     ///
     /// In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
