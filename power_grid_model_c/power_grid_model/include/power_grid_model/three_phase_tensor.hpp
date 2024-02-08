@@ -76,7 +76,7 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
 
 template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> {
   public:
-    DiagonalTensor() { (*this) = Eigen3DiagonalTensor<T>::Zero(); }
+    DiagonalTensor() { (*this).setZero(); }
     // additional constructors
     explicit DiagonalTensor(T const& x) : Eigen3DiagonalTensor<T>{x, x, x} {}
     explicit DiagonalTensor(Vector<T> const& v) : Eigen3DiagonalTensor<T>{v(0), v(1), v(2)} {}
@@ -100,7 +100,6 @@ template <bool sym>
 using RealDiagonalTensor = std::conditional_t<sym, double, three_phase_tensor::DiagonalTensor<double>>;
 template <bool sym>
 using ComplexDiagonalTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
-
 template <bool sym> using RealValue = std::conditional_t<sym, double, three_phase_tensor::Vector<double>>;
 template <bool sym>
 using ComplexValue = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
@@ -154,8 +153,20 @@ template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<De
     return sqrt(abs2(m));
 }
 
+// phase_shift(x) = e^{i arg(x)} = x / |x|
+inline DoubleComplex phase_shift(DoubleComplex const x) {
+    if (auto const abs_x = cabs(x); abs_x > 0.0) {
+        return x / abs_x;
+    }
+    return DoubleComplex{1.0};
+}
+inline ComplexValue<false> phase_shift(ComplexValue<false> const& m) {
+    return {phase_shift(m(0)), phase_shift(m(1)), phase_shift(m(2))};
+}
+
 // calculate kron product of two vector
 inline double vector_outer_product(double x, double y) { return x * y; }
+inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
 template <column_vector DerivedA, column_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
@@ -198,8 +209,11 @@ template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<Derived
 
 // function to sum rows of tensor
 template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
-// overload for double
-inline double sum_row(double d) { return d; }
+template <typename T>
+    requires std::floating_point<T> || std::same_as<T, DoubleComplex>
+inline T sum_row(T d) {
+    return d;
+}
 
 // function to sum vector
 template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }
@@ -300,6 +314,10 @@ inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || i
 // any_zero
 inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
 inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
+
+// all_zero
+inline auto all_zero(std::floating_point auto value) { return value == 0.0; }
+inline auto all_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).all(); }
 
 // update real values
 //

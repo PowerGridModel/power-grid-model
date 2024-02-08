@@ -267,7 +267,7 @@ class Topology {
             }
             assert(i == math_topo_single.n_bus());
             // assign slack bus as the source node
-            math_topo_single.slack_bus_ = comp_coup_.node[source_node].pos;
+            math_topo_single.slack_bus = comp_coup_.node[source_node].pos;
             math_topology_.emplace_back(std::move(math_topo_single));
             // iterate math model sequence number
             ++math_solver_idx;

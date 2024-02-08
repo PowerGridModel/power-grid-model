@@ -62,6 +62,8 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
             return (*this)(get_asym_row_idx<r>(), get_asym_col_idx<c>());
         }
     }
+
+    void clear() { *this = {}; }
 };
 
 } // namespace power_grid_model::math_solver
