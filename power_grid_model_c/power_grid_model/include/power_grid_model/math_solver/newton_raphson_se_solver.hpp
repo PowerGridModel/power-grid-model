@@ -459,9 +459,9 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// @brief Fill Q^T(j,i) of LHS(i, j) from the Q(j, i) of LHS(j, i).
     ///
     /// @param y_bus
-    void fill_qt(YBus<sym> const& y_bus) {
+    void fill_qt(YBus<sym> const& y_bus) const {
         iterate_matrix_skip_fills(
-            [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) const {
+            [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
                 auto& block = data_gain_[data_idx];
 
                 block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
