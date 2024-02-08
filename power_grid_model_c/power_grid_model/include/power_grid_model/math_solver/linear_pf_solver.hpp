@@ -74,7 +74,7 @@ template <bool sym> class LinearPFSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");
+        sub_timer = Timer(calculation_info, 2223, "Calculate math result");
         calculate_result(y_bus, input, output);
 
         // output
@@ -115,8 +115,8 @@ template <bool sym> class LinearPFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        detail::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                 [](Idx /*i*/) { return LoadGenType::const_y; });
+        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                    [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
 

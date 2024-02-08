@@ -89,7 +89,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
 
         // calculate math result
         {
-            Timer const sub_timer{calculation_info, 2225, "Calculate Math Result"};
+            Timer const sub_timer{calculation_info, 2225, "Calculate math result"};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
@@ -102,8 +102,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        detail::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                 [this](Idx i) { return (*load_gen_type_)[i]; });
+        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                    [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
   private:
