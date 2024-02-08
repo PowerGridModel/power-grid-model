@@ -83,9 +83,9 @@ also of importance. Also, there should be at least one voltage measurement.
 ```{warning}
 The [iterative linear](#iterative-linear) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation
 algorithms initialize voltage angles to zero when no angle measurement is available. This might result in the
-calculation succeeding, but giving a faulty outcome instead of raising a singular matrix error. For example, all
-magnitudes might correct, but gauge symmetry may still cause the results to be off globally by the same phase compared
-to the actual state.
+calculation succeeding, but giving a faulty outcome instead of raising a singular matrix error.
+This produces more correct outputs when the system is observable, but may prevent the calculation from raising an exception,
+even if it is unobservable, therefore giving faulty results.
 ```
 
 #### Short Circuit Calculations
@@ -112,12 +112,12 @@ Iterative methods are more accurate and should thus be selected when an accurate
 Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
 The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-| Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                        |
-| ----------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------- |
-| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | `CalculationMethod.newton_raphson`    |
-| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | `CalculationMethod.iterative_current` |
-| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | `CalculationMethod.linear`            |
-| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | `CalculationMethod.linear_current`    |
+| Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                                                                                                                                         |
+| ----------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | [`CalculationMethod.newton_raphson`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.newton_raphson)       |
+| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | [`CalculationMethod.iterative_current`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.iterative_current) |
+| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | [`CalculationMethod.linear`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.linear)                       |
+| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | [`CalculationMethod.linear_current`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.linear_current)       |
 
 ```{note}
 By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
@@ -153,6 +153,8 @@ and then obtaining the real and reactive power flow through the branches. The fo
 - Voltage controlled bus: a bus with known $P$ and $U$. Note: this bus is not supported by power-grid-model yet.
 
 #### Newton-Raphson power flow
+
+Algorithm call: [`CalculationMethod.newton_raphson`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.newton_raphson)
 
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
 terms, to solve the nonlinear set of equations iteratively:
@@ -239,6 +241,8 @@ For each iteration the following steps are executed:
 
 #### Iterative current power flow
 
+Algorithm call: [`CalculationMethod.linear_current`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.linear_current)
+
 This algorithm is a Jacobi-like method for powerflow analysis.
 It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
 
@@ -264,6 +268,8 @@ The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like t
 
 #### Linear power flow
 
+Algorithm call: [`CalculationMethod.linear`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.linear)
+
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual `LoadGenType`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
 It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
@@ -277,6 +283,8 @@ The algorithm is as follows:
 3. Solve linear equation: $YU_N = I_N$ for $U_N$
 
 #### Linear current power flow
+
+Algorithm call: `CalculationMethod.linear_current`
 
 **This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current-power-flow).** 
 This approximation method will give better results when most of the load/generation types resemble constant current. 
@@ -355,10 +363,10 @@ and $W$ is the weighting factor matrix.
 
 At the moment, only iterative state estimation algorithms are implemented.
 
-| Algorithm                                                             | Default  | Speed | Accuracy | Algorithm call                       |
-| --------------------------------------------------------------------- | -------- | ----- | -------- | ------------------------------------ |
-| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     | &#10004; |       | &#10004; | `CalculationMethod.newton_raphson`   |
-| [Iterative linear](calculations.md#iterative-linear-state-estimation) |          |       | &#10004; | `CalculationMethod.iterative_linear` |
+| Algorithm                                                             | Default  | Speed    | Accuracy | Algorithm call                                                                                                                                       |
+| --------------------------------------------------------------------- | -------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | [`CalculationMethod.iterative_linear`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.iterative_linear) |
+| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | [`CalculationMethod.newton_raphson`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.newton_raphson)     |
 
 ```{note}
 By default, the [iterative linear](#iterative-linear) method is used.
@@ -391,10 +399,12 @@ Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the
 
 #### Iterative linear state estimation
 
-Linear WLS requires all measurements to be linear. This is only possible is all measurements are phasor unit measurements, 
+Algorithm call: [`CalculationMethod.iterative_linear`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.iterative_linear)
+
+Linear WLS requires all measurements to be linear. This is only possible if all measurements are phasor unit measurements,
 which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
 
-- Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small, 
+- Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small,
   it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
   magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
@@ -434,44 +444,64 @@ for the next iteration:
 be the slack bus, which is connected to the external network (source). $\underline{U}^{(0)}$ is initialized as follows:
   - For bus $i$, if there is no voltage measurement, assign $\underline{U}^{(0)} = e^{j \theta_i}$, where $\theta_i$ is the intrinsic
   transformer phase shift between Bus $i$ and Bus $s$.
-  - For bus $i$, if there is a voltage measurement, assign $\underline{U}^{(0)} = U_{meas,i}e^{j \theta_i}$, where $U_{meas,i}$ is 
+  - For bus $i$, if there is a voltage measurement, assign $\underline{U}^{(0)} = U_{meas,i}e^{j \theta_i}$, where $U_{meas,i}$ is
   the measured voltage magnitude.
 - In iteration $k$, follow the steps below:
   - Linearize the voltage measurements by using the phase angle of the calculated voltages of iteration $k-1$.
   - Linearize the complex power flow measurements by using either the linearized voltage measurement if the bus is measured, or
   the voltage phasor result from iteration $k-1$.
-  - Compute the temporary new voltage phasor $\underline{\tilde{U}}^{(k)}$ using the pre-factorized matrix.
-  [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
+  - Compute the temporary new voltage phasor $\underline{\tilde{U}}^{(k)}$ using the pre-factorized matrix. See also [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
   - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
   - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
   stop the iteration. Otherwise, continue until the maximum number of iterations is reached. 
   
 In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
 the system error of the phase shift converges to zero. Because the matrix is pre-built and
-pre-factorized, the computation cost of each iteration is much smaller than Newton-Raphson
+pre-factorized, the computation cost of each iteration is much smaller than for the [Newton-Raphson](#newton-raphson-state-estimation)
 method, where the Jacobian matrix needs to be constructed and factorized each time.
 
 ```{warning}
-The algorithm initializes voltage angles to zero when no angle measurement is available. This might result in the
-calculation succeeding, but giving a faulty outcome instead of raising a singular matrix error. For example, all
-magnitudes might correct, but gauge symmetry may still cause the results to be off globally by the same phase compared
-to the actual state.
+The algorithm will assume angles to be zero by default (see the details about voltage sensors). This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
 ```
-
-Algorithm call: `CalculationMethod.iterative_linear`
 
 #### Newton-Raphson state estimation
 
+Algorithm call: [`CalculationMethod.newton_raphson`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.newton_raphson)
+
+The Newton-Raphson approach solves state estimation by considering it as a system of real, non-linear equations.
+It then iteratively solves the first order Taylor expansion of that system.
+It does not make any assumptions on linearization and may therefore be more accurate than the [iterative linear](#iterative-linear-state-estimation) approach.
+
+The Newton-Raphson methode considers all measurements to be independent real measurements.
+I.e., `\sigma_P`, `\sigma_Q` and `\sigma_U` are all independent values.
+The rationale behind to calculation is similar to that of the [Newton-Raphson for power flow](#newton-raphson-power-flow).
+Because of that, the iteration process differs slightly from the one for [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
+
+- Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and $\boldsymbol{\theta}^{(k)}$ the column vector of the estimated voltage angle in k-th iteration. Let Bus $s$ be the slack bus which is connected to external network (source). We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
+  - For Bus $i$, if there is no voltage measurement, assign $U_i^{(0)} = 1$ and $\theta_i^{(0)} = 0$,
+  where $\theta_i$ is the intrinsic transformer phase shift between Bus $i$ and Bus $s$.
+  - For Bus $i$, if there is a voltage measurement, $U_i^{(0)} = U_{\text{mea},i}$ and $\theta_i^{(0)} = \theta_i$,
+  where $U_{\text{mea},i}$ is the measured voltage magnitude.
+- In iteration $k$, follow the steps below:
+  - Construct and (LU-)factorize the Jacobian matrix for $\boldsymbol{x}^{(k)}$, using the network parameters.
+  - Compute the temporary new voltage magnitude and angle result, $\widetilde{\boldsymbol{U}}^{(k)}$ and $\widetilde{\boldsymbol{\theta}}^{(k)}$,
+  using the prefactorized matrix. See also [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
+  - Normalize the result voltage phasor angle by setting angle of slack bus to zero:
+  $\underline{U}_i^{(k)} = \widetilde{\underline{U}}_i^{(k)} \times |\widetilde{\underline{U}}_s^{(k)}| / \widetilde{\underline{U}}_s^{(k)}$.
+  - If the maximum deviation between $\underline{\boldsymbol{U}}^{(k)}$ and $\underline{\boldsymbol{U}}^{(k-1)}$ is smaller than the tolerance $\epsilon$,
+  stop the iteration, otherwise continue until the maximum number of iterations is reached.
+  Note: we're using the phasor here: $\underline{\boldsymbol{U}} = \boldsymbol{U}e^{j\boldsymbol{\theta}}$.
+
+As for the [iterative linear](#iterative-linear-state-estimation) approach, in the iteration process, the phase angle of voltages at each bus is updated using the last iteration.
+The system error of the phase shift converges to zero.
+
 ```{warning}
-The algorithm initializes voltage angles to zero when no angle measurement is available. This might result in the
-calculation succeeding, but giving a faulty outcome instead of raising a singular matrix error. For example, all
-magnitudes might correct, but gauge symmetry may still cause the results to be off globally by the same phase compared
-to the actual state.
+The algorithm will assume angles to be zero by default (see the details about voltage sensors). This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
 ```
 
-Algorithm call: `CalculationMethod.newton_raphson`
-
 ### Short circuit algorithms
+
+Algorithm call: [`CalculationMethod.iec60909`](../advanced_documentation/python-api-reference.html#power_grid_model.enum.CalculationMethod.iec60909)
 
 In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
 
