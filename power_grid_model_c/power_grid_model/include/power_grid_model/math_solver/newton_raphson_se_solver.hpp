@@ -331,14 +331,14 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// Q_ij = 0
     /// R_ii = -1.0, only diagonal
     /// assign -1.0 to diagonal of 3x3 tensor, for asym
-    void virtually_remove_constraints(NRSEGainBlock<sym>& block) {
+    void virtually_remove_constraints(NRSEGainBlock<sym>& block) const {
         block.r_P_theta() = RealTensor<sym>{-1.0};
         block.r_Q_v() = RealTensor<sym>{-1.0};
     }
 
     /// R_ii = -variance, only diagonal
     /// assign variance to diagonal of 3x3 tensor, for asym
-    void process_injection_diagonal(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& injection) {
+    void process_injection_diagonal(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& injection) const {
         rhs_block.tau_p() += injection.value.real();
         rhs_block.tau_q() += injection.value.imag();
         block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
@@ -357,7 +357,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// @param yij admittance of (row with injection, c)
     /// @param u_state Voltage state of iteration
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                               auto const& yij, auto const& u_state) {
+                               auto const& yij, auto const& u_state) const {
         auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
         auto const nl_ui_uj_yij = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
         auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij);
@@ -461,7 +461,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// @param y_bus
     void fill_qt(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
-            [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
+            [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) const {
                 auto& block = data_gain_[data_idx];
 
                 block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();

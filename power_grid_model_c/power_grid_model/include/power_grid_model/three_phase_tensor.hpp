@@ -155,8 +155,7 @@ template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<De
 
 // phase_shift(x) = e^{i arg(x)} = x / |x|
 inline DoubleComplex phase_shift(DoubleComplex const x) {
-    auto const abs_x = cabs(x);
-    if (abs_x > 0.0) {
+    if (auto const abs_x = cabs(x); abs_x > 0.0) {
         return x / abs_x;
     }
     return DoubleComplex{1.0};
