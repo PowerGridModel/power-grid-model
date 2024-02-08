@@ -74,7 +74,7 @@ template <bool sym> class LinearPFSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");
+        sub_timer = Timer(calculation_info, 2223, "Calculate math result");
         calculate_result(y_bus, input, output);
 
         // output

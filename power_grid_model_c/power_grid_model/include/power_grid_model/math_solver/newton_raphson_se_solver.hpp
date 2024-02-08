@@ -157,7 +157,7 @@ template <bool sym> class NewtonRaphsonSESolver {
         };
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");
+        sub_timer = Timer(calculation_info, 2227, "Calculate math result");
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.

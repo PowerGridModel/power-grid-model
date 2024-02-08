@@ -89,7 +89,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
 
         // calculate math result
         {
-            Timer const sub_timer{calculation_info, 2225, "Calculate Math Result"};
+            Timer const sub_timer{calculation_info, 2225, "Calculate math result"};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.

@@ -153,6 +153,18 @@ template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<De
     return sqrt(abs2(m));
 }
 
+// phase_shift(x) = e^{i arg(x)} = x / |x|
+inline DoubleComplex phase_shift(DoubleComplex const x) {
+    auto const abs_x = cabs(x);
+    if (abs_x > 0.0) {
+        return x / abs_x;
+    }
+    return DoubleComplex{1.0};
+}
+inline ComplexValue<false> phase_shift(ComplexValue<false> const& m) {
+    return {phase_shift(m(0)), phase_shift(m(1)), phase_shift(m(2))};
+}
+
 // calculate kron product of two vector
 inline double vector_outer_product(double x, double y) { return x * y; }
 inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }

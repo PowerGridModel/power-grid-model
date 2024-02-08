@@ -147,14 +147,24 @@ template <bool sym> class MeasuredValues {
     combine_voltage_iteration_with_measurements(ComplexValueVector<sym> const& current_u) const {
         ComplexValueVector<sym> u(current_u.size());
 
-        for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
+        auto const new_u = [this, &current_u](Idx bus) -> ComplexValue<sym> {
+            auto const& current_u_bus = current_u[bus];
+
             if (!has_voltage(bus)) { // no measurement
-                u[bus] = current_u[bus];
-            } else if (!has_angle_measurement(bus)) {
-                u[bus] = real(voltage(bus)) * current_u[bus] / cabs(current_u[bus]); // U / |U| to get angle shift
-            } else {                                                                 // full measurement
-                u[bus] = voltage(bus);
+                return current_u_bus;
             }
+
+            auto const& u_measured = voltage(bus);
+            if (has_angle_measurement(bus)) { // full measurement
+                return u_measured;
+            }
+
+            // U / |U| to get angle shift
+            return real(u_measured) * phase_shift(current_u_bus);
+        };
+
+        for (Idx bus = 0; bus != static_cast<Idx>(current_u.size()); ++bus) {
+            u[bus] = new_u(bus);
         }
         return u;
     }
