@@ -459,7 +459,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     /// @brief Fill Q^T(j,i) of LHS(i, j) from the Q(j, i) of LHS(j, i).
     ///
     /// @param y_bus
-    void fill_qt(YBus<sym> const& y_bus) const {
+    void fill_qt(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
             [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
                 auto& block = data_gain_[data_idx];
@@ -490,7 +490,7 @@ template <bool sym> class NewtonRaphsonSESolver {
 
     template <typename Func>
         requires std::invocable<Func, Idx /*row*/, Idx /*col*/, Idx /*data_idx*/, Idx /*data_idx_transpose*/>
-    void iterate_matrix_skip_fills(Func func, YBus<sym> const& y_bus) {
+    void iterate_matrix_skip_fills(Func func, YBus<sym> const& y_bus) const {
         auto const& row_indptr = y_bus.row_indptr_lu();
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
