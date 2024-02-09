@@ -12,7 +12,7 @@ With power-grid-model it is possible to perform two different types of calculati
 
 - [Power flow](#power-flow-algorithms): a "what-if" scenario calculation. This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
-- [Short circuit](#short-circuit-algorithms): a "what-if" scenario calculation with short circuit entries. This calculation can be performed by using the {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
+- [Short circuit](#short-circuit-calculation-algorithms): a "what-if" scenario calculation with short circuit entries. This calculation can be performed by using the {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
 
 ### Calculation types explained
 
@@ -85,7 +85,7 @@ The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](
 This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
 ```
 
-#### Short Circuit Calculations
+#### Short circuit calculations
 
 Short circuit calculation is carried out to analyze the worst case scenario when a fault has occurred.
 The currents flowing through branches and node voltages are calculated.
@@ -109,12 +109,14 @@ Iterative methods are more accurate and should thus be selected when an accurate
 Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
 The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-| Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                                                                                                                              |
-| ----------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`       |
-| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
-| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                       |
-| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`       |
+At the moment, the following power flow algorithms are implemented.
+
+| Algorithm                                          | Default  | Speed    | Accuracy | Algorithm call                                                                                              |
+| -------------------------------------------------- | -------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| [Newton-Raphson](#newton-raphson-power-flow)       | &#10004; |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`       |
+| [Iterative current](#iterative-current-power-flow) |          |          | &#10004; | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
+| [Linear](#linear-power-flow)                       |          | &#10004; |          | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                       |
+| [Linear current](#linear-current-power-flow)       |          | &#10004; |          | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`       |
 
 ```{note}
 By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
@@ -241,7 +243,8 @@ For each iteration the following steps are executed:
 Algorithm call: {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`
 
 This algorithm is a Jacobi-like method for powerflow analysis.
-It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
+It has linear convergence as opposed to quadratic convergence in the [Newton-Raphson](#newton-raphson-power-flow) method. This means that the number of iterations will be greater.
+[Newton-Raphson](#newton-raphson-power-flow) will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
 
 The algorithm is as follows:
 
@@ -275,8 +278,8 @@ This is because this method will then be both accurate and the fastest.
 
 The algorithm is as follows:
 
-1. Assume injected currents by loads $I_N=0$ since we model loads/generation as impedance. 
-   Admittance of each load/generation is calculated from rated power as $y=-\overline{S}$ 
+1. Assume injected currents by loads $I_N=0$ since we model loads/generation as impedance.
+   Admittance of each load/generation is calculated from rated power as $y=-\overline{S}$
 2. Build $Y{bus}$. Add the admittances of loads/generation to the diagonal elements.
 3. Solve linear equation: $YU_N = I_N$ for $U_N$
 
@@ -284,13 +287,14 @@ The algorithm is as follows:
 
 Algorithm call: {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`
 
-**This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current-power-flow).** 
-This approximation method will give better results when most of the load/generation types resemble constant current. 
-Similar to [Iterative Current](calculations.md#iterative-current-power-flow), batch calculations like timeseries will also be faster. 
+**This algorithm is essentially a single iteration of [iterative current power flow](#iterative-current-power-flow).**
+
+This approximation method will give better results when most of the load/generation types resemble constant current.
+Similar to [iterative current](#iterative-current-power-flow), batch calculations like timeseries will also be faster.
 The reason is the same: the $Y_{bus}$ matrix does not change across batches and the same factorization would be used.
 
 In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](#linear-power-flow) in such case. This is because we approximate the load as current instead of impedance.
-There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations. They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level. 
+There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations. They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level.
 When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage. When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
 
 ### State estimation algorithms
@@ -358,12 +362,12 @@ Where $\underline{x}_i$ is the real value of the i-th measured quantity in compl
 $\sigma_i$ is the normalized standard deviation of the measurement error of the i-th measurement, $\Sigma$ is the normalized covariance matrix
 and $W$ is the weighting factor matrix.
 
-At the moment, only iterative state estimation algorithms are implemented.
+At the moment, the following state estimation algorithms are implemented.
 
-| Algorithm                                                             | Default  | Speed    | Accuracy | Algorithm call                                                                                                                            |
-| --------------------------------------------------------------------- | -------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>` |
-| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`     |
+| Algorithm                                              | Default  | Speed    | Accuracy | Algorithm call                                                                                            |
+| ------------------------------------------------------ | -------- | -------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| [Iterative linear](#iterative-linear-state-estimation) | &#10004; | &#10004; |          | {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>` |
+| [Newton-Raphson](#newton-raphson-state-estimation)     |          |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`     |
 
 ```{note}
 By default, the [iterative linear](#iterative-linear-state-estimation) method is used.
@@ -475,7 +479,7 @@ It may therefore be more accurate and is likely to achieve convergence in less i
 However, the Jacobian matrix needs to be calculated every iteration and cannot be prefactorized, which, on average, causes it to be slower.
 
 The Newton-Raphson methode considers all measurements to be independent real measurements.
-I.e., `\sigma_P`, `\sigma_Q` and `\sigma_U` are all independent values.
+I.e., $\sigma_P$, $\sigma_Q$ and $\sigma_U$ are all independent values.
 The rationale behind to calculation is similar to that of the [Newton-Raphson for power flow](#newton-raphson-power-flow).
 Because of that, the iteration process differs slightly from the one for [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
 
@@ -503,9 +507,7 @@ The system error of the phase shift converges to zero.
 The algorithm will assume angles to be zero by default (see the details about voltage sensors). This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
 ```
 
-### Short circuit algorithms
-
-Algorithm call: {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.CalculationMethod.iec60909>`
+### Short circuit calculation algorithms
 
 In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
 
@@ -513,6 +515,16 @@ $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 
 This gives the initial symmetrical short circuit current ($I_k^{\prime\prime}$) for a fault.
 This quantity is then used to derive almost all further calculations of short circuit studies applications.
+
+At the moment, the following short circuit algorithms are implemented.
+
+| Algorithm                                         | Default  | Speed    | Accuracy | Algorithm call                                                                            |
+| ------------------------------------------------- | -------- | -------- | -------- | ----------------------------------------------------------------------------------------- |
+| [IEC 60909](#iec-60909-short-circuit-calculation) | &#10004; | &#10004; |          | {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.CalculationMethod.iec60909>` |
+
+#### IEC 60909 short circuit calculation
+
+Algorithm call: {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.CalculationMethod.iec60909>`
 
 The assumptions used for calculations in power-grid-model are aligned to the ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
 
