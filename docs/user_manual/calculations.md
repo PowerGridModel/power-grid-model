@@ -112,8 +112,8 @@ Iterative methods are more accurate and should thus be selected when an accurate
 Their accuracy is not explicitly calculated and may vary a lot. The user should have an intuition of their applicability based on the input grid configuration.
 The table below can be used to pick the right algorithm. Below the table a more in depth explanation is given for each algorithm.
 
-| Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                                                                                                        |
-| ----------------------------------------------------------------- | -------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                                                                                                                              |
+| ----------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)       |
 | [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | [`CalculationMethod.iterative_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_current) |
 | [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | [`CalculationMethod.linear`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear)                       |
@@ -363,8 +363,8 @@ and $W$ is the weighting factor matrix.
 
 At the moment, only iterative state estimation algorithms are implemented.
 
-| Algorithm                                                             | Default  | Speed    | Accuracy | Algorithm call                                                                                                      |
-| --------------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| Algorithm                                                             | Default  | Speed    | Accuracy | Algorithm call                                                                                                                            |
+| --------------------------------------------------------------------- | -------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_linear) |
 | [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)     |
 
@@ -466,18 +466,25 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 #### Newton-Raphson state estimation
 
+```warning
+This feature is still experimental and is at the time of writing not yet publicly available.
+```
+
 Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)
 
 The Newton-Raphson approach solves state estimation by considering it as a system of real, non-linear equations.
-It then iteratively solves the first order Taylor expansion of that system.
-It does not make any assumptions on linearization and may therefore be more accurate than the [iterative linear](#iterative-linear-state-estimation) approach.
+It then iteratively solves the first order Taylor expansion of that system. It does not make any linearization assumptions.
+It may therefore be more accurate and is likely to achieve convergence in less iterations than the [iterative linear](#iterative-linear-state-estimation) approach.
+However, the Jacobian matrix needs to be calculated every iteration and cannot be prefactorized, which, on average, causes it to be slower.
 
 The Newton-Raphson methode considers all measurements to be independent real measurements.
 I.e., `\sigma_P`, `\sigma_Q` and `\sigma_U` are all independent values.
 The rationale behind to calculation is similar to that of the [Newton-Raphson for power flow](#newton-raphson-power-flow).
 Because of that, the iteration process differs slightly from the one for [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
 
-- Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and $\boldsymbol{\theta}^{(k)}$ the column vector of the estimated voltage angle in k-th iteration. Let Bus $s$ be the slack bus which is connected to external network (source). We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
+- Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and $\boldsymbol{\theta}^{(k)}$ the column vector of the
+estimated voltage angle in k-th iteration. Let Bus $s$ be the slack bus which is connected to external network (source).
+We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
   - For Bus $i$, if there is no voltage measurement, assign $U_i^{(0)} = 1$ and $\theta_i^{(0)} = 0$,
   where $\theta_i$ is the intrinsic transformer phase shift between Bus $i$ and Bus $s$.
   - For Bus $i$, if there is a voltage measurement, $U_i^{(0)} = U_{\text{mea},i}$ and $\theta_i^{(0)} = \theta_i$,
