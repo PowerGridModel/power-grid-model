@@ -114,10 +114,10 @@ The table below can be used to pick the right algorithm. Below the table a more 
 
 | Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                                                                                                        |
 | ----------------------------------------------------------------- | -------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
-| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#CalculationMethod.newton_raphson)       |
-| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | [`CalculationMethod.iterative_current`](../api_reference/python-api-reference.md#CalculationMethod.iterative_current) |
-| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | [`CalculationMethod.linear`](../api_reference/python-api-reference.md#CalculationMethod.linear)                       |
-| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#CalculationMethod.linear_current)       |
+| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#newton_raphson)       |
+| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | [`CalculationMethod.iterative_current`](../api_reference/python-api-reference.md#iterative_current) |
+| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | [`CalculationMethod.linear`](../api_reference/python-api-reference.md#linear)                       |
+| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#linear_current)       |
 
 ```{note}
 By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
@@ -154,7 +154,7 @@ and then obtaining the real and reactive power flow through the branches. The fo
 
 #### Newton-Raphson power flow
 
-Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#CalculationMethod.newton_raphson)
+Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#newton_raphson)
 
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
 terms, to solve the nonlinear set of equations iteratively:
@@ -241,7 +241,7 @@ For each iteration the following steps are executed:
 
 #### Iterative current power flow
 
-Algorithm call: [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#CalculationMethod.linear_current)
+Algorithm call: [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#linear_current)
 
 This algorithm is a Jacobi-like method for powerflow analysis.
 It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
@@ -268,7 +268,7 @@ The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like t
 
 #### Linear power flow
 
-Algorithm call: [`CalculationMethod.linear`](../api_reference/python-api-reference.md#CalculationMethod.linear)
+Algorithm call: [`CalculationMethod.linear`](../api_reference/python-api-reference.md#linear)
 
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual `LoadGenType`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
@@ -365,8 +365,8 @@ At the moment, only iterative state estimation algorithms are implemented.
 
 | Algorithm                                                             | Default  | Speed    | Accuracy | Algorithm call                                                                                                      |
 | --------------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
-| [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#CalculationMethod.iterative_linear) |
-| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#CalculationMethod.newton_raphson)     |
+| [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#iterative_linear) |
+| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#newton_raphson)     |
 
 ```{note}
 By default, the [iterative linear](#iterative-linear) method is used.
@@ -399,7 +399,7 @@ Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the
 
 #### Iterative linear state estimation
 
-Algorithm call: [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#CalculationMethod.iterative_linear)
+Algorithm call: [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#iterative_linear)
 
 Linear WLS requires all measurements to be linear. This is only possible if all measurements are phasor unit measurements,
 which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
@@ -466,7 +466,7 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 #### Newton-Raphson state estimation
 
-Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#CalculationMethod.newton_raphson)
+Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#newton_raphson)
 
 The Newton-Raphson approach solves state estimation by considering it as a system of real, non-linear equations.
 It then iteratively solves the first order Taylor expansion of that system.
@@ -501,7 +501,7 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 ### Short circuit algorithms
 
-Algorithm call: [`CalculationMethod.iec60909`](../api_reference/python-api-reference.md#CalculationMethod.iec60909)
+Algorithm call: [`CalculationMethod.iec60909`](../api_reference/python-api-reference.md#iec60909)
 
 In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
 
