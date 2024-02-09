@@ -81,11 +81,8 @@ also of importance. Also, there should be at least one voltage measurement.
 ```
 
 ```{warning}
-The [iterative linear](#iterative-linear) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation
-algorithms initialize voltage angles to zero when no angle measurement is available. This might result in the
-calculation succeeding, but giving a faulty outcome instead of raising a singular matrix error.
-This produces more correct outputs when the system is observable, but may prevent the calculation from raising an exception,
-even if it is unobservable, therefore giving faulty results.
+The [iterative linear](#iterative-linear) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
+This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
 ```
 
 #### Short Circuit Calculations
