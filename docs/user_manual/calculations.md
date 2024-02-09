@@ -111,17 +111,17 @@ The table below can be used to pick the right algorithm. Below the table a more 
 
 | Algorithm                                                         | Default  | Speed    | Accuracy | Algorithm call                                                                                                                              |
 | ----------------------------------------------------------------- | -------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)       |
-| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | [`CalculationMethod.iterative_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_current) |
-| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | [`CalculationMethod.linear`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear)                       |
-| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear_current)       |
+| [Newton-Raphson](calculations.md#newton-raphson-power-flow)       | &#10004; |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`       |
+| [Iterative current](calculations.md#iterative-current-power-flow) |          |          | &#10004; | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
+| [Linear](calculations.md#linear-power-flow)                       |          | &#10004; |          | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                       |
+| [Linear current](calculations.md#linear-current-power-flow)       |          | &#10004; |          | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`       |
 
 ```{note}
 By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
 ```
 
 ```{note}
-When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear) method regardless of the input provided by the user. 
+When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear-power-flow) method regardless of the input provided by the user. 
 This is because this method will then be both accurate and the fastest.
 ```
 
@@ -151,7 +151,7 @@ and then obtaining the real and reactive power flow through the branches. The fo
 
 #### Newton-Raphson power flow
 
-Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)
+Algorithm call: {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`
 
 This is the traditional method for power flow calculations. This method uses a Taylor series, ignoring the higher order
 terms, to solve the nonlinear set of equations iteratively:
@@ -238,7 +238,7 @@ For each iteration the following steps are executed:
 
 #### Iterative current power flow
 
-Algorithm call: [`CalculationMethod.iterative_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_current)
+Algorithm call: {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`
 
 This algorithm is a Jacobi-like method for powerflow analysis.
 It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
@@ -265,12 +265,13 @@ The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like t
 
 #### Linear power flow
 
-Algorithm call: [`CalculationMethod.linear`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear)
+Algorithm call: {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`
 
-This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual `LoadGenType`.
+This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
 It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
-When all the load/generation types are of constant impedance, power-grid-model uses Linear method regardless of the input provided by the user. This is because this method will then be accurate and fastest. 
+When all the load/generation types are of constant impedance, power-grid-model uses Linear method regardless of the input provided by the user.
+This is because this method will then be both accurate and the fastest. 
 
 The algorithm is as follows:
 
@@ -281,15 +282,14 @@ The algorithm is as follows:
 
 #### Linear current power flow
 
-Algorithm call: [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear_current)
+Algorithm call: {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`
 
 **This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current-power-flow).** 
 This approximation method will give better results when most of the load/generation types resemble constant current. 
 Similar to [Iterative Current](calculations.md#iterative-current-power-flow), batch calculations like timeseries will also be faster. 
 The reason is the same: the $Y_{bus}$ matrix does not change across batches and the same factorization would be used.
 
-
-In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](calculations.md#linear) in such case. This is because we approximate the load as current instead of impedance.
+In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](#linear-power-flow) in such case. This is because we approximate the load as current instead of impedance.
 There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations. They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level. 
 When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage. When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
 
@@ -362,11 +362,11 @@ At the moment, only iterative state estimation algorithms are implemented.
 
 | Algorithm                                                             | Default  | Speed    | Accuracy | Algorithm call                                                                                                                            |
 | --------------------------------------------------------------------- | -------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_linear) |
-| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)     |
+| [Iterative linear](calculations.md#iterative-linear-state-estimation) | &#10004; | &#10004; |          | {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>` |
+| [Newton-Raphson](calculations.md#newton-raphson-state-estimation)     |          |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`     |
 
 ```{note}
-By default, the [iterative linear](#iterative-linear) method is used.
+By default, the [iterative linear](#iterative-linear-state-estimation) method is used.
 ```
 
 There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
@@ -396,7 +396,7 @@ Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the
 
 #### Iterative linear state estimation
 
-Algorithm call: [`CalculationMethod.iterative_linear`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_linear)
+Algorithm call: {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>`
 
 Linear WLS requires all measurements to be linear. This is only possible if all measurements are phasor unit measurements,
 which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
@@ -467,7 +467,7 @@ The algorithm will assume angles to be zero by default (see the details about vo
 This feature is still experimental and is at the time of writing not yet publicly available.
 ```
 
-Algorithm call: [`CalculationMethod.newton_raphson`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.newton_raphson)
+Algorithm call: {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`
 
 The Newton-Raphson approach solves state estimation by considering it as a system of real, non-linear equations.
 It then iteratively solves the first order Taylor expansion of that system. It does not make any linearization assumptions.
@@ -505,7 +505,7 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 ### Short circuit algorithms
 
-Algorithm call: [`CalculationMethod.iec60909`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iec60909)
+Algorithm call: {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.CalculationMethod.iec60909>`
 
 In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
 
