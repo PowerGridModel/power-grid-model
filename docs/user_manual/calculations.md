@@ -241,7 +241,7 @@ For each iteration the following steps are executed:
 
 #### Iterative current power flow
 
-Algorithm call: [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear_current)
+Algorithm call: [`CalculationMethod.iterative_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.iterative_current)
 
 This algorithm is a Jacobi-like method for powerflow analysis.
 It has linear convergence as opposed to quadratic convergence in the Newton-Raphson method. This means that the number of iterations will be greater. Newton-Raphson will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
@@ -284,7 +284,7 @@ The algorithm is as follows:
 
 #### Linear current power flow
 
-Algorithm call: `CalculationMethod.linear_current`
+Algorithm call: [`CalculationMethod.linear_current`](../api_reference/python-api-reference.md#power_grid_model.enum.CalculationMethod.linear_current)
 
 **This algorithm is essentially a single iteration of [Iterative Current](calculations.md#iterative-current-power-flow).** 
 This approximation method will give better results when most of the load/generation types resemble constant current. 
