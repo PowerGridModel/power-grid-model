@@ -81,7 +81,7 @@ also of importance. Also, there should be at least one voltage measurement.
 ```
 
 ```{warning}
-The [iterative linear](#iterative-linear) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
+The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
 This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
 ```
 
