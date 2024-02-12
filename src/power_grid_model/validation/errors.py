@@ -49,6 +49,8 @@ class ValidationError(ABC):
 
     _message: str = "An unknown validation error occurred."
 
+    delimiter: str = " and "
+
     @property
     def component_str(self) -> str:
         """
@@ -153,7 +155,7 @@ class MultiFieldValidationError(ValidationError):
 
     @property
     def field_str(self) -> str:
-        return " and ".join(f"'{field}'" for field in self.field)
+        return self.delimiter.join(f"'{field}'" for field in self.field)
 
 
 class MultiComponentValidationError(ValidationError):
@@ -189,7 +191,7 @@ class MultiComponentValidationError(ValidationError):
 
     @property
     def field_str(self) -> str:
-        return " and ".join(f"{component}.{field}" for component, field in self.field)
+        return self.delimiter.join(f"{component}.{field}" for component, field in self.field)
 
 
 class NotIdenticalError(SingleFieldValidationError):
@@ -377,7 +379,7 @@ class ComparisonError(SingleFieldValidationError):
         A string representation of the reference value. E.g. 'zero', 'one', 'field_a and field_b' or '123'.
         """
         if isinstance(self.ref_value, tuple):
-            return " and ".join(map(str, self.ref_value))
+            return self.delimiter.join(map(str, self.ref_value))
         if self.ref_value == 0:
             return "zero"
         if self.ref_value == 1:
