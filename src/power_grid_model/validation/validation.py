@@ -334,9 +334,7 @@ def validate_required_values(
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 
 
-def validate_values(
-    data: SingleDataset, calculation_type: Optional[CalculationType] = None
-) -> List[ValidationError]:
+def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> List[ValidationError]:
     """
     For each component supplied in the data, call the appropriate validation function
 
