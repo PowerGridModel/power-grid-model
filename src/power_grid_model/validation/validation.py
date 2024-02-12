@@ -334,7 +334,7 @@ def validate_required_values(
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 
 
-def validate_values(  # pylint: disable=too-many-branches
+def validate_values(
     data: SingleDataset, calculation_type: Optional[CalculationType] = None
 ) -> List[ValidationError]:
     """
@@ -360,28 +360,23 @@ def validate_values(  # pylint: disable=too-many-branches
         )
     )
 
-    if "node" in data:
-        errors += validate_node(data)
-    if "line" in data:
-        errors += validate_line(data)
-    if "link" in data:
-        errors += validate_branch(data, "link")
-    if "transformer" in data:
-        errors += validate_transformer(data)
-    if "three_winding_transformer" in data:
-        errors += validate_three_winding_transformer(data)
-    if "source" in data:
-        errors += validate_source(data)
-    if "sym_load" in data:
-        errors += validate_generic_load_gen(data, "sym_load")
-    if "sym_gen" in data:
-        errors += validate_generic_load_gen(data, "sym_gen")
-    if "asym_load" in data:
-        errors += validate_generic_load_gen(data, "asym_load")
-    if "asym_gen" in data:
-        errors += validate_generic_load_gen(data, "asym_gen")
-    if "shunt" in data:
-        errors += validate_shunt(data)
+    component_validators = {
+        "node": validate_node,
+        "line": validate_line,
+        "link": lambda d: validate_branch(d, "link"),
+        "transformer": validate_transformer,
+        "three_winding_transformer": validate_three_winding_transformer,
+        "source": validate_source,
+        "sym_load": lambda d: validate_generic_load_gen(d, "sym_load"),
+        "sym_gen": lambda d: validate_generic_load_gen(d, "sym_gen"),
+        "asym_load": lambda d: validate_generic_load_gen(d, "asym_load"),
+        "asym_gen": lambda d: validate_generic_load_gen(d, "asym_gen"),
+        "shunt": validate_shunt,
+    }
+
+    for component, validator in component_validators.items():
+        if component in data:
+            errors += validator(data)
 
     if calculation_type in (None, CalculationType.state_estimation):
         if "sym_voltage_sensor" in data:
