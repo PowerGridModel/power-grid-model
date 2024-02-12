@@ -376,7 +376,7 @@ def validate_values(
 
     for component, validator in component_validators.items():
         if component in data:
-            errors += validator(data)
+            errors += validator(data) 
 
     if calculation_type in (None, CalculationType.state_estimation):
         if "sym_voltage_sensor" in data:
