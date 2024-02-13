@@ -34,7 +34,7 @@ Output:
 #### State estimation
 
 State estimation is a statistical calculation method that determines the most probable state of the grid, based on
-network data and measurements. Here, measurements may be power flow or voltage values with some kind of uncertainty, which were 
+network data and measurements. Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were 
 either measured, estimated or forecasted.
 
 Input:
@@ -49,9 +49,9 @@ Output:
 - Deviation between measurement values and estimated state
 
 In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will 
-raise a sparse matrix error, since the matrix reprensentation of the system is too sparse to solve - in particular when it is
-singular. Simply said, observability means that the number of measurements should be larger than or equal to the number of
-unknowns. For each node, there are two unknowns, `u` and `u_angle`, so the following equations should be met:
+raise a sparse matrix error; the matrix reprensentation of the system is too sparse to solve and particular so when it is
+singular. In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of
+unknowns) or a balanced system (when the number of measurements is equal to the number of unknowns). For each node, there are two unknowns, `u` and `u_angle`, so the following conditions should be met:
 
 $$
    \begin{eqnarray}
@@ -77,12 +77,12 @@ The number of measurements can be found by taking the sum of the following:
 
 ```{note}
 Having enough measurements does not necessarily mean that the system is observable. The location of the measurements is
-also of importance. Also, there should be at least one voltage measurement.
+also of importance. Additionally, there should be at least one voltage measurement.
 ```
 
 ```{warning}
 The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
-This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
+In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
 ```
 
 #### Short circuit calculations
@@ -123,8 +123,8 @@ By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
 ```
 
 ```{note}
-When all the load/generation types are of constant impedance, power-grid-model uses the [Linear](#linear-power-flow) method regardless of the input provided by the user. 
-This is because this method will then be both accurate and the fastest.
+When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy. 
+Therefore power-grid-model will use this method regardless of the input provided by the user in this case. 
 ```
 
 The nodal equations of a power system network can be written as:
@@ -243,8 +243,8 @@ For each iteration the following steps are executed:
 Algorithm call: {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`
 
 This algorithm is a Jacobi-like method for powerflow analysis.
-It has linear convergence as opposed to quadratic convergence in the [Newton-Raphson](#newton-raphson-power-flow) method. This means that the number of iterations will be greater.
-[Newton-Raphson](#newton-raphson-power-flow) will also be more robust in achieving convergence in case of greater meshed configurations. However, the iterative current algorithm will be faster most of the time.
+It has a linear convergence rate as opposed to the quadratic convergence rate in the [Newton-Raphson](#newton-raphson-power-flow) method. This means that more iterations is needed to achieve similar convergence.
+Additionally, [Newton-Raphson](#newton-raphson-power-flow) will be more robust converging in case of greater meshed configurations. Nevertheless, the iterative current algorithm will be faster most of the time.
 
 The algorithm is as follows:
 
@@ -273,8 +273,8 @@ Algorithm call: {py:class}`CalculationMethod.linear <power_grid_model.enum.Calcu
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
 It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
-When all the load/generation types are of constant impedance, power-grid-model uses Linear method regardless of the input provided by the user.
-This is because this method will then be both accurate and the fastest. 
+When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy. 
+Therefore power-grid-model will use this method regardless of the input provided by the user in this case. 
 
 The algorithm is as follows:
 
@@ -291,7 +291,7 @@ Algorithm call: {py:class}`CalculationMethod.linear_current <power_grid_model.en
 
 This approximation method will give better results when most of the load/generation types resemble constant current.
 Similar to [iterative current](#iterative-current-power-flow), batch calculations like timeseries will also be faster.
-The reason is the same: the $Y_{bus}$ matrix does not change across batches and the same factorization would be used.
+Same reason applies here: the $Y_{bus}$ matrix does not change across batches and as a result the same factorization could be used.
 
 In practical grids most loads and generations correspond to the constant power type. Linear current would give a better approximation than [Linear](#linear-power-flow) in such case. This is because we approximate the load as current instead of impedance.
 There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations. They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level.
@@ -402,8 +402,8 @@ Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the
 
 Algorithm call: {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>`
 
-Linear WLS requires all measurements to be linear. This is only possible if all measurements are phasor unit measurements,
-which is not realistic in a distribution grid. Therefore, traditional measurements are linearized before the algorithm is performed:
+Linear WLS requires all measurements to be linear. This is only possible when all measurements are phasor unit measurements,
+which is not realistic in distribution grids. Therefore, traditional measurements are linearized prior to running the algorithm:
 
 - Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small,
   it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
@@ -468,20 +468,20 @@ The algorithm will assume angles to be zero by default (see the details about vo
 #### Newton-Raphson state estimation
 
 ```warning
-This feature is still experimental and is at the time of writing not yet publicly available.
+At the time of writing, this feature is still experimental and is not yet publicly available.
 ```
 
 Algorithm call: {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`
 
-The Newton-Raphson approach solves state estimation by considering it as a system of real, non-linear equations.
-It then iteratively solves the first order Taylor expansion of that system. It does not make any linearization assumptions.
-It may therefore be more accurate and is likely to achieve convergence in less iterations than the [iterative linear](#iterative-linear-state-estimation) approach.
-However, the Jacobian matrix needs to be calculated every iteration and cannot be prefactorized, which, on average, causes it to be slower.
+The Newton-Raphson state estimation considers the problem as a system of real, non-linear equations.
+It iteratively solves the first order Taylor expansion of the system. It does not make any assumptions on linearization
+It could be more accurate and converge in less iterations than the [iterative linear](#iterative-linear-state-estimation) approach.
+However, the Jacobian matrix needs to be calculated every iteration and cannot be prefactorized, which makes it slower on average.
 
-The Newton-Raphson methode considers all measurements to be independent real measurements.
+The Newton-Raphson method considers all measurements to be independent real measurements.
 I.e., $\sigma_P$, $\sigma_Q$ and $\sigma_U$ are all independent values.
 The rationale behind to calculation is similar to that of the [Newton-Raphson for power flow](#newton-raphson-power-flow).
-Because of that, the iteration process differs slightly from the one for [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
+Consequently, the iteration process differs slightly from that of [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
 
 - Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and $\boldsymbol{\theta}^{(k)}$ the column vector of the
 estimated voltage angle in k-th iteration. Let Bus $s$ be the slack bus which is connected to external network (source).
@@ -500,11 +500,11 @@ We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
   stop the iteration, otherwise continue until the maximum number of iterations is reached.
   Note: we're using the phasor here: $\underline{\boldsymbol{U}} = \boldsymbol{U}e^{j\boldsymbol{\theta}}$.
 
-As for the [iterative linear](#iterative-linear-state-estimation) approach, in the iteration process, the phase angle of voltages at each bus is updated using the last iteration.
+As for the [iterative linear](#iterative-linear-state-estimation) approach, during iterations, phase angles of voltage at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
 
 ```{warning}
-The algorithm will assume angles to be zero by default (see the details about voltage sensors). This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
+The algorithm will assume angles to be zero by default (see the details about voltage sensors). In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
 ```
 
 ### Short circuit calculation algorithms
