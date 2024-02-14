@@ -3,14 +3,11 @@
   "rtol": 1e-8,
   "atol": {
     "default": 1e-8,
-    ".+_residual": 5e-4
+    ".+_residual": 1e-7
   },
   "extra_params": {
     "newton_raphson": {
-      "experimental_features": "enabled",
-      "fail": {
-        "reason": "Experimental feature under development"
-      }
+      "experimental_features": "enabled"
     }
   }
 }
