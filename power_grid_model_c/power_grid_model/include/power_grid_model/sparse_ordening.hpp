@@ -9,8 +9,8 @@
 #include "power_grid_model.hpp"
 
 #include <algorithm> // remove and remove_if
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -27,7 +27,7 @@ inline void set_element_vector_pair(Idx u, Idx v, std::vector<std::pair<Idx, Idx
     }
 }
 
-inline IdxVector adj(Idx const& u, std::map<Idx, IdxVector> const& d) {
+inline IdxVector adj(Idx const u, std::unordered_map<Idx, IdxVector> const& d) {
     IdxVector l;
 
     for (const auto& [k, adjacent] : d) {
@@ -42,18 +42,18 @@ inline IdxVector adj(Idx const& u, std::map<Idx, IdxVector> const& d) {
 }
 
 inline std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>>
-comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
+comp_size_degrees_graph(std::unordered_map<Idx, IdxVector> const& d) {
     std::vector<std::pair<Idx, Idx>> dd;
     IdxVector v;
     Idx n = 0;
 
-    for (const auto& [k, adjacent] : d) {
+    for (auto const& [k, adjacent] : d) {
         if (std::ranges::find(v, k) == v.end()) {
             ++n;
             v.push_back(k);
             dd.emplace_back(k, adj(k, d).size());
         }
-        for (const Idx& e : adjacent) {
+        for (Idx e : adjacent) {
             if (std::ranges::find(v, e) == v.end()) {
                 ++n;
                 v.push_back(e);
@@ -67,8 +67,8 @@ comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
     return {{n, dd}};
 }
 
-inline std::map<Idx, IdxVector> make_clique(IdxVector& l) {
-    std::map<Idx, IdxVector> d;
+inline std::unordered_map<Idx, IdxVector> make_clique(IdxVector& l) {
+    std::unordered_map<Idx, IdxVector> d;
 
     for (Idx i = 0; i < static_cast<Idx>(l.size()) - 1; i++) {
         Idx const idx = i + 1;
@@ -80,8 +80,8 @@ inline std::map<Idx, IdxVector> make_clique(IdxVector& l) {
     return d;
 }
 
-inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx const& u,
-                                                                          std::map<Idx, IdxVector> const& d) {
+inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx const u,
+                                                                          std::unordered_map<Idx, IdxVector> const& d) {
     IdxVector rl;
 
     auto l = adj(u, d);
@@ -101,7 +101,7 @@ inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx co
     return {{l, rl}};
 }
 
-inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, IdxVector> const& d) {
+inline bool in_graph(std::pair<Idx, Idx> const& e, std::unordered_map<Idx, IdxVector> const& d) {
     if (auto edges_it = d.find(e.first);
         edges_it != d.cend() && std::ranges::find(edges_it->second, e.second) != edges_it->second.cend()) {
         return true;
@@ -113,13 +113,13 @@ inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, IdxVector> cons
     return false;
 }
 
-inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>& d,
+inline IdxVector remove_vertices_update_degrees(Idx const u, std::unordered_map<Idx, IdxVector>& d,
                                                 std::vector<std::pair<Idx, Idx>>& dgd,
                                                 std::vector<std::pair<Idx, Idx>>& fills) {
     std::vector<std::pair<IdxVector, IdxVector>> nbsrl = check_indistguishable(u, d);
     auto& [nbs, rl] = nbsrl[0];
     IdxVector alpha = rl;
-    std::map<Idx, IdxVector> dd;
+    std::unordered_map<Idx, IdxVector> dd;
 
     rl.push_back(u);
 
@@ -175,7 +175,8 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
 }
 } // namespace detail
 
-inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector>& d) {
+inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>>
+minimum_degree_ordering(std::unordered_map<Idx, IdxVector>& d) {
     auto data = detail::comp_size_degrees_graph(d);
     auto& [n, dgd] = data[0];
 
@@ -189,11 +190,11 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
             Idx const from = d.begin()->first;
             Idx const to = d.begin()->second[0];
             alpha.push_back(alpha.back() == from ? to : from);
-            break;
+            return {alpha, fills};
         }
         std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
         if (d.empty()) {
-            break;
+            return {alpha, fills};
         }
     }
     return {alpha, fills};
