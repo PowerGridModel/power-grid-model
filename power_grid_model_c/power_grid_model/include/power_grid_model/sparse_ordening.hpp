@@ -48,13 +48,13 @@ comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
     Idx n = 0;
 
     for (const auto& [k, adjacent] : d) {
-        if (std::ranges::contains(v, k)) {
+        if (std::ranges::find(v, k) == v.end()) {
             ++n;
             v.push_back(k);
             dd.emplace_back(k, adj(k, d).size());
         }
         for (const Idx& e : adjacent) {
-            if (std::ranges::contains(v, e)) {
+            if (std::ranges::find(v, e) == v.end()) {
                 ++n;
                 v.push_back(e);
                 dd.emplace_back(e, adj(e, d).size());

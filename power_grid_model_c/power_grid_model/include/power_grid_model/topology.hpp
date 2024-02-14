@@ -329,7 +329,6 @@ class Topology {
         auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
         std::ranges::copy(reordered, std::back_inserter(dfs_node));
 
-        // TODO(mgovers): make this more efficient
         auto const permuted_node_idx = [&dfs_node](Idx node_idx) {
             return narrow_cast<Idx>(std::distance(dfs_node.begin(), std::ranges::find(dfs_node, node_idx)));
         };
@@ -359,15 +358,13 @@ class Topology {
             Idx2D const i_math = comp_coup_.node[i];
             Idx2D const j_math = comp_coup_.node[j];
             Idx const math_group = [&]() {
-                // TODO(mgovers): rewrite
-                Idx group = -1;
                 if (i_status != 0 && i_math.group != -1) {
-                    group = i_math.group;
+                    return i_math.group;
                 }
                 if (j_status != 0 && j_math.group != -1) {
-                    group = j_math.group;
+                    return j_math.group;
                 }
-                return group;
+                return Idx{-1};
             }();
             // skip if no math model connected
             if (math_group == -1) {
