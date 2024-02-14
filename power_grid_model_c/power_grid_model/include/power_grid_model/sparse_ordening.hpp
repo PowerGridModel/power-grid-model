@@ -42,19 +42,19 @@ inline IdxVector adj(Idx const& u, std::map<Idx, IdxVector> const& d) {
 }
 
 inline std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>>
-comp_size_degrees_graph(std::map<Idx, IdxVector>& d) {
+comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
     std::vector<std::pair<Idx, Idx>> dd;
     IdxVector v;
     Idx n = 0;
 
     for (const auto& [k, adjacent] : d) {
-        if (std::ranges::find(v, k) == v.end()) {
+        if (std::ranges::contains(v, k)) {
             ++n;
             v.push_back(k);
             dd.emplace_back(k, adj(k, d).size());
         }
         for (const Idx& e : adjacent) {
-            if (find(v.begin(), v.end(), e) == v.end()) {
+            if (std::ranges::contains(v, e)) {
                 ++n;
                 v.push_back(e);
                 dd.emplace_back(e, adj(e, d).size());
@@ -80,14 +80,15 @@ inline std::map<Idx, IdxVector> make_clique(IdxVector& l) {
     return d;
 }
 
-inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx& u, std::map<Idx, IdxVector>& d) {
+inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx const& u,
+                                                                          std::map<Idx, IdxVector> const& d) {
     IdxVector rl;
 
     auto l = adj(u, d);
     auto lu = l;
     lu.push_back(u);
 
-    for (auto& v : l) {
+    for (auto const& v : l) {
         auto lv = adj(v, d);
         lv.push_back(v);
         std::ranges::sort(lu);
@@ -166,7 +167,7 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
         }
     }
 
-    for (auto& e : nbs) {
+    for (auto const& e : nbs) {
         set_element_vector_pair(e, static_cast<Idx>(adj(e, d).size()), dgd);
     }
 
@@ -181,7 +182,7 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
     IdxVector alpha;
     std::vector<std::pair<Idx, Idx>> fills;
 
-    for (Idx k = 0; k < n && !d.empty(); k++) {
+    for (Idx k = 0; k < n; ++k) {
         Idx u = get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
         alpha.push_back(u);
         if ((d.size() == 1) && d.begin()->second.size() == 1) {
@@ -191,6 +192,9 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
             break;
         }
         std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
+        if (d.empty()) {
+            break;
+        }
     }
     return {alpha, fills};
 }
