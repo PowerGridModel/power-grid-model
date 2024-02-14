@@ -53,7 +53,7 @@ comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
             v.push_back(k);
             dd.emplace_back(k, adj(k, d).size());
         }
-        for (Idx e : adjacent) {
+        for (Idx const e : adjacent) {
             if (std::ranges::find(v, e) == v.end()) {
                 ++n;
                 v.push_back(e);
@@ -183,7 +183,8 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
     std::vector<std::pair<Idx, Idx>> fills;
 
     for (Idx k = 0; k < n; ++k) {
-        Idx u = get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
+        Idx const u =
+            get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
         alpha.push_back(u);
         if ((d.size() == 1) && d.begin()->second.size() == 1) {
             Idx const from = d.begin()->first;
