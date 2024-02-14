@@ -152,14 +152,14 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
 
     for (auto const& [k, adjacent] : dd) {
         auto it = d.find(k);
-        for (Idx e : adjacent) {
+        for (Idx const e : adjacent) {
             if (!in_graph(std::make_pair(k, e), d)) {
                 if (it != d.end()) {
                     add_element(k, e, it->second);
                 } else if (auto e_it = d.find(e); e_it != d.end()) {
                     add_element(e, k, e_it->second);
                 } else {
-                    std::tie(it, std::ignore) = d.emplace(std::make_pair(k, IdxVector{}));
+                    std::tie(it, std::ignore) = d.try_emplace(k);
                     add_element(k, e, it->second);
                 }
             }
