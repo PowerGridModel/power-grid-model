@@ -145,22 +145,16 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
 
     dd = make_clique(nbs); // TODO check data type
 
-    auto const add_element = [&fills](Idx from, Idx to, IdxVector& from_adjacent) {
-        from_adjacent.push_back(to);
-        fills.emplace_back(from, to);
-    };
-
     for (auto const& [k, adjacent] : dd) {
-        auto it = d.find(k);
         for (Idx e : adjacent) {
-            if (!in_graph(std::make_pair(k, e), d)) {
-                if (it != d.end()) {
-                    add_element(k, e, it->second);
-                } else if (auto e_it = d.find(e); e_it != d.end()) {
-                    add_element(e, k, e_it->second);
+            std::pair const t{k, e};
+            if (!in_graph(t, d)) {
+                if (d.contains(k) || !d.contains(e)) {
+                    d[k].push_back(e);
+                    fills.emplace_back(k, e);
                 } else {
-                    std::tie(it, std::ignore) = d.emplace(std::make_pair(k, IdxVector{}));
-                    add_element(k, e, it->second);
+                    d[e].push_back(k);
+                    fills.emplace_back(e, k);
                 }
             }
         }
