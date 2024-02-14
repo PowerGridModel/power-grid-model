@@ -27,16 +27,14 @@ inline void set_element_vector_pair(Idx u, Idx v, std::vector<std::pair<Idx, Idx
     }
 }
 
-inline IdxVector adj(Idx& u, std::map<Idx, IdxVector>& d) {
+inline IdxVector adj(Idx const& u, std::map<Idx, IdxVector> const& d) {
     IdxVector l;
 
-    for (const auto& it : d) {
-        if (it.first == u) {
-            l.insert(l.end(), it.second.cbegin(), it.second.cend());
-        }
-
-        if (std::ranges::find(it.second, u) != it.second.cend()) {
-            l.push_back(it.first);
+    for (const auto& [k, adjacent] : d) {
+        if (k == u) {
+            l.insert(l.end(), adjacent.cbegin(), adjacent.cend());
+        } else if (std::ranges::find(adjacent, u) != adjacent.cend()) {
+            l.push_back(k);
         }
     }
 
@@ -49,15 +47,13 @@ comp_size_degrees_graph(std::map<Idx, IdxVector>& d) {
     IdxVector v;
     Idx n = 0;
 
-    for (const auto& it : d) {
-        Idx k = it.first;
+    for (const auto& [k, adjacent] : d) {
         if (std::ranges::find(v, k) == v.end()) {
             ++n;
             v.push_back(k);
             dd.emplace_back(k, adj(k, d).size());
         }
-        for (const Idx& el : it.second) {
-            Idx e = el;
+        for (const Idx& e : adjacent) {
             if (find(v.begin(), v.end(), e) == v.end()) {
                 ++n;
                 v.push_back(e);
@@ -105,15 +101,13 @@ inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx& u
 }
 
 inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, IdxVector> const& d) {
-    if (auto edges_it = d.find(e.first); edges_it != d.cend()) {
-        if (std::ranges::find(edges_it->second, e.second) != edges_it->second.cend()) {
-            return true;
-        }
+    if (auto edges_it = d.find(e.first);
+        edges_it != d.cend() && std::ranges::find(edges_it->second, e.second) != edges_it->second.cend()) {
+        return true;
     }
-    if (auto edges_it = d.find(e.second); edges_it != d.cend()) {
-        if (std::ranges::find(edges_it->second, e.first) != edges_it->second.cend()) {
-            return true;
-        }
+    if (auto edges_it = d.find(e.second);
+        edges_it != d.cend() && std::ranges::find(edges_it->second, e.first) != edges_it->second.cend()) {
+        return true;
     }
     return false;
 }
@@ -135,26 +129,25 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
 
         remove_element_vector_pair(uu, dgd);
         IdxVector el;
-        for (auto& it : d) {
-            std::erase(it.second, uu);
-            if (it.second.empty()) {
-                el.push_back(it.first);
+        for (auto& [e, adjacent] : d) {
+            std::erase(adjacent, uu);
+            if (adjacent.empty()) {
+                el.push_back(e);
             }
         }
 
         el.push_back(uu);
 
-        for (auto& it : el) {
+        for (auto const& it : el) {
             d.erase(it);
         }
     }
 
     dd = make_clique(nbs);
 
-    for (auto& it : dd) {
-        Idx const k = it.first;
-        for (const Idx& e : it.second) {
-            std::pair<Idx, Idx> const t{k, e};
+    for (auto const& [k, adjacent] : dd) {
+        for (Idx e : adjacent) {
+            std::pair const t{k, e};
             if (!in_graph(t, d)) {
                 if (d.find(k) != d.end() || d.find(e) == d.end()) {
                     d[k].push_back(e);
