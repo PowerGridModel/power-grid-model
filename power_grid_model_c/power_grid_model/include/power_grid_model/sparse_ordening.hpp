@@ -143,18 +143,24 @@ inline IdxVector remove_vertices_update_degrees(Idx& u, std::map<Idx, IdxVector>
         }
     }
 
-    dd = make_clique(nbs);
+    dd = make_clique(nbs); // TODO check data type
+
+    auto const add_element = [&fills](Idx from, Idx to, IdxVector& from_adjacent) {
+        from_adjacent.push_back(to);
+        fills.emplace_back(from, to);
+    };
 
     for (auto const& [k, adjacent] : dd) {
+        auto it = d.find(k);
         for (Idx e : adjacent) {
-            std::pair const t{k, e};
-            if (!in_graph(t, d)) {
-                if (d.find(k) != d.end() || d.find(e) == d.end()) {
-                    d[k].push_back(e);
-                    fills.emplace_back(k, e);
+            if (!in_graph(std::make_pair(k, e), d)) {
+                if (it != d.end()) {
+                    add_element(k, e, it->second);
+                }
+                if (auto e_it = d.find(e); e_it != d.end()) {
+                    add_element(e, k, e_it->second);
                 } else {
-                    d[e].push_back(k);
-                    fills.emplace_back(e, k);
+                    add_element(k, e, it->second);
                 }
             }
         }
@@ -175,19 +181,16 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
     IdxVector alpha;
     std::vector<std::pair<Idx, Idx>> fills;
 
-    for (Idx k = 0; k < n; k++) {
+    for (Idx k = 0; k < n && !d.empty(); k++) {
         Idx u = get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
         alpha.push_back(u);
         if ((d.size() == 1) && d.begin()->second.size() == 1) {
-            Idx const a = d.begin()->first;
-            Idx const b = d.begin()->second[0];
-            alpha.push_back(alpha.back() == a ? b : a);
+            Idx const from = d.begin()->first;
+            Idx const to = d.begin()->second[0];
+            alpha.push_back(alpha.back() == from ? to : from);
             break;
         }
         std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
-        if (d.empty()) {
-            break;
-        }
     }
     return {alpha, fills};
 }

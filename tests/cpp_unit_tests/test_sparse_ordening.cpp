@@ -20,15 +20,13 @@ TEST_CASE("Test sparse ordening") {
                                               {4, {6, 8}}, {6, {7, 8, 9}}, {7, {8, 9}},    {8, {9}}};
 
         auto const start = std::chrono::high_resolution_clock::now();
-        std::pair<std::vector<Idx>, std::vector<std::pair<Idx, Idx>>> const alpha_fills =
-            power_grid_model::minimum_degree_ordering(graph);
+        auto const [alpha, fills] = power_grid_model::minimum_degree_ordering(graph);
         auto const stop = std::chrono::high_resolution_clock::now();
 
         auto const duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "Time taken by function: " << duration.count() << " microseconds"
-                  << "\n";
+        std::cout << "Time taken by function: " << duration.count() << " microseconds\n";
 
-        CHECK(alpha_fills.first == std::vector<Idx>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-        CHECK(alpha_fills.second == std::vector<std::pair<Idx, Idx>>{{3, 5}, {4, 5}, {8, 5}, {6, 5}, {7, 5}});
+        CHECK(alpha == std::vector<Idx>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+        CHECK(fills == std::vector<std::pair<Idx, Idx>>{{3, 5}, {4, 5}, {8, 5}, {6, 5}, {7, 5}});
     }
 }

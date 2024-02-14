@@ -304,9 +304,9 @@ class Topology {
         std::vector<Idx> cyclic_node;
         std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
                      [this](Idx x) { return node_status_[x] == -2; });
-        GraphIdx const n_cycle_node = cyclic_node.size();
+
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
-        if (n_cycle_node < 4) {
+        if (cyclic_node.size() < 4) {
             std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
             return fill_in;
         }
@@ -318,9 +318,9 @@ class Topology {
                 unique_nearest_neighbours[node_idx] = {predecessor};
             }
         }
-        for (auto const& edge : back_edges) {
-            auto const from{static_cast<Idx>(edge.first)};
-            auto const to{static_cast<Idx>(edge.second)};
+        for (auto const& [from_node, to_node] : back_edges) {
+            auto const from{static_cast<Idx>(from_node)};
+            auto const to{static_cast<Idx>(to_node)};
             if (!detail::in_graph(std::pair{from, to}, unique_nearest_neighbours)) {
                 unique_nearest_neighbours[from].push_back(to);
             }
@@ -331,7 +331,7 @@ class Topology {
 
         // TODO(mgovers): make this more efficient
         auto const permuted_node_idx = [&dfs_node](Idx node_idx) {
-            return static_cast<Idx>(std::distance(dfs_node.begin(), std::ranges::find(dfs_node, node_idx)));
+            return narrow_cast<Idx>(std::distance(dfs_node.begin(), std::ranges::find(dfs_node, node_idx)));
         };
 
         for (auto [from, to] : fills) {

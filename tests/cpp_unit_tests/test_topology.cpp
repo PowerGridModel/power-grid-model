@@ -282,9 +282,10 @@ TEST_CASE("Test topology") {
 
     SUBCASE("Test topology result") {
         Topology topo{comp_topo, comp_conn};
-        auto pair = topo.build_topology();
-        auto const& math_topology = pair.first;
-        auto const& topo_comp_coup = *pair.second;
+        auto const [math_topology, topo_comp_coup_ptr] = topo.build_topology();
+
+        REQUIRE(topo_comp_coup_ptr != nullptr);
+        auto const& topo_comp_coup = *topo_comp_coup_ptr;
 
         CHECK(math_topology.size() == 2);
         // test component coupling
