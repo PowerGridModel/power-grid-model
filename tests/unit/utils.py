@@ -130,15 +130,14 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
             if calculation_type == "short_circuit" and sym:
                 continue  # only asym short circuit calculations are supported
 
-            for calculation_method in calculation_methods:
-                yield from add_case(
-                    case_dir=case_dir,
-                    params=params,
-                    calculation_type=calculation_type,
-                    calculation_method=calculation_method,
-                    sym=sym,
-                    **kwargs,
-                )
+            yield from add_case(
+                case_dir=case_dir,
+                params=params,
+                calculation_type=calculation_type,
+                calculation_method=calculation_method,
+                sym=sym,
+                **kwargs,
+            )
 
 
 def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[List[str]] = None):
