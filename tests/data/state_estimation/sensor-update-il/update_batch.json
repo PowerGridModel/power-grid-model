@@ -1,0 +1,34 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_power_sensor": [
+        {"id": 21, "power_sigma": 200000, "p_measured": -2000000, "q_measured": 300000},
+        {"id": 22, "power_sigma": 200000, "p_measured": 2000000, "q_measured": -570000},
+        {"id": 23, "power_sigma": 200000, "p_measured": -2000000, "q_measured": 280000},
+        {"id": 24, "power_sigma": 300000, "p_measured": 3000000, "q_measured": -400000},
+        {"id": 25, "power_sigma": 200000, "p_measured": -2000000, "q_measured": 400000}
+      ],
+      "sym_voltage_sensor": [
+        {"id": 19, "u_sigma": 2000, "u_measured": 20000},
+        {"id": 20, "u_sigma": 2000, "u_measured": 20000}
+      ]
+    },
+    {
+      "sym_power_sensor": [
+        {"id": 21},
+        {"id": 22},
+        {"id": 23},
+        {"id": 24},
+        {"id": 25}
+      ],
+      "sym_voltage_sensor": [
+        {"id": 19, "u_sigma": 2000},
+        {"id": 20, "u_sigma": 2000}
+      ]
+    }
+  ]
+}
