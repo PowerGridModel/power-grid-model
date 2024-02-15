@@ -61,10 +61,10 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
     GetterType<1, 0> g_Q_theta() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> g_Q_v() { return this->template get_val<1, 1>(); }
 
-    // represented as (Q(X, Y))^T, not (Q^T)(X, Y)
+    // (Q^T)(X, Y)
     GetterType<0, 2> qt_P_theta() { return this->template get_val<0, 2>(); }
-    GetterType<0, 3> qt_P_v() { return this->template get_val<1, 2>(); }
-    GetterType<1, 2> qt_Q_theta() { return this->template get_val<0, 3>(); }
+    GetterType<0, 3> qt_P_v() { return this->template get_val<0, 3>(); }
+    GetterType<1, 2> qt_Q_theta() { return this->template get_val<1, 2>(); }
     GetterType<1, 3> qt_Q_v() { return this->template get_val<1, 3>(); }
 
     GetterType<2, 0> q_P_theta() { return this->template get_val<2, 0>(); }
@@ -462,10 +462,10 @@ template <bool sym> class NewtonRaphsonSESolver {
             [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
                 auto& block = data_gain_[data_idx];
 
-                block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
-                block.qt_P_v() = data_gain_[data_idx_transpose].q_P_v();
-                block.qt_Q_theta() = data_gain_[data_idx_transpose].q_Q_theta();
-                block.qt_Q_v() = data_gain_[data_idx_transpose].q_Q_v();
+                block.qt_P_theta() = hermitian_transpose(data_gain_[data_idx_transpose].q_P_theta());
+                block.qt_Q_theta() = hermitian_transpose(data_gain_[data_idx_transpose].q_P_v());
+                block.qt_P_v() = hermitian_transpose(data_gain_[data_idx_transpose].q_Q_theta());
+                block.qt_Q_v() = hermitian_transpose(data_gain_[data_idx_transpose].q_Q_v());
             },
             y_bus);
     }
@@ -480,8 +480,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                 auto& rhs_block = delta_x_rhs_[row];
 
                 rhs_block.eta_theta() +=
-                    dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_Q_theta(), x_[col].phi_q());
-                rhs_block.eta_v() += dot(block.qt_P_v(), x_[col].phi_p()) + dot(block.qt_Q_v(), x_[col].phi_q());
+                    dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_P_v(), x_[col].phi_q());
+                rhs_block.eta_v() += dot(block.qt_Q_theta(), x_[col].phi_p()) + dot(block.qt_Q_v(), x_[col].phi_q());
             },
             y_bus);
     }
