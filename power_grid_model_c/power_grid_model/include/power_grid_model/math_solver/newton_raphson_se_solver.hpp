@@ -61,9 +61,10 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
     GetterType<1, 0> g_Q_theta() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> g_Q_v() { return this->template get_val<1, 1>(); }
 
+    // represented as (Q(X, Y))^T, not (Q^T)(X, Y)
     GetterType<0, 2> qt_P_theta() { return this->template get_val<0, 2>(); }
-    GetterType<0, 3> qt_P_v() { return this->template get_val<0, 3>(); }
-    GetterType<1, 2> qt_Q_theta() { return this->template get_val<1, 2>(); }
+    GetterType<0, 3> qt_P_v() { return this->template get_val<1, 2>(); }
+    GetterType<1, 2> qt_Q_theta() { return this->template get_val<0, 3>(); }
     GetterType<1, 3> qt_Q_v() { return this->template get_val<1, 3>(); }
 
     GetterType<2, 0> q_P_theta() { return this->template get_val<2, 0>(); }
@@ -159,8 +160,8 @@ template <bool sym> class NewtonRaphsonSESolver {
             sub_timer = Timer(calculation_info, 2224, "Prepare LHS rhs");
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
-            sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
-            sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
+            sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation");
+            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values);
         };
@@ -323,9 +324,6 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         fill_qt(y_bus);
         process_lagrange_multiplier(y_bus);
-
-        // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
     /// Q_ij = 0
@@ -465,8 +463,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                 auto& block = data_gain_[data_idx];
 
                 block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
-                block.qt_P_v() = data_gain_[data_idx_transpose].q_Q_theta();
-                block.qt_Q_theta() = data_gain_[data_idx_transpose].q_P_v();
+                block.qt_P_v() = data_gain_[data_idx_transpose].q_P_v();
+                block.qt_Q_theta() = data_gain_[data_idx_transpose].q_Q_theta();
                 block.qt_Q_v() = data_gain_[data_idx_transpose].q_Q_v();
             },
             y_bus);
@@ -482,8 +480,8 @@ template <bool sym> class NewtonRaphsonSESolver {
                 auto& rhs_block = delta_x_rhs_[row];
 
                 rhs_block.eta_theta() +=
-                    dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_P_v(), x_[col].phi_q());
-                rhs_block.eta_v() += dot(block.qt_Q_theta(), x_[col].phi_p()) + dot(block.qt_Q_v(), x_[col].phi_q());
+                    dot(block.qt_P_theta(), x_[col].phi_p()) + dot(block.qt_Q_theta(), x_[col].phi_q());
+                rhs_block.eta_v() += dot(block.qt_P_v(), x_[col].phi_p()) + dot(block.qt_Q_v(), x_[col].phi_q());
             },
             y_bus);
     }
