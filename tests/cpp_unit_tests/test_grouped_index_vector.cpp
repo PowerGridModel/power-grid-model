@@ -132,9 +132,7 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
     SUBCASE("empty input") {
         auto const empty_idx_vector = A{};
-        for (auto [index, element_range] : enumerated_zip_sequence(empty_idx_vector)) {
-            (void)index;
-            (void)element_range;
+        for ([[maybe_unused]] auto [index, element_range] : enumerated_zip_sequence(empty_idx_vector)) {
             FAIL("this code should not be reached");
         }
     }
