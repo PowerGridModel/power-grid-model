@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 20000},
+      {"id": 2, "u_rated": 400},
+      {"id": 3, "u_rated": 400},
+      {"id": 4, "u_rated": 400},
+      {"id": 5, "u_rated": 400},
+      {"id": 6, "u_rated": 400},
+      {"id": 7, "u_rated": 400},
+      {"id": 8, "u_rated": 400}
+    ],
+    "line": [
+      {"id": 9, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1, "r1": 0.000416, "x1": 0.000136, "c1": 1e-09, "tan1": 0, "r0": 0.001248, "x0": 0.000272, "c0": 3e-09, "tan0": 0, "i_n": 10000},
+      {"id": 10, "from_node": 2, "to_node": 4, "from_status": 1, "to_status": 1, "r1": 0.000385, "x1": 0.000395, "c1": 0, "tan1": 0, "r0": 0.001155, "x0": 0.00079, "c0": 0, "tan0": 0, "i_n": 10000},
+      {"id": 11, "from_node": 3, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 0.00542, "x1": 0.00174, "c1": 1e-09, "tan1": 0, "r0": 0.01626, "x0": 0.00348, "c0": 3e-09, "tan0": 0, "i_n": 10000},
+      {"id": 12, "from_node": 4, "to_node": 6, "from_status": 1, "to_status": 1, "r1": 0.008500000000000001, "x1": 0.00286, "c1": 0, "tan1": 0, "r0": 0.0255, "x0": 0.00572, "c0": 0, "tan0": 0, "i_n": 10000},
+      {"id": 13, "from_node": 5, "to_node": 7, "from_status": 1, "to_status": 0, "r1": 0.0185, "x1": 0.01485, "c1": 1e-06, "tan1": 0, "r0": 0.05549999999999999, "x0": 0.0297, "c0": 3e-06, "tan0": 0, "i_n": 10000},
+      {"id": 14, "from_node": 6, "to_node": 7, "from_status": 1, "to_status": 1, "r1": 0.098, "x1": 0.025, "c1": 1e-06, "tan1": 0, "r0": 0.294, "x0": 0.05, "c0": 3e-06, "tan0": 0, "i_n": 10000},
+      {"id": 15, "from_node": 7, "to_node": 8, "from_status": 1, "to_status": 1, "r1": 0.1, "x1": 0.05, "c1": 1e-06, "tan1": 0, "r0": 0.3, "x0": 0.1, "c0": 3e-06, "tan0": 0, "i_n": 10000}
+    ],
+    "transformer": [
+      {"id": 17, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "u1": 20000, "u2": 400, "sn": 630000, "uk": 0.04, "pk": 1000, "i0": 0.001, "p0": 100, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -5, "tap_max": 5, "tap_nom": 0, "tap_size": 2300},
+      {"id": 18, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "u1": 20000, "u2": 400, "sn": 630000, "uk": 0.04, "pk": 1000, "i0": 0.001, "p0": 100, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -5, "tap_max": 5, "tap_nom": 0, "tap_size": 2300}
+    ],
+    "source": [
+      {"id": 16, "node": 1, "status": 1, "u_ref": 1, "sk": 1000000, "rx_ratio": 0.1, "z01_ratio": 1}
+    ],
+    "asym_gen": [
+      {"id": 23, "node": 4, "status": 1, "type": 0, "p_specified": [15000, 15500, 14000], "q_specified": [3000, 3500, 2500]}
+    ],
+    "sym_load": [
+      {"id": 19, "node": 5, "status": 1, "type": 0, "p_specified": 65550, "q_specified": 21540},
+      {"id": 20, "node": 6, "status": 1, "type": 0, "p_specified": 70000, "q_specified": 30000},
+      {"id": 21, "node": 8, "status": 1, "type": 0, "p_specified": 50250, "q_specified": 15800}
+    ],
+    "asym_load": [
+      {"id": 22, "node": 3, "status": 1, "type": 0, "p_specified": [20000, 19000, 20500], "q_specified": [5000, 4500, 5500]}
+    ],
+    "sym_power_sensor": [
+      {"id": 32, "measured_object": 9, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 33, "measured_object": 9, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 34, "measured_object": 10, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 35, "measured_object": 10, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 36, "measured_object": 11, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 37, "measured_object": 11, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 38, "measured_object": 12, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 39, "measured_object": 12, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 40, "measured_object": 13, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 41, "measured_object": 13, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 42, "measured_object": 14, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 43, "measured_object": 14, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 44, "measured_object": 15, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 45, "measured_object": 15, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 46, "measured_object": 17, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 47, "measured_object": 17, "measured_terminal_type": 1, "power_sigma": 1000},
+      {"id": 48, "measured_object": 18, "measured_terminal_type": 0, "power_sigma": 1000},
+      {"id": 49, "measured_object": 18, "measured_terminal_type": 1, "power_sigma": 1000}
+    ],
+    "sym_voltage_sensor": [
+      {"id": 24, "measured_object": 1, "u_sigma": 200},
+      {"id": 25, "measured_object": 2, "u_sigma": 4},
+      {"id": 26, "measured_object": 3, "u_sigma": 4},
+      {"id": 27, "measured_object": 4, "u_sigma": 4},
+      {"id": 28, "measured_object": 5, "u_sigma": 4},
+      {"id": 29, "measured_object": 6, "u_sigma": 4},
+      {"id": 30, "measured_object": 7, "u_sigma": 4},
+      {"id": 31, "measured_object": 8, "u_sigma": 4}
+    ]
+  }
+}
