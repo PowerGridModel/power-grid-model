@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "node": [
+        {"id": 1, "u": 10751.07259575828, "u_angle": 0},
+        {"id": 2, "u": 10901.81945984043, "u_angle": -0.03749215598206366},
+        {"id": 3, "u": 10936.7944291905, "u_angle": -0.05173620864857323}
+      ],
+      "sym_power_sensor": [
+        {"id": 701, "p_residual": 0.0, "q_residual": 0.0},
+        {"id": 801, "p_residual": 0.0, "q_residual": 0.0}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "u": 10751.07259575828, "u_angle": 0},
+        {"id": 2, "u": 10901.81945984043, "u_angle": -0.03749215598206366},
+        {"id": 3, "u": 10936.7944291905, "u_angle": -0.05173620864857323}
+      ],
+      "sym_power_sensor": [
+        {"id": 701, "p_residual": 0.0, "q_residual": 0.0},
+        {"id": 801, "p_residual": 0.0, "q_residual": 0.0}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "u": 10751.07259575828, "u_angle": 0},
+        {"id": 2, "u": 10901.81945984043, "u_angle": -0.03749215598206366},
+        {"id": 3, "u": 10936.7944291905, "u_angle": -0.05173620864857323}
+      ],
+      "sym_power_sensor": [
+        {"id": 701, "p_residual": 0.0, "q_residual": 0.0},
+        {"id": 801, "p_residual": 0.0, "q_residual": 0.0}
+      ]
+    }
+  ]
+}
