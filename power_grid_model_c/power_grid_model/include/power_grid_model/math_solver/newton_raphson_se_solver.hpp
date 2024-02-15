@@ -51,6 +51,8 @@ template <bool sym> using NRSERhs = NRSEUnknown<sym>;
 template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
+    template <int r, int c, int r_size, int c_size>
+    using BlockGetterType = typename Block<double, sym, true, 4>::template BlockGetterType<r, c, r_size, c_size>;
 
     // eigen expression
     using Block<double, sym, true, 4>::Block;
@@ -76,6 +78,11 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
     GetterType<2, 3> r_P_v() { return this->template get_val<2, 3>(); }
     GetterType<3, 2> r_Q_theta() { return this->template get_val<3, 2>(); }
     GetterType<3, 3> r_Q_v() { return this->template get_val<3, 3>(); }
+
+    BlockGetterType<0, 0, 2, 2> g() { return this->template get_block_val<0, 0, 2, 2>(); }
+    BlockGetterType<0, 1, 2, 2> qt() { return this->template get_block_val<0, 1, 2, 2>(); }
+    BlockGetterType<1, 0, 2, 2> q() { return this->template get_block_val<1, 0, 2, 2>(); }
+    BlockGetterType<1, 1, 2, 2> r() { return this->template get_block_val<1, 1, 2, 2>(); }
 };
 
 // solver
@@ -460,12 +467,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     void fill_qt(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
             [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
-                auto& block = data_gain_[data_idx];
-
-                block.qt_P_theta() = hermitian_transpose(data_gain_[data_idx_transpose].q_P_theta());
-                block.qt_Q_theta() = hermitian_transpose(data_gain_[data_idx_transpose].q_P_v());
-                block.qt_P_v() = hermitian_transpose(data_gain_[data_idx_transpose].q_Q_theta());
-                block.qt_Q_v() = hermitian_transpose(data_gain_[data_idx_transpose].q_Q_v());
+                data_gain_[data_idx].qt() = hermitian_transpose(data_gain_[data_idx_transpose].q());
             },
             y_bus);
     }
