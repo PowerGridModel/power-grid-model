@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/sparse_ordening.hpp>
+#include <power_grid_model/sparse_ordering.hpp>
 
 #include <doctest/doctest.h>
 
@@ -14,8 +14,8 @@ namespace {
 using power_grid_model::Idx;
 } // namespace
 
-TEST_CASE("Test sparse ordening") {
-    SUBCASE("minimum_degree_ordening") {
+TEST_CASE("Test sparse ordering") {
+    SUBCASE("minimum_degree_ordering") {
         std::map<Idx, std::vector<Idx>> graph{{0, {3, 5}}, {1, {4, 5, 8}}, {2, {4, 5, 6}}, {3, {6, 7}},
                                               {4, {6, 8}}, {6, {7, 8, 9}}, {7, {8, 9}},    {8, {9}}};
 

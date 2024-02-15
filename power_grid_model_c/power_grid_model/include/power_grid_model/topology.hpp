@@ -11,7 +11,7 @@
 #include "exception.hpp"
 #include "index_mapping.hpp"
 #include "power_grid_model.hpp"
-#include "sparse_ordening.hpp"
+#include "sparse_ordering.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>

@@ -25,7 +25,7 @@ set(PROJECT_SOURCES
     "test_math_solver.cpp"
     "test_measured_values.cpp"
     "test_topology.cpp"
-    "test_sparse_ordening.cpp"
+    "test_sparse_ordering.cpp"
     "test_grouped_index_vector.cpp"
     "test_container.cpp"
     "test_index_mapping.cpp"
