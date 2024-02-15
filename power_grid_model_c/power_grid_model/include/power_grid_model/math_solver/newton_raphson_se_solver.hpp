@@ -245,19 +245,8 @@ template <bool sym> class NewtonRaphsonSESolver {
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 // get data idx of y bus,
-                // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
-                if (data_idx == -1) {
-                    continue;
-                }
-
                 Idx const col = col_indices[data_idx_lu];
-
-                u_state.uj = current_u[col];
-                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
-                u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
-                u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
-                u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
 
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
@@ -268,6 +257,17 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // Diagonal block is being cleared outside this loop
                     block.clear();
                 }
+
+                // skip anything else for a fill-in
+                if (data_idx == -1) {
+                    continue;
+                }
+
+                u_state.uj = current_u[col];
+                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
+                u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
+                u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
+                u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
 
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
