@@ -90,11 +90,6 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             }
             break;
         case PGM_state_estimation:
-            if (calculation_method == CalculationMethod::newton_raphson &&
-                opt->experimental_features == PGM_experimental_features_disabled) {
-                // this option is experimental and should not be exposed to the user
-                throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
-            }
             if (opt->symmetric != 0) {
                 handle->batch_parameter = model->calculate_state_estimation<true>(
                     opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
