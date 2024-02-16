@@ -467,10 +467,6 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 #### Newton-Raphson state estimation
 
-```warning
-At the time of writing, this feature is still experimental and is not yet publicly available.
-```
-
 Algorithm call: {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`
 
 The Newton-Raphson state estimation considers the problem as a system of real, non-linear equations.
