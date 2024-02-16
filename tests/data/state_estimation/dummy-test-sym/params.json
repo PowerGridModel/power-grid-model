@@ -4,10 +4,5 @@
   "atol": {
     "q.*": 1e-1,
     "default": 1e-6
-  },
-  "extra_params": {
-    "newton_raphson": {
-      "experimental_features": "enabled"
-    }
   }
 }
