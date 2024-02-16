@@ -51,6 +51,8 @@ template <bool sym> using NRSERhs = NRSEUnknown<sym>;
 template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
+    template <int r, int c, int r_size, int c_size>
+    using BlockGetterType = typename Block<double, sym, true, 4>::template BlockGetterType<r, c, r_size, c_size>;
 
     // eigen expression
     using Block<double, sym, true, 4>::Block;
@@ -61,6 +63,7 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
     GetterType<1, 0> g_Q_theta() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> g_Q_v() { return this->template get_val<1, 1>(); }
 
+    // (Q^T)(X, Y)
     GetterType<0, 2> qt_P_theta() { return this->template get_val<0, 2>(); }
     GetterType<0, 3> qt_P_v() { return this->template get_val<0, 3>(); }
     GetterType<1, 2> qt_Q_theta() { return this->template get_val<1, 2>(); }
@@ -75,6 +78,11 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
     GetterType<2, 3> r_P_v() { return this->template get_val<2, 3>(); }
     GetterType<3, 2> r_Q_theta() { return this->template get_val<3, 2>(); }
     GetterType<3, 3> r_Q_v() { return this->template get_val<3, 3>(); }
+
+    BlockGetterType<0, 0, 2, 2> g() { return this->template get_block_val<0, 0, 2, 2>(); }
+    BlockGetterType<0, 1, 2, 2> qt() { return this->template get_block_val<0, 1, 2, 2>(); }
+    BlockGetterType<1, 0, 2, 2> q() { return this->template get_block_val<1, 0, 2, 2>(); }
+    BlockGetterType<1, 1, 2, 2> r() { return this->template get_block_val<1, 1, 2, 2>(); }
 };
 
 // solver
@@ -159,8 +167,8 @@ template <bool sym> class NewtonRaphsonSESolver {
             sub_timer = Timer(calculation_info, 2224, "Prepare LHS rhs");
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
-            sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
-            sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
+            sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation");
+            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values);
         };
@@ -245,19 +253,8 @@ template <bool sym> class NewtonRaphsonSESolver {
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 // get data idx of y bus,
-                // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
-                if (data_idx == -1) {
-                    continue;
-                }
-
                 Idx const col = col_indices[data_idx_lu];
-
-                u_state.uj = current_u[col];
-                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
-                u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
-                u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
-                u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
 
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
@@ -268,6 +265,17 @@ template <bool sym> class NewtonRaphsonSESolver {
                     // Diagonal block is being cleared outside this loop
                     block.clear();
                 }
+
+                // skip anything else for a fill-in
+                if (data_idx == -1) {
+                    continue;
+                }
+
+                u_state.uj = current_u[col];
+                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
+                u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
+                u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
+                u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
 
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -323,9 +331,6 @@ template <bool sym> class NewtonRaphsonSESolver {
 
         fill_qt(y_bus);
         process_lagrange_multiplier(y_bus);
-
-        // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
     /// Q_ij = 0
@@ -462,12 +467,7 @@ template <bool sym> class NewtonRaphsonSESolver {
     void fill_qt(YBus<sym> const& y_bus) {
         iterate_matrix_skip_fills(
             [this](Idx /* row */, Idx /* col */, Idx data_idx, Idx data_idx_transpose) {
-                auto& block = data_gain_[data_idx];
-
-                block.qt_P_theta() = data_gain_[data_idx_transpose].q_P_theta();
-                block.qt_P_v() = data_gain_[data_idx_transpose].q_Q_theta();
-                block.qt_Q_theta() = data_gain_[data_idx_transpose].q_P_v();
-                block.qt_Q_v() = data_gain_[data_idx_transpose].q_Q_v();
+                data_gain_[data_idx].qt() = hermitian_transpose(data_gain_[data_idx_transpose].q());
             },
             y_bus);
     }

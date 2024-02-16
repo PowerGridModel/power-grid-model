@@ -103,6 +103,10 @@ def test_single_validation(
     base_kwargs = get_kwargs(sym=sym, calculation_method=calculation_method, params=params)
     result = calculation_function(model, **supported_kwargs(kwargs=base_kwargs, supported=calculation_args))
 
+    # export data if needed
+    if EXPORT_OUTPUT:
+        save_json_data(f"{case_id}.json", result)
+
     # Compare the results
     reference_result = case_data["output"]
     compare_result(result, reference_result, rtol, atol)
@@ -114,10 +118,6 @@ def test_single_validation(
         indexer_array = model.get_indexer(component_name, ids_array)
         # check
         assert np.all(input_array["id"][indexer_array] == ids_array)
-
-    # export data if needed
-    if EXPORT_OUTPUT:
-        save_json_data(f"{case_id}.json", result)
 
     # test calculate with only node and source result
     kwargs = dict(base_kwargs, **{"output_component_types": ["node", "source"]})
@@ -152,23 +152,26 @@ def test_batch_validation(
 
     base_kwargs = get_kwargs(sym=sym, calculation_method=calculation_method, params=params)
 
+    calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
+
+    # export data without comparing first, if needed
+    if EXPORT_OUTPUT:
+        model_copy = copy(model)
+        kwargs = dict(base_kwargs, update_data=update_batch)
+        result_batch = calculation_function(model_copy, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
+        save_json_data(f"{case_id}.json", result_batch)
+
     # execute batch calculation by applying update method
     for update_data, reference_result in zip(update_list, reference_output_list):
         model_copy = copy(model)
         model_copy.update(update_data=update_data)
-        calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
         result = calculation_function(model_copy, **supported_kwargs(kwargs=base_kwargs, supported=calculation_args))
         compare_result(result, reference_result, rtol, atol)
 
     # execute in batch one go
     for threading in [-1, 0, 1, 2]:
-        calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
         kwargs = dict(base_kwargs, update_data=update_batch, threading=threading)
         result_batch = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
         result_list = convert_batch_dataset_to_batch_list(result_batch)
         for result, reference_result in zip(result_list, reference_output_list):
             compare_result(result, reference_result, rtol, atol)
-
-    # export data if needed
-    if EXPORT_OUTPUT:
-        save_json_data(f"{case_id}.json", result_batch)

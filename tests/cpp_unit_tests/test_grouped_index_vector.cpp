@@ -55,7 +55,13 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
 
     auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
 
-    SUBCASE("Empty grouped idx vector") {
+    SUBCASE("Empty grouped idx vector - no explicit initialization") {
+        IdxVectorType const indices;
+        CHECK(indices.element_size() == 0);
+        CHECK(indices.size() == 0);
+    }
+
+    SUBCASE("Empty grouped idx vector - explicit initialization") {
         IdxVectorType const indices{};
         CHECK(indices.element_size() == 0);
         CHECK(indices.size() == 0);
@@ -123,6 +129,13 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
     auto const idx_vector_a = construct_from<A, from_natural_t>(groups_a, num_groups);
     auto const idx_vector_b = construct_from<B, from_natural_t>(groups_b, num_groups);
     auto const idx_vector_c = construct_from<C, from_natural_t>(groups_c, num_groups);
+
+    SUBCASE("empty input") {
+        auto const empty_idx_vector = A{};
+        for ([[maybe_unused]] auto [index, element_range] : enumerated_zip_sequence(empty_idx_vector)) {
+            FAIL("this code should not be reached");
+        }
+    }
 
     SUBCASE("1 input") {
         // Test single zipped iteration

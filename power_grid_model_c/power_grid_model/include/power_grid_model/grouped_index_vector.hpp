@@ -260,7 +260,7 @@ class DenseGroupedIdxVector {
         : DenseGroupedIdxVector{std::move(dense_group_elements), num_groups} {}
 
   private:
-    Idx num_groups_;
+    Idx num_groups_{};
     IdxVector dense_vector_;
 };
 
