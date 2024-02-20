@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_COMMON_CALCULATION_INFO_HPP
 
 #include <cstddef>
+#include <functional>
 #include <map>
 #include <string>
 

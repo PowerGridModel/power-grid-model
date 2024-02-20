@@ -13,8 +13,6 @@
 
 #include <cmath>
 #include <complex>
-#include <tuple>
-#include <utility>
 
 namespace power_grid_model {
 
