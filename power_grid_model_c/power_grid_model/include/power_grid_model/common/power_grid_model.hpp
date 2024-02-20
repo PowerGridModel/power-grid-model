@@ -8,6 +8,7 @@
 
 #include <complex>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <numbers>
 #include <type_traits>
