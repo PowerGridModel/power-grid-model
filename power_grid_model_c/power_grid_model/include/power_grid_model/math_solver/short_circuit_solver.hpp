@@ -12,7 +12,7 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/enum.hpp"
-#include "../exception.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model::math_solver {
 

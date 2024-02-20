@@ -8,8 +8,8 @@
 
 #include "calculation_parameters.hpp"
 #include "common/enum.hpp"
+#include "common/exception.hpp"
 #include "common/power_grid_model.hpp"
-#include "exception.hpp"
 #include "index_mapping.hpp"
 
 #include <boost/graph/adjacency_list.hpp>

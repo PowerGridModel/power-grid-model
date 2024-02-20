@@ -8,8 +8,8 @@
 
 // handle dataset and buffer related stuff
 
+#include "../common/exception.hpp"
 #include "../common/power_grid_model.hpp"
-#include "../exception.hpp"
 #include "dataset.hpp"
 #include "meta_data.hpp"
 #include "meta_data_gen.hpp"

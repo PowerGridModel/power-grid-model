@@ -7,9 +7,9 @@
 #define POWER_GRID_MODEL_META_DATA_HPP
 
 #include "../common/enum.hpp"
+#include "../common/exception.hpp"
 #include "../common/power_grid_model.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "../exception.hpp"
 
 #include <bit>
 #include <span>
