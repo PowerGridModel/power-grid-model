@@ -6,7 +6,6 @@
 #ifndef POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
 #define POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
 
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -14,16 +13,13 @@
 #include <complex>
 #include <concepts>
 #include <cstddef>
-#include <functional>
 #include <limits>
 #include <memory>
 #include <numbers>
 #include <numeric>
 #include <string>
-#include <tuple>
 #include <type_traits>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace power_grid_model {
