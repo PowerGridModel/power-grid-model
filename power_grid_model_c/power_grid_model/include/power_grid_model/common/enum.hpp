@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_ENUM_HPP
-#define POWER_GRID_MODEL_ENUM_HPP
+#ifndef POWER_GRID_MODEL_COMMON_ENUM_HPP
+#define POWER_GRID_MODEL_COMMON_ENUM_HPP
 
 #include "power_grid_model.hpp"
 

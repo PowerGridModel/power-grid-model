@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
-#define POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
+#ifndef POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
+#define POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
 
 #include <algorithm>
 #include <array>
@@ -81,12 +81,6 @@ constexpr double default_source_z01_ratio = 1.0;
 using DoubleVector = std::vector<double>;
 using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
-
-// component list
-template <class... T> struct ComponentList {};
-
-// batch parameter
-struct BatchParameter {};
 
 } // namespace power_grid_model
 

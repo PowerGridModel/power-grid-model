@@ -9,6 +9,7 @@
 // main model class
 
 // main include
+#include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "topology.hpp"

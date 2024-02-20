@@ -6,6 +6,7 @@
 #ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_GEN_GETTERS_HPP
 #define POWER_GRID_MODEL_AUXILIARY_META_GEN_GEN_GETTERS_HPP
 
+#include "../../common/component_list.hpp"
 #include "../../common/counting_iterator.hpp"
 #include "../meta_data.hpp"
 

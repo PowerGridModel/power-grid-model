@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_ALL_COMPONENTS_HPP
 
 // define all components
+#include "common/component_list.hpp"
 #include "common/power_grid_model.hpp"
 // component include
 #include "component/appliance.hpp"

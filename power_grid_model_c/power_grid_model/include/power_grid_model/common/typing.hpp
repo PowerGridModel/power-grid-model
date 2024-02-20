@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_TYPING_HPP
-#define POWER_GRID_MODEL_TYPING_HPP
+#ifndef POWER_GRID_MODEL_COMMON_TYPING_HPP
+#define POWER_GRID_MODEL_COMMON_TYPING_HPP
 
 #include <concepts>
 
