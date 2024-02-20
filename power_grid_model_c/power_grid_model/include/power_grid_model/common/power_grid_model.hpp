@@ -10,9 +10,7 @@
 #include <cstddef>
 #include <limits>
 #include <numbers>
-#include <numeric>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 namespace power_grid_model {

@@ -17,6 +17,7 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <unordered_map>
 
 namespace power_grid_model {

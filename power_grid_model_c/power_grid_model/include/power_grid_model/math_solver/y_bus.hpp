@@ -11,6 +11,7 @@
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
+#include <numeric>
 #include <ranges>
 
 namespace power_grid_model {

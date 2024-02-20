@@ -9,6 +9,7 @@
 #include "common/grouped_index_vector.hpp"
 #include "common/power_grid_model.hpp"
 
+#include <numeric>
 #include <ranges>
 
 namespace power_grid_model {
@@ -51,7 +52,7 @@ struct SparseIndexMapping {
 ///     A 0			coupled to B 3
 ///     nothing		coupled to B 4
 ///     A 1			coupled	to B 5
-///     nothing	coupled to B 6
+///     nothing	    coupled to B 6
 inline SparseIndexMapping build_sparse_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
     using SparseEntry = std::pair<Idx, Idx>;
 
