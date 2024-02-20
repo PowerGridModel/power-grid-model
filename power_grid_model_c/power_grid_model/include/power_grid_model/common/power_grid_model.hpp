@@ -6,9 +6,6 @@
 #ifndef POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
 #define POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
 
-// main header for the model
-#include <boost/iterator/counting_iterator.hpp>
-
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -19,7 +16,6 @@
 #include <cstddef>
 #include <functional>
 #include <limits>
-#include <map>
 #include <memory>
 #include <numbers>
 #include <numeric>
@@ -39,9 +35,6 @@ using Idx = int64_t;
 using IdxVector = std::vector<Idx>;
 
 using IntS = int8_t;
-
-// couting iterator
-using IdxCount = boost::counting_iterator<Idx>;
 
 // struct of indexing to sub modules
 struct Idx2D {
@@ -83,9 +76,6 @@ constexpr DoubleComplex y_link{g_link, g_link};
 constexpr double default_source_sk = 1e10; // 10 GVA 10^10
 constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
-
-using Clock = std::chrono::high_resolution_clock;
-using Duration = std::chrono::duration<double>;
 
 // some usual vector
 using DoubleVector = std::vector<double>;

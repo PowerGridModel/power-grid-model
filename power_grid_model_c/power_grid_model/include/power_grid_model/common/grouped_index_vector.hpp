@@ -6,6 +6,7 @@
 #ifndef POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 #define POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 
+#include "counting_iterator.hpp"
 #include "power_grid_model.hpp"
 #include "typing.hpp"
 

@@ -9,10 +9,14 @@
 #include "calculation_info.hpp"
 #include "power_grid_model.hpp"
 
+#include <chrono>
 #include <iomanip>
 #include <sstream>
 
 namespace power_grid_model {
+
+using Clock = std::chrono::high_resolution_clock;
+using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:

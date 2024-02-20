@@ -10,6 +10,8 @@
 
 #include "../common/power_grid_model.hpp"
 
+#include <map>
+
 namespace power_grid_model {
 
 // a dataset wrapper using void pointers
