@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <concepts>
+#include <utility>
 
 namespace power_grid_model {
 template <std::integral T, std::integral U>
