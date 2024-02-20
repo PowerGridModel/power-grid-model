@@ -10,9 +10,9 @@
 
 // main include
 #include "calculation_parameters.hpp"
+#include "common/power_grid_model.hpp"
 #include "container.hpp"
 #include "exception.hpp"
-#include "power_grid_model.hpp"
 #include "timer.hpp"
 #include "topology.hpp"
 

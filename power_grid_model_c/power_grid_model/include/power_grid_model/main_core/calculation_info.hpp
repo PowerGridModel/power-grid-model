@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_MAIN_CORE_CALCULATION_INFO_HPP
 #define POWER_GRID_MODEL_MAIN_CORE_CALCULATION_INFO_HPP
 
-#include "../power_grid_model.hpp"
+#include "../common/power_grid_model.hpp"
 
 namespace power_grid_model::main_core {
 

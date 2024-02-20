@@ -15,8 +15,8 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/power_grid_model.hpp"
 #include "../exception.hpp"
-#include "../power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 #include "../timer.hpp"
 

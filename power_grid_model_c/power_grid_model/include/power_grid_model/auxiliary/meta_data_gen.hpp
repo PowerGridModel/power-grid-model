@@ -16,7 +16,7 @@
 #include "update.hpp"
 
 #include "../all_components.hpp"
-#include "../power_grid_model.hpp"
+#include "../common/power_grid_model.hpp"
 
 #include <map>
 #include <string>

@@ -7,10 +7,10 @@
 #define POWER_GRID_MODEL_TOPOLOGY_HPP
 
 #include "calculation_parameters.hpp"
+#include "common/power_grid_model.hpp"
 #include "enum.hpp"
 #include "exception.hpp"
 #include "index_mapping.hpp"
-#include "power_grid_model.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>

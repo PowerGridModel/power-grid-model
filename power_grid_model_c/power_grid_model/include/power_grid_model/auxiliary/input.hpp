@@ -12,7 +12,7 @@
 #include "meta_data.hpp"
 
 #include "../enum.hpp"
-#include "../power_grid_model.hpp"
+#include "../common/power_grid_model.hpp"
 #include "../three_phase_tensor.hpp"
 
 namespace power_grid_model {

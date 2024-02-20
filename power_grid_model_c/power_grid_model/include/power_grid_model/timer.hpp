@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_TIMER_HPP
 #define POWER_GRID_MODEL_TIMER_HPP
 
-#include "power_grid_model.hpp"
+#include "common/power_grid_model.hpp"
 
 #include <iomanip>
 #include <sstream>
