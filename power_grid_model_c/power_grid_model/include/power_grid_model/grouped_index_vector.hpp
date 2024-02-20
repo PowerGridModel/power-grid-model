@@ -7,7 +7,7 @@
 #define POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 
 #include "common/power_grid_model.hpp"
-#include "typing.hpp"
+#include "common/typing.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/zip_iterator.hpp>

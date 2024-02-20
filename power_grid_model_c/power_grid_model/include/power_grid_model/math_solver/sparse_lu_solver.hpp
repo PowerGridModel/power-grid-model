@@ -8,8 +8,8 @@
 
 #include "../common/power_grid_model.hpp"
 #include "../common/three_phase_tensor.hpp"
+#include "../common/typing.hpp"
 #include "../exception.hpp"
-#include "../typing.hpp"
 
 #include <memory>
 
