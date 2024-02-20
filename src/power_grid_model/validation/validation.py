@@ -221,6 +221,20 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     return list(chain(*errors))
 
 
+def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str, required_list: Dict[str, List[str]]) -> None:
+    """
+    Helper function to process the required list when both `p_sigma` and `q_sigma` exist
+    and valid but `power_sigma` is missing.
+    """
+    if sensor in data and isinstance(data[sensor], np.ndarray):
+        sensor_data = data[sensor]
+        if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
+            p_sigma = sensor_data["p_sigma"]
+            q_sigma = sensor_data["q_sigma"]
+            if not (np.isnan(p_sigma).any() or np.isnan(q_sigma).any()):
+                required_list[sensor].remove("power_sigma")
+
+
 def validate_required_values(
     data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
 ) -> List[MissingValueError]:
@@ -330,6 +344,10 @@ def validate_required_values(
     if not symmetric or asym_sc:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
+
+    # Allow missing `power_sigma` of both `p_sigma` and `q_sigma` are present
+    process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
+    process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
 
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 

@@ -9,8 +9,10 @@ from unittest.mock import ANY, MagicMock, patch
 import numpy as np
 import pytest
 
-from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
+# from power_grid_model import PowerGridModel, LoadGenType, MeasuredTerminalType, initialize_array, CalculationType, CalculationMethod
+from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType, FaultPhase, FaultType
+from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InfinityError,
@@ -646,3 +648,68 @@ def test_validate_generic_power_sensor__terminal_types(
     all_valid_ids.assert_any_call(
         ANY, ANY, field=ANY, ref_components=ref_component, measured_terminal_type=measured_terminal_type
     )
+
+
+def test_power_sigma_or_p_q_sigma():
+    # node
+    node = initialize_array("input", "node", 2)
+    node["id"] = np.array([0, 3])
+    node["u_rated"] = [10.5e3, 10.5e3]
+
+    # line
+    line = initialize_array("input", "line", 1)
+    line["id"] = [2]
+    line["from_node"] = [0]
+    line["to_node"] = [3]
+    line["from_status"] = [1]
+    line["to_status"] = [1]
+    line["r1"] = [0.001]
+    line["x1"] = [0.02]
+    line["c1"] = [0.0]
+    line["tan1"] = [0.0]
+    line["i_n"] = [1000.0]
+
+    # load
+    sym_load = initialize_array("input", "sym_load", 1)
+    sym_load["id"] = [4]
+    sym_load["node"] = [3]
+    sym_load["status"] = [1]
+    sym_load["type"] = [LoadGenType.const_power]
+    sym_load["p_specified"] = [1e6]
+    sym_load["q_specified"] = [-1e6]
+
+    # source
+    source = initialize_array("input", "source", 1)
+    source["id"] = [1]
+    source["node"] = [0]
+    source["status"] = [1]
+    source["u_ref"] = [1.0]
+
+    # voltage sensor
+    voltage_sensor = initialize_array("input", "sym_voltage_sensor", 1)
+    voltage_sensor["id"] = 5
+    voltage_sensor["measured_object"] = 0
+    voltage_sensor["u_sigma"] = [100.0]
+    voltage_sensor["u_measured"] = [10.5e3]
+
+    # power sensor
+    power_sensor = initialize_array("input", "sym_power_sensor", 2)
+    power_sensor["id"] = [6, 7]
+    power_sensor["measured_object"] = [2, 4]
+    power_sensor["measured_terminal_type"] = [MeasuredTerminalType.branch_from, MeasuredTerminalType.load]
+    power_sensor["p_measured"] = [1e6, -1e6]
+    power_sensor["q_measured"] = [1e6, -1e6]
+    power_sensor["p_sigma"] = [1e4, 1e9]  # trust P for sensor 6
+    power_sensor["q_sigma"] = [1e9, 1e4]  # trust Q for sensor 7
+
+    # all
+    input_data = {
+        "node": node,
+        "line": line,
+        "sym_load": sym_load,
+        "source": source,
+        "sym_voltage_sensor": voltage_sensor,
+        "sym_power_sensor": power_sensor,
+    }
+
+    assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
