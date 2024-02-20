@@ -10,11 +10,13 @@
 
 // main include
 #include "calculation_parameters.hpp"
+#include "container.hpp"
+#include "topology.hpp"
+
+// common
 #include "common/exception.hpp"
 #include "common/power_grid_model.hpp"
 #include "common/timer.hpp"
-#include "container.hpp"
-#include "topology.hpp"
 
 // component include
 #include "all_components.hpp"
