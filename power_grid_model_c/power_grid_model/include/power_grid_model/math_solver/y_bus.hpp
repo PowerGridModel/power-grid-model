@@ -11,6 +11,7 @@
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <ranges>
 
