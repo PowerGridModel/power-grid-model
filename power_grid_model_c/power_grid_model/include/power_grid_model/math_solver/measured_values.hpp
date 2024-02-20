@@ -11,7 +11,7 @@ Collect all measured Values
 */
 
 #include "../calculation_parameters.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model::math_solver {
 

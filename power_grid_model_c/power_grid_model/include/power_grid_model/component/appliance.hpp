@@ -13,7 +13,7 @@
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 

@@ -13,7 +13,7 @@
 
 #include "../../common/enum.hpp"               // NOLINT
 #include "../../common/power_grid_model.hpp"   // NOLINT
-#include "../../three_phase_tensor.hpp" // NOLINT
+#include "../../common/three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"             // NOLINT
 #include "../update.hpp" // NOLINT
 

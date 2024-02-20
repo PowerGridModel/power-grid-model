@@ -7,8 +7,8 @@
 #define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
 
 #include "../common/power_grid_model.hpp"
+#include "../common/three_phase_tensor.hpp"
 #include "../exception.hpp"
-#include "../three_phase_tensor.hpp"
 #include "../typing.hpp"
 
 #include <memory>

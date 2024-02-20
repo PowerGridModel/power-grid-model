@@ -8,8 +8,8 @@
 
 #include "../common/enum.hpp"
 #include "../common/power_grid_model.hpp"
+#include "../common/three_phase_tensor.hpp"
 #include "../exception.hpp"
-#include "../three_phase_tensor.hpp"
 
 #include <bit>
 #include <span>
