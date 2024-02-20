@@ -12,8 +12,8 @@
 
 #include <power_grid_model/auxiliary/dataset_handler.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/common/power_grid_model.hpp>
 #include <power_grid_model/main_model.hpp>
-#include <power_grid_model/power_grid_model.hpp>
 
 namespace {
 using namespace power_grid_model;

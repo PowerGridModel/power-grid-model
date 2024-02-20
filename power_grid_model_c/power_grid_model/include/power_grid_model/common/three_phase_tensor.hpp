@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_THREE_PHASE_TENSOR_HPP
 #define POWER_GRID_MODEL_THREE_PHASE_TENSOR_HPP
 
-#include "common/power_grid_model.hpp"
+#include "power_grid_model.hpp"
 
 // eigen properties
 #include <Eigen/Dense>

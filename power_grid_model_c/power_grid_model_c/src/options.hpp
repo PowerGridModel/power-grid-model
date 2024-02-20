@@ -14,7 +14,7 @@
 
 #include "power_grid_model_c/options.h"
 
-#include <power_grid_model/power_grid_model.hpp>
+#include <power_grid_model/common/power_grid_model.hpp>
 
 // options
 struct PGM_Options {
