@@ -6,18 +6,11 @@
 #ifndef POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
 #define POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
 
-#include <array>
-#include <cassert>
-#include <chrono>
-#include <cmath>
 #include <complex>
-#include <concepts>
 #include <cstddef>
 #include <limits>
-#include <memory>
 #include <numbers>
 #include <numeric>
-#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>

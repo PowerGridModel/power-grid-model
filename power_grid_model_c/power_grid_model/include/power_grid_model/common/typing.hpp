@@ -6,6 +6,7 @@
 #ifndef POWER_GRID_MODEL_COMMON_TYPING_HPP
 #define POWER_GRID_MODEL_COMMON_TYPING_HPP
 
+#include <cassert>
 #include <concepts>
 
 namespace power_grid_model {

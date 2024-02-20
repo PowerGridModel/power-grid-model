@@ -10,6 +10,7 @@
 
 #include "../common/power_grid_model.hpp"
 
+#include <cassert>
 #include <map>
 
 namespace power_grid_model {

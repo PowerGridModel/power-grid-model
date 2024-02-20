@@ -14,6 +14,7 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range.hpp>
 
+#include <array>
 #include <functional>
 #include <memory>
 #include <unordered_map>
