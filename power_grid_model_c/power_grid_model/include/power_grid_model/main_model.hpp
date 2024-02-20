@@ -12,8 +12,8 @@
 #include "calculation_parameters.hpp"
 #include "common/exception.hpp"
 #include "common/power_grid_model.hpp"
+#include "common/timer.hpp"
 #include "container.hpp"
-#include "timer.hpp"
 #include "topology.hpp"
 
 // component include

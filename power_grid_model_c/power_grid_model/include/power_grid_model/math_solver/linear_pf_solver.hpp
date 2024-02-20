@@ -38,7 +38,7 @@ if there are sources
 #include "../common/exception.hpp"
 #include "../common/power_grid_model.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
