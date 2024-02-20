@@ -7,8 +7,8 @@
 #define POWER_GRID_MODEL_TOPOLOGY_HPP
 
 #include "calculation_parameters.hpp"
+#include "common/enum.hpp"
 #include "common/power_grid_model.hpp"
-#include "enum.hpp"
 #include "exception.hpp"
 #include "index_mapping.hpp"
 

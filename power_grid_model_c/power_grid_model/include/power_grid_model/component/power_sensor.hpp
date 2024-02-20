@@ -9,8 +9,8 @@
 #include "sensor.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/enum.hpp"
 #include "../common/power_grid_model.hpp"
-#include "../enum.hpp"
 #include "../exception.hpp"
 
 namespace power_grid_model {

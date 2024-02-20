@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_COMPONENT_TRANSFORMER_UTILS_HPP
 #define POWER_GRID_MODEL_COMPONENT_TRANSFORMER_UTILS_HPP
 
-#include "../enum.hpp"
+#include "../common/enum.hpp"
 
 namespace power_grid_model {
 

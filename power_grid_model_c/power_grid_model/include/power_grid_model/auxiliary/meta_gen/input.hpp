@@ -11,7 +11,7 @@
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../enum.hpp"               // NOLINT
+#include "../../common/enum.hpp"               // NOLINT
 #include "../../common/power_grid_model.hpp"   // NOLINT
 #include "../../three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"             // NOLINT
