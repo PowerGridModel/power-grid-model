@@ -7,9 +7,9 @@
 #define POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
 
 #include "common/enum.hpp"
+#include "common/grouped_index_vector.hpp"
 #include "common/power_grid_model.hpp"
 #include "common/three_phase_tensor.hpp"
-#include "grouped_index_vector.hpp"
 
 namespace power_grid_model {
 
