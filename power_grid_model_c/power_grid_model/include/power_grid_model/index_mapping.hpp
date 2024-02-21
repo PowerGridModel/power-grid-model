@@ -126,12 +126,15 @@ inline auto build_dense_mapping_counting_sort(IdxVector const& idx_B_in_A, Idx c
 } // namespace detail
 
 inline DenseIndexMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
-    constexpr auto relative_complexity_prefactor = 1.0;
-
     auto const n_A_ = static_cast<double>(idx_B_in_A.size());
     auto const n_B_ = static_cast<double>(n_B);
 
-    if (n_A_ + n_B_ < relative_complexity_prefactor * n_A_ * log(n_A_)) {
+    float a = 251.97501525083325;
+    float b = -157.37873480423605;
+    float c = -0.09607294313272485;
+    float d = -251154.76319178438;
+
+    if (b * n_A_ + a * n_B_ < c * n_A_ * log(n_A_) + d) {
         return detail::build_dense_mapping_counting_sort(idx_B_in_A, n_B);
     }
     return detail::build_dense_mapping_comparison_sort(idx_B_in_A, n_B);
