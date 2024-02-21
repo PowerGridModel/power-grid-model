@@ -348,6 +348,9 @@ def validate_required_values(
     # Allow missing `power_sigma` of both `p_sigma` and `q_sigma` are present
     process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
     process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
+    # ToDo:
+    # Instead of removing the `power_sigma` key from `required`, we need to make it a list of length data.shape[0]
+    # Within the list, the `power_sigma` and `p_sigma` and `q_sigma` are marked independently
 
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 
