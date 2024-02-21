@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_COMMON_ENUM_HPP
 #define POWER_GRID_MODEL_COMMON_ENUM_HPP
 
-#include "power_grid_model.hpp"
+#include "common.hpp"
 
 namespace power_grid_model {
 

@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_COMMON_COUNTING_ITERATOR_HPP
 #define POWER_GRID_MODEL_COMMON_COUNTING_ITERATOR_HPP
 
-#include "power_grid_model.hpp"
+#include "common.hpp"
 
 #include <boost/iterator/counting_iterator.hpp>
 

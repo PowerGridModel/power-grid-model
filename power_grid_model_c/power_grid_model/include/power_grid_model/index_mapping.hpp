@@ -6,8 +6,8 @@
 #ifndef POWER_GRID_MODEL_INDEX_MAPPING_HPP
 #define POWER_GRID_MODEL_INDEX_MAPPING_HPP
 
+#include "common/common.hpp"
 #include "common/grouped_index_vector.hpp"
-#include "common/power_grid_model.hpp"
 
 #include <numeric>
 #include <ranges>

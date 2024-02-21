@@ -8,7 +8,7 @@
 
 // define dataset classes with void pointers
 
-#include "../common/power_grid_model.hpp"
+#include "../common/common.hpp"
 
 #include <cassert>
 #include <map>

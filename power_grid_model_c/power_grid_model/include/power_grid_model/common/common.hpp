@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
-#define POWER_GRID_MODEL_COMMON_POWER_GRID_MODEL_HPP
+#ifndef POWER_GRID_MODEL_COMMON_COMMON_HPP
+#define POWER_GRID_MODEL_COMMON_COMMON_HPP
 
 #include <complex>
 #include <cstddef>

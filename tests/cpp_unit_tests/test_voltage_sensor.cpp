@@ -4,7 +4,7 @@
 
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/calculation_parameters.hpp>
-#include <power_grid_model/common/power_grid_model.hpp>
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/sensor.hpp>
 #include <power_grid_model/component/voltage_sensor.hpp>

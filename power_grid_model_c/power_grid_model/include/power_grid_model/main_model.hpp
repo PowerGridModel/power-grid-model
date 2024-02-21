@@ -15,8 +15,8 @@
 #include "topology.hpp"
 
 // common
+#include "common/common.hpp"
 #include "common/exception.hpp"
-#include "common/power_grid_model.hpp"
 #include "common/timer.hpp"
 
 // component include

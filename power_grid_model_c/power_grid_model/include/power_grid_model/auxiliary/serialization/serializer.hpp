@@ -6,8 +6,8 @@
 #ifndef POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_SERIALIZER_HPP
 #define POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_SERIALIZER_HPP
 
+#include "../../common/common.hpp"
 #include "../../common/exception.hpp"
-#include "../../common/power_grid_model.hpp"
 #include "../dataset_handler.hpp"
 #include "../meta_data.hpp"
 #include "../meta_data_gen.hpp"

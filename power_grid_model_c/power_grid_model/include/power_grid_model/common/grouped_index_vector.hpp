@@ -6,8 +6,8 @@
 #ifndef POWER_GRID_MODEL_COMMON_GROUPED_INDEX_VECTOR_HPP
 #define POWER_GRID_MODEL_COMMON_GROUPED_INDEX_VECTOR_HPP
 
+#include "common.hpp"
 #include "counting_iterator.hpp"
-#include "power_grid_model.hpp"
 #include "typing.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>

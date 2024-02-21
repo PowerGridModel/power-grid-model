@@ -7,7 +7,7 @@
 #define POWER_GRID_MODEL_COMMON_TIMER_HPP
 
 #include "calculation_info.hpp"
-#include "power_grid_model.hpp"
+#include "common.hpp"
 
 #include <chrono>
 #include <iomanip>

@@ -9,8 +9,8 @@
 #include "sensor.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
 #include "../common/exception.hpp"
-#include "../common/power_grid_model.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <limits>

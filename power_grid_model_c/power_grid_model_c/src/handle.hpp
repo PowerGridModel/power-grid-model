@@ -15,7 +15,7 @@
 #include "power_grid_model_c/handle.h"
 
 #include <power_grid_model/batch_parameter.hpp>
-#include <power_grid_model/common/power_grid_model.hpp>
+#include <power_grid_model/common/common.hpp>
 
 #include <string_view>
 

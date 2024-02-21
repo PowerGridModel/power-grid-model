@@ -6,8 +6,8 @@
 #ifndef POWER_GRID_MODEL_COMMON_EXCEPTION_HPP
 #define POWER_GRID_MODEL_COMMON_EXCEPTION_HPP
 
+#include "common.hpp"
 #include "enum.hpp"
-#include "power_grid_model.hpp"
 
 #include <exception>
 #include <string>

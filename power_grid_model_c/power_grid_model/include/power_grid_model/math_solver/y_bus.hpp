@@ -7,7 +7,7 @@
 #define POWER_GRID_MODEL_MATH_SOLVER_Y_BUS_HPP
 
 #include "../calculation_parameters.hpp"
-#include "../common/power_grid_model.hpp"
+#include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>

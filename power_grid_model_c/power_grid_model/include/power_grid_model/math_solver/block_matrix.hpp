@@ -9,7 +9,7 @@
 // define block matrix entry for several calculations
 // the name of block matrix getter can be overwritten by sub matrix
 
-#include "../common/power_grid_model.hpp"
+#include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model::math_solver {
