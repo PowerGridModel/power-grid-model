@@ -11,8 +11,8 @@
 
 #include "meta_data.hpp"
 
-#include "../common/enum.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
