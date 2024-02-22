@@ -699,9 +699,9 @@ def test_power_sigma_or_p_q_sigma():
     power_sensor["measured_terminal_type"] = [MeasuredTerminalType.branch_from, MeasuredTerminalType.load]
     power_sensor["p_measured"] = [1e6, -1e6]
     power_sensor["q_measured"] = [1e6, -1e6]
-    power_sensor["power_sigma"] = [NaN, 1e9]  # trust P for sensor 6
-    power_sensor["p_sigma"] = [1e4, NaN]  # trust P for sensor 6
-    power_sensor["q_sigma"] = [1e9, NaN]  # trust Q for sensor 7
+    power_sensor["power_sigma"] = [np.nan, 1e9]
+    power_sensor["p_sigma"] = [1e4, np.nan]
+    power_sensor["q_sigma"] = [1e9, np.nan]
 
     # all
     input_data = {

@@ -221,18 +221,21 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     return list(chain(*errors))
 
 
-def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str, required_list: Dict[str, List[str]]) -> None:
+def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
-    and valid but `power_sigma` is missing.
+    and valid but `power_sigma` is missing. The field `power_sigma` is set to 1 in this case.
+    The argument is that when both `p_sigma` and `q_sigma` are valid, the value pf `power_sigma`
+    is always ignored.
     """
     if sensor in data and isinstance(data[sensor], np.ndarray):
         sensor_data = data[sensor]
-        if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
-            p_sigma = sensor_data["p_sigma"]
-            q_sigma = sensor_data["q_sigma"]
-            if not (np.isnan(p_sigma).any() or np.isnan(q_sigma).any()):
-                required_list[sensor].remove("power_sigma")
+        for i in range(len(sensor_data)):
+            if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
+                p_sigma = sensor_data["p_sigma"][i]
+                q_sigma = sensor_data["q_sigma"][i]
+                if not (np.isnan(p_sigma).any() or np.isnan(q_sigma).any()):
+                    data[sensor]["power_sigma"][i] = 1  # Set to 1 if both p_sigma and q_sigma are valid
 
 
 def validate_required_values(
@@ -346,11 +349,8 @@ def validate_required_values(
         required["shunt"] += ["g0", "b0"]
 
     # Allow missing `power_sigma` of both `p_sigma` and `q_sigma` are present
-    process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
-    process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
-    # ToDo:
-    # Instead of removing the `power_sigma` key from `required`, we need to make it a list of length data.shape[0]
-    # Within the list, the `power_sigma` and `p_sigma` and `q_sigma` are marked independently
+    process_power_sigma_and_p_q_sigma(data, "sym_power_sensor")
+    process_power_sigma_and_p_q_sigma(data, "asym_power_sensor")
 
     return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
 
