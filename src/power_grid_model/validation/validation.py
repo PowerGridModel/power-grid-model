@@ -230,12 +230,17 @@ def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
     """
     if sensor in data and isinstance(data[sensor], np.ndarray):
         sensor_data = data[sensor]
-        for i in range(len(sensor_data)):
-            if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
-                p_sigma = sensor_data["p_sigma"][i]
-                q_sigma = sensor_data["q_sigma"][i]
-                if not (np.isnan(p_sigma).any() or np.isnan(q_sigma).any()):
-                    data[sensor]["power_sigma"][i] = 1  # Set to 1 if both p_sigma and q_sigma are valid
+        if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
+            p_sigma = sensor_data["p_sigma"]
+            q_sigma = sensor_data["q_sigma"]
+            power_sigma = sensor_data["power_sigma"]
+
+            mask = np.logical_not(np.logical_or(np.isnan(p_sigma), np.isnan(q_sigma)))
+            if power_sigma.ndim < mask.ndim:
+                mask = np.any(mask, axis=tuple(range(power_sigma.ndim, mask.ndim)))
+            power_sigma[mask] = np.sqrt(np.sum(np.square(p_sigma[mask]) + np.square(q_sigma[mask]), axis=-1))
+
+            data[sensor]["power_sigma"] = power_sigma
 
 
 def validate_required_values(

@@ -670,13 +670,13 @@ def test_power_sigma_or_p_q_sigma():
     line["i_n"] = [1000.0]
 
     # load
-    sym_load = initialize_array("input", "sym_load", 1)
-    sym_load["id"] = [4]
-    sym_load["node"] = [3]
-    sym_load["status"] = [1]
-    sym_load["type"] = [LoadGenType.const_power]
-    sym_load["p_specified"] = [1e6]
-    sym_load["q_specified"] = [-1e6]
+    sym_load = initialize_array("input", "sym_load", 2)
+    sym_load["id"] = [4, 9]
+    sym_load["node"] = [3, 0]
+    sym_load["status"] = [1, 1]
+    sym_load["type"] = [LoadGenType.const_power, LoadGenType.const_power]
+    sym_load["p_specified"] = [1e6, 1e6]
+    sym_load["q_specified"] = [-1e6, -1e6]
 
     # source
     source = initialize_array("input", "source", 1)
@@ -693,15 +693,19 @@ def test_power_sigma_or_p_q_sigma():
     voltage_sensor["u_measured"] = [10.5e3]
 
     # power sensor
-    power_sensor = initialize_array("input", "sym_power_sensor", 2)
-    power_sensor["id"] = [6, 7]
-    power_sensor["measured_object"] = [2, 4]
-    power_sensor["measured_terminal_type"] = [MeasuredTerminalType.branch_from, MeasuredTerminalType.load]
-    power_sensor["p_measured"] = [1e6, -1e6]
-    power_sensor["q_measured"] = [1e6, -1e6]
-    power_sensor["power_sigma"] = [np.nan, 1e9]
-    power_sensor["p_sigma"] = [1e4, np.nan]
-    power_sensor["q_sigma"] = [1e9, np.nan]
+    sym_power_sensor = initialize_array("input", "sym_power_sensor", 3)
+    sym_power_sensor["id"] = [6, 7, 8]
+    sym_power_sensor["measured_object"] = [2, 4, 9]
+    sym_power_sensor["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.load,
+        MeasuredTerminalType.load,
+    ]
+    sym_power_sensor["p_measured"] = [1e6, -1e6, -1e6]
+    sym_power_sensor["q_measured"] = [1e6, -1e6, -1e6]
+    sym_power_sensor["power_sigma"] = [np.nan, 1e9, 1e9]
+    sym_power_sensor["p_sigma"] = [1e4, np.nan, 1e4]
+    sym_power_sensor["q_sigma"] = [1e9, np.nan, 1e9]
 
     # all
     input_data = {
@@ -710,7 +714,7 @@ def test_power_sigma_or_p_q_sigma():
         "sym_load": sym_load,
         "source": source,
         "sym_voltage_sensor": voltage_sensor,
-        "sym_power_sensor": power_sensor,
+        "sym_power_sensor": sym_power_sensor,
     }
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
