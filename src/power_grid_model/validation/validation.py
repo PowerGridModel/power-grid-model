@@ -10,7 +10,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 """
 import copy
 from itertools import chain
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 
@@ -221,7 +221,9 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     return list(chain(*errors))
 
 
-def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
+def process_power_sigma_and_p_q_sigma(
+    data: SingleDataset, sensor: str, required_list: Dict[str, List[Union[str, List[str]]]]
+) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
     and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
@@ -230,6 +232,7 @@ def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
     """
     if sensor in data and isinstance(data[sensor], np.ndarray):
         sensor_data = data[sensor]
+        sensor_mask = required_list[sensor]
         if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
             p_sigma = sensor_data["p_sigma"]
             q_sigma = sensor_data["q_sigma"]
@@ -238,9 +241,11 @@ def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
             mask = np.logical_not(np.logical_or(np.isnan(p_sigma), np.isnan(q_sigma)))
             if power_sigma.ndim < mask.ndim:
                 mask = np.any(mask, axis=tuple(range(power_sigma.ndim, mask.ndim)))
-            power_sigma[mask] = np.sqrt(np.sum(np.square(p_sigma[mask]) + np.square(q_sigma[mask]), axis=-1))
 
-            data[sensor]["power_sigma"] = power_sigma
+            for sublist, should_remove in zip(sensor_mask, mask):
+                if should_remove and "power_sigma" in sublist:
+                    sublist = cast(List[str], sublist)
+                    sublist.remove("power_sigma")
 
 
 def validate_required_values(
@@ -258,8 +263,8 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required = {"base": ["id"]}
-
+    required: Dict[str, List[Union[str, List[str]]]] = {"base": ["id"]}
+    
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
 
@@ -335,17 +340,27 @@ def validate_required_values(
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
-    required["sym_power_sensor"] = required["power_sensor"].copy()
-    required["asym_power_sensor"] = required["power_sensor"].copy()
+    # Different requirements for individual sensors. Avoid shallow copy.
+    try:
+        required["sym_power_sensor"] = [
+            required["power_sensor"].copy() for _ in range(data["sym_power_sensor"].shape[0])
+        ]
+    except KeyError:
+        pass
+    try:
+        required["asym_power_sensor"] = [
+            required["power_sensor"].copy() for _ in range(data["asym_power_sensor"].shape[0])
+        ]
+    except KeyError:
+        pass
 
-    _data = data  # proxy
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
     asym_sc = False
     if calculation_type is None or calculation_type == CalculationType.short_circuit:
         required["fault"] += ["status", "fault_type"]
-        if "fault" in _data:
-            for elem in _data["fault"]["fault_type"]:
+        if "fault" in data:
+            for elem in data["fault"]["fault_type"]:
                 if elem not in (FaultType.three_phase, FaultType.nan):
                     asym_sc = True
                     break
@@ -354,11 +369,25 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    # Allow missing `power_sigma` of both `p_sigma` and `q_sigma` are present
-    process_power_sigma_and_p_q_sigma(_data, "sym_power_sensor")
-    process_power_sigma_and_p_q_sigma(_data, "asym_power_sensor")
+    # Mark `power_sigma` for each power_sensor based on the state of `p_sigma` and `q_sigma`
+    process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
+    process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
 
-    return list(chain(*(none_missing(_data, component, required.get(component, [])) for component in _data)))
+    return list(
+        chain(
+            *(
+                none_missing(data, component, item, index)
+                for component in data
+                for index, item in enumerate(
+                    (sublist for sublist in required.get(component, []))
+                    if isinstance(required.get(component, []), list)
+                    and all(isinstance(i, list) for i in required.get(component, []))
+                    else [required.get(component, [])]
+                )
+                if data.get(component) is not None and index < len(data.get(component))
+            )
+        )
+    )
 
 
 def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> List[ValidationError]:
