@@ -668,7 +668,7 @@ def all_finite(data: SingleDataset, exceptions: Optional[Dict[str, List[str]]] =
 
 
 def none_missing(
-    data: SingleDataset, component: str, fields: Union[str, List[str], List[List[str]]], index: int = 0
+    data: SingleDataset, component: str, fields: Union[List[Union[str, List[str]]], str, List[str]], index: int = 0
 ) -> List[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.

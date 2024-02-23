@@ -10,7 +10,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 """
 import copy
 from itertools import chain
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Sized, Union, cast
 
 import numpy as np
 
@@ -264,7 +264,7 @@ def validate_required_values(
     """
     # Base
     required: Dict[str, List[Union[str, List[str]]]] = {"base": ["id"]}
-    
+
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
 
@@ -368,11 +368,11 @@ def validate_required_values(
     if not symmetric or asym_sc:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
-
+    
     # Mark `power_sigma` for each power_sensor based on the state of `p_sigma` and `q_sigma`
     process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
     process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
-
+    
     return list(
         chain(
             *(
@@ -382,9 +382,10 @@ def validate_required_values(
                     (sublist for sublist in required.get(component, []))
                     if isinstance(required.get(component, []), list)
                     and all(isinstance(i, list) for i in required.get(component, []))
-                    else [required.get(component, [])]
+                    else [required[component]]
                 )
-                if data.get(component) is not None and index < len(data.get(component))
+                if data[component] is not None and isinstance(data[component], Sized)
+                and index < len(data[component])
             )
         )
     )
