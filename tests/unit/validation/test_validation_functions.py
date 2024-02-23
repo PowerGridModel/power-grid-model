@@ -9,7 +9,6 @@ from unittest.mock import ANY, MagicMock, patch
 import numpy as np
 import pytest
 
-# from power_grid_model import PowerGridModel, LoadGenType, MeasuredTerminalType, initialize_array, CalculationType, CalculationMethod
 from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation import assert_valid_input_data

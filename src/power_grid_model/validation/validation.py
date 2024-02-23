@@ -224,9 +224,9 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
 def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
-    and valid but `power_sigma` is missing. The field `power_sigma` is set to 1 in this case.
-    The argument is that when both `p_sigma` and `q_sigma` are valid, the value pf `power_sigma`
-    is always ignored.
+    and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
+    `p_sigma` and `q_sigma`in this case.
+    However, note that this value is eventually not used in the calculation.
     """
     if sensor in data and isinstance(data[sensor], np.ndarray):
         sensor_data = data[sensor]
