@@ -616,6 +616,7 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 | `q_sigma`    | `RealValueInput` | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; | `> 0` |
 
 Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
+
 | `power_sigma` | `p_sigma` | `q_sigma` |  result  |
 |:-------------:|:---------:|:---------:|:--------:|
 |       x       |      x    |     x     | &#10004; |

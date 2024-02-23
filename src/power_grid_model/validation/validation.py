@@ -225,7 +225,7 @@ def process_power_sigma_and_p_q_sigma(data: SingleDataset, sensor: str) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
     and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
-    `p_sigma` and `q_sigma`in this case.
+    `p_sigma` and `q_sigma`in this case. Happens only on proxy data (not the original data).
     However, note that this value is eventually not used in the calculation.
     """
     if sensor in data and isinstance(data[sensor], np.ndarray):
@@ -338,13 +338,14 @@ def validate_required_values(
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
 
+    _data = data # proxy
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
     asym_sc = False
     if calculation_type is None or calculation_type == CalculationType.short_circuit:
         required["fault"] += ["status", "fault_type"]
-        if "fault" in data:
-            for elem in data["fault"]["fault_type"]:
+        if "fault" in _data:
+            for elem in _data["fault"]["fault_type"]:
                 if elem not in (FaultType.three_phase, FaultType.nan):
                     asym_sc = True
                     break
@@ -354,10 +355,10 @@ def validate_required_values(
         required["shunt"] += ["g0", "b0"]
 
     # Allow missing `power_sigma` of both `p_sigma` and `q_sigma` are present
-    process_power_sigma_and_p_q_sigma(data, "sym_power_sensor")
-    process_power_sigma_and_p_q_sigma(data, "asym_power_sensor")
+    process_power_sigma_and_p_q_sigma(_data, "sym_power_sensor")
+    process_power_sigma_and_p_q_sigma(_data, "asym_power_sensor")
 
-    return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
+    return list(chain(*(none_missing(_data, component, required.get(component, [])) for component in _data)))
 
 
 def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> List[ValidationError]:
