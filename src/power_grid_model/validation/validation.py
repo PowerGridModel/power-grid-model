@@ -338,7 +338,7 @@ def validate_required_values(
     required["sym_power_sensor"] = required["power_sensor"].copy()
     required["asym_power_sensor"] = required["power_sensor"].copy()
 
-    _data = data # proxy
+    _data = data  # proxy
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
     asym_sc = False
