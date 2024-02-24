@@ -343,13 +343,13 @@ def validate_required_values(
     # Different requirements for individual sensors. Avoid shallow copy.
     try:
         required["sym_power_sensor"] = [
-            required["power_sensor"].copy() for _ in range(data["sym_power_sensor"].shape[0])
+            required["power_sensor"].copy() for _ in range(data["sym_power_sensor"].shape[0])  # type: ignore
         ]
     except KeyError:
         pass
     try:
         required["asym_power_sensor"] = [
-            required["power_sensor"].copy() for _ in range(data["asym_power_sensor"].shape[0])
+            required["power_sensor"].copy() for _ in range(data["asym_power_sensor"].shape[0])  # type: ignore
         ]
     except KeyError:
         pass
