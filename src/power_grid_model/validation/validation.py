@@ -368,11 +368,11 @@ def validate_required_values(
     if not symmetric or asym_sc:
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
-    
+
     # Mark `power_sigma` for each power_sensor based on the state of `p_sigma` and `q_sigma`
     process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
     process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
-    
+
     return list(
         chain(
             *(
@@ -384,8 +384,7 @@ def validate_required_values(
                     and all(isinstance(i, list) for i in required.get(component, []))
                     else [required[component]]
                 )
-                if data[component] is not None and isinstance(data[component], Sized)
-                and index < len(data[component])
+                if data[component] is not None and isinstance(data[component], Sized) and index < len(data[component])
             )
         )
     )
