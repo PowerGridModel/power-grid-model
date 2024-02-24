@@ -230,22 +230,32 @@ def process_power_sigma_and_p_q_sigma(
     `p_sigma` and `q_sigma`in this case. Happens only on proxy data (not the original data).
     However, note that this value is eventually not used in the calculation.
     """
-    if sensor in data and isinstance(data[sensor], np.ndarray):
+
+    def _check_sensor_in_data(_data, _sensor):
+        return _sensor in _data and isinstance(_data[_sensor], np.ndarray)
+
+    def _contains_p_q_sigma(_sensor_data):
+        return "p_sigma" in _sensor_data.dtype.names and "q_sigma" in _sensor_data.dtype.names
+
+    def _process_power_sigma_in_list(_sensor_mask, _power_sigma, _p_sigma, _q_sigma):
+        _mask = np.logical_not(np.logical_or(np.isnan(_p_sigma), np.isnan(_q_sigma)))
+        if _power_sigma.ndim < _mask.ndim:
+            _mask = np.any(_mask, axis=tuple(range(_power_sigma.ndim, _mask.ndim)))
+
+        for sublist, should_remove in zip(_sensor_mask, _mask):
+            if should_remove and "power_sigma" in sublist:
+                sublist = cast(List[str], sublist)
+                sublist.remove("power_sigma")
+
+    if _check_sensor_in_data(data, sensor):
         sensor_data = data[sensor]
         sensor_mask = required_list[sensor]
-        if "p_sigma" in sensor_data.dtype.names and "q_sigma" in sensor_data.dtype.names:
+        if _contains_p_q_sigma(sensor_data):
             p_sigma = sensor_data["p_sigma"]
             q_sigma = sensor_data["q_sigma"]
             power_sigma = sensor_data["power_sigma"]
 
-            mask = np.logical_not(np.logical_or(np.isnan(p_sigma), np.isnan(q_sigma)))
-            if power_sigma.ndim < mask.ndim:
-                mask = np.any(mask, axis=tuple(range(power_sigma.ndim, mask.ndim)))
-
-            for sublist, should_remove in zip(sensor_mask, mask):
-                if should_remove and "power_sigma" in sublist:
-                    sublist = cast(List[str], sublist)
-                    sublist.remove("power_sigma")
+            _process_power_sigma_in_list(sensor_mask, power_sigma, p_sigma, q_sigma)
 
 
 def validate_required_values(

@@ -690,20 +690,15 @@ def none_missing(
         if isinstance(field, list):
             field = field[0]
         nan = nan_type(component, field)
-        invalid = None
         if np.isnan(nan):
             invalid = np.isnan(data[component][field][index])
         else:
             invalid = np.equal(data[component][field][index], nan)
 
-        if invalid is not None and invalid.any():
+        if invalid.any():
             if isinstance(invalid, np.ndarray):
                 invalid = np.any(invalid)
-            ids = []
-            if isinstance(data[component][field], list) and len(data[component][field]) > index:
-                ids = data[component]["id"][index][invalid].flatten().tolist()
-            else:
-                ids = data[component]["id"][invalid].flatten().tolist()
+            ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
     return errors
 
