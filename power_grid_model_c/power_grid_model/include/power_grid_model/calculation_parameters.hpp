@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
-#define POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
 
 #include "common/common.hpp"
 #include "common/enum.hpp"
@@ -367,5 +365,3 @@ struct UpdateChange {
 };
 
 } // namespace power_grid_model
-
-#endif

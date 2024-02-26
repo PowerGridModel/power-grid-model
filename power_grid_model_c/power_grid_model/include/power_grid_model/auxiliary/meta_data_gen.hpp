@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_META_DATA_GEN_HPP
-#define POWER_GRID_MODEL_META_DATA_GEN_HPP
 
 #include "input.hpp"
 #include "meta_data.hpp"
@@ -58,5 +56,3 @@ constexpr MetaData meta_data = get_meta_data<AllComponents, // all components li
 constexpr MetaData meta_data = meta_data_gen::meta_data;
 
 } // namespace power_grid_model::meta_data
-
-#endif

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_SHORT_CIRCUIT_SOLVER_HPP
 
 #include "common_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
@@ -446,5 +444,3 @@ template class ShortCircuitSolver<false>;
 using short_circuit::ShortCircuitSolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

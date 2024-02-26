@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_LU_SOLVER_HPP
 
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
@@ -333,5 +331,3 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
 };
 
 } // namespace power_grid_model::math_solver
-
-#endif

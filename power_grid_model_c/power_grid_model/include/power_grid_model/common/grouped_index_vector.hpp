@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_GROUPED_INDEX_VECTOR_HPP
-#define POWER_GRID_MODEL_COMMON_GROUPED_INDEX_VECTOR_HPP
 
 #include "common.hpp"
 #include "counting_iterator.hpp"
@@ -282,5 +280,3 @@ inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
 }
 
 } // namespace power_grid_model
-
-#endif

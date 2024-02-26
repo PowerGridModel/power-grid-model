@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_DESERIALIZER_HPP
-#define POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_DESERIALIZER_HPP
 
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
@@ -844,5 +842,3 @@ class Deserializer {
 };
 
 } // namespace power_grid_model::meta_data
-
-#endif

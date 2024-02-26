@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_DATASET_HANDLER_HPP
-#define POWER_GRID_MODEL_AUXILIARY_DATASET_HANDLER_HPP
 
 // handle dataset and buffer related stuff
 
@@ -202,5 +200,3 @@ using MutableDatasetHandler = DatasetHandler<true, false>;
 using WritableDatasetHandler = DatasetHandler<true, true>;
 
 } // namespace power_grid_model::meta_data
-
-#endif

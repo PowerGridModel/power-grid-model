@@ -4,8 +4,6 @@
 
 // Check if the name means anything
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 
 /*
 Iterative Power Flow
@@ -198,5 +196,3 @@ template class IterativeCurrentPFSolver<false>;
 using iterative_current_pf::IterativeCurrentPFSolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

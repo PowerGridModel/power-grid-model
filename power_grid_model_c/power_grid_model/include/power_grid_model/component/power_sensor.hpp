@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_POWER_SENSOR_HPP
-#define POWER_GRID_MODEL_COMPONENT_POWER_SENSOR_HPP
 
 #include "sensor.hpp"
 
@@ -181,5 +179,3 @@ using SymPowerSensor = PowerSensor<true>;
 using AsymPowerSensor = PowerSensor<false>;
 
 } // namespace power_grid_model
-
-#endif

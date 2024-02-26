@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_META_GEN_UPDATE_HPP
 
 #include "gen_getters.hpp" // NOLINT
 
@@ -347,5 +345,4 @@ struct get_component_nan<FaultUpdate> {
 
 } // namespace power_grid_model::meta_data
 
-#endif
 // clang-format on

@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_OUTPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_OUTPUT_HPP
 
 #include "meta_data.hpp"
 
@@ -220,5 +218,4 @@ struct SensorShortCircuitOutput {
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

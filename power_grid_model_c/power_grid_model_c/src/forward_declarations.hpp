@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_C_FORWARD_DECLARATION_HPP
-#define POWER_GRID_MODEL_C_FORWARD_DECLARATION_HPP
 
 #ifndef PGM_DLL_EXPORTS
 #define PGM_DLL_EXPORTS
@@ -37,5 +35,3 @@ using PGM_ConstDataset = power_grid_model::meta_data::DatasetHandler<false, fals
 using PGM_MutableDataset = power_grid_model::meta_data::DatasetHandler<true, false>;
 using PGM_WritableDataset = power_grid_model::meta_data::DatasetHandler<true, true>;
 using PGM_DatasetInfo = power_grid_model::meta_data::DatasetInfo;
-
-#endif

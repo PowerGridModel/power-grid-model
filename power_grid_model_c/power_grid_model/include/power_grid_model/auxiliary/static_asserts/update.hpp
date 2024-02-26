@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_UPDATE_HPP
 
 #include "../update.hpp" // NOLINT
 
@@ -207,5 +205,4 @@ static_assert(offsetof(FaultUpdate, id) == offsetof(BaseUpdate, id));
 
 } // namespace power_grid_model::test
 
-#endif
 // clang-format on

@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_INPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_INPUT_HPP
 
 #include "meta_data.hpp"
 
@@ -392,5 +390,4 @@ struct FaultInput {
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

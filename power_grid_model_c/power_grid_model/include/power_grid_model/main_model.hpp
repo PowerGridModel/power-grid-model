@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_MODEL_HPP
-#define POWER_GRID_MODEL_MAIN_MODEL_HPP
 
 // main model class
 
@@ -1306,5 +1304,3 @@ using MainModel =
                   AllComponents>;
 
 } // namespace power_grid_model
-
-#endif

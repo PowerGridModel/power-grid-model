@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_INDEX_MAPPING_HPP
-#define POWER_GRID_MODEL_INDEX_MAPPING_HPP
 
 #include "common/common.hpp"
 #include "common/grouped_index_vector.hpp"
@@ -139,5 +137,3 @@ inline DenseIndexMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx co
 }
 
 } // namespace power_grid_model
-
-#endif

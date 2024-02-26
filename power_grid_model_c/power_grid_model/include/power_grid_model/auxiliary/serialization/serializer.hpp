@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_SERIALIZER_HPP
-#define POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_SERIALIZER_HPP
 
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
@@ -510,5 +508,3 @@ class Serializer {
 };
 
 } // namespace power_grid_model::meta_data
-
-#endif

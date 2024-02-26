@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
 
 // iterative linear state estimation solver
 
@@ -357,5 +355,3 @@ template class IterativeLinearSESolver<false>;
 using iterative_linear_se::IterativeLinearSESolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

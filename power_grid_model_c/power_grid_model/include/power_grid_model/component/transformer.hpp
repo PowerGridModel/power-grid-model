@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_TRANSFORMER_HPP
-#define POWER_GRID_MODEL_COMPONENT_TRANSFORMER_HPP
 
 #include "branch.hpp"
 #include "transformer_utils.hpp"
@@ -263,5 +261,3 @@ class Transformer : public Branch {
 };
 
 } // namespace power_grid_model
-
-#endif

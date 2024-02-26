@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_THREE_PHASE_TENSOR_HPP
-#define POWER_GRID_MODEL_COMMON_THREE_PHASE_TENSOR_HPP
 
 #include "common.hpp"
 
@@ -383,5 +381,3 @@ template <bool sym> using RealTensorVector = std::vector<RealTensor<sym>>;
 template <bool sym> using ComplexTensorVector = std::vector<ComplexTensor<sym>>;
 
 } // namespace power_grid_model
-
-#endif

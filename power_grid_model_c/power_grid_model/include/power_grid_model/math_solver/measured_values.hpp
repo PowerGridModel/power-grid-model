@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_MEASURED_VALUES_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_MEASURED_VALUES_HPP
 
 /*
 Collect all measured Values
@@ -609,5 +607,3 @@ template <bool sym> class MeasuredValues {
 template class MeasuredValues<true>;
 template class MeasuredValues<false>;
 } // namespace power_grid_model::math_solver
-
-#endif

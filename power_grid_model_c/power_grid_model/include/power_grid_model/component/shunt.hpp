@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_SHUNT_HPP
-#define POWER_GRID_MODEL_COMPONENT_SHUNT_HPP
 
 #include "appliance.hpp"
 #include "base.hpp"
@@ -118,5 +116,3 @@ class Shunt : public Appliance {
 };
 
 } // namespace power_grid_model
-
-#endif

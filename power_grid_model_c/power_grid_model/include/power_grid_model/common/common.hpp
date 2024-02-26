@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_COMMON_HPP
-#define POWER_GRID_MODEL_COMMON_COMMON_HPP
 
 #include <complex>
 #include <cstddef>
@@ -71,5 +69,3 @@ using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
 
 } // namespace power_grid_model
-
-#endif

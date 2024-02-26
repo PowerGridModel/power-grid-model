@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
-#define POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 
 #include "base.hpp"
 
@@ -219,5 +217,3 @@ class Fault final : public Base {
 };
 
 } // namespace power_grid_model
-
-#endif

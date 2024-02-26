@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_SOURCE_HPP
-#define POWER_GRID_MODEL_COMPONENT_SOURCE_HPP
 
 #include "appliance.hpp"
 #include "base.hpp"
@@ -138,5 +136,3 @@ class Source : public Appliance {
 };
 
 } // namespace power_grid_model
-
-#endif

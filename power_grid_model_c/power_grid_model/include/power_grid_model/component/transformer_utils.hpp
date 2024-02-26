@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_TRANSFORMER_UTILS_HPP
-#define POWER_GRID_MODEL_COMPONENT_TRANSFORMER_UTILS_HPP
 
 #include "../common/enum.hpp"
 
@@ -45,5 +43,3 @@ constexpr bool is_valid_clock(IntS clock, WindingType winding_from, WindingType 
 // add tap
 
 } // namespace power_grid_model
-
-#endif

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_COUNTING_ITERATOR_HPP
-#define POWER_GRID_MODEL_COMMON_COUNTING_ITERATOR_HPP
 
 #include "common.hpp"
 
@@ -16,5 +14,3 @@ namespace power_grid_model {
 using IdxCount = boost::counting_iterator<Idx>;
 
 } // namespace power_grid_model
-
-#endif

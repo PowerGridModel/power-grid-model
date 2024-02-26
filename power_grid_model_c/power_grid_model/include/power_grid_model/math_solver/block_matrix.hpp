@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_BLOCK_MATRIX_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_BLOCK_MATRIX_HPP
 
 // define block matrix entry for several calculations
 // the name of block matrix getter can be overwritten by sub matrix
@@ -91,5 +89,3 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
 };
 
 } // namespace power_grid_model::math_solver
-
-#endif

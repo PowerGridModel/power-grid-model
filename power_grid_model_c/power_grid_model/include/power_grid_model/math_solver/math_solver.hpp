@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
 
 #include "iterative_current_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
@@ -184,5 +182,3 @@ template class MathSolver<false>;
 using math_solver::MathSolver;
 
 } // namespace power_grid_model
-
-#endif

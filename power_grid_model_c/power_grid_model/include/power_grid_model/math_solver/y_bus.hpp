@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_Y_BUS_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_Y_BUS_HPP
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
@@ -552,5 +550,3 @@ template class YBus<false>;
 using math_solver::YBus;
 
 } // namespace power_grid_model
-
-#endif
