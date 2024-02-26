@@ -6,15 +6,14 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_INPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_META_GEN_INPUT_HPP
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../enum.hpp"               // NOLINT
-#include "../../power_grid_model.hpp"   // NOLINT
-#include "../../three_phase_tensor.hpp" // NOLINT
-#include "../meta_data.hpp"             // NOLINT
+#include "../../common/common.hpp"             // NOLINT
+#include "../../common/enum.hpp"               // NOLINT
+#include "../../common/three_phase_tensor.hpp" // NOLINT
+#include "../meta_data.hpp"                    // NOLINT
+
 #include "../input.hpp" // NOLINT
 
 
@@ -712,5 +711,4 @@ struct get_component_nan<FaultInput> {
 
 } // namespace power_grid_model::meta_data
 
-#endif
 // clang-format on

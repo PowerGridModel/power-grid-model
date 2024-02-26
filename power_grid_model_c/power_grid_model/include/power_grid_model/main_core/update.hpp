@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_UPDATE_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_UPDATE_HPP
 
 #include "state.hpp"
 
@@ -144,5 +142,3 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
 }
 
 } // namespace power_grid_model::main_core
-
-#endif

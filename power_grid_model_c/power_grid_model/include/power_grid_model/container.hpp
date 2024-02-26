@@ -3,19 +3,19 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_CONTAINER_HPP
-#define POWER_GRID_MODEL_CONTAINER_HPP
 
 // container for multiple components
 
-#include "exception.hpp"
-#include "power_grid_model.hpp"
+#include "common/common.hpp"
+#include "common/exception.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range.hpp>
 
+#include <array>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <unordered_map>
 
 namespace power_grid_model {
@@ -327,5 +327,3 @@ template <class... T> using ExtraRetrievableTypes = container_impl::ExtraRetriev
 template <class... T> using Container = typename container_impl::container_trait<T...>::type;
 
 } // namespace power_grid_model
-
-#endif

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_NODE_HPP
-#define POWER_GRID_MODEL_COMPONENT_NODE_HPP
 
 #include "base.hpp"
 
@@ -12,8 +10,8 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -78,5 +76,3 @@ class Node final : public Base {
 };
 
 } // namespace power_grid_model
-
-#endif
