@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
-#define POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
 
-#include "enum.hpp"
-#include "grouped_index_vector.hpp"
-#include "power_grid_model.hpp"
-#include "three_phase_tensor.hpp"
+#include "common/common.hpp"
+#include "common/enum.hpp"
+#include "common/grouped_index_vector.hpp"
+#include "common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -367,5 +365,3 @@ struct UpdateChange {
 };
 
 } // namespace power_grid_model
-
-#endif

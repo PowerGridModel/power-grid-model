@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_C_OPTIONS_HPP
-#define POWER_GRID_MODEL_C_OPTIONS_HPP
 
 #ifndef PGM_DLL_EXPORTS
 #define PGM_DLL_EXPORTS
@@ -14,7 +12,7 @@
 
 #include "power_grid_model_c/options.h"
 
-#include <power_grid_model/power_grid_model.hpp>
+#include <power_grid_model/common/common.hpp>
 
 // options
 struct PGM_Options {
@@ -28,5 +26,3 @@ struct PGM_Options {
     Idx short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
     Idx experimental_features{PGM_experimental_features_disabled};
 };
-
-#endif

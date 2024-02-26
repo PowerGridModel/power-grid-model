@@ -3,35 +3,14 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
-#define POWER_GRID_MODEL_POWER_GRID_MODEL_HPP
 
-// main header for the model
-#include <boost/iterator/counting_iterator.hpp>
-
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <chrono>
-#include <cmath>
 #include <complex>
-#include <concepts>
 #include <cstddef>
-#include <functional>
+#include <cstdint>
 #include <limits>
-#include <map>
-#include <memory>
 #include <numbers>
-#include <numeric>
-#include <string>
-#include <tuple>
 #include <type_traits>
-#include <utility>
-#include <variant>
 #include <vector>
-#ifdef POWER_GRID_MODEL_CPP_BENCHMARK
-#include <new>
-#endif
 
 namespace power_grid_model {
 
@@ -42,9 +21,6 @@ using Idx = int64_t;
 using IdxVector = std::vector<Idx>;
 
 using IntS = int8_t;
-
-// couting iterator
-using IdxCount = boost::counting_iterator<Idx>;
 
 // struct of indexing to sub modules
 struct Idx2D {
@@ -87,32 +63,9 @@ constexpr double default_source_sk = 1e10; // 10 GVA 10^10
 constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
 
-// calculation info
-#ifdef POWER_GRID_MODEL_CPP_BENCHMARK
-#if defined(__cpp_lib_hardware_interference_size)
-constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
-#else
-constexpr size_t cache_line_size = 64;
-#endif
-class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double, std::less<>> {};
-#else
-using CalculationInfo = std::map<std::string, double, std::less<>>;
-#endif
-
-using Clock = std::chrono::high_resolution_clock;
-using Duration = std::chrono::duration<double>;
-
 // some usual vector
 using DoubleVector = std::vector<double>;
 using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
 
-// component list
-template <class... T> struct ComponentList {};
-
-// batch parameter
-struct BatchParameter {};
-
 } // namespace power_grid_model
-
-#endif

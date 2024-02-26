@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_OUTPUT_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_OUTPUT_HPP
 
 #include "state.hpp"
 
@@ -418,5 +416,3 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 } // namespace power_grid_model::main_core
-
-#endif

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_PF_SOLVER_HPP
 
 /*
  * Class to house common functions of newton raphson and iterative current method
@@ -15,10 +13,10 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
@@ -121,5 +119,3 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
 };
 
 } // namespace power_grid_model::math_solver
-
-#endif

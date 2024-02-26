@@ -6,14 +6,12 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_{{ include_guard }}_HPP
-#define POWER_GRID_MODEL_AUXILIARY_{{ include_guard }}_HPP
 
 #include "meta_data.hpp"
 
-#include "../enum.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -41,5 +39,4 @@ using Asym{{ attribute_class.name }} = {{ attribute_class.name }}<false>;
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

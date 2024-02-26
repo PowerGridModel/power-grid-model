@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_SOLVER_FUNCTIONS_HPP
-#define POWER_GRID_MODEL_COMMON_SOLVER_FUNCTIONS_HPP
 
 #include "measured_values.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model::math_solver::detail {
 
@@ -110,5 +108,3 @@ inline void calculate_se_result(YBus<sym> const& y_bus, MeasuredValues<sym> cons
 }
 
 } // namespace power_grid_model::math_solver::detail
-
-#endif

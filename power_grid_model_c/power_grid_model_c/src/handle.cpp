@@ -9,6 +9,8 @@
 
 #include "handle.hpp"
 
+#include <algorithm>
+
 namespace {
 using namespace power_grid_model;
 } // namespace

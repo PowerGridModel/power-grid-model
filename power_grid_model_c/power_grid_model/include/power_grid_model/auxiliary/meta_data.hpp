@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_META_DATA_HPP
-#define POWER_GRID_MODEL_META_DATA_HPP
 
-#include "../enum.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 #include <bit>
 #include <span>
@@ -191,5 +189,3 @@ struct MetaData {
 constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
 } // namespace power_grid_model::meta_data
-
-#endif

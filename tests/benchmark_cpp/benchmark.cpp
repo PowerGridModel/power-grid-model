@@ -4,8 +4,8 @@
 
 #include "fictional_grid_generator.hpp"
 
+#include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
-#include <power_grid_model/timer.hpp>
 
 #include <iostream>
 #include <random>
