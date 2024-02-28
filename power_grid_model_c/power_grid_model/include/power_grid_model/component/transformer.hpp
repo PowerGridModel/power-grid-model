@@ -70,8 +70,13 @@ class Transformer : public Branch {
     // phase shift is theta_from - theta_to
     double phase_shift() const final { return clock_ * deg_30; }
     bool is_param_mutable() const final { return true; }
-    // get tap
+    // getters
     IntS tap_pos() const { return tap_pos_; }
+    BranchSide tap_side() const {return tap_side_;}
+    IntS tap_min() const {return tap_min_;}
+    IntS tap_max() const {return tap_max_;}
+    IntS tap_nom() const {return tap_nom_;}
+
     // setter
     bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
