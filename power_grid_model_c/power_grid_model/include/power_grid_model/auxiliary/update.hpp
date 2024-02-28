@@ -6,14 +6,12 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_UPDATE_HPP
 
 #include "meta_data.hpp"
 
-#include "../enum.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -183,5 +181,4 @@ struct FaultUpdate {
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

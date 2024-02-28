@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_STATE_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_STATE_HPP
 
 #include "../calculation_parameters.hpp"
 #include "../container.hpp"
@@ -46,5 +44,3 @@ concept model_component_state =
     std::same_as<StateType<ContainerType>, MainModelState<ContainerType>>;
 
 } // namespace power_grid_model::main_core
-
-#endif

@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMMON_SOLVER_FUNCTIONS_HPP
-#define POWER_GRID_MODEL_COMMON_SOLVER_FUNCTIONS_HPP
 
+#include "measured_values.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model::math_solver::detail {
 
@@ -75,10 +75,10 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
 template <bool sym, typename LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
-inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                             grouped_idx_vector_type auto const& sources_per_bus,
-                             grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
-                             LoadGenFunc&& load_gen_func) {
+inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                grouped_idx_vector_type auto const& sources_per_bus,
+                                grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
+                                LoadGenFunc&& load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
     // call y bus
@@ -97,6 +97,14 @@ inline void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& 
     output.bus_injection = y_bus.calculate_injection(output.u);
 }
 
-} // namespace power_grid_model::math_solver::detail
+template <bool sym>
+inline void calculate_se_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
+                                MathOutput<sym>& output) {
+    // call y bus
+    output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
+    output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
+    output.bus_injection = y_bus.calculate_injection(output.u);
+    std::tie(output.load_gen, output.source) = measured_value.calculate_load_gen_source(output.u, output.bus_injection);
+}
 
-#endif
+} // namespace power_grid_model::math_solver::detail

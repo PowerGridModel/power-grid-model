@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_GEN_GETTERS_HPP
-#define POWER_GRID_MODEL_AUXILIARY_META_GEN_GEN_GETTERS_HPP
 
+#include "../../common/component_list.hpp"
+#include "../../common/counting_iterator.hpp"
 #include "../meta_data.hpp"
 
 namespace power_grid_model::meta_data::meta_data_gen {
@@ -96,5 +96,3 @@ struct get_meta_data<comp_list, dataset_mark<dataset_name_getter, struct_getter>
 };
 
 } // namespace power_grid_model::meta_data::meta_data_gen
-
-#endif

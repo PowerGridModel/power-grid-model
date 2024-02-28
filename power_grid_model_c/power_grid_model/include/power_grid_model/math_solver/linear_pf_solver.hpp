@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_LINEAR_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_LINEAR_PF_SOLVER_HPP
 
 /*
 Linear PF solver for constant impedance
@@ -35,10 +33,10 @@ if there are sources
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
@@ -74,7 +72,7 @@ template <bool sym> class LinearPFSolver {
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2223, "Calculate Math Result");
+        sub_timer = Timer(calculation_info, 2223, "Calculate math result");
         calculate_result(y_bus, input, output);
 
         // output
@@ -115,8 +113,8 @@ template <bool sym> class LinearPFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        detail::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                 [](Idx /*i*/) { return LoadGenType::const_y; });
+        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                    [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
 
@@ -127,5 +125,3 @@ template class LinearPFSolver<false>;
 using linear_pf::LinearPFSolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

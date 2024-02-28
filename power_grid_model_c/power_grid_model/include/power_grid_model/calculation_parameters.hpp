@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
-#define POWER_GRID_MODEL_CALCULATION_PARAMETERS_HPP
 
-#include "enum.hpp"
-#include "grouped_index_vector.hpp"
-#include "power_grid_model.hpp"
-#include "three_phase_tensor.hpp"
+#include "common/common.hpp"
+#include "common/enum.hpp"
+#include "common/grouped_index_vector.hpp"
+#include "common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -112,7 +110,7 @@ using BranchIdx = std::array<Idx, 2>;
 using Branch3Idx = std::array<Idx, 3>;
 
 struct MathModelTopology {
-    Idx slack_bus_{};
+    Idx slack_bus{};
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
@@ -157,6 +155,11 @@ template <bool sym> struct MathModelParam {
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
     ComplexTensorVector<sym> source_param;
+};
+
+struct MathModelParamIncrement {
+    std::vector<Idx> branch_param_to_change; // indices of changed branch_param
+    std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
 };
 
 template <bool sym> struct PowerFlowInput {
@@ -362,5 +365,3 @@ struct UpdateChange {
 };
 
 } // namespace power_grid_model
-
-#endif

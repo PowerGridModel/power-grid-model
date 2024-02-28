@@ -3,23 +3,20 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_LINEAR_SE_SOLVER_HPP
 
-/*
-iterative linear state estimation solver
-*/
+// iterative linear state estimation solver
 
 #include "block_matrix.hpp"
+#include "common_solver_functions.hpp"
 #include "measured_values.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
@@ -45,12 +42,10 @@ template <bool sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false,
 template <bool sym> using ILSERhs = ILSEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
-/*
-[
-   [G, QH]
-   [Q, R ]
-]
-*/
+// [
+//    [G, QH]
+//    [Q, R ]
+// ]
 template <bool sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
@@ -117,12 +112,12 @@ template <bool sym> class IterativeLinearSESolver {
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
-            max_dev = iterate_unknown(output.u, measured_values.has_angle_measurement());
+            max_dev = iterate_unknown(output.u, measured_values.has_angle());
         };
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2227, "Calculate Math Result");
-        calculate_result(y_bus, measured_values, output);
+        sub_timer = Timer(calculation_info, 2227, "Calculate math result");
+        detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -152,7 +147,7 @@ template <bool sym> class IterativeLinearSESolver {
     SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>> sparse_solver_;
     typename SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>>::BlockPermArray perm_;
 
-    auto diagonal_inverse(RealValue<sym> const& value) {
+    static auto diagonal_inverse(RealValue<sym> const& value) {
         return ComplexDiagonalTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 
@@ -167,7 +162,7 @@ template <bool sym> class IterativeLinearSESolver {
                 Idx const col = col_indices[data_idx_lu];
                 // get a reference and reset block to zero
                 ILSEGainBlock<sym>& block = data_gain_[data_idx_lu];
-                block = ILSEGainBlock<sym>{};
+                block.clear();
                 // get data idx of y bus,
                 // skip for a fill-in
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
@@ -188,7 +183,7 @@ template <bool sym> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += Ys^H * (variance^-1) * Ys
+                            // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
                             block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
                                              diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance),
@@ -259,14 +254,14 @@ template <bool sym> class IterativeLinearSESolver {
         std::vector<BranchIdx> const branch_bus_idx = y_bus.math_topology().branch_bus_idx;
         // get generated (measured/estimated) voltage phasor
         // with current result voltage angle
-        ComplexValueVector<sym> u = measured_value.voltage(current_u);
+        ComplexValueVector<sym> u = linearize_measurements(current_u, measured_value);
 
         // loop all bus to fill rhs
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             Idx const data_idx = y_bus.bus_entry()[bus];
             // reset rhs block to fill values
             ILSERhs<sym>& rhs_block = x_rhs_[bus];
-            rhs_block = ILSERhs<sym>{};
+            rhs_block.clear();
             // fill block with voltage measurement
             if (measured_value.has_voltage(bus)) {
                 // eta += u / variance
@@ -281,7 +276,7 @@ template <bool sym> class IterativeLinearSESolver {
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
-                        // eta -= Ys^H * (variance^-1) * i_shunt
+                        // eta += (-Ys)^H * (variance^-1) * i_shunt
                         rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
                                                diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
                     }
@@ -315,19 +310,24 @@ template <bool sym> class IterativeLinearSESolver {
         }
     }
 
-    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle_measurement) {
+    double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle) {
         double max_dev = 0.0;
         // phase shift anti offset of slack bus, phase a
         // if no angle measurement is present
         DoubleComplex const angle_offset = [&]() -> DoubleComplex {
-            if (has_angle_measurement) {
+            if (has_angle) {
                 return 1.0;
             }
-            if constexpr (sym) {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()) / x_rhs_[math_topo_->slack_bus_].u();
-            } else {
-                return cabs(x_rhs_[math_topo_->slack_bus_].u()(0)) / x_rhs_[math_topo_->slack_bus_].u()(0);
+            auto const& voltage = x_rhs_[math_topo_->slack_bus].u();
+            auto const& voltage_a = [&voltage]() -> auto const& {
+                if constexpr (sym) {
+                    return voltage;
+                } else {
+                    return voltage(0);
+                }
             }
+            ();
+            return cabs(voltage_a) / voltage_a;
         }();
 
         for (Idx bus = 0; bus != n_bus_; ++bus) {
@@ -342,13 +342,8 @@ template <bool sym> class IterativeLinearSESolver {
         return max_dev;
     }
 
-    void calculate_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value, MathOutput<sym>& output) {
-        // call y bus
-        output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
-        output.bus_injection = y_bus.calculate_injection(output.u);
-        std::tie(output.load_gen, output.source) =
-            measured_value.calculate_load_gen_source(output.u, output.bus_injection);
+    auto linearize_measurements(ComplexValueVector<sym> const& current_u, MeasuredValues<sym> const& measured_values) {
+        return measured_values.combine_voltage_iteration_with_measurements(current_u);
     }
 };
 
@@ -360,5 +355,3 @@ template class IterativeLinearSESolver<false>;
 using iterative_linear_se::IterativeLinearSESolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

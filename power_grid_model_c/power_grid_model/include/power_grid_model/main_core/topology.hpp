@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_TOPOLOGY_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_TOPOLOGY_HPP
 
 #include "state.hpp"
 
@@ -140,5 +138,3 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 } // namespace power_grid_model::main_core
-
-#endif

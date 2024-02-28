@@ -3,19 +3,19 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_CONTAINER_HPP
-#define POWER_GRID_MODEL_CONTAINER_HPP
 
 // container for multiple components
 
-#include "exception.hpp"
-#include "power_grid_model.hpp"
+#include "common/common.hpp"
+#include "common/exception.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range.hpp>
 
+#include <array>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <unordered_map>
 
 namespace power_grid_model {
@@ -140,13 +140,20 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         return size_[get_cls_pos_v<Gettable, GettableTypes...>];
     }
 
+    // get sequence idx based on idx_2d
+    // E.g. when you know the idx_2d of the derived class but want to know the index of the base class getter
+    template <class Gettable> Idx get_seq(Idx2D idx_2d) const {
+        assert(construction_complete_);
+        std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
+        return cum_size[idx_2d.group] + idx_2d.pos;
+    }
+
     // get sequence idx based on id
     template <class Gettable> Idx get_seq(ID id) const {
         assert(construction_complete_);
-        std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = map_.find(id);
         assert(found != map_.end());
-        return cum_size[found->second.group] + found->second.pos;
+        return get_seq<Gettable>(found->second);
     }
 
     // get idx_2d based on sequence
@@ -320,5 +327,3 @@ template <class... T> using ExtraRetrievableTypes = container_impl::ExtraRetriev
 template <class... T> using Container = typename container_impl::container_trait<T...>::type;
 
 } // namespace power_grid_model
-
-#endif

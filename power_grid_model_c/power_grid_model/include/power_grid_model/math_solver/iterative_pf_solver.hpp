@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_PF_SOLVER_HPP
 
 /*
  * Class to house common functions of newton raphson and iterative current method
@@ -15,10 +13,10 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
@@ -89,7 +87,7 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
 
         // calculate math result
         {
-            Timer const sub_timer{calculation_info, 2225, "Calculate Math Result"};
+            Timer const sub_timer{calculation_info, 2225, "Calculate math result"};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
@@ -102,8 +100,8 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        detail::calculate_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                 [this](Idx i) { return (*load_gen_type_)[i]; });
+        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+                                    [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
   private:
@@ -121,5 +119,3 @@ template <bool sym, typename DerivedSolver> class IterativePFSolver {
 };
 
 } // namespace power_grid_model::math_solver
-
-#endif

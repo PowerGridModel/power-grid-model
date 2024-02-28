@@ -3,12 +3,13 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_DATASET_HPP
-#define POWER_GRID_MODEL_AUXILIARY_DATASET_HPP
 
 // define dataset classes with void pointers
 
-#include "../power_grid_model.hpp"
+#include "../common/common.hpp"
+
+#include <cassert>
+#include <map>
 
 namespace power_grid_model {
 
@@ -104,5 +105,3 @@ using Dataset = std::map<std::string, MutableDataPointer>;
 using ConstDataset = std::map<std::string, ConstDataPointer>;
 
 } // namespace power_grid_model
-
-#endif

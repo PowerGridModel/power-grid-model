@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_INPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_INPUT_HPP
 
 #include "../input.hpp" // NOLINT
 
@@ -482,5 +480,4 @@ static_assert(offsetof(FaultInput, id) == offsetof(BaseInput, id));
 
 } // namespace power_grid_model::test
 
-#endif
 // clang-format on

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
-#define POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
 
 #include "base.hpp"
 
@@ -12,7 +10,7 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model {
 
@@ -190,5 +188,3 @@ class Branch3 : public Base {
 };
 
 } // namespace power_grid_model
-
-#endif

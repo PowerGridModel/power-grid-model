@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_OUTPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_OUTPUT_HPP
 
 #include "../output.hpp" // NOLINT
 
@@ -283,5 +281,4 @@ static_assert(offsetof(SensorShortCircuitOutput, energized) == offsetof(BaseOutp
 
 } // namespace power_grid_model::test
 
-#endif
 // clang-format on

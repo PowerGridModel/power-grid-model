@@ -10,10 +10,21 @@ namespace power_grid_model {
 namespace {
 constexpr double s3 = sqrt3;
 constexpr double ph = 2.0 / 3.0 * pi;
+
+struct IterativeLinearCalculationMethod {
+    static constexpr auto calculation_method = CalculationMethod::iterative_linear;
+};
+struct NewtonRaphsonCalculationMethod {
+    static constexpr auto calculation_method = CalculationMethod::newton_raphson;
+};
 } // namespace
 
-TEST_CASE("Test main model - state estimation") {
+TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, IterativeLinearCalculationMethod,
+                   NewtonRaphsonCalculationMethod) {
+    constexpr auto calculation_method = CalculationMethod::calculation_method;
+
     MainModel main_model{50.0};
+
     SUBCASE("State Estimation") {
         SUBCASE("Single Node + Source") {
             main_model.add_component<Node>({{1, 10e3}});
@@ -23,19 +34,47 @@ TEST_CASE("Test main model - state estimation") {
                 main_model.set_construction_complete();
                 SUBCASE("Symmetric Calculation") {
                     std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
                     std::vector<NodeOutput<true>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.1));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     std::vector<MathOutput<false>> const math_output =
-                        main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
                     std::vector<NodeOutput<false>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.1));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(0.1 - ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(0.1 + ph));
+                }
+            }
+            SUBCASE("Symmetric Voltage Sensor - no angle") {
+                main_model.add_component<SymVoltageSensor>({{3, 1, 1e2, 12.345e3, nan}});
+                main_model.set_construction_complete();
+                SUBCASE("Symmetric Calculation") {
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<true>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u == doctest::Approx(12.345e3));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.0));
+                }
+                SUBCASE("Asymmetric Calculation") {
+                    std::vector<MathOutput<false>> const math_output =
+                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<false>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.0));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(-ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(ph));
                 }
             }
             SUBCASE("Asymmetric Voltage Sensor") {
@@ -44,22 +83,51 @@ TEST_CASE("Test main model - state estimation") {
                 main_model.set_construction_complete();
                 SUBCASE("Symmetric Calculation") {
                     std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
                     std::vector<NodeOutput<true>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     double const u = (std::cos(0.1) + std::cos(0.2) + std::cos(0.3)) * 12.345e3;
                     double const v = (std::sin(0.1) + std::sin(0.2) + std::sin(0.3)) * 12.345e3;
                     double const expected_u = std::sqrt(u * u + v * v) / 3.0;
                     CHECK(node_output[0].u == doctest::Approx(expected_u));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.2));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     std::vector<MathOutput<false>> const math_output =
-                        main_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
                     std::vector<NodeOutput<false>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.1));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(0.2 - ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(0.3 + ph));
+                }
+            }
+            SUBCASE("Asymmetric Voltage Sensor - no angle") {
+                main_model.add_component<AsymVoltageSensor>(
+                    {{3, 1, 1e2, {12.345e3 / s3, 12.345e3 / s3, 12.345e3 / s3}, {nan, nan, nan}}});
+                main_model.set_construction_complete();
+                SUBCASE("Symmetric Calculation") {
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<true>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u == doctest::Approx(12.345e3));
+                    CHECK(node_output[0].u_angle == doctest::Approx(0.0));
+                }
+                SUBCASE("Asymmetric Calculation") {
+                    std::vector<MathOutput<false>> const math_output =
+                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<false>> node_output(1);
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
+                    CHECK(node_output[0].u_angle.x() == doctest::Approx(0.0));
+                    CHECK(node_output[0].u_angle.y() == doctest::Approx(-ph));
+                    CHECK(node_output[0].u_angle.z() == doctest::Approx(ph));
                 }
             }
         }
@@ -79,7 +147,7 @@ TEST_CASE("Test main model - state estimation") {
                 SUBCASE("Without Injection Sensor") {
                     main_model.set_construction_complete();
                     std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
 
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
@@ -112,7 +180,7 @@ TEST_CASE("Test main model - state estimation") {
                     main_model.set_construction_complete();
 
                     std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear);
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
 
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
@@ -143,7 +211,51 @@ TEST_CASE("Test main model - state estimation") {
                 }
             }
         }
+        SUBCASE("Line power sensor") {
+            main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
+            main_model.add_component<Line>({{3, 1, 2, 1, 1, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e3}});
+            main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
+            main_model.add_component<Shunt>({{6, 2, 1, 1800 / 10e3 / 10e3, -180 / 10e3 / 10e3, 0.0, 0.0}});
+            main_model.add_component<SymVoltageSensor>({{11, 1, 1e2, 10.0e3, 0.0}});
+            SUBCASE("Symmetric Power Sensor - Symmetric Calculation") {
+                main_model.add_component<SymPowerSensor>(
+                    {{17, 3, MeasuredTerminalType::branch_from, 1e2, 1800.0, 180.0, nan, nan},
+                     {18, 3, MeasuredTerminalType::branch_to, 1e2, -1800.0, -180.0, nan, nan},
+                     {16, 6, MeasuredTerminalType::shunt, 1e2, 1800.0, 180.0, nan, nan}});
+                SUBCASE("Line flow") {
+                    main_model.set_construction_complete();
+                    std::vector<MathOutput<true>> const math_output =
+                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
 
+                    std::vector<SymApplianceOutput> shunt_output(1);
+                    std::vector<SymNodeOutput> node_output(2);
+                    std::vector<SymPowerSensorOutput> power_sensor_output(3);
+                    std::vector<BranchOutput<true>> line_output(1);
+                    main_model.output_result<Shunt>(math_output, shunt_output.begin());
+                    main_model.output_result<Node>(math_output, node_output.begin());
+                    main_model.output_result<Line>(math_output, line_output.begin());
+                    main_model.output_result<SymPowerSensor>(math_output, power_sensor_output.begin());
+
+                    CHECK(shunt_output[0].p == doctest::Approx(1800.0).epsilon(0.01));
+                    CHECK(shunt_output[0].q == doctest::Approx(180.0).epsilon(0.01));
+
+                    CHECK(line_output[0].p_from == doctest::Approx(1800.0).epsilon(0.01));
+                    CHECK(line_output[0].q_from == doctest::Approx(180.0).epsilon(0.01));
+                    CHECK(line_output[0].p_to == doctest::Approx(-1800.0).epsilon(0.01));
+                    CHECK(line_output[0].q_to == doctest::Approx(-180.0).epsilon(0.01));
+
+                    // dealing with orders of magnitude kW / kVA and precision at W / VA level
+                    auto const zero_at_order_of_magnitude = doctest::Approx(0.0).scale(1e3).epsilon(0.001);
+
+                    CHECK(power_sensor_output[0].p_residual == zero_at_order_of_magnitude); // shunt
+                    CHECK(power_sensor_output[0].q_residual == zero_at_order_of_magnitude); // shunt
+                    CHECK(power_sensor_output[1].p_residual == zero_at_order_of_magnitude); // branch_from
+                    CHECK(power_sensor_output[1].q_residual == zero_at_order_of_magnitude); // branch_from
+                    CHECK(power_sensor_output[2].p_residual == zero_at_order_of_magnitude); // branch_to
+                    CHECK(power_sensor_output[2].q_residual == zero_at_order_of_magnitude); // branch_to
+                }
+            }
+        }
         SUBCASE("Forbid Link Power Measurements") {
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
             main_model.add_component<Link>({{3, 1, 2, 1, 1}});
@@ -223,10 +335,10 @@ TEST_CASE("Test main model - state estimation") {
                 ref_result_data["node"] =
                     DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
-                test_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                            test_result_data, update_data, -1);
-                ref_model.calculate_state_estimation<true>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                           ref_result_data, update_data, -1);
+                test_model.calculate_state_estimation<true>(1e-8, 20, calculation_method, test_result_data, update_data,
+                                                            -1);
+                ref_model.calculate_state_estimation<true>(1e-8, 20, calculation_method, ref_result_data, update_data,
+                                                           -1);
 
                 CHECK(test_node_output[0].u == doctest::Approx(ref_node_output[0].u));
             }
@@ -241,10 +353,10 @@ TEST_CASE("Test main model - state estimation") {
                 ref_result_data["node"] =
                     DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
-                test_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                             test_result_data, update_data, -1);
-                ref_model.calculate_state_estimation<false>(1e-8, 20, CalculationMethod::iterative_linear,
-                                                            ref_result_data, update_data, -1);
+                test_model.calculate_state_estimation<false>(1e-8, 20, calculation_method, test_result_data,
+                                                             update_data, -1);
+                ref_model.calculate_state_estimation<false>(1e-8, 20, calculation_method, ref_result_data, update_data,
+                                                            -1);
 
                 CHECK(test_node_output[0].u.x() == doctest::Approx(ref_node_output[0].u.x()));
                 CHECK(test_node_output[0].u.y() == doctest::Approx(ref_node_output[0].u.y()));

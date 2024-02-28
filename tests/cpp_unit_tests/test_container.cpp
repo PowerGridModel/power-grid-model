@@ -26,11 +26,9 @@ struct C2 : C {
 
 TEST_CASE("Test component container") {
     using CompContainer = Container<C, C1, C2>;
-    CompContainer container;
-    container.reserve<C>(3);
-    container.reserve<C1>(2);
-    container.reserve<C2>(1);
     using CompContainer2 = Container<ExtraRetrievableTypes<C>, C1, C2>;
+
+    CompContainer container;
     CompContainer2 container2;
 
     container.emplace<C>(1, 5);
@@ -110,6 +108,18 @@ TEST_CASE("Test component container") {
         CHECK(const_container.size<C>() == 6);
         CHECK(const_container.size<C1>() == 2);
         CHECK(const_container.size<C2>() == 1);
+    }
+
+    SUBCASE("Test get sequence based on idx_2d") {
+        CHECK(const_container.get_seq<C>(Idx2D{0, 0}) == 0);
+        CHECK(const_container.get_seq<C>(Idx2D{0, 1}) == 1);
+        CHECK(const_container.get_seq<C>(Idx2D{0, 2}) == 2);
+        CHECK(const_container.get_seq<C>(Idx2D{1, 0}) == 3);
+        CHECK(const_container.get_seq<C>(Idx2D{1, 1}) == 4);
+        CHECK(const_container.get_seq<C>(Idx2D{2, 0}) == 5);
+        CHECK(const_container.get_seq<C1>(Idx2D{1, 0}) == 0);
+        CHECK(const_container.get_seq<C1>(Idx2D{1, 1}) == 1);
+        CHECK(const_container.get_seq<C2>(Idx2D{2, 0}) == 0);
     }
 
     SUBCASE("Test get sequence based on id") {

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
 
 #include "iterative_current_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
@@ -15,10 +13,10 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 #include <optional>
 
@@ -64,7 +62,7 @@ template <bool sym> class MathSolver {
 
         switch (calculation_method) {
         case default_method:
-            [[fallthrough]]; // use Newton-Raphson by default
+            [[fallthrough]]; // use iterative linear by default
         case iterative_linear:
             return run_state_estimation_iterative_linear(input, err_tol, max_iter, calculation_info, y_bus);
         case newton_raphson:
@@ -96,6 +94,12 @@ template <bool sym> class MathSolver {
         linear_pf_solver_.reset();
         iterative_current_pf_solver_.reset();
         iterative_linear_se_solver_.reset();
+    }
+
+    void parameters_changed(bool changed) {
+        if (iterative_current_pf_solver_.has_value()) {
+            iterative_current_pf_solver_->parameters_changed(changed);
+        }
     }
 
   private:
@@ -178,5 +182,3 @@ template class MathSolver<false>;
 using math_solver::MathSolver;
 
 } // namespace power_grid_model
-
-#endif

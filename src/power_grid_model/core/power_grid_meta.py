@@ -114,7 +114,6 @@ def _generate_meta_component(component: ComponentPtr) -> ComponentMetaData:
     nan_scalar = np.empty(1, dtype=dtype)
     for key, value in nans.items():
         nan_scalar[key] = value
-    # return component
     return ComponentMetaData(dtype=dtype, dtype_dict=dtype_dict, nans=nans, nan_scalar=nan_scalar)
 
 

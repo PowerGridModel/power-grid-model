@@ -4,10 +4,10 @@
 
 // In this unit test the powerflow, state estimation and short circuit solvers are tested
 
-#include <power_grid_model/exception.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 #include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
-#include <power_grid_model/three_phase_tensor.hpp>
 
 #include <doctest/doctest.h>
 
@@ -140,7 +140,7 @@ TEST_CASE("Test math solver") {
     // build topo
     double const shift_val = deg_30;
     MathModelTopology topo;
-    topo.slack_bus_ = 0;
+    topo.slack_bus = 0;
     topo.phase_shift = {0.0, 0.0, -shift_val};
     topo.branch_bus_idx = {{0, 1}, {1, 2}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
@@ -521,24 +521,45 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle") {
         MathSolver<true> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> const output =
-            solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        MathOutput<true> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
+
         assert_output(output, output_ref);
     }
 
     SUBCASE("Test sym se without angle") {
         MathSolver<true> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> const output =
-            solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        MathOutput<true> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
+
         assert_output(output, output_ref, true);
     }
 
     SUBCASE("Test sym se with angle, const z") {
         MathSolver<true> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> const output =
-            solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        MathOutput<true> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
+
         assert_output(output, output_ref_z);
     }
 
@@ -548,32 +569,62 @@ TEST_CASE("Test math solver") {
         auto& branch_from_power = se_input_angle.measured_branch_from_power.front();
         branch_from_power.p_variance = 0.25;
         branch_from_power.q_variance = 0.75;
-        MathOutput<true> const output =
-            solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        MathOutput<true> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
+
         assert_output(output, output_ref);
     }
 
     SUBCASE("Test asym se with angle") {
         MathSolver<false> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> const output =
-            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        MathOutput<false> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, newton_raphson, y_bus_asym);
+        }
+
         assert_output(output, output_ref_asym);
     }
 
     SUBCASE("Test asym se without angle") {
         MathSolver<false> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> const output =
-            solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        MathOutput<false> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, newton_raphson, y_bus_asym);
+        }
+
         assert_output(output, output_ref_asym, true);
     }
 
     SUBCASE("Test asym se with angle, const z") {
         MathSolver<false> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> const output =
-            solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        MathOutput<false> output;
+
+        SUBCASE("iterative linear") {
+            output =
+                solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output =
+                solver.run_state_estimation(se_input_asym_angle_const_z, 1e-10, 20, info, newton_raphson, y_bus_asym);
+        }
+
         assert_output(output, output_ref_asym_z);
     }
 
@@ -583,8 +634,15 @@ TEST_CASE("Test math solver") {
         auto& branch_from_power = se_input_asym_angle.measured_branch_from_power.front();
         branch_from_power.p_variance = RealValue<false>{0.25};
         branch_from_power.q_variance = RealValue<false>{0.75};
-        MathOutput<false> const output =
-            solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        MathOutput<false> output;
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, newton_raphson, y_bus_asym);
+        }
+
         assert_output(output, output_ref_asym);
     }
 }
@@ -683,7 +741,7 @@ TEST_CASE("Short circuit solver") {
 
     // Grid for short circuit
     MathModelTopology topo_sc;
-    topo_sc.slack_bus_ = 0;
+    topo_sc.slack_bus = 0;
     topo_sc.phase_shift = {0.0, 0.0};
     topo_sc.branch_bus_idx = {{0, 1}};
     topo_sc.sources_per_bus = {from_sparse, {0, 1, 1}};
@@ -869,7 +927,7 @@ TEST_CASE("Short circuit solver") {
     SUBCASE("Test fault on source bus") {
         // Grid for short circuit
         MathModelTopology topo_comp;
-        topo_sc.slack_bus_ = 0;
+        topo_sc.slack_bus = 0;
         topo_comp.phase_shift = {0.0};
         topo_comp.branch_bus_idx = {};
         topo_comp.sources_per_bus = {from_sparse, {0, 1}};
@@ -1040,7 +1098,7 @@ TEST_CASE("Math solver, zero variance test") {
     bus_1 = bus_0 = 1.0
     */
     MathModelTopology topo;
-    topo.slack_bus_ = 1;
+    topo.slack_bus = 1;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
     topo.sources_per_bus = {from_sparse, {0, 0, 1}};
@@ -1065,7 +1123,14 @@ TEST_CASE("Math solver, zero variance test") {
 
     MathSolver<true> solver{topo_ptr};
     CalculationInfo info;
-    MathOutput<true> output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+    MathOutput<true> output;
+
+    SUBCASE("iterative linear") {
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+    }
+    SUBCASE("Newton-Raphson") {
+        output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+    }
 
     // check both voltage
     check_close(output.u[0], 1.0);
@@ -1082,7 +1147,7 @@ TEST_CASE("Math solver, measurements") {
 
     */
     MathModelTopology topo;
-    topo.slack_bus_ = 0;
+    topo.slack_bus = 0;
     topo.phase_shift = {0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1}};
@@ -1126,8 +1191,15 @@ TEST_CASE("Math solver, measurements") {
         auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
+
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
         CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -1153,7 +1225,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
@@ -1181,7 +1259,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -1209,7 +1293,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -1237,7 +1327,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
@@ -1264,7 +1360,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
@@ -1294,7 +1396,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
@@ -1323,7 +1431,13 @@ TEST_CASE("Math solver, measurements") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<true> const y_bus_sym{topo_ptr, param_ptr};
         MathSolver<true> solver{topo_ptr};
-        output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+
+        SUBCASE("iterative linear") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
+        }
+        SUBCASE("Newton-Raphson") {
+            output = solver.run_state_estimation(se_input, 1e-10, 20, info, newton_raphson, y_bus_sym);
+        }
 
         // the different aggregation of the load gen's P and Q measurements cause differences compared to the case with
         // identical variances

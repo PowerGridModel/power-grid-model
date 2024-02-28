@@ -4,14 +4,5 @@
   "atol": {
     "default": 1e-05,
     ".+_residual": 0.1
-  },
-  "extra_params": {
-    "newton_raphson": {
-      "experimental_features": "enabled",
-      "fail": {
-        "reason": "Experimental feature under development",
-        "raises": "PowerGridError"
-      }
-    }
   }
 }
