@@ -132,7 +132,7 @@ TEST_CASE("Test transformer") {
     // YNyn2
     vec_asym.push_back({{y1, y4, y4t, y1}});
 
-    SUBCASE("Test getters"){
+    SUBCASE("Test getters") {
         CHECK(vec[0].tap_pos() == 0);
         CHECK(vec[0].tap_side() == BranchSide::from);
         CHECK(vec[0].tap_min() == -11);
