@@ -132,6 +132,14 @@ TEST_CASE("Test transformer") {
     // YNyn2
     vec_asym.push_back({{y1, y4, y4t, y1}});
 
+    SUBCASE("Test getters"){
+        CHECK(vec[0].tap_pos() == 0);
+        CHECK(vec[0].tap_side() == BranchSide::from);
+        CHECK(vec[0].tap_min() == -11);
+        CHECK(vec[0].tap_max() == 9);
+        CHECK(vec[0].tap_nom() == 0);
+    }
+
     SUBCASE("Test i base") {
         CHECK(vec[0].base_i_from() == doctest::Approx(base_i_from));
         CHECK(vec[0].base_i_to() == doctest::Approx(base_i_to));
