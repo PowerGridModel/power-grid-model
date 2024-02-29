@@ -26,7 +26,6 @@ jobs:
 
   acquire-python-version-build-sdist:
     name: Build sdist and set version
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +55,6 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -92,7 +90,6 @@ jobs:
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: windows-latest
     strategy:
       matrix:
@@ -136,7 +133,6 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: macos-13
     strategy:
       matrix:
@@ -217,7 +213,6 @@ jobs:
 
   build-and-test-conda:
     name: Build and test in Conda
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
 
     runs-on: ${{ matrix.os }}-latest
     strategy:
