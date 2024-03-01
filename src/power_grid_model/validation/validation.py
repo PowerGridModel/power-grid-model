@@ -9,8 +9,9 @@ Although all functions are 'public', you probably only need validate_input_data(
 
 """
 import copy
+from collections.abc import Sized as ABCSized
 from itertools import chain
-from typing import Dict, List, Optional, Sized, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 
@@ -379,25 +380,49 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    # Mark `power_sigma` for each power_sensor based on the state of `p_sigma` and `q_sigma`
     process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
     process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
 
-    return list(
-        chain(
-            *(
-                none_missing(data, component, item, index)
-                for component in data
-                for index, item in enumerate(
-                    (sublist for sublist in required.get(component, []))
-                    if isinstance(required.get(component, []), list)
-                    and all(isinstance(i, list) for i in required.get(component, []))
-                    else [required[component]]
-                )
-                if data[component] is not None and isinstance(data[component], Sized) and index < len(data[component])
-            )
+    return _validate_required_in_data(data, required)
+
+
+def _validate_required_in_data(data, required):
+    """
+    Checks if all required data is available.
+
+    Args:
+        data: A power-grid-model input dataset
+        required: a list of required fields (a list of str), per component when applicaple (a list of str or str lists)
+
+    Returns:
+        An empty list if all required data is available, or a list of MissingValueErrors.
+    """
+    def is_valid_component(data, component):
+        return (
+            not (isinstance(data[component], np.ndarray) and data[component].size == 0)
+            and data[component] is not None
+            and isinstance(data[component], ABCSized)
         )
-    )
+
+    def is_nested_list(items):
+        return isinstance(items, list) and all(isinstance(i, list) for i in items)
+
+    def process_nested_items(component, items, data, results):
+        for index, item in enumerate(sublist for sublist in items):
+            if index < len(data[component]):
+                results.append(none_missing(data, component, item, index))
+
+    results = []
+
+    for component in data:
+        if is_valid_component(data, component):
+            items = required.get(component, [])
+            if is_nested_list(items):
+                process_nested_items(component, items, data, results)
+            else:
+                results.append(none_missing(data, component, items, 0))
+
+    return list(chain(*results))
 
 
 def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> List[ValidationError]:
