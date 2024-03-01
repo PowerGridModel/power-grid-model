@@ -397,6 +397,7 @@ def _validate_required_in_data(data, required):
     Returns:
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
+
     def is_valid_component(data, component):
         return (
             not (isinstance(data[component], np.ndarray) and data[component].size == 0)
