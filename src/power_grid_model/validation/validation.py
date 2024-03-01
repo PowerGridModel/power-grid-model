@@ -222,7 +222,7 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     return list(chain(*errors))
 
 
-def process_power_sigma_and_p_q_sigma(
+def _process_power_sigma_and_p_q_sigma(
     data: SingleDataset, sensor: str, required_list: Dict[str, List[Union[str, List[str]]]]
 ) -> None:
     """
@@ -352,18 +352,13 @@ def validate_required_values(
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
     # Different requirements for individual sensors. Avoid shallow copy.
-    try:
-        required["sym_power_sensor"] = [
-            required["power_sensor"].copy() for _ in range(data["sym_power_sensor"].shape[0])  # type: ignore
-        ]
-    except KeyError:
-        pass
-    try:
-        required["asym_power_sensor"] = [
-            required["power_sensor"].copy() for _ in range(data["asym_power_sensor"].shape[0])  # type: ignore
-        ]
-    except KeyError:
-        pass
+    for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
+        try:
+            required[sensor_type] = [
+                required["power_sensor"].copy() for _ in range(data[sensor_type].shape[0])  # type: ignore
+            ]
+        except KeyError:
+            pass
 
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
@@ -380,8 +375,8 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
-    process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
+    _process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
+    _process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
 
     return _validate_required_in_data(data, required)
 
