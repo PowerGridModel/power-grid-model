@@ -22,7 +22,7 @@ struct BaseOutput {
 
 template <symmetry_tag sym_type>
 struct NodeOutput {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -42,7 +42,7 @@ using AsymNodeOutput = NodeOutput<asymmetric_t>;
 
 template <symmetry_tag sym_type>
 struct BranchOutput {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -66,7 +66,7 @@ using AsymBranchOutput = BranchOutput<asymmetric_t>;
 
 template <symmetry_tag sym_type>
 struct Branch3Output {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -94,7 +94,7 @@ using AsymBranch3Output = Branch3Output<asymmetric_t>;
 
 template <symmetry_tag sym_type>
 struct ApplianceOutput {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -114,7 +114,7 @@ using AsymApplianceOutput = ApplianceOutput<asymmetric_t>;
 
 template <symmetry_tag sym_type>
 struct VoltageSensorOutput {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
@@ -131,7 +131,7 @@ using AsymVoltageSensorOutput = VoltageSensorOutput<asymmetric_t>;
 
 template <symmetry_tag sym_type>
 struct PowerSensorOutput {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized

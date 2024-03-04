@@ -90,7 +90,7 @@ struct get_attributes_list<ThreeWindingTransformerUpdate> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<LoadGenUpdate<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
@@ -130,7 +130,7 @@ struct get_attributes_list<ShuntUpdate> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<VoltageSensorUpdate<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
@@ -144,7 +144,7 @@ struct get_attributes_list<VoltageSensorUpdate<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<PowerSensorUpdate<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
@@ -258,7 +258,7 @@ struct get_component_nan<ThreeWindingTransformerUpdate> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<LoadGenUpdate<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     LoadGenUpdate<sym> operator() () const {
         LoadGenUpdate<sym> comp;
@@ -304,7 +304,7 @@ struct get_component_nan<ShuntUpdate> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<VoltageSensorUpdate<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     VoltageSensorUpdate<sym> operator() () const {
         VoltageSensorUpdate<sym> comp;
@@ -320,7 +320,7 @@ struct get_component_nan<VoltageSensorUpdate<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<PowerSensorUpdate<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     PowerSensorUpdate<sym> operator() () const {
         PowerSensorUpdate<sym> comp;

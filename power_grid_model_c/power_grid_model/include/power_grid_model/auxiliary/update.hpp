@@ -82,7 +82,7 @@ struct ThreeWindingTransformerUpdate {
 
 template <symmetry_tag sym_type>
 struct LoadGenUpdate {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
@@ -135,7 +135,7 @@ struct ShuntUpdate {
 
 template <symmetry_tag sym_type>
 struct VoltageSensorUpdate {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     double u_sigma;  // sigma of error margin of voltage measurement
@@ -152,7 +152,7 @@ using AsymVoltageSensorUpdate = VoltageSensorUpdate<asymmetric_t>;
 
 template <symmetry_tag sym_type>
 struct PowerSensorUpdate {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     ID id;  // ID of the object
     double power_sigma;  // sigma of error margin of power measurement

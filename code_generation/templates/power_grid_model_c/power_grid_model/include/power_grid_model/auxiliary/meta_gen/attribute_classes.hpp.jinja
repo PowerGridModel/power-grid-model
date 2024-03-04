@@ -26,7 +26,7 @@ namespace power_grid_model::meta_data {
 {%- if attribute_class.is_template -%}
 template <symmetry_tag sym_type>
 struct get_attributes_list<{{ attribute_class.name }}<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 {% else -%}
 template<>
 struct get_attributes_list<{{ attribute_class.name }}> {
@@ -48,7 +48,7 @@ struct get_attributes_list<{{ attribute_class.name }}> {
 {%- if attribute_class.is_template -%}
 template <symmetry_tag sym_type>
 struct get_component_nan<{{ attribute_class.name }}<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 {% else -%}
 template<>
 struct get_component_nan<{{ attribute_class.name }}> {

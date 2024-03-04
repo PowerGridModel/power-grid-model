@@ -233,7 +233,7 @@ struct get_attributes_list<GenericLoadGenInput> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<LoadGenInput<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
@@ -291,7 +291,7 @@ struct get_attributes_list<GenericVoltageSensorInput> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<VoltageSensorInput<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
@@ -318,7 +318,7 @@ struct get_attributes_list<GenericPowerSensorInput> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<PowerSensorInput<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
@@ -587,7 +587,7 @@ struct get_component_nan<GenericLoadGenInput> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<LoadGenInput<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     LoadGenInput<sym> operator() () const {
         LoadGenInput<sym> comp;
@@ -653,7 +653,7 @@ struct get_component_nan<GenericVoltageSensorInput> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<VoltageSensorInput<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     VoltageSensorInput<sym> operator() () const {
         VoltageSensorInput<sym> comp;
@@ -684,7 +684,7 @@ struct get_component_nan<GenericPowerSensorInput> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<PowerSensorInput<sym_type>> {
-    using sym = sym_type;
+    using sym = typename sym_type;
 
     PowerSensorInput<sym> operator() () const {
         PowerSensorInput<sym> comp;

@@ -20,7 +20,7 @@ namespace power_grid_model {
 {%- if attribute_class.is_template -%}
 template <symmetry_tag sym_type>
 struct {{ attribute_class.name }} {
-    using sym = sym_type;
+    using sym = typename sym_type;
 {% else -%}
 struct {{ attribute_class.name }} {
 {%- endif -%}
