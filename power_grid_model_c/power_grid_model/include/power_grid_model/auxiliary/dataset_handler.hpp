@@ -6,6 +6,8 @@
 
 // handle dataset and buffer related stuff
 
+#include "dataset_handler_fwd.hpp"
+
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "dataset.hpp"
@@ -31,12 +33,15 @@ struct DatasetInfo {
     std::vector<ComponentInfo> component_info;
 };
 
-template <bool data_mutable, bool indptr_mutable>
-    requires(data_mutable || !indptr_mutable)
+template <data_mutable_tag data_mutable_type, indptr_mutable_tag indptr_mutable_type>
+    requires(is_data_mutable<data_mutable_type> || !is_indptr_mutable<indptr_mutable_type>)
 class DatasetHandler {
   public:
-    using Data = std::conditional_t<data_mutable, void, void const>;
-    using Indptr = std::conditional_t<indptr_mutable, Idx, Idx const>;
+    using data_mutable = data_mutable_type;
+    using indptr_mutable = indptr_mutable_type;
+
+    using Data = std::conditional_t<is_data_mutable<data_mutable>, void, void const>;
+    using Indptr = std::conditional_t<is_indptr_mutable<indptr_mutable>, Idx, Idx const>;
     struct Buffer {
         Data* data;
         // for uniform buffer, indptr is empty
@@ -54,9 +59,9 @@ class DatasetHandler {
     }
 
     // implicit conversion constructor to const
-    template <bool indptr_mutable_other>
-    DatasetHandler(DatasetHandler<true, indptr_mutable_other> const& other)
-        requires(!data_mutable)
+    template <indptr_mutable_tag indptr_mutable_other>
+    DatasetHandler(DatasetHandler<data_mutable_t, indptr_mutable_other> const& other)
+        requires(!is_data_mutable<data_mutable>)
         : dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
@@ -66,7 +71,7 @@ class DatasetHandler {
 
     template <bool dataset_const>
     std::map<std::string, DataPointer<dataset_const>> export_dataset(Idx scenario = -1) const
-        requires(dataset_const || data_mutable)
+        requires(dataset_const || is_data_mutable<data_mutable>)
     {
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with multiple scenarios!\n"};
@@ -121,14 +126,14 @@ class DatasetHandler {
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
-        requires indptr_mutable
+        requires is_indptr_mutable<indptr_mutable>
     {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
     void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
                     Data* data)
-        requires(!indptr_mutable)
+        requires(!is_indptr_mutable<indptr_mutable>)
     {
         check_non_uniform_integrity<true>(elements_per_scenario, total_elements, indptr);
         add_component_info_impl(component, elements_per_scenario, total_elements);
@@ -141,7 +146,7 @@ class DatasetHandler {
     }
 
     void set_buffer(std::string_view component, Indptr* indptr, Data* data)
-        requires indptr_mutable
+        requires is_indptr_mutable<indptr_mutable>
     {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = dataset_info_.component_info[idx];
@@ -195,8 +200,8 @@ class DatasetHandler {
     }
 };
 
-using ConstDatasetHandler = DatasetHandler<false, false>;
-using MutableDatasetHandler = DatasetHandler<true, false>;
-using WritableDatasetHandler = DatasetHandler<true, true>;
+using ConstDatasetHandler = DatasetHandler<data_immutable_t, indptr_immutable_t>;
+using MutableDatasetHandler = DatasetHandler<data_mutable_t, indptr_immutable_t>;
+using WritableDatasetHandler = DatasetHandler<data_mutable_t, indptr_mutable_t>;
 
 } // namespace power_grid_model::meta_data
