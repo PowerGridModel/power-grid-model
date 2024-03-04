@@ -303,21 +303,21 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
             {4, 1.0, RealValue<asymmetric_t>{12.345e3}, RealValue<asymmetric_t>{0.1}}};
 
         ConstDataset input_data;
-        input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};
+        input_data["node"] = ConstDataPointer{node_input.data(), static_cast<Idx>(node_input.size())};
         input_data["source"] =
-            DataPointer<true>{incomplete_source_input.data(), static_cast<Idx>(incomplete_source_input.size())};
+            ConstDataPointer{incomplete_source_input.data(), static_cast<Idx>(incomplete_source_input.size())};
         input_data["sym_voltage_sensor"] =
-            DataPointer<true>{incomplete_sym_sensor_input.data(), static_cast<Idx>(incomplete_sym_sensor_input.size())};
-        input_data["asym_voltage_sensor"] = DataPointer<true>{incomplete_asym_sensor_input.data(),
-                                                              static_cast<Idx>(incomplete_asym_sensor_input.size())};
+            ConstDataPointer{incomplete_sym_sensor_input.data(), static_cast<Idx>(incomplete_sym_sensor_input.size())};
+        input_data["asym_voltage_sensor"] = ConstDataPointer{incomplete_asym_sensor_input.data(),
+                                                             static_cast<Idx>(incomplete_asym_sensor_input.size())};
 
         ConstDataset update_data;
         update_data["source"] =
-            DataPointer<true>{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
+            ConstDataPointer{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
         update_data["sym_voltage_sensor"] =
-            DataPointer<true>{complete_sym_sensor_update.data(), static_cast<Idx>(complete_sym_sensor_update.size())};
+            ConstDataPointer{complete_sym_sensor_update.data(), static_cast<Idx>(complete_sym_sensor_update.size())};
         update_data["asym_voltage_sensor"] =
-            DataPointer<true>{complete_asym_sensor_update.data(), static_cast<Idx>(complete_asym_sensor_update.size())};
+            ConstDataPointer{complete_asym_sensor_update.data(), static_cast<Idx>(complete_asym_sensor_update.size())};
 
         SUBCASE("State Estimation") {
             MainModel test_model{50.0, input_data};
@@ -331,9 +331,9 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 Dataset test_result_data;
                 Dataset ref_result_data;
                 test_result_data["node"] =
-                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                    MutableDataPointer{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
                 ref_result_data["node"] =
-                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+                    MutableDataPointer{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
                 test_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method, test_result_data,
                                                                    update_data, -1);
@@ -349,9 +349,9 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 Dataset test_result_data;
                 Dataset ref_result_data;
                 test_result_data["node"] =
-                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                    MutableDataPointer{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
                 ref_result_data["node"] =
-                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+                    MutableDataPointer{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
                 test_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method, test_result_data,
                                                                     update_data, -1);

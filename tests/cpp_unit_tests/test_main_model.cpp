@@ -1050,42 +1050,41 @@ TEST_CASE("Test main model - runtime dispatch") {
     auto main_model = default_model(state);
 
     ConstDataset input_data;
-    input_data["node"] = DataPointer<true>{state.node_input.data(), static_cast<Idx>(state.node_input.size())};
-    input_data["line"] = DataPointer<true>{state.line_input.data(), static_cast<Idx>(state.line_input.size())};
-    input_data["link"] = DataPointer<true>{state.link_input.data(), static_cast<Idx>(state.link_input.size())};
-    input_data["source"] = DataPointer<true>{state.source_input.data(), static_cast<Idx>(state.source_input.size())};
+    input_data["node"] = ConstDataPointer{state.node_input.data(), static_cast<Idx>(state.node_input.size())};
+    input_data["line"] = ConstDataPointer{state.line_input.data(), static_cast<Idx>(state.line_input.size())};
+    input_data["link"] = ConstDataPointer{state.link_input.data(), static_cast<Idx>(state.link_input.size())};
+    input_data["source"] = ConstDataPointer{state.source_input.data(), static_cast<Idx>(state.source_input.size())};
     input_data["sym_load"] =
-        DataPointer<true>{state.sym_load_input.data(), static_cast<Idx>(state.sym_load_input.size())};
+        ConstDataPointer{state.sym_load_input.data(), static_cast<Idx>(state.sym_load_input.size())};
     input_data["asym_load"] =
-        DataPointer<true>{state.asym_load_input.data(), static_cast<Idx>(state.asym_load_input.size())};
-    input_data["shunt"] = DataPointer<true>{state.shunt_input.data(), static_cast<Idx>(state.shunt_input.size())};
+        ConstDataPointer{state.asym_load_input.data(), static_cast<Idx>(state.asym_load_input.size())};
+    input_data["shunt"] = ConstDataPointer{state.shunt_input.data(), static_cast<Idx>(state.shunt_input.size())};
 
     SUBCASE("Single-size batches") {
         ConstDataset update_data;
         update_data["sym_load"] =
-            DataPointer<true>{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())};
+            ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())};
         update_data["asym_load"] =
-            DataPointer<true>{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())};
-        update_data["shunt"] =
-            DataPointer<true>{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())};
+            ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())};
+        update_data["shunt"] = ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())};
         update_data["source"] =
-            DataPointer<true>{state.source_update.data(), static_cast<Idx>(state.source_update.size())};
-        update_data["link"] = DataPointer<true>{state.link_update.data(), static_cast<Idx>(state.link_update.size())};
+            ConstDataPointer{state.source_update.data(), static_cast<Idx>(state.source_update.size())};
+        update_data["link"] = ConstDataPointer{state.link_update.data(), static_cast<Idx>(state.link_update.size())};
 
         Dataset sym_result_data;
-        sym_result_data["node"] = DataPointer<false>{state.sym_node.data(), static_cast<Idx>(state.sym_node.size())};
-        sym_result_data["line"] = DataPointer<false>{state.sym_line.data(), static_cast<Idx>(state.sym_line.size())};
-        sym_result_data["link"] = DataPointer<false>{state.sym_link.data(), static_cast<Idx>(state.sym_link.size())};
+        sym_result_data["node"] = MutableDataPointer{state.sym_node.data(), static_cast<Idx>(state.sym_node.size())};
+        sym_result_data["line"] = MutableDataPointer{state.sym_line.data(), static_cast<Idx>(state.sym_line.size())};
+        sym_result_data["link"] = MutableDataPointer{state.sym_link.data(), static_cast<Idx>(state.sym_link.size())};
         sym_result_data["source"] =
-            DataPointer<false>{state.sym_source.data(), static_cast<Idx>(state.sym_source.size())};
+            MutableDataPointer{state.sym_source.data(), static_cast<Idx>(state.sym_source.size())};
         sym_result_data["sym_load"] =
-            DataPointer<false>{state.sym_load_sym.data(), static_cast<Idx>(state.sym_load_sym.size())};
+            MutableDataPointer{state.sym_load_sym.data(), static_cast<Idx>(state.sym_load_sym.size())};
         sym_result_data["asym_load"] =
-            DataPointer<false>{state.sym_load_asym.data(), static_cast<Idx>(state.sym_load_asym.size())};
-        sym_result_data["shunt"] = DataPointer<false>{state.sym_shunt.data(), static_cast<Idx>(state.sym_shunt.size())};
+            MutableDataPointer{state.sym_load_asym.data(), static_cast<Idx>(state.sym_load_asym.size())};
+        sym_result_data["shunt"] = MutableDataPointer{state.sym_shunt.data(), static_cast<Idx>(state.sym_shunt.size())};
 
         Dataset asym_result_data;
-        asym_result_data["node"] = DataPointer<false>{state.asym_node.data(), static_cast<Idx>(state.asym_node.size())};
+        asym_result_data["node"] = MutableDataPointer{state.asym_node.data(), static_cast<Idx>(state.asym_node.size())};
 
         MainModel model{50.0, input_data};
         auto const count = model.all_component_count();
@@ -1156,10 +1155,10 @@ TEST_CASE("Test main model - runtime dispatch") {
 
         std::vector<SymLoadGenUpdate> sym_load_update_2{{7, 1, nan, 1.0e7}, {7, 1, 1.0e3, nan}, {7, 1, 1.0e3, 1.0e7}};
         dependent_update_data["sym_load"] =
-            DataPointer<true>{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
+            ConstDataPointer{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
 
         std::vector<NodeOutput<symmetric_t>> sym_node_2(sym_load_update_2.size() * state.sym_node.size());
-        dependent_result_data["node"] = DataPointer<false>{
+        dependent_result_data["node"] = MutableDataPointer{
             sym_node_2.data(), static_cast<Idx>(sym_load_update_2.size()), static_cast<Idx>(state.sym_node.size())};
 
         model.calculate_power_flow<symmetric_t>(1e-8, 20, CalculationMethod::newton_raphson, dependent_result_data,
@@ -1216,11 +1215,11 @@ TEST_CASE("Test main model - incomplete input") {
 
     ConstDataset update_data;
     update_data["source"] =
-        DataPointer<true>{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
+        ConstDataPointer{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
     update_data["sym_load"] =
-        DataPointer<true>{complete_sym_load_update.data(), static_cast<Idx>(complete_sym_load_update.size())};
+        ConstDataPointer{complete_sym_load_update.data(), static_cast<Idx>(complete_sym_load_update.size())};
     update_data["asym_load"] =
-        DataPointer<true>{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
+        ConstDataPointer{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
 
     std::vector<SourceUpdate> incomplete_source_update{{6, na_IntS, nan, nan}, {10, na_IntS, nan, nan}};
     std::vector<SymLoadGenUpdate> incomplete_sym_load_update{{7, na_IntS, nan, nan}};
@@ -1229,11 +1228,11 @@ TEST_CASE("Test main model - incomplete input") {
 
     ConstDataset incomplete_update_data;
     incomplete_update_data["source"] =
-        DataPointer<true>{incomplete_source_update.data(), static_cast<Idx>(incomplete_source_update.size())};
+        ConstDataPointer{incomplete_source_update.data(), static_cast<Idx>(incomplete_source_update.size())};
     incomplete_update_data["sym_load"] =
-        DataPointer<true>{incomplete_sym_load_update.data(), static_cast<Idx>(incomplete_sym_load_update.size())};
+        ConstDataPointer{incomplete_sym_load_update.data(), static_cast<Idx>(incomplete_sym_load_update.size())};
     incomplete_update_data["asym_load"] =
-        DataPointer<true>{incomplete_asym_load_update.data(), static_cast<Idx>(incomplete_asym_load_update.size())};
+        ConstDataPointer{incomplete_asym_load_update.data(), static_cast<Idx>(incomplete_asym_load_update.size())};
 
     MainModel const ref_model{main_model};
 
@@ -1243,8 +1242,8 @@ TEST_CASE("Test main model - incomplete input") {
     SUBCASE("Symmetrical - Complete") {
         std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
         std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size());
-        test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
-        ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
+        test_result_data["node"] = MutableDataPointer{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+        ref_result_data["node"] = MutableDataPointer{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
 
         SUBCASE("Test linear calculation") {
             test_model.calculate_power_flow<symmetric_t>(1e-8, 20, linear, test_result_data, update_data, -1);
@@ -1275,8 +1274,8 @@ TEST_CASE("Test main model - incomplete input") {
     SUBCASE("Asymmetrical - Complete") {
         std::vector<NodeOutput<asymmetric_t>> test_asym_node(state.asym_node.size());
         std::vector<NodeOutput<asymmetric_t>> ref_asym_node(state.asym_node.size());
-        test_result_data["node"] = DataPointer<false>{test_asym_node.data(), static_cast<Idx>(test_asym_node.size())};
-        ref_result_data["node"] = DataPointer<false>{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+        test_result_data["node"] = MutableDataPointer{test_asym_node.data(), static_cast<Idx>(test_asym_node.size())};
+        ref_result_data["node"] = MutableDataPointer{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
 
         SUBCASE("Test linear calculation") {
             test_model.calculate_power_flow<asymmetric_t>(1e-8, 20, linear, test_result_data, update_data, -1);
@@ -1314,7 +1313,7 @@ TEST_CASE("Test main model - incomplete input") {
 
     SUBCASE("Symmetrical - Incomplete") {
         std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
-        test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+        test_result_data["node"] = MutableDataPointer{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
 
         SUBCASE("Direct call") {
             CHECK_THROWS_AS(test_model.calculate_power_flow<symmetric_t>(1e-8, 1, linear), SparseMatrixError);
@@ -1339,7 +1338,7 @@ TEST_CASE("Test main model - incomplete input") {
 
     SUBCASE("Asymmetrical - Incomplete") {
         std::vector<NodeOutput<asymmetric_t>> test_sym_node(state.sym_node.size());
-        test_result_data["node"] = DataPointer<false>{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+        test_result_data["node"] = MutableDataPointer{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
 
         SUBCASE("Direct call") {
             CHECK_THROWS_AS(test_model.calculate_power_flow<asymmetric_t>(1e-8, 1, linear), SparseMatrixError);
@@ -1384,14 +1383,14 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
     REQUIRE(source_indptr.size() == batch_size + 1);
 
     ConstDataset mixed_update_data;
-    mixed_update_data["source"] = DataPointer<true>{mixed_source_update.data(), batch_size, 2};
-    mixed_update_data["sym_load"] = DataPointer<true>{mixed_sym_load_update.data(), batch_size, 1};
-    mixed_update_data["asym_load"] = DataPointer<true>{mixed_asym_load_update.data(), batch_size, 1};
+    mixed_update_data["source"] = ConstDataPointer{mixed_source_update.data(), batch_size, 2};
+    mixed_update_data["sym_load"] = ConstDataPointer{mixed_sym_load_update.data(), batch_size, 1};
+    mixed_update_data["asym_load"] = ConstDataPointer{mixed_asym_load_update.data(), batch_size, 1};
 
     ConstDataset second_scenario_update_data;
-    second_scenario_update_data["source"] = DataPointer<true>{mixed_source_update.data() + 2, 2};
-    second_scenario_update_data["sym_load"] = DataPointer<true>{mixed_sym_load_update.data() + 1, 1};
-    second_scenario_update_data["asym_load"] = DataPointer<true>{mixed_asym_load_update.data() + 1, 1};
+    second_scenario_update_data["source"] = ConstDataPointer{mixed_source_update.data() + 2, 2};
+    second_scenario_update_data["sym_load"] = ConstDataPointer{mixed_sym_load_update.data() + 1, 1};
+    second_scenario_update_data["asym_load"] = ConstDataPointer{mixed_asym_load_update.data() + 1, 1};
 
     Dataset test_result_data;
     Dataset ref_result_data;
@@ -1402,8 +1401,8 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
         std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size(),
                                                           {na_IntID, na_IntS, nan, nan, nan, nan, nan});
         test_result_data["node"] =
-            DataPointer<false>{test_sym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
-        ref_result_data["node"] = DataPointer<false>{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
+            MutableDataPointer{test_sym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
+        ref_result_data["node"] = MutableDataPointer{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
 
         CHECK_THROWS_AS(
             test_model.calculate_power_flow<symmetric_t>(1e-8, 1, linear, test_result_data, mixed_update_data),
@@ -1428,8 +1427,8 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
              RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}});
         test_result_data["node"] =
-            DataPointer<false>{test_asym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
-        ref_result_data["node"] = DataPointer<false>{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+            MutableDataPointer{test_asym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
+        ref_result_data["node"] = MutableDataPointer{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
 
         CHECK_THROWS_AS(
             test_model.calculate_power_flow<asymmetric_t>(1e-8, 1, linear, test_result_data, mixed_update_data),

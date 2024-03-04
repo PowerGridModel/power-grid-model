@@ -69,27 +69,27 @@ class DatasetHandler {
         }
     }
 
-    template <bool dataset_const>
-    std::map<std::string, DataPointer<dataset_const>> export_dataset(Idx scenario = -1) const
-        requires(dataset_const || is_data_mutable<data_mutable>)
+    template <dataset_type_tag dataset_type>
+    std::map<std::string, DataPointer<dataset_type>> export_dataset(Idx scenario = -1) const
+        requires(is_const_dataset<dataset_type> || is_data_mutable<data_mutable>)
     {
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with multiple scenarios!\n"};
         }
-        std::map<std::string, DataPointer<dataset_const>> dataset;
+        std::map<std::string, DataPointer<dataset_type>> dataset;
         for (Idx i{}; i != n_components(); ++i) {
             ComponentInfo const& component = get_component_info(i);
             Buffer const& buffer = get_buffer(i);
             if (scenario < 0) {
-                dataset[component.component->name] = DataPointer<dataset_const>{
+                dataset[component.component->name] = DataPointer<dataset_type>{
                     buffer.data, buffer.indptr.data(), batch_size(), component.elements_per_scenario};
             } else {
                 if (component.elements_per_scenario < 0) {
-                    dataset[component.component->name] = DataPointer<dataset_const>{
+                    dataset[component.component->name] = DataPointer<dataset_type>{
                         component.component->advance_ptr(buffer.data, buffer.indptr[scenario]),
                         buffer.indptr[scenario + 1] - buffer.indptr[scenario]};
                 } else {
-                    dataset[component.component->name] = DataPointer<dataset_const>{
+                    dataset[component.component->name] = DataPointer<dataset_type>{
                         component.component->advance_ptr(buffer.data, component.elements_per_scenario * scenario),
                         component.elements_per_scenario};
                 }

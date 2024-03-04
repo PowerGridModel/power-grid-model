@@ -150,17 +150,17 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
             {5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}};
 
         ConstDataset input_data;
-        input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};
-        input_data["line"] = DataPointer<true>{line_input.data(), static_cast<Idx>(line_input.size())};
-        input_data["source"] = DataPointer<true>{source_input.data(), static_cast<Idx>(source_input.size())};
-        input_data["fault"] = DataPointer<true>{fault_input.data(), static_cast<Idx>(fault_input.size())};
+        input_data["node"] = ConstDataPointer{node_input.data(), static_cast<Idx>(node_input.size())};
+        input_data["line"] = ConstDataPointer{line_input.data(), static_cast<Idx>(line_input.size())};
+        input_data["source"] = ConstDataPointer{source_input.data(), static_cast<Idx>(source_input.size())};
+        input_data["fault"] = ConstDataPointer{fault_input.data(), static_cast<Idx>(fault_input.size())};
 
         MainModel model{50.0, input_data};
 
         std::vector<NodeShortCircuitOutput> node_output(2);
 
         Dataset result_data;
-        result_data["node"] = DataPointer<false>{node_output.data(), static_cast<Idx>(node_output.size())};
+        result_data["node"] = MutableDataPointer{node_output.data(), static_cast<Idx>(node_output.size())};
 
         model.calculate_short_circuit(ShortCircuitVoltageScaling::maximum, CalculationMethod::iec60909, result_data);
 

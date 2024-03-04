@@ -30,7 +30,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     return call_with_catch(
         handle,
         [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, input_dataset->export_dataset<true>(), 0};
+            return new PGM_PowerGridModel{system_frequency, input_dataset->export_dataset<const_dataset_t>(), 0};
         },
         PGM_regular_error);
 }
@@ -40,7 +40,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
     call_with_catch(
         handle,
         [model, update_dataset] {
-            model->update_component<MainModel::permanent_update_t>(update_dataset->export_dataset<true>());
+            model->update_component<MainModel::permanent_update_t>(update_dataset->export_dataset<const_dataset_t>());
         },
         PGM_regular_error);
 }
@@ -70,9 +70,9 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         return;
     }
 
-    Dataset const exported_output_dataset = output_dataset->export_dataset<false>();
+    Dataset const exported_output_dataset = output_dataset->export_dataset<mutable_dataset_t>();
     auto const exported_update_dataset =
-        batch_dataset != nullptr ? batch_dataset->export_dataset<true>() : ConstDataset{};
+        batch_dataset != nullptr ? batch_dataset->export_dataset<const_dataset_t>() : ConstDataset{};
 
     // call calculation
     try {

@@ -64,11 +64,11 @@ struct OwningDataset {
     std::vector<ConstDataset> batch_scenarios;
 };
 
-template <bool is_const>
-std::map<std::string, DataPointer<is_const>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
-    std::map<std::string, DataPointer<is_const>> dataset;
+template <dataset_type_tag dataset_type>
+std::map<std::string, DataPointer<dataset_type>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
+    std::map<std::string, DataPointer<dataset_type>> dataset;
     for (auto const& [name, buffer] : buffer_map) {
-        dataset[name] = static_cast<DataPointer<is_const>>(buffer.data_ptr);
+        dataset[name] = static_cast<DataPointer<dataset_type>>(buffer.data_ptr);
     }
     return dataset;
 }
@@ -92,15 +92,15 @@ auto create_owning_dataset(WritableDatasetHandler& info) {
         info.set_buffer(component_info.component->name, buffer.indptr.data(), buffer.ptr.get());
         dataset.buffer_map[component_meta->name] = std::move(buffer);
     }
-    dataset.const_dataset = info.export_dataset<true>();
-    dataset.dataset = info.export_dataset<false>();
+    dataset.const_dataset = info.export_dataset<const_dataset_t>();
+    dataset.dataset = info.export_dataset<mutable_dataset_t>();
 
     return dataset;
 }
 
 auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
     for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
-        dataset.batch_scenarios.push_back(info.export_dataset<true>(scenario_idx));
+        dataset.batch_scenarios.push_back(info.export_dataset<const_dataset_t>(scenario_idx));
     }
 }
 
