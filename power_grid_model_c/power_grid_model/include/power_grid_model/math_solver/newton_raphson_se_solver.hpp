@@ -21,7 +21,7 @@ namespace power_grid_model::math_solver {
 namespace newton_raphson_se {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
-template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
+template <symmetry_tag sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
     template <int r, int c> using GetterType = typename Block<double, sym, false, 4>::template GetterType<r, c>;
 
     // eigen expression
@@ -40,14 +40,14 @@ template <bool sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
 };
 
 // block class for the right hand side in state estimation equation
-template <bool sym> using NRSERhs = NRSEUnknown<sym>;
+template <symmetry_tag sym> using NRSERhs = NRSEUnknown<sym>;
 
 // class of 4*4 (12*12) se gain block
 // [
 //    [G, Q^T]
 //    [Q, R  ]
 // ]
-template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
+template <symmetry_tag sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
     template <int r, int c, int r_size, int c_size>
@@ -85,7 +85,7 @@ template <bool sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
 };
 
 // solver
-template <bool sym> class NewtonRaphsonSESolver {
+template <symmetry_tag sym> class NewtonRaphsonSESolver {
     enum class Order { row_major = 0, column_major = 1 };
 
     struct NRSEVoltageState {
@@ -653,7 +653,7 @@ template <bool sym> class NewtonRaphsonSESolver {
                 return 0.0;
             }
             auto const& theta = x_[math_topo_->slack_bus].theta() + delta_x_rhs_[math_topo_->slack_bus].theta();
-            if constexpr (sym) {
+            if constexpr (is_symmetric<sym>) {
                 return theta;
             } else {
                 return theta(0);
@@ -690,8 +690,8 @@ template <bool sym> class NewtonRaphsonSESolver {
     }
 };
 
-template class NewtonRaphsonSESolver<true>;
-template class NewtonRaphsonSESolver<false>;
+template class NewtonRaphsonSESolver<symmetric_t>;
+template class NewtonRaphsonSESolver<asymmetric_t>;
 
 } // namespace newton_raphson_se
 

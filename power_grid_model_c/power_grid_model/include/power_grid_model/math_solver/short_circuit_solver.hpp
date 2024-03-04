@@ -18,7 +18,7 @@ namespace power_grid_model::math_solver {
 namespace short_circuit {
 
 // solver
-template <bool sym> class ShortCircuitSolver {
+template <symmetry_tag sym> class ShortCircuitSolver {
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
@@ -126,7 +126,7 @@ template <bool sym> class ShortCircuitSolver {
             diagonal_element = ComplexTensor<sym>{-1};
             u_bus = ComplexValue<sym>{0}; // update rhs
         }
-        if constexpr (!sym) {
+        if constexpr (!is_symmetric<sym>) {
             if (fault_type == single_phase_to_ground) {
                 for (Idx data_index = y_bus.row_indptr_lu()[bus_number];
                      data_index != y_bus.row_indptr_lu()[bus_number + 1]; ++data_index) {
@@ -184,7 +184,7 @@ template <bool sym> class ShortCircuitSolver {
             // mat_data[bus,bus] += y_fault
             diagonal_element += ComplexTensor<sym>{y_fault};
         }
-        if constexpr (!sym) {
+        if constexpr (!is_symmetric<sym>) {
             if (fault_type == single_phase_to_ground) {
                 // mat_data[bus,bus][phase_1, phase_1] += y_fault
                 diagonal_element(phase_1, phase_1) += y_fault;
@@ -245,7 +245,7 @@ template <bool sym> class ShortCircuitSolver {
                                                                          // negative to fault
                         u_bus = ComplexValue<sym>{0.0};
                     }
-                    if constexpr (!sym) {
+                    if constexpr (!is_symmetric<sym>) {
                         if (fault_type == single_phase_to_ground) {
                             i_fault(phase_1) = -1.0 * x_bus_subtotal[phase_1] / infinite_admittance_fault_counter_bus;
                             u_bus(phase_1) = 0.0;
@@ -273,7 +273,7 @@ template <bool sym> class ShortCircuitSolver {
                     if (fault_type == three_phase) { // three phase fault
                         i_fault = static_cast<ComplexValue<sym>>(y_fault * x_bus_subtotal);
                     }
-                    if constexpr (!sym) {
+                    if constexpr (!is_symmetric<sym>) {
                         if (fault_type == single_phase_to_ground) {
                             i_fault(phase_1) = y_fault * x_bus_subtotal[phase_1];
                         } else if (fault_type == two_phase) {
@@ -313,7 +313,7 @@ template <bool sym> class ShortCircuitSolver {
                     if (fault_type == three_phase) {
                         i_fault += static_cast<ComplexValue<sym>>(i_source_bus / infinite_admittance_fault_counter_bus);
                     }
-                    if constexpr (!sym) {
+                    if constexpr (!is_symmetric<sym>) {
                         if (fault_type == single_phase_to_ground) {
                             i_fault(phase_1) += i_source_bus[phase_1] / infinite_admittance_fault_counter_bus;
                         } else if (fault_type == two_phase) {
@@ -336,7 +336,7 @@ template <bool sym> class ShortCircuitSolver {
                 } else {
                     // compensate for 2 phase to ground fault with impedance
                     assert(!std::isinf(y_fault.imag()));
-                    if constexpr (!sym) {
+                    if constexpr (!is_symmetric<sym>) {
                         if ((fault_type == two_phase_to_ground) && (infinite_admittance_fault_counter_bus == 0.0)) {
                             auto const finite_admittance_fault_counter_bus = static_cast<double>(faults.size());
                             // i_inj_1 + i_inj_2 = i_ref_1 + i_ref_2 - u_12 * y_fault
@@ -436,8 +436,8 @@ template <bool sym> class ShortCircuitSolver {
     }
 };
 
-template class ShortCircuitSolver<true>;
-template class ShortCircuitSolver<false>;
+template class ShortCircuitSolver<symmetric_t>;
+template class ShortCircuitSolver<asymmetric_t>;
 
 } // namespace short_circuit
 

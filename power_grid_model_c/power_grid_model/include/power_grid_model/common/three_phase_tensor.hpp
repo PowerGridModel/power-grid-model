@@ -88,35 +88,38 @@ template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> 
 } // namespace three_phase_tensor
 
 // three phase vector and tensor
-template <bool sym> using RealTensor = std::conditional_t<sym, double, three_phase_tensor::Tensor<double>>;
-template <bool sym>
-using ComplexTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
+template <symmetry_tag sym>
+using RealTensor = std::conditional_t<is_symmetric<sym>, double, three_phase_tensor::Tensor<double>>;
+template <symmetry_tag sym>
+using ComplexTensor = std::conditional_t<is_symmetric<sym>, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
 
-template <bool sym>
-using RealDiagonalTensor = std::conditional_t<sym, double, three_phase_tensor::DiagonalTensor<double>>;
-template <bool sym>
-using ComplexDiagonalTensor = std::conditional_t<sym, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
-template <bool sym> using RealValue = std::conditional_t<sym, double, three_phase_tensor::Vector<double>>;
-template <bool sym>
-using ComplexValue = std::conditional_t<sym, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
+template <symmetry_tag sym>
+using RealDiagonalTensor = std::conditional_t<is_symmetric<sym>, double, three_phase_tensor::DiagonalTensor<double>>;
+template <symmetry_tag sym>
+using ComplexDiagonalTensor =
+    std::conditional_t<is_symmetric<sym>, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
+template <symmetry_tag sym>
+using RealValue = std::conditional_t<is_symmetric<sym>, double, three_phase_tensor::Vector<double>>;
+template <symmetry_tag sym>
+using ComplexValue = std::conditional_t<is_symmetric<sym>, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
 
 // asserts to ensure alignment
-static_assert(sizeof(RealTensor<false>) == sizeof(double[9]));
-static_assert(alignof(RealTensor<false>) == alignof(double[9]));
-static_assert(std::is_standard_layout_v<RealTensor<false>>);
-static_assert(std::is_trivially_destructible_v<RealTensor<false>>);
-static_assert(sizeof(ComplexTensor<false>) == sizeof(double[18]));
-static_assert(alignof(ComplexTensor<false>) >= alignof(double[18]));
-static_assert(std::is_standard_layout_v<ComplexTensor<false>>);
-static_assert(std::is_trivially_destructible_v<ComplexTensor<false>>);
-static_assert(sizeof(RealValue<false>) == sizeof(double[3]));
-static_assert(alignof(RealValue<false>) == alignof(double[3]));
-static_assert(std::is_standard_layout_v<RealValue<false>>);
-static_assert(std::is_trivially_destructible_v<RealValue<false>>);
-static_assert(sizeof(ComplexValue<false>) == sizeof(double[6]));
-static_assert(alignof(ComplexValue<false>) >= alignof(double[6]));
-static_assert(std::is_standard_layout_v<ComplexValue<false>>);
-static_assert(std::is_trivially_destructible_v<ComplexValue<false>>);
+static_assert(sizeof(RealTensor<asymmetric_t>) == sizeof(double[9]));
+static_assert(alignof(RealTensor<asymmetric_t>) == alignof(double[9]));
+static_assert(std::is_standard_layout_v<RealTensor<asymmetric_t>>);
+static_assert(std::is_trivially_destructible_v<RealTensor<asymmetric_t>>);
+static_assert(sizeof(ComplexTensor<asymmetric_t>) == sizeof(double[18]));
+static_assert(alignof(ComplexTensor<asymmetric_t>) >= alignof(double[18]));
+static_assert(std::is_standard_layout_v<ComplexTensor<asymmetric_t>>);
+static_assert(std::is_trivially_destructible_v<ComplexTensor<asymmetric_t>>);
+static_assert(sizeof(RealValue<asymmetric_t>) == sizeof(double[3]));
+static_assert(alignof(RealValue<asymmetric_t>) == alignof(double[3]));
+static_assert(std::is_standard_layout_v<RealValue<asymmetric_t>>);
+static_assert(std::is_trivially_destructible_v<RealValue<asymmetric_t>>);
+static_assert(sizeof(ComplexValue<asymmetric_t>) == sizeof(double[6]));
+static_assert(alignof(ComplexValue<asymmetric_t>) >= alignof(double[6]));
+static_assert(std::is_standard_layout_v<ComplexValue<asymmetric_t>>);
+static_assert(std::is_trivially_destructible_v<ComplexValue<asymmetric_t>>);
 
 // enabler
 template <class T>
@@ -128,18 +131,22 @@ template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
 // piecewise factory construction for complex vector
-template <bool sym = false> inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
-    if constexpr (sym) {
+template <symmetry_tag sym = asymmetric_t> inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
+    if constexpr (is_symmetric<sym>) {
         return x;
     } else {
-        return ComplexValue<false>{std::piecewise_construct, x};
+        return ComplexValue<asymmetric_t>{std::piecewise_construct, x};
     }
 }
 
-template <column_vector DerivedA>
-inline ComplexValue<false> piecewise_complex_value(Eigen::ArrayBase<DerivedA> const& val) {
-    return val;
+template <column_vector Derived, template <typename> typename T>
+    requires std::convertible_to<T<Derived>, Eigen::ArrayBase<Derived>>
+inline ComplexValue<asymmetric_t> piecewise_complex_value(T<Derived> const& x) {
+    return x;
 }
+
+// piecewise factory construction for complex vector
+inline ComplexValue<asymmetric_t> piecewise_complex_value(ComplexValue<asymmetric_t> const& x) { return x; }
 
 // abs
 inline double cabs(double x) { return std::abs(x); }
@@ -156,7 +163,7 @@ inline DoubleComplex phase_shift(DoubleComplex const x) {
     }
     return DoubleComplex{1.0};
 }
-inline ComplexValue<false> phase_shift(ComplexValue<false> const& m) {
+inline ComplexValue<asymmetric_t> phase_shift(ComplexValue<asymmetric_t> const& m) {
     return {phase_shift(m(0)), phase_shift(m(1)), phase_shift(m(2))};
 }
 
@@ -222,8 +229,8 @@ template <column_vector DerivedA> inline auto mean_val(Eigen::ArrayBase<DerivedA
 inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
 inline double mean_val(double z) { return z; }
 
-template <bool sym, class T> inline auto process_mean_val(const T& m) {
-    if constexpr (sym) {
+template <symmetry_tag sym, class T> inline auto process_mean_val(const T& m) {
+    if constexpr (is_symmetric<sym>) {
         return mean_val(m);
     } else {
         return m;
@@ -254,7 +261,7 @@ inline auto pos_seq(DoubleComplex const& val) { return val; }
 // inverse of tensor
 inline auto inv(double val) { return 1.0 / val; }
 inline auto inv(DoubleComplex const& val) { return 1.0 / val; }
-inline auto inv(ComplexTensor<false> const& val) { return val.matrix().inverse().array(); }
+inline auto inv(ComplexTensor<asymmetric_t> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
 inline void add_diag(double& x, double y) { x += y; }
@@ -269,7 +276,7 @@ inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> 
 }
 
 // zero tensor
-template <bool sym> inline const ComplexTensor<sym> zero_tensor = ComplexTensor<sym>{0.0};
+template <symmetry_tag sym> inline const ComplexTensor<sym> zero_tensor = ComplexTensor<sym>{0.0};
 
 // inverse symmetric param
 inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const& s, DoubleComplex const& m) {
@@ -305,15 +312,17 @@ template <class Derived> inline auto is_normal(Eigen::ArrayBase<Derived> const& 
 
 // isinf
 inline auto is_inf(std::floating_point auto value) { return std::isinf(value); }
-inline auto is_inf(RealValue<false> const& value) { return is_inf(value(0)) || is_inf(value(1)) || is_inf(value(2)); }
+inline auto is_inf(RealValue<asymmetric_t> const& value) {
+    return is_inf(value(0)) || is_inf(value(1)) || is_inf(value(2));
+}
 
 // any_zero
 inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
-inline auto any_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).any(); }
+inline auto any_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).any(); }
 
 // all_zero
 inline auto all_zero(std::floating_point auto value) { return value == 0.0; }
-inline auto all_zero(RealValue<false> const& value) { return (value == RealValue<false>{0.0}).all(); }
+inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).all(); }
 
 // update real values
 //
@@ -325,9 +334,9 @@ inline auto all_zero(RealValue<false> const& value) { return (value == RealValue
 // asymmetric: update [1.0, nan, nan] with [nan, nan, 2.0] -> [1.0, nan, 2.0]
 //
 // The function assumes that the current value is normalized and new value should be normalized with scalar
-template <bool sym, class Proxy>
+template <symmetry_tag sym, class Proxy>
 inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
-    if constexpr (sym) {
+    if constexpr (is_symmetric<sym>) {
         if (!is_nan(new_value)) {
             current_value = scalar * new_value;
         }
@@ -348,20 +357,20 @@ template <typename T> inline void set_if_not_nan(T& target, T const& value) {
         target = value;
     }
 };
-inline void set_if_not_nan(RealValue<false>& target, RealValue<false> const& value) {
+inline void set_if_not_nan(RealValue<asymmetric_t>& target, RealValue<asymmetric_t> const& value) {
     for (Idx i = 0; i != 3; ++i) {
         set_if_not_nan(target(i), value(i));
     }
 };
 
 // symmetric component matrix
-inline ComplexTensor<false> get_sym_matrix() {
-    ComplexTensor<false> m;
+inline ComplexTensor<asymmetric_t> get_sym_matrix() {
+    ComplexTensor<asymmetric_t> m;
     m << 1.0, 1.0, 1.0, 1.0, a2, a, 1.0, a, a2;
     return m;
 }
-inline ComplexTensor<false> get_sym_matrix_inv() {
-    ComplexTensor<false> m;
+inline ComplexTensor<asymmetric_t> get_sym_matrix_inv() {
+    ComplexTensor<asymmetric_t> m;
     m << 1.0, 1.0, 1.0, 1.0, a, a2, 1.0, a2, a;
     m = m / 3.0;
     return m;
@@ -375,9 +384,9 @@ template <rk2_tensor Derived> inline auto hermitian_transpose(Eigen::ArrayBase<D
 }
 
 // vector of values
-template <bool sym> using RealValueVector = std::vector<RealValue<sym>>;
-template <bool sym> using ComplexValueVector = std::vector<ComplexValue<sym>>;
-template <bool sym> using RealTensorVector = std::vector<RealTensor<sym>>;
-template <bool sym> using ComplexTensorVector = std::vector<ComplexTensor<sym>>;
+template <symmetry_tag sym> using RealValueVector = std::vector<RealValue<sym>>;
+template <symmetry_tag sym> using ComplexValueVector = std::vector<ComplexValue<sym>>;
+template <symmetry_tag sym> using RealTensorVector = std::vector<RealTensor<sym>>;
+template <symmetry_tag sym> using ComplexTensorVector = std::vector<ComplexTensor<sym>>;
 
 } // namespace power_grid_model

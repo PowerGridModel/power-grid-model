@@ -80,22 +80,22 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         switch (opt->calculation_type) {
         case PGM_power_flow:
             if (opt->symmetric != 0) {
-                handle->batch_parameter =
-                    model->calculate_power_flow<true>(opt->err_tol, opt->max_iter, calculation_method,
-                                                      exported_output_dataset, exported_update_dataset, opt->threading);
+                handle->batch_parameter = model->calculate_power_flow<symmetric_t>(
+                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
+                    opt->threading);
             } else {
-                handle->batch_parameter = model->calculate_power_flow<false>(
+                handle->batch_parameter = model->calculate_power_flow<asymmetric_t>(
                     opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
                     opt->threading);
             }
             break;
         case PGM_state_estimation:
             if (opt->symmetric != 0) {
-                handle->batch_parameter = model->calculate_state_estimation<true>(
+                handle->batch_parameter = model->calculate_state_estimation<symmetric_t>(
                     opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
                     opt->threading);
             } else {
-                handle->batch_parameter = model->calculate_state_estimation<false>(
+                handle->batch_parameter = model->calculate_state_estimation<asymmetric_t>(
                     opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
                     opt->threading);
             }

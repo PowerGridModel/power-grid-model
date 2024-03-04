@@ -202,18 +202,18 @@ class Transformer : public Branch {
     }
 
     // branch param
-    BranchCalcParam<true> sym_calc_param() const final {
+    BranchCalcParam<symmetric_t> sym_calc_param() const final {
         auto const [y_series, y_shunt, k] = transformer_params();
         return calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
     }
-    BranchCalcParam<false> asym_calc_param() const final {
+    BranchCalcParam<asymmetric_t> asym_calc_param() const final {
         auto const [y_series, y_shunt, k] = transformer_params();
         // positive sequence
         auto const param1 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
         // negative sequence
         auto const param2 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (-clock_ * deg_30)));
         // zero sequence, default zero
-        BranchCalcParam<true> param0{};
+        BranchCalcParam<symmetric_t> param0{};
         // YNyn
         if (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) {
             double phase_shift_0 = 0.0;
@@ -252,12 +252,12 @@ class Transformer : public Branch {
 
         // for the rest param0 is zero
         // calculate yabc
-        ComplexTensor<false> const sym_matrix = get_sym_matrix();
-        ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
-        BranchCalcParam<false> param;
+        ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
+        ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
+        BranchCalcParam<asymmetric_t> param;
         for (size_t i = 0; i != 4; ++i) {
             // Yabc = A * Y012 * A^-1
-            ComplexTensor<false> y012;
+            ComplexTensor<asymmetric_t> y012;
             y012 << param0.value[i], 0.0, 0.0, 0.0, param1.value[i], 0.0, 0.0, 0.0, param2.value[i];
             param.value[i] = dot(sym_matrix, y012, sym_matrix_inv);
         }

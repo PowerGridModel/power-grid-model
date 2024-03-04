@@ -88,8 +88,10 @@ struct get_attributes_list<ThreeWindingTransformerUpdate> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<LoadGenUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<LoadGenUpdate<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
@@ -126,8 +128,10 @@ struct get_attributes_list<ShuntUpdate> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<VoltageSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<VoltageSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
@@ -138,8 +142,10 @@ struct get_attributes_list<VoltageSensorUpdate<sym>> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<PowerSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<PowerSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
@@ -250,8 +256,10 @@ struct get_component_nan<ThreeWindingTransformerUpdate> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<LoadGenUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<LoadGenUpdate<sym_type>> {
+    using sym = sym_type;
+
     LoadGenUpdate<sym> operator() () const {
         LoadGenUpdate<sym> comp;
         // all attributes including base class
@@ -294,8 +302,10 @@ struct get_component_nan<ShuntUpdate> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<VoltageSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<VoltageSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     VoltageSensorUpdate<sym> operator() () const {
         VoltageSensorUpdate<sym> comp;
         // all attributes including base class
@@ -308,8 +318,10 @@ struct get_component_nan<VoltageSensorUpdate<sym>> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<PowerSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<PowerSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     PowerSensorUpdate<sym> operator() () const {
         PowerSensorUpdate<sym> comp;
         // all attributes including base class

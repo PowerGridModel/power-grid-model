@@ -29,11 +29,11 @@ class GenericLoadGen : public Appliance {
     // getter for load type
     LoadGenType type() const { return type_; }
     // getter for calculation param, power injection
-    template <bool sym> ComplexValue<sym> calc_param(bool is_connected_to_source = true) const {
+    template <symmetry_tag sym> ComplexValue<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return ComplexValue<sym>{};
         }
-        if constexpr (sym) {
+        if constexpr (is_symmetric<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();
@@ -42,8 +42,8 @@ class GenericLoadGen : public Appliance {
 
   private:
     LoadGenType type_;
-    virtual ComplexValue<true> sym_calc_param() const = 0;
-    virtual ComplexValue<false> asym_calc_param() const = 0;
+    virtual ComplexValue<symmetric_t> sym_calc_param() const = 0;
+    virtual ComplexValue<asymmetric_t> asym_calc_param() const = 0;
 };
 
 // abstraction of load/generation
@@ -56,14 +56,14 @@ class GenericGenerator : public GenericLoadGen {
     using GenericLoadGen::GenericLoadGen;
 };
 
-template <bool sym, bool is_gen>
+template <symmetry_tag sym, bool is_gen>
 class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, GenericLoad> {
   public:
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
     using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
     static constexpr char const* name = [] {
-        if constexpr (sym) {
+        if constexpr (is_symmetric<sym>) {
             return is_gen ? "sym_gen" : "sym_load";
         } else {
             return is_gen ? "asym_gen" : "asym_load";
@@ -112,35 +112,39 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     static constexpr double direction_ = is_gen ? 1.0 : -1.0;
 
     // override calc_param
-    ComplexValue<true> sym_calc_param() const override {
-        if constexpr (sym) {
+    ComplexValue<symmetric_t> sym_calc_param() const override {
+        if constexpr (is_symmetric<sym>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
                 return {nan, nan};
             }
         }
         return mean_val(s_specified_);
     }
-    ComplexValue<false> asym_calc_param() const override {
-        if constexpr (sym) {
+    ComplexValue<asymmetric_t> asym_calc_param() const override {
+        if constexpr (is_symmetric<sym>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
-                return ComplexValue<false>{std::complex{nan, nan}};
+                return ComplexValue<asymmetric_t>{std::complex{nan, nan}};
             }
         }
         return piecewise_complex_value(s_specified_);
     }
-    template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         appliance_math_output.s = scale_power<sym_calc>(u);
         appliance_math_output.i = conj(appliance_math_output.s / u);
         return appliance_math_output;
     }
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const override { return u2si<true>(u); }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const override { return u2si<false>(u); }
+    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const override {
+        return u2si<symmetric_t>(u);
+    }
+    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const override {
+        return u2si<asymmetric_t>(u);
+    }
 
     double injection_direction() const override { return direction_; }
 
     // scale load
-    template <bool sym_calc> ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
+    template <symmetry_tag sym_calc> ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
         using enum LoadGenType;
 
         auto const params = [this] { return this->template calc_param<sym_calc>(); };
@@ -158,14 +162,14 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
 };
 
 // explicit instantiation
-template class LoadGen<true, true>;
-template class LoadGen<true, false>;
-template class LoadGen<false, true>;
-template class LoadGen<false, false>;
+template class LoadGen<symmetric_t, true>;
+template class LoadGen<symmetric_t, false>;
+template class LoadGen<asymmetric_t, true>;
+template class LoadGen<asymmetric_t, false>;
 // alias
-using SymGenerator = LoadGen<true, true>;
-using AsymGenerator = LoadGen<false, true>;
-using SymLoad = LoadGen<true, false>;
-using AsymLoad = LoadGen<false, false>;
+using SymGenerator = LoadGen<symmetric_t, true>;
+using AsymGenerator = LoadGen<asymmetric_t, true>;
+using SymLoad = LoadGen<symmetric_t, false>;
+using AsymLoad = LoadGen<asymmetric_t, false>;
 
 } // namespace power_grid_model

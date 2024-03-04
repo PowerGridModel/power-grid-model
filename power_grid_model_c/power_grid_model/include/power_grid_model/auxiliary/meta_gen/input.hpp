@@ -231,8 +231,10 @@ struct get_attributes_list<GenericLoadGenInput> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<LoadGenInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<LoadGenInput<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
@@ -287,8 +289,10 @@ struct get_attributes_list<GenericVoltageSensorInput> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<VoltageSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<VoltageSensorInput<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
             
@@ -312,8 +316,10 @@ struct get_attributes_list<GenericPowerSensorInput> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<PowerSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<PowerSensorInput<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
@@ -579,8 +585,10 @@ struct get_component_nan<GenericLoadGenInput> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<LoadGenInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<LoadGenInput<sym_type>> {
+    using sym = sym_type;
+
     LoadGenInput<sym> operator() () const {
         LoadGenInput<sym> comp;
         // all attributes including base class
@@ -643,8 +651,10 @@ struct get_component_nan<GenericVoltageSensorInput> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<VoltageSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<VoltageSensorInput<sym_type>> {
+    using sym = sym_type;
+
     VoltageSensorInput<sym> operator() () const {
         VoltageSensorInput<sym> comp;
         // all attributes including base class
@@ -672,8 +682,10 @@ struct get_component_nan<GenericPowerSensorInput> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<PowerSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<PowerSensorInput<sym_type>> {
+    using sym = sym_type;
+
     PowerSensorInput<sym> operator() () const {
         PowerSensorInput<sym> comp;
         // all attributes including base class

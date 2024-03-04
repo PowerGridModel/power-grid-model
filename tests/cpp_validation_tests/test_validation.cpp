@@ -146,7 +146,7 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
 
     std::stringstream sstr;
     sstr << std::setprecision(16);
-    if constexpr (std::same_as<T, RealValue<false>>) {
+    if constexpr (std::same_as<T, RealValue<asymmetric_t>>) {
         sstr << "(" << value(0) << ", " << value(1) << ", " << value(2) << ")";
     } else {
         sstr << value;
@@ -166,16 +166,16 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
     case c_double:
         return get_as_string<double>(raw_data_ptr, attr, obj);
     case c_double3:
-        return get_as_string<RealValue<false>>(raw_data_ptr, attr, obj);
+        return get_as_string<RealValue<asymmetric_t>>(raw_data_ptr, attr, obj);
     default:
         return "<unknown value type>"s;
     }
 }
 
-template <bool sym>
-bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
-                                MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
-                                double rtol, Idx obj) {
+template <symmetry_tag sym>
+bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
+                               MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol, double rtol,
+                               Idx obj) {
     RealValue<sym> mag{};
     RealValue<sym> mag_ref{};
     RealValue<sym> angle{};
@@ -186,24 +186,25 @@ bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCon
     angle_attr.get_value(reference_result_ptr, &angle_ref, obj);
     ComplexValue<sym> const result = mag * exp(1.0i * angle);
     ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
-    if constexpr (sym) {
+    if constexpr (is_symmetric<sym>) {
         return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
     } else {
         return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
     }
 }
 
-bool assert_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
-                                MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol,
-                                double rtol, Idx obj) {
+bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
+                               MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol, double rtol,
+                               Idx obj) {
     if (angle_attr.ctype == CType::c_double) {
         assert(mag_attr.ctype == CType::c_double);
-        return assert_angle_and_magnitude<true>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
-                                                obj);
+        return check_angle_and_magnitude<symmetric_t>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol,
+                                                      rtol, obj);
     }
     assert(angle_attr.ctype == CType::c_double3);
     assert(mag_attr.ctype == CType::c_double3);
-    return assert_angle_and_magnitude<false>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol, obj);
+    return check_angle_and_magnitude<asymmetric_t>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
+                                                   obj);
 }
 
 // assert single result
@@ -257,8 +258,8 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         continue;
                     }
                     bool const match =
-                        is_angle ? assert_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
-                                                              possible_attr_magnitude, dynamic_atol, rtol, obj)
+                        is_angle ? check_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
+                                                             possible_attr_magnitude, dynamic_atol, rtol, obj)
                                  : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
                     if (match) {
                         CHECK(match);
@@ -331,22 +332,22 @@ CalculationFunc calculation_func(CaseParam const& param) {
         return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
                      ConstDataset const& update_dataset, Idx threading) {
             if (sym) {
-                return model.calculate_power_flow<true>(err_tol, max_iter, calculation_method, dataset, update_dataset,
-                                                        threading);
+                return model.calculate_power_flow<symmetric_t>(err_tol, max_iter, calculation_method, dataset,
+                                                               update_dataset, threading);
             }
-            return model.calculate_power_flow<false>(err_tol, max_iter, calculation_method, dataset, update_dataset,
-                                                     threading);
+            return model.calculate_power_flow<asymmetric_t>(err_tol, max_iter, calculation_method, dataset,
+                                                            update_dataset, threading);
         };
     }
     if (calculation_type == "state_estimation"s) {
         return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
                      ConstDataset const& update_dataset, Idx threading) {
             if (sym) {
-                return model.calculate_state_estimation<true>(err_tol, max_iter, calculation_method, dataset,
-                                                              update_dataset, threading);
+                return model.calculate_state_estimation<symmetric_t>(err_tol, max_iter, calculation_method, dataset,
+                                                                     update_dataset, threading);
             }
-            return model.calculate_state_estimation<false>(err_tol, max_iter, calculation_method, dataset,
-                                                           update_dataset, threading);
+            return model.calculate_state_estimation<asymmetric_t>(err_tol, max_iter, calculation_method, dataset,
+                                                                  update_dataset, threading);
         };
     }
     if (calculation_type == "short_circuit"s) {

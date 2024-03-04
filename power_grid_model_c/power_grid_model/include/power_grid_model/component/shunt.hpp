@@ -29,11 +29,11 @@ class Shunt : public Appliance {
     }
 
     // getter for calculation param, shunt y
-    template <bool sym> ComplexTensor<sym> calc_param(bool is_connected_to_source = true) const {
+    template <symmetry_tag sym> ComplexTensor<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return ComplexTensor<sym>{};
         }
-        if constexpr (sym) {
+        if constexpr (is_symmetric<sym>) {
             return y1_;
         } else {
             // abc matrix
@@ -41,7 +41,7 @@ class Shunt : public Appliance {
             // [[2y1+y0, y0-y1, y0-y1],
             //  [y0-y1, 2y1+y0, y0-y1],
             //  [y0-y1, y0-y1, 2y1+y0]]
-            return ComplexTensor<false>{(2.0 * y1_ + y0_) / 3.0, (y0_ - y1_) / 3.0};
+            return ComplexTensor<asymmetric_t>{(2.0 * y1_ + y0_) / 3.0, (y0_ - y1_) / 3.0};
         }
     }
 
@@ -101,7 +101,7 @@ class Shunt : public Appliance {
         return true;
     }
 
-    template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         ComplexTensor<sym_calc> const param = calc_param<sym_calc>();
         // return value should be injection direction, therefore a negative sign for i
@@ -109,8 +109,12 @@ class Shunt : public Appliance {
         appliance_math_output.s = u * conj(appliance_math_output.i);
         return appliance_math_output;
     }
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
+    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
+        return u2si<symmetric_t>(u);
+    }
+    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
+        return u2si<asymmetric_t>(u);
+    }
 
     double injection_direction() const final { return -1.0; }
 };

@@ -391,19 +391,19 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     // calculate branch parameters
-    std::array<BranchCalcParam<true>, 3> sym_calc_param() const final {
+    std::array<BranchCalcParam<symmetric_t>, 3> sym_calc_param() const final {
         std::array<Transformer, 3> const transformer_array = convert_to_two_winding_transformers();
-        std::array<BranchCalcParam<true>, 3> transformer_params{};
+        std::array<BranchCalcParam<symmetric_t>, 3> transformer_params{};
         for (size_t i = 0; i < transformer_array.size(); i++) {
-            transformer_params[i] = transformer_array[i].calc_param<true>();
+            transformer_params[i] = transformer_array[i].calc_param<symmetric_t>();
         }
         return transformer_params;
     }
-    std::array<BranchCalcParam<false>, 3> asym_calc_param() const final {
+    std::array<BranchCalcParam<asymmetric_t>, 3> asym_calc_param() const final {
         std::array<Transformer, 3> const transformer_array = convert_to_two_winding_transformers();
-        std::array<BranchCalcParam<false>, 3> transformer_params{};
+        std::array<BranchCalcParam<asymmetric_t>, 3> transformer_params{};
         for (size_t i = 0; i < transformer_array.size(); i++) {
-            transformer_params[i] = transformer_array[i].calc_param<false>();
+            transformer_params[i] = transformer_array[i].calc_param<asymmetric_t>();
         }
         return transformer_params;
     }
