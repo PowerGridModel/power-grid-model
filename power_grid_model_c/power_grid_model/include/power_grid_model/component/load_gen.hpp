@@ -17,6 +17,18 @@
 
 namespace power_grid_model {
 
+struct load_appliance_t {};
+struct gen_appliance_t {};
+
+template <typename T>
+concept appliance_type_tag = std::same_as<T, load_appliance_t> || std::same_as<T, gen_appliance_t>;
+template <appliance_type_tag T> constexpr bool is_generator = std::same_as<T, gen_appliance_t>;
+
+static_assert(appliance_type_tag<load_appliance_t>);
+static_assert(appliance_type_tag<gen_appliance_t>);
+static_assert(!is_generator<load_appliance_t>);
+static_assert(is_generator<gen_appliance_t>);
+
 class GenericLoadGen : public Appliance {
   public:
     using InputType = GenericLoadGenInput;
@@ -56,17 +68,19 @@ class GenericGenerator : public GenericLoadGen {
     using GenericLoadGen::GenericLoadGen;
 };
 
-template <symmetry_tag sym, bool is_gen>
-class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, GenericLoad> {
+template <symmetry_tag sym, appliance_type_tag appliance_type_>
+class LoadGen final : public std::conditional_t<is_generator<appliance_type_>, GenericGenerator, GenericLoad> {
   public:
+    using appliance_type = appliance_type_;
+
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
-    using BaseClass = std::conditional_t<is_gen, GenericGenerator, GenericLoad>;
+    using BaseClass = std::conditional_t<is_generator<appliance_type>, GenericGenerator, GenericLoad>;
     static constexpr char const* name = [] {
         if constexpr (is_symmetric<sym>) {
-            return is_gen ? "sym_gen" : "sym_load";
+            return is_generator<appliance_type> ? "sym_gen" : "sym_load";
         } else {
-            return is_gen ? "asym_gen" : "asym_load";
+            return is_generator<appliance_type> ? "asym_gen" : "asym_load";
         }
     }();
 
@@ -109,7 +123,7 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
     ComplexValue<sym> s_specified_{std::complex<double>{nan, nan}}; // specified power injection
 
     // direction of load_gen
-    static constexpr double direction_ = is_gen ? 1.0 : -1.0;
+    static constexpr double direction_ = is_generator<appliance_type> ? 1.0 : -1.0;
 
     // override calc_param
     ComplexValue<symmetric_t> sym_calc_param() const override {
@@ -162,14 +176,14 @@ class LoadGen final : public std::conditional_t<is_gen, GenericGenerator, Generi
 };
 
 // explicit instantiation
-template class LoadGen<symmetric_t, true>;
-template class LoadGen<symmetric_t, false>;
-template class LoadGen<asymmetric_t, true>;
-template class LoadGen<asymmetric_t, false>;
+template class LoadGen<symmetric_t, gen_appliance_t>;
+template class LoadGen<symmetric_t, load_appliance_t>;
+template class LoadGen<asymmetric_t, gen_appliance_t>;
+template class LoadGen<asymmetric_t, load_appliance_t>;
 // alias
-using SymGenerator = LoadGen<symmetric_t, true>;
-using AsymGenerator = LoadGen<asymmetric_t, true>;
-using SymLoad = LoadGen<symmetric_t, false>;
-using AsymLoad = LoadGen<asymmetric_t, false>;
+using SymGenerator = LoadGen<symmetric_t, gen_appliance_t>;
+using AsymGenerator = LoadGen<asymmetric_t, gen_appliance_t>;
+using SymLoad = LoadGen<symmetric_t, load_appliance_t>;
+using AsymLoad = LoadGen<asymmetric_t, load_appliance_t>;
 
 } // namespace power_grid_model

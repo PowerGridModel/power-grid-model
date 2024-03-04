@@ -135,7 +135,7 @@ class DatasetHandler {
                     Data* data)
         requires(!is_indptr_mutable<indptr_mutable>)
     {
-        check_non_uniform_integrity<true>(elements_per_scenario, total_elements, indptr);
+        check_non_uniform_integrity<indptr_immutable_t>(elements_per_scenario, total_elements, indptr);
         add_component_info_impl(component, elements_per_scenario, total_elements);
         buffers_.back().data = data;
         if (indptr) {
@@ -150,7 +150,7 @@ class DatasetHandler {
     {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = dataset_info_.component_info[idx];
-        check_non_uniform_integrity<false>(info.elements_per_scenario, info.total_elements, indptr);
+        check_non_uniform_integrity<indptr_mutable_t>(info.elements_per_scenario, info.total_elements, indptr);
         buffers_[idx].data = data;
         if (indptr) {
             buffers_[idx].indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
@@ -170,13 +170,13 @@ class DatasetHandler {
         }
     }
 
-    template <bool check_indptr_content>
+    template <indptr_mutable_tag check_indptr_content>
     void check_non_uniform_integrity(Idx elements_per_scenario, Idx total_elements, Indptr* indptr) {
         if (elements_per_scenario < 0) {
             if (!indptr) {
                 throw DatasetError{"For a non-uniform buffer, indptr should be supplied !\n"};
             }
-            if constexpr (check_indptr_content) {
+            if constexpr (!is_indptr_mutable<check_indptr_content>) {
                 if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
                     throw DatasetError{
                         "For a non-uniform buffer, indptr should begin with 0 and end with total_elements !\n"};
