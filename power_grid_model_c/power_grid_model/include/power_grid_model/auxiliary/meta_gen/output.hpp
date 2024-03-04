@@ -33,7 +33,7 @@ struct get_attributes_list<BaseOutput> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<NodeOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
@@ -50,7 +50,7 @@ struct get_attributes_list<NodeOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<BranchOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     static constexpr std::array<MetaAttribute, 11> value{
             // all attributes including base class
@@ -71,7 +71,7 @@ struct get_attributes_list<BranchOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<Branch3Output<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     static constexpr std::array<MetaAttribute, 15> value{
             // all attributes including base class
@@ -96,7 +96,7 @@ struct get_attributes_list<Branch3Output<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<ApplianceOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
@@ -113,7 +113,7 @@ struct get_attributes_list<ApplianceOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<VoltageSensorOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
@@ -127,7 +127,7 @@ struct get_attributes_list<VoltageSensorOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_attributes_list<PowerSensorOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
@@ -244,7 +244,7 @@ struct get_component_nan<BaseOutput> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<NodeOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     NodeOutput<sym> operator() () const {
         NodeOutput<sym> comp;
@@ -263,7 +263,7 @@ struct get_component_nan<NodeOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<BranchOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     BranchOutput<sym> operator() () const {
         BranchOutput<sym> comp;
@@ -286,7 +286,7 @@ struct get_component_nan<BranchOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<Branch3Output<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     Branch3Output<sym> operator() () const {
         Branch3Output<sym> comp;
@@ -313,7 +313,7 @@ struct get_component_nan<Branch3Output<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<ApplianceOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     ApplianceOutput<sym> operator() () const {
         ApplianceOutput<sym> comp;
@@ -332,7 +332,7 @@ struct get_component_nan<ApplianceOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<VoltageSensorOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     VoltageSensorOutput<sym> operator() () const {
         VoltageSensorOutput<sym> comp;
@@ -348,7 +348,7 @@ struct get_component_nan<VoltageSensorOutput<sym_type>> {
 
 template <symmetry_tag sym_type>
 struct get_component_nan<PowerSensorOutput<sym_type>> {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     PowerSensorOutput<sym> operator() () const {
         PowerSensorOutput<sym> comp;

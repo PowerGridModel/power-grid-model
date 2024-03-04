@@ -232,7 +232,7 @@ struct GenericLoadGenInput {
 
 template <symmetry_tag sym_type>
 struct LoadGenInput {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -310,7 +310,7 @@ struct GenericVoltageSensorInput {
 
 template <symmetry_tag sym_type>
 struct VoltageSensorInput {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
@@ -351,7 +351,7 @@ struct GenericPowerSensorInput {
 
 template <symmetry_tag sym_type>
 struct PowerSensorInput {
-    using sym = typename sym_type;
+    using sym = sym_type;
 
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
