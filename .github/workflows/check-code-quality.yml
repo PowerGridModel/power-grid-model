@@ -11,11 +11,10 @@
 name: Check Code Quality
 
 on:
-  # run pipeline on push event of main or release branch
+  # run pipeline on push event of main branch
   push:
     branches:
-      - main
-      - 'release/**'
+      - main      
   # run pipeline on pull request
   pull_request:
 
@@ -25,7 +24,7 @@ concurrency:
 
 jobs:
   check-code-quality:
-    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
+
     runs-on: ubuntu-latest
 
     steps:
