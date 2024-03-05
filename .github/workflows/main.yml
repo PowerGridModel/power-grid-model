@@ -21,331 +21,326 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+
 jobs:
-  verify:
+
+  acquire-python-version-build-sdist:
+    name: Build sdist and set version
     runs-on: ubuntu-latest
     steps:
-      - run: echo "xyz"
-    if: github.ref != 'refs/heads/main'
-# jobs:
+      - uses: actions/checkout@v4
 
-#   acquire-python-version-build-sdist:
-#     name: Build sdist and set version
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-#       - uses: actions/setup-python@v5
-#         with:
-#           python-version: "3.11"
+      - name: Set PyPI Version
+        run: |
+          pip install requests build
+          python set_pypi_version.py
 
-#       - name: Set PyPI Version
-#         run: |
-#           pip install requests build
-#           python set_pypi_version.py
+      - name: Build SDist
+        run:  python -m build --sdist --outdir wheelhouse .
 
-#       - name: Build SDist
-#         run:  python -m build --sdist --outdir wheelhouse .
+      - name: Keep version file
+        uses: actions/upload-artifact@v4
+        with:
+          name: version
+          path: PYPI_VERSION
 
-#       - name: Keep version file
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: version
-#           path: PYPI_VERSION
+      - name: Keep SDist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheelhouse
+          path: ./wheelhouse/*.tar.gz
 
-#       - name: Keep SDist
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: wheelhouse
-#           path: ./wheelhouse/*.tar.gz
+  build-cpp-test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - compiler: clang
+            cc: clang-15
+            cxx: clang++-15
 
-#   build-cpp-test-linux:
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         build-option: [ debug, release ]
-#         compiler: [gcc, clang]
-#         include:
-#           - compiler: gcc
-#             cc: gcc-11
-#             cxx: g++-11
-#           - compiler: clang
-#             cc: clang-15
-#             cxx: clang++-15
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
-#     env:
-#       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-#       CC: ${{ matrix.cc }}
-#       CXX: ${{ matrix.cxx }}
-#       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang-15
+      - name: Enable brew
+        run: |
+          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Install packages
-#         run: |
-#           sudo apt-get update
-#           sudo apt-get install -y ninja-build clang-15
-#       - name: Enable brew
-#         run: |
-#           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-#       - name: Install C++ dependencies
-#         run: |
-#           brew install boost eigen nlohmann-json msgpack-cxx doctest
-#       - name: Build and test
-#         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+  build-cpp-test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+        compiler: [msvc, clang-cl]
 
-#   build-cpp-test-windows:
-#     runs-on: windows-latest
-#     strategy:
-#       matrix:
-#         build-option: [ debug, release ]
-#         compiler: [msvc, clang-cl]
+    env:
+      PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
-#     env:
-#       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
+    steps:
+      - uses: actions/checkout@v4
 
-#     steps:
-#       - uses: actions/checkout@v4
+      - name: Activate conda
+        run: |
+          & "$env:CONDA\condabin\conda" init
 
-#       - name: Activate conda
-#         run: |
-#           & "$env:CONDA\condabin\conda" init
+      - name: Install conda environment
+        run: |
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 
-#       - name: Install conda environment
-#         run: |
-#           conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
+      - name: Build and test
+        run: |
+          $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+          Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
 
-#       - name: Build and test
-#         run: |
-#           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
-#           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
-#           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          # generate cmake cache
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          # build
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          # test
+          ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
+          # install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
 
-#           # generate cmake cache
-#           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
-#           # build
-#           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-#           # test
-#           ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
-#           # install
-#           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          # build and run integration test
+          cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
-#           # build and run integration test
-#           cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
-#           cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
-#           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-#           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-#           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
+  build-cpp-test-macos:
+    runs-on: macos-13
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+    env:
+      CMAKE_PREFIX_PATH: /usr/local
+      CC: clang
+      CXX: clang++
+      PRESET: ci-clang-${{ matrix.build-option }}
 
-#   build-cpp-test-macos:
-#     runs-on: macos-13
-#     strategy:
-#       matrix:
-#         build-option: [ debug, release ]
-#     env:
-#       CMAKE_PREFIX_PATH: /usr/local
-#       CC: clang
-#       CXX: clang++
-#       PRESET: ci-clang-${{ matrix.build-option }}
+    steps:
+      - uses: actions/checkout@v4
 
-#     steps:
-#       - uses: actions/checkout@v4
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
-#       - name: Set up XCode
-#         uses: maxim-lobanov/setup-xcode@v1
-#         with:
-#           xcode-version: latest-stable
+      - name: Install cpp dependencies
+        run: |
+          brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
-#       - name: Install cpp dependencies
-#         run: |
-#           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
-#       - name: Build and test
-#         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+  build-and-test-python:
+    strategy:
+      matrix:
+        platform: [ linux-x64, linux-aarch64, macos, windows ]
+        include:
+          - platform: linux-x64
+            os: ubuntu-latest
+            cibw_build: "*_x86_64"
+          - platform: linux-aarch64
+            os: ubuntu-latest
+            cibw_build: "*_aarch64"
+          - platform: macos
+            os: macos-13
+            cibw_build: "*"
+          - platform: windows
+            os: windows-latest
+            cibw_build: "*"
 
-#   build-and-test-python:
-#     strategy:
-#       matrix:
-#         platform: [ linux-x64, linux-aarch64, macos, windows ]
-#         include:
-#           - platform: linux-x64
-#             os: ubuntu-latest
-#             cibw_build: "*_x86_64"
-#           - platform: linux-aarch64
-#             os: ubuntu-latest
-#             cibw_build: "*_aarch64"
-#           - platform: macos
-#             os: macos-13
-#             cibw_build: "*"
-#           - platform: windows
-#             os: windows-latest
-#             cibw_build: "*"
+    runs-on: ${{ matrix.os }}
+    needs: [acquire-python-version-build-sdist]
 
-#     runs-on: ${{ matrix.os }}
-#     needs: [acquire-python-version-build-sdist]
+    steps:
+      - uses: actions/checkout@v4
 
-#     steps:
-#       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: .
 
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: version
-#           path: .
+      - name: Set up QEMU
+        if: matrix.os == 'ubuntu-latest'
+        uses: docker/setup-qemu-action@v3
 
-#       - name: Set up QEMU
-#         if: matrix.os == 'ubuntu-latest'
-#         uses: docker/setup-qemu-action@v3
+      - name: Set up XCode
+        if: matrix.os == 'macos-13'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
-#       - name: Set up XCode
-#         if: matrix.os == 'macos-13'
-#         uses: maxim-lobanov/setup-xcode@v1
-#         with:
-#           xcode-version: latest-stable
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.16.5
+        # GitHub Actions specific build parameters
+        env:
+          # pass GitHub runner info into Linux container
+          CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
+          CIBW_BUILD: ${{ matrix.cibw_build }}
 
-#       - name: Build wheels
-#         uses: pypa/cibuildwheel@v2.16.5
-#         # GitHub Actions specific build parameters
-#         env:
-#           # pass GitHub runner info into Linux container
-#           CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
-#           CIBW_BUILD: ${{ matrix.cibw_build }}
+      - name: Keep wheel files
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheelhouse-${{ matrix.platform }}
+          path: ./wheelhouse/*.whl
 
-#       - name: Keep wheel files
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: wheelhouse-${{ matrix.platform }}
-#           path: ./wheelhouse/*.whl
+  build-and-test-conda:
+    name: Build and test in Conda
 
-#   build-and-test-conda:
-#     name: Build and test in Conda
-
-#     runs-on: ${{ matrix.os }}-latest
-#     strategy:
-#       matrix:
-#         os: ["ubuntu", "windows"] # We do not test conda for MacOS
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ["ubuntu", "windows"] # We do not test conda for MacOS
   
-#     defaults:
-#       run:
-#         shell: bash -el {0}
-#     steps:
-#       - uses: actions/checkout@v4
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
 
-#       - uses: conda-incubator/setup-miniconda@v3
-#         with:
-#           activate-environment: conda-pgm-env
-#           environment-file: .github/conda_pgm_env.yml
-#           auto-activate-base: false
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: conda-pgm-env
+          environment-file: .github/conda_pgm_env.yml
+          auto-activate-base: false
       
-#       - name: List conda
-#         run: |
-#           conda info
-#           conda list
+      - name: List conda
+        run: |
+          conda info
+          conda list
       
-#       - name: Build
-#         run: python -m pip install . -vv --no-build-isolation --no-deps   
+      - name: Build
+        run: python -m pip install . -vv --no-build-isolation --no-deps   
 
-#       - name: Test
-#         run: pytest
+      - name: Test
+        run: pytest
 
-#   test-python-macos-arm64:
-#     runs-on: flyci-macos-large-latest-m1
-#     needs: [build-cpp-test-macos, build-and-test-python]
-#     if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+  test-python-macos-arm64:
+    runs-on: flyci-macos-large-latest-m1
+    needs: [build-cpp-test-macos, build-and-test-python]
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
 
-#     steps:
-#       - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-#       - name: Setup python
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: '3.10'
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
       
-#       - name: Check python version
-#         run: |
-#           uname -a
-#           uname -m
-#           python -c 'import platform; print(platform.platform())'
-#           python --version
+      - name: Check python version
+        run: |
+          uname -a
+          uname -m
+          python -c 'import platform; print(platform.platform())'
+          python --version
 
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: version
-#           path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: .
 
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: wheelhouse-macos
-#           path: wheelhouse-macos/.
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheelhouse-macos
+          path: wheelhouse-macos/.
    
-#       - name: Install
-#         run: |
-#           pip install power-grid-model[dev]==$(cat PYPI_VERSION) --find-links=wheelhouse-macos
+      - name: Install
+        run: |
+          pip install power-grid-model[dev]==$(cat PYPI_VERSION) --find-links=wheelhouse-macos
       
-#       - name: test
-#         run: |
-#           pytest
+      - name: test
+        run: |
+          pytest
 
 
-#   publish-wheels:
-#     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
-#     # always run publish job but fail at the first step if previous jobs have been failed
-#     if: always()
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: write
-#     env:
-#       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
-#       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
+  publish-wheels:
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
+    # always run publish job but fail at the first step if previous jobs have been failed
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TWINE_USERNAME: ${{ secrets.PYPI_USER }}
+      TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
-#     steps:
-#       - name: Fail fast
-#         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-#         run: |
-#           echo "Previous jobs have failures!"
-#           exit 1
+    steps:
+      - name: Fail fast
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "Previous jobs have failures!"
+          exit 1
 
-#       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-#       - name: Setup python
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: '3.10'
-#           architecture: x64
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: x64
 
-#       - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
 
-#       - uses: actions/download-artifact@v4
-#         with:
-#           name: version
-#           path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: version
+          path: .
 
-#       - name: Combine wheelhouses
-#         run: mv wheelhouse-*/* wheelhouse
+      - name: Combine wheelhouses
+        run: mv wheelhouse-*/* wheelhouse
 
-#       - name: List assets
-#         run: ls ./wheelhouse/ -al
+      - name: List assets
+        run: ls ./wheelhouse/ -al
 
-#       - name: Get tag
-#         id: tag
-#         run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
+      - name: Get tag
+        id: tag
+        run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
 
-#       - name: Display tag
-#         run: echo "${{ steps.tag.outputs.tag }}"
+      - name: Display tag
+        run: echo "${{ steps.tag.outputs.tag }}"
 
-#       - name: Upload wheels
-#         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
-#         run: |
-#           pip install twine
-#           echo "Publish to PyPI..."
-#           twine upload --verbose wheelhouse/*
+      - name: Upload wheels
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        run: |
+          pip install twine
+          echo "Publish to PyPI..."
+          twine upload --verbose wheelhouse/*
 
-#       - name: Release
-#         #uses: softprops/action-gh-release@v1
-#         #if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
-#         # with:
-#         #   files: |
-#         #     ./wheelhouse/*
-#         #   tag_name: ${{ steps.tag.outputs.tag }}
-#         #   prerelease: github.ref != "refs/heads/main"
-#         #   generate_release_notes: true
-#         #   target_commitish: ${{ github.sha }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        with:
+          files: |
+            ./wheelhouse/*
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: github.ref != 'refs/heads/main'
+          generate_release_notes: true
+          target_commitish: ${{ github.sha }}
