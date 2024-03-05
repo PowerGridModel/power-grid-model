@@ -667,7 +667,9 @@ def all_finite(data: SingleDataset, exceptions: Optional[Dict[str, List[str]]] =
     return errors
 
 
-def none_missing(data: SingleDataset, component: str, fields: Union[str, List[str]]) -> List[MissingValueError]:
+def none_missing(
+    data: SingleDataset, component: str, fields: Union[List[Union[str, List[str]]], str, List[str]], index: int = 0
+) -> List[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
     Returns an empty list on success, or a list containing a single error object on failure.
@@ -685,14 +687,17 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
     if isinstance(fields, str):
         fields = [fields]
     for field in fields:
+        if isinstance(field, list):
+            field = field[0]
         nan = nan_type(component, field)
         if np.isnan(nan):
-            invalid = np.isnan(data[component][field])
+            invalid = np.isnan(data[component][field][index])
         else:
-            invalid = np.equal(data[component][field], nan)
+            invalid = np.equal(data[component][field][index], nan)
+
         if invalid.any():
-            if invalid.ndim > 1:
-                invalid = invalid.any(axis=1)
+            if isinstance(invalid, np.ndarray):
+                invalid = np.any(invalid)
             ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
     return errors
