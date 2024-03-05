@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_TOPOLOGY_HPP
-#define POWER_GRID_MODEL_TOPOLOGY_HPP
 
 #include "calculation_parameters.hpp"
-#include "enum.hpp"
-#include "exception.hpp"
+#include "common/common.hpp"
+#include "common/enum.hpp"
+#include "common/exception.hpp"
 #include "index_mapping.hpp"
-#include "power_grid_model.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
@@ -692,5 +690,3 @@ class Topology {
 }; // namespace power_grid_model
 
 } // namespace power_grid_model
-
-#endif

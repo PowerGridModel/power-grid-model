@@ -110,6 +110,14 @@ TEST_CASE("Test three winding transformer") {
     input.pk_23_max = 120e3;
     vec.emplace_back(input, 138e3, 69e3, 13.8e3);
 
+    SUBCASE("Test getters") {
+        CHECK(vec[0].tap_pos() == 2);
+        CHECK(vec[0].tap_side() == Branch3Side::side_1);
+        CHECK(vec[0].tap_min() == -8);
+        CHECK(vec[0].tap_max() == 10);
+        CHECK(vec[0].tap_nom() == 0);
+    }
+
     for (ThreeWindingTransformer const& transformer3 : vec) {
         CHECK(transformer3.math_model_type() == ComponentType::branch3);
     }

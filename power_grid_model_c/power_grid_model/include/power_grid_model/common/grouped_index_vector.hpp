@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
-#define POWER_GRID_MODEL_SPARSE_IDX_VECTOR_HPP
 
-#include "power_grid_model.hpp"
+#include "common.hpp"
+#include "counting_iterator.hpp"
 #include "typing.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
@@ -281,5 +280,3 @@ inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
 }
 
 } // namespace power_grid_model
-
-#endif

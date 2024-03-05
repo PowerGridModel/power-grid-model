@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_SE_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_SE_SOLVER_HPP
 
 // Newton Raphson state estimation solver
 
@@ -14,7 +12,8 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
@@ -699,5 +698,3 @@ template class NewtonRaphsonSESolver<false>;
 using newton_raphson_se::NewtonRaphsonSESolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

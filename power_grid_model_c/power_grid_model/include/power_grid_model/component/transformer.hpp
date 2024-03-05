@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_TRANSFORMER_HPP
-#define POWER_GRID_MODEL_COMPONENT_TRANSFORMER_HPP
 
 #include "branch.hpp"
 #include "transformer_utils.hpp"
@@ -13,9 +11,9 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -72,8 +70,13 @@ class Transformer : public Branch {
     // phase shift is theta_from - theta_to
     double phase_shift() const final { return clock_ * deg_30; }
     bool is_param_mutable() const final { return true; }
-    // get tap
+    // getters
     IntS tap_pos() const { return tap_pos_; }
+    BranchSide tap_side() const { return tap_side_; }
+    IntS tap_min() const { return tap_min_; }
+    IntS tap_max() const { return tap_max_; }
+    IntS tap_nom() const { return tap_nom_; }
+
     // setter
     bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
@@ -263,5 +266,3 @@ class Transformer : public Branch {
 };
 
 } // namespace power_grid_model
-
-#endif

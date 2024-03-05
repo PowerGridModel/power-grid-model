@@ -9,8 +9,9 @@ Although all functions are 'public', you probably only need validate_input_data(
 
 """
 import copy
+from collections.abc import Sized as ABCSized
 from itertools import chain
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 
@@ -221,6 +222,43 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
     return list(chain(*errors))
 
 
+def _process_power_sigma_and_p_q_sigma(
+    data: SingleDataset, sensor: str, required_list: Dict[str, List[Union[str, List[str]]]]
+) -> None:
+    """
+    Helper function to process the required list when both `p_sigma` and `q_sigma` exist
+    and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
+    `p_sigma` and `q_sigma`in this case. Happens only on proxy data (not the original data).
+    However, note that this value is eventually not used in the calculation.
+    """
+
+    def _check_sensor_in_data(_data, _sensor):
+        return _sensor in _data and isinstance(_data[_sensor], np.ndarray)
+
+    def _contains_p_q_sigma(_sensor_data):
+        return "p_sigma" in _sensor_data.dtype.names and "q_sigma" in _sensor_data.dtype.names
+
+    def _process_power_sigma_in_list(_sensor_mask, _power_sigma, _p_sigma, _q_sigma):
+        _mask = np.logical_not(np.logical_or(np.isnan(_p_sigma), np.isnan(_q_sigma)))
+        if _power_sigma.ndim < _mask.ndim:
+            _mask = np.any(_mask, axis=tuple(range(_power_sigma.ndim, _mask.ndim)))
+
+        for sublist, should_remove in zip(_sensor_mask, _mask):
+            if should_remove and "power_sigma" in sublist:
+                sublist = cast(List[str], sublist)
+                sublist.remove("power_sigma")
+
+    if _check_sensor_in_data(data, sensor):
+        sensor_data = data[sensor]
+        sensor_mask = required_list[sensor]
+        if _contains_p_q_sigma(sensor_data):
+            p_sigma = sensor_data["p_sigma"]
+            q_sigma = sensor_data["q_sigma"]
+            power_sigma = sensor_data["power_sigma"]
+
+            _process_power_sigma_in_list(sensor_mask, power_sigma, p_sigma, q_sigma)
+
+
 def validate_required_values(
     data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
 ) -> List[MissingValueError]:
@@ -236,7 +274,7 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required = {"base": ["id"]}
+    required: Dict[str, List[Union[str, List[str]]]] = {"base": ["id"]}
 
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
@@ -313,8 +351,14 @@ def validate_required_values(
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
-    required["sym_power_sensor"] = required["power_sensor"].copy()
-    required["asym_power_sensor"] = required["power_sensor"].copy()
+    # Different requirements for individual sensors. Avoid shallow copy.
+    for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
+        try:
+            required[sensor_type] = [
+                required["power_sensor"].copy() for _ in range(data[sensor_type].shape[0])  # type: ignore
+            ]
+        except KeyError:
+            pass
 
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
@@ -331,7 +375,50 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    return list(chain(*(none_missing(data, component, required.get(component, [])) for component in data)))
+    _process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
+    _process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
+
+    return _validate_required_in_data(data, required)
+
+
+def _validate_required_in_data(data, required):
+    """
+    Checks if all required data is available.
+
+    Args:
+        data: A power-grid-model input dataset
+        required: a list of required fields (a list of str), per component when applicaple (a list of str or str lists)
+
+    Returns:
+        An empty list if all required data is available, or a list of MissingValueErrors.
+    """
+
+    def is_valid_component(data, component):
+        return (
+            not (isinstance(data[component], np.ndarray) and data[component].size == 0)
+            and data[component] is not None
+            and isinstance(data[component], ABCSized)
+        )
+
+    def is_nested_list(items):
+        return isinstance(items, list) and all(isinstance(i, list) for i in items)
+
+    def process_nested_items(component, items, data, results):
+        for index, item in enumerate(sublist for sublist in items):
+            if index < len(data[component]):
+                results.append(none_missing(data, component, item, index))
+
+    results = []
+
+    for component in data:
+        if is_valid_component(data, component):
+            items = required.get(component, [])
+            if is_nested_list(items):
+                process_nested_items(component, items, data, results)
+            else:
+                results.append(none_missing(data, component, items, 0))
+
+    return list(chain(*results))
 
 
 def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> List[ValidationError]:

@@ -3,18 +3,19 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_MODEL_HPP
-#define POWER_GRID_MODEL_MAIN_MODEL_HPP
 
 // main model class
 
 // main include
+#include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
-#include "exception.hpp"
-#include "power_grid_model.hpp"
-#include "timer.hpp"
 #include "topology.hpp"
+
+// common
+#include "common/common.hpp"
+#include "common/exception.hpp"
+#include "common/timer.hpp"
 
 // component include
 #include "all_components.hpp"
@@ -1303,5 +1304,3 @@ using MainModel =
                   AllComponents>;
 
 } // namespace power_grid_model
-
-#endif

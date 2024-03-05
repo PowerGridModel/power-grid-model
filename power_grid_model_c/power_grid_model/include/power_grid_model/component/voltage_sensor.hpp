@@ -3,15 +3,13 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_VOLTAGE_SENSOR_HPP
-#define POWER_GRID_MODEL_COMPONENT_VOLTAGE_SENSOR_HPP
 
 #include "sensor.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 #include <limits>
 
@@ -172,5 +170,3 @@ using SymVoltageSensor = VoltageSensor<true>;
 using AsymVoltageSensor = VoltageSensor<false>;
 
 } // namespace power_grid_model
-
-#endif

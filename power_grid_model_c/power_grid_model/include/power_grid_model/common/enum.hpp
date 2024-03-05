@@ -3,10 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_ENUM_HPP
-#define POWER_GRID_MODEL_ENUM_HPP
 
-#include "power_grid_model.hpp"
+#include "common.hpp"
 
 namespace power_grid_model {
 
@@ -101,5 +99,3 @@ enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 }
 enum class SerializationFormat : IntS { json = 0, msgpack = 1 };
 
 } // namespace power_grid_model
-
-#endif

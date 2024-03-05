@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_THREE_WINDING_TRANSFORMER_HPP
-#define POWER_GRID_MODEL_COMPONENT_THREE_WINDING_TRANSFORMER_HPP
 
 #include "branch3.hpp"
 #include "transformer.hpp"
@@ -107,6 +105,13 @@ class ThreeWindingTransformer : public Branch3 {
     // because clock_12 is the phase shift node_1 - node_2
     // and the phase shift in the math model is node_x - node_internal
     std::array<double, 3> phase_shift() const final { return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30}; }
+
+    // getters
+    IntS tap_pos() const { return tap_pos_; }
+    Branch3Side tap_side() const { return tap_side_; }
+    IntS tap_min() const { return tap_min_; }
+    IntS tap_max() const { return tap_max_; }
+    IntS tap_nom() const { return tap_nom_; }
 
     // setter
     bool set_tap(IntS new_tap) {
@@ -405,5 +410,3 @@ class ThreeWindingTransformer : public Branch3 {
 };
 
 } // namespace power_grid_model
-
-#endif
