@@ -68,38 +68,40 @@ class GenericGenerator : public GenericLoadGen {
     using GenericLoadGen::GenericLoadGen;
 };
 
-template <symmetry_tag sym, appliance_type_tag appliance_type_>
+template <symmetry_tag loadgen_symmetry_, appliance_type_tag appliance_type_>
 class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>, GenericGenerator, GenericLoad> {
   public:
+    using loadgen_symmetry = loadgen_symmetry_;
     using appliance_type = appliance_type_;
 
-    using InputType = LoadGenInput<sym>;
-    using UpdateType = LoadGenUpdate<sym>;
+    using InputType = LoadGenInput<loadgen_symmetry>;
+    using UpdateType = LoadGenUpdate<loadgen_symmetry>;
     using BaseClass = std::conditional_t<is_generator_v<appliance_type>, GenericGenerator, GenericLoad>;
     static constexpr char const* name = [] {
-        if constexpr (is_symmetric_v<sym>) {
+        if constexpr (is_symmetric_v<loadgen_symmetry>) {
             return is_generator_v<appliance_type> ? "sym_gen" : "sym_load";
         } else {
             return is_generator_v<appliance_type> ? "asym_gen" : "asym_load";
         }
     }();
 
-    LoadGen(LoadGenInput<sym> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
+    LoadGen(LoadGenInput<loadgen_symmetry> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
         set_power(load_gen_input.p_specified, load_gen_input.q_specified);
     }
 
-    void set_power(RealValue<sym> const& new_p_specified, RealValue<sym> const& new_q_specified) {
-        double const scalar = direction_ / base_power<sym>;
-        RealValue<sym> ps = real(s_specified_);
-        RealValue<sym> qs = imag(s_specified_);
-        update_real_value<sym>(new_p_specified, ps, scalar);
-        update_real_value<sym>(new_q_specified, qs, scalar);
+    void set_power(RealValue<loadgen_symmetry> const& new_p_specified,
+                   RealValue<loadgen_symmetry> const& new_q_specified) {
+        double const scalar = direction_ / base_power<loadgen_symmetry>;
+        RealValue<loadgen_symmetry> ps = real(s_specified_);
+        RealValue<loadgen_symmetry> qs = imag(s_specified_);
+        update_real_value<loadgen_symmetry>(new_p_specified, ps, scalar);
+        update_real_value<loadgen_symmetry>(new_q_specified, qs, scalar);
 
-        s_specified_ = ComplexValue<sym>{ps, qs};
+        s_specified_ = ComplexValue<loadgen_symmetry>{ps, qs};
     }
 
     // update for load_gen
-    UpdateChange update(LoadGenUpdate<sym> const& update_data) {
+    UpdateChange update(LoadGenUpdate<loadgen_symmetry> const& update_data) {
         assert(update_data.id == this->id());
         this->set_status(update_data.status);
         set_power(update_data.p_specified, update_data.q_specified);
@@ -107,8 +109,8 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         return {false, false};
     }
 
-    LoadGenUpdate<sym> inverse(LoadGenUpdate<sym> update_data) const {
-        double const scalar = direction_ * base_power<sym>;
+    LoadGenUpdate<loadgen_symmetry> inverse(LoadGenUpdate<loadgen_symmetry> update_data) const {
+        double const scalar = direction_ * base_power<loadgen_symmetry>;
 
         assert(update_data.id == this->id());
 
@@ -120,14 +122,14 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
     }
 
   private:
-    ComplexValue<sym> s_specified_{std::complex<double>{nan, nan}}; // specified power injection
+    ComplexValue<loadgen_symmetry> s_specified_{std::complex<double>{nan, nan}}; // specified power injection
 
     // direction of load_gen
     static constexpr double direction_ = is_generator_v<appliance_type> ? 1.0 : -1.0;
 
     // override calc_param
     ComplexValue<symmetric_t> sym_calc_param() const override {
-        if constexpr (is_symmetric_v<sym>) {
+        if constexpr (is_symmetric_v<loadgen_symmetry>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
                 return {nan, nan};
             }
@@ -135,16 +137,17 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         return mean_val(s_specified_);
     }
     ComplexValue<asymmetric_t> asym_calc_param() const override {
-        if constexpr (is_symmetric_v<sym>) {
+        if constexpr (is_symmetric_v<loadgen_symmetry>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
                 return ComplexValue<asymmetric_t>{std::complex{nan, nan}};
             }
         }
         return piecewise_complex_value(s_specified_);
     }
-    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
-        ApplianceMathOutput<sym_calc> appliance_math_output;
-        appliance_math_output.s = scale_power<sym_calc>(u);
+    template <symmetry_tag calculation_symmetry>
+    ApplianceMathOutput<calculation_symmetry> u2si(ComplexValue<calculation_symmetry> const& u) const {
+        ApplianceMathOutput<calculation_symmetry> appliance_math_output;
+        appliance_math_output.s = scale_power<calculation_symmetry>(u);
         appliance_math_output.i = conj(appliance_math_output.s / u);
         return appliance_math_output;
     }
@@ -158,10 +161,11 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
     double injection_direction() const override { return direction_; }
 
     // scale load
-    template <symmetry_tag sym_calc> ComplexValue<sym_calc> scale_power(ComplexValue<sym_calc> u) const {
+    template <symmetry_tag calculation_symmetry>
+    ComplexValue<calculation_symmetry> scale_power(ComplexValue<calculation_symmetry> u) const {
         using enum LoadGenType;
 
-        auto const params = [this] { return this->template calc_param<sym_calc>(); };
+        auto const params = [this] { return this->template calc_param<calculation_symmetry>(); };
         switch (this->type()) {
         case const_pq:
             return params();

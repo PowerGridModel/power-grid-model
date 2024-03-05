@@ -66,62 +66,66 @@ class GenericPowerSensor : public Sensor {
     virtual PowerSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& s) const = 0;
 };
 
-template <symmetry_tag sym> class PowerSensor : public GenericPowerSensor {
+template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public GenericPowerSensor {
   public:
-    static constexpr char const* name = is_symmetric_v<sym> ? "sym_power_sensor" : "asym_power_sensor";
-    using InputType = PowerSensorInput<sym>;
-    using UpdateType = PowerSensorUpdate<sym>;
+    using power_sensor_symmetry = power_sensor_symmetry_;
+
+    static constexpr char const* name =
+        is_symmetric_v<power_sensor_symmetry> ? "sym_power_sensor" : "asym_power_sensor";
+    using InputType = PowerSensorInput<power_sensor_symmetry>;
+    using UpdateType = PowerSensorUpdate<power_sensor_symmetry>;
     template <symmetry_tag sym_calc> using OutputType = PowerSensorOutput<sym_calc>;
 
-    explicit PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
+    explicit PowerSensor(PowerSensorInput<power_sensor_symmetry> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input},
-          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<sym>},
-          p_sigma_{power_sensor_input.p_sigma / base_power<sym>},
-          q_sigma_{power_sensor_input.q_sigma / base_power<sym>} {
+          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<power_sensor_symmetry>},
+          p_sigma_{power_sensor_input.p_sigma / base_power<power_sensor_symmetry>},
+          q_sigma_{power_sensor_input.q_sigma / base_power<power_sensor_symmetry>} {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };
 
-    UpdateChange update(PowerSensorUpdate<sym> const& update_data) {
-        constexpr double scalar = 1.0 / base_power<sym>;
+    UpdateChange update(PowerSensorUpdate<power_sensor_symmetry> const& update_data) {
+        constexpr double scalar = 1.0 / base_power<power_sensor_symmetry>;
 
         set_power(update_data.p_measured, update_data.q_measured);
 
         if (!is_nan(update_data.power_sigma)) {
             apparent_power_sigma_ = update_data.power_sigma * scalar;
         }
-        update_real_value<sym>(update_data.p_sigma, p_sigma_, scalar);
-        update_real_value<sym>(update_data.q_sigma, q_sigma_, scalar);
+        update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, scalar);
+        update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, scalar);
 
         return {false, false};
     }
 
-    PowerSensorUpdate<sym> inverse(PowerSensorUpdate<sym> update_data) const {
+    PowerSensorUpdate<power_sensor_symmetry> inverse(PowerSensorUpdate<power_sensor_symmetry> update_data) const {
         assert(update_data.id == this->id());
 
-        auto const scalar = convert_direction() * base_power<sym>;
+        auto const scalar = convert_direction() * base_power<power_sensor_symmetry>;
 
         set_if_not_nan(update_data.p_measured, real(s_measured_) * scalar);
         set_if_not_nan(update_data.q_measured, imag(s_measured_) * scalar);
-        set_if_not_nan(update_data.power_sigma, apparent_power_sigma_ * base_power<sym>);
-        set_if_not_nan(update_data.p_sigma, p_sigma_ * base_power<sym>);
-        set_if_not_nan(update_data.q_sigma, q_sigma_ * base_power<sym>);
+        set_if_not_nan(update_data.power_sigma, apparent_power_sigma_ * base_power<power_sensor_symmetry>);
+        set_if_not_nan(update_data.p_sigma, p_sigma_ * base_power<power_sensor_symmetry>);
+        set_if_not_nan(update_data.q_sigma, q_sigma_ * base_power<power_sensor_symmetry>);
 
         return update_data;
     }
 
   private:
-    ComplexValue<sym> s_measured_{};
+    ComplexValue<power_sensor_symmetry> s_measured_{};
 
     double apparent_power_sigma_{};
-    RealValue<sym> p_sigma_{};
-    RealValue<sym> q_sigma_{};
+    RealValue<power_sensor_symmetry> p_sigma_{};
+    RealValue<power_sensor_symmetry> q_sigma_{};
 
-    void set_power(RealValue<sym> const& p_measured, RealValue<sym> const& q_measured) {
-        double const scalar = convert_direction() / base_power<sym>;
-        RealValue<sym> ps = real(s_measured_);
-        RealValue<sym> qs = imag(s_measured_);
-        update_real_value<sym>(p_measured, ps, scalar);
-        update_real_value<sym>(q_measured, qs, scalar);
+    void set_power(RealValue<power_sensor_symmetry> const& p_measured,
+                   RealValue<power_sensor_symmetry> const& q_measured) {
+        double const scalar = convert_direction() / base_power<power_sensor_symmetry>;
+        RealValue<power_sensor_symmetry> ps = real(s_measured_);
+        RealValue<power_sensor_symmetry> qs = imag(s_measured_);
+        update_real_value<power_sensor_symmetry>(p_measured, ps, scalar);
+        update_real_value<power_sensor_symmetry>(q_measured, qs, scalar);
         s_measured_ = ps + 1.0i * qs;
     }
 

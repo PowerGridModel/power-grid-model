@@ -6,6 +6,8 @@
 
 // define dataset classes with void pointers
 
+#include "dataset_fwd.hpp"
+
 #include "../common/common.hpp"
 
 #include <cassert>
@@ -25,11 +27,6 @@ namespace power_grid_model {
 //     the indptr is a nullptr, for i-th sets,
 //          the set data is in the range [ i * elements_per_scenario, (i + 1) * elements_per_scenario )
 
-struct const_dataset_t {};
-struct mutable_dataset_t {};
-
-template <typename T>
-concept dataset_type_tag = std::same_as<T, const_dataset_t> || std::same_as<T, mutable_dataset_t>;
 template <dataset_type_tag T> constexpr bool is_const_dataset_v = std::same_as<T, const_dataset_t>;
 
 static_assert(dataset_type_tag<const_dataset_t>);
