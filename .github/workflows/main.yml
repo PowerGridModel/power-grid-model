@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "xyz"
-    if: github.ref != "refs/heads/main"
+    if: github.ref != 'refs/heads/main'
 # jobs:
 
 #   acquire-python-version-build-sdist:
