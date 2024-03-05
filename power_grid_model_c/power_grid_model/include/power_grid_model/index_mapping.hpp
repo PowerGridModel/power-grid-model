@@ -130,9 +130,9 @@ inline DenseIndexMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx co
 
     constexpr double a = -0.62458071347;
     constexpr double b = -0.00038127964;
-    constexpr double c = -996.744708763;
+    // constexpr double c = -996.744708763;
 
-    if (n_A_ < a * n_B_ + b * n_A_ * log(n_A_) + c) {
+    if (constexpr double c = -996.744708763; n_A_ < a * n_B_ + b * n_A_ * log(n_A_) + c) {
         return detail::build_dense_mapping_counting_sort(idx_B_in_A, n_B);
     }
     return detail::build_dense_mapping_comparison_sort(idx_B_in_A, n_B);
