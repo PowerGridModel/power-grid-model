@@ -24,7 +24,7 @@ namespace power_grid_model::math_solver {
 namespace iterative_linear_se {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
-template <bool sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false, 2> {
+template <symmetry_tag sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false, 2> {
     template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
@@ -39,14 +39,14 @@ template <bool sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false,
 };
 
 // block class for the right hand side in state estimation equation
-template <bool sym> using ILSERhs = ILSEUnknown<sym>;
+template <symmetry_tag sym> using ILSERhs = ILSEUnknown<sym>;
 
 // class of 2*2 (6*6) se gain block
 // [
 //    [G, QH]
 //    [Q, R ]
 // ]
-template <bool sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true, 2> {
+template <symmetry_tag sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
 
@@ -60,9 +60,9 @@ template <bool sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true,
     GetterType<1, 1> r() { return this->template get_val<1, 1>(); }
 };
 
-template <bool sym> class IterativeLinearSESolver {
+template <symmetry_tag sym> class IterativeLinearSESolver {
     // block size 2 for symmetric, 6 for asym
-    static constexpr Idx bsr_block_size_ = sym ? 2 : 6;
+    static constexpr Idx bsr_block_size_ = is_symmetric_v<sym> ? 2 : 6;
 
   public:
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
@@ -320,7 +320,7 @@ template <bool sym> class IterativeLinearSESolver {
             }
             auto const& voltage = x_rhs_[math_topo_->slack_bus].u();
             auto const& voltage_a = [&voltage]() -> auto const& {
-                if constexpr (sym) {
+                if constexpr (is_symmetric_v<sym>) {
                     return voltage;
                 } else {
                     return voltage(0);
@@ -347,8 +347,8 @@ template <bool sym> class IterativeLinearSESolver {
     }
 };
 
-template class IterativeLinearSESolver<true>;
-template class IterativeLinearSESolver<false>;
+template class IterativeLinearSESolver<symmetric_t>;
+template class IterativeLinearSESolver<asymmetric_t>;
 
 } // namespace iterative_linear_se
 

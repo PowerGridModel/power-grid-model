@@ -35,7 +35,9 @@ class Link final : public Branch {
   private:
     double base_i_from_;
     double base_i_to_;
-    BranchCalcParam<true> sym_calc_param() const override { return calc_param_y_sym(y_link, 0.0, 1.0); }
-    BranchCalcParam<false> asym_calc_param() const override { return calc_param_y_asym(y_link, 0.0, y_link, 0.0, 1.0); }
+    BranchCalcParam<symmetric_t> sym_calc_param() const override { return calc_param_y_sym(y_link, 0.0, 1.0); }
+    BranchCalcParam<asymmetric_t> asym_calc_param() const override {
+        return calc_param_y_asym(y_link, 0.0, y_link, 0.0, 1.0);
+    }
 };
 } // namespace power_grid_model

@@ -33,17 +33,17 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 main_model.add_component<SymVoltageSensor>({{3, 1, 1e2, 12.345e3, 0.1}});
                 main_model.set_construction_complete();
                 SUBCASE("Symmetric Calculation") {
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<true>> node_output(1);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<symmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
                     CHECK(node_output[0].u_angle == doctest::Approx(0.1));
                 }
                 SUBCASE("Asymmetric Calculation") {
-                    std::vector<MathOutput<false>> const math_output =
-                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<false>> node_output(1);
+                    std::vector<MathOutput<asymmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<asymmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
@@ -57,17 +57,17 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 main_model.add_component<SymVoltageSensor>({{3, 1, 1e2, 12.345e3, nan}});
                 main_model.set_construction_complete();
                 SUBCASE("Symmetric Calculation") {
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<true>> node_output(1);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<symmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
                     CHECK(node_output[0].u_angle == doctest::Approx(0.0));
                 }
                 SUBCASE("Asymmetric Calculation") {
-                    std::vector<MathOutput<false>> const math_output =
-                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<false>> node_output(1);
+                    std::vector<MathOutput<asymmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<asymmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
@@ -82,9 +82,9 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     {{3, 1, 1e2, {12.345e3 / s3, 12.345e3 / s3, 12.345e3 / s3}, {0.1, 0.2 - ph, 0.3 + ph}}});
                 main_model.set_construction_complete();
                 SUBCASE("Symmetric Calculation") {
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<true>> node_output(1);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<symmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     double const u = (std::cos(0.1) + std::cos(0.2) + std::cos(0.3)) * 12.345e3;
                     double const v = (std::sin(0.1) + std::sin(0.2) + std::sin(0.3)) * 12.345e3;
@@ -93,9 +93,9 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     CHECK(node_output[0].u_angle == doctest::Approx(0.2));
                 }
                 SUBCASE("Asymmetric Calculation") {
-                    std::vector<MathOutput<false>> const math_output =
-                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<false>> node_output(1);
+                    std::vector<MathOutput<asymmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<asymmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
@@ -110,17 +110,17 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     {{3, 1, 1e2, {12.345e3 / s3, 12.345e3 / s3, 12.345e3 / s3}, {nan, nan, nan}}});
                 main_model.set_construction_complete();
                 SUBCASE("Symmetric Calculation") {
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<true>> node_output(1);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<symmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
                     CHECK(node_output[0].u_angle == doctest::Approx(0.0));
                 }
                 SUBCASE("Asymmetric Calculation") {
-                    std::vector<MathOutput<false>> const math_output =
-                        main_model.calculate_state_estimation<false>(1e-8, 20, calculation_method);
-                    std::vector<NodeOutput<false>> node_output(1);
+                    std::vector<MathOutput<asymmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method);
+                    std::vector<NodeOutput<asymmetric_t>> node_output(1);
                     main_model.output_result<Node>(math_output, node_output.begin());
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
@@ -146,8 +146,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                      {16, 6, MeasuredTerminalType::load, 1e2, 1800.0, 180.0, nan, nan}});
                 SUBCASE("Without Injection Sensor") {
                     main_model.set_construction_complete();
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
 
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
@@ -179,8 +179,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                         {{12, 2, MeasuredTerminalType::node, 2e2, -1200.0, -120.0, nan, nan}});
                     main_model.set_construction_complete();
 
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
 
                     std::vector<SymApplianceOutput> gen_output(1);
                     std::vector<SymApplianceOutput> load_output(1);
@@ -224,13 +224,13 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                      {16, 6, MeasuredTerminalType::shunt, 1e2, 1800.0, 180.0, nan, nan}});
                 SUBCASE("Line flow") {
                     main_model.set_construction_complete();
-                    std::vector<MathOutput<true>> const math_output =
-                        main_model.calculate_state_estimation<true>(1e-8, 20, calculation_method);
+                    std::vector<MathOutput<symmetric_t>> const math_output =
+                        main_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method);
 
                     std::vector<SymApplianceOutput> shunt_output(1);
                     std::vector<SymNodeOutput> node_output(2);
                     std::vector<SymPowerSensorOutput> power_sensor_output(3);
-                    std::vector<BranchOutput<true>> line_output(1);
+                    std::vector<BranchOutput<symmetric_t>> line_output(1);
                     main_model.output_result<Shunt>(math_output, shunt_output.begin());
                     main_model.output_result<Node>(math_output, node_output.begin());
                     main_model.output_result<Line>(math_output, line_output.begin());
@@ -295,29 +295,29 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
         std::vector<SourceInput> incomplete_source_input{{2, 1, 1, nan, nan, nan, nan, nan}};
         std::vector<SymVoltageSensorInput> incomplete_sym_sensor_input{{3, 1, 1e2, nan, nan}};
         std::vector<AsymVoltageSensorInput> incomplete_asym_sensor_input{
-            {4, 1, 1e2, RealValue<false>{nan}, RealValue<false>{nan}}};
+            {4, 1, 1e2, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}}};
 
         std::vector<SourceUpdate> complete_source_update{{2, 1, 1.0, nan}};
         std::vector<SymVoltageSensorUpdate> complete_sym_sensor_update{{3, 1.0, 12.345e3, 0.1}};
         std::vector<AsymVoltageSensorUpdate> complete_asym_sensor_update{
-            {4, 1.0, RealValue<false>{12.345e3}, RealValue<false>{0.1}}};
+            {4, 1.0, RealValue<asymmetric_t>{12.345e3}, RealValue<asymmetric_t>{0.1}}};
 
         ConstDataset input_data;
-        input_data["node"] = DataPointer<true>{node_input.data(), static_cast<Idx>(node_input.size())};
+        input_data["node"] = ConstDataPointer{node_input.data(), static_cast<Idx>(node_input.size())};
         input_data["source"] =
-            DataPointer<true>{incomplete_source_input.data(), static_cast<Idx>(incomplete_source_input.size())};
+            ConstDataPointer{incomplete_source_input.data(), static_cast<Idx>(incomplete_source_input.size())};
         input_data["sym_voltage_sensor"] =
-            DataPointer<true>{incomplete_sym_sensor_input.data(), static_cast<Idx>(incomplete_sym_sensor_input.size())};
-        input_data["asym_voltage_sensor"] = DataPointer<true>{incomplete_asym_sensor_input.data(),
-                                                              static_cast<Idx>(incomplete_asym_sensor_input.size())};
+            ConstDataPointer{incomplete_sym_sensor_input.data(), static_cast<Idx>(incomplete_sym_sensor_input.size())};
+        input_data["asym_voltage_sensor"] = ConstDataPointer{incomplete_asym_sensor_input.data(),
+                                                             static_cast<Idx>(incomplete_asym_sensor_input.size())};
 
         ConstDataset update_data;
         update_data["source"] =
-            DataPointer<true>{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
+            ConstDataPointer{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
         update_data["sym_voltage_sensor"] =
-            DataPointer<true>{complete_sym_sensor_update.data(), static_cast<Idx>(complete_sym_sensor_update.size())};
+            ConstDataPointer{complete_sym_sensor_update.data(), static_cast<Idx>(complete_sym_sensor_update.size())};
         update_data["asym_voltage_sensor"] =
-            DataPointer<true>{complete_asym_sensor_update.data(), static_cast<Idx>(complete_asym_sensor_update.size())};
+            ConstDataPointer{complete_asym_sensor_update.data(), static_cast<Idx>(complete_asym_sensor_update.size())};
 
         SUBCASE("State Estimation") {
             MainModel test_model{50.0, input_data};
@@ -325,38 +325,38 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
             ref_model.update_component<MainModel::permanent_update_t>(update_data);
 
             SUBCASE("Symmetric Calculation") {
-                std::vector<NodeOutput<true>> test_node_output(1);
-                std::vector<NodeOutput<true>> ref_node_output(1);
+                std::vector<NodeOutput<symmetric_t>> test_node_output(1);
+                std::vector<NodeOutput<symmetric_t>> ref_node_output(1);
 
                 Dataset test_result_data;
                 Dataset ref_result_data;
                 test_result_data["node"] =
-                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                    MutableDataPointer{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
                 ref_result_data["node"] =
-                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+                    MutableDataPointer{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
-                test_model.calculate_state_estimation<true>(1e-8, 20, calculation_method, test_result_data, update_data,
-                                                            -1);
-                ref_model.calculate_state_estimation<true>(1e-8, 20, calculation_method, ref_result_data, update_data,
-                                                           -1);
+                test_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method, test_result_data,
+                                                                   update_data, -1);
+                ref_model.calculate_state_estimation<symmetric_t>(1e-8, 20, calculation_method, ref_result_data,
+                                                                  update_data, -1);
 
                 CHECK(test_node_output[0].u == doctest::Approx(ref_node_output[0].u));
             }
             SUBCASE("Asymmetric Calculation") {
-                std::vector<NodeOutput<false>> test_node_output(1);
-                std::vector<NodeOutput<false>> ref_node_output(1);
+                std::vector<NodeOutput<asymmetric_t>> test_node_output(1);
+                std::vector<NodeOutput<asymmetric_t>> ref_node_output(1);
 
                 Dataset test_result_data;
                 Dataset ref_result_data;
                 test_result_data["node"] =
-                    DataPointer<false>{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
+                    MutableDataPointer{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
                 ref_result_data["node"] =
-                    DataPointer<false>{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+                    MutableDataPointer{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
 
-                test_model.calculate_state_estimation<false>(1e-8, 20, calculation_method, test_result_data,
-                                                             update_data, -1);
-                ref_model.calculate_state_estimation<false>(1e-8, 20, calculation_method, ref_result_data, update_data,
-                                                            -1);
+                test_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method, test_result_data,
+                                                                    update_data, -1);
+                ref_model.calculate_state_estimation<asymmetric_t>(1e-8, 20, calculation_method, ref_result_data,
+                                                                   update_data, -1);
 
                 CHECK(test_node_output[0].u.x() == doctest::Approx(ref_node_output[0].u.x()));
                 CHECK(test_node_output[0].u.y() == doctest::Approx(ref_node_output[0].u.y()));

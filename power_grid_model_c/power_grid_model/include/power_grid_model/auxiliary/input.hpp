@@ -230,8 +230,10 @@ struct GenericLoadGenInput {
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct LoadGenInput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
     IntS status;  // whether the appliance is connected
@@ -252,8 +254,8 @@ struct LoadGenInput {
     operator GenericLoadGenInput const&() const { return reinterpret_cast<GenericLoadGenInput const&>(*this); }
 };
 
-using SymLoadGenInput = LoadGenInput<true>;
-using AsymLoadGenInput = LoadGenInput<false>;
+using SymLoadGenInput = LoadGenInput<symmetric_t>;
+using AsymLoadGenInput = LoadGenInput<asymmetric_t>;
 
 struct ShuntInput {
     ID id;  // ID of the object
@@ -306,8 +308,10 @@ struct GenericVoltageSensorInput {
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct VoltageSensorInput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     double u_sigma;  // sigma of error margin of voltage measurement
@@ -327,8 +331,8 @@ struct VoltageSensorInput {
     operator GenericVoltageSensorInput const&() const { return reinterpret_cast<GenericVoltageSensorInput const&>(*this); }
 };
 
-using SymVoltageSensorInput = VoltageSensorInput<true>;
-using AsymVoltageSensorInput = VoltageSensorInput<false>;
+using SymVoltageSensorInput = VoltageSensorInput<symmetric_t>;
+using AsymVoltageSensorInput = VoltageSensorInput<asymmetric_t>;
 
 struct GenericPowerSensorInput {
     ID id;  // ID of the object
@@ -345,8 +349,10 @@ struct GenericPowerSensorInput {
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct PowerSensorInput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     MeasuredTerminalType measured_terminal_type;  // type of measured terminal
@@ -369,8 +375,8 @@ struct PowerSensorInput {
     operator GenericPowerSensorInput const&() const { return reinterpret_cast<GenericPowerSensorInput const&>(*this); }
 };
 
-using SymPowerSensorInput = PowerSensorInput<true>;
-using AsymPowerSensorInput = PowerSensorInput<false>;
+using SymPowerSensorInput = PowerSensorInput<symmetric_t>;
+using AsymPowerSensorInput = PowerSensorInput<asymmetric_t>;
 
 struct FaultInput {
     ID id;  // ID of the object

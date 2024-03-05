@@ -291,10 +291,10 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
     }
 };
 
-template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
+template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
     static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
 
-    RealValue<false>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    RealValue<asymmetric_t>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Idx idx{};
     bool inside_array{};
 

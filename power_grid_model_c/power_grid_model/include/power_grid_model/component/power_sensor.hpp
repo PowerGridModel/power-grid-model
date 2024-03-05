@@ -22,23 +22,23 @@ class GenericPowerSensor : public Sensor {
 
     MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
 
-    template <bool sym> PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
-        if constexpr (sym) {
+    template <symmetry_tag sym> PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
+        if constexpr (is_symmetric_v<sym>) {
             return get_sym_output(s);
         } else {
             return get_asym_output(s);
         }
     }
 
-    template <bool sym> PowerSensorOutput<sym> get_null_output() const {
+    template <symmetry_tag sym> PowerSensorOutput<sym> get_null_output() const {
         return {.id = id(), .energized = false, .p_residual = {}, .q_residual = {}};
     }
 
     SensorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
     // getter for calculation param
-    template <bool sym> PowerSensorCalcParam<sym> calc_param() const {
-        if constexpr (sym) {
+    template <symmetry_tag sym> PowerSensorCalcParam<sym> calc_param() const {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();
@@ -59,74 +59,78 @@ class GenericPowerSensor : public Sensor {
 
     // virtual function getter for sym and asym param
     // override them in real sensors function
-    virtual PowerSensorCalcParam<true> sym_calc_param() const = 0;
-    virtual PowerSensorCalcParam<false> asym_calc_param() const = 0;
+    virtual PowerSensorCalcParam<symmetric_t> sym_calc_param() const = 0;
+    virtual PowerSensorCalcParam<asymmetric_t> asym_calc_param() const = 0;
 
-    virtual PowerSensorOutput<true> get_sym_output(ComplexValue<true> const& s) const = 0;
-    virtual PowerSensorOutput<false> get_asym_output(ComplexValue<false> const& s) const = 0;
+    virtual PowerSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& s) const = 0;
+    virtual PowerSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& s) const = 0;
 };
 
-template <bool sym> class PowerSensor : public GenericPowerSensor {
+template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public GenericPowerSensor {
   public:
-    static constexpr char const* name = sym ? "sym_power_sensor" : "asym_power_sensor";
-    using InputType = PowerSensorInput<sym>;
-    using UpdateType = PowerSensorUpdate<sym>;
-    template <bool sym_calc> using OutputType = PowerSensorOutput<sym_calc>;
+    using power_sensor_symmetry = power_sensor_symmetry_;
 
-    explicit PowerSensor(PowerSensorInput<sym> const& power_sensor_input)
+    static constexpr char const* name =
+        is_symmetric_v<power_sensor_symmetry> ? "sym_power_sensor" : "asym_power_sensor";
+    using InputType = PowerSensorInput<power_sensor_symmetry>;
+    using UpdateType = PowerSensorUpdate<power_sensor_symmetry>;
+    template <symmetry_tag sym_calc> using OutputType = PowerSensorOutput<sym_calc>;
+
+    explicit PowerSensor(PowerSensorInput<power_sensor_symmetry> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input},
-          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<sym>},
-          p_sigma_{power_sensor_input.p_sigma / base_power<sym>},
-          q_sigma_{power_sensor_input.q_sigma / base_power<sym>} {
+          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<power_sensor_symmetry>},
+          p_sigma_{power_sensor_input.p_sigma / base_power<power_sensor_symmetry>},
+          q_sigma_{power_sensor_input.q_sigma / base_power<power_sensor_symmetry>} {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };
 
-    UpdateChange update(PowerSensorUpdate<sym> const& update_data) {
-        constexpr double scalar = 1.0 / base_power<sym>;
+    UpdateChange update(PowerSensorUpdate<power_sensor_symmetry> const& update_data) {
+        constexpr double scalar = 1.0 / base_power<power_sensor_symmetry>;
 
         set_power(update_data.p_measured, update_data.q_measured);
 
         if (!is_nan(update_data.power_sigma)) {
             apparent_power_sigma_ = update_data.power_sigma * scalar;
         }
-        update_real_value<sym>(update_data.p_sigma, p_sigma_, scalar);
-        update_real_value<sym>(update_data.q_sigma, q_sigma_, scalar);
+        update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, scalar);
+        update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, scalar);
 
         return {false, false};
     }
 
-    PowerSensorUpdate<sym> inverse(PowerSensorUpdate<sym> update_data) const {
+    PowerSensorUpdate<power_sensor_symmetry> inverse(PowerSensorUpdate<power_sensor_symmetry> update_data) const {
         assert(update_data.id == this->id());
 
-        auto const scalar = convert_direction() * base_power<sym>;
+        auto const scalar = convert_direction() * base_power<power_sensor_symmetry>;
 
         set_if_not_nan(update_data.p_measured, real(s_measured_) * scalar);
         set_if_not_nan(update_data.q_measured, imag(s_measured_) * scalar);
-        set_if_not_nan(update_data.power_sigma, apparent_power_sigma_ * base_power<sym>);
-        set_if_not_nan(update_data.p_sigma, p_sigma_ * base_power<sym>);
-        set_if_not_nan(update_data.q_sigma, q_sigma_ * base_power<sym>);
+        set_if_not_nan(update_data.power_sigma, apparent_power_sigma_ * base_power<power_sensor_symmetry>);
+        set_if_not_nan(update_data.p_sigma, p_sigma_ * base_power<power_sensor_symmetry>);
+        set_if_not_nan(update_data.q_sigma, q_sigma_ * base_power<power_sensor_symmetry>);
 
         return update_data;
     }
 
   private:
-    ComplexValue<sym> s_measured_{};
+    ComplexValue<power_sensor_symmetry> s_measured_{};
 
     double apparent_power_sigma_{};
-    RealValue<sym> p_sigma_{};
-    RealValue<sym> q_sigma_{};
+    RealValue<power_sensor_symmetry> p_sigma_{};
+    RealValue<power_sensor_symmetry> q_sigma_{};
 
-    void set_power(RealValue<sym> const& p_measured, RealValue<sym> const& q_measured) {
-        double const scalar = convert_direction() / base_power<sym>;
-        RealValue<sym> ps = real(s_measured_);
-        RealValue<sym> qs = imag(s_measured_);
-        update_real_value<sym>(p_measured, ps, scalar);
-        update_real_value<sym>(q_measured, qs, scalar);
+    void set_power(RealValue<power_sensor_symmetry> const& p_measured,
+                   RealValue<power_sensor_symmetry> const& q_measured) {
+        double const scalar = convert_direction() / base_power<power_sensor_symmetry>;
+        RealValue<power_sensor_symmetry> ps = real(s_measured_);
+        RealValue<power_sensor_symmetry> qs = imag(s_measured_);
+        update_real_value<power_sensor_symmetry>(p_measured, ps, scalar);
+        update_real_value<power_sensor_symmetry>(q_measured, qs, scalar);
         s_measured_ = ps + 1.0i * qs;
     }
 
-    PowerSensorCalcParam<true> sym_calc_param() const final {
-        PowerSensorCalcParam<true> calc_param{};
+    PowerSensorCalcParam<symmetric_t> sym_calc_param() const final {
+        PowerSensorCalcParam<symmetric_t> calc_param{};
         if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
             calc_param.p_variance = mean_val(p_sigma_ * p_sigma_);
             calc_param.q_variance = mean_val(q_sigma_ * q_sigma_);
@@ -141,14 +145,15 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
         calc_param.value = mean_val(s_measured_);
         return calc_param;
     }
-    PowerSensorCalcParam<false> asym_calc_param() const final {
-        PowerSensorCalcParam<false> calc_param{};
+    PowerSensorCalcParam<asymmetric_t> asym_calc_param() const final {
+        PowerSensorCalcParam<asymmetric_t> calc_param{};
         if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
-            calc_param.p_variance = RealValue<false>{p_sigma_ * p_sigma_};
-            calc_param.q_variance = RealValue<false>{q_sigma_ * q_sigma_};
+            calc_param.p_variance = RealValue<asymmetric_t>{p_sigma_ * p_sigma_};
+            calc_param.q_variance = RealValue<asymmetric_t>{q_sigma_ * q_sigma_};
         } else {
-            auto const variance = RealValue<false>{is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
-                                                                    : std::numeric_limits<double>::infinity()};
+            auto const variance =
+                RealValue<asymmetric_t>{is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
+                                                         : std::numeric_limits<double>::infinity()};
             calc_param.p_variance = variance;
             calc_param.q_variance = variance;
         }
@@ -157,13 +162,14 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
         calc_param.value = piecewise_complex_value(s_measured_);
         return calc_param;
     }
-    PowerSensorOutput<true> get_sym_output(ComplexValue<true> const& s) const final {
-        return get_generic_output<true>(s);
+    PowerSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& s) const final {
+        return get_generic_output<symmetric_t>(s);
     }
-    PowerSensorOutput<false> get_asym_output(ComplexValue<false> const& s) const final {
-        return get_generic_output<false>(s);
+    PowerSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& s) const final {
+        return get_generic_output<asymmetric_t>(s);
     }
-    template <bool sym_calc> PowerSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& s) const {
+    template <symmetry_tag sym_calc>
+    PowerSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& s) const {
         PowerSensorOutput<sym_calc> output{};
         ComplexValue<sym_calc> const s_residual{process_mean_val<sym_calc>(s_measured_ - s) * convert_direction() *
                                                 base_power<sym_calc>};
@@ -175,7 +181,7 @@ template <bool sym> class PowerSensor : public GenericPowerSensor {
     }
 };
 
-using SymPowerSensor = PowerSensor<true>;
-using AsymPowerSensor = PowerSensor<false>;
+using SymPowerSensor = PowerSensor<symmetric_t>;
+using AsymPowerSensor = PowerSensor<asymmetric_t>;
 
 } // namespace power_grid_model

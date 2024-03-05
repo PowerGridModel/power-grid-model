@@ -21,7 +21,7 @@
 namespace power_grid_model::math_solver {
 
 // solver
-template <bool sym, typename DerivedSolver> class IterativePFSolver {
+template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
