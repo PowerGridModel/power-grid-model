@@ -46,7 +46,7 @@ class Branch : public Base {
         if (!energized(is_connected_to_source)) {
             return BranchCalcParam<sym>{};
         }
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();

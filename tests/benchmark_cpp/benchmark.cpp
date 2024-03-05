@@ -48,7 +48,7 @@ struct PowerGridBenchmark {
 
         std::string title = "Benchmark case: ";
         title += option.has_mv_ring ? "meshed grid, " : "radial grid, ";
-        title += is_symmetric<sym> ? "symmetric, " : "asymmetric, ";
+        title += is_symmetric_v<sym> ? "symmetric, " : "asymmetric, ";
         if (calculation_method == CalculationMethod::newton_raphson) {
             title += "Newton-Raphson method";
         } else if (calculation_method == CalculationMethod::linear) {

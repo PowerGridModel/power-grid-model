@@ -9,7 +9,7 @@
 namespace power_grid_model::math_solver {
 namespace {
 template <symmetry_tag sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         CHECK(cabs((x) - (y)) < (tolerance));
     } else {
         CHECK((cabs((x) - (y)) < (tolerance)).all());

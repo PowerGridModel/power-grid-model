@@ -8,7 +8,7 @@ namespace power_grid_model {
 namespace {
 static_assert(symmetry_tag<symmetric_t>);
 static_assert(symmetry_tag<symmetric_t>);
-static_assert(is_symmetric<symmetric_t>);
-static_assert(!is_symmetric<asymmetric_t>);
+static_assert(is_symmetric_v<symmetric_t>);
+static_assert(!is_symmetric_v<asymmetric_t>);
 } // namespace
 } // namespace power_grid_model

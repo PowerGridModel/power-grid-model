@@ -83,7 +83,7 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitMathOutput {
 template <symmetry_tag sym_type> struct UniformComplexRandomVariable {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric<sym>};
+    static constexpr bool symmetric{is_symmetric_v<sym>};
 
     ComplexValue<sym> value{};
     double variance{}; // variance (sigma^2) of the error range, in p.u.
@@ -101,7 +101,7 @@ template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandomV
 template <symmetry_tag sym_type> struct PowerSensorCalcParam {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric<sym>};
+    static constexpr bool symmetric{is_symmetric_v<sym>};
 
     ComplexValue<sym> value{};
     RealValue<sym> p_variance{}; // variance (sigma^2) of the error range of the active power, in p.u.

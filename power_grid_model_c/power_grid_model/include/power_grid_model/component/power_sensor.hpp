@@ -23,7 +23,7 @@ class GenericPowerSensor : public Sensor {
     MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
 
     template <symmetry_tag sym> PowerSensorOutput<sym> get_output(ComplexValue<sym> const& s) const {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return get_sym_output(s);
         } else {
             return get_asym_output(s);
@@ -38,7 +38,7 @@ class GenericPowerSensor : public Sensor {
 
     // getter for calculation param
     template <symmetry_tag sym> PowerSensorCalcParam<sym> calc_param() const {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();
@@ -68,7 +68,7 @@ class GenericPowerSensor : public Sensor {
 
 template <symmetry_tag sym> class PowerSensor : public GenericPowerSensor {
   public:
-    static constexpr char const* name = is_symmetric<sym> ? "sym_power_sensor" : "asym_power_sensor";
+    static constexpr char const* name = is_symmetric_v<sym> ? "sym_power_sensor" : "asym_power_sensor";
     using InputType = PowerSensorInput<sym>;
     using UpdateType = PowerSensorUpdate<sym>;
     template <symmetry_tag sym_calc> using OutputType = PowerSensorOutput<sym_calc>;

@@ -33,7 +33,7 @@ class Shunt : public Appliance {
         if (!energized(is_connected_to_source)) {
             return ComplexTensor<sym>{};
         }
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return y1_;
         } else {
             // abc matrix

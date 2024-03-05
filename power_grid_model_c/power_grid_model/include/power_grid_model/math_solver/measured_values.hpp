@@ -535,7 +535,7 @@ template <symmetry_tag sym> class MeasuredValues {
         }
         for (auto const& x : power_main_value_) {
             auto const variance = x.p_variance + x.q_variance;
-            if constexpr (is_symmetric<sym>) {
+            if constexpr (is_symmetric_v<sym>) {
                 unconstrained_min(variance);
             } else {
                 for (Idx const phase : {0, 1, 2}) {

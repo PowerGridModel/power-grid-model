@@ -24,7 +24,7 @@ using FaultType::two_phase;
 using FaultType::two_phase_to_ground;
 
 template <symmetry_tag sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         CHECK(cabs((x) - (y)) < (tolerance));
     } else {
         CHECK((cabs((x) - (y)) < (tolerance)).all());
@@ -696,7 +696,7 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
                                                   DoubleComplex const& z0, DoubleComplex const& z0_0, double const vref,
                                                   DoubleComplex const& zref) {
 
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         DoubleComplex const if_abc = vref / (z0 + zref + z_fault);
         DoubleComplex const u0 = vref - if_abc * zref;
         DoubleComplex const u1 = u0 - if_abc * z0;

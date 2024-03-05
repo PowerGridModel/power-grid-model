@@ -653,7 +653,7 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
                 return 0.0;
             }
             auto const& theta = x_[math_topo_->slack_bus].theta() + delta_x_rhs_[math_topo_->slack_bus].theta();
-            if constexpr (is_symmetric<sym>) {
+            if constexpr (is_symmetric_v<sym>) {
                 return theta;
             } else {
                 return theta(0);

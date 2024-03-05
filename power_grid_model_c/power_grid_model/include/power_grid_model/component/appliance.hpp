@@ -68,7 +68,7 @@ class Appliance : public Base {
         output.s = base_power<sym> * cabs(appliance_math_output.s);
         output.i = base_i_ * cabs(appliance_math_output.i);
         // pf
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             if (output.s < numerical_tolerance) {
                 output.pf = 0.0;
             } else {
@@ -97,7 +97,7 @@ class Appliance : public Base {
         return get_sc_output(iabc);
     }
     template <symmetry_tag sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return get_output<symmetric_t>(sym_u2si(u));
         } else {
             return get_output<asymmetric_t>(asym_u2si(u));

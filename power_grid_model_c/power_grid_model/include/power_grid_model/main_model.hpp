@@ -812,7 +812,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 #endif // !NDEBUG
 
     template <symmetry_tag sym> bool& is_parameter_up_to_date() {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return is_sym_parameter_up_to_date_;
         } else {
             return is_asym_parameter_up_to_date_;
@@ -820,7 +820,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym> std::vector<MathSolver<sym>>& get_solvers() {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return math_state_.math_solvers_sym;
         } else {
             return math_state_.math_solvers_asym;
@@ -828,7 +828,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym> std::vector<YBus<sym>>& get_y_bus() {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return math_state_.y_bus_vec_sym;
         } else {
             return math_state_.y_bus_vec_asym;
@@ -1285,7 +1285,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         } else if (!is_parameter_up_to_date<sym>()) {
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
             std::vector<MathModelParamIncrement> const math_param_increments = get_math_param_increment<sym>();
-            if (last_updated_calculation_symmetry_mode_ == is_symmetric<sym>) {
+            if (last_updated_calculation_symmetry_mode_ == is_symmetric_v<sym>) {
                 main_core::update_y_bus(math_state_, math_params, math_param_increments);
             } else {
                 main_core::update_y_bus(math_state_, math_params);
@@ -1294,7 +1294,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // else do nothing, set everything up to date
         is_parameter_up_to_date<sym>() = true;
         std::ranges::for_each(parameter_changed_components_, [](auto& comps) { comps.clear(); });
-        last_updated_calculation_symmetry_mode_ = is_symmetric<sym>;
+        last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
     }
 };
 

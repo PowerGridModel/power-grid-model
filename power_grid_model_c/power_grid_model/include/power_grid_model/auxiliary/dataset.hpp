@@ -30,19 +30,19 @@ struct mutable_dataset_t {};
 
 template <typename T>
 concept dataset_type_tag = std::same_as<T, const_dataset_t> || std::same_as<T, mutable_dataset_t>;
-template <dataset_type_tag T> constexpr bool is_const_dataset = std::same_as<T, const_dataset_t>;
+template <dataset_type_tag T> constexpr bool is_const_dataset_v = std::same_as<T, const_dataset_t>;
 
 static_assert(dataset_type_tag<const_dataset_t>);
 static_assert(dataset_type_tag<mutable_dataset_t>);
-static_assert(is_const_dataset<const_dataset_t>);
-static_assert(!is_const_dataset<mutable_dataset_t>);
+static_assert(is_const_dataset_v<const_dataset_t>);
+static_assert(!is_const_dataset_v<mutable_dataset_t>);
 
 template <dataset_type_tag dataset_type_> class DataPointer {
   public:
     using dataset_type = dataset_type_;
 
   private:
-    template <class T> using ptr_t = std::conditional_t<is_const_dataset<dataset_type>, T const*, T*>;
+    template <class T> using ptr_t = std::conditional_t<is_const_dataset_v<dataset_type>, T const*, T*>;
 
   public:
     DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, elements_per_scenario_{} {}
@@ -102,7 +102,7 @@ template <dataset_type_tag dataset_type_> class DataPointer {
 
     // conversion to const iterator
     explicit operator DataPointer<const_dataset_t>() const
-        requires(!is_const_dataset<dataset_type>)
+        requires(!is_const_dataset_v<dataset_type>)
     {
         return DataPointer<const_dataset_t>{ptr_, indptr_, batch_size_, elements_per_scenario_};
     }

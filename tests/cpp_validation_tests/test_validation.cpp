@@ -186,7 +186,7 @@ bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCons
     angle_attr.get_value(reference_result_ptr, &angle_ref, obj);
     ComplexValue<sym> const result = mag * exp(1.0i * angle);
     ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
     } else {
         return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();

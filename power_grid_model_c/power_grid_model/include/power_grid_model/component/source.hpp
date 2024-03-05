@@ -45,7 +45,7 @@ class Source : public Appliance {
     // getter for calculation param, y_ref
     template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
         // internal element_admittance
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return y1_ref_;
         } else {
             ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();

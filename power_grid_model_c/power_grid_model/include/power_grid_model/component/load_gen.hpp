@@ -22,12 +22,12 @@ struct gen_appliance_t {};
 
 template <typename T>
 concept appliance_type_tag = std::same_as<T, load_appliance_t> || std::same_as<T, gen_appliance_t>;
-template <appliance_type_tag T> constexpr bool is_generator = std::same_as<T, gen_appliance_t>;
+template <appliance_type_tag T> constexpr bool is_generator_v = std::same_as<T, gen_appliance_t>;
 
 static_assert(appliance_type_tag<load_appliance_t>);
 static_assert(appliance_type_tag<gen_appliance_t>);
-static_assert(!is_generator<load_appliance_t>);
-static_assert(is_generator<gen_appliance_t>);
+static_assert(!is_generator_v<load_appliance_t>);
+static_assert(is_generator_v<gen_appliance_t>);
 
 class GenericLoadGen : public Appliance {
   public:
@@ -45,7 +45,7 @@ class GenericLoadGen : public Appliance {
         if (!energized(is_connected_to_source)) {
             return ComplexValue<sym>{};
         }
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();
@@ -69,18 +69,18 @@ class GenericGenerator : public GenericLoadGen {
 };
 
 template <symmetry_tag sym, appliance_type_tag appliance_type_>
-class LoadGen final : public std::conditional_t<is_generator<appliance_type_>, GenericGenerator, GenericLoad> {
+class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>, GenericGenerator, GenericLoad> {
   public:
     using appliance_type = appliance_type_;
 
     using InputType = LoadGenInput<sym>;
     using UpdateType = LoadGenUpdate<sym>;
-    using BaseClass = std::conditional_t<is_generator<appliance_type>, GenericGenerator, GenericLoad>;
+    using BaseClass = std::conditional_t<is_generator_v<appliance_type>, GenericGenerator, GenericLoad>;
     static constexpr char const* name = [] {
-        if constexpr (is_symmetric<sym>) {
-            return is_generator<appliance_type> ? "sym_gen" : "sym_load";
+        if constexpr (is_symmetric_v<sym>) {
+            return is_generator_v<appliance_type> ? "sym_gen" : "sym_load";
         } else {
-            return is_generator<appliance_type> ? "asym_gen" : "asym_load";
+            return is_generator_v<appliance_type> ? "asym_gen" : "asym_load";
         }
     }();
 
@@ -123,11 +123,11 @@ class LoadGen final : public std::conditional_t<is_generator<appliance_type_>, G
     ComplexValue<sym> s_specified_{std::complex<double>{nan, nan}}; // specified power injection
 
     // direction of load_gen
-    static constexpr double direction_ = is_generator<appliance_type> ? 1.0 : -1.0;
+    static constexpr double direction_ = is_generator_v<appliance_type> ? 1.0 : -1.0;
 
     // override calc_param
     ComplexValue<symmetric_t> sym_calc_param() const override {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
                 return {nan, nan};
             }
@@ -135,7 +135,7 @@ class LoadGen final : public std::conditional_t<is_generator<appliance_type_>, G
         return mean_val(s_specified_);
     }
     ComplexValue<asymmetric_t> asym_calc_param() const override {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
                 return ComplexValue<asymmetric_t>{std::complex{nan, nan}};
             }

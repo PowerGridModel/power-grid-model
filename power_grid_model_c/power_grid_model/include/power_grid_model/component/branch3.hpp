@@ -62,7 +62,7 @@ class Branch3 : public Base {
         if (!energized(is_connected_to_source)) {
             return std::array<BranchCalcParam<sym>, 3>{};
         }
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();

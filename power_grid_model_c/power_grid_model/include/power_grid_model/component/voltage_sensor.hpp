@@ -23,7 +23,7 @@ class GenericVoltageSensor : public Sensor {
         : Sensor{generic_voltage_sensor_input} {};
 
     template <symmetry_tag sym> VoltageSensorOutput<sym> get_output(ComplexValue<sym> const& u) const {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             assert(u != 0.0 + 0.0i);
             return get_sym_output(u);
         } else {
@@ -48,7 +48,7 @@ class GenericVoltageSensor : public Sensor {
 
     // getter for calculation param
     template <symmetry_tag sym> VoltageSensorCalcParam<sym> calc_param() const {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();
@@ -67,7 +67,7 @@ class GenericVoltageSensor : public Sensor {
 
 template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
   public:
-    static constexpr char const* name = is_symmetric<sym> ? "sym_voltage_sensor" : "asym_voltage_sensor";
+    static constexpr char const* name = is_symmetric_v<sym> ? "sym_voltage_sensor" : "asym_voltage_sensor";
     using InputType = VoltageSensorInput<sym>;
     using UpdateType = VoltageSensorUpdate<sym>;
     template <symmetry_tag sym_calc> using OutputType = VoltageSensorOutput<sym_calc>;
@@ -113,7 +113,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
     RealValue<sym> u_angle_measured_;
 
     bool has_angle() const {
-        if constexpr (is_symmetric<sym>) {
+        if constexpr (is_symmetric_v<sym>) {
             return !is_nan(u_angle_measured_);
         } else {
             return !u_angle_measured_.isNaN().any();

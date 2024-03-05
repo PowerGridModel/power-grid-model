@@ -62,7 +62,7 @@ template <symmetry_tag sym> class ILSEGainBlock : public Block<DoubleComplex, sy
 
 template <symmetry_tag sym> class IterativeLinearSESolver {
     // block size 2 for symmetric, 6 for asym
-    static constexpr Idx bsr_block_size_ = is_symmetric<sym> ? 2 : 6;
+    static constexpr Idx bsr_block_size_ = is_symmetric_v<sym> ? 2 : 6;
 
   public:
     IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
@@ -320,7 +320,7 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
             }
             auto const& voltage = x_rhs_[math_topo_->slack_bus].u();
             auto const& voltage_a = [&voltage]() -> auto const& {
-                if constexpr (is_symmetric<sym>) {
+                if constexpr (is_symmetric_v<sym>) {
                     return voltage;
                 } else {
                     return voltage(0);

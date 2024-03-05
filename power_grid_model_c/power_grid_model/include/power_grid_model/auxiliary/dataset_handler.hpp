@@ -34,14 +34,14 @@ struct DatasetInfo {
 };
 
 template <data_mutable_tag data_mutable_type, indptr_mutable_tag indptr_mutable_type>
-    requires(is_data_mutable<data_mutable_type> || !is_indptr_mutable<indptr_mutable_type>)
+    requires(is_data_mutable_v<data_mutable_type> || !is_indptr_mutable_v<indptr_mutable_type>)
 class DatasetHandler {
   public:
     using data_mutable = data_mutable_type;
     using indptr_mutable = indptr_mutable_type;
 
-    using Data = std::conditional_t<is_data_mutable<data_mutable>, void, void const>;
-    using Indptr = std::conditional_t<is_indptr_mutable<indptr_mutable>, Idx, Idx const>;
+    using Data = std::conditional_t<is_data_mutable_v<data_mutable>, void, void const>;
+    using Indptr = std::conditional_t<is_indptr_mutable_v<indptr_mutable>, Idx, Idx const>;
     struct Buffer {
         Data* data;
         // for uniform buffer, indptr is empty
@@ -61,7 +61,7 @@ class DatasetHandler {
     // implicit conversion constructor to const
     template <indptr_mutable_tag indptr_mutable_other>
     DatasetHandler(DatasetHandler<data_mutable_t, indptr_mutable_other> const& other)
-        requires(!is_data_mutable<data_mutable>)
+        requires(!is_data_mutable_v<data_mutable>)
         : dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
@@ -71,7 +71,7 @@ class DatasetHandler {
 
     template <dataset_type_tag dataset_type>
     std::map<std::string, DataPointer<dataset_type>> export_dataset(Idx scenario = -1) const
-        requires(is_const_dataset<dataset_type> || is_data_mutable<data_mutable>)
+        requires(is_const_dataset_v<dataset_type> || is_data_mutable_v<data_mutable>)
     {
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with multiple scenarios!\n"};
@@ -126,14 +126,14 @@ class DatasetHandler {
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
-        requires is_indptr_mutable<indptr_mutable>
+        requires is_indptr_mutable_v<indptr_mutable>
     {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
     void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
                     Data* data)
-        requires(!is_indptr_mutable<indptr_mutable>)
+        requires(!is_indptr_mutable_v<indptr_mutable>)
     {
         check_non_uniform_integrity<indptr_immutable_t>(elements_per_scenario, total_elements, indptr);
         add_component_info_impl(component, elements_per_scenario, total_elements);
@@ -146,7 +146,7 @@ class DatasetHandler {
     }
 
     void set_buffer(std::string_view component, Indptr* indptr, Data* data)
-        requires is_indptr_mutable<indptr_mutable>
+        requires is_indptr_mutable_v<indptr_mutable>
     {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = dataset_info_.component_info[idx];
@@ -176,7 +176,7 @@ class DatasetHandler {
             if (!indptr) {
                 throw DatasetError{"For a non-uniform buffer, indptr should be supplied !\n"};
             }
-            if constexpr (!is_indptr_mutable<check_indptr_content>) {
+            if constexpr (!is_indptr_mutable_v<check_indptr_content>) {
                 if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
                     throw DatasetError{
                         "For a non-uniform buffer, indptr should begin with 0 and end with total_elements !\n"};

@@ -36,9 +36,9 @@ struct asymmetric_t {};
 template <typename T>
 concept symmetry_tag = std::derived_from<T, symmetric_t> || std::derived_from<T, asymmetric_t>;
 
-template <symmetry_tag T> constexpr bool is_symmetric = std::derived_from<T, symmetric_t>;
+template <symmetry_tag T> constexpr bool is_symmetric_v = std::derived_from<T, symmetric_t>;
 
-template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric<T>, asymmetric_t, symmetric_t>;
+template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric_v<T>, asymmetric_t, symmetric_t>;
 
 // math constant
 using namespace std::complex_literals;
@@ -61,8 +61,8 @@ constexpr ID na_IntID = std::numeric_limits<ID>::min();
 // power grid constant
 constexpr double base_power_3p = 1e6;
 constexpr double base_power_1p = base_power_3p / 3.0;
-template <symmetry_tag sym> constexpr double u_scale = is_symmetric<sym> ? 1.0 : inv_sqrt3;
-template <symmetry_tag sym> constexpr double base_power = is_symmetric<sym> ? base_power_3p : base_power_1p;
+template <symmetry_tag sym> constexpr double u_scale = is_symmetric_v<sym> ? 1.0 : inv_sqrt3;
+template <symmetry_tag sym> constexpr double base_power = is_symmetric_v<sym> ? base_power_3p : base_power_1p;
 // links are direct line between nodes with infinite element_admittance in theory
 // for numerical calculation, a big link element_admittance is assigned
 // 1e6 Siemens element_admittance in 10kV network

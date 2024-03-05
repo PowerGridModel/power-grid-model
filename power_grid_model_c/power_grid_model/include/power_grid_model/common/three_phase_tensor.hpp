@@ -89,19 +89,19 @@ template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> 
 
 // three phase vector and tensor
 template <symmetry_tag sym>
-using RealTensor = std::conditional_t<is_symmetric<sym>, double, three_phase_tensor::Tensor<double>>;
+using RealTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::Tensor<double>>;
 template <symmetry_tag sym>
-using ComplexTensor = std::conditional_t<is_symmetric<sym>, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
+using ComplexTensor = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
 
 template <symmetry_tag sym>
-using RealDiagonalTensor = std::conditional_t<is_symmetric<sym>, double, three_phase_tensor::DiagonalTensor<double>>;
+using RealDiagonalTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::DiagonalTensor<double>>;
 template <symmetry_tag sym>
 using ComplexDiagonalTensor =
-    std::conditional_t<is_symmetric<sym>, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
+    std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::DiagonalTensor<DoubleComplex>>;
 template <symmetry_tag sym>
-using RealValue = std::conditional_t<is_symmetric<sym>, double, three_phase_tensor::Vector<double>>;
+using RealValue = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::Vector<double>>;
 template <symmetry_tag sym>
-using ComplexValue = std::conditional_t<is_symmetric<sym>, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
+using ComplexValue = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
 
 // asserts to ensure alignment
 static_assert(sizeof(RealTensor<asymmetric_t>) == sizeof(double[9]));
@@ -132,7 +132,7 @@ concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
 // piecewise factory construction for complex vector
 template <symmetry_tag sym = asymmetric_t> inline ComplexValue<sym> piecewise_complex_value(DoubleComplex const& x) {
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         return x;
     } else {
         return ComplexValue<asymmetric_t>{std::piecewise_construct, x};
@@ -230,7 +230,7 @@ inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
 inline double mean_val(double z) { return z; }
 
 template <symmetry_tag sym, class T> inline auto process_mean_val(const T& m) {
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         return mean_val(m);
     } else {
         return m;
@@ -336,7 +336,7 @@ inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == Re
 // The function assumes that the current value is normalized and new value should be normalized with scalar
 template <symmetry_tag sym, class Proxy>
 inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
-    if constexpr (is_symmetric<sym>) {
+    if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
             current_value = scalar * new_value;
         }
