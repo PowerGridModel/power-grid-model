@@ -18,7 +18,7 @@ class Branch3 : public Base {
   public:
     using InputType = Branch3Input;
     using UpdateType = Branch3Update;
-    template <bool sym> using OutputType = Branch3Output<sym>;
+    template <symmetry_tag sym> using OutputType = Branch3Output<sym>;
     using ShortCircuitOutputType = Branch3ShortCircuitOutput;
     static constexpr char const* name = "branch3";
     ComponentType math_model_type() const final { return ComponentType::branch3; }
@@ -57,18 +57,19 @@ class Branch3 : public Base {
     virtual double loading(double s_1, double s_2, double s_3) const = 0;
     virtual std::array<double, 3> phase_shift() const = 0;
 
-    template <bool sym> std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
+    template <symmetry_tag sym>
+    std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return std::array<BranchCalcParam<sym>, 3>{};
         }
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
             return asym_calc_param();
         }
     }
 
-    template <bool sym>
+    template <symmetry_tag sym>
     Branch3Output<sym> get_output(BranchMathOutput<sym> const& branch_math_output1,
                                   BranchMathOutput<sym> const& branch_math_output2,
                                   BranchMathOutput<sym> const& branch_math_output3) const {
@@ -96,8 +97,9 @@ class Branch3 : public Base {
         return output;
     }
 
-    Branch3ShortCircuitOutput get_sc_output(ComplexValue<false> const& i_1, ComplexValue<false> const& i_2,
-                                            ComplexValue<false> const& i_3) const {
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> const& i_1,
+                                            ComplexValue<asymmetric_t> const& i_2,
+                                            ComplexValue<asymmetric_t> const& i_3) const {
         // result object
         Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
@@ -110,21 +112,21 @@ class Branch3 : public Base {
         output.i_3_angle = arg(i_3);
         return output;
     }
-    Branch3ShortCircuitOutput get_sc_output(ComplexValue<true> const& i_1, ComplexValue<true> const& i_2,
-                                            ComplexValue<true> const& i_3) const {
-        ComplexValue<false> const iabc_1{i_1};
-        ComplexValue<false> const iabc_2{i_2};
-        ComplexValue<false> const iabc_3{i_3};
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& i_1, ComplexValue<symmetric_t> const& i_2,
+                                            ComplexValue<symmetric_t> const& i_3) const {
+        ComplexValue<asymmetric_t> const iabc_1{i_1};
+        ComplexValue<asymmetric_t> const iabc_2{i_2};
+        ComplexValue<asymmetric_t> const iabc_3{i_3};
         return get_sc_output(iabc_1, iabc_2, iabc_3);
     }
-    template <bool sym>
+    template <symmetry_tag sym>
     Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<sym> const& branch_math_output1,
                                             BranchShortCircuitMathOutput<sym> const& branch_math_output2,
                                             BranchShortCircuitMathOutput<sym> const& branch_math_output3) const {
         return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
     }
 
-    template <bool sym> Branch3Output<sym> get_null_output() const {
+    template <symmetry_tag sym> Branch3Output<sym> get_null_output() const {
         Branch3Output<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -183,8 +185,8 @@ class Branch3 : public Base {
     bool status_2_;
     bool status_3_;
 
-    virtual std::array<BranchCalcParam<true>, 3> sym_calc_param() const = 0;
-    virtual std::array<BranchCalcParam<false>, 3> asym_calc_param() const = 0;
+    virtual std::array<BranchCalcParam<symmetric_t>, 3> sym_calc_param() const = 0;
+    virtual std::array<BranchCalcParam<asymmetric_t>, 3> asym_calc_param() const = 0;
 };
 
 } // namespace power_grid_model

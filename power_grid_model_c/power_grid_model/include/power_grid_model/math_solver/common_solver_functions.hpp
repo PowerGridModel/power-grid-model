@@ -12,7 +12,7 @@
 
 namespace power_grid_model::math_solver::detail {
 
-template <bool sym>
+template <symmetry_tag sym>
 inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
                         ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element,
                         ComplexValue<sym>& u_bus) {
@@ -23,7 +23,7 @@ inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym>
     }
 }
 
-template <bool sym> inline void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
+template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
     ComplexTensorVector<sym> const& ydata = y_bus.admittance();
     std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {
         if (k == -1) {
@@ -33,7 +33,7 @@ template <bool sym> inline void copy_y_bus(YBus<sym> const& y_bus, ComplexTensor
     });
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
                                     PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
     for (Idx const source : sources) {
@@ -44,7 +44,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
     }
 }
 
-template <bool sym, class LoadGenFunc>
+template <symmetry_tag sym, class LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
@@ -72,7 +72,7 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
     }
 }
 
-template <bool sym, typename LoadGenFunc>
+template <symmetry_tag sym, typename LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -97,7 +97,7 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
     output.bus_injection = y_bus.calculate_injection(output.u);
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 inline void calculate_se_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
                                 MathOutput<sym>& output) {
     // call y bus
