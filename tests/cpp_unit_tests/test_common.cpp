@@ -10,5 +10,7 @@ static_assert(symmetry_tag<symmetric_t>);
 static_assert(symmetry_tag<symmetric_t>);
 static_assert(is_symmetric_v<symmetric_t>);
 static_assert(!is_symmetric_v<asymmetric_t>);
+static_assert(std::same_as<other_symmetry_t<symmetric_t>, asymmetric_t>);
+static_assert(std::same_as<other_symmetry_t<asymmetric_t>, symmetric_t>);
 } // namespace
 } // namespace power_grid_model
