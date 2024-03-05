@@ -32,12 +32,6 @@ def set_version(pkg_dir: Path):
             # major.minor.patch
             # do nothing
             pass
-        elif "release" in ref:
-            # release branch
-            # major.minor.patch rc 9 build_number short_hash
-            # NOTE: the major.minor in release branch is usually higher than the main branch
-            # this is the leading version if you enable test version in pip install
-            version += f"rc9{build_number}{short_hash}"
         else:
             # feature branch
             # major.minor.patch a 1 build_number short_hash
