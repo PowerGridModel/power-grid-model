@@ -341,6 +341,6 @@ jobs:
           files: |
             ./wheelhouse/*
           tag_name: ${{ steps.tag.outputs.tag }}
-          prerelease: github.ref != 'refs/heads/main'
+          prerelease: ${{ github.ref != 'refs/heads/main'}}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
