@@ -277,7 +277,7 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
                                           ComplexValue<sym> const& uj) {
         PFJacBlock<sym> block{};
         // Calculate power flow from i to j ie. (ui @* uj)  .* conj(yij)
-        ComplexTensor<sym> power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
+        ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
         // calculate H, N, M, L
         // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
         // = imag(power_flow_ij)
