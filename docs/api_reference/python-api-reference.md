@@ -31,6 +31,13 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.validation.errors_to_string
 ```
 
+## data_types
+
+```{eval-rst}
+.. automodule:: power_grid_model.data_types
+   :undoc-members:
+```
+
 ### errors
 
 ```{eval-rst}
