@@ -42,7 +42,7 @@ namespace power_grid_model::math_solver {
 
 namespace linear_pf {
 
-template <bool sym> class LinearPFSolver {
+template <symmetry_tag sym> class LinearPFSolver {
 
   public:
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -118,8 +118,8 @@ template <bool sym> class LinearPFSolver {
     }
 };
 
-template class LinearPFSolver<true>;
-template class LinearPFSolver<false>;
+template class LinearPFSolver<symmetric_t>;
+template class LinearPFSolver<asymmetric_t>;
 } // namespace linear_pf
 
 using linear_pf::LinearPFSolver;

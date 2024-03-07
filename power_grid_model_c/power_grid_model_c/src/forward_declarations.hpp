@@ -8,6 +8,8 @@
 #define PGM_DLL_EXPORTS
 #endif
 
+#include <power_grid_model/auxiliary/dataset_fwd.hpp>
+
 // forward declare all referenced struct/class in C++ core
 // alias them in the root namespace
 
@@ -18,9 +20,8 @@ struct MetaComponent;
 struct MetaDataset;
 class Serializer;
 class Deserializer;
-template <bool data_mutable, bool indptr_mutable>
-    requires(data_mutable || !indptr_mutable)
-class DatasetHandler;
+
+template <dataset_handler_tag dataset_handler_type> class DatasetHandler;
 
 struct DatasetInfo;
 
@@ -31,7 +32,7 @@ using PGM_MetaComponent = power_grid_model::meta_data::MetaComponent;
 using PGM_MetaDataset = power_grid_model::meta_data::MetaDataset;
 using PGM_Serializer = power_grid_model::meta_data::Serializer;
 using PGM_Deserializer = power_grid_model::meta_data::Deserializer;
-using PGM_ConstDataset = power_grid_model::meta_data::DatasetHandler<false, false>;
-using PGM_MutableDataset = power_grid_model::meta_data::DatasetHandler<true, false>;
-using PGM_WritableDataset = power_grid_model::meta_data::DatasetHandler<true, true>;
+using PGM_ConstDataset = power_grid_model::meta_data::DatasetHandler<power_grid_model::const_dataset_t>;
+using PGM_MutableDataset = power_grid_model::meta_data::DatasetHandler<power_grid_model::mutable_dataset_t>;
+using PGM_WritableDataset = power_grid_model::meta_data::DatasetHandler<power_grid_model::writable_dataset_t>;
 using PGM_DatasetInfo = power_grid_model::meta_data::DatasetInfo;

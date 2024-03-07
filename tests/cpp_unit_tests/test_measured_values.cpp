@@ -8,17 +8,19 @@
 
 namespace power_grid_model::math_solver {
 namespace {
-template <bool sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (sym) {
+template <symmetry_tag sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
+    if constexpr (is_symmetric_v<sym>) {
         CHECK(cabs((x) - (y)) < (tolerance));
     } else {
         CHECK((cabs((x) - (y)) < (tolerance)).all());
     }
 }
 
-template <bool sym> void check_close(auto const& x, auto const& y) { check_close<sym>(x, y, numerical_tolerance); }
-void check_close(auto const& x, auto const& y, auto const& tolerance) { check_close<true>(x, y, tolerance); }
-void check_close(auto const& x, auto const& y) { check_close<true>(x, y); }
+template <symmetry_tag sym> void check_close(auto const& x, auto const& y) {
+    check_close<sym>(x, y, numerical_tolerance);
+}
+void check_close(auto const& x, auto const& y, auto const& tolerance) { check_close<symmetric_t>(x, y, tolerance); }
+void check_close(auto const& x, auto const& y) { check_close<symmetric_t>(x, y); }
 } // namespace
 
 TEST_CASE("Measured Values") {
@@ -30,11 +32,11 @@ TEST_CASE("Measured Values") {
         topo.sources_per_bus = {from_dense, {}, 1};
         topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
-        StateEstimationInput<true> input{};
+        StateEstimationInput<symmetric_t> input{};
         input.measured_load_gen_power = {{1.0 + 0.1i, 0.3, 0.1}};
         input.load_gen_status = {1};
 
-        MeasuredValues<true> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -51,17 +53,17 @@ TEST_CASE("Measured Values") {
         topo.sources_per_bus = {from_dense, {}, 1};
         topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
-        StateEstimationInput<false> input{};
+        StateEstimationInput<asymmetric_t> input{};
         input.measured_load_gen_power = {{{1.0, 1.1 + 0.1i, 1.2 - 0.2i}, {0.3, 0.6, 0.65}, {0.1, 0.2, 0.05}}};
         input.load_gen_status = {1};
 
-        MeasuredValues<false> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
-        check_close<false>(injection.value, ComplexValue<false>{1.0 + 0.0i, 1.1 + 0.1i, 1.2 - 0.2i});
-        check_close<false>(injection.p_variance, RealValue<false>{0.75, 1.5, 1.625});
-        check_close<false>(injection.q_variance, RealValue<false>{0.25, 0.5, 0.125});
+        check_close<asymmetric_t>(injection.value, ComplexValue<asymmetric_t>{1.0 + 0.0i, 1.1 + 0.1i, 1.2 - 0.2i});
+        check_close<asymmetric_t>(injection.p_variance, RealValue<asymmetric_t>{0.75, 1.5, 1.625});
+        check_close<asymmetric_t>(injection.q_variance, RealValue<asymmetric_t>{0.25, 0.5, 0.125});
     }
 
     SUBCASE("Accumulate two power sensors on same injection - sym") {
@@ -72,11 +74,11 @@ TEST_CASE("Measured Values") {
         topo.sources_per_bus = {from_dense, {}, 1};
         topo.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
 
-        StateEstimationInput<true> input{};
+        StateEstimationInput<symmetric_t> input{};
         input.measured_load_gen_power = {{1.0 + 1.5i, 1.0, 5.0}, {4.0 + 0.7i, 2.0, 3.0}};
         input.load_gen_status = {1};
 
-        MeasuredValues<true> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -93,11 +95,11 @@ TEST_CASE("Measured Values") {
         topo.sources_per_bus = {from_dense, {}, 1};
         topo.power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
 
-        StateEstimationInput<true> input{};
+        StateEstimationInput<symmetric_t> input{};
         input.measured_load_gen_power = {{1.0 + 1.5i, 1.0, 4.0}, {4.0 + 0.7i, 2.0, 3.0}};
         input.load_gen_status = {1, 1};
 
-        MeasuredValues<true> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -114,18 +116,18 @@ TEST_CASE("Measured Values") {
         topo.sources_per_bus = {from_dense, {}, 1};
         topo.power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
 
-        StateEstimationInput<false> input{};
+        StateEstimationInput<asymmetric_t> input{};
         input.measured_load_gen_power = {{{1.0 + 1.5i, 0.5 + 1.0i, 2.0 + 0.5i}, {1.0, 0.5, 3.0}, {4.0, 3.5, 1.5}},
                                          {{4.0 + 0.7i, -0.4 - 0.8i, -1.2 + 2.5i}, {2.0, 1.5, 5.5}, {3.0, 5.0, 0.5}}};
         input.load_gen_status = {1, 1};
 
-        MeasuredValues<false> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         CHECK(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
-        check_close<false>(injection.value, ComplexValue<false>{5.0 + 2.2i, 0.1 + 0.2i, 0.8 + 3.0i});
-        check_close<false>(injection.p_variance, RealValue<false>{0.3, 0.2, 0.85});
-        check_close<false>(injection.q_variance, RealValue<false>{0.7, 0.85, 0.2});
+        check_close<asymmetric_t>(injection.value, ComplexValue<asymmetric_t>{5.0 + 2.2i, 0.1 + 0.2i, 0.8 + 3.0i});
+        check_close<asymmetric_t>(injection.p_variance, RealValue<asymmetric_t>{0.3, 0.2, 0.85});
+        check_close<asymmetric_t>(injection.q_variance, RealValue<asymmetric_t>{0.7, 0.85, 0.2});
     }
 }
 

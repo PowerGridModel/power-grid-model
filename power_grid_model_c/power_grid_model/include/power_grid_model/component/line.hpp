@@ -49,8 +49,10 @@ class Line final : public Branch {
     DoubleComplex y0_series_;
     DoubleComplex y0_shunt_;
 
-    BranchCalcParam<true> sym_calc_param() const override { return calc_param_y_sym(y1_series_, y1_shunt_, 1.0); }
-    BranchCalcParam<false> asym_calc_param() const override {
+    BranchCalcParam<symmetric_t> sym_calc_param() const override {
+        return calc_param_y_sym(y1_series_, y1_shunt_, 1.0);
+    }
+    BranchCalcParam<asymmetric_t> asym_calc_param() const override {
         return calc_param_y_asym(y1_series_, y1_shunt_, y0_series_, y0_shunt_, 1.0);
     }
 };

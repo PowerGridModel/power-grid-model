@@ -39,10 +39,11 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     };
 
     // pack double[3]
-    template <> struct pack<power_grid_model::RealValue<false>> {
+    template <> struct pack<power_grid_model::RealValue<power_grid_model::asymmetric_t>> {
         template <typename Stream>
-        msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& p,
-                                            power_grid_model::RealValue<false> const& o) const {
+        msgpack::packer<Stream>&
+        operator()(msgpack::packer<Stream>& p,
+                   power_grid_model::RealValue<power_grid_model::asymmetric_t> const& o) const {
             p.pack_array(3);
             for (int8_t i = 0; i != 3; ++i) {
                 if (power_grid_model::is_nan(o(i))) {
