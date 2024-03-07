@@ -15,20 +15,21 @@ import numpy as np
 
 SparseBatchArray = Dict[str, np.ndarray]
 """
-A sparse batch array is a dictionary containing the keys "indptr" and "data".
-    indptr: a one-dimensional numpy int32 array
-    data: a one-dimensional structured numpy array. The exact dtype depends on the type component.
+A sparse batch array is a dictionary containing the keys `indptr` and `data`.
+    - indptr: a one-dimensional numpy int32 array
+    
+    - data: a one-dimensional structured numpy array. The exact dtype depends on the type component.
 
-Example: 
-    {"indptr": <1d-array>, "data": <1d-array>}
+Example: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
 BatchArray = Union[np.ndarray, SparseBatchArray]
 """
-A batch is a either a dense or a sparse batch array
+A batch is a either a dense or a sparse batch array.
 
 Examples:
     dense:  <2d-array>
+
     sparse: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
@@ -54,8 +55,9 @@ Dataset = Union[SingleDataset, BatchDataset]
 A general data set can be a single or a batch dataset.
 
 Examples:
-    single: {"node": <1d-array>, "line": <1d-array>}
-    batch:  {"node": <2d-array>, "line": {"indptr": <1d-array>, "data": <1d-array>}}
+    - single: {"node": <1d-array>, "line": <1d-array>}
+    
+    - batch:  {"node": <2d-array>, "line": {"indptr": <1d-array>, "data": <1d-array>}}
 
 """
 
@@ -94,9 +96,10 @@ When representing a grid as a native python structure, each attribute (u_rated e
 a real value, or a tuple of three real values.
 
 Examples:
-    real:    10500.0
-    nominal: 123
-    asym:    (10400.0, 10500.0, 10600.0)
+    - real:    10500.0
+    
+    - nominal: 123
+    - asym:    (10400.0, 10500.0, 10600.0)
 """
 
 Component = Dict[str, Union[AttributeValue, str]]
