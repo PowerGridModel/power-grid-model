@@ -273,21 +273,18 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     // permutation array
     typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
 
+    /// @brief power_flow_ij = (ui @* uj)  .* conj(yij)
+    /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
+    /// = imaginary(power_flow_ij)
+    /// Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
+    /// = real(power_flow_ij)
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {
         PFJacBlock<sym> block{};
-        // Calculate power flow from i to j ie. (ui @* uj)  .* conj(yij)
         ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
-        // calculate H, N, M, L
-        // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-        // = imaginary(power_flow_ij)
         block.h() = imag(power_flow_ij);
-        // Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
-        // = real(power_flow_ij)
         block.n() = real(power_flow_ij);
-        // Mij = - Nij
         block.m() = -block.n();
-        // Lij = Hij
         block.l() = block.h();
         return block;
     }
