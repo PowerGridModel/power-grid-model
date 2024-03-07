@@ -48,7 +48,7 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.data_types.ComponentList
 .. autoclass:: power_grid_model.data_types.SinglePythonDataset
 .. autoclass:: power_grid_model.data_types.BatchPythonDataset
-.. autoclass:: power_grid_model.data_types.BatchPythonDataset
+.. autoclass:: power_grid_model.data_types.PythonDataset
 ```
 
 ### errors
