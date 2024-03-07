@@ -41,7 +41,7 @@ TEST_CASE("Test load generator") {
     AsymGenerator const asym_gen_y{asym_load_gen_input, 10e3};
 
     double const base_i = base_power_1p / (10e3 / sqrt3);
-    DoubleComplex const u{1.1 * std::exp(1.0i * 10.0)};
+    ComplexValue<symmetric_t> const u{1.1 * std::exp(1.0i * 10.0)};
     ComplexValue<asymmetric_t> const ua{1.1 * std::exp(1.0i * 10.0)};
     double const pf = 1 / sqrt(2.0);
     double const s_pq = sqrt(2.0) * 3e6;
