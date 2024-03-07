@@ -280,9 +280,9 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
         ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
         // calculate H, N, M, L
         // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-        // = imag(power_flow_ij)
+        // = imaginary(power_flow_ij)
         block.h() = imag(power_flow_ij);
-        // Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
+        // Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
         // = real(power_flow_ij)
         block.n() = real(power_flow_ij);
         // Mij = - Nij
