@@ -215,6 +215,21 @@ struct ThreeWindingTransformerInput {
     operator Branch3Input const&() const { return reinterpret_cast<Branch3Input const&>(*this); }
 };
 
+struct TransformerTapRegulatorInput {
+    ID id;  // ID of the object
+    ID transformer_id;  // ID the of transformer
+    // control_side
+    double u_set;
+    double u_band;
+    bool enabled;
+    double line_drop_compensation_r;
+    double line_drop_compensation_x;
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+};
+
 struct GenericLoadGenInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
