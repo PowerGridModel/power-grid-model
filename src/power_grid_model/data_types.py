@@ -4,7 +4,7 @@
 
 """
 Many data types are used throughout the power grid model project. In an attempt to clarify type hints, some types
-have been defined and explained in this file
+have been defined and explained in this file.
 """
 
 from typing import Dict, List, Tuple, Union
@@ -19,7 +19,8 @@ A sparse batch array is a dictionary containing the keys "indptr" and "data".
     indptr: a one-dimensional numpy int32 array
     data: a one-dimensional structured numpy array. The exact dtype depends on the type component.
 
-Example: {"indptr": <1d-array>, "data": <1d-array>}
+Example: 
+    {"indptr": <1d-array>, "data": <1d-array>}
 """
 
 BatchArray = Union[np.ndarray, SparseBatchArray]

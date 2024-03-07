@@ -31,11 +31,24 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.validation.errors_to_string
 ```
 
-## data_types
+## data types
 
 ```{eval-rst}
-.. automodule:: power_grid_model.data_types
-   :undoc-members:
+.. autoclass:: power_grid_model.data_types.SparseBatchArray
+.. autoclass:: power_grid_model.data_types.BatchArray
+.. autoclass:: power_grid_model.data_types.SingleDataset
+.. autoclass:: power_grid_model.data_types.BatchDataset
+.. autoclass:: power_grid_model.data_types.Dataset
+.. autoclass:: power_grid_model.data_types.Batchlist
+.. autoclass:: power_grid_model.data_types.NominalValue
+.. autoclass:: power_grid_model.data_types.RealValue
+.. autoclass:: power_grid_model.data_types.AsymValue
+.. autoclass:: power_grid_model.data_types.AttributeValue
+.. autoclass:: power_grid_model.data_types.Component
+.. autoclass:: power_grid_model.data_types.ComponentList
+.. autoclass:: power_grid_model.data_types.SinglePythonDataset
+.. autoclass:: power_grid_model.data_types.BatchPythonDataset
+.. autoclass:: power_grid_model.data_types.BatchPythonDataset
 ```
 
 ### errors
