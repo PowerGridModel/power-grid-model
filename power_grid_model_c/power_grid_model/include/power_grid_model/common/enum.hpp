@@ -20,6 +20,11 @@ enum class BranchSide : IntS { from = 0, to = 1 };
 
 enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
+union ControlSide {
+    BranchSide branch_side;
+    Branch3Side branch3_side;
+};
+
 enum class CalculationMethod : IntS {
     default_method = -128,
     linear = 0,

@@ -218,12 +218,12 @@ struct ThreeWindingTransformerInput {
 struct TransformerTapRegulatorInput {
     ID id;  // ID of the object
     ID transformer_id;  // ID the of transformer
-    // control_side
-    double u_set;
-    double u_band;
-    bool enabled;
-    double line_drop_compensation_r;
-    double line_drop_compensation_x;
+    ControlSide control_side;  //control side of the (three winding) transformer
+    double u_set;  // voltage setpoint
+    double u_band;  // voltage bandwidth
+    bool enabled;  //regulator enabled
+    double line_drop_compensation_r;  // line drop compensation resistance
+    double line_drop_compensation_x;  // line drop compensation reactance
 
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
