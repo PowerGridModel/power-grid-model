@@ -50,7 +50,7 @@ TEST_CASE("Test power sensor") {
             sym_power_sensor_input.q_sigma = nan;
 
             ComplexValue<symmetric_t> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0};
+            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0}; // NOSONAR
 
             PowerSensor<symmetric_t> sym_power_sensor{sym_power_sensor_input};
 
@@ -170,7 +170,7 @@ TEST_CASE("Test power sensor") {
             sym_power_sensor_input.q_sigma = nan;
 
             ComplexValue<symmetric_t> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0};
+            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0}; // NOSONAR
 
             PowerSensor<symmetric_t> sym_power_sensor{sym_power_sensor_input};
 
@@ -315,7 +315,7 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_input.q_sigma = r_nan;
 
             ComplexValue<symmetric_t> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0};
+            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0}; // NOSONAR
 
             PowerSensor<asymmetric_t> asym_power_sensor{asym_power_sensor_input};
 
@@ -438,7 +438,7 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_input.q_sigma = r_nan;
 
             ComplexValue<symmetric_t> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
-            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0};
+            ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0}; // NOSONAR
 
             PowerSensor<asymmetric_t> asym_power_sensor{asym_power_sensor_input};
 

@@ -53,7 +53,7 @@ class Node final : public Base {
     }
     NodeShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& u_pu) const {
         // Convert the input positive sequence voltage to phase voltage
-        ComplexValue<asymmetric_t> const uabc_pu{u_pu};
+        ComplexValue<asymmetric_t> const uabc_pu{u_pu}; // NOSONAR
         return get_sc_output(uabc_pu);
     }
     template <symmetry_tag sym> NodeOutput<sym> get_null_output() const {

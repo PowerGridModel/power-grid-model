@@ -76,7 +76,7 @@ class Fault final : public Base {
     }
 
     FaultShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> i_f, double const u_rated) const {
-        ComplexValue<asymmetric_t> const iabc_f{i_f};
+        ComplexValue<asymmetric_t> const iabc_f{i_f}; // NOSONAR
         return get_sc_output(iabc_f, u_rated);
     }
 

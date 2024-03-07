@@ -93,7 +93,7 @@ class Appliance : public Base {
         return output;
     }
     ApplianceShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& i) const {
-        ComplexValue<asymmetric_t> const iabc{i};
+        ComplexValue<asymmetric_t> const iabc{i}; // NOSONAR
         return get_sc_output(iabc);
     }
     template <symmetry_tag sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {

@@ -98,7 +98,7 @@ TEST_CASE("Test fault") {
 
     SUBCASE("Test get_short_circuit_output sym") {
         ComplexValue<symmetric_t> const i_f_pu = 1.0 + 1.0i;
-        ComplexValue<asymmetric_t> const i_f_res{i_f_pu};
+        ComplexValue<asymmetric_t> const i_f_res{i_f_pu}; // NOSONAR
         FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
