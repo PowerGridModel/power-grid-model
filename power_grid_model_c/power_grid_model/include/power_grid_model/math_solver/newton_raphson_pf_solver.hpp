@@ -273,11 +273,13 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     // permutation array
     typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
 
-    /// @brief power_flow_ij = (ui @* uj)  .* conj(yij)
+    /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
     /// = imaginary(power_flow_ij)
     /// Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
     /// = real(power_flow_ij)
+    /// Mij = -Nij
+    /// Lij = Hij
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {
         PFJacBlock<sym> block{};
