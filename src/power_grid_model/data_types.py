@@ -128,7 +128,7 @@ SingleDataset, but in a native python format, without using numpy.
 
 - Example: 
 
-{"node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}], 
+ {"node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}], 
 
  "line": [{"id": 3, "from_node": 1, "to_node": 2, ...}],}
 """
