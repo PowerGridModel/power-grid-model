@@ -273,32 +273,20 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     // permutation array
     typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
 
+    /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
+    /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
+    /// = imaginary(power_flow_ij)
+    /// Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
+    /// = real(power_flow_ij)
+    /// Mij = -Nij
+    /// Lij = Hij
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {
         PFJacBlock<sym> block{};
-        // real and imag of addmittance
-        RealTensor<sym> const gij = real(yij);
-        RealTensor<sym> const bij = imag(yij);
-        // diag(Vi) * cos(theta_ij) * diag(Vj)
-        // Ui_r @* Uj_r + Ui_i @* Uj_i
-        // = cij
-        RealTensor<sym> const c_ij =
-            vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
-        // diag(Vi) * sin(theta_ij) * diag(Vj)
-        // = Ui_i @* Uj_r - Ui_r @* Uj_i
-        // = sij
-        RealTensor<sym> const s_ij =
-            vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
-        // calculate H, N, M, L
-        // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-        // = Gij .* sij - Bij .* cij
-        block.h() = gij * s_ij - bij * c_ij;
-        // Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
-        // = Gij .* cij + Bij .* sij
-        block.n() = gij * c_ij + bij * s_ij;
-        // Mij = - Nij
+        ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
+        block.h() = imag(power_flow_ij);
+        block.n() = real(power_flow_ij);
         block.m() = -block.n();
-        // Lij = Hij
         block.l() = block.h();
         return block;
     }
