@@ -28,7 +28,7 @@ A batch is a either a dense or a sparse batch array.
 
 - Examples:
 
-dense: <2d-array>; 
+dense: <2d-array>
 
 sparse: {"indptr": <1d-array>, "data": <1d-array>}
 """
@@ -58,8 +58,7 @@ A general data set can be a single or a batch dataset.
 
 single: {"node": <1d-array>, "line": <1d-array>}
 
-batch:  {"node": <2d-array>, "line": {"indptr": <1d-array>, "data": <1d-array>}}
-
+batch: {"node": <2d-array>, "line": {"indptr": <1d-array>, "data": <1d-array>}}
 """
 
 BatchList = List[SingleDataset]
@@ -88,7 +87,7 @@ AsymValue = Tuple[RealValue, RealValue, RealValue]
 """
 Asymmetrical values are three-phase values like p or u_measured.
 
--Example: (10400.0, 10500.0, 10600.0)
+- Example: (10400.0, 10500.0, 10600.0)
 """
 
 AttributeValue = Union[RealValue, NominalValue, AsymValue]
@@ -142,7 +141,7 @@ BatchDataset, but in a native python format, without using numpy. Actually it lo
 
 - Example: 
 
-[{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
+ [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
 
  {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
@@ -153,15 +152,15 @@ A general python data set can be a single or a batch python dataset.
 
 - Examples:
 
-single:
+ single:
 
-{"node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
+ {"node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
 
  "line": [{"id": 3, "from_node": 1, "to_node": 2, ...}],}
 
  batch:
 
-[{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
+ [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
 
  {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """

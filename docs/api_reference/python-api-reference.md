@@ -39,7 +39,7 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.data_types.SingleDataset
 .. autoclass:: power_grid_model.data_types.BatchDataset
 .. autoclass:: power_grid_model.data_types.Dataset
-.. autoclass:: power_grid_model.data_types.Batchlist
+.. autoclass:: power_grid_model.data_types.BatchList
 .. autoclass:: power_grid_model.data_types.NominalValue
 .. autoclass:: power_grid_model.data_types.RealValue
 .. autoclass:: power_grid_model.data_types.AsymValue
