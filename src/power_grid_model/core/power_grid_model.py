@@ -399,7 +399,7 @@ class PowerGridModel:
                             - Dimension 1: Each updated element per batch for this component type.
                         - For inhomogeneous update batch (a dictionary containing two keys):
 
-                            - indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the
+                            - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
@@ -479,7 +479,7 @@ class PowerGridModel:
                             - Dimension 1: Each updated element per batch for this component type.
                         - For inhomogeneous update batch (a dictionary containing two keys):
 
-                            - indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the
+                            - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
@@ -549,7 +549,7 @@ class PowerGridModel:
                             - Dimension 1: each updated element per batch for this component type
                         - For inhomogeneous update batch (a dictionary containing two keys):
 
-                            - indptr: A 1D integer numpy array with length n_batch + 1. Given batch number k, the
+                            - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
