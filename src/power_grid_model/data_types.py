@@ -17,7 +17,7 @@ SparseBatchArray = Dict[str, np.ndarray]
 """
 A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
-- indptr: a one-dimensional numpy int32 array
+- indptr: a one-dimensional numpy int64 array
 - data: a one-dimensional structured numpy array. The exact dtype depends on the type of component.
 - Example: {"indptr": <1d-array>, "data": <1d-array>}
 """
