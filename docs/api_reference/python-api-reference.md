@@ -31,6 +31,12 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.validation.errors_to_string
 ```
 
+### errors
+
+```{eval-rst}
+.. autoclass:: power_grid_model.validation.errors.ValidationError
+```
+
 ## data types
 
 ```{eval-rst}
@@ -51,12 +57,6 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.data_types.PythonDataset
 ```
 
-### errors
-
-```{eval-rst}
-.. autoclass:: power_grid_model.validation.errors.ValidationError
-```
-
 ## utils
 
 ```{eval-rst}
@@ -72,6 +72,6 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.utils.msgpack_serialize_to_file
 .. autofunction:: power_grid_model.utils.import_json_data
 .. autofunction:: power_grid_model.utils.export_json_data
-.. autofunction:: power_grid_model._utils.get_and_verify_batch_sizes
-.. autofunction:: power_grid_model._utils.get_batch_size
+.. autofunction:: power_grid_model.utils.get_and_verify_batch_sizes
+.. autofunction:: power_grid_model.utils.get_batch_size
 ```
