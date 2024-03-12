@@ -18,8 +18,8 @@ SingleArray = Union[np.ndarray]
 A single array is a one-dimensional structured containing a list of components of the same type.
 
 - Examples:
-  - structure: <1d-array>
-  - concrete example: array([(0, 10500.0), (0, 10500.0)], dtype=power_grid_meta_data["input"]["node"].dtype)
+    - structure: <1d-array>
+    - concrete: array([(0, 10500.0), (0, 10500.0)], dtype=power_grid_meta_data["input"]["node"].dtype)
 """
 
 DenseBatchArray = Union[np.ndarray]
@@ -34,16 +34,16 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
 - data: a one-dimensional structured numpy array. The exact dtype depends on the type of component.
 - indptr: a one-dimensional numpy int64 array containing n+1 elements where n is the amount of scenarios.
-  - The elements are the indices in the data that point to the first element of that scenario.
-  - The last element is one after the data index of the last element of the last scenario.
-  - Usually, the last element will therefore be the size of the data.
+    - The elements are the indices in the data that point to the first element of that scenario.
+    - The last element is one after the data index of the last element of the last scenario.
+    - Usually, the last element will therefore be the size of the data.
 
 - Examples:
-  - structure: {"indptr": <1d-array>, "data": SingleArray}
-  - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
-    - the scenario 0 sets the statuses of components ids 0 and 1 to 1 (and keeps defaults for other components)
-    - scenario 1 keeps the default values for all components
-    - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
+    - structure: {"indptr": <1d-array>, "data": SingleArray}
+    - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
+        - the scenario 0 sets the statuses of components ids 0 and 1 to 1 (and keeps defaults for other components)
+        - scenario 1 keeps the default values for all components
+        - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
 """
 
 BatchArray = Union[DenseBatchArray, SparseBatchArray]
@@ -51,10 +51,8 @@ BatchArray = Union[DenseBatchArray, SparseBatchArray]
 A batch is a either a dense or a sparse batch array.
 
 - Examples:
-
-dense: <2d-array>
-
-sparse: {"indptr": SingleArray, "data": SingleArray}
+    - dense: <2d-array>
+    - sparse: {"indptr": SingleArray, "data": SingleArray}
 """
 
 DataArray = Union[SingleArray, BatchArray]
@@ -84,8 +82,8 @@ Dataset = Union[SingleDataset, BatchDataset]
 A general data set can be a single or a batch dataset.
 
 - Examples:
-  - single: {"node": SingleArray, "line": SingleArray}
-  - batch: {"node": <2d-array>, "line": {"indptr": SingleArray, "data": SingleArray}}
+    - single: {"node": SingleArray, "line": SingleArray}
+    - batch: {"node": <2d-array>, "line": {"indptr": SingleArray, "data": SingleArray}}
 """
 
 BatchList = List[SingleDataset]
@@ -123,9 +121,9 @@ When representing a grid as a native python structure, each attribute (u_rated e
 a real value, or a tuple of three real values.
 
 - Examples:
-  - real: 10500.0    
-  - nominal: 123
-  - asym: (10400.0, 10500.0, 10600.0)
+    - real: 10500.0    
+    - nominal: 123
+    - asym: (10400.0, 10500.0, 10600.0)
 """
 
 Component = Dict[str, Union[AttributeValue, str]]
@@ -166,14 +164,8 @@ BatchDataset, but in a native python format, without using numpy. Actually it lo
 
 - Example: 
 
-  [
-    {
-      "line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],
-    },
-    {
-      "line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],
-    }
-  ]
+  [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
+   {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
 
 PythonDataset = Union[SinglePythonDataset, BatchPythonDataset]
@@ -191,12 +183,6 @@ A general python data set can be a single or a batch python dataset.
 
   - batch:
 
-    [
-      {
-        "line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],
-      },
-      {
-        "line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],
-      }
-    ]
+    [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
+     {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
