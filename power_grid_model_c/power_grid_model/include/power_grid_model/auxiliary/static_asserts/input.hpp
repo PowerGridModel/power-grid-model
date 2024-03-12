@@ -146,54 +146,54 @@ static_assert(offsetof(GenericLoadGenInput, id) == offsetof(ApplianceInput, id))
 static_assert(offsetof(GenericLoadGenInput, node) == offsetof(ApplianceInput, node));
 static_assert(offsetof(GenericLoadGenInput, status) == offsetof(ApplianceInput, status));
 
-// static asserts for LoadGenInput<true>
-static_assert(std::is_standard_layout_v<LoadGenInput<true>>);
-// static asserts for conversion of LoadGenInput<true> to BaseInput
-static_assert(std::alignment_of_v<LoadGenInput<true>> >= std::alignment_of_v<GenericLoadGenInput>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::id), decltype(BaseInput::id)>);
-static_assert(offsetof(LoadGenInput<true>, id) == offsetof(BaseInput, id));
-// static asserts for conversion of LoadGenInput<true> to ApplianceInput
-static_assert(std::alignment_of_v<LoadGenInput<true>> >= std::alignment_of_v<GenericLoadGenInput>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::id), decltype(ApplianceInput::id)>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::node), decltype(ApplianceInput::node)>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::status), decltype(ApplianceInput::status)>);
-static_assert(offsetof(LoadGenInput<true>, id) == offsetof(ApplianceInput, id));
-static_assert(offsetof(LoadGenInput<true>, node) == offsetof(ApplianceInput, node));
-static_assert(offsetof(LoadGenInput<true>, status) == offsetof(ApplianceInput, status));
-// static asserts for conversion of LoadGenInput<true> to GenericLoadGenInput
-static_assert(std::alignment_of_v<LoadGenInput<true>> >= std::alignment_of_v<GenericLoadGenInput>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::id), decltype(GenericLoadGenInput::id)>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::node), decltype(GenericLoadGenInput::node)>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::status), decltype(GenericLoadGenInput::status)>);
-static_assert(std::same_as<decltype(LoadGenInput<true>::type), decltype(GenericLoadGenInput::type)>);
-static_assert(offsetof(LoadGenInput<true>, id) == offsetof(GenericLoadGenInput, id));
-static_assert(offsetof(LoadGenInput<true>, node) == offsetof(GenericLoadGenInput, node));
-static_assert(offsetof(LoadGenInput<true>, status) == offsetof(GenericLoadGenInput, status));
-static_assert(offsetof(LoadGenInput<true>, type) == offsetof(GenericLoadGenInput, type));
-// static asserts for LoadGenInput<false>
-static_assert(std::is_standard_layout_v<LoadGenInput<false>>);
-// static asserts for conversion of LoadGenInput<false> to BaseInput
-static_assert(std::alignment_of_v<LoadGenInput<false>> >= std::alignment_of_v<GenericLoadGenInput>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::id), decltype(BaseInput::id)>);
-static_assert(offsetof(LoadGenInput<false>, id) == offsetof(BaseInput, id));
-// static asserts for conversion of LoadGenInput<false> to ApplianceInput
-static_assert(std::alignment_of_v<LoadGenInput<false>> >= std::alignment_of_v<GenericLoadGenInput>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::id), decltype(ApplianceInput::id)>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::node), decltype(ApplianceInput::node)>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::status), decltype(ApplianceInput::status)>);
-static_assert(offsetof(LoadGenInput<false>, id) == offsetof(ApplianceInput, id));
-static_assert(offsetof(LoadGenInput<false>, node) == offsetof(ApplianceInput, node));
-static_assert(offsetof(LoadGenInput<false>, status) == offsetof(ApplianceInput, status));
-// static asserts for conversion of LoadGenInput<false> to GenericLoadGenInput
-static_assert(std::alignment_of_v<LoadGenInput<false>> >= std::alignment_of_v<GenericLoadGenInput>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::id), decltype(GenericLoadGenInput::id)>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::node), decltype(GenericLoadGenInput::node)>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::status), decltype(GenericLoadGenInput::status)>);
-static_assert(std::same_as<decltype(LoadGenInput<false>::type), decltype(GenericLoadGenInput::type)>);
-static_assert(offsetof(LoadGenInput<false>, id) == offsetof(GenericLoadGenInput, id));
-static_assert(offsetof(LoadGenInput<false>, node) == offsetof(GenericLoadGenInput, node));
-static_assert(offsetof(LoadGenInput<false>, status) == offsetof(GenericLoadGenInput, status));
-static_assert(offsetof(LoadGenInput<false>, type) == offsetof(GenericLoadGenInput, type));
+// static asserts for LoadGenInput<symmetric_t>
+static_assert(std::is_standard_layout_v<LoadGenInput<symmetric_t>>);
+// static asserts for conversion of LoadGenInput<symmetric_t> to BaseInput
+static_assert(std::alignment_of_v<LoadGenInput<symmetric_t>> >= std::alignment_of_v<GenericLoadGenInput>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::id), decltype(BaseInput::id)>);
+static_assert(offsetof(LoadGenInput<symmetric_t>, id) == offsetof(BaseInput, id));
+// static asserts for conversion of LoadGenInput<symmetric_t> to ApplianceInput
+static_assert(std::alignment_of_v<LoadGenInput<symmetric_t>> >= std::alignment_of_v<GenericLoadGenInput>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::id), decltype(ApplianceInput::id)>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::node), decltype(ApplianceInput::node)>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::status), decltype(ApplianceInput::status)>);
+static_assert(offsetof(LoadGenInput<symmetric_t>, id) == offsetof(ApplianceInput, id));
+static_assert(offsetof(LoadGenInput<symmetric_t>, node) == offsetof(ApplianceInput, node));
+static_assert(offsetof(LoadGenInput<symmetric_t>, status) == offsetof(ApplianceInput, status));
+// static asserts for conversion of LoadGenInput<symmetric_t> to GenericLoadGenInput
+static_assert(std::alignment_of_v<LoadGenInput<symmetric_t>> >= std::alignment_of_v<GenericLoadGenInput>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::id), decltype(GenericLoadGenInput::id)>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::node), decltype(GenericLoadGenInput::node)>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::status), decltype(GenericLoadGenInput::status)>);
+static_assert(std::same_as<decltype(LoadGenInput<symmetric_t>::type), decltype(GenericLoadGenInput::type)>);
+static_assert(offsetof(LoadGenInput<symmetric_t>, id) == offsetof(GenericLoadGenInput, id));
+static_assert(offsetof(LoadGenInput<symmetric_t>, node) == offsetof(GenericLoadGenInput, node));
+static_assert(offsetof(LoadGenInput<symmetric_t>, status) == offsetof(GenericLoadGenInput, status));
+static_assert(offsetof(LoadGenInput<symmetric_t>, type) == offsetof(GenericLoadGenInput, type));
+// static asserts for LoadGenInput<asymmetric_t>
+static_assert(std::is_standard_layout_v<LoadGenInput<asymmetric_t>>);
+// static asserts for conversion of LoadGenInput<asymmetric_t> to BaseInput
+static_assert(std::alignment_of_v<LoadGenInput<asymmetric_t>> >= std::alignment_of_v<GenericLoadGenInput>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::id), decltype(BaseInput::id)>);
+static_assert(offsetof(LoadGenInput<asymmetric_t>, id) == offsetof(BaseInput, id));
+// static asserts for conversion of LoadGenInput<asymmetric_t> to ApplianceInput
+static_assert(std::alignment_of_v<LoadGenInput<asymmetric_t>> >= std::alignment_of_v<GenericLoadGenInput>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::id), decltype(ApplianceInput::id)>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::node), decltype(ApplianceInput::node)>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::status), decltype(ApplianceInput::status)>);
+static_assert(offsetof(LoadGenInput<asymmetric_t>, id) == offsetof(ApplianceInput, id));
+static_assert(offsetof(LoadGenInput<asymmetric_t>, node) == offsetof(ApplianceInput, node));
+static_assert(offsetof(LoadGenInput<asymmetric_t>, status) == offsetof(ApplianceInput, status));
+// static asserts for conversion of LoadGenInput<asymmetric_t> to GenericLoadGenInput
+static_assert(std::alignment_of_v<LoadGenInput<asymmetric_t>> >= std::alignment_of_v<GenericLoadGenInput>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::id), decltype(GenericLoadGenInput::id)>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::node), decltype(GenericLoadGenInput::node)>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::status), decltype(GenericLoadGenInput::status)>);
+static_assert(std::same_as<decltype(LoadGenInput<asymmetric_t>::type), decltype(GenericLoadGenInput::type)>);
+static_assert(offsetof(LoadGenInput<asymmetric_t>, id) == offsetof(GenericLoadGenInput, id));
+static_assert(offsetof(LoadGenInput<asymmetric_t>, node) == offsetof(GenericLoadGenInput, node));
+static_assert(offsetof(LoadGenInput<asymmetric_t>, status) == offsetof(GenericLoadGenInput, status));
+static_assert(offsetof(LoadGenInput<asymmetric_t>, type) == offsetof(GenericLoadGenInput, type));
 // static asserts for SymLoadGenInput
 static_assert(std::is_standard_layout_v<SymLoadGenInput>);
 // static asserts for conversion of SymLoadGenInput to BaseInput
@@ -286,46 +286,46 @@ static_assert(std::same_as<decltype(GenericVoltageSensorInput::measured_object),
 static_assert(offsetof(GenericVoltageSensorInput, id) == offsetof(SensorInput, id));
 static_assert(offsetof(GenericVoltageSensorInput, measured_object) == offsetof(SensorInput, measured_object));
 
-// static asserts for VoltageSensorInput<true>
-static_assert(std::is_standard_layout_v<VoltageSensorInput<true>>);
-// static asserts for conversion of VoltageSensorInput<true> to BaseInput
-static_assert(std::alignment_of_v<VoltageSensorInput<true>> >= std::alignment_of_v<GenericVoltageSensorInput>);
-static_assert(std::same_as<decltype(VoltageSensorInput<true>::id), decltype(BaseInput::id)>);
-static_assert(offsetof(VoltageSensorInput<true>, id) == offsetof(BaseInput, id));
-// static asserts for conversion of VoltageSensorInput<true> to SensorInput
-static_assert(std::alignment_of_v<VoltageSensorInput<true>> >= std::alignment_of_v<GenericVoltageSensorInput>);
-static_assert(std::same_as<decltype(VoltageSensorInput<true>::id), decltype(SensorInput::id)>);
-static_assert(std::same_as<decltype(VoltageSensorInput<true>::measured_object), decltype(SensorInput::measured_object)>);
-static_assert(offsetof(VoltageSensorInput<true>, id) == offsetof(SensorInput, id));
-static_assert(offsetof(VoltageSensorInput<true>, measured_object) == offsetof(SensorInput, measured_object));
-// static asserts for conversion of VoltageSensorInput<true> to GenericVoltageSensorInput
-static_assert(std::alignment_of_v<VoltageSensorInput<true>> >= std::alignment_of_v<GenericVoltageSensorInput>);
-static_assert(std::same_as<decltype(VoltageSensorInput<true>::id), decltype(GenericVoltageSensorInput::id)>);
-static_assert(std::same_as<decltype(VoltageSensorInput<true>::measured_object), decltype(GenericVoltageSensorInput::measured_object)>);
-static_assert(std::same_as<decltype(VoltageSensorInput<true>::u_sigma), decltype(GenericVoltageSensorInput::u_sigma)>);
-static_assert(offsetof(VoltageSensorInput<true>, id) == offsetof(GenericVoltageSensorInput, id));
-static_assert(offsetof(VoltageSensorInput<true>, measured_object) == offsetof(GenericVoltageSensorInput, measured_object));
-static_assert(offsetof(VoltageSensorInput<true>, u_sigma) == offsetof(GenericVoltageSensorInput, u_sigma));
-// static asserts for VoltageSensorInput<false>
-static_assert(std::is_standard_layout_v<VoltageSensorInput<false>>);
-// static asserts for conversion of VoltageSensorInput<false> to BaseInput
-static_assert(std::alignment_of_v<VoltageSensorInput<false>> >= std::alignment_of_v<GenericVoltageSensorInput>);
-static_assert(std::same_as<decltype(VoltageSensorInput<false>::id), decltype(BaseInput::id)>);
-static_assert(offsetof(VoltageSensorInput<false>, id) == offsetof(BaseInput, id));
-// static asserts for conversion of VoltageSensorInput<false> to SensorInput
-static_assert(std::alignment_of_v<VoltageSensorInput<false>> >= std::alignment_of_v<GenericVoltageSensorInput>);
-static_assert(std::same_as<decltype(VoltageSensorInput<false>::id), decltype(SensorInput::id)>);
-static_assert(std::same_as<decltype(VoltageSensorInput<false>::measured_object), decltype(SensorInput::measured_object)>);
-static_assert(offsetof(VoltageSensorInput<false>, id) == offsetof(SensorInput, id));
-static_assert(offsetof(VoltageSensorInput<false>, measured_object) == offsetof(SensorInput, measured_object));
-// static asserts for conversion of VoltageSensorInput<false> to GenericVoltageSensorInput
-static_assert(std::alignment_of_v<VoltageSensorInput<false>> >= std::alignment_of_v<GenericVoltageSensorInput>);
-static_assert(std::same_as<decltype(VoltageSensorInput<false>::id), decltype(GenericVoltageSensorInput::id)>);
-static_assert(std::same_as<decltype(VoltageSensorInput<false>::measured_object), decltype(GenericVoltageSensorInput::measured_object)>);
-static_assert(std::same_as<decltype(VoltageSensorInput<false>::u_sigma), decltype(GenericVoltageSensorInput::u_sigma)>);
-static_assert(offsetof(VoltageSensorInput<false>, id) == offsetof(GenericVoltageSensorInput, id));
-static_assert(offsetof(VoltageSensorInput<false>, measured_object) == offsetof(GenericVoltageSensorInput, measured_object));
-static_assert(offsetof(VoltageSensorInput<false>, u_sigma) == offsetof(GenericVoltageSensorInput, u_sigma));
+// static asserts for VoltageSensorInput<symmetric_t>
+static_assert(std::is_standard_layout_v<VoltageSensorInput<symmetric_t>>);
+// static asserts for conversion of VoltageSensorInput<symmetric_t> to BaseInput
+static_assert(std::alignment_of_v<VoltageSensorInput<symmetric_t>> >= std::alignment_of_v<GenericVoltageSensorInput>);
+static_assert(std::same_as<decltype(VoltageSensorInput<symmetric_t>::id), decltype(BaseInput::id)>);
+static_assert(offsetof(VoltageSensorInput<symmetric_t>, id) == offsetof(BaseInput, id));
+// static asserts for conversion of VoltageSensorInput<symmetric_t> to SensorInput
+static_assert(std::alignment_of_v<VoltageSensorInput<symmetric_t>> >= std::alignment_of_v<GenericVoltageSensorInput>);
+static_assert(std::same_as<decltype(VoltageSensorInput<symmetric_t>::id), decltype(SensorInput::id)>);
+static_assert(std::same_as<decltype(VoltageSensorInput<symmetric_t>::measured_object), decltype(SensorInput::measured_object)>);
+static_assert(offsetof(VoltageSensorInput<symmetric_t>, id) == offsetof(SensorInput, id));
+static_assert(offsetof(VoltageSensorInput<symmetric_t>, measured_object) == offsetof(SensorInput, measured_object));
+// static asserts for conversion of VoltageSensorInput<symmetric_t> to GenericVoltageSensorInput
+static_assert(std::alignment_of_v<VoltageSensorInput<symmetric_t>> >= std::alignment_of_v<GenericVoltageSensorInput>);
+static_assert(std::same_as<decltype(VoltageSensorInput<symmetric_t>::id), decltype(GenericVoltageSensorInput::id)>);
+static_assert(std::same_as<decltype(VoltageSensorInput<symmetric_t>::measured_object), decltype(GenericVoltageSensorInput::measured_object)>);
+static_assert(std::same_as<decltype(VoltageSensorInput<symmetric_t>::u_sigma), decltype(GenericVoltageSensorInput::u_sigma)>);
+static_assert(offsetof(VoltageSensorInput<symmetric_t>, id) == offsetof(GenericVoltageSensorInput, id));
+static_assert(offsetof(VoltageSensorInput<symmetric_t>, measured_object) == offsetof(GenericVoltageSensorInput, measured_object));
+static_assert(offsetof(VoltageSensorInput<symmetric_t>, u_sigma) == offsetof(GenericVoltageSensorInput, u_sigma));
+// static asserts for VoltageSensorInput<asymmetric_t>
+static_assert(std::is_standard_layout_v<VoltageSensorInput<asymmetric_t>>);
+// static asserts for conversion of VoltageSensorInput<asymmetric_t> to BaseInput
+static_assert(std::alignment_of_v<VoltageSensorInput<asymmetric_t>> >= std::alignment_of_v<GenericVoltageSensorInput>);
+static_assert(std::same_as<decltype(VoltageSensorInput<asymmetric_t>::id), decltype(BaseInput::id)>);
+static_assert(offsetof(VoltageSensorInput<asymmetric_t>, id) == offsetof(BaseInput, id));
+// static asserts for conversion of VoltageSensorInput<asymmetric_t> to SensorInput
+static_assert(std::alignment_of_v<VoltageSensorInput<asymmetric_t>> >= std::alignment_of_v<GenericVoltageSensorInput>);
+static_assert(std::same_as<decltype(VoltageSensorInput<asymmetric_t>::id), decltype(SensorInput::id)>);
+static_assert(std::same_as<decltype(VoltageSensorInput<asymmetric_t>::measured_object), decltype(SensorInput::measured_object)>);
+static_assert(offsetof(VoltageSensorInput<asymmetric_t>, id) == offsetof(SensorInput, id));
+static_assert(offsetof(VoltageSensorInput<asymmetric_t>, measured_object) == offsetof(SensorInput, measured_object));
+// static asserts for conversion of VoltageSensorInput<asymmetric_t> to GenericVoltageSensorInput
+static_assert(std::alignment_of_v<VoltageSensorInput<asymmetric_t>> >= std::alignment_of_v<GenericVoltageSensorInput>);
+static_assert(std::same_as<decltype(VoltageSensorInput<asymmetric_t>::id), decltype(GenericVoltageSensorInput::id)>);
+static_assert(std::same_as<decltype(VoltageSensorInput<asymmetric_t>::measured_object), decltype(GenericVoltageSensorInput::measured_object)>);
+static_assert(std::same_as<decltype(VoltageSensorInput<asymmetric_t>::u_sigma), decltype(GenericVoltageSensorInput::u_sigma)>);
+static_assert(offsetof(VoltageSensorInput<asymmetric_t>, id) == offsetof(GenericVoltageSensorInput, id));
+static_assert(offsetof(VoltageSensorInput<asymmetric_t>, measured_object) == offsetof(GenericVoltageSensorInput, measured_object));
+static_assert(offsetof(VoltageSensorInput<asymmetric_t>, u_sigma) == offsetof(GenericVoltageSensorInput, u_sigma));
 // static asserts for SymVoltageSensorInput
 static_assert(std::is_standard_layout_v<SymVoltageSensorInput>);
 // static asserts for conversion of SymVoltageSensorInput to BaseInput
@@ -380,50 +380,50 @@ static_assert(std::same_as<decltype(GenericPowerSensorInput::measured_object), d
 static_assert(offsetof(GenericPowerSensorInput, id) == offsetof(SensorInput, id));
 static_assert(offsetof(GenericPowerSensorInput, measured_object) == offsetof(SensorInput, measured_object));
 
-// static asserts for PowerSensorInput<true>
-static_assert(std::is_standard_layout_v<PowerSensorInput<true>>);
-// static asserts for conversion of PowerSensorInput<true> to BaseInput
-static_assert(std::alignment_of_v<PowerSensorInput<true>> >= std::alignment_of_v<GenericPowerSensorInput>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::id), decltype(BaseInput::id)>);
-static_assert(offsetof(PowerSensorInput<true>, id) == offsetof(BaseInput, id));
-// static asserts for conversion of PowerSensorInput<true> to SensorInput
-static_assert(std::alignment_of_v<PowerSensorInput<true>> >= std::alignment_of_v<GenericPowerSensorInput>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::id), decltype(SensorInput::id)>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::measured_object), decltype(SensorInput::measured_object)>);
-static_assert(offsetof(PowerSensorInput<true>, id) == offsetof(SensorInput, id));
-static_assert(offsetof(PowerSensorInput<true>, measured_object) == offsetof(SensorInput, measured_object));
-// static asserts for conversion of PowerSensorInput<true> to GenericPowerSensorInput
-static_assert(std::alignment_of_v<PowerSensorInput<true>> >= std::alignment_of_v<GenericPowerSensorInput>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::id), decltype(GenericPowerSensorInput::id)>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::measured_object), decltype(GenericPowerSensorInput::measured_object)>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::measured_terminal_type), decltype(GenericPowerSensorInput::measured_terminal_type)>);
-static_assert(std::same_as<decltype(PowerSensorInput<true>::power_sigma), decltype(GenericPowerSensorInput::power_sigma)>);
-static_assert(offsetof(PowerSensorInput<true>, id) == offsetof(GenericPowerSensorInput, id));
-static_assert(offsetof(PowerSensorInput<true>, measured_object) == offsetof(GenericPowerSensorInput, measured_object));
-static_assert(offsetof(PowerSensorInput<true>, measured_terminal_type) == offsetof(GenericPowerSensorInput, measured_terminal_type));
-static_assert(offsetof(PowerSensorInput<true>, power_sigma) == offsetof(GenericPowerSensorInput, power_sigma));
-// static asserts for PowerSensorInput<false>
-static_assert(std::is_standard_layout_v<PowerSensorInput<false>>);
-// static asserts for conversion of PowerSensorInput<false> to BaseInput
-static_assert(std::alignment_of_v<PowerSensorInput<false>> >= std::alignment_of_v<GenericPowerSensorInput>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::id), decltype(BaseInput::id)>);
-static_assert(offsetof(PowerSensorInput<false>, id) == offsetof(BaseInput, id));
-// static asserts for conversion of PowerSensorInput<false> to SensorInput
-static_assert(std::alignment_of_v<PowerSensorInput<false>> >= std::alignment_of_v<GenericPowerSensorInput>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::id), decltype(SensorInput::id)>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::measured_object), decltype(SensorInput::measured_object)>);
-static_assert(offsetof(PowerSensorInput<false>, id) == offsetof(SensorInput, id));
-static_assert(offsetof(PowerSensorInput<false>, measured_object) == offsetof(SensorInput, measured_object));
-// static asserts for conversion of PowerSensorInput<false> to GenericPowerSensorInput
-static_assert(std::alignment_of_v<PowerSensorInput<false>> >= std::alignment_of_v<GenericPowerSensorInput>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::id), decltype(GenericPowerSensorInput::id)>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::measured_object), decltype(GenericPowerSensorInput::measured_object)>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::measured_terminal_type), decltype(GenericPowerSensorInput::measured_terminal_type)>);
-static_assert(std::same_as<decltype(PowerSensorInput<false>::power_sigma), decltype(GenericPowerSensorInput::power_sigma)>);
-static_assert(offsetof(PowerSensorInput<false>, id) == offsetof(GenericPowerSensorInput, id));
-static_assert(offsetof(PowerSensorInput<false>, measured_object) == offsetof(GenericPowerSensorInput, measured_object));
-static_assert(offsetof(PowerSensorInput<false>, measured_terminal_type) == offsetof(GenericPowerSensorInput, measured_terminal_type));
-static_assert(offsetof(PowerSensorInput<false>, power_sigma) == offsetof(GenericPowerSensorInput, power_sigma));
+// static asserts for PowerSensorInput<symmetric_t>
+static_assert(std::is_standard_layout_v<PowerSensorInput<symmetric_t>>);
+// static asserts for conversion of PowerSensorInput<symmetric_t> to BaseInput
+static_assert(std::alignment_of_v<PowerSensorInput<symmetric_t>> >= std::alignment_of_v<GenericPowerSensorInput>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::id), decltype(BaseInput::id)>);
+static_assert(offsetof(PowerSensorInput<symmetric_t>, id) == offsetof(BaseInput, id));
+// static asserts for conversion of PowerSensorInput<symmetric_t> to SensorInput
+static_assert(std::alignment_of_v<PowerSensorInput<symmetric_t>> >= std::alignment_of_v<GenericPowerSensorInput>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::id), decltype(SensorInput::id)>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::measured_object), decltype(SensorInput::measured_object)>);
+static_assert(offsetof(PowerSensorInput<symmetric_t>, id) == offsetof(SensorInput, id));
+static_assert(offsetof(PowerSensorInput<symmetric_t>, measured_object) == offsetof(SensorInput, measured_object));
+// static asserts for conversion of PowerSensorInput<symmetric_t> to GenericPowerSensorInput
+static_assert(std::alignment_of_v<PowerSensorInput<symmetric_t>> >= std::alignment_of_v<GenericPowerSensorInput>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::id), decltype(GenericPowerSensorInput::id)>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::measured_object), decltype(GenericPowerSensorInput::measured_object)>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::measured_terminal_type), decltype(GenericPowerSensorInput::measured_terminal_type)>);
+static_assert(std::same_as<decltype(PowerSensorInput<symmetric_t>::power_sigma), decltype(GenericPowerSensorInput::power_sigma)>);
+static_assert(offsetof(PowerSensorInput<symmetric_t>, id) == offsetof(GenericPowerSensorInput, id));
+static_assert(offsetof(PowerSensorInput<symmetric_t>, measured_object) == offsetof(GenericPowerSensorInput, measured_object));
+static_assert(offsetof(PowerSensorInput<symmetric_t>, measured_terminal_type) == offsetof(GenericPowerSensorInput, measured_terminal_type));
+static_assert(offsetof(PowerSensorInput<symmetric_t>, power_sigma) == offsetof(GenericPowerSensorInput, power_sigma));
+// static asserts for PowerSensorInput<asymmetric_t>
+static_assert(std::is_standard_layout_v<PowerSensorInput<asymmetric_t>>);
+// static asserts for conversion of PowerSensorInput<asymmetric_t> to BaseInput
+static_assert(std::alignment_of_v<PowerSensorInput<asymmetric_t>> >= std::alignment_of_v<GenericPowerSensorInput>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::id), decltype(BaseInput::id)>);
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, id) == offsetof(BaseInput, id));
+// static asserts for conversion of PowerSensorInput<asymmetric_t> to SensorInput
+static_assert(std::alignment_of_v<PowerSensorInput<asymmetric_t>> >= std::alignment_of_v<GenericPowerSensorInput>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::id), decltype(SensorInput::id)>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::measured_object), decltype(SensorInput::measured_object)>);
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, id) == offsetof(SensorInput, id));
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, measured_object) == offsetof(SensorInput, measured_object));
+// static asserts for conversion of PowerSensorInput<asymmetric_t> to GenericPowerSensorInput
+static_assert(std::alignment_of_v<PowerSensorInput<asymmetric_t>> >= std::alignment_of_v<GenericPowerSensorInput>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::id), decltype(GenericPowerSensorInput::id)>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::measured_object), decltype(GenericPowerSensorInput::measured_object)>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::measured_terminal_type), decltype(GenericPowerSensorInput::measured_terminal_type)>);
+static_assert(std::same_as<decltype(PowerSensorInput<asymmetric_t>::power_sigma), decltype(GenericPowerSensorInput::power_sigma)>);
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, id) == offsetof(GenericPowerSensorInput, id));
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, measured_object) == offsetof(GenericPowerSensorInput, measured_object));
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, measured_terminal_type) == offsetof(GenericPowerSensorInput, measured_terminal_type));
+static_assert(offsetof(PowerSensorInput<asymmetric_t>, power_sigma) == offsetof(GenericPowerSensorInput, power_sigma));
 // static asserts for SymPowerSensorInput
 static_assert(std::is_standard_layout_v<SymPowerSensorInput>);
 // static asserts for conversion of SymPowerSensorInput to BaseInput

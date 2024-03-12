@@ -43,7 +43,7 @@ template <class StructType, auto member_ptr, size_t offset, auto attribute_name_
             ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
             if constexpr (std::same_as<ValueType, double>) {
                 return std::abs(y - x) < (std::abs(x) * rtol + atol);
-            } else if constexpr (std::same_as<ValueType, RealValue<false>>) {
+            } else if constexpr (std::same_as<ValueType, RealValue<asymmetric_t>>) {
                 return (abs(y - x) < (abs(x) * rtol + atol)).all();
             } else {
                 return x == y;

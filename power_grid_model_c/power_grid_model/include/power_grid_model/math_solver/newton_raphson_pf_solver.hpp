@@ -161,7 +161,7 @@ namespace power_grid_model::math_solver {
 namespace newton_raphson_pf {
 
 // class for phasor in polar coordinate and/or complex power
-template <bool sym> struct PolarPhasor : public Block<double, sym, false, 2> {
+template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false, 2> {
     template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
@@ -176,7 +176,7 @@ template <bool sym> struct PolarPhasor : public Block<double, sym, false, 2> {
 };
 
 // class for complex power
-template <bool sym> using ComplexPower = PolarPhasor<sym>;
+template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
 
 // class of pf block
 // block of incomplete power flow jacobian
@@ -185,7 +185,7 @@ template <bool sym> using ComplexPower = PolarPhasor<sym>;
 // [M = dQ/dTheta = -N, L = V * dQ/dV = H] ]
 // Hij = Gij .* sij - Bij .* cij = L
 // Nij = Gij .* cij + Bij .* sij = -M
-template <bool sym> class PFJacBlock : public Block<double, sym, true, 2> {
+template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
 
@@ -200,7 +200,7 @@ template <bool sym> class PFJacBlock : public Block<double, sym, true, 2> {
 };
 
 // solver
-template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
+template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
   public:
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
@@ -273,32 +273,20 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     // permutation array
     typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
 
+    /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
+    /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
+    /// = imaginary(power_flow_ij)
+    /// Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
+    /// = real(power_flow_ij)
+    /// Mij = -Nij
+    /// Lij = Hij
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {
         PFJacBlock<sym> block{};
-        // real and imag of addmittance
-        RealTensor<sym> const gij = real(yij);
-        RealTensor<sym> const bij = imag(yij);
-        // diag(Vi) * cos(theta_ij) * diag(Vj)
-        // Ui_r @* Uj_r + Ui_i @* Uj_i
-        // = cij
-        RealTensor<sym> const c_ij =
-            vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
-        // diag(Vi) * sin(theta_ij) * diag(Vj)
-        // = Ui_i @* Uj_r - Ui_r @* Uj_i
-        // = sij
-        RealTensor<sym> const s_ij =
-            vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
-        // calculate H, N, M, L
-        // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-        // = Gij .* sij - Bij .* cij
-        block.h() = gij * s_ij - bij * c_ij;
-        // Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
-        // = Gij .* cij + Bij .* sij
-        block.n() = gij * c_ij + bij * s_ij;
-        // Mij = - Nij
+        ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
+        block.h() = imag(power_flow_ij);
+        block.n() = real(power_flow_ij);
         block.m() = -block.n();
-        // Lij = Hij
         block.l() = block.h();
         return block;
     }
@@ -430,8 +418,8 @@ template <bool sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, 
     }
 };
 
-template class NewtonRaphsonPFSolver<true>;
-template class NewtonRaphsonPFSolver<false>;
+template class NewtonRaphsonPFSolver<symmetric_t>;
+template class NewtonRaphsonPFSolver<asymmetric_t>;
 
 } // namespace newton_raphson_pf
 

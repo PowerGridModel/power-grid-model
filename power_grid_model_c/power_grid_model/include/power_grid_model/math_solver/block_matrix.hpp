@@ -12,15 +12,15 @@
 
 namespace power_grid_model::math_solver {
 
-template <scalar_value T, bool sym, bool is_tensor, int n_sub_block> struct block_trait {
-    static constexpr int sub_block_size = sym ? 1 : 3;
+template <scalar_value T, symmetry_tag sym, bool is_tensor, int n_sub_block> struct block_trait {
+    static constexpr int sub_block_size = is_symmetric_v<sym> ? 1 : 3;
     static constexpr int n_row = n_sub_block * sub_block_size;
     static constexpr int n_col = is_tensor ? n_sub_block * sub_block_size : 1;
 
     using ArrayType = Eigen::Array<T, n_row, n_col, Eigen::ColMajor>;
 };
 
-template <class T, bool sym, bool is_tensor, int n_sub_block>
+template <class T, symmetry_tag sym, bool is_tensor, int n_sub_block>
 class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
   public:
     using block_traits = block_trait<T, sym, is_tensor, n_sub_block>;
@@ -61,11 +61,11 @@ class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
     template <int c> static auto get_col_idx() { return Block::get_block_col_idx<c, 1>(); }
 
     template <int r, int c>
-    using GetterType =
-        std::conditional_t<sym, T&, decltype(std::declval<ArrayType>()(get_row_idx<r>(), get_col_idx<c>()))>;
+    using GetterType = std::conditional_t<is_symmetric_v<sym>, T&,
+                                          decltype(std::declval<ArrayType>()(get_row_idx<r>(), get_col_idx<c>()))>;
 
     template <int r, int c> GetterType<r, c> get_val() {
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             return (*this)(r, c);
         } else {
             return (*this)(get_row_idx<r>(), get_col_idx<c>());

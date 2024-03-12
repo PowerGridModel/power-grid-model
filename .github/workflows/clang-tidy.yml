@@ -5,12 +5,10 @@
 name: Clang Tidy
 
 on:
-  # run pipeline on push event of main or release branch
+  # run pipeline on push event of main branch
   push:
     branches:
       - main
-      - 'release/**'
-
   # run pipeline on pull request
   pull_request:
 
@@ -31,7 +29,6 @@ concurrency:
 
 jobs:
   clang-tidy:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     strategy:
       matrix:

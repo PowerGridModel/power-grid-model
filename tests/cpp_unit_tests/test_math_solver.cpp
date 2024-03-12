@@ -23,22 +23,24 @@ using FaultType::three_phase;
 using FaultType::two_phase;
 using FaultType::two_phase_to_ground;
 
-template <bool sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (sym) {
+template <symmetry_tag sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
+    if constexpr (is_symmetric_v<sym>) {
         CHECK(cabs((x) - (y)) < (tolerance));
     } else {
         CHECK((cabs((x) - (y)) < (tolerance)).all());
     }
 }
 
-template <bool sym> void check_close(auto const& x, auto const& y) { check_close<sym>(x, y, numerical_tolerance); }
-void check_close(auto const& x, auto const& y, auto const& tolerance) { check_close<true>(x, y, tolerance); }
-void check_close(auto const& x, auto const& y) { check_close<true>(x, y); }
+template <symmetry_tag sym> void check_close(auto const& x, auto const& y) {
+    check_close<sym>(x, y, numerical_tolerance);
+}
+void check_close(auto const& x, auto const& y, auto const& tolerance) { check_close<symmetric_t>(x, y, tolerance); }
+void check_close(auto const& x, auto const& y) { check_close<symmetric_t>(x, y); }
 } // namespace
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {
-        math_solver::newton_raphson_pf::PFJacBlock<true> b{};
+        math_solver::newton_raphson_pf::PFJacBlock<symmetric_t> b{};
         b.h() += 1.0;
         b.n() += 2.0;
         b.m() += 3.0;
@@ -50,25 +52,25 @@ TEST_CASE("Test block") {
     }
 
     SUBCASE("Asymmetric") {
-        math_solver::newton_raphson_pf::PFJacBlock<false> b{};
-        RealTensor<false> const h{1.0};
-        RealTensor<false> const n{2.0};
-        RealTensor<false> const m{3.0};
-        RealTensor<false> const l{4.0};
+        math_solver::newton_raphson_pf::PFJacBlock<asymmetric_t> b{};
+        RealTensor<asymmetric_t> const h{1.0};
+        RealTensor<asymmetric_t> const n{2.0};
+        RealTensor<asymmetric_t> const m{3.0};
+        RealTensor<asymmetric_t> const l{4.0};
         b.h() += h;
         b.n() += n;
         b.m() += m;
         b.l() += l;
-        check_close<false>(b.h(), h, numerical_tolerance);
-        check_close<false>(b.n(), n, numerical_tolerance);
-        check_close<false>(b.m(), m, numerical_tolerance);
-        check_close<false>(b.l(), l, numerical_tolerance);
+        check_close<asymmetric_t>(b.h(), h, numerical_tolerance);
+        check_close<asymmetric_t>(b.n(), n, numerical_tolerance);
+        check_close<asymmetric_t>(b.m(), m, numerical_tolerance);
+        check_close<asymmetric_t>(b.l(), l, numerical_tolerance);
     }
 }
 
 namespace {
 
-template <bool sym>
+template <symmetry_tag sym>
 void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
                    double tolerance = numerical_tolerance) {
     DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
@@ -98,7 +100,7 @@ void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_
     }
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
                       double tolerance = numerical_tolerance) {
     for (size_t i = 0; i != output.u_bus.size(); ++i) {
@@ -160,9 +162,9 @@ TEST_CASE("Test math solver") {
     topo.power_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
 
     // build param, pf input, output, backwards
-    MathModelParam<true> param;
-    PowerFlowInput<true> pf_input;
-    MathOutput<true> output_ref;
+    MathModelParam<symmetric_t> param;
+    PowerFlowInput<symmetric_t> pf_input;
+    MathOutput<symmetric_t> output_ref;
     // voltage
     double const vref = 1.1;
     double const v0 = 1.08;
@@ -228,8 +230,8 @@ TEST_CASE("Test math solver") {
     output_ref.bus_injection = {output_ref.branch[0].s_f, output_ref.branch[0].s_t + output_ref.branch[1].s_f, 0};
 
     // const z
-    PowerFlowInput<true> pf_input_z = pf_input;
-    MathOutput<true> output_ref_z = output_ref;
+    PowerFlowInput<symmetric_t> pf_input_z = pf_input;
+    MathOutput<symmetric_t> output_ref_z = output_ref;
     for (size_t i = 0; i < 6; i++) {
         if (i % 3 == 2) {
             pf_input_z.s_injection[i] *= 3.0;
@@ -243,93 +245,93 @@ TEST_CASE("Test math solver") {
 
     // asymmetric param
     // network param
-    MathModelParam<false> param_asym;
+    MathModelParam<asymmetric_t> param_asym;
     // branch
     DoubleComplex const y0_0 = 0.5 + 0.5i;
-    ComplexTensor<false> y0a{2.0 * y0 + y0_0, y0_0 - y0};
+    ComplexTensor<asymmetric_t> y0a{2.0 * y0 + y0_0, y0_0 - y0};
     y0a /= 3.0;
-    ComplexTensor<false> const ys0a{ys0, 0.0};
-    ComplexTensor<false> y1_1{2.0 * y1, -y1};
+    ComplexTensor<asymmetric_t> const ys0a{ys0, 0.0};
+    ComplexTensor<asymmetric_t> y1_1{2.0 * y1, -y1};
     y1_1 /= 3.0;
-    ComplexTensor<false> y1_3;
+    ComplexTensor<asymmetric_t> y1_3;
     y1_3 << -y1, y1, 0.0, 0.0, -y1, y1, y1, 0.0, -y1;
     y1_3 /= sqrt3;
-    ComplexTensor<false> y1_3t = (y1_3.matrix().transpose()).array();
+    ComplexTensor<asymmetric_t> y1_3t = (y1_3.matrix().transpose()).array();
     param_asym.branch_param = {{y0a + ys0a, -y0a, -y0a, y0a + ys0a}, {y1_1, y1_3, y1_3t, y1_1}};
     // shunt
     DoubleComplex const ys_0 = ys * 0.2;
-    ComplexTensor<false> ysa{2.0 * ys + ys_0, ys_0 - ys};
+    ComplexTensor<asymmetric_t> ysa{2.0 * ys + ys_0, ys_0 - ys};
     ysa /= 3.0;
     param_asym.shunt_param = {ysa};
     // source
-    param_asym.source_param = {ComplexTensor<false>{yref}};
+    param_asym.source_param = {ComplexTensor<asymmetric_t>{yref}};
 
     // load and source
-    PowerFlowInput<false> pf_input_asym;
+    PowerFlowInput<asymmetric_t> pf_input_asym;
     pf_input_asym.source = {vref};
     pf_input_asym.s_injection.resize(pf_input.s_injection.size());
     for (size_t i = 0; i < pf_input.s_injection.size(); i++) {
-        pf_input_asym.s_injection[i] =
-            RealValue<false>{real(pf_input.s_injection[i])} + 1.0i * RealValue<false>{imag(pf_input.s_injection[i])};
+        pf_input_asym.s_injection[i] = RealValue<asymmetric_t>{real(pf_input.s_injection[i])} +
+                                       1.0i * RealValue<asymmetric_t>{imag(pf_input.s_injection[i])};
     }
 
     // output
-    MathOutput<false> output_ref_asym;
+    MathOutput<asymmetric_t> output_ref_asym;
     output_ref_asym.u.resize(output_ref.u.size());
     for (size_t i = 0; i != output_ref.u.size(); ++i) {
-        output_ref_asym.u[i] = ComplexValue<false>{output_ref.u[i]};
+        output_ref_asym.u[i] = ComplexValue<asymmetric_t>{output_ref.u[i]};
     }
     output_ref_asym.branch.resize(output_ref.branch.size());
     for (size_t i = 0; i != output_ref.branch.size(); ++i) {
-        output_ref_asym.branch[i].s_f = output_ref.branch[i].s_f * RealValue<false>{1.0};
-        output_ref_asym.branch[i].s_t = output_ref.branch[i].s_t * RealValue<false>{1.0};
-        output_ref_asym.branch[i].i_f = ComplexValue<false>{output_ref.branch[i].i_f};
-        output_ref_asym.branch[i].i_t = ComplexValue<false>{output_ref.branch[i].i_t};
+        output_ref_asym.branch[i].s_f = output_ref.branch[i].s_f * RealValue<asymmetric_t>{1.0};
+        output_ref_asym.branch[i].s_t = output_ref.branch[i].s_t * RealValue<asymmetric_t>{1.0};
+        output_ref_asym.branch[i].i_f = ComplexValue<asymmetric_t>{output_ref.branch[i].i_f};
+        output_ref_asym.branch[i].i_t = ComplexValue<asymmetric_t>{output_ref.branch[i].i_t};
     }
     output_ref_asym.bus_injection.resize(output_ref.bus_injection.size());
     for (size_t i = 0; i != output_ref.bus_injection.size(); ++i) {
-        output_ref_asym.bus_injection[i] = output_ref.bus_injection[i] * RealValue<false>{1.0};
+        output_ref_asym.bus_injection[i] = output_ref.bus_injection[i] * RealValue<asymmetric_t>{1.0};
     }
     output_ref_asym.source.resize(output_ref.source.size());
     for (size_t i = 0; i != output_ref.source.size(); ++i) {
-        output_ref_asym.source[i].s = output_ref.source[i].s * RealValue<false>{1.0};
-        output_ref_asym.source[i].i = ComplexValue<false>{output_ref.source[i].i};
+        output_ref_asym.source[i].s = output_ref.source[i].s * RealValue<asymmetric_t>{1.0};
+        output_ref_asym.source[i].i = ComplexValue<asymmetric_t>{output_ref.source[i].i};
     }
     output_ref_asym.load_gen.resize(output_ref.load_gen.size());
     for (size_t i = 0; i != output_ref.load_gen.size(); ++i) {
-        output_ref_asym.load_gen[i].s = output_ref.load_gen[i].s * RealValue<false>{1.0};
-        output_ref_asym.load_gen[i].i = ComplexValue<false>{output_ref.load_gen[i].i};
+        output_ref_asym.load_gen[i].s = output_ref.load_gen[i].s * RealValue<asymmetric_t>{1.0};
+        output_ref_asym.load_gen[i].i = ComplexValue<asymmetric_t>{output_ref.load_gen[i].i};
     }
     output_ref_asym.shunt.resize(output_ref.shunt.size());
     for (size_t i = 0; i != output_ref.shunt.size(); ++i) {
-        output_ref_asym.shunt[i].s = output_ref.shunt[i].s * RealValue<false>{1.0};
-        output_ref_asym.shunt[i].i = ComplexValue<false>{output_ref.shunt[i].i};
+        output_ref_asym.shunt[i].s = output_ref.shunt[i].s * RealValue<asymmetric_t>{1.0};
+        output_ref_asym.shunt[i].i = ComplexValue<asymmetric_t>{output_ref.shunt[i].i};
     }
 
     // const z
-    PowerFlowInput<false> pf_input_asym_z = pf_input_asym;
-    MathOutput<false> output_ref_asym_z = output_ref_asym;
+    PowerFlowInput<asymmetric_t> pf_input_asym_z = pf_input_asym;
+    MathOutput<asymmetric_t> output_ref_asym_z = output_ref_asym;
     for (size_t i = 0; i < 6; i++) {
         if (i % 3 == 2) {
             pf_input_asym_z.s_injection[i] *= 3.0;
             output_ref_asym_z.load_gen[i].i *= 3.0;
             output_ref_asym_z.load_gen[i].s *= 3.0;
         } else {
-            pf_input_asym_z.s_injection[i] = ComplexValue<false>{0.0};
+            pf_input_asym_z.s_injection[i] = ComplexValue<asymmetric_t>{0.0};
             output_ref_asym_z.load_gen[i] = {};
         }
     }
 
     // topo and param ptr
-    auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+    auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-    auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_asym);
-    YBus<true> y_bus_sym{topo_ptr, param_ptr};
-    YBus<false> const y_bus_asym{topo_ptr, param_asym_ptr};
+    auto param_asym_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(param_asym);
+    YBus<symmetric_t> y_bus_sym{topo_ptr, param_ptr};
+    YBus<asymmetric_t> const y_bus_asym{topo_ptr, param_asym_ptr};
 
     // state estimation input
     // symmetric, with u angle, with u angle and const z, without u angle
-    StateEstimationInput<true> se_input_angle;
+    StateEstimationInput<symmetric_t> se_input_angle;
     se_input_angle.shunt_status = {1};
     se_input_angle.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
     se_input_angle.source_status = {1};
@@ -357,12 +359,12 @@ TEST_CASE("Test math solver") {
         {output_ref.branch[1].s_t, 0.5, 0.5},
     };
     // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
-    StateEstimationInput<true> se_input_no_angle = se_input_angle;
+    StateEstimationInput<symmetric_t> se_input_no_angle = se_input_angle;
     se_input_no_angle.measured_voltage[0].value = DoubleComplex{cabs(se_input_no_angle.measured_voltage[0].value), nan};
     se_input_no_angle.measured_voltage[1].value = DoubleComplex{cabs(se_input_no_angle.measured_voltage[1].value), nan};
 
     // with angle, const z
-    StateEstimationInput<true> se_input_angle_const_z = se_input_angle;
+    StateEstimationInput<symmetric_t> se_input_angle_const_z = se_input_angle;
     // set open for load 01, 34, scale load 5 (sensor 2)
     se_input_angle_const_z.load_gen_status[0] = 0;
     se_input_angle_const_z.load_gen_status[1] = 0;
@@ -371,46 +373,55 @@ TEST_CASE("Test math solver") {
     se_input_angle_const_z.measured_load_gen_power[2].value *= 3.0;
 
     // asymmetric, with u angle, with u angle and const z, without u angle
-    StateEstimationInput<false> se_input_asym_angle;
+    StateEstimationInput<asymmetric_t> se_input_asym_angle;
     se_input_asym_angle.shunt_status = {1};
     se_input_asym_angle.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
     se_input_asym_angle.source_status = {1};
-    se_input_asym_angle.measured_voltage = {{ComplexValue<false>{output_ref.u[0]}, 1.0},
-                                            {ComplexValue<false>{output_ref.u[2]}, 1.0},
-                                            {ComplexValue<false>{output_ref.u[2]}, 1.0}};
+    se_input_asym_angle.measured_voltage = {{ComplexValue<asymmetric_t>{output_ref.u[0]}, 1.0},
+                                            {ComplexValue<asymmetric_t>{output_ref.u[2]}, 1.0},
+                                            {ComplexValue<asymmetric_t>{output_ref.u[2]}, 1.0}};
     se_input_asym_angle.measured_bus_injection = {
         {(output_ref.source[0].s + output_ref.load_gen[0].s + output_ref.load_gen[1].s + output_ref.load_gen[2].s) *
-             RealValue<false>{1.0},
-         RealValue<false>{0.5}, RealValue<false>{0.5}}};
-    se_input_asym_angle.measured_source_power = {
-        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
-        {output_ref.source[0].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}}};
+             RealValue<asymmetric_t>{1.0},
+         RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
+    se_input_asym_angle.measured_source_power = {{output_ref.source[0].s * RealValue<asymmetric_t>{1.0},
+                                                  RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
+                                                 {output_ref.source[0].s * RealValue<asymmetric_t>{1.0},
+                                                  RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
     se_input_asym_angle.measured_load_gen_power = {
-        {output_ref.load_gen[3].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
-        {output_ref.load_gen[4].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
-        {output_ref.load_gen[5].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
-        {500.0 * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.load_gen[3].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
+        {output_ref.load_gen[4].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
+        {output_ref.load_gen[5].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
+        {500.0 * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
     };
     se_input_asym_angle.measured_shunt_power = {
-        {output_ref.shunt[0].s * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.shunt[0].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
     };
 
     se_input_asym_angle.measured_branch_from_power = {
-        {output_ref.branch[0].s_f * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.branch[0].s_f * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
     };
     se_input_asym_angle.measured_branch_to_power = {
-        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
-        {output_ref.branch[0].s_t * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
-        {output_ref.branch[1].s_t * RealValue<false>{1.0}, RealValue<false>{0.5}, RealValue<false>{0.5}},
+        {output_ref.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
+        {output_ref.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
+        {output_ref.branch[1].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+         RealValue<asymmetric_t>{0.5}},
     };
     // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
-    StateEstimationInput<false> se_input_asym_no_angle = se_input_asym_angle;
+    StateEstimationInput<asymmetric_t> se_input_asym_no_angle = se_input_asym_angle;
     se_input_asym_no_angle.measured_voltage[0].value =
         cabs(se_input_asym_no_angle.measured_voltage[0].value) + DoubleComplex{0.0, nan};
     se_input_asym_no_angle.measured_voltage[1].value =
         cabs(se_input_asym_no_angle.measured_voltage[1].value) + DoubleComplex{0.0, nan};
     // with angle, const z
-    StateEstimationInput<false> se_input_asym_angle_const_z = se_input_asym_angle;
+    StateEstimationInput<asymmetric_t> se_input_asym_angle_const_z = se_input_asym_angle;
     // set open for load 01, 34, scale load 5 (sensor 2)
     se_input_asym_angle_const_z.load_gen_status[0] = 0;
     se_input_asym_angle_const_z.load_gen_status[1] = 0;
@@ -419,25 +430,26 @@ TEST_CASE("Test math solver") {
     se_input_asym_angle_const_z.measured_load_gen_power[2].value *= 3.0;
 
     SUBCASE("Test symmetric pf solver") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
+        MathOutput<symmetric_t> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         assert_output(output, output_ref);
         // copy
-        MathSolver<true> solver2{solver};
+        MathSolver<symmetric_t> solver2{solver};
         solver2.clear_solver();
         output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         assert_output(output, output_ref);
         // move
-        MathSolver<true> solver3{std::move(solver)};
+        MathSolver<symmetric_t> solver3{std::move(solver)};
         output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         assert_output(output, output_ref);
     }
 
     SUBCASE("Test symmetric iterative current pf solver") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> const output = solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current, y_bus_sym);
+        MathOutput<symmetric_t> const output =
+            solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current, y_bus_sym);
         assert_output(output, output_ref);
     }
 
@@ -446,15 +458,15 @@ TEST_CASE("Test math solver") {
         constexpr auto error_tolerance{5e-3};
         constexpr auto result_tolerance{5e-2};
 
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> const output =
+        MathOutput<symmetric_t> const output =
             solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current, y_bus_sym);
         assert_output(output, output_ref, false, result_tolerance);
     }
 
     SUBCASE("Test wrong calculation type") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
         CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_linear, y_bus_sym),
                         InvalidCalculationMethod);
@@ -463,16 +475,16 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test const z pf solver") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
 
         // const z
-        MathOutput<true> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
+        MathOutput<symmetric_t> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
         assert_output(output, output_ref_z);
     }
 
     SUBCASE("Test not converge") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
         pf_input.s_injection[6] = 1e6;
         CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym), IterationDiverge);
@@ -481,11 +493,11 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test singular ybus") {
         std::vector<CalculationMethod> const methods{linear, newton_raphson, linear_current, iterative_current};
 
-        param.branch_param[0] = BranchCalcParam<true>{};
-        param.branch_param[1] = BranchCalcParam<true>{};
+        param.branch_param[0] = BranchCalcParam<symmetric_t>{};
+        param.branch_param[1] = BranchCalcParam<symmetric_t>{};
         param.shunt_param[0] = 0.0;
-        y_bus_sym.update_admittance(std::make_shared<MathModelParam<true> const>(param));
-        MathSolver<true> solver{topo_ptr};
+        y_bus_sym.update_admittance(std::make_shared<MathModelParam<symmetric_t> const>(param));
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
 
         for (auto method : methods) {
@@ -495,33 +507,34 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test asymmetric pf solver") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> const output =
+        MathOutput<asymmetric_t> const output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson, y_bus_asym);
         assert_output(output, output_ref_asym);
     }
 
     SUBCASE("Test iterative current asymmetric pf solver") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> const output =
+        MathOutput<asymmetric_t> const output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current, y_bus_asym);
         assert_output(output, output_ref_asym);
     }
 
     SUBCASE("Test asym const z pf solver") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
         // const z
-        MathOutput<false> const output = solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear, y_bus_asym);
+        MathOutput<asymmetric_t> const output =
+            solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear, y_bus_asym);
         assert_output(output, output_ref_asym_z);
     }
 
     SUBCASE("Test sym se with angle") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> output;
+        MathOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -534,9 +547,9 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test sym se without angle") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> output;
+        MathOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -549,9 +562,9 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test sym se with angle, const z") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<true> output;
+        MathOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -564,12 +577,12 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test sym se with angle and different power variances") {
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
         auto& branch_from_power = se_input_angle.measured_branch_from_power.front();
         branch_from_power.p_variance = 0.25;
         branch_from_power.q_variance = 0.75;
-        MathOutput<true> output;
+        MathOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -582,9 +595,9 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test asym se with angle") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> output;
+        MathOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
@@ -597,9 +610,9 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test asym se without angle") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> output;
+        MathOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
@@ -612,9 +625,9 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test asym se with angle, const z") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<false> output;
+        MathOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output =
@@ -629,12 +642,12 @@ TEST_CASE("Test math solver") {
     }
 
     SUBCASE("Test asym se with angle and different power variances") {
-        MathSolver<false> solver{topo_ptr};
+        MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
         auto& branch_from_power = se_input_asym_angle.measured_branch_from_power.front();
-        branch_from_power.p_variance = RealValue<false>{0.25};
-        branch_from_power.q_variance = RealValue<false>{0.75};
-        MathOutput<false> output;
+        branch_from_power.p_variance = RealValue<asymmetric_t>{0.25};
+        branch_from_power.q_variance = RealValue<asymmetric_t>{0.75};
+        MathOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
@@ -658,7 +671,7 @@ ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_ph
     return sc_input;
 }
 
-template <bool sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
+template <symmetry_tag sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
     ShortCircuitMathOutput<sym> sc_output;
     sc_output.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
     sc_output.fault = {{ComplexValue<sym>{}}};
@@ -667,7 +680,7 @@ template <bool sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(Double
     return sc_output;
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
                                                             ComplexValue<sym> if_abc) {
     ShortCircuitMathOutput<sym> sc_output;
@@ -678,32 +691,32 @@ constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0
     return sc_output;
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
                                                   DoubleComplex const& z0, DoubleComplex const& z0_0, double const vref,
                                                   DoubleComplex const& zref) {
 
-    if constexpr (sym) {
+    if constexpr (is_symmetric_v<sym>) {
         DoubleComplex const if_abc = vref / (z0 + zref + z_fault);
         DoubleComplex const u0 = vref - if_abc * zref;
         DoubleComplex const u1 = u0 - if_abc * z0;
-        return create_math_sc_output<true>(u0, u1, if_abc);
+        return create_math_sc_output<symmetric_t>(u0, u1, if_abc);
     } else {
-        ComplexValue<false> if_abc{};
+        ComplexValue<asymmetric_t> if_abc{};
         switch (fault_type) {
         case three_phase: {
             DoubleComplex const if_3ph = vref / (z0 + zref + z_fault);
-            if_abc = ComplexValue<false>(if_3ph);
+            if_abc = ComplexValue<asymmetric_t>(if_3ph);
             break;
         }
         case single_phase_to_ground: {
             DoubleComplex const if_1phg = vref / (2.0 * (zref + z0) + (z0_0 + zref) + 3.0 * z_fault);
-            if_abc = ComplexValue<false>(3.0 * if_1phg, 0.0, 0.0);
+            if_abc = ComplexValue<asymmetric_t>(3.0 * if_1phg, 0.0, 0.0);
             break;
         }
         case two_phase: {
             DoubleComplex const if_2ph = (-1i * sqrt3) * vref / (2.0 * (zref + z0) + z_fault);
-            if_abc = ComplexValue<false>(0.0, if_2ph, -if_2ph);
+            if_abc = ComplexValue<asymmetric_t>(0.0, if_2ph, -if_2ph);
             break;
         }
         case two_phase_to_ground: {
@@ -713,23 +726,24 @@ ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleCo
             DoubleComplex const i_0 = vref * (-y2phg_0 * y2phg_12 / y2phg_sum);
             DoubleComplex const i_1 = vref * ((-y2phg_12 * y2phg_12 / y2phg_sum) + y2phg_12);
             DoubleComplex const i_2 = vref * (-y2phg_12 * y2phg_12 / y2phg_sum);
-            if_abc = ComplexValue<false>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
+            if_abc =
+                ComplexValue<asymmetric_t>{i_0 + i_1 + i_2, i_0 + i_1 * a * a + i_2 * a, i_0 + i_1 * a + i_2 * a * a};
             break;
         }
         default:
             throw InvalidShortCircuitType{false, fault_type};
         }
-        ComplexValue<false> const vref_asym{vref};
-        ComplexValue<false> const u0 = vref_asym - if_abc * zref;
+        ComplexValue<asymmetric_t> const vref_asym{vref};
+        ComplexValue<asymmetric_t> const u0 = vref_asym - if_abc * zref;
         DoubleComplex const z_self{(2.0 * z0 + z0_0) / 3.0};
         DoubleComplex const z_mutual{(z0_0 - z0) / 3.0};
-        ComplexValue<false> const u_drop{
+        ComplexValue<asymmetric_t> const u_drop{
             if_abc(0) * z_self + (if_abc(1) + if_abc(2)) * z_mutual,
             if_abc(1) * z_self + (if_abc(0) + if_abc(2)) * z_mutual,
             if_abc(2) * z_self + (if_abc(0) + if_abc(1)) * z_mutual,
         };
-        ComplexValue<false> const u1 = u0 - u_drop;
-        return create_math_sc_output<false>(u0, u1, if_abc);
+        ComplexValue<asymmetric_t> const u1 = u0 - u_drop;
+        return create_math_sc_output<asymmetric_t>(u0, u1, if_abc);
     }
 }
 
@@ -766,30 +780,30 @@ TEST_CASE("Short circuit solver") {
     DoubleComplex const y_fault_solid{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
 
     // params sym
-    MathModelParam<true> param_sc_sym;
+    MathModelParam<symmetric_t> param_sc_sym;
     param_sc_sym.branch_param = {{y0, -y0, -y0, y0}};
     param_sc_sym.source_param = {yref};
 
     // params asym
-    MathModelParam<false> param_sc_asym;
-    ComplexTensor<false> const y0a{(2.0 * y0 + y0_0) / 3.0, (y0_0 - y0) / 3.0};
+    MathModelParam<asymmetric_t> param_sc_asym;
+    ComplexTensor<asymmetric_t> const y0a{(2.0 * y0 + y0_0) / 3.0, (y0_0 - y0) / 3.0};
     param_sc_asym.branch_param = {{y0a, -y0a, -y0a, y0a}};
-    ComplexTensor<false> const yref_asym{yref};
+    ComplexTensor<asymmetric_t> const yref_asym{yref};
     param_sc_asym.source_param = {yref_asym};
 
     // topo and param ptr
     auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
-    auto param_sym_ptr = std::make_shared<MathModelParam<true> const>(param_sc_sym);
-    auto param_asym_ptr = std::make_shared<MathModelParam<false> const>(param_sc_asym);
+    auto param_sym_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sc_sym);
+    auto param_asym_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(param_sc_asym);
 
     SUBCASE("Test short circuit solver 3ph") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_buses);
@@ -798,23 +812,23 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph solid fault") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
 
     SUBCASE("Test short circuit solver 3ph sym params") {
-        YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
-        MathSolver<true> solver{topo_sc_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        MathSolver<symmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
-        assert_sc_output<true>(output, sc_output_ref);
+        assert_sc_output<symmetric_t>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(three_phase, FaultPhase::default_value, y_fault, vref, fault_buses);
@@ -823,23 +837,23 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
-        YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
-        MathSolver<true> solver{topo_sc_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        MathSolver<symmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<true>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
-        assert_sc_output<true>(output, sc_output_ref);
+        assert_sc_output<symmetric_t>(output, sc_output_ref);
     }
 
     SUBCASE("Test short circuit solver 1phg") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(single_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_buses);
@@ -848,23 +862,24 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg solid fault") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref =
+            create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
 
     SUBCASE("Test short circuit solver 2ph") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
         auto sc_input_default = create_sc_test_input(two_phase, FaultPhase::default_value, y_fault, vref, fault_buses);
         CHECK_THROWS_AS(solver.run_short_circuit(sc_input_default, info, CalculationMethod::iec60909, y_bus_asym),
@@ -872,23 +887,23 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph solid fault") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
 
     SUBCASE("Test short circuit solver 2phg") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
         auto sc_input_default =
             create_sc_test_input(two_phase_to_ground, FaultPhase::default_value, y_fault, vref, fault_buses);
@@ -897,31 +912,32 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg solid") {
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver{topo_sc_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver{topo_sc_ptr};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<false>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref =
+            create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
         CalculationInfo info;
         auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(output, sc_output_ref);
+        assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
 
     SUBCASE("Test short circuit solver no faults") {
-        YBus<true> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
-        YBus<false> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
-        MathSolver<false> solver_asym{topo_sc_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_sc_ptr, param_sym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc_ptr, param_asym_ptr};
+        MathSolver<asymmetric_t> solver_asym{topo_sc_ptr};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
         sc_input.fault_buses = {from_dense, {}, topo_sc_ptr->n_bus()};
-        auto asym_sc_output_ref = blank_sc_output<false>(vref);
+        auto asym_sc_output_ref = blank_sc_output<asymmetric_t>(vref);
         CalculationInfo info;
         auto asym_output = solver_asym.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-        assert_sc_output<false>(asym_output, asym_sc_output_ref);
+        assert_sc_output<asymmetric_t>(asym_output, asym_sc_output_ref);
 
-        MathSolver<true> solver_sym{topo_sc_ptr};
-        auto sym_sc_output_ref = blank_sc_output<true>(vref);
+        MathSolver<symmetric_t> solver_sym{topo_sc_ptr};
+        auto sym_sc_output_ref = blank_sc_output<symmetric_t>(vref);
         auto sym_output = solver_sym.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
-        assert_sc_output<true>(sym_output, sym_sc_output_ref);
+        assert_sc_output<symmetric_t>(sym_output, sym_sc_output_ref);
     }
 
     SUBCASE("Test fault on source bus") {
@@ -935,18 +951,18 @@ TEST_CASE("Short circuit solver") {
         topo_comp.load_gens_per_bus = {from_sparse, {0, 0}};
         DenseGroupedIdxVector const fault_buses_2 = {from_sparse, {0, 1}};
         // params source injection
-        MathModelParam<false> asym_param_comp;
+        MathModelParam<asymmetric_t> asym_param_comp;
         asym_param_comp.source_param = {yref_asym};
-        MathModelParam<true> sym_param_comp;
+        MathModelParam<symmetric_t> sym_param_comp;
         sym_param_comp.source_param = {yref};
         // topo and param ptr
         auto topo_comp_ptr = std::make_shared<MathModelTopology const>(topo_comp);
-        auto asym_param_comp_ptr = std::make_shared<MathModelParam<false> const>(asym_param_comp);
-        auto sym_param_comp_ptr = std::make_shared<MathModelParam<true> const>(sym_param_comp);
-        MathSolver<false> solver{topo_comp_ptr};
-        MathSolver<true> sym_solver{topo_comp_ptr};
-        YBus<false> const y_bus_asym{topo_comp_ptr, asym_param_comp_ptr};
-        YBus<true> const y_bus_sym{topo_comp_ptr, sym_param_comp_ptr};
+        auto asym_param_comp_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(asym_param_comp);
+        auto sym_param_comp_ptr = std::make_shared<MathModelParam<symmetric_t> const>(sym_param_comp);
+        MathSolver<asymmetric_t> solver{topo_comp_ptr};
+        MathSolver<symmetric_t> sym_solver{topo_comp_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_comp_ptr, asym_param_comp_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_comp_ptr, sym_param_comp_ptr};
 
         DoubleComplex const if_comp = vref / (zref + z_fault);
         DoubleComplex const uf_comp = vref - if_comp * zref;
@@ -969,7 +985,7 @@ TEST_CASE("Short circuit solver") {
         DoubleComplex const if_c_2phg_solid = vref * a / zref;
 
         SUBCASE("Source on 3ph sym fault") {
-            ShortCircuitMathOutput<true> sc_output_ref;
+            ShortCircuitMathOutput<symmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {uf_comp};
             sc_output_ref.fault = {{if_comp}};
             sc_output_ref.branch = {};
@@ -978,11 +994,11 @@ TEST_CASE("Short circuit solver") {
             auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
-            assert_sc_output<true>(output, sc_output_ref);
+            assert_sc_output<symmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 3ph sym solid fault") {
-            ShortCircuitMathOutput<true> sc_output_ref;
+            ShortCircuitMathOutput<symmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {DoubleComplex{uf_comp_solid}};
             sc_output_ref.fault = {{if_comp_solid}};
             sc_output_ref.branch = {};
@@ -991,100 +1007,100 @@ TEST_CASE("Short circuit solver") {
             auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = sym_solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_sym);
-            assert_sc_output<true>(output, sc_output_ref);
+            assert_sc_output<symmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 3ph fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{uf_comp}};
-            sc_output_ref.fault = {{ComplexValue<false>{if_comp}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{uf_comp}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{if_comp}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{if_comp}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{if_comp}}};
 
             auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 1phg fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{uf_comp, vref * a * a, vref * a}};
-            sc_output_ref.fault = {{ComplexValue<false>{if_comp, 0, 0}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{uf_comp, vref * a * a, vref * a}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{if_comp, 0, 0}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{if_comp, 0, 0}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{if_comp, 0, 0}}};
 
             auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 1phg solid fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{uf_comp_solid, vref * a * a, vref * a}};
-            sc_output_ref.fault = {{ComplexValue<false>{if_comp_solid, 0, 0}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{uf_comp_solid, vref * a * a, vref * a}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{if_comp_solid, 0, 0}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{if_comp_solid, 0, 0}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{if_comp_solid, 0, 0}}};
 
             auto sc_input =
                 create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 2ph fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{vref, uf_b_comp, uf_c_comp}};
-            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_comp, -if_b_comp}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_comp, uf_c_comp}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_comp, -if_b_comp}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_comp, -if_b_comp}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{0.0, if_b_comp, -if_b_comp}}};
 
             auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 2ph solid fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{vref, uf_b_comp_solid, uf_c_comp_solid}};
-            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_comp_solid, uf_c_comp_solid}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
 
             auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 2phg fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{vref, uf_b_2phg, uf_b_2phg}};
-            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_2phg, if_c_2phg}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_2phg, uf_b_2phg}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_2phg, if_c_2phg}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_2phg, if_c_2phg}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{0.0, if_b_2phg, if_c_2phg}}};
 
             auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
 
         SUBCASE("Source on 2phg solid fault") {
-            ShortCircuitMathOutput<false> sc_output_ref;
-            sc_output_ref.u_bus = {ComplexValue<false>{vref, uf_b_2phg_solid, uf_b_2phg_solid}};
-            sc_output_ref.fault = {{ComplexValue<false>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
+            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_2phg_solid, uf_b_2phg_solid}};
+            sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
             sc_output_ref.branch = {};
-            sc_output_ref.source = {{ComplexValue<false>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
+            sc_output_ref.source = {{ComplexValue<asymmetric_t>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
 
             auto sc_input =
                 create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_buses_2);
             CalculationInfo info;
             auto output = solver.run_short_circuit(sc_input, info, CalculationMethod::iec60909, y_bus_asym);
-            assert_sc_output<false>(output, sc_output_ref);
+            assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
     }
 }
@@ -1111,19 +1127,19 @@ TEST_CASE("Math solver, zero variance test") {
     topo.power_sensors_per_shunt = {from_sparse, {0}};
     topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
     topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
-    MathModelParam<true> param;
+    MathModelParam<symmetric_t> param;
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
-    auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+    auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-    YBus<true> const y_bus_sym{topo_ptr, param_ptr};
+    YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
 
-    StateEstimationInput<true> se_input;
+    StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.measured_voltage = {{1.0, 1.0}};
 
-    MathSolver<true> solver{topo_ptr};
+    MathSolver<symmetric_t> solver{topo_ptr};
     CalculationInfo info;
-    MathOutput<true> output;
+    MathOutput<symmetric_t> output;
 
     SUBCASE("iterative linear") {
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1162,16 +1178,16 @@ TEST_CASE("Math solver, measurements") {
     topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
     topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
 
-    MathModelParam<true> param;
+    MathModelParam<symmetric_t> param;
     param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
 
-    StateEstimationInput<true> se_input;
+    StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1};
     se_input.measured_voltage = {{1.0, 0.1}};
 
     CalculationInfo info;
-    MathOutput<true> output;
+    MathOutput<symmetric_t> output;
 
     SUBCASE("Source and branch") {
         /*
@@ -1188,11 +1204,11 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_source_power = {{1.93, 0.05, 0.05}};
         se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
 
-        MathSolver<true> solver{topo_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1221,10 +1237,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
         se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1255,10 +1271,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_source_power = {{1.93, 0.05, 0.05}};
         se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1289,10 +1305,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_source_power = {{1.93, 0.05, 0.05}};
         se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1323,10 +1339,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
         se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1356,10 +1372,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.load_gen_status = {1, 1};
         se_input.measured_load_gen_power = {{-3.0, 0.05, 0.05}, {1.0, 0.05, 0.05}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1392,10 +1408,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.05, 0.05}};
         se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1427,10 +1443,10 @@ TEST_CASE("Math solver, measurements") {
         se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.025, 0.075}};
         se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
 
-        auto param_ptr = std::make_shared<MathModelParam<true> const>(param);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<true> const y_bus_sym{topo_ptr, param_ptr};
-        MathSolver<true> solver{topo_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        MathSolver<symmetric_t> solver{topo_ptr};
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1446,8 +1462,8 @@ TEST_CASE("Math solver, measurements") {
         CHECK(real(output.load_gen[1].s) > doctest::Approx(0.85));
     }
 
-    const ComplexValue<true> load_gen_s =
-        std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<true>{},
+    const ComplexValue<symmetric_t> load_gen_s =
+        std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<symmetric_t>{},
                         [](auto const& a, auto const& b) { return a + b.s; });
 
     CHECK(output.bus_injection[0] == output.branch[0].s_f);

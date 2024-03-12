@@ -8,11 +8,10 @@ name: Build and Test C++ and Python
 
 # Controls when the workflow will run
 on:
-  # run pipeline on push event of main or release branch
+  # run pipeline on push event of main branch
   push:
     branches:
-      - main
-      - 'release/**'
+      - main      
   # run pipeline on pull request
   pull_request:
   # Allows you to run this workflow manually from the Actions tab
@@ -22,11 +21,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+
 jobs:
 
   acquire-python-version-build-sdist:
     name: Build sdist and set version
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +55,6 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -92,7 +90,6 @@ jobs:
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: windows-latest
     strategy:
       matrix:
@@ -136,7 +133,6 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: macos-13
     strategy:
       matrix:
@@ -217,7 +213,6 @@ jobs:
 
   build-and-test-conda:
     name: Build and test in Conda
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
 
     runs-on: ${{ matrix.os }}-latest
     strategy:
@@ -346,6 +341,6 @@ jobs:
           files: |
             ./wheelhouse/*
           tag_name: ${{ steps.tag.outputs.tag }}
-          prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
+          prerelease: ${{ github.ref != 'refs/heads/main'}}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}

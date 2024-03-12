@@ -174,12 +174,12 @@
             "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": "i_f",
                     "description": "three phase short circuit current magnitude"
                 },
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": "i_f_angle",
                     "description": "three phase short circuit current angle"
                 }
@@ -191,7 +191,7 @@
             "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "u_pu",
                         "u",
@@ -207,7 +207,7 @@
             "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "i_from",
                         "i_from_angle"
@@ -215,7 +215,7 @@
                     "description": "initial three phase short circuit current flow at from-side"
                 },
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "i_to",
                         "i_to_angle"
@@ -230,7 +230,7 @@
             "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "i_1",
                         "i_1_angle"
@@ -238,7 +238,7 @@
                     "description": "initial three phase short circuit current flow at side 1"
                 },
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "i_2",
                         "i_2_angle"
@@ -246,7 +246,7 @@
                     "description": "initial three phase short circuit current flow at side 2"
                 },
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "i_3",
                         "i_3_angle"
@@ -261,7 +261,7 @@
             "is_template": false,
             "attributes": [
                 {
-                    "data_type": "RealValue<false>",
+                    "data_type": "RealValue<asymmetric_t>",
                     "names": [
                         "i",
                         "i_angle"

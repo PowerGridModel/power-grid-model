@@ -75,9 +75,9 @@ TEST_CASE("C API Model") {
     PGM_dataset_const_add_buffer(hl, input_dataset, "source", 1, 1, nullptr, source_buffer);
 
     // output data
-    std::array<NodeOutput<true>, 2> sym_node_outputs{};
-    NodeOutput<true>& node_result_0 = sym_node_outputs[0];
-    NodeOutput<true>& node_result_1 = sym_node_outputs[1];
+    std::array<NodeOutput<symmetric_t>, 2> sym_node_outputs{};
+    NodeOutput<symmetric_t>& node_result_0 = sym_node_outputs[0];
+    NodeOutput<symmetric_t>& node_result_1 = sym_node_outputs[1];
     MutableDatasetPtr const unique_single_output_dataset{PGM_create_dataset_mutable(hl, "sym_output", 0, 1)};
     PGM_MutableDataset* single_output_dataset = unique_single_output_dataset.get();
     PGM_dataset_mutable_add_buffer(hl, single_output_dataset, "node", 1, 1, nullptr, sym_node_outputs.data());
