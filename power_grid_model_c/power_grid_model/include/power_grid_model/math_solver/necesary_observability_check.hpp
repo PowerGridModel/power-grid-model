@@ -54,9 +54,9 @@ template <symmetry_tag sym> class NecesaryObservabilityCheck {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             if (measured_values_.has_voltage(bus)) {
                 n_voltage_magnitude_sensor_++;
-            }
-            if (measured_values_.has_angle_measurement(bus)) {
-                n_voltage_phasor_sensor_++;
+                if (measured_values_.has_angle_measurement(bus)) {
+                    n_voltage_phasor_sensor_++;
+                }
             }
         }
     }
