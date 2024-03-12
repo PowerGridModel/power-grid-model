@@ -22,7 +22,13 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 - Example: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
-BatchArray = Union[np.ndarray, SparseBatchArray]
+DenseBatchArray = Union[np.ndarray]
+"""
+A dense batch array is a two-dimensional structured numpy array containing a list of components of 
+the same type for each scenario.
+"""
+
+BatchArray = Union[DenseBatchArray, SparseBatchArray]
 """
 A batch is a either a dense or a sparse batch array.
 
@@ -33,7 +39,20 @@ dense: <2d-array>
 sparse: {"indptr": <1d-array>, "data": <1d-array>}
 """
 
-SingleDataset = Dict[str, np.ndarray]
+SingleArray = Dict[str, np.ndarray]
+"""
+A single array is a dictionary where the keys are the component types and the values are one-dimensional
+structured numpy arrays.
+
+- Example: {"node": <1d-array>, "line": <1d-array>}
+"""
+
+DataArray = Union[SingleArray, BatchArray]
+"""
+A data array can be a single or a batch array. It is a numpy structured array.
+"""
+
+SingleDataset = Union[SingleArray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are one-dimensional
 structured numpy arrays.
