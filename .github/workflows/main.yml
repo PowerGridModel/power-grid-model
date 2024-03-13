@@ -153,6 +153,9 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
+          brew install python@3.12 || true
+          brew link --overwrite python@3.12
+          brew pin python@3.12
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
@@ -335,7 +338,7 @@ jobs:
           twine upload --verbose wheelhouse/*
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         with:
           files: |
