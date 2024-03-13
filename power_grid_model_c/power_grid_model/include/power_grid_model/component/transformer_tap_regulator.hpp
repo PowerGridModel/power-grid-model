@@ -8,6 +8,31 @@
 
 namespace power_grid_model {
 
-class TransformerTapRegulator : public Base {};
+class TransformerTapRegulator : public Base {
+    using InputType = TransformerTapRegulatorInput;
+    // using UpdateType = ...
+    static constexpr char const* name = "transformer_tap_regulator";
+
+    explicit TransformerTapRegulator(TransformerTapRegulatorInput const& transformer_tap_regulator_input,
+                                     double u_rated)
+        : Base{transformer_tap_regulator_input},
+          transformer_id_{transformer_tap_regulator_input.transformer_id},
+          control_side_{transformer_tap_regulator_input.control_side},
+          u_set_{transformer_tap_regulator_input.u_set},
+          u_band_{transformer_tap_regulator_input.u_band},
+          enabled_{transformer_tap_regulator_input.enabled},
+          line_drop_compensation_r_{transformer_tap_regulator_input.line_drop_compensation_r},
+          line_drop_compensation_x_{transformer_tap_regulator_input.line_drop_compensation_x} {}
+
+  private:
+    // transformer tap regulator parameters
+    ID transformer_id_;
+    ControlSide control_side_;
+    double u_set_;
+    double u_band_;
+    bool enabled_;
+    double line_drop_compensation_r_;
+    double line_drop_compensation_x_;
+};
 
 } // namespace power_grid_model
