@@ -134,7 +134,7 @@ struct IndexMappingCriterion {
     }
 };
 
-#ifdef _WIND32
+#ifdef _WIN32
 constexpr IndexMappingCriterion index_mapping_criterion_gcc{
     .coeff_1 = -1.4407094632018602, .coeff_2 = 0.060335413266752236, .coeff_3 = -130.95675432669466};
 #else
