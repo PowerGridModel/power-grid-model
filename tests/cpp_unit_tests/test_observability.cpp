@@ -11,8 +11,8 @@
 namespace power_grid_model {
 
 namespace {
-void observability_subcase(MathModelTopology& topo, MathModelParam<symmetric_t> param,
-                           StateEstimationInput<symmetric_t> se_input) {
+void observability_subcase(MathModelTopology const& topo, MathModelParam<symmetric_t> param,
+                           StateEstimationInput<symmetric_t> const& se_input) {
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
     YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
@@ -71,14 +71,14 @@ TEST_CASE("Necessary observability check") {
         se_input.measured_voltage = {};
         observability_subcase(topo, param, se_input);
     }
-    {
+    SUBCASE("Count sensors")    {
         // reduce 1 injection power sensor in upcoming cases
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
         se_input.measured_bus_injection = {};
 
         SUBCASE("voltage phasor unavailable condition for unobservable grid") {
             // setting only real part of measurement makes it magnitude sensor
-            se_input.measured_voltage = {{1.0, 1.0}};
+            se_input.measured_voltage = {{{1.0, nan}, 1.0}};
             observability_subcase(topo, param, se_input);
         }
 
