@@ -31,30 +31,23 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.validation.errors_to_string
 ```
 
-## data types
-
-```{eval-rst}
-.. autoclass:: power_grid_model.data_types.SparseBatchArray
-.. autoclass:: power_grid_model.data_types.BatchArray
-.. autoclass:: power_grid_model.data_types.SingleDataset
-.. autoclass:: power_grid_model.data_types.BatchDataset
-.. autoclass:: power_grid_model.data_types.Dataset
-.. autoclass:: power_grid_model.data_types.BatchList
-.. autoclass:: power_grid_model.data_types.NominalValue
-.. autoclass:: power_grid_model.data_types.RealValue
-.. autoclass:: power_grid_model.data_types.AsymValue
-.. autoclass:: power_grid_model.data_types.AttributeValue
-.. autoclass:: power_grid_model.data_types.Component
-.. autoclass:: power_grid_model.data_types.ComponentList
-.. autoclass:: power_grid_model.data_types.SinglePythonDataset
-.. autoclass:: power_grid_model.data_types.BatchPythonDataset
-.. autoclass:: power_grid_model.data_types.PythonDataset
-```
-
 ### errors
 
 ```{eval-rst}
 .. autoclass:: power_grid_model.validation.errors.ValidationError
+```
+
+## data types
+
+```{eval-rst}
+.. autoclass:: power_grid_model.data_types.Dataset
+.. autoclass:: power_grid_model.data_types.SingleDataset
+.. autoclass:: power_grid_model.data_types.BatchDataset
+.. autoclass:: power_grid_model.data_types.DataArray
+.. autoclass:: power_grid_model.data_types.SingleArray
+.. autoclass:: power_grid_model.data_types.BatchArray
+.. autoclass:: power_grid_model.data_types.DenseBatchArray
+.. autoclass:: power_grid_model.data_types.SparseBatchArray
 ```
 
 ## utils

@@ -12,9 +12,12 @@ Some terms regarding the data structures are explained here, including the defin
 
 - **Dataset:** Either a single or a batch dataset.
     - **SingleDataset:** A data type storing input data (i.e. all elements of all components) for a single scenario.
-    - **BatchDataset:** A data type storing update and or output data for one or more scenarios. A batch dataset can be either a sparse or a dense one.
-        - **SparseBatchDataset:**  Dictionaries with a one-dimensional numpy int32 array and a one-dimensional structured numpy arrays. 
-        - **DenseBatchDataset:** A dictionary where the keys are the component types and the values are two-dimensional structured numpy arrays.
+    - **BatchDataset:** A data type storing update and or output data for one or more scenarios. A batch dataset can contain sparse or dense data, depending on the component.
+- **DataArray** A data array can be a single or a batch array. It is a numpy structured array.     
+    - **SingleArray** A dictionary where the keys are the component types and the values are one-dimensional structured numpy arrays.
+    - **BatchArray:** An array of dictionaries where the keys are the component types and the values are two-dimensional structured numpy arrays.
+        - **DenseBatchArray:** A two-dimensional structured numpy array containing a list of components of the same type for each scenario.
+        - **SparseBatchArray:** A dictionary with a one-dimensional numpy int64 array and a one-dimensional structured numpy arrays. 
 
 ### Type of Dataset 
 
