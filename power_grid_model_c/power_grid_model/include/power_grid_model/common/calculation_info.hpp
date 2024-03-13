@@ -9,10 +9,6 @@
 #include <map>
 #include <string>
 
-#ifdef POWER_GRID_MODEL_CPP_BENCHMARK
-#include <new>
-#endif
-
 namespace power_grid_model {
 
 using CalculationInfo = std::map<std::string, double, std::less<>>;
