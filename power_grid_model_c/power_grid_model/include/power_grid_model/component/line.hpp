@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_LINE_HPP
-#define POWER_GRID_MODEL_COMPONENT_LINE_HPP
 
 #include "branch.hpp"
 
@@ -12,9 +10,9 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -51,12 +49,12 @@ class Line final : public Branch {
     DoubleComplex y0_series_;
     DoubleComplex y0_shunt_;
 
-    BranchCalcParam<true> sym_calc_param() const override { return calc_param_y_sym(y1_series_, y1_shunt_, 1.0); }
-    BranchCalcParam<false> asym_calc_param() const override {
+    BranchCalcParam<symmetric_t> sym_calc_param() const override {
+        return calc_param_y_sym(y1_series_, y1_shunt_, 1.0);
+    }
+    BranchCalcParam<asymmetric_t> asym_calc_param() const override {
         return calc_param_y_asym(y1_series_, y1_shunt_, y0_series_, y0_shunt_, 1.0);
     }
 };
 
 } // namespace power_grid_model
-
-#endif

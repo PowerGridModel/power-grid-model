@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_APPLIANCE_HPP
-#define POWER_GRID_MODEL_COMPONENT_APPLIANCE_HPP
 
 #include "base.hpp"
 
@@ -12,8 +10,8 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -21,7 +19,7 @@ class Appliance : public Base {
   public:
     using InputType = ApplianceInput;
     using UpdateType = ApplianceUpdate;
-    template <bool sym> using OutputType = ApplianceOutput<sym>;
+    template <symmetry_tag sym> using OutputType = ApplianceOutput<sym>;
     using ShortCircuitOutputType = ApplianceShortCircuitOutput;
     static constexpr char const* name = "appliance";
 
@@ -50,7 +48,7 @@ class Appliance : public Base {
     }
 
     // empty output
-    template <bool sym> ApplianceOutput<sym> get_null_output() const {
+    template <symmetry_tag sym> ApplianceOutput<sym> get_null_output() const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -61,7 +59,8 @@ class Appliance : public Base {
         return output;
     }
 
-    template <bool sym> ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
+    template <symmetry_tag sym>
+    ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.p = base_power<sym> * real(appliance_math_output.s) * injection_direction();
@@ -69,7 +68,7 @@ class Appliance : public Base {
         output.s = base_power<sym> * cabs(appliance_math_output.s);
         output.i = base_i_ * cabs(appliance_math_output.i);
         // pf
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             if (output.s < numerical_tolerance) {
                 output.pf = 0.0;
             } else {
@@ -86,25 +85,25 @@ class Appliance : public Base {
         }
         return output;
     }
-    ApplianceShortCircuitOutput get_sc_output(ComplexValue<false> const& i) const {
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> const& i) const {
         ApplianceShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(energized(true));
         output.i = base_i_ * cabs(i);
         output.i_angle = arg(i * injection_direction());
         return output;
     }
-    ApplianceShortCircuitOutput get_sc_output(ComplexValue<true> const& i) const {
-        ComplexValue<false> const iabc{i};
+    ApplianceShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& i) const {
+        ComplexValue<asymmetric_t> const iabc{i};
         return get_sc_output(iabc);
     }
-    template <bool sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
-        if constexpr (sym) {
-            return get_output<true>(sym_u2si(u));
+    template <symmetry_tag sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
+        if constexpr (is_symmetric_v<sym>) {
+            return get_output<symmetric_t>(sym_u2si(u));
         } else {
-            return get_output<false>(asym_u2si(u));
+            return get_output<asymmetric_t>(asym_u2si(u));
         }
     }
-    template <bool sym>
+    template <symmetry_tag sym>
     ApplianceShortCircuitOutput get_sc_output(ApplianceShortCircuitMathOutput<sym> const& appliance_math_output) const {
         return get_sc_output(appliance_math_output.i);
     }
@@ -115,12 +114,10 @@ class Appliance : public Base {
     double base_i_;
 
     // pure virtual functions for translate from u to s/i
-    virtual ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const = 0;
-    virtual ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const = 0;
+    virtual ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const = 0;
+    virtual ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const = 0;
 
     virtual double injection_direction() const = 0;
 };
 
 } // namespace power_grid_model
-
-#endif

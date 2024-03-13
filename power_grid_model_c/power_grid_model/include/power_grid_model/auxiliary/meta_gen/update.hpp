@@ -6,15 +6,14 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_META_GEN_UPDATE_HPP
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../enum.hpp"               // NOLINT
-#include "../../power_grid_model.hpp"   // NOLINT
-#include "../../three_phase_tensor.hpp" // NOLINT
-#include "../meta_data.hpp"             // NOLINT
+#include "../../common/common.hpp"             // NOLINT
+#include "../../common/enum.hpp"               // NOLINT
+#include "../../common/three_phase_tensor.hpp" // NOLINT
+#include "../meta_data.hpp"                    // NOLINT
+
 #include "../update.hpp" // NOLINT
 
 
@@ -89,8 +88,10 @@ struct get_attributes_list<ThreeWindingTransformerUpdate> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<LoadGenUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<LoadGenUpdate<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
@@ -127,8 +128,10 @@ struct get_attributes_list<ShuntUpdate> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<VoltageSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<VoltageSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
@@ -139,8 +142,10 @@ struct get_attributes_list<VoltageSensorUpdate<sym>> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<PowerSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<PowerSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
@@ -251,8 +256,10 @@ struct get_component_nan<ThreeWindingTransformerUpdate> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<LoadGenUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<LoadGenUpdate<sym_type>> {
+    using sym = sym_type;
+
     LoadGenUpdate<sym> operator() () const {
         LoadGenUpdate<sym> comp;
         // all attributes including base class
@@ -295,8 +302,10 @@ struct get_component_nan<ShuntUpdate> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<VoltageSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<VoltageSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     VoltageSensorUpdate<sym> operator() () const {
         VoltageSensorUpdate<sym> comp;
         // all attributes including base class
@@ -309,8 +318,10 @@ struct get_component_nan<VoltageSensorUpdate<sym>> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<PowerSensorUpdate<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<PowerSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
     PowerSensorUpdate<sym> operator() () const {
         PowerSensorUpdate<sym> comp;
         // all attributes including base class
@@ -346,5 +357,4 @@ struct get_component_nan<FaultUpdate> {
 
 } // namespace power_grid_model::meta_data
 
-#endif
 // clang-format on

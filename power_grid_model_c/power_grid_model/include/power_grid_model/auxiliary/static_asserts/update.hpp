@@ -6,8 +6,6 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_STATIC_ASSERTS_UPDATE_HPP
 
 #include "../update.hpp" // NOLINT
 
@@ -71,30 +69,30 @@ static_assert(offsetof(ThreeWindingTransformerUpdate, status_1) == offsetof(Bran
 static_assert(offsetof(ThreeWindingTransformerUpdate, status_2) == offsetof(Branch3Update, status_2));
 static_assert(offsetof(ThreeWindingTransformerUpdate, status_3) == offsetof(Branch3Update, status_3));
 
-// static asserts for LoadGenUpdate<true>
-static_assert(std::is_standard_layout_v<LoadGenUpdate<true>>);
-// static asserts for conversion of LoadGenUpdate<true> to BaseUpdate
-static_assert(std::alignment_of_v<LoadGenUpdate<true>> >= std::alignment_of_v<ApplianceUpdate>);
-static_assert(std::same_as<decltype(LoadGenUpdate<true>::id), decltype(BaseUpdate::id)>);
-static_assert(offsetof(LoadGenUpdate<true>, id) == offsetof(BaseUpdate, id));
-// static asserts for conversion of LoadGenUpdate<true> to ApplianceUpdate
-static_assert(std::alignment_of_v<LoadGenUpdate<true>> >= std::alignment_of_v<ApplianceUpdate>);
-static_assert(std::same_as<decltype(LoadGenUpdate<true>::id), decltype(ApplianceUpdate::id)>);
-static_assert(std::same_as<decltype(LoadGenUpdate<true>::status), decltype(ApplianceUpdate::status)>);
-static_assert(offsetof(LoadGenUpdate<true>, id) == offsetof(ApplianceUpdate, id));
-static_assert(offsetof(LoadGenUpdate<true>, status) == offsetof(ApplianceUpdate, status));
-// static asserts for LoadGenUpdate<false>
-static_assert(std::is_standard_layout_v<LoadGenUpdate<false>>);
-// static asserts for conversion of LoadGenUpdate<false> to BaseUpdate
-static_assert(std::alignment_of_v<LoadGenUpdate<false>> >= std::alignment_of_v<ApplianceUpdate>);
-static_assert(std::same_as<decltype(LoadGenUpdate<false>::id), decltype(BaseUpdate::id)>);
-static_assert(offsetof(LoadGenUpdate<false>, id) == offsetof(BaseUpdate, id));
-// static asserts for conversion of LoadGenUpdate<false> to ApplianceUpdate
-static_assert(std::alignment_of_v<LoadGenUpdate<false>> >= std::alignment_of_v<ApplianceUpdate>);
-static_assert(std::same_as<decltype(LoadGenUpdate<false>::id), decltype(ApplianceUpdate::id)>);
-static_assert(std::same_as<decltype(LoadGenUpdate<false>::status), decltype(ApplianceUpdate::status)>);
-static_assert(offsetof(LoadGenUpdate<false>, id) == offsetof(ApplianceUpdate, id));
-static_assert(offsetof(LoadGenUpdate<false>, status) == offsetof(ApplianceUpdate, status));
+// static asserts for LoadGenUpdate<symmetric_t>
+static_assert(std::is_standard_layout_v<LoadGenUpdate<symmetric_t>>);
+// static asserts for conversion of LoadGenUpdate<symmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<LoadGenUpdate<symmetric_t>> >= std::alignment_of_v<ApplianceUpdate>);
+static_assert(std::same_as<decltype(LoadGenUpdate<symmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(LoadGenUpdate<symmetric_t>, id) == offsetof(BaseUpdate, id));
+// static asserts for conversion of LoadGenUpdate<symmetric_t> to ApplianceUpdate
+static_assert(std::alignment_of_v<LoadGenUpdate<symmetric_t>> >= std::alignment_of_v<ApplianceUpdate>);
+static_assert(std::same_as<decltype(LoadGenUpdate<symmetric_t>::id), decltype(ApplianceUpdate::id)>);
+static_assert(std::same_as<decltype(LoadGenUpdate<symmetric_t>::status), decltype(ApplianceUpdate::status)>);
+static_assert(offsetof(LoadGenUpdate<symmetric_t>, id) == offsetof(ApplianceUpdate, id));
+static_assert(offsetof(LoadGenUpdate<symmetric_t>, status) == offsetof(ApplianceUpdate, status));
+// static asserts for LoadGenUpdate<asymmetric_t>
+static_assert(std::is_standard_layout_v<LoadGenUpdate<asymmetric_t>>);
+// static asserts for conversion of LoadGenUpdate<asymmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<LoadGenUpdate<asymmetric_t>> >= std::alignment_of_v<ApplianceUpdate>);
+static_assert(std::same_as<decltype(LoadGenUpdate<asymmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(LoadGenUpdate<asymmetric_t>, id) == offsetof(BaseUpdate, id));
+// static asserts for conversion of LoadGenUpdate<asymmetric_t> to ApplianceUpdate
+static_assert(std::alignment_of_v<LoadGenUpdate<asymmetric_t>> >= std::alignment_of_v<ApplianceUpdate>);
+static_assert(std::same_as<decltype(LoadGenUpdate<asymmetric_t>::id), decltype(ApplianceUpdate::id)>);
+static_assert(std::same_as<decltype(LoadGenUpdate<asymmetric_t>::status), decltype(ApplianceUpdate::status)>);
+static_assert(offsetof(LoadGenUpdate<asymmetric_t>, id) == offsetof(ApplianceUpdate, id));
+static_assert(offsetof(LoadGenUpdate<asymmetric_t>, status) == offsetof(ApplianceUpdate, status));
 // static asserts for SymLoadGenUpdate
 static_assert(std::is_standard_layout_v<SymLoadGenUpdate>);
 // static asserts for conversion of SymLoadGenUpdate to BaseUpdate
@@ -146,18 +144,18 @@ static_assert(std::same_as<decltype(ShuntUpdate::status), decltype(ApplianceUpda
 static_assert(offsetof(ShuntUpdate, id) == offsetof(ApplianceUpdate, id));
 static_assert(offsetof(ShuntUpdate, status) == offsetof(ApplianceUpdate, status));
 
-// static asserts for VoltageSensorUpdate<true>
-static_assert(std::is_standard_layout_v<VoltageSensorUpdate<true>>);
-// static asserts for conversion of VoltageSensorUpdate<true> to BaseUpdate
-static_assert(std::alignment_of_v<VoltageSensorUpdate<true>> >= std::alignment_of_v<BaseUpdate>);
-static_assert(std::same_as<decltype(VoltageSensorUpdate<true>::id), decltype(BaseUpdate::id)>);
-static_assert(offsetof(VoltageSensorUpdate<true>, id) == offsetof(BaseUpdate, id));
-// static asserts for VoltageSensorUpdate<false>
-static_assert(std::is_standard_layout_v<VoltageSensorUpdate<false>>);
-// static asserts for conversion of VoltageSensorUpdate<false> to BaseUpdate
-static_assert(std::alignment_of_v<VoltageSensorUpdate<false>> >= std::alignment_of_v<BaseUpdate>);
-static_assert(std::same_as<decltype(VoltageSensorUpdate<false>::id), decltype(BaseUpdate::id)>);
-static_assert(offsetof(VoltageSensorUpdate<false>, id) == offsetof(BaseUpdate, id));
+// static asserts for VoltageSensorUpdate<symmetric_t>
+static_assert(std::is_standard_layout_v<VoltageSensorUpdate<symmetric_t>>);
+// static asserts for conversion of VoltageSensorUpdate<symmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<VoltageSensorUpdate<symmetric_t>> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(VoltageSensorUpdate<symmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(VoltageSensorUpdate<symmetric_t>, id) == offsetof(BaseUpdate, id));
+// static asserts for VoltageSensorUpdate<asymmetric_t>
+static_assert(std::is_standard_layout_v<VoltageSensorUpdate<asymmetric_t>>);
+// static asserts for conversion of VoltageSensorUpdate<asymmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<VoltageSensorUpdate<asymmetric_t>> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(VoltageSensorUpdate<asymmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(VoltageSensorUpdate<asymmetric_t>, id) == offsetof(BaseUpdate, id));
 // static asserts for SymVoltageSensorUpdate
 static_assert(std::is_standard_layout_v<SymVoltageSensorUpdate>);
 // static asserts for conversion of SymVoltageSensorUpdate to BaseUpdate
@@ -171,18 +169,18 @@ static_assert(std::alignment_of_v<AsymVoltageSensorUpdate> >= std::alignment_of_
 static_assert(std::same_as<decltype(AsymVoltageSensorUpdate::id), decltype(BaseUpdate::id)>);
 static_assert(offsetof(AsymVoltageSensorUpdate, id) == offsetof(BaseUpdate, id));
 
-// static asserts for PowerSensorUpdate<true>
-static_assert(std::is_standard_layout_v<PowerSensorUpdate<true>>);
-// static asserts for conversion of PowerSensorUpdate<true> to BaseUpdate
-static_assert(std::alignment_of_v<PowerSensorUpdate<true>> >= std::alignment_of_v<BaseUpdate>);
-static_assert(std::same_as<decltype(PowerSensorUpdate<true>::id), decltype(BaseUpdate::id)>);
-static_assert(offsetof(PowerSensorUpdate<true>, id) == offsetof(BaseUpdate, id));
-// static asserts for PowerSensorUpdate<false>
-static_assert(std::is_standard_layout_v<PowerSensorUpdate<false>>);
-// static asserts for conversion of PowerSensorUpdate<false> to BaseUpdate
-static_assert(std::alignment_of_v<PowerSensorUpdate<false>> >= std::alignment_of_v<BaseUpdate>);
-static_assert(std::same_as<decltype(PowerSensorUpdate<false>::id), decltype(BaseUpdate::id)>);
-static_assert(offsetof(PowerSensorUpdate<false>, id) == offsetof(BaseUpdate, id));
+// static asserts for PowerSensorUpdate<symmetric_t>
+static_assert(std::is_standard_layout_v<PowerSensorUpdate<symmetric_t>>);
+// static asserts for conversion of PowerSensorUpdate<symmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<PowerSensorUpdate<symmetric_t>> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(PowerSensorUpdate<symmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(PowerSensorUpdate<symmetric_t>, id) == offsetof(BaseUpdate, id));
+// static asserts for PowerSensorUpdate<asymmetric_t>
+static_assert(std::is_standard_layout_v<PowerSensorUpdate<asymmetric_t>>);
+// static asserts for conversion of PowerSensorUpdate<asymmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<PowerSensorUpdate<asymmetric_t>> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(PowerSensorUpdate<asymmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(PowerSensorUpdate<asymmetric_t>, id) == offsetof(BaseUpdate, id));
 // static asserts for SymPowerSensorUpdate
 static_assert(std::is_standard_layout_v<SymPowerSensorUpdate>);
 // static asserts for conversion of SymPowerSensorUpdate to BaseUpdate
@@ -207,5 +205,4 @@ static_assert(offsetof(FaultUpdate, id) == offsetof(BaseUpdate, id));
 
 } // namespace power_grid_model::test
 
-#endif
 // clang-format on

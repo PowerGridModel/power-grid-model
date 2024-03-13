@@ -6,15 +6,15 @@ SPDX-License-Identifier: MPL-2.0
 
 # Dataset Terminology
 
-Some terms regarding the data structures are explained here, including the definition of dataset, component, and attribute.
+Some terms regarding the data structures are explained here, including the definition of dataset, component, and attribute. For detailed data types used throughout the power grid model, please refer to [Python API Reference](../api_reference/python-api-reference.md).
 
 ## Data structures
 
-- **SingleDataset:** A data type storing input data (ie. all elements of all components) for a single scenario
-
-- **BatchDataset:** A data type storing update and or output data for one or more scenarios
-
-- **Dataset:** Either a single or a batch dataset
+- **Dataset:** Either a single or a batch dataset.
+    - **SingleDataset:** A data type storing input data (i.e. all elements of all components) for a single scenario.
+    - **BatchDataset:** A data type storing update and or output data for one or more scenarios. A batch dataset can be either a sparse or a dense one.
+        - **SparseBatchDataset:**  Dictionaries with a one-dimensional numpy int32 array and a one-dimensional structured numpy arrays. 
+        - **DenseBatchDataset:** A dictionary where the keys are the component types and the values are two-dimensional structured numpy arrays.
 
 ### Type of Dataset 
 

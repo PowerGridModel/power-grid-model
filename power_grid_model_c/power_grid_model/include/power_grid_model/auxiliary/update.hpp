@@ -6,14 +6,12 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_UPDATE_HPP
 
 #include "meta_data.hpp"
 
-#include "../enum.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -82,8 +80,10 @@ struct ThreeWindingTransformerUpdate {
     operator Branch3Update const&() const { return reinterpret_cast<Branch3Update const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct LoadGenUpdate {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS status;  // whether the appliance is connected
     RealValue<sym> p_specified;  // specified active/reactive power
@@ -98,8 +98,8 @@ struct LoadGenUpdate {
     operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-using SymLoadGenUpdate = LoadGenUpdate<true>;
-using AsymLoadGenUpdate = LoadGenUpdate<false>;
+using SymLoadGenUpdate = LoadGenUpdate<symmetric_t>;
+using AsymLoadGenUpdate = LoadGenUpdate<asymmetric_t>;
 
 struct SourceUpdate {
     ID id;  // ID of the object
@@ -133,8 +133,10 @@ struct ShuntUpdate {
     operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct VoltageSensorUpdate {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     double u_sigma;  // sigma of error margin of voltage measurement
     RealValue<sym> u_measured;  // measured voltage magnitude and angle
@@ -145,11 +147,13 @@ struct VoltageSensorUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-using SymVoltageSensorUpdate = VoltageSensorUpdate<true>;
-using AsymVoltageSensorUpdate = VoltageSensorUpdate<false>;
+using SymVoltageSensorUpdate = VoltageSensorUpdate<symmetric_t>;
+using AsymVoltageSensorUpdate = VoltageSensorUpdate<asymmetric_t>;
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct PowerSensorUpdate {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     double power_sigma;  // sigma of error margin of power measurement
     RealValue<sym> p_measured;  // measured active/reactive power
@@ -162,8 +166,8 @@ struct PowerSensorUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-using SymPowerSensorUpdate = PowerSensorUpdate<true>;
-using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
+using SymPowerSensorUpdate = PowerSensorUpdate<symmetric_t>;
+using AsymPowerSensorUpdate = PowerSensorUpdate<asymmetric_t>;
 
 struct FaultUpdate {
     ID id;  // ID of the object
@@ -183,5 +187,4 @@ struct FaultUpdate {
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

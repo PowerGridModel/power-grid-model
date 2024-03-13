@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
-#define POWER_GRID_MODEL_COMPONENT_SHORT_CIRCUIT_HPP
 
 #include "base.hpp"
 
@@ -12,8 +10,8 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../enum.hpp"
-#include "../exception.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model {
 
@@ -21,7 +19,7 @@ class Fault final : public Base {
   public:
     using InputType = FaultInput;
     using UpdateType = FaultUpdate;
-    template <bool sym> using OutputType = FaultOutput;
+    template <symmetry_tag sym> using OutputType = FaultOutput;
     using ShortCircuitOutputType = FaultShortCircuitOutput;
     static constexpr char const* name = "fault";
     ComponentType math_model_type() const override { return ComponentType::fault; }
@@ -65,7 +63,7 @@ class Fault final : public Base {
     }
 
     FaultShortCircuitOutput get_null_sc_output() const { return get_null_output_impl<FaultShortCircuitOutput>(); }
-    FaultShortCircuitOutput get_sc_output(ComplexValue<false> i_f, double const u_rated) const {
+    FaultShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
         i_f = i_f * base_i;
@@ -77,12 +75,12 @@ class Fault final : public Base {
         return output;
     }
 
-    FaultShortCircuitOutput get_sc_output(ComplexValue<true> i_f, double const u_rated) const {
-        ComplexValue<false> const iabc_f{i_f};
+    FaultShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> i_f, double const u_rated) const {
+        ComplexValue<asymmetric_t> const iabc_f{i_f};
         return get_sc_output(iabc_f, u_rated);
     }
 
-    template <bool sym>
+    template <symmetry_tag sym>
     FaultShortCircuitOutput get_sc_output(FaultShortCircuitMathOutput<sym> const& math_output,
                                           double const u_rated) const {
         return get_sc_output(math_output.i_fault, u_rated);
@@ -219,5 +217,3 @@ class Fault final : public Base {
 };
 
 } // namespace power_grid_model
-
-#endif

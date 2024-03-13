@@ -6,15 +6,14 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_INPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_META_GEN_INPUT_HPP
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../enum.hpp"               // NOLINT
-#include "../../power_grid_model.hpp"   // NOLINT
-#include "../../three_phase_tensor.hpp" // NOLINT
-#include "../meta_data.hpp"             // NOLINT
+#include "../../common/common.hpp"             // NOLINT
+#include "../../common/enum.hpp"               // NOLINT
+#include "../../common/three_phase_tensor.hpp" // NOLINT
+#include "../meta_data.hpp"                    // NOLINT
+
 #include "../input.hpp" // NOLINT
 
 
@@ -232,8 +231,10 @@ struct get_attributes_list<GenericLoadGenInput> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<LoadGenInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<LoadGenInput<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
@@ -288,8 +289,10 @@ struct get_attributes_list<GenericVoltageSensorInput> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<VoltageSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<VoltageSensorInput<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
             
@@ -313,8 +316,10 @@ struct get_attributes_list<GenericPowerSensorInput> {
     };
 };
 
-template <bool sym>
-struct get_attributes_list<PowerSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_attributes_list<PowerSensorInput<sym_type>> {
+    using sym = sym_type;
+
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
@@ -580,8 +585,10 @@ struct get_component_nan<GenericLoadGenInput> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<LoadGenInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<LoadGenInput<sym_type>> {
+    using sym = sym_type;
+
     LoadGenInput<sym> operator() () const {
         LoadGenInput<sym> comp;
         // all attributes including base class
@@ -644,8 +651,10 @@ struct get_component_nan<GenericVoltageSensorInput> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<VoltageSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<VoltageSensorInput<sym_type>> {
+    using sym = sym_type;
+
     VoltageSensorInput<sym> operator() () const {
         VoltageSensorInput<sym> comp;
         // all attributes including base class
@@ -673,8 +682,10 @@ struct get_component_nan<GenericPowerSensorInput> {
     }
 };
 
-template <bool sym>
-struct get_component_nan<PowerSensorInput<sym>> {
+template <symmetry_tag sym_type>
+struct get_component_nan<PowerSensorInput<sym_type>> {
+    using sym = sym_type;
+
     PowerSensorInput<sym> operator() () const {
         PowerSensorInput<sym> comp;
         // all attributes including base class
@@ -712,5 +723,4 @@ struct get_component_nan<FaultInput> {
 
 } // namespace power_grid_model::meta_data
 
-#endif
 // clang-format on

@@ -44,8 +44,8 @@ class CodeGenerator:
             if attribute_class.is_template:
                 attribute_class.full_name = f"{attribute_class.name}<sym>"
                 attribute_class.specification_names = [
-                    f"{attribute_class.name}<true>",
-                    f"{attribute_class.name}<false>",
+                    f"{attribute_class.name}<symmetric_t>",
+                    f"{attribute_class.name}<asymmetric_t>",
                     f"Sym{attribute_class.name}",
                     f"Asym{attribute_class.name}",
                 ]

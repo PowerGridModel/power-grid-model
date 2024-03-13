@@ -46,7 +46,7 @@ struct InputData {
     }
 };
 
-template <bool sym> struct OutputData {
+template <symmetry_tag sym> struct OutputData {
     std::vector<NodeOutput<sym>> node;
     std::vector<BranchOutput<sym>> transformer;
     std::vector<BranchOutput<sym>> line;
@@ -124,7 +124,7 @@ class FictionalGridGenerator {
 
     InputData const& input_data() const { return input_; }
 
-    template <bool sym> OutputData<sym> generate_output_data(Idx batch_size = 1) const {
+    template <symmetry_tag sym> OutputData<sym> generate_output_data(Idx batch_size = 1) const {
         batch_size = std::max(batch_size, Idx{1});
         OutputData<sym> output{};
         output.batch_size = batch_size;
@@ -328,7 +328,7 @@ class FictionalGridGenerator {
         // template
         NodeInput const lv_node{.id = 0, .u_rated = 400.0};
         AsymLoadGenInput const lv_asym_load{
-            0, 0, 1, LoadGenType::const_i, RealValue<false>{0.0}, RealValue<false>{0.0}};
+            0, 0, 1, LoadGenType::const_i, RealValue<asymmetric_t>{0.0}, RealValue<asymmetric_t>{0.0}};
         // 4*150 Al, per km
         LineInput const lv_main_line{0, 0, 0, 1, 1, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387, 0.36e-6, 0.0, 300.0};
         // 4*16 Cu, per km

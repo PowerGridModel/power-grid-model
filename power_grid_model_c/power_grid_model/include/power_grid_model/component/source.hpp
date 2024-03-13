@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_SOURCE_HPP
-#define POWER_GRID_MODEL_COMPONENT_SOURCE_HPP
 
 #include "appliance.hpp"
 #include "base.hpp"
@@ -13,8 +11,8 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -45,16 +43,16 @@ class Source : public Appliance {
     }
 
     // getter for calculation param, y_ref
-    template <bool sym> ComplexTensor<sym> math_param() const {
+    template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
         // internal element_admittance
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             return y1_ref_;
         } else {
-            ComplexTensor<false> const sym_matrix = get_sym_matrix();
-            ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
-            ComplexTensor<false> y012;
+            ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
+            ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
+            ComplexTensor<asymmetric_t> y012;
             y012 << y1_ref_, 0.0, 0.0, 0.0, y1_ref_, 0.0, 0.0, 0.0, y0_ref_;
-            ComplexTensor<false> yabc = dot(sym_matrix, y012, sym_matrix_inv);
+            ComplexTensor<asymmetric_t> yabc = dot(sym_matrix, y012, sym_matrix_inv);
             return yabc;
         }
     }
@@ -122,7 +120,7 @@ class Source : public Appliance {
     DoubleComplex y1_ref_{};
     DoubleComplex y0_ref_{};
 
-    template <bool sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceMathOutput<sym_calc> appliance_math_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
         ComplexTensor<sym_calc> const y_ref = math_param<sym_calc>();
@@ -131,12 +129,14 @@ class Source : public Appliance {
         return appliance_math_output;
     }
 
-    ApplianceMathOutput<true> sym_u2si(ComplexValue<true> const& u) const final { return u2si<true>(u); }
-    ApplianceMathOutput<false> asym_u2si(ComplexValue<false> const& u) const final { return u2si<false>(u); }
+    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
+        return u2si<symmetric_t>(u);
+    }
+    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
+        return u2si<asymmetric_t>(u);
+    }
 
     double injection_direction() const final { return 1.0; }
 };
 
 } // namespace power_grid_model
-
-#endif

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
-#define POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP
 
 #include "power_grid_model_c.h"
 
@@ -28,5 +26,3 @@ using ConstDatasetPtr = std::unique_ptr<PGM_ConstDataset, DeleterFunctor<&PGM_de
 using MutableDatasetPtr = std::unique_ptr<PGM_MutableDataset, DeleterFunctor<&PGM_destroy_dataset_mutable>>;
 
 } // namespace power_grid_model
-
-#endif // POWER_GRID_MODEL_C_API_CPP_HANDLE_HPP

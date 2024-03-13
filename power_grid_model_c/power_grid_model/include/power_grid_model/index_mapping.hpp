@@ -3,12 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_INDEX_MAPPING_HPP
-#define POWER_GRID_MODEL_INDEX_MAPPING_HPP
 
-#include "grouped_index_vector.hpp"
-#include "power_grid_model.hpp"
+#include "common/common.hpp"
+#include "common/grouped_index_vector.hpp"
 
+#include <numeric>
 #include <ranges>
 
 namespace power_grid_model {
@@ -51,7 +50,7 @@ struct SparseIndexMapping {
 ///     A 0			coupled to B 3
 ///     nothing		coupled to B 4
 ///     A 1			coupled	to B 5
-///     nothing	coupled to B 6
+///     nothing	    coupled to B 6
 inline SparseIndexMapping build_sparse_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
     using SparseEntry = std::pair<Idx, Idx>;
 
@@ -138,5 +137,3 @@ inline DenseIndexMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx co
 }
 
 } // namespace power_grid_model
-
-#endif

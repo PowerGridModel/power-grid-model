@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_SENSOR_HPP
-#define POWER_GRID_MODEL_COMPONENT_SENSOR_HPP
 
 #include "base.hpp"
 
@@ -12,8 +10,8 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model {
 
@@ -46,5 +44,3 @@ class Sensor : public Base {
 };
 
 } // namespace power_grid_model
-
-#endif

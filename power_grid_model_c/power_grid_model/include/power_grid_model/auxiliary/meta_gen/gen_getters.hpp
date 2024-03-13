@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_META_GEN_GEN_GETTERS_HPP
-#define POWER_GRID_MODEL_AUXILIARY_META_GEN_GEN_GETTERS_HPP
 
+#include "../../common/component_list.hpp"
+#include "../../common/counting_iterator.hpp"
 #include "../meta_data.hpp"
 
 namespace power_grid_model::meta_data::meta_data_gen {
@@ -43,7 +43,7 @@ template <class StructType, auto member_ptr, size_t offset, auto attribute_name_
             ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
             if constexpr (std::same_as<ValueType, double>) {
                 return std::abs(y - x) < (std::abs(x) * rtol + atol);
-            } else if constexpr (std::same_as<ValueType, RealValue<false>>) {
+            } else if constexpr (std::same_as<ValueType, RealValue<asymmetric_t>>) {
                 return (abs(y - x) < (abs(x) * rtol + atol)).all();
             } else {
                 return x == y;
@@ -96,5 +96,3 @@ struct get_meta_data<comp_list, dataset_mark<dataset_name_getter, struct_getter>
 };
 
 } // namespace power_grid_model::meta_data::meta_data_gen
-
-#endif

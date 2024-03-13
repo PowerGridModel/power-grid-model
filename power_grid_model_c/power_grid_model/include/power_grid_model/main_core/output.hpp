@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_OUTPUT_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_OUTPUT_HPP
 
 #include "state.hpp"
 
@@ -100,7 +98,7 @@ template <std::same_as<Node> Component, class ComponentContainer, steady_state_m
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Node, Idx2D>(state, res_it, [&math_output](Node const& node, Idx2D math_id) {
-        constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+        using sym = typename MathOutputType::sym;
 
         if (math_id.group == -1) {
             return node.get_null_output<sym>();
@@ -129,7 +127,7 @@ template <std::derived_from<Branch> Component, class ComponentContainer, steady_
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Branch const& branch, Idx2D math_id) {
-        constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+        using sym = typename MathOutputType::sym;
 
         if (math_id.group == -1) {
             return branch.get_null_output<sym>();
@@ -158,7 +156,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2DBranch3>(
         state, res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
-            constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+            using sym = typename MathOutputType::sym;
 
             if (math_id.group == -1) {
                 return branch3.get_null_output<sym>();
@@ -204,7 +202,7 @@ template <std::same_as<Source> Component, class ComponentContainer, steady_state
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Source const& source, Idx2D math_id) {
-        constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+        using sym = typename MathOutputType::sym;
 
         if (math_id.group == -1) {
             return source.get_null_output<sym>();
@@ -233,7 +231,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
         state, res_it, [&math_output](GenericLoadGen const& load_gen, Idx2D math_id) {
-            constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+            using sym = typename MathOutputType::sym;
 
             if (math_id.group == -1) {
                 return load_gen.get_null_output<sym>();
@@ -258,7 +256,7 @@ template <std::same_as<Shunt> Component, class ComponentContainer, steady_state_
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Shunt const& shunt, Idx2D math_id) {
-        constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+        using sym = typename MathOutputType::sym;
 
         if (math_id.group == -1) {
             return shunt.get_null_output<sym>();
@@ -287,7 +285,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
         state, res_it, [&state, &math_output](GenericVoltageSensor const& voltage_sensor, Idx const node_seq) {
-            constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+            using sym = typename MathOutputType::sym;
 
             Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
             if (node_math_id.group == -1) {
@@ -315,7 +313,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
         state, res_it, [&state, &math_output](GenericPowerSensor const& power_sensor, Idx const obj_seq) {
-            constexpr auto sym = symmetric_math_output_type<MathOutputType>;
+            using sym = typename MathOutputType::sym;
 
             auto const terminal_type = power_sensor.get_terminal_type();
             Idx2D const obj_math_id = [&]() {
@@ -418,5 +416,3 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 } // namespace power_grid_model::main_core
-
-#endif

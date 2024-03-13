@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_Y_BUS_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_Y_BUS_HPP
 
 #include "../calculation_parameters.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
+#include <memory>
+#include <numeric>
 #include <ranges>
 
 namespace power_grid_model {
@@ -275,7 +275,7 @@ struct YBusStructure {
 };
 
 // See also "Node Admittance Matrix" in "State Estimation Alliander"
-template <bool sym> class YBus {
+template <symmetry_tag sym> class YBus {
   public:
     using ParamChangedCallback = std::function<void(bool param_changed)>;
 
@@ -542,13 +542,11 @@ template <bool sym> class YBus {
     }
 };
 
-template class YBus<true>;
-template class YBus<false>;
+template class YBus<symmetric_t>;
+template class YBus<asymmetric_t>;
 
 } // namespace math_solver
 
 using math_solver::YBus;
 
 } // namespace power_grid_model
-
-#endif

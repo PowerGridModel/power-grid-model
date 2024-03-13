@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/power_grid_model.hpp>
-#include <power_grid_model/typing.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/typing.hpp>
 
 #include <doctest/doctest.h>
 

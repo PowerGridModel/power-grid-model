@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_DATASET_HPP
-#define POWER_GRID_MODEL_AUXILIARY_DATASET_HPP
 
 // define dataset classes with void pointers
 
-#include "../power_grid_model.hpp"
+#include "dataset_fwd.hpp"
+
+#include "../common/common.hpp"
+
+#include <cassert>
+#include <map>
 
 namespace power_grid_model {
 
@@ -24,8 +27,19 @@ namespace power_grid_model {
 //     the indptr is a nullptr, for i-th sets,
 //          the set data is in the range [ i * elements_per_scenario, (i + 1) * elements_per_scenario )
 
-template <bool is_const> class DataPointer {
-    template <class T> using ptr_t = std::conditional_t<is_const, T const*, T*>;
+template <dataset_type_tag T> constexpr bool is_const_dataset_v = std::same_as<T, const_dataset_t>;
+
+static_assert(dataset_type_tag<const_dataset_t>);
+static_assert(dataset_type_tag<mutable_dataset_t>);
+static_assert(is_const_dataset_v<const_dataset_t>);
+static_assert(!is_const_dataset_v<mutable_dataset_t>);
+
+template <dataset_type_tag dataset_type_> class DataPointer {
+  public:
+    using dataset_type = dataset_type_;
+
+  private:
+    template <class T> using ptr_t = std::conditional_t<is_const_dataset_v<dataset_type>, T const*, T*>;
 
   public:
     DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, elements_per_scenario_{} {}
@@ -84,10 +98,10 @@ template <bool is_const> class DataPointer {
     }
 
     // conversion to const iterator
-    explicit operator DataPointer<true>() const
-        requires(!is_const)
+    explicit operator DataPointer<const_dataset_t>() const
+        requires(!is_const_dataset_v<dataset_type>)
     {
-        return DataPointer<true>{ptr_, indptr_, batch_size_, elements_per_scenario_};
+        return DataPointer<const_dataset_t>{ptr_, indptr_, batch_size_, elements_per_scenario_};
     }
 
   private:
@@ -97,12 +111,10 @@ template <bool is_const> class DataPointer {
     Idx elements_per_scenario_; // number of data points per batch, -1 for variable batches
 };
 
-using MutableDataPointer = DataPointer<false>;
-using ConstDataPointer = DataPointer<true>;
+using MutableDataPointer = DataPointer<mutable_dataset_t>;
+using ConstDataPointer = DataPointer<const_dataset_t>;
 
 using Dataset = std::map<std::string, MutableDataPointer>;
 using ConstDataset = std::map<std::string, ConstDataPointer>;
 
 } // namespace power_grid_model
-
-#endif

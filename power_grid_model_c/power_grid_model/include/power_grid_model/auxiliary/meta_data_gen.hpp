@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_META_DATA_GEN_HPP
-#define POWER_GRID_MODEL_META_DATA_GEN_HPP
 
 #include "input.hpp"
 #include "meta_data.hpp"
@@ -16,7 +14,7 @@
 #include "update.hpp"
 
 #include "../all_components.hpp"
-#include "../power_grid_model.hpp"
+#include "../common/common.hpp"
 
 #include <map>
 #include <string>
@@ -34,10 +32,10 @@ template <class T> struct update_getter_s {
     using type = typename T::UpdateType;
 };
 template <class T> struct sym_output_getter_s {
-    using type = typename T::template OutputType<true>;
+    using type = typename T::template OutputType<symmetric_t>;
 };
 template <class T> struct asym_output_getter_s {
-    using type = typename T::template OutputType<false>;
+    using type = typename T::template OutputType<asymmetric_t>;
 };
 template <class T> struct sc_output_getter_s {
     using type = typename T::ShortCircuitOutputType;
@@ -58,5 +56,3 @@ constexpr MetaData meta_data = get_meta_data<AllComponents, // all components li
 constexpr MetaData meta_data = meta_data_gen::meta_data;
 
 } // namespace power_grid_model::meta_data
-
-#endif

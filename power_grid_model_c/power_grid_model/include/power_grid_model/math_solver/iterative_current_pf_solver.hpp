@@ -4,8 +4,6 @@
 
 // Check if the name means anything
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 
 /*
 Iterative Power Flow
@@ -61,10 +59,10 @@ Nomenclature:
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::math_solver {
 
@@ -72,7 +70,8 @@ namespace power_grid_model::math_solver {
 namespace iterative_current_pf {
 
 // solver
-template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
+template <symmetry_tag sym>
+class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
   public:
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
@@ -190,13 +189,11 @@ template <bool sym> class IterativeCurrentPFSolver : public IterativePFSolver<sy
     }
 };
 
-template class IterativeCurrentPFSolver<true>;
-template class IterativeCurrentPFSolver<false>;
+template class IterativeCurrentPFSolver<symmetric_t>;
+template class IterativeCurrentPFSolver<asymmetric_t>;
 
 } // namespace iterative_current_pf
 
 using iterative_current_pf::IterativeCurrentPFSolver;
 
 } // namespace power_grid_model::math_solver
-
-#endif

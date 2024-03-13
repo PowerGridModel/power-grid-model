@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MAIN_CORE_UPDATE_HPP
-#define POWER_GRID_MODEL_MAIN_CORE_UPDATE_HPP
 
 #include "state.hpp"
 
@@ -104,10 +102,10 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
         begin, end, sequence_idx);
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
     auto& y_bus_vec = [&math_state]() -> auto& {
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             return math_state.y_bus_vec_sym;
         } else {
             return math_state.y_bus_vec_asym;
@@ -122,11 +120,11 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
     }
 }
 
-template <bool sym>
+template <symmetry_tag sym>
 inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
                          std::vector<MathModelParamIncrement> const& math_model_param_increments) {
     auto& y_bus_vec = [&math_state]() -> auto& {
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             return math_state.y_bus_vec_sym;
         } else {
             return math_state.y_bus_vec_asym;
@@ -144,5 +142,3 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
 }
 
 } // namespace power_grid_model::main_core
-
-#endif

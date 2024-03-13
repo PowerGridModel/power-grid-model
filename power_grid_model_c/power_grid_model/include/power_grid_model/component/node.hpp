@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_NODE_HPP
-#define POWER_GRID_MODEL_COMPONENT_NODE_HPP
 
 #include "base.hpp"
 
@@ -12,15 +10,15 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
 class Node final : public Base {
   public:
     using InputType = NodeInput;
-    template <bool sym> using OutputType = NodeOutput<sym>;
+    template <symmetry_tag sym> using OutputType = NodeOutput<sym>;
     using ShortCircuitOutputType = NodeShortCircuitOutput;
     static constexpr char const* name = "node";
     constexpr ComponentType math_model_type() const override { return ComponentType::node; }
@@ -32,7 +30,7 @@ class Node final : public Base {
     static constexpr BaseUpdate inverse(BaseUpdate update_data) { return update_data; }
 
     // energized
-    template <bool sym>
+    template <symmetry_tag sym>
     NodeOutput<sym> get_output(ComplexValue<sym> const& u_pu, ComplexValue<sym> const& bus_injection) const {
         NodeOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
@@ -44,21 +42,21 @@ class Node final : public Base {
         return output;
     }
 
-    NodeShortCircuitOutput get_sc_output(ComplexValue<false> const& u_pu) const {
+    NodeShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> const& u_pu) const {
         NodeShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         output.u_pu = cabs(u_pu);
-        output.u = u_scale<false> * u_rated_ * output.u_pu;
+        output.u = u_scale<asymmetric_t> * u_rated_ * output.u_pu;
         output.u_angle = arg(u_pu);
 
         return output;
     }
-    NodeShortCircuitOutput get_sc_output(ComplexValue<true> const& u_pu) const {
+    NodeShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& u_pu) const {
         // Convert the input positive sequence voltage to phase voltage
-        ComplexValue<false> const uabc_pu{u_pu};
+        ComplexValue<asymmetric_t> const uabc_pu{u_pu};
         return get_sc_output(uabc_pu);
     }
-    template <bool sym> NodeOutput<sym> get_null_output() const {
+    template <symmetry_tag sym> NodeOutput<sym> get_null_output() const {
         NodeOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
@@ -78,5 +76,3 @@ class Node final : public Base {
 };
 
 } // namespace power_grid_model
-
-#endif
