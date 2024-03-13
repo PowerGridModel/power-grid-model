@@ -53,9 +53,9 @@ TEST_CASE("Necessary observability check") {
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1, 1};
-    se_input.measured_voltage = {{1.0, 1.0}};
-    se_input.measured_bus_injection = {{1.0}};
-    se_input.measured_branch_from_power = {{1.0}};
+    se_input.measured_voltage = {{1.0 + 1.0i, 1.0}};
+    se_input.measured_bus_injection = {{1.0, 1.0, 1.0}};
+    se_input.measured_branch_from_power = {{1.0, 1.0, 1.0}};
 
     SUBCASE("Observable grid") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -78,7 +78,7 @@ TEST_CASE("Necessary observability check") {
 
         SUBCASE("voltage phasor unavailable condition for unobservable grid") {
             // setting only real part of measurement makes it magnitude sensor
-            se_input.measured_voltage = {{1.0, nan}};
+            se_input.measured_voltage = {{1.0, 1.0}};
             observability_subcase(topo, param, se_input);
         }
 
@@ -89,7 +89,7 @@ TEST_CASE("Necessary observability check") {
         SUBCASE("Parallel branch get counted as one sensor") {
             // Add sensor on branch 3 to side. Hence 2 parallel sensors
             topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 1}};
-            se_input.measured_branch_to_power = {{1.0}};
+            se_input.measured_branch_to_power = {{1.0, 1.0, 1.0}};
             observability_subcase(topo, param, se_input);
         }
     }
