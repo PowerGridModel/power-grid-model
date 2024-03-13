@@ -71,7 +71,7 @@ TEST_CASE("Necessary observability check") {
         se_input.measured_voltage = {};
         observability_subcase(topo, param, se_input);
     }
-    SUBCASE("Count sensors")    {
+    SUBCASE("Count sensors") {
         // reduce 1 injection power sensor in upcoming cases
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
         se_input.measured_bus_injection = {};
