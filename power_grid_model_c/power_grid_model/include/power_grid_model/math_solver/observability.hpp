@@ -39,19 +39,13 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
             n_injection_sensor++;
         }
     }
-    // for (BranchIdx const branch : branch_bus_idx) {
-    //     if (measured_values.has_branch_from(branch_bus_idx[0]) || measured_values.has_branch_to(branch_bus_idx[0]) ||
-    //         measured_values.has_branch_from(branch_bus_idx[1]) || measured_values.has_branch_to(branch_bus_idx[1])) {
-    //         n_branch_sensor++;
-    //     }
-    // }
-    n_branch_sensor = 1000;
 
     Idx const n_power_sensor = n_branch_sensor + n_injection_sensor;
 
     if (n_voltage_phasor_sensor == 0 && n_power_sensor < n_bus_ - 1) {
         throw NotObservableError{};
-    } else if (n_voltage_phasor_sensor > 0 && n_power_sensor + n_voltage_phasor_sensor < n_bus_) {
+    }
+    if (n_power_sensor + n_voltage_phasor_sensor < n_bus_) {
         throw NotObservableError{};
     }
 }
