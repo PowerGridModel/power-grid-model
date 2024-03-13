@@ -28,18 +28,18 @@ A dense batch array is a two-dimensional structured numpy array containing a lis
 the same type for each scenario.
 """
 
-SparseBatchArray = Dict[str, np.ndarray]
+SparseBatchArray = Dict[str, Union[np.ndarray, SingleArray]]
 """
 A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
-- data: a one-dimensional structured numpy array. The exact dtype depends on the type of component.
+- data: a :class:`SingleArray`. The exact dtype depends on the type of component.
 - indptr: a one-dimensional numpy int64 array containing n+1 elements where n is the amount of scenarios.
     - The elements are the indices in the data that point to the first element of that scenario.
     - The last element is one after the data index of the last element of the last scenario.
     - Usually, the last element will therefore be the size of the data.
 
 - Examples:
-    - structure: {"indptr": <1d-array>, "data": SingleArray}
+    - structure: {"indptr": <1d-array>, "data": :class:`SingleArray`}
     - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
         - the scenario 0 sets the statuses of components ids 0 and 1 to 1 (and keeps defaults for other components)
         - scenario 1 keeps the default values for all components
@@ -48,42 +48,36 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
 BatchArray = Union[DenseBatchArray, SparseBatchArray]
 """
-A batch is a either a dense or a sparse batch array.
-
-- Examples:
-    - dense: <2d-array>
-    - sparse: {"indptr": SingleArray, "data": SingleArray}
+A batch array is a either a :class:`DenseBatchArray` or a :class:`SparseBatchArray`.
 """
 
 DataArray = Union[SingleArray, BatchArray]
 """
-A data array can be a single or a batch array. It is a numpy structured array.
+A data array can be a :class:`SingleArray` or a :class:`BatchArray`.
 """
 
 SingleDataset = Union[SingleArray]
 """
-A single dataset is a dictionary where the keys are the component types and the values are one-dimensional
-structured numpy arrays.
+A single dataset is a dictionary where the keys are the component types and the values are
+:class:`SingleArray`s
 
-- Example: {"node": SingleArray, "line": SingleArray}
+- Example: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
 """
 
 BatchDataset = Dict[str, BatchArray]
 """
-A batch dataset is a dictionary where the keys are the component types and the values are either two-dimensional
-structured numpy arrays (dense batch array) or dictionaries with an indptr and a one-dimensional structured numpy
-array (sparse batch array).
+A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchArray`s
 
-- Example: {"node": <2d-array>, "line": {"indptr": SingleArray, "data": SingleArray}}
+- Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
 
 Dataset = Union[SingleDataset, BatchDataset]
 """
-A general data set can be a single or a batch dataset.
+A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
 - Examples:
-    - single: {"node": SingleArray, "line": SingleArray}
-    - batch: {"node": <2d-array>, "line": {"indptr": SingleArray, "data": SingleArray}}
+    - single: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
+    - batch: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
 
 BatchList = List[SingleDataset]
@@ -91,7 +85,7 @@ BatchList = List[SingleDataset]
 A batch list is an alternative representation of a batch. It is a list of single datasets, where each single dataset
 is actually a batch. The batch list is intended as an intermediate data type, during conversions.
 
-- Example: [{"node": SingleArray, "line": SingleArray}, {"node": SingleArray, "line": SingleArray}]
+- Example: [:class:`SingleDataset`, {"node": :class:`SingleDataset`}]
 """
 
 NominalValue = int
