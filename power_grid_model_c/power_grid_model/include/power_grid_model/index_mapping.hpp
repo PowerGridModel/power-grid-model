@@ -134,8 +134,13 @@ struct IndexMappingCriterion {
     }
 };
 
+#ifdef _WIND32
 constexpr IndexMappingCriterion index_mapping_criterion_gcc{
-    .coeff_1 = -0.62458071347, .coeff_2 = -0.00038127964, .coeff_3 = -996.744708763};
+    .coeff_1 = -1.4407094632018602, .coeff_2 = 0.060335413266752236, .coeff_3 = -130.95675432669466};
+#else
+constexpr IndexMappingCriterion index_mapping_criterion_gcc{
+    .coeff_1 = 0.00733595283054587, .coeff_2 = -0.01888288636738604, .coeff_3 = -20.338844396105696};
+#endif
 
 } // namespace index_mapping::detail
 
