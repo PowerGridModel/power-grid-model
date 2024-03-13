@@ -12,7 +12,7 @@ namespace power_grid_model::math_solver {
 
 template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values,
-                                          std::shared_ptr<MathModelTopology const> topo) {
+                                          std::shared_ptr<MathModelTopology const> const& topo) {
 
     Idx const n_bus{topo->n_bus()};
     std::vector<BranchIdx> const& branch_bus_idx{topo->branch_bus_idx};
