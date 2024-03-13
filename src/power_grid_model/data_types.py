@@ -61,14 +61,14 @@ A data array can be a :class:`SingleArray` or a :class:`BatchArray`.
 SingleDataset = Union[SingleArray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are
-:class:`SingleArray`s
+:class:`SingleArray`
 
 - Example: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
 """
 
 BatchDataset = Dict[str, BatchArray]
 """
-A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchArray`s
+A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchArray`
 
 - Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
