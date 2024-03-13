@@ -33,6 +33,7 @@ SparseBatchArray = Dict[str, Union[np.ndarray, SingleArray]]
 A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
 - data: a :class:`SingleArray`. The exact dtype depends on the type of component.
+
 - indptr: a one-dimensional numpy int64 array containing n+1 elements where n is the amount of scenarios.
     - The elements are the indices in the data that point to the first element of that scenario.
     - The last element is one after the data index of the last element of the last scenario.
@@ -40,6 +41,7 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
 - Examples:
     - structure: {"indptr": <1d-array>, "data": :class:`SingleArray`}
+
     - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
         - the scenario 0 sets the statuses of components ids 0 and 1 to 1 (and keeps defaults for other components)
         - scenario 1 keeps the default values for all components
@@ -115,7 +117,7 @@ When representing a grid as a native python structure, each attribute (u_rated e
 a real value, or a tuple of three real values.
 
 - Examples:
-    - real: 10500.0    
+    - real: 10500.0
     - nominal: 123
     - asym: (10400.0, 10500.0, 10600.0)
 """
