@@ -14,7 +14,7 @@ template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values,
                                           std::shared_ptr<MathModelTopology const> topo) {
 
-    Idx n_bus{topo->n_bus()};
+    Idx const n_bus{topo->n_bus()};
     std::vector<BranchIdx> const& branch_bus_idx{topo->branch_bus_idx};
     Idx n_voltage_magnitude_sensor{};
     Idx n_voltage_phasor_sensor{};
