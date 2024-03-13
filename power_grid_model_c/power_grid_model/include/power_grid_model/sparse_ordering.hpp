@@ -3,14 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_SPARSE_ORDERING_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_SPARSE_ORDERING_HPP
 
-#include "power_grid_model.hpp"
+#include "common/common.hpp"
 
-#include <algorithm> // remove and remove_if
+#include <algorithm>
 #include <map>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -200,5 +197,3 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
     return {alpha, fills};
 }
 } // namespace power_grid_model
-
-#endif
