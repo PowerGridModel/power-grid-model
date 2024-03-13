@@ -60,7 +60,7 @@ DataArray = Union[SingleArray, BatchArray]
 A data array can be a :class:`SingleArray` or a :class:`BatchArray`.
 """
 
-SingleDataset = Union[SingleArray]
+SingleDataset = Dict[str, SingleArray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are
 :class:`SingleArray`
