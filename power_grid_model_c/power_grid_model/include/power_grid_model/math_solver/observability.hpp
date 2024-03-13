@@ -44,7 +44,7 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
 
     // count branch measurements
     std::vector<bool> measured_nodes(n_bus, false);
-    for (Idx branch = 0; branch != branch_bus_idx.size(); ++branch) {
+    for (Idx branch = 0; branch != static_cast<Idx>(branch_bus_idx.size()); ++branch) {
         auto const& [node_from, node_to] = branch_bus_idx[branch];
         if (node_from == -1 || node_to == -1) {
             continue;
