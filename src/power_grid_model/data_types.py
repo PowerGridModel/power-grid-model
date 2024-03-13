@@ -18,6 +18,7 @@ SingleArray = Union[np.ndarray]
 A single array is a one-dimensional structured containing a list of components of the same type.
 
 - Examples:
+
     - structure: <1d-array>
     - concrete: array([(0, 10500.0), (0, 10500.0)], dtype=power_grid_meta_data["input"]["node"].dtype)
 """
@@ -33,16 +34,17 @@ SparseBatchArray = Dict[str, Union[np.ndarray, SingleArray]]
 A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
 - data: a :class:`SingleArray`. The exact dtype depends on the type of component.
-
 - indptr: a one-dimensional numpy int64 array containing n+1 elements where n is the amount of scenarios.
+
     - The elements are the indices in the data that point to the first element of that scenario.
     - The last element is one after the data index of the last element of the last scenario.
     - Usually, the last element will therefore be the size of the data.
 
 - Examples:
-    - structure: {"indptr": <1d-array>, "data": :class:`SingleArray`}
 
+    - structure: {"indptr": <1d-array>, "data": :class:`SingleArray`}
     - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
+
         - the scenario 0 sets the statuses of components ids 0 and 1 to 1 (and keeps defaults for other components)
         - scenario 1 keeps the default values for all components
         - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
@@ -78,6 +80,7 @@ Dataset = Union[SingleDataset, BatchDataset]
 A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
 - Examples:
+
     - single: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
     - batch: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
@@ -117,6 +120,7 @@ When representing a grid as a native python structure, each attribute (u_rated e
 a real value, or a tuple of three real values.
 
 - Examples:
+
     - real: 10500.0
     - nominal: 123
     - asym: (10400.0, 10500.0, 10600.0)
