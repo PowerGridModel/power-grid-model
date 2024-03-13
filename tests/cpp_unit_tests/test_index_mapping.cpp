@@ -17,7 +17,7 @@ TEST_CASE("Test sparse mapping") {
     CHECK(mapping.reorder == mapping_2.reorder);
 }
 
-TEST_CASE("Test dense mapping - counting sort") {
+TEST_CASE("Test dense mapping - comparison sort") {
     IdxVector const idx_B_in_A{3, 5, 2, 1, 1, 2};
     DenseIndexMapping const mapping{{1, 1, 2, 2, 3, 5}, {3, 4, 2, 5, 0, 1}};
     DenseIndexMapping const mapping_2 = build_dense_mapping(idx_B_in_A, 7);
@@ -28,18 +28,21 @@ TEST_CASE("Test dense mapping - counting sort") {
     CHECK(mapping_2.indvector.end() - 1 == std::ranges::max_element(mapping_2.indvector));
 }
 
-TEST_CASE("Test dense mapping - comparison sort") {
-    constexpr Idx count{1'000'000};
+TEST_CASE("Test dense mapping - counting sort") {
+    constexpr Idx count{100000};
+    double n_B = 1000.0;
+
+    double decrement = n_B / count;
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {
-        idx_B_in_A[i] = count - 1 - i;
+        idx_B_in_A[i] = n_B - i * decrement;
     }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
     std::ranges::sort(sorted_idx_B_in_A);
 
-    DenseIndexMapping const mapping = build_dense_mapping(idx_B_in_A, count);
+    DenseIndexMapping const mapping = build_dense_mapping(idx_B_in_A, n_B);
 
     CHECK(mapping.indvector == sorted_idx_B_in_A);
     CHECK(mapping.indvector.begin() == std::ranges::min_element(mapping.indvector));
