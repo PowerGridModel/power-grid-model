@@ -153,6 +153,9 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
+          brew install python@3.12 || true
+          brew link --overwrite python@3.12
+          brew pin python@3.12
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
