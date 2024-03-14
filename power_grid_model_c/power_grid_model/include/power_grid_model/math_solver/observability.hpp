@@ -44,7 +44,7 @@ Idx count_bus_injection_sensors(const Idx n_bus, const MeasuredValues<sym>& meas
 }
 
 template <symmetry_tag sym>
-std::tuple<Idx, Idx> const count_voltage_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
+std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
     Idx n_voltage_magnitude{};
     Idx n_voltage_phasor{};
     for (Idx bus = 0; bus != n_bus; ++bus) {
