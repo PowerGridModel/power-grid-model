@@ -87,17 +87,17 @@ In observable systems this helps better outputting correct results. On the other
 
 ##### Necessary observability condition
 
-As per the requirements of observability mentioned above, user needs to satisfy atleast  following conditions for state estimation calculation in power-grid-model. 
+Based on the requirements of observability mentioned above, user needs to satisfy  at least the following conditions for state estimation calculation in power-grid-model.
 
 - `n_voltage_sensor >= 1`
-- If no voltage phasor sensors are available, then following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
+- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
 
-`n_unique_power_sensor` can be calculated as follows:
+`n_unique_power_sensor` can be calculated as sum of following:
 
-- Zero injection present (ie. zero constraint for node)
-- Complete injection at node: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
-- A branch sensor: Parallel branches with either side of measurements count as one.
-- A Branch3 sensor
+- Zero injection or zero power flow constraint if present for all nodes.
+- Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
+- Any sensor on a `Branch` for all branches: Parallel branches with either side of measurements count as one.
+- All `Branch3` sensors.
 
 #### Short circuit calculations
 

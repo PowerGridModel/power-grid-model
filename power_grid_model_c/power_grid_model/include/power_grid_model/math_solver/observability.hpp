@@ -8,11 +8,13 @@
 
 #include "../common/exception.hpp"
 
-namespace power_grid_model::math_solver::detail {
+namespace power_grid_model::math_solver {
+
+namespace detail {
 
 template <symmetry_tag sym>
-Idx const count_branch_sensors(const std::vector<BranchIdx>& branch_bus_idx, const Idx n_bus,
-                               const MeasuredValues<sym>& measured_values) {
+Idx count_branch_sensors(const std::vector<BranchIdx>& branch_bus_idx, const Idx n_bus,
+                         const MeasuredValues<sym>& measured_values) {
     Idx n_branch_sensor{};
     std::vector<bool> measured_nodes(n_bus, false);
     for (Idx branch = 0; branch != static_cast<Idx>(branch_bus_idx.size()); ++branch) {
@@ -31,7 +33,7 @@ Idx const count_branch_sensors(const std::vector<BranchIdx>& branch_bus_idx, con
 }
 
 template <symmetry_tag sym>
-Idx const count_bus_injection_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
+Idx count_bus_injection_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
     Idx n_injection_sensor{};
     for (Idx bus = 0; bus != n_bus; ++bus) {
         if (measured_values.has_bus_injection(bus)) {
@@ -56,6 +58,7 @@ std::tuple<Idx, Idx> const count_voltage_sensors(const Idx n_bus, const Measured
     return std::make_tuple(n_voltage_magnitude, n_voltage_phasor);
 }
 
+} // namespace detail
 template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values,
                                           std::shared_ptr<MathModelTopology const> const& topo) {
@@ -63,12 +66,12 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
     Idx const n_bus{topo->n_bus()};
     std::vector<BranchIdx> const& branch_bus_idx{topo->branch_bus_idx};
 
-    auto const [n_voltage_magnitude, n_voltage_phasor] = count_voltage_sensors(n_bus, measured_values);
+    auto const [n_voltage_magnitude, n_voltage_phasor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_magnitude + n_voltage_phasor < 1) {
         throw NotObservableError{};
     }
-    Idx const n_injection_sensor = count_bus_injection_sensors(n_bus, measured_values);
-    Idx const n_branch_sensor = count_branch_sensors(branch_bus_idx, n_bus, measured_values);
+    Idx const n_injection_sensor = detail::count_bus_injection_sensors(n_bus, measured_values);
+    Idx const n_branch_sensor = detail::count_branch_sensors(branch_bus_idx, n_bus, measured_values);
 
     if (n_voltage_phasor == 0 && n_branch_sensor + n_injection_sensor < n_bus - 1) {
         throw NotObservableError{};
@@ -77,4 +80,5 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
         throw NotObservableError{};
     }
 }
-} // namespace power_grid_model::math_solver::detail
+
+} // namespace power_grid_model::math_solver

@@ -18,7 +18,7 @@ void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetri
     YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
     math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
 
-    CHECK_THROWS_AS(math_solver::detail::necessary_observability_check(measured_values, y_bus.shared_topology()),
+    CHECK_THROWS_AS(math_solver::necessary_observability_check(measured_values, y_bus.shared_topology()),
                     NotObservableError);
 }
 } // namespace
@@ -61,7 +61,7 @@ TEST_CASE("Necessary observability check") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
-        CHECK_NOTHROW(math_solver::detail::necessary_observability_check(measured_values, y_bus.shared_topology()));
+        CHECK_NOTHROW(math_solver::necessary_observability_check(measured_values, y_bus.shared_topology()));
     }
 
     SUBCASE("No voltage sensor") {

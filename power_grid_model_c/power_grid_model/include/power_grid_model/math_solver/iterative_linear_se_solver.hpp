@@ -89,7 +89,7 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
-        detail::necessary_observability_check(measured_values, y_bus.shared_topology());
+        necessary_observability_check(measured_values, y_bus.shared_topology());
 
         // prepare matrix, including pre-factorization
         sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");
