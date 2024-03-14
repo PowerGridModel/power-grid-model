@@ -122,21 +122,22 @@ inline auto build_dense_mapping_counting_sort(IdxVector const& idx_B_in_A, Idx c
                              .reorder = std::move(sparse_result.reorder)};
 }
 
-struct IndexMappingCriterion {
-    double coeff_1{};
-    double coeff_2{};
-    double coeff_3{};
+struct IndexMappingApproachCriterion {
+    double n_a_prefactor{};
+    double n_a_log_n_a_prefactor{};
+    double constant{};
 
     constexpr bool operator()(std::integral auto n_A, std::integral auto n_B) const {
         auto const n_A_ = static_cast<double>(n_A);
         auto const n_B_ = static_cast<double>(n_B);
 
-        return n_B_ < coeff_1 * n_A_ + coeff_2 * n_A_ * log(n_A_) + coeff_3;
+        return n_B_ < n_a_prefactor * n_A_ + n_a_log_n_a_prefactor * n_A_ * log(n_A_) + constant;
     }
 };
 
-constexpr IndexMappingCriterion index_mapping_criterion_gcc{
-    .coeff_1 = -0.00733595283054587, .coeff_2 = 0.01888288636738604, .coeff_3 = 20.338844396105696};
+constexpr IndexMappingApproachCriterion index_mapping_criterion_gcc{.n_a_prefactor = -0.00733595283054587,
+                                                                    .n_a_log_n_a_prefactor = 0.01888288636738604,
+                                                                    .constant = 20.338844396105696};
 
 } // namespace index_mapping::detail
 
