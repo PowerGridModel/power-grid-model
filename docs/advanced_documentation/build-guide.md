@@ -44,7 +44,7 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 * gcc >= 11.0
   * Version 12.x tested using the version in the `manylinux_2_28` container.
   * Version 12.x tested using the musllinux build with custom compiler
-  * Version 11.x tested in CI
+  * Version 13.x tested in CI
 * Clang >= 15.0
   * Version 15.x tested in CI
   * Version 15.x tested in CI with code quality checks
@@ -166,8 +166,8 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-15            # or g++-11
-export CC=clang-15               # gcc-11
+export CXX=clang++-15            # or g++-13
+export CC=clang-15               # gcc-13
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
 export LLVM_COV=llvm-cov-15
 export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
