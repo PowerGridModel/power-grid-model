@@ -11,8 +11,8 @@
 namespace power_grid_model {
 
 namespace {
-void observability_subcase(MathModelTopology const& topo, MathModelParam<symmetric_t> param,
-                           StateEstimationInput<symmetric_t> const& se_input) {
+void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> param,
+                          StateEstimationInput<symmetric_t> const& se_input) {
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
     YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
@@ -25,9 +25,9 @@ void observability_subcase(MathModelTopology const& topo, MathModelParam<symmetr
 
 TEST_CASE("Necessary observability check") {
     /*
-.
-    bus_2 --branch_0-- bus_1 --branch_0-- bus_0 -- source
-          --branch_1--
+                  /-branch_0-\
+            bus_2              bus_1 --branch_0-- bus_0 -- source
+                  \-branch_1-/
     */
     MathModelTopology topo;
     topo.slack_bus = 0;
@@ -61,15 +61,13 @@ TEST_CASE("Necessary observability check") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
-
-        // Should not throw exception
-        math_solver::necessary_observability_check(measured_values, y_bus.shared_topology());
+        CHECK_NOTHROW(math_solver::necessary_observability_check(measured_values, y_bus.shared_topology()));
     }
 
     SUBCASE("No voltage sensor") {
         topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
         se_input.measured_voltage = {};
-        observability_subcase(topo, param, se_input);
+        check_not_observable(topo, param, se_input);
     }
     SUBCASE("Count sensors") {
         // reduce 1 injection power sensor in upcoming cases
@@ -79,18 +77,18 @@ TEST_CASE("Necessary observability check") {
         SUBCASE("voltage phasor unavailable condition for unobservable grid") {
             // setting only real part of measurement makes it magnitude sensor
             se_input.measured_voltage = {{{1.0, nan}, 1.0}};
-            observability_subcase(topo, param, se_input);
+            check_not_observable(topo, param, se_input);
         }
 
         SUBCASE("voltage phasor available condition for unobservable grid") {
-            observability_subcase(topo, param, se_input);
+            check_not_observable(topo, param, se_input);
         }
 
         SUBCASE("Parallel branch get counted as one sensor") {
             // Add sensor on branch 3 to side. Hence 2 parallel sensors
             topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 1}};
             se_input.measured_branch_to_power = {{1.0, 1.0, 1.0}};
-            observability_subcase(topo, param, se_input);
+            check_not_observable(topo, param, se_input);
         }
     }
 }
