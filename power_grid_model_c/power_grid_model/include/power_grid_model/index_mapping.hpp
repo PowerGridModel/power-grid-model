@@ -130,17 +130,13 @@ struct IndexMappingCriterion {
     constexpr bool operator()(std::integral auto n_A, std::integral auto n_B) const {
         auto const n_A_ = static_cast<double>(n_A);
         auto const n_B_ = static_cast<double>(n_B);
-        return n_A < coeff_1 * n_B_ + coeff_2 * n_A_ * log(n_A_) + coeff_3;
+
+        return n_B_ < coeff_1 * n_A_ + coeff_2 * n_A_ * log(n_A_) + coeff_3;
     }
 };
 
-#ifdef _WIN32
 constexpr IndexMappingCriterion index_mapping_criterion_gcc{
-    .coeff_1 = -1.4407094632018602, .coeff_2 = 0.060335413266752236, .coeff_3 = -130.95675432669466};
-#else
-constexpr IndexMappingCriterion index_mapping_criterion_gcc{
-    .coeff_1 = 0.00733595283054587, .coeff_2 = -0.01888288636738604, .coeff_3 = -20.338844396105696};
-#endif
+    .coeff_1 = -0.00733595283054587, .coeff_2 = 0.01888288636738604, .coeff_3 = 20.338844396105696};
 
 } // namespace index_mapping::detail
 
