@@ -325,15 +325,17 @@ class Topology {
         }
 
         auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
-        std::ranges::copy(reordered, std::back_inserter(dfs_node));
 
-        auto const permuted_node_idx = [&dfs_node](Idx node_idx) {
-            return narrow_cast<Idx>(std::distance(dfs_node.begin(), std::ranges::find(dfs_node, node_idx)));
+        const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
+        auto const permuted_node_idx = [n_non_cyclic_nodes, &reordered](Idx node_idx) {
+            return n_non_cyclic_nodes +
+                   narrow_cast<Idx>(std::distance(reordered.begin(), std::ranges::find(reordered, node_idx)));
         };
 
+        std::ranges::copy(reordered, std::back_inserter(dfs_node));
         for (auto [from, to] : fills) {
-            auto from_reordered = permuted_node_idx(reordered[from]);
-            auto to_reordered = permuted_node_idx(reordered[to]);
+            auto from_reordered = permuted_node_idx(from);
+            auto to_reordered = permuted_node_idx(to);
             fill_in.push_back({from_reordered, to_reordered});
         }
 

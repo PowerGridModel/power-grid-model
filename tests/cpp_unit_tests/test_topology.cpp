@@ -259,7 +259,7 @@ TEST_CASE("Test topology") {
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
     math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 7};
-    math0.fill_in = {{4, 2}};
+    math0.fill_in = {{3, 2}};
 
     // Sub graph / math model 1
     MathModelTopology math1;
@@ -395,7 +395,7 @@ TEST_CASE("Test cycle reorder") {
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
         comp_coup_ref.node = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {0, 4}, {0, 5}, {0, 6}};
-        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {3, 6}, {6, 4}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {2, 6}, {6, 4}};
 
         Topology topo{comp_topo, comp_conn};
         auto pair = topo.build_topology();
