@@ -80,6 +80,14 @@ struct ThreeWindingTransformerUpdate {
     operator Branch3Update const&() const { return reinterpret_cast<Branch3Update const&>(*this); }
 };
 
+struct TransformerTapRegulatorUpdate{
+    double u_set;  // voltage setpoint
+    double u_band;  // voltage bandwidth
+    bool enabled;  //regulator enabled
+    double line_drop_compensation_r;  // line drop compensation resistance
+    double line_drop_compensation_x;  // line drop compensation reactance
+};
+
 template <symmetry_tag sym_type>
 struct LoadGenUpdate {
     using sym = sym_type;
