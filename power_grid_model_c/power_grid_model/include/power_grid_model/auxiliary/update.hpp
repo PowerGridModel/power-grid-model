@@ -81,11 +81,16 @@ struct ThreeWindingTransformerUpdate {
 };
 
 struct TransformerTapRegulatorUpdate{
+    ID id;  // ID of the object
     double u_set;  // voltage setpoint
     double u_band;  // voltage bandwidth
     bool enabled;  //regulator enabled
     double line_drop_compensation_r;  // line drop compensation resistance
     double line_drop_compensation_x;  // line drop compensation reactance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
 template <symmetry_tag sym_type>
