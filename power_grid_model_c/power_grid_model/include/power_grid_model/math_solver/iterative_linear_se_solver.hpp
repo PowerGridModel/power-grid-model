@@ -9,6 +9,7 @@
 #include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
 #include "measured_values.hpp"
+#include "observability.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
@@ -88,6 +89,7 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
+        necessary_observability_check(measured_values, y_bus.shared_topology());
 
         // prepare matrix, including pre-factorization
         sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");

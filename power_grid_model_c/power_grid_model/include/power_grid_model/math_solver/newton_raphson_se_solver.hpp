@@ -9,6 +9,7 @@
 #include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
 #include "measured_values.hpp"
+#include "observability.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -152,6 +153,7 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
+        necessary_observability_check(measured_values, y_bus.shared_topology());
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");

@@ -165,7 +165,7 @@ $$
 ### Transformer
 
 `transformer` is a {hoverxreftooltip}`user_manual/components:branch` which connects two nodes with possibly different voltage
-levels.
+levels. An example of usage of transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb)
 
 #### Input
 
@@ -276,7 +276,7 @@ switches are always defined at side 1, 2, or 3 of the branch. In reality such sw
 ### Three-Winding Transformer
 
 `three_winding_transformer` is a {hoverxreftooltip}`user_manual/components:branch3` connects three nodes with possibly different
-voltage levels.
+voltage levels. An example of usage of three-winding transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb).
 
 #### Input
 
