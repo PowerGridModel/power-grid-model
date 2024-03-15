@@ -76,16 +76,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fix kernel mmap rnd bits
+        # https://github.com/actions/runner-images/issues/9491
+        continue-on-error: true
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
       - name: Install packages
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build clang-15
+
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json msgpack-cxx doctest
+
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
