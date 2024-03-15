@@ -78,6 +78,11 @@ class SparseMatrixError : public PowerGridError {
     }
 };
 
+class NotObservableError : public PowerGridError {
+  public:
+    NotObservableError() { append_msg("Not enough measurements available for state estimation.\n"); }
+};
+
 class IterationDiverge : public PowerGridError {
   public:
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
