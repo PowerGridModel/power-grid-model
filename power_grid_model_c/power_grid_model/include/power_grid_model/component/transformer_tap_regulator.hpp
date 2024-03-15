@@ -38,6 +38,12 @@ class TransformerTapRegulator : public Base {
         line_drop_compensation_x_ = update_data.line_drop_compensation_x;
     }
 
+    TransformerTapRegulatorOutput get_output(IntS const& tap_pos) {
+        TransformerTapRegulatorOutput output{};
+        output.id = id();
+        output.tap_pos = tap_pos;
+    }
+
   private:
     // transformer tap regulator parameters
     ID transformer_id_;
