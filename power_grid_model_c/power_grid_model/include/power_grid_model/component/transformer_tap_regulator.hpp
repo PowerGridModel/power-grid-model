@@ -6,6 +6,10 @@
 
 #include "base.hpp"
 
+#include "../auxiliary/input.hpp"
+#include "../auxiliary/output.hpp"
+#include "../auxiliary/update.hpp"
+
 namespace power_grid_model {
 
 class TransformerTapRegulator : public Base {
@@ -23,6 +27,16 @@ class TransformerTapRegulator : public Base {
           enabled_{transformer_tap_regulator_input.enabled},
           line_drop_compensation_r_{transformer_tap_regulator_input.line_drop_compensation_r},
           line_drop_compensation_x_{transformer_tap_regulator_input.line_drop_compensation_x} {}
+
+    // update for transformer tap regulator, hide default update for branch
+    void update(TransformerTapRegulatorUpdate const& update_data) {
+        assert(update_data.id == id());
+        u_set_ = update_data.u_set;
+        u_band_ = update_data.u_band;
+        enabled_ = update_data.enabled;
+        line_drop_compensation_r_ = update_data.line_drop_compensation_r;
+        line_drop_compensation_x_ = update_data.line_drop_compensation_x;
+    }
 
   private:
     // transformer tap regulator parameters
