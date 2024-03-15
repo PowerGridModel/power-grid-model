@@ -89,6 +89,7 @@ examples/Short Circuit Example.ipynb
 examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
 examples/Asymmetric Calculation Example.ipynb
+examples/Transformer Examples.ipynb
 ```
 
 ```{toctree}
