@@ -95,8 +95,7 @@ using AsymBranch3Output = Branch3Output<asymmetric_t>;
 struct TransformerTapRegulatorOutput{    
     ID id;  // ID of the object
     IntS tap_pos;  // result of regulated tap position
-    bool reach_limit;  // if the tap position is reaching tap_max or tap_min
-
+    
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
