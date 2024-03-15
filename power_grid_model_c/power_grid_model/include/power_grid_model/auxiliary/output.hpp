@@ -6,14 +6,12 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_OUTPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_OUTPUT_HPP
 
 #include "meta_data.hpp"
 
-#include "../enum.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -22,8 +20,10 @@ struct BaseOutput {
     IntS energized;  // whether the object is energized
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct NodeOutput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
     RealValue<sym> u_pu;  // voltage magnitude and angle
@@ -37,11 +37,13 @@ struct NodeOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-using SymNodeOutput = NodeOutput<true>;
-using AsymNodeOutput = NodeOutput<false>;
+using SymNodeOutput = NodeOutput<symmetric_t>;
+using AsymNodeOutput = NodeOutput<asymmetric_t>;
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct BranchOutput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
     double loading;  // loading of the branch
@@ -59,11 +61,13 @@ struct BranchOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-using SymBranchOutput = BranchOutput<true>;
-using AsymBranchOutput = BranchOutput<false>;
+using SymBranchOutput = BranchOutput<symmetric_t>;
+using AsymBranchOutput = BranchOutput<asymmetric_t>;
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct Branch3Output {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
     double loading;  // loading of the branch
@@ -85,11 +89,13 @@ struct Branch3Output {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-using SymBranch3Output = Branch3Output<true>;
-using AsymBranch3Output = Branch3Output<false>;
+using SymBranch3Output = Branch3Output<symmetric_t>;
+using AsymBranch3Output = Branch3Output<asymmetric_t>;
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct ApplianceOutput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
     RealValue<sym> p;  // power flow of the appliance
@@ -103,11 +109,13 @@ struct ApplianceOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-using SymApplianceOutput = ApplianceOutput<true>;
-using AsymApplianceOutput = ApplianceOutput<false>;
+using SymApplianceOutput = ApplianceOutput<symmetric_t>;
+using AsymApplianceOutput = ApplianceOutput<asymmetric_t>;
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct VoltageSensorOutput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
     RealValue<sym> u_residual;  // deviation between the measured value and calculated value
@@ -118,11 +126,13 @@ struct VoltageSensorOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-using SymVoltageSensorOutput = VoltageSensorOutput<true>;
-using AsymVoltageSensorOutput = VoltageSensorOutput<false>;
+using SymVoltageSensorOutput = VoltageSensorOutput<symmetric_t>;
+using AsymVoltageSensorOutput = VoltageSensorOutput<asymmetric_t>;
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct PowerSensorOutput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
     RealValue<sym> p_residual;  // deviation between the measured value and calculated value
@@ -133,8 +143,8 @@ struct PowerSensorOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-using SymPowerSensorOutput = PowerSensorOutput<true>;
-using AsymPowerSensorOutput = PowerSensorOutput<false>;
+using SymPowerSensorOutput = PowerSensorOutput<symmetric_t>;
+using AsymPowerSensorOutput = PowerSensorOutput<asymmetric_t>;
 
 struct FaultOutput {
     ID id;  // ID of the object
@@ -148,8 +158,8 @@ struct FaultOutput {
 struct FaultShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
-    RealValue<false> i_f;  // three phase short circuit current magnitude
-    RealValue<false> i_f_angle;  // three phase short circuit current angle
+    RealValue<asymmetric_t> i_f;  // three phase short circuit current magnitude
+    RealValue<asymmetric_t> i_f_angle;  // three phase short circuit current angle
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -159,9 +169,9 @@ struct FaultShortCircuitOutput {
 struct NodeShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
-    RealValue<false> u_pu;  // initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<false> u;  // initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<false> u_angle;  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<asymmetric_t> u_pu;  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<asymmetric_t> u;  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<asymmetric_t> u_angle;  // initial three phase line-to-ground short circuit voltage magnitude and angle
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -171,10 +181,10 @@ struct NodeShortCircuitOutput {
 struct BranchShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
-    RealValue<false> i_from;  // initial three phase short circuit current flow at from-side
-    RealValue<false> i_from_angle;  // initial three phase short circuit current flow at from-side
-    RealValue<false> i_to;  // initial three phase short circuit current flow at to-side
-    RealValue<false> i_to_angle;  // initial three phase short circuit current flow at to-side
+    RealValue<asymmetric_t> i_from;  // initial three phase short circuit current flow at from-side
+    RealValue<asymmetric_t> i_from_angle;  // initial three phase short circuit current flow at from-side
+    RealValue<asymmetric_t> i_to;  // initial three phase short circuit current flow at to-side
+    RealValue<asymmetric_t> i_to_angle;  // initial three phase short circuit current flow at to-side
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -184,12 +194,12 @@ struct BranchShortCircuitOutput {
 struct Branch3ShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
-    RealValue<false> i_1;  // initial three phase short circuit current flow at side 1
-    RealValue<false> i_1_angle;  // initial three phase short circuit current flow at side 1
-    RealValue<false> i_2;  // initial three phase short circuit current flow at side 2
-    RealValue<false> i_2_angle;  // initial three phase short circuit current flow at side 2
-    RealValue<false> i_3;  // initial three phase short circuit current flow at side 3
-    RealValue<false> i_3_angle;  // initial three phase short circuit current flow at side 3
+    RealValue<asymmetric_t> i_1;  // initial three phase short circuit current flow at side 1
+    RealValue<asymmetric_t> i_1_angle;  // initial three phase short circuit current flow at side 1
+    RealValue<asymmetric_t> i_2;  // initial three phase short circuit current flow at side 2
+    RealValue<asymmetric_t> i_2_angle;  // initial three phase short circuit current flow at side 2
+    RealValue<asymmetric_t> i_3;  // initial three phase short circuit current flow at side 3
+    RealValue<asymmetric_t> i_3_angle;  // initial three phase short circuit current flow at side 3
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -199,8 +209,8 @@ struct Branch3ShortCircuitOutput {
 struct ApplianceShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
-    RealValue<false> i;  // initial three phase short circuit current flow of the appliance
-    RealValue<false> i_angle;  // initial three phase short circuit current flow of the appliance
+    RealValue<asymmetric_t> i;  // initial three phase short circuit current flow of the appliance
+    RealValue<asymmetric_t> i_angle;  // initial three phase short circuit current flow of the appliance
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -220,5 +230,4 @@ struct SensorShortCircuitOutput {
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

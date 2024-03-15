@@ -4,18 +4,20 @@
 
 #include "fictional_grid_generator.hpp"
 
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
-#include <power_grid_model/timer.hpp>
 
 #include <iostream>
 #include <random>
 
 namespace power_grid_model::benchmark {
+namespace {
 
 struct PowerGridBenchmark {
     PowerGridBenchmark() : main_model{std::make_unique<MainModel>(50.0)} {}
 
-    template <bool sym>
+    template <symmetry_tag sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
         if (!main_model) {
             std::cout << "\nNo main model available: skipping benchmark.\n";
@@ -37,7 +39,7 @@ struct PowerGridBenchmark {
         }
     }
 
-    template <bool sym>
+    template <symmetry_tag sym>
     void run_benchmark(Option const& option, CalculationMethod calculation_method, Idx batch_size = -1,
                        Idx threading = -1) {
         CalculationInfo info;
@@ -46,7 +48,7 @@ struct PowerGridBenchmark {
 
         std::string title = "Benchmark case: ";
         title += option.has_mv_ring ? "meshed grid, " : "radial grid, ";
-        title += sym ? "symmetric, " : "asymmetric, ";
+        title += is_symmetric_v<sym> ? "symmetric, " : "asymmetric, ";
         if (calculation_method == CalculationMethod::newton_raphson) {
             title += "Newton-Raphson method";
         } else if (calculation_method == CalculationMethod::linear) {
@@ -94,8 +96,13 @@ struct PowerGridBenchmark {
     std::unique_ptr<MainModel> main_model;
     FictionalGridGenerator generator;
 };
-
+} // namespace
 } // namespace power_grid_model::benchmark
+
+namespace {
+using power_grid_model::asymmetric_t;
+using power_grid_model::symmetric_t;
+} // namespace
 
 int main(int /* argc */, char** /* argv */) {
     using enum power_grid_model::CalculationMethod;
@@ -122,22 +129,22 @@ int main(int /* argc */, char** /* argv */) {
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    benchmarker.run_benchmark<true>(option, newton_raphson, batch_size);
-    benchmarker.run_benchmark<true>(option, newton_raphson, batch_size, 6);
-    benchmarker.run_benchmark<true>(option, linear);
-    benchmarker.run_benchmark<true>(option, iterative_current);
-    benchmarker.run_benchmark<false>(option, newton_raphson);
-    benchmarker.run_benchmark<false>(option, linear);
-    // benchmarker.run_benchmark<false>(option, iterative_current);
+    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size);
+    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size, 6);
+    benchmarker.run_benchmark<symmetric_t>(option, linear);
+    benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
+    benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
+    benchmarker.run_benchmark<asymmetric_t>(option, linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
-    benchmarker.run_benchmark<true>(option, newton_raphson);
-    benchmarker.run_benchmark<true>(option, linear);
-    benchmarker.run_benchmark<true>(option, iterative_current);
-    benchmarker.run_benchmark<false>(option, newton_raphson);
-    benchmarker.run_benchmark<false>(option, linear);
-    // benchmarker.run_benchmark<false>(option, iterative_current);
+    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson);
+    benchmarker.run_benchmark<symmetric_t>(option, linear);
+    benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
+    benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
+    benchmarker.run_benchmark<asymmetric_t>(option, linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
     return 0;
 }

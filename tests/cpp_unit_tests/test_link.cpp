@@ -18,8 +18,8 @@ TEST_CASE("Test link") {
     double const base_i_to = base_power_1p / (50.0e3 / sqrt3);
     DoubleComplex const u1f = 1.0;
     DoubleComplex const u1t = 0.9;
-    ComplexValue<false> const uaf{1.0};
-    ComplexValue<false> const uat{0.9};
+    ComplexValue<asymmetric_t> const uaf{1.0};
+    ComplexValue<asymmetric_t> const uat{0.9};
     DoubleComplex const i1f = (u1f - u1t) * y_link * base_i_from;
     DoubleComplex const i1t = (u1t - u1f) * y_link * base_i_to;
     DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
@@ -28,8 +28,8 @@ TEST_CASE("Test link") {
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
     DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
-    ComplexValue<false> const if_sc_asym{1.0 + 1.0i};
-    ComplexValue<false> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
+    ComplexValue<asymmetric_t> const if_sc_asym{1.0 + 1.0i};
+    ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
 
     CHECK(link.math_model_type() == ComponentType::branch);
 
@@ -47,14 +47,14 @@ TEST_CASE("Test link") {
 
     SUBCASE("Symmetric parameters") {
         // double connected
-        BranchCalcParam<true> param = branch.calc_param<true>();
+        BranchCalcParam<symmetric_t> param = branch.calc_param<symmetric_t>();
         CHECK(cabs(param.yff() - y_link) < numerical_tolerance);
         CHECK(cabs(param.ytt() - y_link) < numerical_tolerance);
         CHECK(cabs(param.ytf() + y_link) < numerical_tolerance);
         CHECK(cabs(param.yft() + y_link) < numerical_tolerance);
         // single connected
         CHECK(branch.set_status(false, na_IntS));
-        param = branch.calc_param<true>();
+        param = branch.calc_param<symmetric_t>();
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytt() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytf() - 0.0) < numerical_tolerance);
@@ -62,7 +62,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Symmetric results") {
-        BranchOutput<true> output = branch.get_output<true>(1.0, 0.9);
+        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == 0.0);
@@ -77,7 +77,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Asymmetric results") {
-        BranchOutput<false> output = branch.get_output<false>(uaf, uat);
+        BranchOutput<asymmetric_t> output = branch.get_output<asymmetric_t>(uaf, uat);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == 0.0);

@@ -5,11 +5,10 @@
 name: Validate citation
 
 on:
-  # run pipeline on push event of main or release branch, or when CITATIONS path has changed
+  # run pipeline on push event of main branch, or when CITATIONS path has changed
   push:
     branches:
       - main
-      - 'release/**'
     paths:
       - CITATION.cff
 

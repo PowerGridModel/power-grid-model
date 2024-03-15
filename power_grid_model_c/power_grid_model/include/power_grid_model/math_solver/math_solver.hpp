@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_MATH_SOLVER_HPP
 
 #include "iterative_current_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
@@ -15,10 +13,10 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
 
 #include <optional>
 
@@ -26,7 +24,7 @@ namespace power_grid_model {
 
 namespace math_solver {
 
-template <bool sym> class MathSolver {
+template <symmetry_tag sym> class MathSolver {
   public:
     explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : topo_ptr_{topo_ptr},
@@ -177,12 +175,10 @@ template <bool sym> class MathSolver {
     }
 };
 
-template class MathSolver<true>;
-template class MathSolver<false>;
+template class MathSolver<symmetric_t>;
+template class MathSolver<asymmetric_t>;
 } // namespace math_solver
 
 using math_solver::MathSolver;
 
 } // namespace power_grid_model
-
-#endif

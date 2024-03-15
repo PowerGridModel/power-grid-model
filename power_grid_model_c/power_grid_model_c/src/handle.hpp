@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_C_HANDLE_HPP
-#define POWER_GRID_MODEL_C_HANDLE_HPP
 
 #ifndef PGM_DLL_EXPORTS
 #define PGM_DLL_EXPORTS
@@ -14,7 +12,8 @@
 
 #include "power_grid_model_c/handle.h"
 
-#include <power_grid_model/power_grid_model.hpp>
+#include <power_grid_model/batch_parameter.hpp>
+#include <power_grid_model/common/common.hpp>
 
 #include <string_view>
 
@@ -44,5 +43,3 @@ auto call_with_catch(PGM_Handle* handle, Functor func, PGM_Idx error_code, std::
         return static_cast<ReturnValueType>(empty);
     }
 }
-
-#endif

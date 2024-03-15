@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_META_DATA_HPP
-#define POWER_GRID_MODEL_META_DATA_HPP
 
-#include "../enum.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 #include <bit>
 #include <span>
@@ -46,7 +44,7 @@ template <> struct ctype_t<int8_t> {
     static constexpr CType value = CType::c_int8;
 };
 
-template <> struct ctype_t<RealValue<false>> {
+template <> struct ctype_t<RealValue<asymmetric_t>> {
     static constexpr CType value = CType::c_double3;
 };
 template <class T>
@@ -64,7 +62,7 @@ template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType
     case c_double:
         return f.template operator()<double>(std::forward<Args>(args)...);
     case c_double3:
-        return f.template operator()<RealValue<false>>(std::forward<Args>(args)...);
+        return f.template operator()<RealValue<asymmetric_t>>(std::forward<Args>(args)...);
     case c_int8:
         return f.template operator()<int8_t>(std::forward<Args>(args)...);
     case c_int32:
@@ -78,7 +76,7 @@ template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType
 inline void set_nan(double& x) { x = nan; }
 inline void set_nan(IntS& x) { x = na_IntS; }
 inline void set_nan(ID& x) { x = na_IntID; }
-inline void set_nan(RealValue<false>& x) { x = RealValue<false>{nan}; }
+inline void set_nan(RealValue<asymmetric_t>& x) { x = RealValue<asymmetric_t>{nan}; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
 inline void set_nan(Enum& x) {
@@ -191,5 +189,3 @@ struct MetaData {
 constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
 } // namespace power_grid_model::meta_data
-
-#endif

@@ -3,15 +3,18 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_TIMER_HPP
-#define POWER_GRID_MODEL_TIMER_HPP
 
-#include "power_grid_model.hpp"
+#include "calculation_info.hpp"
+#include "common.hpp"
 
+#include <chrono>
 #include <iomanip>
 #include <sstream>
 
 namespace power_grid_model {
+
+using Clock = std::chrono::high_resolution_clock;
+using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:
@@ -78,5 +81,3 @@ class Timer {
 };
 
 } // namespace power_grid_model
-
-#endif // POWER_GRID_MODEL_TIMER_HPP

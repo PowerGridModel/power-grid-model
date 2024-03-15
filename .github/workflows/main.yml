@@ -8,25 +8,32 @@ name: Build and Test C++ and Python
 
 # Controls when the workflow will run
 on:
-  # run pipeline on push event of main or release branch
+  # run pipeline on push event of main branch
   push:
     branches:
       - main
-      - 'release/**'
   # run pipeline on pull request
   pull_request:
-  # Allows you to run this workflow manually from the Actions tab
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: true
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+
 jobs:
 
   acquire-python-version-build-sdist:
     name: Build sdist and set version
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +63,6 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -64,8 +70,8 @@ jobs:
         compiler: [gcc, clang]
         include:
           - compiler: gcc
-            cc: gcc-11
-            cxx: g++-11
+            cc: gcc-13
+            cxx: g++-13
           - compiler: clang
             cc: clang-15
             cxx: clang++-15
@@ -78,21 +84,29 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fix kernel mmap rnd bits
+        # https://github.com/actions/runner-images/issues/9491
+        continue-on-error: true
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
       - name: Install packages
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build clang-15
+
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json msgpack-cxx doctest
+
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: windows-latest
     strategy:
       matrix:
@@ -136,7 +150,6 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
     runs-on: macos-13
     strategy:
       matrix:
@@ -157,6 +170,9 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
+          brew install python@3.12 || true
+          brew link --overwrite python@3.12
+          brew pin python@3.12
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
@@ -217,7 +233,6 @@ jobs:
 
   build-and-test-conda:
     name: Build and test in Conda
-    if: (github.event_name == 'push')  || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release'))
 
     runs-on: ${{ matrix.os }}-latest
     strategy:
@@ -333,19 +348,19 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
         run: |
           pip install twine
           echo "Publish to PyPI..."
           twine upload --verbose wheelhouse/*
 
       - name: Release
-        uses: softprops/action-gh-release@v1
-        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        uses: softprops/action-gh-release@v2
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
         with:
           files: |
             ./wheelhouse/*
           tag_name: ${{ steps.tag.outputs.tag }}
-          prerelease: ${{ contains(steps.tag.outputs.tag, 'rc') }}
+          prerelease: ${{ github.ref != 'refs/heads/main'}}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}

@@ -85,6 +85,20 @@ The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](
 In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
 ```
 
+##### Necessary observability condition
+
+Based on the requirements of observability mentioned above, user needs to satisfy  at least the following conditions for state estimation calculation in power-grid-model.
+
+- `n_voltage_sensor >= 1`
+- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
+
+`n_unique_power_sensor` can be calculated as sum of following:
+
+- Zero injection or zero power flow constraint if present for all nodes.
+- Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
+- Any sensor on a `Branch` for all branches: Parallel branches with either side of measurements count as one.
+- All `Branch3` sensors.
+
 #### Short circuit calculations
 
 Short circuit calculation is carried out to analyze the worst case scenario when a fault has occurred.

@@ -3,15 +3,12 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_EXCEPTION_HPP
-#define POWER_GRID_MODEL_EXCEPTION_HPP
 
+#include "common.hpp"
 #include "enum.hpp"
-#include "power_grid_model.hpp"
 
 #include <exception>
 #include <string>
-#include <utility>
 
 namespace power_grid_model {
 
@@ -79,6 +76,11 @@ class SparseMatrixError : public PowerGridError {
                    std::string("If you get this error from state estimation, ") +
                    "it usually means the system is not fully observable, i.e. not enough measurements.");
     }
+};
+
+class NotObservableError : public PowerGridError {
+  public:
+    NotObservableError() { append_msg("Not enough measurements available for state estimation.\n"); }
 };
 
 class IterationDiverge : public PowerGridError {
@@ -181,5 +183,3 @@ class DatasetError : public PowerGridError {
 };
 
 } // namespace power_grid_model
-
-#endif

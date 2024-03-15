@@ -3,11 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_DESERIALIZER_HPP
-#define POWER_GRID_MODEL_AUXILIARY_SERIALIZTION_DESERIALIZER_HPP
 
-#include "../../exception.hpp"
-#include "../../power_grid_model.hpp"
+#include "../../common/common.hpp"
+#include "../../common/exception.hpp"
 #include "../dataset_handler.hpp"
 #include "../meta_data.hpp"
 #include "../meta_data_gen.hpp"
@@ -293,10 +291,10 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
     }
 };
 
-template <> struct ValueVisitor<RealValue<false>> : DefaultErrorVisitor<ValueVisitor<RealValue<false>>> {
+template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
     static constexpr std::string_view static_err_msg = "Expect an array of 3 numbers.";
 
-    RealValue<false>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    RealValue<asymmetric_t>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Idx idx{};
     bool inside_array{};
 
@@ -844,5 +842,3 @@ class Deserializer {
 };
 
 } // namespace power_grid_model::meta_data
-
-#endif

@@ -165,7 +165,7 @@ $$
 ### Transformer
 
 `transformer` is a {hoverxreftooltip}`user_manual/components:branch` which connects two nodes with possibly different voltage
-levels.
+levels. An example of usage of transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb)
 
 #### Input
 
@@ -276,7 +276,7 @@ switches are always defined at side 1, 2, or 3 of the branch. In reality such sw
 ### Three-Winding Transformer
 
 `three_winding_transformer` is a {hoverxreftooltip}`user_manual/components:branch3` connects three nodes with possibly different
-voltage levels.
+voltage levels. An example of usage of three-winding transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb).
 
 #### Input
 
@@ -594,7 +594,7 @@ Because of this distribution, at least one appliance is required to be connected
 | name                     | data type                                                                     | unit             | description                                                                                                                                                                                 |              required               |  update  |                     valid values                     |
 | ------------------------ | ----------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------: | :------: | :--------------------------------------------------: |
 | `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                | indicate if it measures an `appliance` or a `branch`                                                                                                                                        |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
-| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See {hoverxreftooltip}`user_manual/components:Power Sensor Concrete Types`. | &#10024; only for state estimation. | &#10004; |                        `> 0`                         |
+| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See {hoverxreftooltip}`user_manual/components:Power Sensor Concrete Types`. | &#10024; in certain cases for state estimation. See the explanation for [concrete types](#power-sensor-concrete-types) below. | &#10004; |                        `> 0`                         |
 
 #### Power Sensor Concrete Types
 
@@ -614,6 +614,19 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 | `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power                                                                                                        | &#10024; only for state estimation  | &#10004; |
 | `p_sigma`    | `RealValueInput` | watt (W)                   | standard deviation of the active power measurement error. Usually this is the absolute measurement error range divided by 3.   | &#10060; see the explanation below. | &#10004; | `> 0` |
 | `q_sigma`    | `RealValueInput` | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; | `> 0` |
+
+Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
+
+| `power_sigma` | `p_sigma` | `q_sigma` |  result  |
+|:-------------:|:---------:|:---------:|:--------:|
+|       x       |      x    |     x     | &#10004; |
+|       x       |      x    |           | &#10060; |
+|       x       |           |     x     | &#10060; |
+|       x       |           |           | &#10004; |
+|               |      x    |     x     | &#10004; |
+|               |      x    |           | &#10060; |
+|               |           |     x     | &#10060; |
+|               |           |           | &#10060; |
 
 ```{note}
 1. If both `p_sigma` and `q_sigma` are provided, they represent the standard deviation of the active and reactive power, respectively, and the value of `power_sigma` is ignored. Any infinite component invalidates the entire measurement.

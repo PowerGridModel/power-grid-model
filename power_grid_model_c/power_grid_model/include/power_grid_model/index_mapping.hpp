@@ -3,12 +3,11 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_INDEX_MAPPING_HPP
-#define POWER_GRID_MODEL_INDEX_MAPPING_HPP
 
-#include "grouped_index_vector.hpp"
-#include "power_grid_model.hpp"
+#include "common/common.hpp"
+#include "common/grouped_index_vector.hpp"
 
+#include <numeric>
 #include <ranges>
 
 namespace power_grid_model {
@@ -51,7 +50,7 @@ struct SparseIndexMapping {
 ///     A 0			coupled to B 3
 ///     nothing		coupled to B 4
 ///     A 1			coupled	to B 5
-///     nothing	coupled to B 6
+///     nothing	    coupled to B 6
 inline SparseIndexMapping build_sparse_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
     using SparseEntry = std::pair<Idx, Idx>;
 
@@ -90,7 +89,7 @@ struct DenseIndexMapping {
     IdxVector reorder;
 };
 
-namespace detail {
+namespace index_mapping::detail {
 
 inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx const /* n_B */) {
     using DenseEntry = std::pair<Idx, Idx>;
@@ -119,24 +118,34 @@ inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx
 inline auto build_dense_mapping_counting_sort(IdxVector const& idx_B_in_A, Idx const n_B) {
     auto sparse_result = build_sparse_mapping(idx_B_in_A, n_B);
 
-    return DenseIndexMapping{.indvector = sparse_decode(sparse_result.indptr),
+    return DenseIndexMapping{.indvector = power_grid_model::detail::sparse_decode(sparse_result.indptr),
                              .reorder = std::move(sparse_result.reorder)};
 }
 
-} // namespace detail
+struct IndexMappingApproachCriterion {
+    double n_a_prefactor{};
+    double n_a_log_n_a_prefactor{};
+    double constant{};
+
+    constexpr bool operator()(std::integral auto n_A, std::integral auto n_B) const {
+        auto const n_A_ = static_cast<double>(n_A);
+        auto const n_B_ = static_cast<double>(n_B);
+
+        return n_B_ < n_a_prefactor * n_A_ + n_a_log_n_a_prefactor * n_A_ * log(n_A_) + constant;
+    }
+};
+
+constexpr IndexMappingApproachCriterion index_mapping_criterion_gcc{.n_a_prefactor = -0.00733595283054587,
+                                                                    .n_a_log_n_a_prefactor = 0.01888288636738604,
+                                                                    .constant = 20.338844396105696};
+
+} // namespace index_mapping::detail
 
 inline DenseIndexMapping build_dense_mapping(IdxVector const& idx_B_in_A, Idx const n_B) {
-    constexpr auto relative_complexity_prefactor = 1.0;
-
-    auto const n_A_ = static_cast<double>(idx_B_in_A.size());
-    auto const n_B_ = static_cast<double>(n_B);
-
-    if (n_A_ + n_B_ < relative_complexity_prefactor * n_A_ * log(n_A_)) {
-        return detail::build_dense_mapping_counting_sort(idx_B_in_A, n_B);
+    if (index_mapping::detail::index_mapping_criterion_gcc(idx_B_in_A.size(), n_B)) {
+        return index_mapping::detail::build_dense_mapping_counting_sort(idx_B_in_A, n_B);
     }
-    return detail::build_dense_mapping_comparison_sort(idx_B_in_A, n_B);
+    return index_mapping::detail::build_dense_mapping_comparison_sort(idx_B_in_A, n_B);
 }
 
 } // namespace power_grid_model
-
-#endif

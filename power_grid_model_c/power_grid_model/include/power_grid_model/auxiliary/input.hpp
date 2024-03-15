@@ -6,14 +6,12 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_INPUT_HPP
-#define POWER_GRID_MODEL_AUXILIARY_INPUT_HPP
 
 #include "meta_data.hpp"
 
-#include "../enum.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -232,8 +230,10 @@ struct GenericLoadGenInput {
     operator ApplianceInput const&() const { return reinterpret_cast<ApplianceInput const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct LoadGenInput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
     IntS status;  // whether the appliance is connected
@@ -254,8 +254,8 @@ struct LoadGenInput {
     operator GenericLoadGenInput const&() const { return reinterpret_cast<GenericLoadGenInput const&>(*this); }
 };
 
-using SymLoadGenInput = LoadGenInput<true>;
-using AsymLoadGenInput = LoadGenInput<false>;
+using SymLoadGenInput = LoadGenInput<symmetric_t>;
+using AsymLoadGenInput = LoadGenInput<asymmetric_t>;
 
 struct ShuntInput {
     ID id;  // ID of the object
@@ -308,8 +308,10 @@ struct GenericVoltageSensorInput {
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct VoltageSensorInput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     double u_sigma;  // sigma of error margin of voltage measurement
@@ -329,8 +331,8 @@ struct VoltageSensorInput {
     operator GenericVoltageSensorInput const&() const { return reinterpret_cast<GenericVoltageSensorInput const&>(*this); }
 };
 
-using SymVoltageSensorInput = VoltageSensorInput<true>;
-using AsymVoltageSensorInput = VoltageSensorInput<false>;
+using SymVoltageSensorInput = VoltageSensorInput<symmetric_t>;
+using AsymVoltageSensorInput = VoltageSensorInput<asymmetric_t>;
 
 struct GenericPowerSensorInput {
     ID id;  // ID of the object
@@ -347,8 +349,10 @@ struct GenericPowerSensorInput {
     operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
 };
 
-template <bool sym>
+template <symmetry_tag sym_type>
 struct PowerSensorInput {
+    using sym = sym_type;
+
     ID id;  // ID of the object
     ID measured_object;  // ID of the measured object
     MeasuredTerminalType measured_terminal_type;  // type of measured terminal
@@ -371,8 +375,8 @@ struct PowerSensorInput {
     operator GenericPowerSensorInput const&() const { return reinterpret_cast<GenericPowerSensorInput const&>(*this); }
 };
 
-using SymPowerSensorInput = PowerSensorInput<true>;
-using AsymPowerSensorInput = PowerSensorInput<false>;
+using SymPowerSensorInput = PowerSensorInput<symmetric_t>;
+using AsymPowerSensorInput = PowerSensorInput<asymmetric_t>;
 
 struct FaultInput {
     ID id;  // ID of the object
@@ -392,5 +396,4 @@ struct FaultInput {
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

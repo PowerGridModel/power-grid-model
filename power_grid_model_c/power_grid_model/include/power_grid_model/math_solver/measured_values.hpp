@@ -3,20 +3,20 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_MEASURED_VALUES_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_MEASURED_VALUES_HPP
 
 /*
 Collect all measured Values
 */
 
 #include "../calculation_parameters.hpp"
-#include "../three_phase_tensor.hpp"
+#include "../common/three_phase_tensor.hpp"
+
+#include <memory>
 
 namespace power_grid_model::math_solver {
 
 namespace detail {
-template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+template <symmetry_tag sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
     if (is_nan(imag(value))) {
         return real(value); // only keep real part
     }
@@ -27,7 +27,7 @@ template <bool sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& 
 // processed measurement struct
 // combined all measurement of the same quantity
 // accumulate for bus injection measurement
-template <bool sym> class MeasuredValues {
+template <symmetry_tag sym> class MeasuredValues {
     static constexpr Idx disconnected = -1;
     static constexpr Idx unmeasured = -2;
     static constexpr Idx undefined = -3;
@@ -535,7 +535,7 @@ template <bool sym> class MeasuredValues {
         }
         for (auto const& x : power_main_value_) {
             auto const variance = x.p_variance + x.q_variance;
-            if constexpr (sym) {
+            if constexpr (is_symmetric_v<sym>) {
                 unconstrained_min(variance);
             } else {
                 for (Idx const phase : {0, 1, 2}) {
@@ -604,8 +604,6 @@ template <bool sym> class MeasuredValues {
     }
 };
 
-template class MeasuredValues<true>;
-template class MeasuredValues<false>;
+template class MeasuredValues<symmetric_t>;
+template class MeasuredValues<asymmetric_t>;
 } // namespace power_grid_model::math_solver
-
-#endif

@@ -97,8 +97,8 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test get_short_circuit_output sym") {
-        ComplexValue<true> const i_f_pu = 1.0 + 1.0i;
-        ComplexValue<false> const i_f_res{i_f_pu};
+        ComplexValue<symmetric_t> const i_f_pu = 1.0 + 1.0i;
+        ComplexValue<asymmetric_t> const i_f_res{i_f_pu};
         FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
@@ -107,7 +107,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test get_short_circuit_output asym") {
-        ComplexValue<false> i_f_pu{};
+        ComplexValue<asymmetric_t> i_f_pu{};
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
         FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);

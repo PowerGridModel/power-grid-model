@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
-#include <power_grid_model/three_phase_tensor.hpp>
 
 #include <doctest/doctest.h>
 
@@ -42,7 +42,7 @@ TEST_CASE("Test y bus") {
     //   --- 0 ---              |
     //                          X
     MathModelTopology topo{};
-    MathModelParam<true> param_sym;
+    MathModelParam<symmetric_t> param_sym;
     topo.phase_shift.resize(4, 0.0);
     topo.branch_bus_idx = {
         {1, 0}, // branch 0 from node 1 to 0
@@ -82,7 +82,7 @@ TEST_CASE("Test y bus") {
                                     18, 20,     // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
                                     23};
     IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    ComplexTensorVector<true> admittance_sym = {
+    ComplexTensorVector<symmetric_t> admittance_sym = {
         17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
         18.0 + 3.0i,    // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
         19.0 + 2.0i,    // 1, 0 -> {0, 1}tf + {1, 0}ft = 19.0 + 2.0i
@@ -101,26 +101,26 @@ TEST_CASE("Test y bus") {
     //   x 0 0
     //   0 x 0
     //   0 0 x
-    MathModelParam<false> param_asym;
+    MathModelParam<asymmetric_t> param_asym;
     // value
     param_asym.branch_param.resize(param_sym.branch_param.size());
     for (size_t i = 0; i < param_sym.branch_param.size(); i++) {
         for (size_t j = 0; j < 4; j++) {
-            param_asym.branch_param[i].value[j] = ComplexTensor<false>{param_sym.branch_param[i].value[j]};
+            param_asym.branch_param[i].value[j] = ComplexTensor<asymmetric_t>{param_sym.branch_param[i].value[j]};
         }
     }
     param_asym.shunt_param.resize(param_sym.shunt_param.size());
     for (size_t i = 0; i < param_sym.shunt_param.size(); i++) {
-        param_asym.shunt_param[i] = ComplexTensor<false>{param_sym.shunt_param[i]};
+        param_asym.shunt_param[i] = ComplexTensor<asymmetric_t>{param_sym.shunt_param[i]};
     }
     // admittance_sym
-    ComplexTensorVector<false> admittance_asym(admittance_sym.size());
+    ComplexTensorVector<asymmetric_t> admittance_asym(admittance_sym.size());
     for (size_t i = 0; i < admittance_sym.size(); i++) {
-        admittance_asym[i] = ComplexTensor<false>{admittance_sym[i]};
+        admittance_asym[i] = ComplexTensor<asymmetric_t>{admittance_sym[i]};
     }
 
     SUBCASE("Test y bus construction (symmetrical)") {
-        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -156,10 +156,10 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (asymmetrical)") {
-        YBus<true> const ybus_sym{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<symmetric_t> const ybus_sym{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         // construct from existing structure
-        YBus<false> const ybus{topo_ptr, std::make_shared<MathModelParam<false> const>(param_asym),
-                               ybus_sym.shared_y_bus_struct()};
+        YBus<asymmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<asymmetric_t> const>(param_asym),
+                                      ybus_sym.shared_y_bus_struct()};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -174,9 +174,9 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test branch flow calculation") {
-        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
-        auto branch_flow = ybus.calculate_branch_flow<BranchMathOutput<true>>(u);
+        auto branch_flow = ybus.calculate_branch_flow<BranchMathOutput<symmetric_t>>(u);
 
         // branch 2, bus 2->3
         // if = 3 * 9i + 4 * 10i = 67i
@@ -190,9 +190,9 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test shunt flow calculation") {
-        YBus<true> const ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
-        auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceMathOutput<true>>(u);
+        auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceMathOutput<symmetric_t>>(u);
 
         // shunt 1
         // i = -4 * 200i
@@ -204,7 +204,7 @@ TEST_CASE("Test y bus") {
 
 TEST_CASE("Test one bus system") {
     MathModelTopology topo{};
-    MathModelParam<true> const param;
+    MathModelParam<symmetric_t> const param;
 
     topo.phase_shift = {0.0};
     topo.shunts_per_bus = {from_sparse, {0, 0}};
@@ -217,8 +217,8 @@ TEST_CASE("Test one bus system") {
     IdxVector lu_transpose_entry = {0};
     IdxVector y_bus_entry_indptr = {0, 0};
 
-    YBus<true> const ybus{std::make_shared<MathModelTopology const>(topo),
-                          std::make_shared<MathModelParam<true> const>(param)};
+    YBus<symmetric_t> const ybus{std::make_shared<MathModelTopology const>(topo),
+                                 std::make_shared<MathModelParam<symmetric_t> const>(param)};
 
     CHECK(ybus.size() == 1);
     CHECK(ybus.nnz() == nnz);
@@ -297,7 +297,7 @@ TEST_CASE("Incremental update y-bus") {
     //   --- 0 ---              |
     //                          X
     MathModelTopology topo{};
-    MathModelParam<true> param_sym;
+    MathModelParam<symmetric_t> param_sym;
     topo.phase_shift.resize(4, 0.0);
     topo.branch_bus_idx = {
         {1, 0}, // branch 0 from node 1 to 0
@@ -322,7 +322,7 @@ TEST_CASE("Incremental update y-bus") {
     // get shared ptr
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
 
-    const ComplexTensorVector<true> admittance_sym = {
+    const ComplexTensorVector<symmetric_t> admittance_sym = {
         17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
         18.0 + 3.0i,    // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
         19.0 + 2.0i,    // 1, 0 -> {0, 1}tf + {1, 0}ft = 19.0 + 2.0i
@@ -335,9 +335,9 @@ TEST_CASE("Incremental update y-bus") {
         13.0 + 212.0i   // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1) = 12.0i + 13.0 + 200.0i
     };
 
-    const ComplexTensorVector<true> admittance_sym_state_1 = {34.0 + 208.0i, 36.0 + 6.0i,  38.0 + 4.0i,    50.0 + 2.0i,
-                                                              12.0,          14.0,         48.0 + 2018.0i, 30.0 + 20.0i,
-                                                              14.0 + 22.0i,  26.0 + 424.0i};
+    const ComplexTensorVector<symmetric_t> admittance_sym_state_1 = {
+        34.0 + 208.0i, 36.0 + 6.0i,    38.0 + 4.0i,  50.0 + 2.0i,  12.0,
+        14.0,          48.0 + 2018.0i, 30.0 + 20.0i, 14.0 + 22.0i, 26.0 + 424.0i};
     topo.branch_bus_idx = {
         {1, 0}, // branch 0 from node 1 to 0
         {1, 2}, // branch 1 from node 1 to 2
@@ -347,7 +347,7 @@ TEST_CASE("Incremental update y-bus") {
         {2, -1} // branch 5 from node 2 to "not connected"
     };
 
-    MathModelParam<true> param_sym_update;
+    MathModelParam<symmetric_t> param_sym_update;
     // Swap based params
     param_sym_update.branch_param = {
         //   ff,    ft,   tf,   tt
@@ -360,7 +360,7 @@ TEST_CASE("Incremental update y-bus") {
     };
     param_sym_update.shunt_param = {101.0i, 200.0i};
 
-    const ComplexTensorVector<true> admittance_sym_2 = {
+    const ComplexTensorVector<symmetric_t> admittance_sym_2 = {
         // 17.0 + 104.0i,                                                                        [v]
         17.0 + 105.0i, // 0, 0 -> += {1, 0}tt + {0, 1}ff + shunt(0) = 0.0 + 0.0 + 1.0i
         // 18.0 + 3.0i,                                                                          [v]
@@ -383,37 +383,38 @@ TEST_CASE("Incremental update y-bus") {
         13.0 + 214.0i // 3, 3 -> += {2,3}tt + {3,2}ff + shunt(1) = 2.0i + 0.0 + 0.0
     };
 
-    auto verify_admittance = [](ComplexTensorVector<true> const& admittance,
-                                ComplexTensorVector<true> const& admittance_ref) {
+    auto verify_admittance = [](ComplexTensorVector<symmetric_t> const& admittance,
+                                ComplexTensorVector<symmetric_t> const& admittance_ref) {
         CHECK(admittance.size() == admittance_ref.size());
         for (size_t i = 0; i < admittance.size(); i++) {
             CHECK(cabs(admittance[i] - admittance_ref[i]) < numerical_tolerance);
         }
     };
     SUBCASE("Test whole scale update") {
-        YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<symmetric_t> ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         verify_admittance(ybus.admittance(), admittance_sym);
 
-        ybus.update_admittance(std::make_shared<MathModelParam<true> const>(param_sym));
+        ybus.update_admittance(std::make_shared<MathModelParam<symmetric_t> const>(param_sym));
         verify_admittance(ybus.admittance(), admittance_sym);
     }
 
     SUBCASE("Test progressive update") {
-        YBus<true> ybus{topo_ptr, std::make_shared<MathModelParam<true> const>(param_sym)};
+        YBus<symmetric_t> ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto branch_param_to_change_views =
             boost::irange(0, static_cast<int>(param_sym_update.branch_param.size())) |
             boost::adaptors::filtered([&param_sym_update](Idx i) {
-                return param_sym_update.branch_param[i].yff() != ComplexTensor<true>{0.0} ||
-                       param_sym_update.branch_param[i].yft() != ComplexTensor<true>{0.0} ||
-                       param_sym_update.branch_param[i].ytf() != ComplexTensor<true>{0.0} ||
-                       param_sym_update.branch_param[i].ytt() != ComplexTensor<true>{0.0};
+                return param_sym_update.branch_param[i].yff() != ComplexTensor<symmetric_t>{0.0} ||
+                       param_sym_update.branch_param[i].yft() != ComplexTensor<symmetric_t>{0.0} ||
+                       param_sym_update.branch_param[i].ytf() != ComplexTensor<symmetric_t>{0.0} ||
+                       param_sym_update.branch_param[i].ytt() != ComplexTensor<symmetric_t>{0.0};
             });
-        auto shunt_param_to_change_views = boost::irange(0, static_cast<int>(param_sym_update.shunt_param.size())) |
-                                           boost::adaptors::filtered([&param_sym_update](Idx i) {
-                                               return param_sym_update.shunt_param[i] != ComplexTensor<true>{0.0};
-                                           });
+        auto shunt_param_to_change_views =
+            boost::irange(0, static_cast<int>(param_sym_update.shunt_param.size())) |
+            boost::adaptors::filtered([&param_sym_update](Idx i) {
+                return param_sym_update.shunt_param[i] != ComplexTensor<symmetric_t>{0.0};
+            });
 
         MathModelParamIncrement math_model_param_incrmt;
         math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
@@ -421,7 +422,7 @@ TEST_CASE("Incremental update y-bus") {
         math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
                                                          shunt_param_to_change_views.end()};
 
-        auto param_update_ptr = std::make_shared<MathModelParam<true> const>(param_sym_update);
+        auto param_update_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sym_update);
 
         ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);

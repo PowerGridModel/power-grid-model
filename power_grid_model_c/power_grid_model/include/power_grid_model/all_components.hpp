@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_ALL_COMPONENTS_HPP
-#define POWER_GRID_MODEL_ALL_COMPONENTS_HPP
 
 // define all components
-#include "power_grid_model.hpp"
+#include "common/common.hpp"
+#include "common/component_list.hpp"
 // component include
 #include "component/appliance.hpp"
 #include "component/fault.hpp"
@@ -30,5 +29,3 @@ using AllComponents =
                   SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor, Fault>;
 
 } // namespace power_grid_model
-
-#endif // POWER_GRID_MODEL_ALL_COMPONENTS_HPP

@@ -5,6 +5,7 @@
 set(PROJECT_SOURCES
     "test_all_components.cpp"
     "test_entry_point.cpp"
+    "test_common.cpp"
     "test_component_input.cpp"
     "test_component_output.cpp"
     "test_component_update.cpp"
@@ -24,6 +25,7 @@ set(PROJECT_SOURCES
     "test_y_bus.cpp"
     "test_math_solver.cpp"
     "test_measured_values.cpp"
+    "test_observability.cpp"
     "test_topology.cpp"
     "test_grouped_index_vector.cpp"
     "test_container.cpp"

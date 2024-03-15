@@ -13,14 +13,14 @@ using namespace std::complex_literals;
 constexpr double base_i_from = base_power_3p / 150e3 / sqrt3;
 constexpr double base_i_to = base_power_3p / 10e3 / sqrt3;
 
-ComplexTensor<false> get_a() {
-    ComplexTensor<false> A;
+ComplexTensor<asymmetric_t> get_a() {
+    ComplexTensor<asymmetric_t> A;
     A << 1.0, 1.0, 1.0, 1.0, a2, a, 1.0, a, a2;
     return A;
 }
 
-ComplexTensor<false> get_a_inv() {
-    ComplexTensor<false> A_inv;
+ComplexTensor<asymmetric_t> get_a_inv() {
+    ComplexTensor<asymmetric_t> A_inv;
     A_inv << 1.0, 1.0, 1.0, 1.0, a, a2, 1.0, a2, a;
     A_inv = A_inv / 3.0;
     return A_inv;
@@ -94,7 +94,7 @@ TEST_CASE("Test transformer") {
     DoubleComplex const y = 1.0 / z_series / base_y;
 
     // sym
-    std::vector<BranchCalcParam<true>> vec_sym;
+    std::vector<BranchCalcParam<symmetric_t>> vec_sym;
     // 12
     vec_sym.push_back({{y, -y, -y, y}});
     // 11, -30
@@ -107,19 +107,19 @@ TEST_CASE("Test transformer") {
     vec_sym.push_back({{y, -y * std::exp(2.0i * deg_30), -y * std::exp(-2.0i * deg_30), y}});
 
     // asym
-    std::vector<BranchCalcParam<false>> vec_asym;
-    ComplexTensor<false> y1;
+    std::vector<BranchCalcParam<asymmetric_t>> vec_asym;
+    ComplexTensor<asymmetric_t> y1;
     y1 << y, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, y;
-    ComplexTensor<false> y2;
+    ComplexTensor<asymmetric_t> y2;
     y2 << 2.0 * y, -y, -y, -y, 2.0 * y, -y, -y, -y, 2.0 * y;
     y2 = y2 / 3.0;
-    ComplexTensor<false> y3;
+    ComplexTensor<asymmetric_t> y3;
     y3 << -y, y, 0.0, 0.0, -y, y, y, 0.0, -y;
     y3 = y3 / sqrt3;
-    ComplexTensor<false> y3t = (y3.matrix().transpose()).array();
-    ComplexTensor<false> y4;
+    ComplexTensor<asymmetric_t> y3t = (y3.matrix().transpose()).array();
+    ComplexTensor<asymmetric_t> y4;
     y4 << 0.0, y, 0.0, 0.0, 0.0, y, y, 0.0, 0.0;
-    ComplexTensor<false> y4t = (y4.matrix().transpose()).array();
+    ComplexTensor<asymmetric_t> y4t = (y4.matrix().transpose()).array();
 
     // YNyn12
     vec_asym.push_back({{y1, -y1, -y1, y1}});
@@ -131,6 +131,14 @@ TEST_CASE("Test transformer") {
     vec_asym.push_back({{y2, -y2, -y2, y2}});
     // YNyn2
     vec_asym.push_back({{y1, y4, y4t, y1}});
+
+    SUBCASE("Test getters") {
+        CHECK(vec[0].tap_pos() == 0);
+        CHECK(vec[0].tap_side() == BranchSide::from);
+        CHECK(vec[0].tap_min() == -11);
+        CHECK(vec[0].tap_max() == 9);
+        CHECK(vec[0].tap_nom() == 0);
+    }
 
     SUBCASE("Test i base") {
         CHECK(vec[0].base_i_from() == doctest::Approx(base_i_from));
@@ -159,7 +167,7 @@ TEST_CASE("Test transformer") {
                 vec[i].update(TransformerUpdate{.id = 1, .from_status = na_IntS, .to_status = na_IntS, .tap_pos = -2});
             CHECK(!changed.topo);
             CHECK(changed.param);
-            BranchCalcParam<true> const param = vec[i].calc_param<true>();
+            BranchCalcParam<symmetric_t> const param = vec[i].calc_param<symmetric_t>();
             for (size_t j = 0; j < 4; j++) {
                 CHECK(cabs(param.value[j] - vec_sym[i].value[j]) < numerical_tolerance);
             }
@@ -207,7 +215,7 @@ TEST_CASE("Test transformer") {
     SUBCASE("asymmetric paramters") {
         for (size_t i = 0; i < 5; i++) {
             vec[i].set_tap(-2);
-            BranchCalcParam<false> const param = vec[i].calc_param<false>();
+            BranchCalcParam<asymmetric_t> const param = vec[i].calc_param<asymmetric_t>();
             for (size_t j = 0; j < 4; j++) {
                 CHECK((cabs(param.value[j] - vec_asym[i].value[j]) < numerical_tolerance).all());
             }
@@ -261,8 +269,8 @@ TEST_CASE("Test transformer") {
 }
 
 TEST_CASE("Test Transfomer - Test 0 YNyn12") {
-    ComplexTensor<false> const A = get_a();
-    ComplexTensor<false> const A_inv = get_a_inv();
+    ComplexTensor<asymmetric_t> const A = get_a();
+    ComplexTensor<asymmetric_t> const A_inv = get_a_inv();
 
     TransformerInput const input{.id = 1,
                                  .from_node = 2,
@@ -314,10 +322,10 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     DoubleComplex const z_2_series = z_1_series;
     DoubleComplex const z_0_series = z_1_series + 3.0 * (z_grounding_to + z_grounding_from / k / k);
 
-    ComplexTensor<false> z_diagonal;
+    ComplexTensor<asymmetric_t> z_diagonal;
     z_diagonal << z_0_series, 0.0, 0.0, 0.0, z_1_series, 0.0, 0.0, 0.0, z_2_series;
 
-    ComplexTensor<false> const z_series = dot(A, z_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const z_series = dot(A, z_diagonal, A_inv);
 
     double const y_shunt_abs = input.i0 * input.sn / input.u2 / input.u2;
     double const y_shunt_real = input.p0 / input.u2 / input.u2;
@@ -328,16 +336,16 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
         y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
-    ComplexTensor<false> y_shunt_diagonal;
+    ComplexTensor<asymmetric_t> y_shunt_diagonal;
     y_shunt_diagonal << y_1_shunt, 0.0, 0.0, 0.0, y_1_shunt, 0.0, 0.0, 0.0, y_1_shunt;
-    ComplexTensor<false> const y_shunt = dot(A, y_shunt_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_shunt = dot(A, y_shunt_diagonal, A_inv);
 
-    ComplexTensor<false> const y_ff = inv(z_series) + 0.5 * y_shunt;
-    ComplexTensor<false> const y_ft = -inv(z_series);
-    ComplexTensor<false> const y_tf = -inv(z_series);
-    ComplexTensor<false> const y_tt = inv(z_series) + 0.5 * y_shunt;
+    ComplexTensor<asymmetric_t> const y_ff = inv(z_series) + 0.5 * y_shunt;
+    ComplexTensor<asymmetric_t> const y_ft = -inv(z_series);
+    ComplexTensor<asymmetric_t> const y_tf = -inv(z_series);
+    ComplexTensor<asymmetric_t> const y_tt = inv(z_series) + 0.5 * y_shunt;
 
-    BranchCalcParam<false> const param = YNyn12.calc_param<false>();
+    BranchCalcParam<asymmetric_t> const param = YNyn12.calc_param<asymmetric_t>();
 
     CHECK((cabs(param.value[0] - y_ff) < numerical_tolerance).all());
     CHECK((cabs(param.value[1] - y_ft) < numerical_tolerance).all());
@@ -357,8 +365,8 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
 }
 
 TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
-    ComplexTensor<false> const A = get_a();
-    ComplexTensor<false> const A_inv = get_a_inv();
+    ComplexTensor<asymmetric_t> const A = get_a();
+    ComplexTensor<asymmetric_t> const A_inv = get_a_inv();
 
     TransformerInput const input{.id = 1,
                                  .from_node = 2,
@@ -440,24 +448,24 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     DoubleComplex const y_0_tt = (1.0 / (z_1_series + 3.0 * z_grounding_to)) + y_1_shunt;
 
     // Sequence admittances -> phase addmitance
-    ComplexTensor<false> y_ff_diagonal;
+    ComplexTensor<asymmetric_t> y_ff_diagonal;
     y_ff_diagonal << y_0_ff, 0.0, 0.0, 0.0, y_1_ff, 0.0, 0.0, 0.0, y_2_ff;
 
-    ComplexTensor<false> y_ft_diagonal;
+    ComplexTensor<asymmetric_t> y_ft_diagonal;
     y_ft_diagonal << y_0_ft, 0.0, 0.0, 0.0, y_1_ft, 0.0, 0.0, 0.0, y_2_ft;
 
-    ComplexTensor<false> y_tf_diagonal;
+    ComplexTensor<asymmetric_t> y_tf_diagonal;
     y_tf_diagonal << y_0_tf, 0.0, 0.0, 0.0, y_1_tf, 0.0, 0.0, 0.0, y_2_tf;
 
-    ComplexTensor<false> y_tt_diagonal;
+    ComplexTensor<asymmetric_t> y_tt_diagonal;
     y_tt_diagonal << y_0_tt, 0.0, 0.0, 0.0, y_1_tt, 0.0, 0.0, 0.0, y_2_tt;
 
-    ComplexTensor<false> const y_ff = dot(A, y_ff_diagonal, A_inv);
-    ComplexTensor<false> const y_ft = dot(A, y_ft_diagonal, A_inv);
-    ComplexTensor<false> const y_tf = dot(A, y_tf_diagonal, A_inv);
-    ComplexTensor<false> const y_tt = dot(A, y_tt_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_ff = dot(A, y_ff_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_ft = dot(A, y_ft_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_tf = dot(A, y_tf_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_tt = dot(A, y_tt_diagonal, A_inv);
 
-    BranchCalcParam<false> const param = Dyn11.calc_param<false>();
+    BranchCalcParam<asymmetric_t> const param = Dyn11.calc_param<asymmetric_t>();
 
     CHECK((cabs(param.value[0] - y_ff) < numerical_tolerance).all());
     CHECK((cabs(param.value[1] - y_ft) < numerical_tolerance).all());
@@ -466,8 +474,8 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
 }
 
 TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
-    ComplexTensor<false> const A = get_a();
-    ComplexTensor<false> const A_inv = get_a_inv();
+    ComplexTensor<asymmetric_t> const A = get_a();
+    ComplexTensor<asymmetric_t> const A_inv = get_a_inv();
 
     TransformerInput const input{.id = 1,
                                  .from_node = 2,
@@ -549,24 +557,24 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     DoubleComplex const y_0_tt = (1.0 / (z_1_series * 0.1 + 3.0 * z_grounding_to));
 
     // Sequence admittances -> phase addmitance
-    ComplexTensor<false> y_ff_diagonal;
+    ComplexTensor<asymmetric_t> y_ff_diagonal;
     y_ff_diagonal << y_0_ff, 0.0, 0.0, 0.0, y_1_ff, 0.0, 0.0, 0.0, y_2_ff;
 
-    ComplexTensor<false> y_ft_diagonal;
+    ComplexTensor<asymmetric_t> y_ft_diagonal;
     y_ft_diagonal << y_0_ft, 0.0, 0.0, 0.0, y_1_ft, 0.0, 0.0, 0.0, y_2_ft;
 
-    ComplexTensor<false> y_tf_diagonal;
+    ComplexTensor<asymmetric_t> y_tf_diagonal;
     y_tf_diagonal << y_0_tf, 0.0, 0.0, 0.0, y_1_tf, 0.0, 0.0, 0.0, y_2_tf;
 
-    ComplexTensor<false> y_tt_diagonal;
+    ComplexTensor<asymmetric_t> y_tt_diagonal;
     y_tt_diagonal << y_0_tt, 0.0, 0.0, 0.0, y_1_tt, 0.0, 0.0, 0.0, y_2_tt;
 
-    ComplexTensor<false> const y_ff = dot(A, y_ff_diagonal, A_inv);
-    ComplexTensor<false> const y_ft = dot(A, y_ft_diagonal, A_inv);
-    ComplexTensor<false> const y_tf = dot(A, y_tf_diagonal, A_inv);
-    ComplexTensor<false> const y_tt = dot(A, y_tt_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_ff = dot(A, y_ff_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_ft = dot(A, y_ft_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_tf = dot(A, y_tf_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_tt = dot(A, y_tt_diagonal, A_inv);
 
-    BranchCalcParam<false> const param = Dyn11.calc_param<false>();
+    BranchCalcParam<asymmetric_t> const param = Dyn11.calc_param<asymmetric_t>();
 
     CHECK((cabs(param.value[0] - y_ff) < numerical_tolerance).all());
     CHECK((cabs(param.value[1] - y_ft) < numerical_tolerance).all());
@@ -575,8 +583,8 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
 }
 
 TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
-    ComplexTensor<false> const A = get_a();
-    ComplexTensor<false> const A_inv = get_a_inv();
+    ComplexTensor<asymmetric_t> const A = get_a();
+    ComplexTensor<asymmetric_t> const A_inv = get_a_inv();
 
     TransformerInput const input{.id = 1,
                                  .from_node = 2,
@@ -658,24 +666,24 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     DoubleComplex const y_0_tt = (1.0 / (z_1_series + 3.0 * z_grounding_to)) + y_1_shunt;
 
     // Sequence admittances -> phase addmitance
-    ComplexTensor<false> y_ff_diagonal;
+    ComplexTensor<asymmetric_t> y_ff_diagonal;
     y_ff_diagonal << y_0_ff, 0.0, 0.0, 0.0, y_1_ff, 0.0, 0.0, 0.0, y_2_ff;
 
-    ComplexTensor<false> y_ft_diagonal;
+    ComplexTensor<asymmetric_t> y_ft_diagonal;
     y_ft_diagonal << y_0_ft, 0.0, 0.0, 0.0, y_1_ft, 0.0, 0.0, 0.0, y_2_ft;
 
-    ComplexTensor<false> y_tf_diagonal;
+    ComplexTensor<asymmetric_t> y_tf_diagonal;
     y_tf_diagonal << y_0_tf, 0.0, 0.0, 0.0, y_1_tf, 0.0, 0.0, 0.0, y_2_tf;
 
-    ComplexTensor<false> y_tt_diagonal;
+    ComplexTensor<asymmetric_t> y_tt_diagonal;
     y_tt_diagonal << y_0_tt, 0.0, 0.0, 0.0, y_1_tt, 0.0, 0.0, 0.0, y_2_tt;
 
-    ComplexTensor<false> const y_ff = dot(A, y_ff_diagonal, A_inv);
-    ComplexTensor<false> const y_ft = dot(A, y_ft_diagonal, A_inv);
-    ComplexTensor<false> const y_tf = dot(A, y_tf_diagonal, A_inv);
-    ComplexTensor<false> const y_tt = dot(A, y_tt_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_ff = dot(A, y_ff_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_ft = dot(A, y_ft_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_tf = dot(A, y_tf_diagonal, A_inv);
+    ComplexTensor<asymmetric_t> const y_tt = dot(A, y_tt_diagonal, A_inv);
 
-    BranchCalcParam<false> const param = Dyn11.calc_param<false>();
+    BranchCalcParam<asymmetric_t> const param = Dyn11.calc_param<asymmetric_t>();
 
     CHECK((cabs(param.value[0] - y_ff) < numerical_tolerance).all());
     CHECK((cabs(param.value[1] - y_ft) < numerical_tolerance).all());
@@ -752,7 +760,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
     DoubleComplex const y_ft = (-1.0 / conj(tap_ratio)) * (1.0 / z_1_series);
     DoubleComplex const y_tf = (-1.0 / tap_ratio) * (1.0 / z_1_series);
 
-    BranchCalcParam<true> const param = Dyn11.calc_param<true>();
+    BranchCalcParam<symmetric_t> const param = Dyn11.calc_param<symmetric_t>();
 
     CHECK(cabs(param.value[0] - y_ff) < numerical_tolerance);
     CHECK(cabs(param.value[1] - y_ft) < numerical_tolerance);
@@ -829,7 +837,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     DoubleComplex const y_ft = (-1.0 / conj(tap_ratio)) * (1.0 / z_1_series);
     DoubleComplex const y_tf = (-1.0 / tap_ratio) * (1.0 / z_1_series);
 
-    BranchCalcParam<true> const param = Dyn11.calc_param<true>();
+    BranchCalcParam<symmetric_t> const param = Dyn11.calc_param<symmetric_t>();
 
     CHECK(cabs(param.value[0] - y_ff) < numerical_tolerance);
     CHECK(cabs(param.value[1] - y_ft) < numerical_tolerance);
