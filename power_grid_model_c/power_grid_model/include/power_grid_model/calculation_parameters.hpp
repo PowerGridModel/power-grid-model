@@ -35,6 +35,13 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
     ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
+struct TransformerTapRegulatorCalcParam {
+    double u_set{};
+    double u_band{};
+    DoubleComplex z_compensation{};
+    bool enabled{};
+};
+
 template <symmetry_tag sym_type> struct BranchMathOutput {
     using sym = sym_type;
 
