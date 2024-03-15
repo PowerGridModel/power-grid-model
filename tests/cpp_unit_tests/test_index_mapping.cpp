@@ -25,7 +25,7 @@ TEST_CASE("Test dense mapping - comparison sort") {
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {
-        idx_B_in_A[i] = static_cast<long>(n_B - i * decrement);
+        idx_B_in_A[i] = static_cast<Idx>(static_cast<double>(n_B) - static_cast<double>(i) * decrement);
     }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
@@ -55,7 +55,7 @@ TEST_CASE("Test dense mapping - counting sort") {
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {
-        idx_B_in_A[i] = static_cast<long>((n_B - 1) - i * decrement);
+        idx_B_in_A[i] = static_cast<Idx>(static_cast<double>(n_B - 1) - static_cast<double>(i) * decrement);
     }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
