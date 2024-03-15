@@ -19,13 +19,13 @@ TEST_CASE("Test sparse mapping") {
 
 TEST_CASE("Test dense mapping - comparison sort") {
     constexpr Idx count{10};
-    double n_B = 100000.0;
+    constexpr Idx n_B = 100000;
 
-    double decrement = n_B / count;
+    double decrement = static_cast<double>(n_B) / count;
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {
-        idx_B_in_A[i] = n_B - i * decrement;
+        idx_B_in_A[i] = static_cast<long>(n_B - i * decrement);
     }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
@@ -49,13 +49,13 @@ TEST_CASE("Test dense mapping index criterion - comparison sort") {
 
 TEST_CASE("Test dense mapping - counting sort") {
     constexpr Idx count{1000000};
-    double n_B = 10.0;
+    constexpr Idx n_B = 10;
 
-    double decrement = n_B / count;
+    double decrement = static_cast<double>(n_B) / count;
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {
-        idx_B_in_A[i] = (n_B - 1) - i * decrement;
+        idx_B_in_A[i] = static_cast<long>((n_B - 1) - i * decrement);
     }
 
     IdxVector sorted_idx_B_in_A = idx_B_in_A;
