@@ -11,11 +11,19 @@ on:
   # run pipeline on push event of main branch
   push:
     branches:
-      - main      
+      - main
   # run pipeline on pull request
   pull_request:
-  # Allows you to run this workflow manually from the Actions tab
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: true
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -340,7 +348,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
         run: |
           pip install twine
           echo "Publish to PyPI..."
@@ -348,7 +356,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
         with:
           files: |
             ./wheelhouse/*
