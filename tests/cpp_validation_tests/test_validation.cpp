@@ -292,6 +292,7 @@ std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"linear", CalculationMethod::linear},
     {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
+    {"linear_current", CalculationMethod::linear_current},
     {"iec60909", CalculationMethod::iec60909},
 };
 std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {

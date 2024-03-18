@@ -218,9 +218,9 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray linear_perm(
             y_bus.size());
 
+        detail::copy_y_bus<sym>(y_bus, linear_mat_data);
         detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
                                               linear_mat_data);
-        detail::copy_y_bus<sym>(y_bus, linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
 
         // get magnitude and angle of start voltage
