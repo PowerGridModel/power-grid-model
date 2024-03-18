@@ -14,7 +14,7 @@ on:
 
 jobs:
   dco:
-    name: DCO for merge groups
+    name: DCO
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
