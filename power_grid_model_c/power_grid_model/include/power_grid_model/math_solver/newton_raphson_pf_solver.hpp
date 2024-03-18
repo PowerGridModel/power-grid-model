@@ -211,7 +211,18 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const& /* y_bus */, MathOutput<sym> const& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
+        SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> linear_sparse_solver{
+            y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()};
+        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray linear_perm(
+            y_bus.size());
+
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
+                                              linear_mat_data);
+        detail::copy_y_bus<sym>(y_bus, linear_mat_data);
+        linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
+
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
