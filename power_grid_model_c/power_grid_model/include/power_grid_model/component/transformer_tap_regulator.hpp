@@ -9,6 +9,8 @@
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
 
 namespace power_grid_model {
 
@@ -42,6 +44,16 @@ class TransformerTapRegulator : public Base {
         TransformerTapRegulatorOutput output{};
         output.id = id();
         output.tap_pos = tap_pos;
+    }
+
+    template <symmetry_tag sym> TransformerTapRegulatorCalcParam calc_param(double const& u_rated) {
+        TransformerTapRegulatorCalcParam param{};
+        param.u_set = u_set_ / u_rated;
+        param.u_band = u_band_ / u_rated;
+        double z_base = u_rated * u_rated / base_power<sym>;
+        DoubleComplex z_compensation{line_drop_compensation_r_, line_drop_compensation_x_};
+        param.z_compensation = z_compensation / z_base;
+        return param;
     }
 
   private:
