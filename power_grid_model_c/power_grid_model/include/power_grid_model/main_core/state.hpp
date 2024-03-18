@@ -25,6 +25,9 @@ template <class CompContainer> struct MainModelState {
     ComponentToMathCoupling comp_coup;
 };
 
+template <class StateType>
+concept main_model_state_c = std::same_as<StateType, MainModelState<typename StateType::ComponentContainer>>;
+
 template <typename ContainerType, typename ComponentType>
 concept component_container = requires(ContainerType const& c, ID id) {
                                   { c.template citer<ComponentType>().begin() } -> std::forward_iterator;
@@ -39,7 +42,7 @@ concept component_container = requires(ContainerType const& c, ID id) {
                               };
 
 template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
-concept model_component_state =
+concept model_component_state_c =
     component_container<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
     std::same_as<StateType<ContainerType>, MainModelState<ContainerType>>;
 
