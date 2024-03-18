@@ -10,7 +10,6 @@ on:
   # run pipeline on merge queue because DCO plugin does not
   merge_group:
   # Any other signals are handled by the actual DCO plugin
-  pull_request:  # TODO remove
 
 jobs:
   dco:
