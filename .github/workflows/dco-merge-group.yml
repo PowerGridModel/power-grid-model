@@ -18,5 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
-      - run: |
-        echo "Workaround: signal DCO for merge queues because DCO plugin does not run for merge queues. See https://github.com/dcoapp/app/issues/199"
+      - name: "Workaround for DCO on merge groups"
+        run: |
+          echo "Workaround: signal DCO for merge queues because DCO plugin does not run for merge queues. See https://github.com/dcoapp/app/issues/199"
