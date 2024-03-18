@@ -28,7 +28,6 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
-        std::vector<double> const& phase_shift = *phase_shift_;
 
         // prepare
         MathOutput<sym> output;
@@ -40,25 +39,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         // initialize
         {
             Timer const sub_timer{calculation_info, 2221, "Initialize calculation"};
-            // average u_ref of all sources
-            DoubleComplex const u_ref = [&]() {
-                DoubleComplex sum_u_ref = 0.0;
-                for (auto const& [bus, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
-                    for (Idx const source : sources) {
-                        sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
-                    }
-                }
-                return sum_u_ref / (double)input.source.size();
-            }();
-
-            // assign u_ref as flat start
-            for (Idx i = 0; i != n_bus_; ++i) {
-                // consider phase shift
-                output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
-            }
-
             // Further initialization specific to the derived solver
-            derived_solver.initialize_derived_solver(y_bus, output);
+            derived_solver.initialize_derived_solver(y_bus, input, output);
         }
 
         // start calculation
