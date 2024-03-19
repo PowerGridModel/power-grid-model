@@ -24,11 +24,11 @@ Some terms regarding the data structures are explained here, including the defin
 The type of Dataset. i.e. `input`, `update`, `sym_output`, `asym_output`, `sc_output`.
 The examples in brackets are given in context of a dataset of a `line` component.
 
-- **input:** Contains attributes relevant to configuration of grid.(eg. `id`, `from_node`, `from_status`, ...)
-- **update:** Contains attributes relevant to multiple scenarios. (eg. `from_status`,`to_status`)
-- **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation calculation. (eg. `p_from`, `p_to`, ...) 
-- **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation calculation. (eg. `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
-- **sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. (eg. `i_from`, `i_from_angle`, ...). Like for the `asym_output`, detailed data for all 3 phases will be provided where relevant.
+- **input:** Contains attributes relevant to configuration of grid.(e.g., `id`, `from_node`, `from_status`, ...)
+- **update:** Contains attributes relevant to multiple scenarios. (e.g., `from_status`,`to_status`)
+- **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation calculation. (e.g., `p_from`, `p_to`, ...) 
+- **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation calculation. (e.g., `p_from`, `p_to`, ...). Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
+- **sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. (e.g., `i_from`, `i_from_angle`, ...). Like for the `asym_output`, detailed data for all 3 phases will be provided where relevant.
 
 ## Terms regarding data structures
 
