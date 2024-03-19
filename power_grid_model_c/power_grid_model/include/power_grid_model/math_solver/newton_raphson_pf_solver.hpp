@@ -212,11 +212,12 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+
         ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
-        SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> linear_sparse_solver{
-            y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()};
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray linear_perm(
-            y_bus.size());
+        LinearSparseSolverType linear_sparse_solver{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(),
+                                                    y_bus.shared_diag_lu()};
+        typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
 
         detail::copy_y_bus<sym>(y_bus, linear_mat_data);
         detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
@@ -280,9 +281,11 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     // 2. power unbalance: p/q_specified - p/q_calculated
     // 3. unknown iterative
     std::vector<ComplexPower<sym>> del_x_pq_;
-    SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>> sparse_solver_;
+
+    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
+    SparseSolverType sparse_solver_;
     // permutation array
-    typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
+    typename SparseSolverType::BlockPermArray perm_;
 
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
