@@ -95,7 +95,7 @@ using AsymBranch3Output = Branch3Output<asymmetric_t>;
 struct TransformerTapRegulatorOutput{    
     ID id;  // ID of the object
     IntS tap_pos;  // result of regulated tap position
-}
+};
 
 template <symmetry_tag sym_type>
 struct ApplianceOutput {

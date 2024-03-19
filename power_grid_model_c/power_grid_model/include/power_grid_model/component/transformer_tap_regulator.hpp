@@ -24,6 +24,7 @@ class TransformerTapRegulator : public Base {
         : Base{transformer_tap_regulator_input},
           transformer_id_{transformer_tap_regulator_input.transformer_id},
           control_side_{transformer_tap_regulator_input.control_side},
+          u_rated_{u_rated},
           u_set_{transformer_tap_regulator_input.u_set},
           u_band_{transformer_tap_regulator_input.u_band},
           enabled_{transformer_tap_regulator_input.enabled},
@@ -44,15 +45,17 @@ class TransformerTapRegulator : public Base {
         TransformerTapRegulatorOutput output{};
         output.id = id();
         output.tap_pos = tap_pos;
+        return output;
     }
 
-    template <symmetry_tag sym> TransformerTapRegulatorCalcParam calc_param(double const& u_rated) {
+    template <symmetry_tag sym> TransformerTapRegulatorCalcParam calc_param() {
         TransformerTapRegulatorCalcParam param{};
-        param.u_set = u_set_ / u_rated;
-        param.u_band = u_band_ / u_rated;
-        double z_base = u_rated * u_rated / base_power<sym>;
+        param.u_set = u_set_ / u_rated_;
+        param.u_band = u_band_ / u_rated_;
+        double z_base = u_rated_ * u_rated_ / base_power<sym>;
         DoubleComplex z_compensation{line_drop_compensation_r_, line_drop_compensation_x_};
         param.z_compensation = z_compensation / z_base;
+        param.enabled = enabled_;
         return param;
     }
 
@@ -60,6 +63,7 @@ class TransformerTapRegulator : public Base {
     // transformer tap regulator parameters
     ID transformer_id_;
     ControlSide control_side_;
+    double u_rated_;
     double u_set_;
     double u_band_;
     bool enabled_;
