@@ -151,7 +151,6 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
     // sparse solver
-    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
     SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
     bool parameters_changed_ = true;
