@@ -26,8 +26,19 @@ TEST_CASE("Test transformer tap regulator") {
     // update
     // get_output
     // calc_param
+    // control_side
+    // energized
+    // math_model_type
 
-    SUBCASE("test get_output") {}
+    SUBCASE("test energized") {
+        CHECK(transformer_tap_regulator.energized(true) == true);
+        CHECK(transformer_tap_regulator.energized(false) == true);
+    }
+
+    // SUBCASE("test get_output") {
+    //     TransformerTapRegulatorOutput output = transformer_tap_regulator.get_output(10);
+    //     // TODO
+    // }
 }
 
 } // namespace power_grid_model
