@@ -87,8 +87,9 @@ template <symmetry_tag sym> class LinearPFSolver {
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
-    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
-    typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    SparseSolverType sparse_solver_;
+    typename SparseSolverType::BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         detail::prepare_linear_matrix_and_rhs(y_bus, input, *load_gens_per_bus_, *sources_per_bus_, output, mat_data_);

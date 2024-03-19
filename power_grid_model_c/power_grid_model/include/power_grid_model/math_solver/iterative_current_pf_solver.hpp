@@ -73,8 +73,8 @@ namespace iterative_current_pf {
 template <symmetry_tag sym>
 class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
   public:
-    using BlockPermArray =
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    using BlockPermArray = typename SparseSolverType::BlockPermArray;
 
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
@@ -151,7 +151,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
     // sparse solver
-    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
     bool parameters_changed_ = true;
 
