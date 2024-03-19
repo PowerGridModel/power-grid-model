@@ -5,6 +5,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "regulator.hpp"
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
@@ -14,15 +15,15 @@
 
 namespace power_grid_model {
 
-class TransformerTapRegulator : public Base {
+class TransformerTapRegulator : public Regulator {
+  public:
     using InputType = TransformerTapRegulatorInput;
     // using UpdateType = ...
     static constexpr char const* name = "transformer_tap_regulator";
 
     explicit TransformerTapRegulator(TransformerTapRegulatorInput const& transformer_tap_regulator_input,
                                      double u_rated)
-        : Base{transformer_tap_regulator_input},
-          transformer_id_{transformer_tap_regulator_input.transformer_id},
+        : Regulator{transformer_tap_regulator_input},
           control_side_{transformer_tap_regulator_input.control_side},
           u_rated_{u_rated},
           u_set_{transformer_tap_regulator_input.u_set},
@@ -59,9 +60,11 @@ class TransformerTapRegulator : public Base {
         return param;
     }
 
+    // getter
+    ControlSide control_side() const { return control_side_; }
+
   private:
     // transformer tap regulator parameters
-    ID transformer_id_;
     ControlSide control_side_;
     double u_rated_;
     double u_set_;

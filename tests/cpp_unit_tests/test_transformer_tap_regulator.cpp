@@ -10,7 +10,7 @@ namespace power_grid_model {
 
 TEST_CASE("Test transformer tap regulator") {
     TransformerTapRegulatorInput input{.id = 1,
-                                       .transformer_id = 2,
+                                       .regulated_object = 2,
                                        .control_side = ControlSide::from,
                                        .u_set = 10.5e3,
                                        .u_band = 1e3,
