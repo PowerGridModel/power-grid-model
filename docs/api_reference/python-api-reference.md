@@ -37,6 +37,19 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.validation.errors.ValidationError
 ```
 
+## data types
+
+```{eval-rst}
+.. autoclass:: power_grid_model.data_types.Dataset
+.. autoclass:: power_grid_model.data_types.SingleDataset
+.. autoclass:: power_grid_model.data_types.BatchDataset
+.. autoclass:: power_grid_model.data_types.DataArray
+.. autoclass:: power_grid_model.data_types.SingleArray
+.. autoclass:: power_grid_model.data_types.BatchArray
+.. autoclass:: power_grid_model.data_types.DenseBatchArray
+.. autoclass:: power_grid_model.data_types.SparseBatchArray
+```
+
 ## utils
 
 ```{eval-rst}
