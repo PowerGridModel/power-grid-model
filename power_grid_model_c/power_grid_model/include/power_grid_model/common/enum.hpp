@@ -98,4 +98,9 @@ enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 }
 
 enum class SerializationFormat : IntS { json = 0, msgpack = 1 };
 
+enum class OptimizerType : IntS {
+    noop = 0,                     // do nothing
+    automatic_tap_adjustment = 1, // power flow with automatic tap adjustment
+};
+
 } // namespace power_grid_model
