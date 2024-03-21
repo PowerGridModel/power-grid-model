@@ -492,9 +492,7 @@ static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(BaseInput, 
 // static asserts for conversion of TransformerTapRegulatorInput to RegulatorInput
 static_assert(std::alignment_of_v<TransformerTapRegulatorInput> >= std::alignment_of_v<RegulatorInput>);
 static_assert(std::same_as<decltype(TransformerTapRegulatorInput::id), decltype(RegulatorInput::id)>);
-static_assert(std::same_as<decltype(TransformerTapRegulatorInput::id), decltype(RegulatorInput::id)>);
 static_assert(std::same_as<decltype(TransformerTapRegulatorInput::regulated_object), decltype(RegulatorInput::regulated_object)>);
-static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(RegulatorInput, id));
 static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(RegulatorInput, id));
 static_assert(offsetof(TransformerTapRegulatorInput, regulated_object) == offsetof(RegulatorInput, regulated_object));
 

@@ -39,7 +39,7 @@ struct TransformerTapRegulatorCalcParam {
     double u_set{};
     double u_band{};
     DoubleComplex z_compensation{};
-    bool enabled{};
+    IntS status{};
 };
 
 template <symmetry_tag sym_type> struct BranchMathOutput {

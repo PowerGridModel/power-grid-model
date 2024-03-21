@@ -427,11 +427,6 @@
             "attributes": [
                 {
                     "data_type": "ID",
-                    "names": "id",
-                    "description": "ID of the object"
-                },
-                {
-                    "data_type": "ID",
                     "names": "regulated_object",
                     "description": "ID of the regulated object"
                 }

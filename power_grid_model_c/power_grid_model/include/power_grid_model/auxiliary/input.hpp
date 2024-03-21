@@ -394,7 +394,6 @@ struct FaultInput {
 
 struct RegulatorInput {
     ID id;  // ID of the object
-    ID id;  // ID of the object
     ID regulated_object;  // ID of the regulated object
 
     // implicit conversions to BaseInput
@@ -403,7 +402,6 @@ struct RegulatorInput {
 };
 
 struct TransformerTapRegulatorInput {
-    ID id;  // ID of the object
     ID id;  // ID of the object
     ID regulated_object;  // ID of the regulated object
     ControlSide control_side;  // control side of the (three winding) transformer

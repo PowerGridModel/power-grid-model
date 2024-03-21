@@ -351,10 +351,9 @@ struct get_attributes_list<FaultInput> {
 
 template<>
 struct get_attributes_list<RegulatorInput> {
-    static constexpr std::array<MetaAttribute, 3> value{
+    static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::id, offsetof(RegulatorInput, id), []{ return "id"; }>::value,
             meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::id, offsetof(RegulatorInput, id), []{ return "id"; }>::value,
             meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::regulated_object, offsetof(RegulatorInput, regulated_object), []{ return "regulated_object"; }>::value,
     };
@@ -362,10 +361,9 @@ struct get_attributes_list<RegulatorInput> {
 
 template<>
 struct get_attributes_list<TransformerTapRegulatorInput> {
-    static constexpr std::array<MetaAttribute, 9> value{
+    static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::id, offsetof(TransformerTapRegulatorInput, id), []{ return "id"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::id, offsetof(TransformerTapRegulatorInput, id), []{ return "id"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::regulated_object, offsetof(TransformerTapRegulatorInput, regulated_object), []{ return "regulated_object"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::control_side, offsetof(TransformerTapRegulatorInput, control_side), []{ return "control_side"; }>::value,
@@ -754,7 +752,6 @@ struct get_component_nan<RegulatorInput> {
         // all attributes including base class
         
         set_nan(comp.id);
-        set_nan(comp.id);
         set_nan(comp.regulated_object);
         return comp;
     }
@@ -766,7 +763,6 @@ struct get_component_nan<TransformerTapRegulatorInput> {
         TransformerTapRegulatorInput comp;
         // all attributes including base class
         
-        set_nan(comp.id);
         set_nan(comp.id);
         set_nan(comp.regulated_object);
         set_nan(comp.control_side);
