@@ -128,11 +128,12 @@ TEST_CASE("Test get optimizer") {
             for (auto strategy : strategies) {
                 CAPTURE(strategy);
                 auto optimizer = get_instance(automatic_tap_adjustment, strategy);
-                // auto tap_optimizer = std::dynamic_pointer_cast<
-                //     TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
 
-                // REQUIRE(tap_optimizer != nullptr);
-                // CHECK(tap_optimizer->strategy() == strategy);
+                auto tap_optimizer = std::dynamic_pointer_cast<
+                    TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
+                REQUIRE(tap_optimizer != nullptr);
+                CHECK(tap_optimizer->strategy() == strategy);
+
                 CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO(mgovers): implement this check
             }
         }
