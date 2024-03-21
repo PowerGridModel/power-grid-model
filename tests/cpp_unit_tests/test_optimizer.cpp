@@ -75,7 +75,7 @@ TEST_CASE("Test tap position optimizer") {
             CAPTURE(strategy);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO to be overloaded
+            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO(mgovers): implement this check
         }
     }
     SUBCASE("asymmetric") {
@@ -83,7 +83,7 @@ TEST_CASE("Test tap position optimizer") {
             CAPTURE(strategy);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO to be overloaded
+            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO(mgovers): implement this check
         }
     }
 }
@@ -132,7 +132,7 @@ TEST_CASE("Test get optimizer") {
                     TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
 
                 CHECK(tap_optimizer->strategy() == strategy);
-                CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO to be overloaded
+                CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO(mgovers): implement this check
             }
         }
     }
