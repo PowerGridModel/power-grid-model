@@ -60,7 +60,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     TapPositionOptimizer(Calculator calculate, StateUpdater update, OptimizerStrategy strategy)
         : calculate_{std::move(calculate)}, update_{std::move(update)}, strategy_{strategy} {}
 
-    virtual auto optimize(State const& state) -> ResultType final {
+    auto optimize(State const& state) -> ResultType final {
         auto const order = rank_transformers(state);
         return optimize(state, order);
     }

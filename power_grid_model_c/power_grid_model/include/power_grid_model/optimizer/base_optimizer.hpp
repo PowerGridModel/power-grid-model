@@ -43,9 +43,9 @@ class BaseOptimizer {
 
     BaseOptimizer() = default;
     BaseOptimizer(BaseOptimizer const&) = delete;
-    BaseOptimizer(BaseOptimizer&&) = default;
+    BaseOptimizer(BaseOptimizer&&) noexcept = default;
     BaseOptimizer& operator=(BaseOptimizer const&) = delete;
-    BaseOptimizer& operator=(BaseOptimizer&&) = default;
+    BaseOptimizer& operator=(BaseOptimizer&&) noexcept = default;
     virtual ~BaseOptimizer() = default;
 
     virtual auto optimize(State const& state) -> ResultType = 0;
@@ -78,7 +78,7 @@ class NoopOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
 
     NoopOptimizer(Calculator func) : func_{std::move(func)} {}
 
-    virtual auto optimize(State const& state) -> ResultType final { return func_(state); }
+    auto optimize(State const& state) -> ResultType final { return func_(state); }
 
   private:
     Calculator func_;

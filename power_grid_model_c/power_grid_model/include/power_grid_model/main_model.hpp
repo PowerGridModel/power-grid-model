@@ -1177,11 +1177,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
             state, state.topo_comp_coup->power_sensor, se_input, [&state](Idx i) {
-                return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_from ||
+                using enum MeasuredTerminalType;
+                return state.comp_topo->power_sensor_terminal_type[i] == branch_from ||
                        // all branch3 sensors are at from side in the mathematical model
-                       state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_1 ||
-                       state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_2 ||
-                       state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch3_3;
+                       state.comp_topo->power_sensor_terminal_type[i] == branch3_1 ||
+                       state.comp_topo->power_sensor_terminal_type[i] == branch3_2 ||
+                       state.comp_topo->power_sensor_terminal_type[i] == branch3_3;
             });
         prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
                       &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(

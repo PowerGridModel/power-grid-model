@@ -51,10 +51,14 @@ static_assert(
 static_assert(
     std::convertible_to<decltype(stub_steady_state_state_calculator<asymmetric_t>), AsymStubSteadyStateCalculator>);
 
-constexpr auto stub_update(StubUpdateType const& /* update_data */){};
+constexpr void stub_update(StubUpdateType const& /* update_data */){
+    // stub
+};
 static_assert(std::convertible_to<decltype(stub_update), StubUpdate>);
 
-constexpr auto stub_const_dataset_update(ConstDataset const& /* update_data */){};
+constexpr void stub_const_dataset_update(ConstDataset const& /* update_data */){
+    // stub
+};
 static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstDatasetUpdate>);
 
 constexpr auto strategies = [] {
