@@ -131,6 +131,7 @@ TEST_CASE("Test get optimizer") {
                 auto tap_optimizer = std::dynamic_pointer_cast<
                     TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
 
+                REQUIRE(tap_optimizer != nullptr);
                 CHECK(tap_optimizer->strategy() == strategy);
                 CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO(mgovers): implement this check
             }
