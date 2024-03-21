@@ -206,6 +206,37 @@
                     "description": "short circuit impedance"
                 }
             ]
+        },
+        {
+            "name": "TransformerTapRegulatorUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_set",
+                    "description": "voltage setpoint"
+                },
+                {
+                    "data_type": "double",
+                    "names": "u_band",
+                    "description": "voltage bandwidth"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "regulator enables"
+                },
+                {
+                    "data_type": "double",
+                    "names": "line_drop_compensation_r",
+                    "description": "line drop compensation resistance"
+                },
+                {
+                    "data_type": "double",
+                    "names": "line_drop_compensation_x",
+                    "description": "line drop compensation reactance"
+                }
+            ]
         }
     ]
 }
