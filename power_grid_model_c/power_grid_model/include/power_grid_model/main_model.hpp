@@ -393,7 +393,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym>
     auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
         return [this, voltage_scaling,
-                calculation_method](MainModelState const& state) -> std::vector<ShortCircuitMathOutput<sym>> {
+                calculation_method](MainModelState const& /*state*/) -> std::vector<ShortCircuitMathOutput<sym>> {
             return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
                 [this, voltage_scaling](Idx /* n_math_solvers */) {
                     assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
