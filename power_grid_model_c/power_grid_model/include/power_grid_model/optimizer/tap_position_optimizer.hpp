@@ -68,7 +68,10 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     constexpr auto strategy() { return strategy_; }
 
   private:
-    auto optimize(State const& state, std::vector<Idx2D> const& order) -> ResultType { throw PowerGridError{}; }
+    auto optimize(State const& state, std::vector<Idx2D> const& order) -> ResultType {
+        // TODO(mgovers): rank Idx2D of transformers as listed in the container
+        throw PowerGridError{};
+    }
 
     Calculator calculate_;
     StateUpdater update_;
