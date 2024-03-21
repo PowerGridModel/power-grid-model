@@ -92,11 +92,6 @@ struct Branch3Output {
 using SymBranch3Output = Branch3Output<symmetric_t>;
 using AsymBranch3Output = Branch3Output<asymmetric_t>;
 
-struct TransformerTapRegulatorOutput{    
-    ID id;  // ID of the object
-    IntS tap_pos;  // result of regulated tap position
-};
-
 template <symmetry_tag sym_type>
 struct ApplianceOutput {
     using sym = sym_type;
@@ -225,6 +220,16 @@ struct ApplianceShortCircuitOutput {
 struct SensorShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
+
+    // implicit conversions to BaseOutput
+    operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
+    operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
+};
+
+struct TransformerTapRegulatorOutput {
+    ID id;  // ID of the object
+    IntS energized;  // whether the object is energized
+    IntS tap_pos;  // result of regulated tap position
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }

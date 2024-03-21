@@ -80,19 +80,6 @@ struct ThreeWindingTransformerUpdate {
     operator Branch3Update const&() const { return reinterpret_cast<Branch3Update const&>(*this); }
 };
 
-struct TransformerTapRegulatorUpdate{
-    ID id;  // ID of the object
-    double u_set;  // voltage setpoint
-    double u_band;  // voltage bandwidth
-    bool enabled;  //regulator enabled
-    double line_drop_compensation_r;  // line drop compensation resistance
-    double line_drop_compensation_x;  // line drop compensation reactance
-
-    // implicit conversions to BaseUpdate
-    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
-    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
-};
-
 template <symmetry_tag sym_type>
 struct LoadGenUpdate {
     using sym = sym_type;
@@ -190,6 +177,19 @@ struct FaultUpdate {
     ID fault_object;  // ID of the faulted object
     double r_f;  // short circuit impedance
     double x_f;  // short circuit impedance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+};
+
+struct TransformerTapRegulatorUpdate {
+    ID id;  // ID of the object
+    double u_set;  // voltage setpoint
+    double u_band;  // voltage bandwidth
+    IntS status;  // regulator enables
+    double line_drop_compensation_r;  // line drop compensation resistance
+    double line_drop_compensation_x;  // line drop compensation reactance
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }

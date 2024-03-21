@@ -277,6 +277,15 @@ static_assert(std::same_as<decltype(SensorShortCircuitOutput::energized), declty
 static_assert(offsetof(SensorShortCircuitOutput, id) == offsetof(BaseOutput, id));
 static_assert(offsetof(SensorShortCircuitOutput, energized) == offsetof(BaseOutput, energized));
 
+// static asserts for TransformerTapRegulatorOutput
+static_assert(std::is_standard_layout_v<TransformerTapRegulatorOutput>);
+// static asserts for conversion of TransformerTapRegulatorOutput to BaseOutput
+static_assert(std::alignment_of_v<TransformerTapRegulatorOutput> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorOutput::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorOutput::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(TransformerTapRegulatorOutput, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(TransformerTapRegulatorOutput, energized) == offsetof(BaseOutput, energized));
+
 
 
 } // namespace power_grid_model::test

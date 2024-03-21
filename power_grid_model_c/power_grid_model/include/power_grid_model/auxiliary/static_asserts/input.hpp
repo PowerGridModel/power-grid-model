@@ -476,6 +476,28 @@ static_assert(std::alignment_of_v<FaultInput> >= std::alignment_of_v<BaseInput>)
 static_assert(std::same_as<decltype(FaultInput::id), decltype(BaseInput::id)>);
 static_assert(offsetof(FaultInput, id) == offsetof(BaseInput, id));
 
+// static asserts for RegulatorInput
+static_assert(std::is_standard_layout_v<RegulatorInput>);
+// static asserts for conversion of RegulatorInput to BaseInput
+static_assert(std::alignment_of_v<RegulatorInput> >= std::alignment_of_v<BaseInput>);
+static_assert(std::same_as<decltype(RegulatorInput::id), decltype(BaseInput::id)>);
+static_assert(offsetof(RegulatorInput, id) == offsetof(BaseInput, id));
+
+// static asserts for TransformerTapRegulatorInput
+static_assert(std::is_standard_layout_v<TransformerTapRegulatorInput>);
+// static asserts for conversion of TransformerTapRegulatorInput to BaseInput
+static_assert(std::alignment_of_v<TransformerTapRegulatorInput> >= std::alignment_of_v<RegulatorInput>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorInput::id), decltype(BaseInput::id)>);
+static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(BaseInput, id));
+// static asserts for conversion of TransformerTapRegulatorInput to RegulatorInput
+static_assert(std::alignment_of_v<TransformerTapRegulatorInput> >= std::alignment_of_v<RegulatorInput>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorInput::id), decltype(RegulatorInput::id)>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorInput::id), decltype(RegulatorInput::id)>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorInput::regulated_object), decltype(RegulatorInput::regulated_object)>);
+static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(RegulatorInput, id));
+static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(RegulatorInput, id));
+static_assert(offsetof(TransformerTapRegulatorInput, regulated_object) == offsetof(RegulatorInput, regulated_object));
+
 
 
 } // namespace power_grid_model::test

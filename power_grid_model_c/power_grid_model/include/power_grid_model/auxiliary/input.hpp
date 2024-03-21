@@ -215,34 +215,6 @@ struct ThreeWindingTransformerInput {
     operator Branch3Input const&() const { return reinterpret_cast<Branch3Input const&>(*this); }
 };
 
-struct RegulatorInput {
-    ID id;  // ID of the object
-    ID regulated_object;  // ID the of regulated object
-
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-};
-
-struct TransformerTapRegulatorInput {
-    ID id;  // ID of the object
-    ID regulated_object;  // ID the of transformer
-    ControlSide control_side;  //control side of the (three winding) transformer
-    double u_set;  // voltage setpoint
-    double u_band;  // voltage bandwidth
-    bool enabled;  //regulator enabled
-    double line_drop_compensation_r;  // line drop compensation resistance
-    double line_drop_compensation_x;  // line drop compensation reactance
-
-    // implicit conversions to BaseInput
-    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
-    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
-
-    // implicit conversions to RegulatorInput
-    operator RegulatorInput&() { return reinterpret_cast<RegulatorInput&>(*this); }
-    operator RegulatorInput const&() const { return reinterpret_cast<RegulatorInput const&>(*this); }
-};
-
 struct GenericLoadGenInput {
     ID id;  // ID of the object
     ID node;  // node ID to which this appliance is connected
@@ -418,6 +390,36 @@ struct FaultInput {
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+};
+
+struct RegulatorInput {
+    ID id;  // ID of the object
+    ID id;  // ID of the object
+    ID regulated_object;  // ID of the regulated object
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+};
+
+struct TransformerTapRegulatorInput {
+    ID id;  // ID of the object
+    ID id;  // ID of the object
+    ID regulated_object;  // ID of the regulated object
+    ControlSide control_side;  // control side of the (three winding) transformer
+    double u_set;  // voltage setpoint
+    double u_band;  // voltage bandwidth
+    IntS status;  // regulator enabled
+    double line_drop_compensation_r;  // line drop compensation resistance
+    double line_drop_compensation_x;  // line drop compensation reactance
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to RegulatorInput
+    operator RegulatorInput&() { return reinterpret_cast<RegulatorInput&>(*this); }
+    operator RegulatorInput const&() const { return reinterpret_cast<RegulatorInput const&>(*this); }
 };
 
 
