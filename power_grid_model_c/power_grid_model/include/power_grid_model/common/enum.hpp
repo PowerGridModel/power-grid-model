@@ -103,4 +103,11 @@ enum class OptimizerType : IntS {
     automatic_tap_adjustment = 1, // power flow with automatic tap adjustment
 };
 
+enum class OptimizerStrategy : IntS {
+    any = 0,
+    lowest = 1,
+    highest = 2,
+    nan = na_IntS,
+};
+
 } // namespace power_grid_model

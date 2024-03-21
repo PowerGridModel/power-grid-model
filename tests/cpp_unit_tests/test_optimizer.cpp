@@ -56,6 +56,11 @@ static_assert(std::convertible_to<decltype(stub_update), StubUpdate>);
 
 constexpr auto stub_const_dataset_update(ConstDataset const& /* update_data */){};
 static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstDatasetUpdate>);
+
+constexpr auto strategies = [] {
+    using enum OptimizerStrategy;
+    return std::array{any, lowest, highest, nan};
+}();
 } // namespace
 
 TEST_CASE("Test no-op optimizer") {
@@ -66,14 +71,20 @@ TEST_CASE("Test no-op optimizer") {
 
 TEST_CASE("Test tap position optimizer") {
     SUBCASE("symmetric") {
-        auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-            stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update};
-        CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO to be overloaded
+        for (auto strategy : strategies) {
+            CAPTURE(strategy);
+            auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
+                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy};
+            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO to be overloaded
+        }
     }
     SUBCASE("asymmetric") {
-        auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-            stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update};
-        CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO to be overloaded
+        for (auto strategy : strategies) {
+            CAPTURE(strategy);
+            auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
+                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy};
+            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO to be overloaded
+        }
     }
 }
 
@@ -82,30 +93,47 @@ TEST_CASE("Test get optimizer") {
 
     SUBCASE("Stub state calculator") {
         SUBCASE("Noop") {
-            auto optimizer = get_optimizer<StubState, StubUpdateType>(noop, mock_state_calculator, stub_update);
-            CHECK(optimizer->optimize({}).x == 1);
+            for (auto strategy : strategies) {
+                CAPTURE(strategy);
+                auto optimizer =
+                    get_optimizer<StubState, StubUpdateType>(noop, strategy, mock_state_calculator, stub_update);
+                CHECK(optimizer->optimize({}).x == 1);
+            }
         }
 
         SUBCASE("Not implemented type") {
-            CHECK_THROWS_AS((get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, mock_state_calculator,
-                                                                      stub_update)),
-                            MissingCaseForEnumError<OptimizerType>);
+            for (auto strategy : strategies) {
+                CAPTURE(strategy);
+                CHECK_THROWS_AS((get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, strategy,
+                                                                          mock_state_calculator, stub_update)),
+                                MissingCaseForEnumError<OptimizerType>);
+            }
         }
     }
 
     SUBCASE("Symmetric state calculator") {
-        auto const get_instance = [](OptimizerType optimizer_type) {
+        auto const get_instance = [](OptimizerType optimizer_type, OptimizerStrategy strategy) {
             return get_optimizer<StubState, ConstDataset>(
-                optimizer_type, stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update);
+                optimizer_type, strategy, stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update);
         };
 
         SUBCASE("Noop") {
-            auto optimizer = get_instance(noop);
-            CHECK(optimizer->optimize({}).empty());
+            for (auto strategy : strategies) {
+                CAPTURE(strategy);
+                auto optimizer = get_instance(noop, strategy);
+                CHECK(optimizer->optimize({}).empty());
+            }
         }
         SUBCASE("Automatic tap adjustment") {
-            auto optimizer = get_instance(automatic_tap_adjustment);
-            CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO to be overloaded
+            for (auto strategy : strategies) {
+                CAPTURE(strategy);
+                auto optimizer = get_instance(automatic_tap_adjustment, strategy);
+                auto tap_optimizer = std::dynamic_pointer_cast<
+                    TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
+
+                CHECK(tap_optimizer->strategy() == strategy);
+                CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO to be overloaded
+            }
         }
     }
 }

@@ -668,7 +668,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     std::vector<MathOutput<sym>> calculate_power_flow(double err_tol, Idx max_iter,
                                                       CalculationMethod calculation_method) {
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
-                   OptimizerType::noop, calculate_power_flow_<sym>(err_tol, max_iter, calculation_method),
+                   OptimizerType::noop, OptimizerStrategy::any,
+                   calculate_power_flow_<sym>(err_tol, max_iter, calculation_method),
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
             ->optimize(state_);
     }
