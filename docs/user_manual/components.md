@@ -24,7 +24,7 @@ The base type for all power-grid-model components.
 
 | name        | data type | unit | description                                                                                                                      |
 | ----------- | --------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `id`        | `int32_t` | -    | ID of a component, the ID should be unique across all components, e.g.,F you cannot have a node with `id=5` and a line with `id=5`. |
+| `id`        | `int32_t` | -    | ID of a component, the ID should be unique across all components, e.g., you cannot have a node with `id=5` and a line with `id=5`. |
 | `energized` | `int8_t`  | -    | Indicates if a component is energized, i.e. connected to a source                                                                |
 
 ## Node
