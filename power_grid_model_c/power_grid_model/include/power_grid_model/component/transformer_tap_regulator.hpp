@@ -42,7 +42,7 @@ class TransformerTapRegulator : public Regulator {
         line_drop_compensation_x_ = update_data.line_drop_compensation_x;
     }
 
-    TransformerTapRegulatorOutput get_output(IntS const& tap_pos) {
+    TransformerTapRegulatorOutput get_output(IntS const& tap_pos) const {
         TransformerTapRegulatorOutput output{};
         output.id = id();
         output.energized = energized(true);
@@ -50,7 +50,7 @@ class TransformerTapRegulator : public Regulator {
         return output;
     }
 
-    template <symmetry_tag sym> TransformerTapRegulatorCalcParam calc_param() {
+    template <symmetry_tag sym> TransformerTapRegulatorCalcParam calc_param() const {
         TransformerTapRegulatorCalcParam param{};
         param.u_set = u_set_ / u_rated_;
         param.u_band = u_band_ / u_rated_;
