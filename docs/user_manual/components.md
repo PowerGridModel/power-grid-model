@@ -6,26 +6,25 @@ SPDX-License-Identifier: MPL-2.0
 
 # Components
 
-The attributes of components are listed in the tables in the sections below. The column names of the tables are as
-follows:
+The attributes of components are listed below. 
 
 ## Base
 
 * type name: `base`
 
-The base type for all power grid components.
+The base type for all power-grid-model components.
 
 #### Input
 
 | name | data type | unit | description                                                                                                                      | required |                                     update                                     |
 | ---- | --------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- | :------: | :----------------------------------------------------------------------------: |
-| `id` | `int32_t` | -    | ID of a component, the ID should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. | &#10004; | &#10060; (id needs to be specified in the update query, but cannot be changed) |
+| `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (id needs to be specified in the update query, but cannot be changed) |
 
 #### Steady state output and Short circuit output
 
 | name        | data type | unit | description                                                                                                                      |
 | ----------- | --------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `id`        | `int32_t` | -    | ID of a component, the ID should be unique along all components, i.e. you cannot have a node with `id` 5 and a line with `id` 5. |
+| `id`        | `int32_t` | -    | ID of a component, the ID should be unique across all components, e.g., you cannot have a node with `id=5` and a line with `id=5`. |
 | `energized` | `int8_t`  | -    | Indicates if a component is energized, i.e. connected to a source                                                                |
 
 ## Node
@@ -335,7 +334,7 @@ increased.
 
 `three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration. 
 However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star. 
-The values between windings (for eg. `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
+The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
 The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
