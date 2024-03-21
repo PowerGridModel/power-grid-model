@@ -45,6 +45,7 @@ class TransformerTapRegulator : public Regulator {
     TransformerTapRegulatorOutput get_output(IntS const& tap_pos) {
         TransformerTapRegulatorOutput output{};
         output.id = id();
+        output.energized = energized(true);
         output.tap_pos = tap_pos;
         return output;
     }

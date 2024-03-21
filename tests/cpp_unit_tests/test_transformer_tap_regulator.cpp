@@ -14,7 +14,7 @@ TEST_CASE("Test transformer tap regulator") {
                                        .control_side = ControlSide::from,
                                        .u_set = 10.0e3,
                                        .u_band = 1.0e3,
-                                       .enabled = true,
+                                       .status = true,
                                        .line_drop_compensation_r = 1.0,
                                        .line_drop_compensation_x = 2.0};
 
@@ -41,7 +41,7 @@ TEST_CASE("Test transformer tap regulator") {
         TransformerTapRegulatorUpdate update{.id = 1,
                                              .u_set = 11.0e3,
                                              .u_band = 2.0e3,
-                                             .enabled = false,
+                                             .status = false,
                                              .line_drop_compensation_r = 2.0,
                                              .line_drop_compensation_x = 4.0};
 
@@ -58,7 +58,7 @@ TEST_CASE("Test transformer tap regulator") {
         CHECK(param.u_set == doctest::Approx(u_set_expected));
         CHECK(param.u_band == doctest::Approx(u_band_expected));
         CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
-        CHECK_FALSE(param.enabled);
+        CHECK_FALSE(param.status);
     }
 
     SUBCASE("Test calc param - sym") {
@@ -74,7 +74,7 @@ TEST_CASE("Test transformer tap regulator") {
         CHECK(param.u_set == doctest::Approx(u_set_expected));
         CHECK(param.u_band == doctest::Approx(u_band_expected));
         CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
-        CHECK(param.enabled);
+        CHECK(param.status);
     }
 
     SUBCASE("Test calc param - asym") {
@@ -90,7 +90,7 @@ TEST_CASE("Test transformer tap regulator") {
         CHECK(param.u_set == doctest::Approx(u_set_expected));
         CHECK(param.u_band == doctest::Approx(u_band_expected));
         CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
-        CHECK(param.enabled);
+        CHECK(param.status);
     }
 }
 
