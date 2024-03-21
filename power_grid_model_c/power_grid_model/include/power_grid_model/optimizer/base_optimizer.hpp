@@ -41,6 +41,13 @@ class BaseOptimizer {
     using State = State_;
     using ResultType = state_calculator_result_t<Calculator, State>;
 
+    BaseOptimizer() = default;
+    BaseOptimizer(BaseOptimizer const&) = delete;
+    BaseOptimizer(BaseOptimizer&&) = default;
+    BaseOptimizer& operator=(BaseOptimizer const&) = delete;
+    BaseOptimizer& operator=(BaseOptimizer&&) = default;
+    virtual ~BaseOptimizer() = default;
+
     virtual auto optimize(State const& state) -> ResultType = 0;
 
     template <std::derived_from<BaseOptimizer> Optimizer, typename... Args>
@@ -54,7 +61,7 @@ class BaseOptimizer {
 template <typename Optimizer>
 concept optimizer_c =
     detail::state_calculator_c<typename Optimizer::Calculator, typename Optimizer::State> &&
-    requires(Optimizer optimizer, Optimizer::State& state) {
+    requires(Optimizer optimizer, typename Optimizer::State& state) {
         {
             optimizer.optimize(state)
             } -> std::same_as<std::invoke_result_t<typename Optimizer::Calculator,

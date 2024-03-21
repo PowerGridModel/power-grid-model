@@ -27,17 +27,17 @@ using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, bo
                                                             boost::no_property, GraphIdx, GraphIdx>;
 
 template <main_core::main_model_state_c State>
-inline auto build_transformer_graph(State const& state) -> TransformerGraph {
+inline auto build_transformer_graph(State const& /*state*/) -> TransformerGraph {
     // TODO(mgovers): implement
     return {};
 }
 
-inline auto determine_distance_from_source(TransformerGraph const& graph) -> std::vector<std::pair<Idx2D, Idx>> {
+inline auto determine_distance_from_source(TransformerGraph const& /*graph*/) -> std::vector<std::pair<Idx2D, Idx>> {
     // TODO(mgovers): implement
     return {};
 }
 
-inline auto rank_transformers(std::vector<std::pair<Idx2D, Idx>> const& state) -> std::vector<Idx2D> {
+inline auto rank_transformers(std::vector<std::pair<Idx2D, Idx>> const& /*distances*/) -> std::vector<Idx2D> {
     // TODO(mgovers): rank Idx2D of transformers as listed in the container
     return {};
 }
@@ -68,7 +68,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     constexpr auto strategy() { return strategy_; }
 
   private:
-    auto optimize(State const& state, std::vector<Idx2D> const& order) -> ResultType {
+    auto optimize(State const& /*state*/, std::vector<Idx2D> const& /*order*/) -> ResultType {
         // TODO(mgovers): rank Idx2D of transformers as listed in the container
         throw PowerGridError{};
     }

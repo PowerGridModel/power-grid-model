@@ -395,7 +395,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return [this, voltage_scaling,
                 calculation_method](MainModelState const& state) -> std::vector<ShortCircuitMathOutput<sym>> {
             return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
-                [this, &state, voltage_scaling](Idx n_math_solvers) {
+                [this, &state, voltage_scaling](Idx /* n_math_solvers */) {
                     assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
                     return prepare_short_circuit_input<sym>(voltage_scaling);
                 },
