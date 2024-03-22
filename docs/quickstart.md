@@ -7,8 +7,8 @@ SPDX-License-Identifier: MPL-2.0
 # Quick Start
 
 In this quick start a simple 10kV network as below is calculated.
-A line connects two nodes. One node has a source. One node has a symmetric load.
-The code in the quick start is in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
+A line connects two nodes. One node has a source. The other node has a symmetric load.
+The full code for this section is provided in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
 
 ```
 node_1 ---line_3--- node_2
@@ -19,7 +19,7 @@ source_5            sym_load_4
 The library uses a graph data model to represent the physical components and their attributes,
 see [Graph Data Model](user_manual/data-model).
 
-Firstly, import the main model class
+Before we start working on the network, we need first import the main model class
 as well as some helper functions for enumerations and meta data.
 
 ```python
@@ -30,11 +30,10 @@ from power_grid_model import initialize_array
 
 ## Input Data
 
-The library uses dictionary of
+The library uses dictionaries of
 [numpy structured arrays](https://numpy.org/doc/stable/user/basics.rec.html)
-as the main (input and output) data exchange format between Python and C++ core.
-The documentation [Native Data Interface](advanced_documentation/native-data-interface)
-explains the detailed design of this interface.
+as the main (input and output) data exchange format between Python interface and C++ core.
+Detailed design of data interface can be found in [Native Data Interface](advanced_documentation/native-data-interface).
 
 The helper function {py:class}`power_grid_model.initialize_array` can be used to
 easily generate an array of the correct format.
@@ -87,12 +86,11 @@ input_data = {
 }
 ```
 
-Another example of how to create components can also be found 
-in [Input data](ex_input_data).
+Another example of how to create components can be found in [Input data](ex_input_data).
 
 ```{note}
 The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component. 
-(Eg. See that type name of {hoverxref}`user_manual/components:node` is `node`)
+See, e.g., that type name of {hoverxref}`user_manual/components:node` is `node`.
 ```
 
 ## Instantiate Model
@@ -105,7 +103,7 @@ model = PowerGridModel(input_data, system_frequency=50.0)
 
 ## Power Flow Calculation
 
-To perform calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` 
+To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` 
 or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions. 
 Refer [Calculations](user_manual/calculations) for more details on the many optional arguments.
 
@@ -123,7 +121,7 @@ print('Node Result')
 print(pd.DataFrame(result['node']))
 ```
 
-You can print the data in tables.
+The result data can then be viewed in tabular forms.
 
 ```
 Node Input
@@ -138,12 +136,12 @@ Node Result
 
 ## Validation
 
-To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`. Refer [Data Validator](user_manual/data-validator) for more details
+To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`. Refer to [Data Validator](user_manual/data-validator) for more details
 
 ## Batch Data
 
-Optionally, we can add batch scenarios using `update_data` argument. 
-The code below initializes a symmetric load update array with a shape of `(5, 4)`. This is in the form of $$\text{number of batches} \times \text{number of components}$$)
+Optionally, we can add batch scenarios using the `update_data` argument. 
+The code below initializes a symmetric load update array with a shape of `(5, 4)`. This is in the form of $\text{number of batches} \times \text{number of components}$.
 The `update_data` is an optional argument to the {py:class}`power_grid_model.PowerGridModel` object or the calculation functions.
 
 ```python
