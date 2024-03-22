@@ -19,11 +19,23 @@ class Regulator : public Base {
     // regulator always energized
     bool energized(bool /* is_connected_to_source */) const final { return true; }
     ComponentType math_model_type() const final { return ComponentType::regulator; }
+    bool status() const { return status_; }
+
+    void set_status(bool status) { status_ = status; }
+
+    auto inverse(std::convertible_to<RegulatorUpdate> auto update_data) const {
+        assert(update_data.id == id());
+        set_if_not_nan(update_data.status, static_cast<IntS>(status_));
+        return update_data;
+    }
 
   protected:
     // constructor
     explicit Regulator(RegulatorInput const& regulator_input)
-        : Base{regulator_input}, regulated_object_{regulator_input.regulated_object} {}
+        : Base{regulator_input},
+          regulated_object_{regulator_input.regulated_object},
+          status_{regulator_input.status != 0} {}
+
     Regulator(Regulator const&) = default;
     Regulator(Regulator&&) = default;
     Regulator& operator=(Regulator const&) = default;
@@ -34,6 +46,7 @@ class Regulator : public Base {
 
   private:
     ID regulated_object_;
+    bool status_;
 };
 
 } // namespace power_grid_model

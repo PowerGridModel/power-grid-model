@@ -31,6 +31,8 @@ TEST_CASE("Test transformer tap regulator") {
 
     SUBCASE("Test control side") { CHECK(transformer_tap_regulator.control_side() == ControlSide::from); }
 
+    SUBCASE("Test status") { CHECK(transformer_tap_regulator.status()); }
+
     SUBCASE("Test get_output") {
         TransformerTapRegulatorOutput const output = transformer_tap_regulator.get_output(10);
         CHECK(output.id == 1);

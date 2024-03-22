@@ -28,18 +28,29 @@ class TransformerTapRegulator : public Regulator {
           u_rated_{u_rated},
           u_set_{transformer_tap_regulator_input.u_set},
           u_band_{transformer_tap_regulator_input.u_band},
-          status_{transformer_tap_regulator_input.status},
           line_drop_compensation_r_{transformer_tap_regulator_input.line_drop_compensation_r},
           line_drop_compensation_x_{transformer_tap_regulator_input.line_drop_compensation_x} {}
 
     // update for transformer tap regulator, hide default update for branch
     void update(TransformerTapRegulatorUpdate const& update_data) {
         assert(update_data.id == id());
+        set_status(update_data.status);
         u_set_ = update_data.u_set;
         u_band_ = update_data.u_band;
-        status_ = update_data.status;
         line_drop_compensation_r_ = update_data.line_drop_compensation_r;
         line_drop_compensation_x_ = update_data.line_drop_compensation_x;
+    }
+
+    TransformerTapRegulatorUpdate inverse(TransformerTapRegulatorUpdate update_data) const {
+        assert(update_data.id == id());
+
+        update_data = Regulator::inverse(update_data);
+        set_if_not_nan(update_data.u_set, u_set_);
+        set_if_not_nan(update_data.u_band, u_band_);
+        set_if_not_nan(update_data.line_drop_compensation_r, line_drop_compensation_r_);
+        set_if_not_nan(update_data.line_drop_compensation_x, line_drop_compensation_x_);
+
+        return update_data;
     }
 
     TransformerTapRegulatorOutput get_output(IntS const& tap_pos) const {
@@ -57,7 +68,7 @@ class TransformerTapRegulator : public Regulator {
         double z_base = u_rated_ * u_rated_ / base_power<sym>;
         DoubleComplex z_compensation{line_drop_compensation_r_, line_drop_compensation_x_};
         param.z_compensation = z_compensation / z_base;
-        param.status = status_;
+        param.status = Regulator::status();
         return param;
     }
 
@@ -70,7 +81,6 @@ class TransformerTapRegulator : public Regulator {
     double u_rated_;
     double u_set_;
     double u_band_;
-    IntS status_;
     double line_drop_compensation_r_;
     double line_drop_compensation_x_;
 };
