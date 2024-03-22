@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 ## Calculation types
 
-With power-grid-model it is possible to perform two different types of calculation:
+With power-grid-model it is possible to perform three different types of calculations:
 
 - [Power flow](#power-flow-algorithms): a "what-if" scenario calculation. This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method. An example of usage of the power-flow calculation function is given in [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty. This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method. An example of usage of the power-flow calculation function is given in [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
@@ -84,6 +84,20 @@ also of importance. Additionally, there should be at least one voltage measureme
 The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
 In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
 ```
+
+##### Necessary observability condition
+
+Based on the requirements of observability mentioned above, user needs to satisfy  at least the following conditions for state estimation calculation in power-grid-model.
+
+- `n_voltage_sensor >= 1`
+- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
+
+`n_unique_power_sensor` can be calculated as sum of following:
+
+- Zero injection or zero power flow constraint if present for all nodes.
+- Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
+- Any sensor on a `Branch` for all branches: Parallel branches with either side of measurements count as one.
+- All `Branch3` sensors.
 
 #### Short circuit calculations
 

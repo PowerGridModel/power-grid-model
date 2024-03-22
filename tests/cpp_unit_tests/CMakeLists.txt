@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
     "test_y_bus.cpp"
     "test_math_solver.cpp"
     "test_measured_values.cpp"
+    "test_observability.cpp"
     "test_topology.cpp"
     "test_sparse_ordering.cpp"
     "test_grouped_index_vector.cpp"
