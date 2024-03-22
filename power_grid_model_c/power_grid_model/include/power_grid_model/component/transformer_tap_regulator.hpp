@@ -32,13 +32,14 @@ class TransformerTapRegulator : public Regulator {
           line_drop_compensation_x_{transformer_tap_regulator_input.line_drop_compensation_x} {}
 
     // update for transformer tap regulator, hide default update for branch
-    void update(TransformerTapRegulatorUpdate const& update_data) {
+    UpdateChange update(TransformerTapRegulatorUpdate const& update_data) {
         assert(update_data.id == id());
         set_status(update_data.status);
         u_set_ = update_data.u_set;
         u_band_ = update_data.u_band;
         line_drop_compensation_r_ = update_data.line_drop_compensation_r;
         line_drop_compensation_x_ = update_data.line_drop_compensation_x;
+        return {false, false};
     }
 
     TransformerTapRegulatorUpdate inverse(TransformerTapRegulatorUpdate update_data) const {
@@ -74,6 +75,7 @@ class TransformerTapRegulator : public Regulator {
 
     // getter
     ControlSide control_side() const { return control_side_; }
+    RegulatorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
   private:
     // transformer tap regulator parameters

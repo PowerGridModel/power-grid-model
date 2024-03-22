@@ -7,11 +7,15 @@
 #include "base.hpp"
 
 #include "../auxiliary/input.hpp"
+#include "../auxiliary/output.hpp"
+#include "../auxiliary/update.hpp"
 
 namespace power_grid_model {
 
 class Regulator : public Base {
   public:
+    using InputType = RegulatorInput;
+    using ShortCircuitOutputType = RegulatorShortCircuitOutput;
     static constexpr char const* name = "regulator";
 
     ID regulated_object() const { return regulated_object_; };

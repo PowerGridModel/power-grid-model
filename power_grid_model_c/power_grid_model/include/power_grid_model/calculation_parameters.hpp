@@ -369,6 +369,7 @@ struct Idx2DBranch3 {
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
     std::vector<Idx2D> fault;
+    std::vector<Idx2D> transformer_tap_regulator; // TODO: should this be in TopologicalComponentToMathCoupling?
 };
 
 // couple component to math model

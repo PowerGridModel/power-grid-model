@@ -75,6 +75,12 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     return state.comp_coup.fault.cbegin();
 }
 
+template <std::same_as<TransformerTapRegulator> Component, class ComponentContainer>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
+    return state.comp_coup.transformer_tap_regulator.cbegin();
+}
+
 template <typename Component, typename IndexType, class ComponentContainer, std::forward_iterator ResIt,
           typename ResFunc>
     requires model_component_state<MainModelState, ComponentContainer, Component> &&
@@ -412,6 +418,30 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 
             auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
             return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
+        });
+}
+
+// output transformer tap regulator
+template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
+          steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [](TransformerTapRegulator const& /* transformer_tap_regulator */, Idx2D const /* math_id */) {
+            // TODO: this function is not implemented
+            using sym = typename MathOutputType::sym;
+            return typename TransformerTapRegulator::OutputType<sym>{};
+        });
+}
+template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
+          short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
+    requires model_component_state<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [](TransformerTapRegulator const& transformer_tap_regulator, Idx2D const /* math_id */) {
+            return transformer_tap_regulator.get_null_sc_output();
         });
 }
 
