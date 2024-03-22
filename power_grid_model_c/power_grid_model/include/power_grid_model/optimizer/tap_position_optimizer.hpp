@@ -32,7 +32,7 @@ inline auto build_transformer_graph(State const& /*state*/) -> TransformerGraph 
     return {};
 }
 
-inline auto determine_distance_from_source(TransformerGraph const& /*graph*/) -> std::vector<std::pair<Idx2D, Idx>> {
+inline auto get_edge_weights(TransformerGraph const& /*graph*/) -> std::vector<std::pair<Idx2D, Idx>> {
     // TODO(mgovers): implement
     return {};
 }
@@ -43,7 +43,7 @@ inline auto rank_transformers(std::vector<std::pair<Idx2D, Idx>> const& /*distan
 }
 
 template <main_core::main_model_state_c State> inline auto rank_transformers(State const& state) -> std::vector<Idx2D> {
-    return rank_transformers(determine_distance_from_source(build_transformer_graph(state)));
+    return rank_transformers(get_edge_weights(build_transformer_graph(state)));
 }
 
 template <typename StateCalculator, typename StateUpdater_, typename State_>
@@ -57,8 +57,8 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     using typename Base::State;
     using StateUpdater = StateUpdater_;
 
-    TapPositionOptimizer(Calculator calculate, StateUpdater update, OptimizerStrategy strategy)
-        : calculate_{std::move(calculate)}, update_{std::move(update)}, strategy_{strategy} {}
+    TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
+        : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state) -> ResultType final {
         auto const order = rank_transformers(state);

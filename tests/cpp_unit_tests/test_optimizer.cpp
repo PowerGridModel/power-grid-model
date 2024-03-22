@@ -36,7 +36,7 @@ static_assert(std::same_as<std::invoke_result_t<AsymStubSteadyStateCalculator, S
 static_assert(std::invocable<StubUpdate, StubUpdateType const&>);
 static_assert(std::invocable<ConstDatasetUpdate, ConstDataset const&>);
 
-static_assert(optimizer_c<NoopOptimizer<StubStateCalculator, StubState>>);
+static_assert(optimizer_c<NoOptimizer<StubStateCalculator, StubState>>);
 static_assert(optimizer_c<TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>);
 static_assert(optimizer_c<TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>);
 
@@ -68,7 +68,7 @@ constexpr auto strategies = [] {
 } // namespace
 
 TEST_CASE("Test no-op optimizer") {
-    auto optimizer = NoopOptimizer<StubStateCalculator, StubState>{mock_state_calculator};
+    auto optimizer = NoOptimizer<StubStateCalculator, StubState>{mock_state_calculator};
     CHECK(optimizer.optimize({}).x == 1);
     CHECK(optimizer.optimize({}).x == 1);
 }

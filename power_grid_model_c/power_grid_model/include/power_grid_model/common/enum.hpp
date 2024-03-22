@@ -105,9 +105,10 @@ enum class OptimizerType : IntS {
 
 enum class OptimizerStrategy : IntS {
     any = 0,
-    lowest = 1,
-    highest = 2,
-    nan = na_IntS,
+    global_minimum = 1,
+    global_maximum = 2,
+    local_minimum = 3,
+    local_maximum = 4,
 };
 
 } // namespace power_grid_model

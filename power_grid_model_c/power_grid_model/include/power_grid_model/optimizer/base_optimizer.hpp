@@ -69,14 +69,14 @@ concept optimizer_c =
     };
 
 template <typename StateCalculator, typename State_>
-class NoopOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
+class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
   public:
     using Base = detail::BaseOptimizer<StateCalculator, State_>;
     using typename Base::Calculator;
     using typename Base::ResultType;
     using typename Base::State;
 
-    NoopOptimizer(Calculator func) : func_{std::move(func)} {}
+    NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
     auto optimize(State const& state) -> ResultType final { return func_(state); }
 
