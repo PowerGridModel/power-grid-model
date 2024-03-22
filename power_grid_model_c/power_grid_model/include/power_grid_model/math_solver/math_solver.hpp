@@ -100,6 +100,9 @@ template <symmetry_tag sym> class MathSolver {
         if (iterative_current_pf_solver_.has_value()) {
             iterative_current_pf_solver_->parameters_changed(changed);
         }
+        if (newton_raphson_pf_solver_.has_value()) {
+            newton_raphson_pf_solver_->parameters_changed(changed);
+        }
     }
 
   private:

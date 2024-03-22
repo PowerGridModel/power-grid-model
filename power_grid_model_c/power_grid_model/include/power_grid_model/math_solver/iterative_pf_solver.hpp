@@ -10,6 +10,7 @@
 
 // Check if all includes needed
 #include "common_solver_functions.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -23,7 +24,11 @@ namespace power_grid_model::math_solver {
 // solver
 template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
+    using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    using LinearBlockPermArray = typename LinearSparseSolverType::BlockPermArray;
+
     friend DerivedSolver;
+
     MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                    Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
@@ -86,18 +91,52 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                                     [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
+    void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
+
+    void prefactorize_linear_lhs(const YBus<sym>& y_bus) {
+        // if Y bus is not up to date
+        // re-build matrix and prefactorize Build y bus data with source admittance
+        if (parameters_changed_) {
+            ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
+            detail::copy_y_bus<sym>(y_bus, mat_data);
+
+            auto const& sources_per_bus = *sources_per_bus_;
+            IdxVector const& bus_entry = y_bus.lu_diag();
+            for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
+                Idx const data_sequence = bus_entry[bus_number];
+                for (auto source_number : sources) {
+                    // YBus_diag += Y_source
+                    mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                }
+            }
+            // prefactorize
+            LinearBlockPermArray perm(n_bus_);
+            linear_sparse_solver_.prefactorize(mat_data, perm);
+            // move pre-factorized version into shared ptr
+            linear_mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
+            linear_perm_ = std::make_shared<LinearBlockPermArray const>(std::move(perm));
+        }
+        parameters_changed_ = false;
+    }
+
   private:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;
     std::shared_ptr<SparseGroupedIdxVector const> load_gens_per_bus_;
     std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+    bool parameters_changed_ = true;
+    // Linear solver for initialization
+    std::shared_ptr<ComplexTensorVector<sym> const> linear_mat_data_;
+    LinearSparseSolverType linear_sparse_solver_;
+    std::shared_ptr<LinearBlockPermArray const> linear_perm_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           phase_shift_{topo_ptr, &topo_ptr->phase_shift},
           load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
           sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
+          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type},
+          linear_sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 };
 
 } // namespace power_grid_model::math_solver

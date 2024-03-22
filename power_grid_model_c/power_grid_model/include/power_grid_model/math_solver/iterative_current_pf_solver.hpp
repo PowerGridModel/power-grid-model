@@ -77,37 +77,12 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     using BlockPermArray = typename SparseSolverType::BlockPermArray;
 
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
-          rhs_u_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
+        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr}, rhs_u_(y_bus.size()) {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
         make_flat_start(input, output.u);
-
-        auto const& sources_per_bus = *this->sources_per_bus_;
-        IdxVector const& bus_entry = y_bus.lu_diag();
-        // if Y bus is not up to date
-        // re-build matrix and prefactorize Build y bus data with source admittance
-        if (parameters_changed_) {
-            ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
-            detail::copy_y_bus<sym>(y_bus, mat_data);
-
-            for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
-                Idx const data_sequence = bus_entry[bus_number];
-                for (auto source_number : sources) {
-                    // YBus_diag += Y_source
-                    mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
-                }
-            }
-            // prefactorize
-            BlockPermArray perm(this->n_bus_);
-            sparse_solver_.prefactorize(mat_data, perm);
-            // move pre-factorized version into shared ptr
-            mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
-            perm_ = std::make_shared<BlockPermArray const>(std::move(perm));
-        }
-        parameters_changed_ = false;
+        this->prefactorize_linear_lhs(y_bus);
     }
 
     // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
@@ -128,7 +103,10 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
 
     // Solve the linear equations I_inj = YU
     // inplace
-    void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_); }
+    void solve_matrix() {
+        this->linear_sparse_solver_.solve_with_prefactorized_matrix(*this->linear_mat_data_, *this->linear_perm_,
+                                                                    rhs_u_, rhs_u_);
+    }
 
     // Find maximum deviation in voltage among all buses
     double iterate_unknown(ComplexValueVector<sym>& u) {
@@ -145,15 +123,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         return max_dev;
     }
 
-    void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
-
   private:
     ComplexValueVector<sym> rhs_u_;
-    std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
-    // sparse solver
-    SparseSolverType sparse_solver_;
-    std::shared_ptr<BlockPermArray const> perm_;
-    bool parameters_changed_ = true;
 
     void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {

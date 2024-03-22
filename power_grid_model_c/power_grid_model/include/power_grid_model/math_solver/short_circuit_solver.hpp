@@ -83,7 +83,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            detail::add_sources<sym>(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
+            detail::add_sources_to_lhs_rhs<sym>(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
 
             add_faults(faults, bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
                        fault_type, phase_1, phase_2);
