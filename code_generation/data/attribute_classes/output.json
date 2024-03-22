@@ -287,6 +287,12 @@
                     "description": "result of regulated tap position"
                 }
             ]
+        },
+        {
+            "name": "TransformerTapRegulatorShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": []
         }
     ]
 }

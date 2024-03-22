@@ -237,6 +237,16 @@ struct get_attributes_list<TransformerTapRegulatorOutput> {
     };
 };
 
+template<>
+struct get_attributes_list<TransformerTapRegulatorShortCircuitOutput> {
+    static constexpr std::array<MetaAttribute, 2> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorShortCircuitOutput, &TransformerTapRegulatorShortCircuitOutput::id, offsetof(TransformerTapRegulatorShortCircuitOutput, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorShortCircuitOutput, &TransformerTapRegulatorShortCircuitOutput::energized, offsetof(TransformerTapRegulatorShortCircuitOutput, energized), []{ return "energized"; }>::value,
+    };
+};
+
 
 
 // template specialization functors to get nan
@@ -483,6 +493,18 @@ struct get_component_nan<TransformerTapRegulatorOutput> {
         set_nan(comp.id);
         set_nan(comp.energized);
         set_nan(comp.tap_pos);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<TransformerTapRegulatorShortCircuitOutput> {
+    TransformerTapRegulatorShortCircuitOutput operator() () const {
+        TransformerTapRegulatorShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
         return comp;
     }
 };

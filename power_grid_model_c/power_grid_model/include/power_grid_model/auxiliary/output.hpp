@@ -236,6 +236,15 @@ struct TransformerTapRegulatorOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
+struct TransformerTapRegulatorShortCircuitOutput {
+    ID id;  // ID of the object
+    IntS energized;  // whether the object is energized
+
+    // implicit conversions to BaseOutput
+    operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
+    operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
+};
+
 
 
 } // namespace power_grid_model
