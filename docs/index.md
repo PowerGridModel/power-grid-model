@@ -12,7 +12,8 @@ SPDX-License-Identifier: MPL-2.0
 :align: right
 ```
 
-`power-grid-model` is a library for steady-state distribution power system analysis distributed for Python and C.
+`power-grid-model` is a library for steady-state distribution power system analysis.
+It is distributed for Python and C.
 The core of the library is written in C++.
 Currently, it supports both symmetric and asymmetric calculations for the following calculation types:
 
@@ -20,10 +21,10 @@ Currently, it supports both symmetric and asymmetric calculations for the follow
 * State Estimation
 * Short Circuit
 
-For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For conversions from various data format to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 
 ```{note}
-Want to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
+Do you wish to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
 ```
 
 ## Install from PyPI
