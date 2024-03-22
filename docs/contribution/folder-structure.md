@@ -15,6 +15,8 @@ The repository folder structure is as follows. The `docs` and `scripts` folders 
 - The code for validation of input data is in {{ "[validation]({}/src/power_grid_model/validation)".format(gh_link_head_tree) }} folder.
 - The {{ "[tests]({}/tests)".format(gh_link_head_tree) }} folder is divided in the following way:
   - `cpp_unit_tests` contains the tests for the C++ calculation core.
+  - `cpp_integration_tests` contains more extensive tests for the C++ calculation core.
+  - `cpp_validation_tests` contains the validation test cases for the C++ calculation core.
   - `c_api_tests` contains the tests for communication with the C API.
   - `benchmark_cpp` contains a benchmark test case generator in C++.
   - `package_tests` contains an integration test CMake project that tests whether the C API package is correctly installed.
