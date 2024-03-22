@@ -63,12 +63,13 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> std::vector<std::
                 auto [dist, u] = pq.top();
                 pq.pop();
 
-                if (dist != rank[u])
+                if (dist != rank[u]) {
                     continue;
+                }
 
                 for (auto e : boost::make_iterator_range(boost::out_edges(u, graph))) {
                     auto v = boost::target(e, graph);
-                    EdgeWeight weight = graph[e].weight;
+                    const EdgeWeight weight = graph[e].weight;
 
                     if (rank[u] + weight < rank[v]) {
                         rank[v] = rank[u] + weight;
