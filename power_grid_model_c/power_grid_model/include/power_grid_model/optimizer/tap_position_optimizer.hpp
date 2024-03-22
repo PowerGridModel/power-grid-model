@@ -84,7 +84,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> std::vector<std::
     // Convert rank vector to vector of pairs
     std::vector<std::pair<Idx2D, EdgeWeight>> result;
     for (size_t i = 0; i < rank.size(); ++i) {
-        result.push_back({sources[i], rank[i]});
+        result.emplace_back(sources[i], rank[i]);
     }
 
     return result;
