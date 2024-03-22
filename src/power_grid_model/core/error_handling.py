@@ -6,13 +6,33 @@
 Error handling
 """
 
+import re
 from typing import Optional
 
 import numpy as np
 
 from power_grid_model.core.index_integer import IdxNp
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
-from power_grid_model.errors import PowerGridBatchError, PowerGridError, PowerGridSerializationError
+from power_grid_model.errors import (
+    ConflictID,
+    ConflictVoltage,
+    IDNotFound,
+    IDWrongType,
+    InvalidBranch,
+    InvalidBranch3,
+    InvalidCalculationMethod,
+    InvalidMeasuredObject,
+    InvalidShortCircuitPhaseOrType,
+    InvalidTransformerClock,
+    IterationDiverge,
+    MissingCaseForEnumError,
+    NotObservableError,
+    PowerGridBatchError,
+    PowerGridError,
+    PowerGridSerializationError,
+    SparseMatrixError,
+    UnknownAttributeName,
+)
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 # error codes
@@ -21,13 +41,64 @@ PGM_REGULAR_ERROR = 1
 PGM_BATCH_ERROR = 2
 PGM_SERIALIZATION_ERROR = 3
 
+_MISSING_CASE_FOR_ENUM_RE = re.compile(r"(\w+) is not implemented for (\w+) #(\d+)!\n")
+_CONFLICT_VOLTAGE_RE = re.compile(
+    r"Conflicting voltage for line (\d+)\n voltage at from node (\d+) is (.*)\n voltage at to node (\d+) is (.*)\n"
+)
+_INVALID_BRANCH_RE = re.compile(r"Branch (\d+) has the same from- and to-node (\d+),\n This is not allowed!\n")
+_INVALID_BRANCH3_RE = re.compile(
+    r"Branch3 (\d+) is connected to the same node at least twice. Node 1/2/3: (\d+)/(\d+)/(\d+),\n"
+    r"This is not allowed!\n"
+)
+_INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (\d+), clock (\d+)\n")
+_SPARSE_MATRIX_ERROR_RE = re.compile(r"Sparse matrix error")  # multiple different flavors
+_NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for state estimation.\n")
+_ITERATION_DIVERGE_RE = re.compile(
+    r"Iteration failed to converge after (\d+) iterations! Max deviation: (.*), error tolerance: (.*).\n"
+)
+_CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (\d+)\n")
+_ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (\d+)\n")
+_INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) is not supported for (\w+)")
+_ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (\d+)\n")
+_INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
+_UNKNOWN_ATTRIBUTE_NAME_RE = re.compile(r"Unknown attribute name! (.*)\n")
+_INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
 
-def find_error(batch_size: int = 1) -> Optional[RuntimeError]:
+_ERROR_MESSAGE_PATTERNS = {
+    _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
+    _CONFLICT_VOLTAGE_RE: ConflictVoltage,
+    _INVALID_BRANCH_RE: InvalidBranch,
+    _INVALID_BRANCH3_RE: InvalidBranch3,
+    _INVALID_TRANSFORMER_CLOCK_RE: InvalidTransformerClock,
+    _SPARSE_MATRIX_ERROR_RE: SparseMatrixError,
+    _NOT_OBSERVABLE_ERROR_RE: NotObservableError,
+    _ITERATION_DIVERGE_RE: IterationDiverge,
+    _CONFLICT_ID_RE: ConflictID,
+    _ID_NOT_FOUND_RE: IDNotFound,
+    _INVALID_MEASURED_OBJECT_RE: InvalidMeasuredObject,
+    _ID_WRONG_TYPE_RE: IDWrongType,
+    _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
+    _UNKNOWN_ATTRIBUTE_NAME_RE: UnknownAttributeName,
+    _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
+}
+
+
+def _interpret_error(message: str, decode_error: bool = True) -> PowerGridError:
+    if decode_error:
+        for pattern, type_ in _ERROR_MESSAGE_PATTERNS.items():
+            if pattern.search(message) is not None:
+                return type_(message)
+
+    return PowerGridError(message)
+
+
+def find_error(batch_size: int = 1, decode_error: bool = True) -> Optional[RuntimeError]:
     """
     Check if there is an error and return it
 
     Args:
-        batch_size: Size of batch
+        batch_size: (int, optional): Size of batch. Defaults to 1.
+        decode_error (bool, optional): Decode the error message(s) to derived error classes. Defaults to True
 
     Returns: error object, can be none
 
@@ -47,6 +118,7 @@ def find_error(batch_size: int = 1) -> Optional[RuntimeError]:
         failed_msgptr = pgc.batch_errors()
         error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
+        error.errors = [_interpret_error(message, decode_error=decode_error) for message in error.error_messages]
         all_scenarios = np.arange(batch_size, dtype=IdxNp)
         mask = np.ones(batch_size, dtype=np.bool_)
         mask[error.failed_scenarios] = False
@@ -70,13 +142,16 @@ def assert_no_error(batch_size: int = 1):
         raise error
 
 
-def handle_errors(continue_on_batch_error: bool, batch_size: int = 1) -> Optional[PowerGridBatchError]:
+def handle_errors(
+    continue_on_batch_error: bool, batch_size: int = 1, decode_error: bool = True
+) -> Optional[PowerGridBatchError]:
     """
     Handle any errors in the way that is specified.
 
     Args:
         continue_on_batch_error (bool): Return the error when the error type is a batch error instead of reraising it.
         batch_size (int, optional): Size of batch. Defaults to 1.
+        decode_error (bool, optional): Decode the error message(s) to derived error classes. Defaults to True
 
     Raises:
         error: Any errors previously encountered, unless it was a batch error and continue_on_batch_error was True.
@@ -85,7 +160,7 @@ def handle_errors(continue_on_batch_error: bool, batch_size: int = 1) -> Optiona
         Optional[PowerGridBatchError]: None if there were no errors, or the previously encountered
                                        error if it was a batch error and continue_on_batch_error was True.
     """
-    error: Optional[RuntimeError] = find_error(batch_size=batch_size)
+    error: Optional[RuntimeError] = find_error(batch_size=batch_size, decode_error=decode_error)
     if error is None:
         return None
 
