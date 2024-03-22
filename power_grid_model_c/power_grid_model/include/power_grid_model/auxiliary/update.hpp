@@ -183,17 +183,30 @@ struct FaultUpdate {
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
+struct RegulatorUpdate {
+    ID id;  // ID of the object
+    IntS status;  // regulator enables
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+};
+
 struct TransformerTapRegulatorUpdate {
     ID id;  // ID of the object
+    IntS status;  // regulator enables
     double u_set;  // voltage setpoint
     double u_band;  // voltage bandwidth
-    IntS status;  // regulator enables
     double line_drop_compensation_r;  // line drop compensation resistance
     double line_drop_compensation_x;  // line drop compensation reactance
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
     operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to RegulatorUpdate
+    operator RegulatorUpdate&() { return reinterpret_cast<RegulatorUpdate&>(*this); }
+    operator RegulatorUpdate const&() const { return reinterpret_cast<RegulatorUpdate const&>(*this); }
 };
 
 

@@ -208,8 +208,19 @@
             ]
         },
         {
-            "name": "TransformerTapRegulatorUpdate",
+            "name": "RegulatorUpdate",
             "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "regulator enables"
+                }
+            ]
+        },
+        {
+            "name": "TransformerTapRegulatorUpdate",
+            "base": "RegulatorUpdate",
             "attributes": [
                 {
                     "data_type": "double",
@@ -220,11 +231,6 @@
                     "data_type": "double",
                     "names": "u_band",
                     "description": "voltage bandwidth"
-                },
-                {
-                    "data_type": "IntS",
-                    "names": "status",
-                    "description": "regulator enables"
                 },
                 {
                     "data_type": "double",

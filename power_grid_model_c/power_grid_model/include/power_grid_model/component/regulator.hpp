@@ -11,7 +11,6 @@
 namespace power_grid_model {
 
 class Regulator : public Base {
-
   public:
     static constexpr char const* name = "regulator";
 

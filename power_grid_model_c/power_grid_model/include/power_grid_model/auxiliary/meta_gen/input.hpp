@@ -351,11 +351,12 @@ struct get_attributes_list<FaultInput> {
 
 template<>
 struct get_attributes_list<RegulatorInput> {
-    static constexpr std::array<MetaAttribute, 2> value{
+    static constexpr std::array<MetaAttribute, 3> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::id, offsetof(RegulatorInput, id), []{ return "id"; }>::value,
             meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::regulated_object, offsetof(RegulatorInput, regulated_object), []{ return "regulated_object"; }>::value,
+            meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::status, offsetof(RegulatorInput, status), []{ return "status"; }>::value,
     };
 };
 
@@ -366,10 +367,10 @@ struct get_attributes_list<TransformerTapRegulatorInput> {
             
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::id, offsetof(TransformerTapRegulatorInput, id), []{ return "id"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::regulated_object, offsetof(TransformerTapRegulatorInput, regulated_object), []{ return "regulated_object"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::status, offsetof(TransformerTapRegulatorInput, status), []{ return "status"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::control_side, offsetof(TransformerTapRegulatorInput, control_side), []{ return "control_side"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::u_set, offsetof(TransformerTapRegulatorInput, u_set), []{ return "u_set"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::u_band, offsetof(TransformerTapRegulatorInput, u_band), []{ return "u_band"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::status, offsetof(TransformerTapRegulatorInput, status), []{ return "status"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::line_drop_compensation_r, offsetof(TransformerTapRegulatorInput, line_drop_compensation_r), []{ return "line_drop_compensation_r"; }>::value,
             meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::line_drop_compensation_x, offsetof(TransformerTapRegulatorInput, line_drop_compensation_x), []{ return "line_drop_compensation_x"; }>::value,
     };
@@ -753,6 +754,7 @@ struct get_component_nan<RegulatorInput> {
         
         set_nan(comp.id);
         set_nan(comp.regulated_object);
+        set_nan(comp.status);
         return comp;
     }
 };
@@ -765,10 +767,10 @@ struct get_component_nan<TransformerTapRegulatorInput> {
         
         set_nan(comp.id);
         set_nan(comp.regulated_object);
+        set_nan(comp.status);
         set_nan(comp.control_side);
         set_nan(comp.u_set);
         set_nan(comp.u_band);
-        set_nan(comp.status);
         set_nan(comp.line_drop_compensation_r);
         set_nan(comp.line_drop_compensation_x);
         return comp;

@@ -429,6 +429,11 @@
                     "data_type": "ID",
                     "names": "regulated_object",
                     "description": "ID of the regulated object"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "regulator enabled"
                 }
             ]
         },
@@ -450,11 +455,6 @@
                     "data_type": "double",
                     "names": "u_band",
                     "description": "voltage bandwidth"
-                },
-                {
-                    "data_type": "IntS",
-                    "names": "status",
-                    "description": "regulator enabled"
                 },
                 {
                     "data_type": "double",

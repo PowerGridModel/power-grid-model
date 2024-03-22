@@ -18,7 +18,7 @@ namespace power_grid_model {
 class TransformerTapRegulator : public Regulator {
   public:
     using InputType = TransformerTapRegulatorInput;
-    // using UpdateType = ...
+    using UpdateType = TransformerTapRegulatorUpdate;
     static constexpr char const* name = "transformer_tap_regulator";
 
     explicit TransformerTapRegulator(TransformerTapRegulatorInput const& transformer_tap_regulator_input,
