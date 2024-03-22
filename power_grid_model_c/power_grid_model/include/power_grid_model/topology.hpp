@@ -327,7 +327,7 @@ class Topology {
         auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
 
         const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
-        auto const permuted_node_idx = [n_non_cyclic_nodes, &reordered](Idx node_idx) {
+        auto const permuted_node_idx = [n_non_cyclic_nodes, &reordered = reordered](Idx node_idx) {
             return n_non_cyclic_nodes +
                    narrow_cast<Idx>(std::distance(reordered.begin(), std::ranges::find(reordered, node_idx)));
         };
