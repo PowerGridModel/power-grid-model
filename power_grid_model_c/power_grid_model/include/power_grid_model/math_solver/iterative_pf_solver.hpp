@@ -119,6 +119,26 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         parameters_changed_ = false;
     }
 
+    void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
+        std::vector<double> const& phase_shift = *phase_shift_;
+        // average u_ref of all sources
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (auto const& [bus, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
+                for (Idx const source : sources) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
+                }
+            }
+            return sum_u_ref / (double)input.source.size();
+        }();
+
+        // assign u_ref as flat start
+        for (Idx i = 0; i != n_bus_; ++i) {
+            // consider phase shift
+            output_u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+        }
+    }
+
   private:
     Idx n_bus_;
     std::shared_ptr<DoubleVector const> phase_shift_;

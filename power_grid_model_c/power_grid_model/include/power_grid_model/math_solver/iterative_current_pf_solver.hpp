@@ -81,7 +81,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        make_flat_start(input, output.u);
+        this->make_flat_start(input, output.u);
         this->prefactorize_linear_lhs(y_bus);
     }
 
@@ -158,26 +158,6 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
             // I_inj_i += Y_source_j * U_ref_j
             rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                       ComplexValue<sym>{input.source[source_number]});
-        }
-    }
-
-    void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
-        std::vector<double> const& phase_shift = *this->phase_shift_;
-        // average u_ref of all sources
-        DoubleComplex const u_ref = [&]() {
-            DoubleComplex sum_u_ref = 0.0;
-            for (auto const& [bus, sources] : enumerated_zip_sequence(*this->sources_per_bus_)) {
-                for (Idx const source : sources) {
-                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
-                }
-            }
-            return sum_u_ref / (double)input.source.size();
-        }();
-
-        // assign u_ref as flat start
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            // consider phase shift
-            output_u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
         }
     }
 };

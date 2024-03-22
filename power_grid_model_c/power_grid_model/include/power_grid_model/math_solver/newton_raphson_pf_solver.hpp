@@ -215,6 +215,7 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        this->make_flat_start(input, output.u);
         this->prefactorize_linear_lhs(y_bus);
         this->linear_sparse_solver_.solve_with_prefactorized_matrix(*this->linear_mat_data_, *this->linear_perm_,
                                                                     output.u, output.u);
