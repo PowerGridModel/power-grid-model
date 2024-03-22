@@ -103,12 +103,12 @@ enum class OptimizerType : IntS {
     automatic_tap_adjustment = 1, // power flow with automatic tap adjustment
 };
 
-enum class OptimizerStrategy : IntS {
-    any = 0,
-    global_minimum = 1,
-    global_maximum = 2,
-    local_minimum = 3,
-    local_maximum = 4,
+enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
+    any = 0,                          // any = Any{f(x) \in Range} for x \in Domain
+    global_minimum = 1,               // global_minimum = argmin{f(x) \in Range} for x in Domain
+    global_maximum = 2,               // global_maximum = argmax{f(x) \in Range} for x in Domain
+    local_minimum = 3,                // local_minimum = Any{argmin{f(x) \in Range}} for x in Domain
+    local_maximum = 4,                // local_maximum = Any{argmax{f(x) \in Range}} for x in Domain
 };
 
 } // namespace power_grid_model

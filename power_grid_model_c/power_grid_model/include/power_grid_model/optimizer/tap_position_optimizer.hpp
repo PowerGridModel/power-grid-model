@@ -16,15 +16,16 @@ namespace tap_position_optimizer {
 
 namespace detail = power_grid_model::optimizer::detail;
 
-using GraphIdx = size_t;
-struct Edge {
+using TrafoGraphIdx = size_t;
+using EdgeWeight = int64_t;
+struct TrafoGraphEdge {
     Idx2D pos{};
-    Idx weight{};
+    EdgeWeight weight{};
 };
 
 // TODO(mgovers): investigate whether this really is the correct graph structure
-using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, boost::no_property, Edge,
-                                                            boost::no_property, GraphIdx, GraphIdx>;
+using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, boost::no_property, TrafoGraphEdge,
+                                                            boost::no_property, TrafoGraphIdx, TrafoGraphIdx>;
 
 template <main_core::main_model_state_c State>
 inline auto build_transformer_graph(State const& /*state*/) -> TransformerGraph {
@@ -32,7 +33,7 @@ inline auto build_transformer_graph(State const& /*state*/) -> TransformerGraph 
     return {};
 }
 
-inline auto get_edge_weights(TransformerGraph const& /*graph*/) -> std::vector<std::pair<Idx2D, Idx>> {
+inline auto get_edge_weights(TransformerGraph const& /*graph*/) -> std::vector<std::pair<Idx2D, EdgeWeight>> {
     // TODO(mgovers): implement
     return {};
 }
@@ -65,7 +66,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
         return optimize(state, order);
     }
 
-    constexpr auto strategy() { return strategy_; }
+    constexpr auto get_strategy() { return strategy_; }
 
   private:
     auto optimize(State const& /*state*/, std::vector<Idx2D> const& /*order*/) -> ResultType {

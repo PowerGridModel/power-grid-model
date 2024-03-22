@@ -63,7 +63,7 @@ static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstData
 
 constexpr auto strategies = [] {
     using enum OptimizerStrategy;
-    return std::array{any, lowest, highest, nan};
+    return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
 }();
 } // namespace
 
@@ -136,7 +136,7 @@ TEST_CASE("Test get optimizer") {
                 auto tap_optimizer = std::dynamic_pointer_cast<
                     TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
                 REQUIRE(tap_optimizer != nullptr);
-                CHECK(tap_optimizer->strategy() == strategy);
+                CHECK(tap_optimizer->get_strategy() == strategy);
 
                 CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO(mgovers): implement this check
             }
