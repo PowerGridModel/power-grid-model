@@ -67,7 +67,7 @@ class TransformerTapRegulator : public Regulator {
         param.u_set = u_set_ / u_rated_;
         param.u_band = u_band_ / u_rated_;
         double z_base = u_rated_ * u_rated_ / base_power<sym>;
-        DoubleComplex z_compensation{line_drop_compensation_r_, line_drop_compensation_x_};
+        DoubleComplex const z_compensation{line_drop_compensation_r_, line_drop_compensation_x_};
         param.z_compensation = z_compensation / z_base;
         param.status = Regulator::status();
         return param;

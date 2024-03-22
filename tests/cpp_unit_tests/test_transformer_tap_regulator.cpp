@@ -11,10 +11,10 @@ namespace power_grid_model {
 TEST_CASE("Test transformer tap regulator") {
     TransformerTapRegulatorInput const input{.id = 1,
                                              .regulated_object = 2,
+                                             .status = true,
                                              .control_side = ControlSide::from,
                                              .u_set = 10.0e3,
                                              .u_band = 1.0e3,
-                                             .status = true,
                                              .line_drop_compensation_r = 1.0,
                                              .line_drop_compensation_x = 2.0};
 
@@ -41,9 +41,9 @@ TEST_CASE("Test transformer tap regulator") {
 
     SUBCASE("Test update") {
         TransformerTapRegulatorUpdate const update{.id = 1,
+                                                   .status = false,
                                                    .u_set = 11.0e3,
                                                    .u_band = 2.0e3,
-                                                   .status = false,
                                                    .line_drop_compensation_r = 2.0,
                                                    .line_drop_compensation_x = 4.0};
 
