@@ -25,7 +25,7 @@ class Regulator : public Base {
     ComponentType math_model_type() const final { return ComponentType::regulator; }
     bool status() const { return status_; }
 
-    void set_status(bool status) { status_ = static_cast<bool>(status); }
+    void set_status(IntS status) { status_ = static_cast<bool>(status); }
 
     auto inverse(std::convertible_to<RegulatorUpdate> auto update_data) const {
         assert(update_data.id == id());

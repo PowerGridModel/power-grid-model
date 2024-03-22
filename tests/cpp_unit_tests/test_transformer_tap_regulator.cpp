@@ -22,6 +22,8 @@ TEST_CASE("Test transformer tap regulator") {
 
     TransformerTapRegulator transformer_tap_regulator{input, u_rated};
 
+    // TODO: test inverse update
+
     SUBCASE("Test energized") {
         CHECK(transformer_tap_regulator.energized(true));
         CHECK(transformer_tap_regulator.energized(false));
@@ -37,6 +39,12 @@ TEST_CASE("Test transformer tap regulator") {
         TransformerTapRegulatorOutput const output = transformer_tap_regulator.get_output(10);
         CHECK(output.id == 1);
         CHECK(output.tap_pos == 10);
+    }
+
+    SUBCASE("Test short circuit output") {
+        RegulatorShortCircuitOutput sc_output = transformer_tap_regulator.get_null_sc_output();
+        CHECK(sc_output.id == 1);
+        CHECK(sc_output.energized == 0);
     }
 
     SUBCASE("Test update") {
