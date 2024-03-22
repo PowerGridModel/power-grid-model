@@ -99,8 +99,8 @@ TEST_CASE("Test get optimizer") {
         SUBCASE("Noop") {
             for (auto strategy : strategies) {
                 CAPTURE(strategy);
-                auto optimizer =
-                    get_optimizer<StubState, StubUpdateType>(noop, strategy, mock_state_calculator, stub_update);
+                auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy,
+                                                                          mock_state_calculator, stub_update);
                 CHECK(optimizer->optimize({}).x == 1);
             }
         }
@@ -124,7 +124,7 @@ TEST_CASE("Test get optimizer") {
         SUBCASE("Noop") {
             for (auto strategy : strategies) {
                 CAPTURE(strategy);
-                auto optimizer = get_instance(noop, strategy);
+                auto optimizer = get_instance(no_optimization, strategy);
                 CHECK(optimizer->optimize({}).empty());
             }
         }

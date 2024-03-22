@@ -23,7 +23,7 @@ constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy str
     using BaseOptimizer = detail::BaseOptimizer<StateCalculator, State>;
 
     switch (optimizer_type) {
-    case noop:
+    case no_optimization:
         return BaseOptimizer::template make_shared<NoopOptimizer<StateCalculator, State>>(std::move(calculate));
     case automatic_tap_adjustment:
         if constexpr (detail::steady_state_calculator_c<StateCalculator, State> &&
