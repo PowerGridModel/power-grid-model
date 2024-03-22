@@ -93,7 +93,7 @@ template <symmetry_tag sym> class LinearPFSolver {
     BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        using detail::add_sources_to_lhs_rhs;
+        using detail::add_sources_linear_lhs_rhs;
 
         IdxVector const& bus_entry = y_bus.lu_diag();
         for (auto const& [bus_number, load_gens, sources] :
@@ -102,7 +102,7 @@ template <symmetry_tag sym> class LinearPFSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u[bus_number];
             add_loads_to_lhs(load_gens, bus_number, input, diagonal_element);
-            add_sources_to_lhs_rhs(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
+            add_sources_linear_lhs_rhs(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
         }
     }
 

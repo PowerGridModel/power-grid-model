@@ -13,9 +13,9 @@
 namespace power_grid_model::math_solver::detail {
 
 template <symmetry_tag sym>
-inline void add_sources_to_lhs_rhs(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
-                                   ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element,
-                                   ComplexValue<sym>& u_bus) {
+inline void add_sources_linear_lhs_rhs(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,
+                                       ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element,
+                                       ComplexValue<sym>& u_bus) {
     for (Idx const source_number : sources) {
         ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
         diagonal_element += y_source; // add y_source to the diagonal of Ybus

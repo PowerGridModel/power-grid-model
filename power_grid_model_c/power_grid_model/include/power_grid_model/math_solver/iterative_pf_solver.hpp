@@ -100,23 +100,15 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
             detail::copy_y_bus<sym>(y_bus, mat_data);
 
-            auto const& sources_per_bus = *sources_per_bus_;
-            IdxVector const& bus_entry = y_bus.lu_diag();
-            for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
-                Idx const data_sequence = bus_entry[bus_number];
-                for (auto source_number : sources) {
-                    // YBus_diag += Y_source
-                    mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
-                }
-            }
+            add_sources_linear_lhs(y_bus, mat_data);
             // prefactorize
             LinearBlockPermArray perm(n_bus_);
             linear_sparse_solver_.prefactorize(mat_data, perm);
             // move pre-factorized version into shared ptr
             linear_mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
             linear_perm_ = std::make_shared<LinearBlockPermArray const>(std::move(perm));
+            parameters_changed_ = false;
         }
-        parameters_changed_ = false;
     }
 
     void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
@@ -129,13 +121,35 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                 }
             }
-            return sum_u_ref / (double)input.source.size();
+            return sum_u_ref / static_cast<double>(input.source.size());
         }();
 
         // assign u_ref as flat start
         for (Idx i = 0; i != n_bus_; ++i) {
             // consider phase shift
             output_u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+        }
+    }
+
+    void add_sources_linear_lhs(const YBus<sym>& y_bus, ComplexTensorVector<sym>& mat_data) {
+        IdxVector const& bus_entry = y_bus.lu_diag();
+        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
+            Idx const data_sequence = bus_entry[bus_number];
+            for (auto source_number : sources) {
+                // YBus_diag += Y_source
+                mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
+            }
+        }
+    }
+
+    void add_sources_linear_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                ComplexValueVector<sym>& rhs) {
+        for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
+            for (Idx const source_number : sources) {
+                // I_inj_i += Y_source_j * U_ref_j
+                rhs[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                       ComplexValue<sym>{input.source[source_number]});
+            }
         }
     }
 
