@@ -286,14 +286,14 @@ static_assert(std::same_as<decltype(TransformerTapRegulatorOutput::energized), d
 static_assert(offsetof(TransformerTapRegulatorOutput, id) == offsetof(BaseOutput, id));
 static_assert(offsetof(TransformerTapRegulatorOutput, energized) == offsetof(BaseOutput, energized));
 
-// static asserts for TransformerTapRegulatorShortCircuitOutput
-static_assert(std::is_standard_layout_v<TransformerTapRegulatorShortCircuitOutput>);
-// static asserts for conversion of TransformerTapRegulatorShortCircuitOutput to BaseOutput
-static_assert(std::alignment_of_v<TransformerTapRegulatorShortCircuitOutput> >= std::alignment_of_v<BaseOutput>);
-static_assert(std::same_as<decltype(TransformerTapRegulatorShortCircuitOutput::id), decltype(BaseOutput::id)>);
-static_assert(std::same_as<decltype(TransformerTapRegulatorShortCircuitOutput::energized), decltype(BaseOutput::energized)>);
-static_assert(offsetof(TransformerTapRegulatorShortCircuitOutput, id) == offsetof(BaseOutput, id));
-static_assert(offsetof(TransformerTapRegulatorShortCircuitOutput, energized) == offsetof(BaseOutput, energized));
+// static asserts for RegulatorShortCircuitOutput
+static_assert(std::is_standard_layout_v<RegulatorShortCircuitOutput>);
+// static asserts for conversion of RegulatorShortCircuitOutput to BaseOutput
+static_assert(std::alignment_of_v<RegulatorShortCircuitOutput> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(RegulatorShortCircuitOutput::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(RegulatorShortCircuitOutput::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(RegulatorShortCircuitOutput, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(RegulatorShortCircuitOutput, energized) == offsetof(BaseOutput, energized));
 
 
 

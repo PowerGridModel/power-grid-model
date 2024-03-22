@@ -289,7 +289,7 @@
             ]
         },
         {
-            "name": "TransformerTapRegulatorShortCircuitOutput",
+            "name": "RegulatorShortCircuitOutput",
             "base": "BaseOutput",
             "is_template": false,
             "attributes": []

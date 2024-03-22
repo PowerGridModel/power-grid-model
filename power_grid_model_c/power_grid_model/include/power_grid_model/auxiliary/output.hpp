@@ -236,7 +236,7 @@ struct TransformerTapRegulatorOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-struct TransformerTapRegulatorShortCircuitOutput {
+struct RegulatorShortCircuitOutput {
     ID id;  // ID of the object
     IntS energized;  // whether the object is energized
 
