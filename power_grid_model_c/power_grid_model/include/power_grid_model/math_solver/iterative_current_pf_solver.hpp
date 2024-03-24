@@ -73,15 +73,11 @@ namespace iterative_current_pf {
 template <symmetry_tag sym>
 class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
   public:
-    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
-    using BlockPermArray = typename SparseSolverType::BlockPermArray;
-
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr}, rhs_u_(y_bus.size()) {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        this->make_flat_start(input, output.u);
         this->prefactorize_linear_lhs(y_bus);
     }
 

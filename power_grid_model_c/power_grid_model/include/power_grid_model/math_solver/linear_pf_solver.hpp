@@ -45,6 +45,9 @@ namespace linear_pf {
 template <symmetry_tag sym> class LinearPFSolver {
 
   public:
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    using BlockPermArray = typename SparseSolverType::BlockPermArray;
+
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
@@ -87,8 +90,6 @@ template <symmetry_tag sym> class LinearPFSolver {
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
-    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
-    using BlockPermArray = typename SparseSolverType::BlockPermArray;
     SparseSolverType sparse_solver_;
     BlockPermArray perm_;
 

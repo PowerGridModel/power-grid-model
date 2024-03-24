@@ -44,6 +44,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         // initialize
         {
             Timer const sub_timer{calculation_info, 2221, "Initialize calculation"};
+            make_flat_start(input, output.u);
+
             // Further initialization specific to the derived solver
             derived_solver.initialize_derived_solver(y_bus, input, output);
         }
@@ -96,19 +98,19 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     void prefactorize_linear_lhs(const YBus<sym>& y_bus) {
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
-        if (parameters_changed_) {
-            ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
-            detail::copy_y_bus<sym>(y_bus, mat_data);
-
-            add_sources_linear_lhs(y_bus, mat_data);
-            // prefactorize
-            LinearBlockPermArray perm(n_bus_);
-            linear_sparse_solver_.prefactorize(mat_data, perm);
-            // move pre-factorized version into shared ptr
-            linear_mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
-            linear_perm_ = std::make_shared<LinearBlockPermArray const>(std::move(perm));
-            parameters_changed_ = false;
+        if (!parameters_changed_) {
+            return;
         }
+        ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
+        detail::copy_y_bus<sym>(y_bus, mat_data);
+        add_sources_linear_lhs(y_bus, mat_data);
+        // prefactorize
+        LinearBlockPermArray perm(n_bus_);
+        linear_sparse_solver_.prefactorize(mat_data, perm);
+        // move pre-factorized version into shared ptr
+        linear_mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
+        linear_perm_ = std::make_shared<LinearBlockPermArray const>(std::move(perm));
+        parameters_changed_ = false;
     }
 
     void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
