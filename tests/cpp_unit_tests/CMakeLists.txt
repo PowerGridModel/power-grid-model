@@ -33,6 +33,7 @@ set(PROJECT_SOURCES
     "test_deserializer.cpp"
     "test_serializer.cpp"
     "test_typing.cpp"
+    "test_optimizer.cpp"
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
