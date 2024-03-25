@@ -201,6 +201,26 @@ static_assert(std::alignment_of_v<FaultUpdate> >= std::alignment_of_v<BaseUpdate
 static_assert(std::same_as<decltype(FaultUpdate::id), decltype(BaseUpdate::id)>);
 static_assert(offsetof(FaultUpdate, id) == offsetof(BaseUpdate, id));
 
+// static asserts for RegulatorUpdate
+static_assert(std::is_standard_layout_v<RegulatorUpdate>);
+// static asserts for conversion of RegulatorUpdate to BaseUpdate
+static_assert(std::alignment_of_v<RegulatorUpdate> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(RegulatorUpdate::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(RegulatorUpdate, id) == offsetof(BaseUpdate, id));
+
+// static asserts for TransformerTapRegulatorUpdate
+static_assert(std::is_standard_layout_v<TransformerTapRegulatorUpdate>);
+// static asserts for conversion of TransformerTapRegulatorUpdate to BaseUpdate
+static_assert(std::alignment_of_v<TransformerTapRegulatorUpdate> >= std::alignment_of_v<RegulatorUpdate>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorUpdate::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(TransformerTapRegulatorUpdate, id) == offsetof(BaseUpdate, id));
+// static asserts for conversion of TransformerTapRegulatorUpdate to RegulatorUpdate
+static_assert(std::alignment_of_v<TransformerTapRegulatorUpdate> >= std::alignment_of_v<RegulatorUpdate>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorUpdate::id), decltype(RegulatorUpdate::id)>);
+static_assert(std::same_as<decltype(TransformerTapRegulatorUpdate::status), decltype(RegulatorUpdate::status)>);
+static_assert(offsetof(TransformerTapRegulatorUpdate, id) == offsetof(RegulatorUpdate, id));
+static_assert(offsetof(TransformerTapRegulatorUpdate, status) == offsetof(RegulatorUpdate, status));
+
 
 
 } // namespace power_grid_model::test
