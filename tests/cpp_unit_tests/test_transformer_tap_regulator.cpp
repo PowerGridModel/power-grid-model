@@ -7,6 +7,15 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test transformer tap regulator") {
     TransformerTapRegulatorInput const input{.id = 1,
@@ -69,6 +78,73 @@ TEST_CASE("Test transformer tap regulator") {
         CHECK(param.u_band == doctest::Approx(u_band_expected));
         CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
         CHECK_FALSE(param.status);
+    }
+
+    SUBCASE("Test update inverse") {
+        TransformerTapRegulatorUpdate update{.id = 1,
+                                             .status = na_IntS,
+                                             .u_set = nan,
+                                             .u_band = nan,
+                                             .line_drop_compensation_r = nan,
+                                             .line_drop_compensation_x = nan};
+        auto expected = update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { update.status = static_cast<IntS>(transformer_tap_regulator.status()); }
+            SUBCASE("different") { update.status = IntS{0}; }
+            expected.status = static_cast<IntS>(transformer_tap_regulator.status());
+        }
+
+        SUBCASE("u_set") {
+            SUBCASE("same") { update.u_set = input.u_set; }
+            SUBCASE("different") { update.u_set = 11.0e3; }
+            expected.u_set = input.u_set;
+        }
+
+        SUBCASE("u_band") {
+            SUBCASE("same") { update.u_band = input.u_band; }
+            SUBCASE("different") { update.u_band = 2.0e3; }
+            expected.u_band = input.u_band;
+        }
+
+        SUBCASE("line_drop_compensation_r") {
+            SUBCASE("same") { update.line_drop_compensation_r = input.line_drop_compensation_r; }
+            SUBCASE("different") { update.line_drop_compensation_r = 0.0; }
+            expected.line_drop_compensation_r = input.line_drop_compensation_r;
+        }
+
+        SUBCASE("line_drop_compensation_x") {
+            SUBCASE("same") { update.line_drop_compensation_x = input.line_drop_compensation_x; }
+            SUBCASE("different") { update.line_drop_compensation_x = 0.0; }
+            expected.line_drop_compensation_x = input.line_drop_compensation_x;
+        }
+
+        SUBCASE("multiple") {
+            update.id = 1;
+            update.status = false;
+            update.u_set = 11.0e3;
+            update.u_band = 2.0e3;
+            update.line_drop_compensation_r = 2.0;
+            update.line_drop_compensation_x = 4.0;
+            expected.status = static_cast<IntS>(transformer_tap_regulator.status());
+            expected.u_set = input.u_set;
+            expected.u_band = input.u_band;
+            expected.line_drop_compensation_r = input.line_drop_compensation_r;
+            expected.line_drop_compensation_x = input.line_drop_compensation_x;
+        }
+
+        auto const inv = transformer_tap_regulator.inverse(update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        check_nan_preserving_equality(inv.u_set, expected.u_set);
+        check_nan_preserving_equality(inv.u_band, expected.u_band);
+        check_nan_preserving_equality(inv.line_drop_compensation_r, expected.line_drop_compensation_r);
+        check_nan_preserving_equality(inv.line_drop_compensation_x, expected.line_drop_compensation_x);
     }
 
     SUBCASE("Test calc param - sym") {

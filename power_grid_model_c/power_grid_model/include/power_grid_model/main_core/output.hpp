@@ -76,7 +76,7 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 }
 
 template <std::same_as<TransformerTapRegulator> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_coup.transformer_tap_regulator.cbegin();
 }
@@ -424,7 +424,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output transformer tap regulator
 template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
           steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
@@ -436,7 +436,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
