@@ -33,6 +33,7 @@ set(PROJECT_SOURCES
     "test_deserializer.cpp"
     "test_serializer.cpp"
     "test_typing.cpp"
+    "test_transformer_tap_regulator.cpp"
     "test_optimizer.cpp"
 )
 

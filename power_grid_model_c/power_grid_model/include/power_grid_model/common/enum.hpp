@@ -20,6 +20,8 @@ enum class BranchSide : IntS { from = 0, to = 1 };
 
 enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
+enum class ControlSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3 = 2 };
+
 enum class CalculationMethod : IntS {
     default_method = -128,
     linear = 0,
@@ -54,7 +56,9 @@ enum class ComponentType : IntS {
     shunt = 7,
     source = 8,
     branch3 = 9,
-    fault = 10
+    fault = 10,
+    regulator = 11,
+    transformer_tap_regulator = 12
 };
 
 // DO NOT change the order of enumerations

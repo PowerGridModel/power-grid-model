@@ -1231,7 +1231,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
-        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
+        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup), .transformer_tap_regulator = {}};
 
         prepare_input<ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
             state_, state_.comp_coup.fault, sc_input, [this](Fault const& fault) {

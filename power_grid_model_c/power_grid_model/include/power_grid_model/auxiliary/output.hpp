@@ -226,6 +226,25 @@ struct SensorShortCircuitOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
+struct TransformerTapRegulatorOutput {
+    ID id;  // ID of the object
+    IntS energized;  // whether the object is energized
+    IntS tap_pos;  // result of regulated tap position
+
+    // implicit conversions to BaseOutput
+    operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
+    operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
+};
+
+struct RegulatorShortCircuitOutput {
+    ID id;  // ID of the object
+    IntS energized;  // whether the object is energized
+
+    // implicit conversions to BaseOutput
+    operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
+    operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
+};
+
 
 
 } // namespace power_grid_model

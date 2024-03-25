@@ -226,6 +226,27 @@ struct get_attributes_list<SensorShortCircuitOutput> {
     };
 };
 
+template<>
+struct get_attributes_list<TransformerTapRegulatorOutput> {
+    static constexpr std::array<MetaAttribute, 3> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::id, offsetof(TransformerTapRegulatorOutput, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::energized, offsetof(TransformerTapRegulatorOutput, energized), []{ return "energized"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::tap_pos, offsetof(TransformerTapRegulatorOutput, tap_pos), []{ return "tap_pos"; }>::value,
+    };
+};
+
+template<>
+struct get_attributes_list<RegulatorShortCircuitOutput> {
+    static constexpr std::array<MetaAttribute, 2> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<RegulatorShortCircuitOutput, &RegulatorShortCircuitOutput::id, offsetof(RegulatorShortCircuitOutput, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<RegulatorShortCircuitOutput, &RegulatorShortCircuitOutput::energized, offsetof(RegulatorShortCircuitOutput, energized), []{ return "energized"; }>::value,
+    };
+};
+
 
 
 // template specialization functors to get nan
@@ -455,6 +476,31 @@ template<>
 struct get_component_nan<SensorShortCircuitOutput> {
     SensorShortCircuitOutput operator() () const {
         SensorShortCircuitOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<TransformerTapRegulatorOutput> {
+    TransformerTapRegulatorOutput operator() () const {
+        TransformerTapRegulatorOutput comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.energized);
+        set_nan(comp.tap_pos);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<RegulatorShortCircuitOutput> {
+    RegulatorShortCircuitOutput operator() () const {
+        RegulatorShortCircuitOutput comp;
         // all attributes including base class
         
         set_nan(comp.id);
