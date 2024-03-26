@@ -202,6 +202,10 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
 // solver
 template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
   public:
+    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
+    using BlockPermArray =
+        typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
           data_jac_(y_bus.nnz_lu()),
@@ -211,7 +215,19 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const& /* y_bus */, MathOutput<sym> const& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+
+        ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
+        LinearSparseSolverType linear_sparse_solver{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(),
+                                                    y_bus.shared_diag_lu()};
+        typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
+
+        detail::copy_y_bus<sym>(y_bus, linear_mat_data);
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
+                                              linear_mat_data);
+        linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
+
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
@@ -269,9 +285,10 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     // 2. power unbalance: p/q_specified - p/q_calculated
     // 3. unknown iterative
     std::vector<ComplexPower<sym>> del_x_pq_;
-    SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>> sparse_solver_;
+
+    SparseSolverType sparse_solver_;
     // permutation array
-    typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
+    BlockPermArray perm_;
 
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
