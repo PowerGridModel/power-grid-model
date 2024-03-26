@@ -74,7 +74,7 @@ template <symmetry_tag sym>
 class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
   public:
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr}, rhs_u_(y_bus.size()) {}
+        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
@@ -85,17 +85,17 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         // set rhs to zero for iteration start
-        std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
+        std::fill(this->linear_rhs_.begin(), this->linear_rhs_.end(), ComplexValue<sym>{0.0});
 
-        this->add_sources_linear_rhs(y_bus, input, rhs_u_);
-        add_loads(input, u);
+        this->add_sources_linear_rhs(y_bus, input);
+        this->add_loads_linear_rhs(input, u);
     }
 
     // Solve the linear equations I_inj = YU
     // inplace
     void solve_matrix() {
         this->linear_sparse_solver_.solve_with_prefactorized_matrix(*this->linear_mat_data_, *this->linear_perm_,
-                                                                    rhs_u_, rhs_u_);
+                                                                    this->linear_rhs_, this->linear_rhs_);
     }
 
     // Find maximum deviation in voltage among all buses
@@ -104,44 +104,13 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         // loop all buses
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
             // Get maximum iteration for a bus
-            double const dev = max_val(cabs(rhs_u_[bus_number] - u[bus_number]));
+            double const dev = max_val(cabs(this->linear_rhs_[bus_number] - u[bus_number]));
             // Keep maximum deviation of all buses
             max_dev = std::max(dev, max_dev);
             // assign updated values
-            u[bus_number] = rhs_u_[bus_number];
+            u[bus_number] = this->linear_rhs_[bus_number];
         }
         return max_dev;
-    }
-
-  private:
-    ComplexValueVector<sym> rhs_u_;
-
-    void add_loads(PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
-        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*this->load_gens_per_bus_)) {
-            for (Idx const load_number : load_gens) {
-                // load type
-                LoadGenType const type = load_gen_type[load_number];
-                switch (type) {
-                    using enum LoadGenType;
-
-                case const_pq:
-                    // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
-                    rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
-                    break;
-                case const_y:
-                    // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
-                    rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
-                    break;
-                case const_i:
-                    // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
-                    rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
-                    break;
-                default:
-                    throw MissingCaseForEnumError("Injection current calculation", type);
-                }
-            }
-        }
     }
 };
 

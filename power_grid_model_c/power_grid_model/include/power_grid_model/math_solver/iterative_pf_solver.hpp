@@ -144,13 +144,41 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         }
     }
 
-    void add_sources_linear_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                ComplexValueVector<sym>& rhs) {
+    void add_sources_linear_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
         for (auto const& [bus_number, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
             for (Idx const source_number : sources) {
                 // I_inj_i += Y_source_j * U_ref_j
-                rhs[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                       ComplexValue<sym>{input.source[source_number]});
+                linear_rhs_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                               ComplexValue<sym>{input.source[source_number]});
+            }
+        }
+    }
+
+    void add_loads_linear_rhs(PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*this->load_gens_per_bus_)) {
+            for (Idx const load_number : load_gens) {
+                // load type
+                LoadGenType const type = load_gen_type[load_number];
+                switch (type) {
+                    using enum LoadGenType;
+
+                case const_pq:
+                    // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
+                    linear_rhs_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
+                    break;
+                case const_y:
+                    // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
+                    linear_rhs_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
+                    break;
+                case const_i:
+                    // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
+                    linear_rhs_[bus_number] +=
+                        conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
+                    break;
+                default:
+                    throw MissingCaseForEnumError("Injection current calculation", type);
+                }
             }
         }
     }
@@ -164,6 +192,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     bool parameters_changed_ = true;
     // Linear solver for initialization
     std::shared_ptr<ComplexTensorVector<sym> const> linear_mat_data_;
+    ComplexValueVector<sym> linear_rhs_;
     LinearSparseSolverType linear_sparse_solver_;
     std::shared_ptr<LinearBlockPermArray const> linear_perm_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -172,7 +201,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
           load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
           sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
           load_gen_type_{topo_ptr, &topo_ptr->load_gen_type},
-          linear_sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
+          linear_sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          linear_rhs_(n_bus_) {}
 };
 
 } // namespace power_grid_model::math_solver
