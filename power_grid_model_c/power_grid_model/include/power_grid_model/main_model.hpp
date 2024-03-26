@@ -448,6 +448,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             calculation_fn(*this, {}, ignore_output);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
+        } catch (const NotObservableError&) {
+            // missing entries are provided in the update data
         }
 
         // error messages
