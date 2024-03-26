@@ -200,7 +200,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                 }
             }
-            return sum_u_ref / (double)input.source.size();
+            return sum_u_ref / static_cast<double>(input.source.size());
         }();
 
         // assign u_ref as flat start

@@ -202,6 +202,10 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
 // solver
 template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
   public:
+    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
+    using BlockPermArray =
+        typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
           data_jac_(y_bus.nnz_lu()),
@@ -282,10 +286,9 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     // 3. unknown iterative
     std::vector<ComplexPower<sym>> del_x_pq_;
 
-    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
     SparseSolverType sparse_solver_;
     // permutation array
-    typename SparseSolverType::BlockPermArray perm_;
+    BlockPermArray perm_;
 
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
