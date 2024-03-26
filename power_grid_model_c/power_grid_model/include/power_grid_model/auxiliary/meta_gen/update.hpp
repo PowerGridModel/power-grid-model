@@ -173,6 +173,30 @@ struct get_attributes_list<FaultUpdate> {
     };
 };
 
+template<>
+struct get_attributes_list<RegulatorUpdate> {
+    static constexpr std::array<MetaAttribute, 2> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<RegulatorUpdate, &RegulatorUpdate::id, offsetof(RegulatorUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<RegulatorUpdate, &RegulatorUpdate::status, offsetof(RegulatorUpdate, status), []{ return "status"; }>::value,
+    };
+};
+
+template<>
+struct get_attributes_list<TransformerTapRegulatorUpdate> {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorUpdate, &TransformerTapRegulatorUpdate::id, offsetof(TransformerTapRegulatorUpdate, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorUpdate, &TransformerTapRegulatorUpdate::status, offsetof(TransformerTapRegulatorUpdate, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorUpdate, &TransformerTapRegulatorUpdate::u_set, offsetof(TransformerTapRegulatorUpdate, u_set), []{ return "u_set"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorUpdate, &TransformerTapRegulatorUpdate::u_band, offsetof(TransformerTapRegulatorUpdate, u_band), []{ return "u_band"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorUpdate, &TransformerTapRegulatorUpdate::line_drop_compensation_r, offsetof(TransformerTapRegulatorUpdate, line_drop_compensation_r), []{ return "line_drop_compensation_r"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorUpdate, &TransformerTapRegulatorUpdate::line_drop_compensation_x, offsetof(TransformerTapRegulatorUpdate, line_drop_compensation_x), []{ return "line_drop_compensation_x"; }>::value,
+    };
+};
+
 
 
 // template specialization functors to get nan
@@ -349,6 +373,34 @@ struct get_component_nan<FaultUpdate> {
         set_nan(comp.fault_object);
         set_nan(comp.r_f);
         set_nan(comp.x_f);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<RegulatorUpdate> {
+    RegulatorUpdate operator() () const {
+        RegulatorUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        return comp;
+    }
+};
+
+template<>
+struct get_component_nan<TransformerTapRegulatorUpdate> {
+    TransformerTapRegulatorUpdate operator() () const {
+        TransformerTapRegulatorUpdate comp;
+        // all attributes including base class
+        
+        set_nan(comp.id);
+        set_nan(comp.status);
+        set_nan(comp.u_set);
+        set_nan(comp.u_band);
+        set_nan(comp.line_drop_compensation_r);
+        set_nan(comp.line_drop_compensation_x);
         return comp;
     }
 };

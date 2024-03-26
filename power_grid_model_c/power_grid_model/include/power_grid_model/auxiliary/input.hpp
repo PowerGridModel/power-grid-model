@@ -392,6 +392,35 @@ struct FaultInput {
     operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
 };
 
+struct RegulatorInput {
+    ID id;  // ID of the object
+    ID regulated_object;  // ID of the regulated object
+    IntS status;  // regulator enabled
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+};
+
+struct TransformerTapRegulatorInput {
+    ID id;  // ID of the object
+    ID regulated_object;  // ID of the regulated object
+    IntS status;  // regulator enabled
+    ControlSide control_side;  // control side of the (three winding) transformer
+    double u_set;  // voltage setpoint
+    double u_band;  // voltage bandwidth
+    double line_drop_compensation_r;  // line drop compensation resistance
+    double line_drop_compensation_x;  // line drop compensation reactance
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to RegulatorInput
+    operator RegulatorInput&() { return reinterpret_cast<RegulatorInput&>(*this); }
+    operator RegulatorInput const&() const { return reinterpret_cast<RegulatorInput const&>(*this); }
+};
+
 
 
 } // namespace power_grid_model

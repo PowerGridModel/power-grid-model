@@ -13,7 +13,7 @@ namespace power_grid_model::main_core {
 namespace detail {
 
 template <typename Component, class ComponentContainer, typename ResType, typename ResFunc>
-    requires model_component_state<MainModelState, ComponentContainer, Component> &&
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&> &&
              std::convertible_to<std::invoke_result_t<ResFunc, Component const&>, ResType>
 constexpr void register_topo_components(MainModelState<ComponentContainer> const& state, std::vector<ResType>& target,
@@ -26,7 +26,7 @@ constexpr void register_topo_components(MainModelState<ComponentContainer> const
 }
 
 template <typename Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto get_seq(MainModelState<ComponentContainer> const& state, ID id) {
     return state.components.template get_seq<Component>(id);
 }
@@ -34,14 +34,14 @@ constexpr auto get_seq(MainModelState<ComponentContainer> const& state, ID id) {
 } // namespace detail
 
 template <std::same_as<Node> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     comp_topo.n_node = state.components.template size<Node>();
 }
 
 template <std::same_as<Branch> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.branch_node_idx, [&state](Branch const& branch) {
@@ -51,7 +51,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 template <std::same_as<Branch3> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.branch3_node_idx, [&state](Branch3 const& branch3) {
@@ -62,7 +62,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.source_node_idx, [&state](Source const& source) {
@@ -71,7 +71,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.shunt_node_idx, [&state](Shunt const& shunt) {
@@ -80,7 +80,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 template <std::same_as<GenericLoadGen> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(
@@ -92,7 +92,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 template <std::same_as<GenericVoltageSensor> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(
@@ -102,7 +102,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 }
 
 template <std::same_as<GenericPowerSensor> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(

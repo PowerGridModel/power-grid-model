@@ -12,7 +12,7 @@ namespace power_grid_model::main_core {
 
 namespace detail {
 template <std::derived_from<Base> Component, class ComponentContainer, typename UpdateType>
-    requires model_component_state<MainModelState, ComponentContainer, Component> &&
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::same_as<std::remove_cvref_t<typename Component::UpdateType>, std::remove_cvref_t<UpdateType>>
 inline Idx2D get_idx_by_id(MainModelState<ComponentContainer> const& state, UpdateType const& update) {
     return state.components.template get_idx_by_id<Component>(update.id);
@@ -34,7 +34,7 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
 
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
                                    ForwardIterator end, OutputIterator destination) {
     using UpdateType = typename Component::UpdateType;
@@ -44,7 +44,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
 }
 
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
                                                  ForwardIterator end) {
     std::vector<Idx2D> result;
@@ -59,7 +59,7 @@ inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContain
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
                                      ForwardIterator end, OutputIterator changed_it,
                                      std::vector<Idx2D> const& sequence_idx = {}) {
@@ -89,7 +89,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
                            OutputIterator destination, std::vector<Idx2D> const& sequence_idx = {}) {
     using UpdateType = typename Component::UpdateType;

@@ -20,6 +20,8 @@ enum class BranchSide : IntS { from = 0, to = 1 };
 
 enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
+enum class ControlSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3 = 2 };
+
 enum class CalculationMethod : IntS {
     default_method = -128,
     linear = 0,
@@ -54,7 +56,9 @@ enum class ComponentType : IntS {
     shunt = 7,
     source = 8,
     branch3 = 9,
-    fault = 10
+    fault = 10,
+    regulator = 11,
+    transformer_tap_regulator = 12
 };
 
 // DO NOT change the order of enumerations
@@ -97,5 +101,18 @@ enum class ShortCircuitVoltageScaling : IntS { minimum = 0, maximum = 1 };
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 
 enum class SerializationFormat : IntS { json = 0, msgpack = 1 };
+
+enum class OptimizerType : IntS {
+    no_optimization = 0,          // do nothing
+    automatic_tap_adjustment = 1, // power flow with automatic tap adjustment
+};
+
+enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
+    any = 0,                          // any = Any{f(x) \in Range} for x \in Domain
+    global_minimum = 1,               // global_minimum = argmin{f(x) \in Range} for x in Domain
+    global_maximum = 2,               // global_maximum = argmax{f(x) \in Range} for x in Domain
+    local_minimum = 3,                // local_minimum = Any{argmin{f(x) \in Range}} for x in Domain
+    local_maximum = 4,                // local_maximum = Any{argmax{f(x) \in Range}} for x in Domain
+};
 
 } // namespace power_grid_model

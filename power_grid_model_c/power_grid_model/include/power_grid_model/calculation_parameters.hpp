@@ -35,6 +35,13 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
     ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
+struct TransformerTapRegulatorCalcParam {
+    double u_set{};
+    double u_band{};
+    DoubleComplex z_compensation{};
+    IntS status{};
+};
+
 template <symmetry_tag sym_type> struct BranchMathOutput {
     using sym = sym_type;
 
@@ -362,6 +369,7 @@ struct Idx2DBranch3 {
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
     std::vector<Idx2D> fault;
+    std::vector<Idx2D> transformer_tap_regulator; // TODO: should this be in TopologicalComponentToMathCoupling?
 };
 
 // couple component to math model

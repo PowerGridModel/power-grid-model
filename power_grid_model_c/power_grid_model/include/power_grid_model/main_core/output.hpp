@@ -14,70 +14,76 @@ namespace detail {
 
 template <std::derived_from<Base> BaseComponent, std::derived_from<Base> Component, class ComponentContainer>
     requires std::derived_from<Component, BaseComponent> &&
-             model_component_state<MainModelState, ComponentContainer, Component>
+             model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_sequence_offset(MainModelState<ComponentContainer> const& state) {
     return state.components.template get_start_idx<BaseComponent, Component>();
 }
 
 template <std::same_as<Node> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->node.cbegin();
 }
 
 template <std::derived_from<Branch> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->branch.cbegin() + comp_sequence_offset<Branch, Component>(state);
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->branch3.cbegin() + comp_sequence_offset<Branch3, Component>(state);
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->source.cbegin();
 }
 
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->load_gen.cbegin() + comp_sequence_offset<GenericLoadGen, Component>(state);
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->shunt.cbegin();
 }
 
 template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->voltage_sensor_node_idx.cbegin() +
            comp_sequence_offset<GenericVoltageSensor, Component>(state);
 }
 
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->power_sensor_object_idx.cbegin() +
            comp_sequence_offset<GenericPowerSensor, Component>(state);
 }
 
 template <std::same_as<Fault> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_coup.fault.cbegin();
 }
 
+template <std::same_as<TransformerTapRegulator> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
+    return state.comp_coup.transformer_tap_regulator.cbegin();
+}
+
 template <typename Component, typename IndexType, class ComponentContainer, std::forward_iterator ResIt,
           typename ResFunc>
-    requires model_component_state<MainModelState, ComponentContainer, Component> &&
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&, IndexType> &&
              std::convertible_to<std::invoke_result_t<ResFunc, Component const&, IndexType>,
                                  std::iter_value_t<ResIt>> &&
@@ -94,7 +100,7 @@ constexpr ResIt produce_output(MainModelState<ComponentContainer> const& state, 
 // output node
 template <std::same_as<Node> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Node, Idx2D>(state, res_it, [&math_output](Node const& node, Idx2D math_id) {
@@ -109,7 +115,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::same_as<Node> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Node, Idx2D>(state, res_it, [&math_output](Node const& node, Idx2D math_id) {
@@ -123,7 +129,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output branch
 template <std::derived_from<Branch> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Branch const& branch, Idx2D math_id) {
@@ -137,7 +143,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::derived_from<Branch> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Branch const& branch, Idx2D math_id) {
@@ -151,7 +157,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output branch3
 template <std::derived_from<Branch3> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2DBranch3>(
@@ -169,7 +175,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::derived_from<Branch3> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2DBranch3>(
@@ -186,7 +192,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output source, load_gen, shunt individually
 template <std::same_as<Appliance> Component, class ComponentContainer, math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     res_it = output_result<Source>(state, math_output, res_it);
@@ -198,7 +204,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output source
 template <std::same_as<Source> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Source const& source, Idx2D math_id) {
@@ -212,7 +218,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::same_as<Source> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Source const& source, Idx2D math_id) {
@@ -226,7 +232,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output load gen
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer,
           steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
@@ -241,7 +247,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
@@ -252,7 +258,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output shunt
 template <std::same_as<Shunt> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Shunt const& shunt, Idx2D math_id) {
@@ -266,7 +272,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::same_as<Shunt> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Shunt const& shunt, Idx2D math_id) {
@@ -280,7 +286,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output voltage sensor
 template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
           steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
@@ -296,7 +302,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
@@ -308,7 +314,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output power sensor
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
           steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
@@ -380,7 +386,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx>(state, res_it,
@@ -392,7 +398,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 // output fault
 template <std::same_as<Fault> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
@@ -400,8 +406,8 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 template <std::same_as<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
           std::forward_iterator ResIt>
-    requires model_component_state<MainModelState, ComponentContainer, Component> &&
-             model_component_state<MainModelState, ComponentContainer, Node>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
+             model_component_state_c<MainModelState, ComponentContainer, Node>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
@@ -412,6 +418,30 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 
             auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
             return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
+        });
+}
+
+// output transformer tap regulator
+template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
+          steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [](TransformerTapRegulator const& /* transformer_tap_regulator */, Idx2D const /* math_id */) {
+            // TODO: this function is not implemented
+            using sym = typename MathOutputType::sym;
+            return typename TransformerTapRegulator::OutputType<sym>{};
+        });
+}
+template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
+          short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
+    return detail::produce_output<Component, Idx2D>(
+        state, res_it, [](TransformerTapRegulator const& transformer_tap_regulator, Idx2D const /* math_id */) {
+            return transformer_tap_regulator.get_null_sc_output();
         });
 }
 
