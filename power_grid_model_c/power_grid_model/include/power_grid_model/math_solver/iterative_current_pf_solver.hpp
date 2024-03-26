@@ -73,8 +73,8 @@ namespace iterative_current_pf {
 template <symmetry_tag sym>
 class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
   public:
-    using BlockPermArray =
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    using BlockPermArray = typename SparseSolverType::BlockPermArray;
 
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
@@ -82,7 +82,9 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const& /* output */) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        make_flat_start(input, output.u);
+
         auto const& sources_per_bus = *this->sources_per_bus_;
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
@@ -149,7 +151,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
     // sparse solver
-    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
+    SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
     bool parameters_changed_ = true;
 
@@ -185,6 +187,26 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
             // I_inj_i += Y_source_j * U_ref_j
             rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
                                       ComplexValue<sym>{input.source[source_number]});
+        }
+    }
+
+    void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
+        std::vector<double> const& phase_shift = *this->phase_shift_;
+        // average u_ref of all sources
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (auto const& [bus, sources] : enumerated_zip_sequence(*this->sources_per_bus_)) {
+                for (Idx const source : sources) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
+                }
+            }
+            return sum_u_ref / static_cast<double>(input.source.size());
+        }();
+
+        // assign u_ref as flat start
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            // consider phase shift
+            output_u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
         }
     }
 };
