@@ -82,10 +82,6 @@ class InvalidCalculationMethod(PowerGridError):
     """Invalid calculation method provided"""
 
 
-class UnknownAttributeName(PowerGridError):
-    """Unknown attribute provided"""
-
-
 class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided"""
 

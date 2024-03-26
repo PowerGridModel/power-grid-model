@@ -137,13 +137,6 @@ class InvalidCalculationMethod : public CalculationError {
     InvalidCalculationMethod() : CalculationError("The calculation method is invalid for this calculation!") {}
 };
 
-class UnknownAttributeName : public PowerGridError {
-  public:
-    explicit UnknownAttributeName(std::string const& attr_name) {
-        append_msg("Unknown attribute name! " + attr_name + "\n");
-    }
-};
-
 class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {

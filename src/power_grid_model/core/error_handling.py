@@ -31,7 +31,6 @@ from power_grid_model.errors import (
     PowerGridError,
     PowerGridSerializationError,
     SparseMatrixError,
-    UnknownAttributeName,
 )
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
@@ -41,27 +40,27 @@ PGM_REGULAR_ERROR = 1
 PGM_BATCH_ERROR = 2
 PGM_SERIALIZATION_ERROR = 3
 
-_MISSING_CASE_FOR_ENUM_RE = re.compile(r"(\w+) is not implemented for (\w+) #(\d+)!\n")
+_MISSING_CASE_FOR_ENUM_RE = re.compile(r"(\w+) is not implemented for (\w+) #(-?\d+)!\n")
 _CONFLICT_VOLTAGE_RE = re.compile(
-    r"Conflicting voltage for line (\d+)\n voltage at from node (\d+) is (.*)\n voltage at to node (\d+) is (.*)\n"
+    r"Conflicting voltage for line (-?\d+)\n voltage at from node (-?\d+) is (.*)\n"
+    r" voltage at to node (-?\d+) is (.*)\n"
 )
-_INVALID_BRANCH_RE = re.compile(r"Branch (\d+) has the same from- and to-node (\d+),\n This is not allowed!\n")
+_INVALID_BRANCH_RE = re.compile(r"Branch (-?\d+) has the same from- and to-node (-?\d+),\n This is not allowed!\n")
 _INVALID_BRANCH3_RE = re.compile(
-    r"Branch3 (\d+) is connected to the same node at least twice. Node 1/2/3: (\d+)/(\d+)/(\d+),\n"
-    r"This is not allowed!\n"
+    r"Branch3 (-?\d+) is connected to the same node at least twice. Node 1\/2\/3: (-?\d+)\/(-?\d+)\/(-?\d+),\n"
+    r" This is not allowed!\n"
 )
-_INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (\d+), clock (\d+)\n")
+_INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (-?\d+), clock (-?\d+)\n")
 _SPARSE_MATRIX_ERROR_RE = re.compile(r"Sparse matrix error")  # multiple different flavors
 _NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for state estimation.\n")
 _ITERATION_DIVERGE_RE = re.compile(
-    r"Iteration failed to converge after (\d+) iterations! Max deviation: (.*), error tolerance: (.*).\n"
+    r"Iteration failed to converge after (-?\d+) iterations! Max deviation: (.*), error tolerance: (.*).\n"
 )
-_CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (\d+)\n")
-_ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (\d+)\n")
+_CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (-?\d+)\n")
+_ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (-?\d+)\n")
 _INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) is not supported for (\w+)")
-_ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (\d+)\n")
+_ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
-_UNKNOWN_ATTRIBUTE_NAME_RE = re.compile(r"Unknown attribute name! (.*)\n")
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
 
 _ERROR_MESSAGE_PATTERNS = {
@@ -78,7 +77,6 @@ _ERROR_MESSAGE_PATTERNS = {
     _INVALID_MEASURED_OBJECT_RE: InvalidMeasuredObject,
     _ID_WRONG_TYPE_RE: IDWrongType,
     _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
-    _UNKNOWN_ATTRIBUTE_NAME_RE: UnknownAttributeName,
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
 }
 
@@ -109,7 +107,7 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> Optional[Runti
     if error_code == PGM_REGULAR_ERROR:
         error_message = pgc.error_message()
         error_message += VALIDATOR_MSG
-        return PowerGridError(error_message)
+        return _interpret_error(error_message, decode_error=decode_error)
     if error_code == PGM_BATCH_ERROR:
         error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
         error = PowerGridBatchError(error_message)
@@ -129,15 +127,19 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> Optional[Runti
     return RuntimeError("Unknown error!")
 
 
-def assert_no_error(batch_size: int = 1):
+def assert_no_error(batch_size: int = 1, decode_error: bool = True):
     """
     Assert there is no error in the last operation
     If there is an error, raise it
 
+    Args:
+        batch_size (int, optional): Size of batch. Defaults to 1.
+        decode_error (bool, optional): Decode the error message(s) to derived error classes. Defaults to True
+
     Returns:
 
     """
-    error = find_error(batch_size=batch_size)
+    error = find_error(batch_size=batch_size, decode_error=decode_error)
     if error is not None:
         raise error
 
