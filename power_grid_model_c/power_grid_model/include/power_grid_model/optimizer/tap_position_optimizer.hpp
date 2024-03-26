@@ -101,7 +101,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList
 //       i. Infinity(INT_MAX), if tap side of the transformer is disconnected.
 //          The transformer regulation should be ignored
 //       ii.Rank of the vertex at the tap side of the transformer, if tap side of the transformer is connected
-inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> std::vector<Idx2D> { return {}; }
+inline auto rank_transformers(WeightedTrafoList const& /*w_trafo_list*/) -> std::vector<Idx2D> { return {}; }
 
 template <main_core::main_model_state_c State> inline auto rank_transformers(State const& state) -> std::vector<Idx2D> {
     return rank_transformers(get_edge_weights(build_transformer_graph(state)));
