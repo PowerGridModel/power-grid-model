@@ -53,9 +53,7 @@ _INVALID_BRANCH3_RE = re.compile(
 _INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (-?\d+), clock (-?\d+)\n")
 _SPARSE_MATRIX_ERROR_RE = re.compile(r"Sparse matrix error")  # multiple different flavors
 _NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for state estimation.\n")
-_ITERATION_DIVERGE_RE = re.compile(
-    r"Iteration failed to converge after (-?\d+) iterations! Max deviation: (.*), error tolerance: (.*).\n"
-)
+_ITERATION_DIVERGE_RE = re.compile(r"Iteration failed to converge")  # potentially multiple different flavors
 _CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (-?\d+)\n")
 _ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (-?\d+)\n")
 _INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) is not supported for (\w+)")
