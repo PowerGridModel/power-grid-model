@@ -23,6 +23,30 @@ inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym>
     }
 }
 
+template <symmetry_tag sym>
+inline void add_linear_loads(boost::iterator_range<IdxCount> const& load_gens_per_bus, Idx /* bus_number */,
+                             PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element) {
+    for (auto load_number : load_gens_per_bus) {
+        // YBus_diag += -conj(S_base)
+        add_diag(diagonal_element, -conj(input.s_injection[load_number]));
+    }
+}
+
+template <symmetry_tag sym>
+inline void prepare_linear_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                          grouped_idx_vector_type auto const& load_gens_per_bus,
+                                          grouped_idx_vector_type auto const& sources_per_bus, MathOutput<sym>& output,
+                                          ComplexTensorVector<sym>& mat_data) {
+    IdxVector const& bus_entry = y_bus.lu_diag();
+    for (auto const& [bus_number, load_gens, sources] : enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
+        Idx const diagonal_position = bus_entry[bus_number];
+        auto& diagonal_element = mat_data[diagonal_position];
+        auto& u_bus = output.u[bus_number];
+        add_linear_loads(load_gens, bus_number, input, diagonal_element);
+        add_sources(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
+    }
+}
+
 template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
     ComplexTensorVector<sym> const& ydata = y_bus.admittance();
     std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {

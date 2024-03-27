@@ -57,7 +57,7 @@ class InvalidBranch3 : public PowerGridError {
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock) {
-        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock  " + std::to_string(clock) + '\n');
+        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock " + std::to_string(clock) + '\n');
     }
 };
 
@@ -137,13 +137,6 @@ class InvalidCalculationMethod : public CalculationError {
     InvalidCalculationMethod() : CalculationError("The calculation method is invalid for this calculation!") {}
 };
 
-class UnknownAttributeName : public PowerGridError {
-  public:
-    explicit UnknownAttributeName(std::string const& attr_name) {
-        append_msg("Unknown attribute name!" + attr_name + "\n");
-    }
-};
-
 class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
@@ -168,7 +161,7 @@ class InvalidShortCircuitPhases : public PowerGridError {
 class InvalidShortCircuitPhaseOrType : public PowerGridError {
   public:
     InvalidShortCircuitPhaseOrType() {
-        append_msg("During one calculation the short circuit types phases should be similar for all faults \n");
+        append_msg("During one calculation the short circuit types phases should be similar for all faults\n");
     }
 };
 
