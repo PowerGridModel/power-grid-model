@@ -263,7 +263,7 @@ jobs:
   test-python-macos-arm64:
     runs-on: flyci-macos-large-latest-m1
     needs: [build-cpp-test-macos, build-and-test-python]
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'merge_group')
 
     steps:
       - uses: actions/checkout@v4
