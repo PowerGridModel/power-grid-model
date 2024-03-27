@@ -1,0 +1,1448 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 6, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 5, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": 4, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.0, "x_f": 0.0}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 1, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 2, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 0}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 0}
+        ]
+    }
+  ,
+    {
+      "fault":
+        [
+          {"id": 10, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+        ],
+      "source":
+        [
+          {"id": 5, "status": 1}
+        ],
+      "shunt":
+        [
+          {"id": 9, "status": 1}
+        ]
+    }
+  
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {
+    "sym_power_sensor": [
+      "id",
+      "power_sigma",
+      "p_measured",
+      "q_measured"
+    ]
+  },
+  "data": [
+    {
+      "sym_power_sensor": [
+        {"id": 701, "p_sigma": 7294.513554720424, "q_sigma": 7294.513554720424},
+        {"id": 801, "p_sigma": 7378.659261681623, "q_sigma": 7378.659261681623}
+      ]
+    },
+    {
+      "sym_power_sensor": [
+        {"id": 701, "p_sigma": 72.94513554720425, "q_sigma": 10315.484187104355},
+        {"id": 801, "p_sigma": 73.78659261681624, "q_sigma": 10434.478236955598}
+      ]
+    },
+    {
+      "sym_power_sensor": [
+        {"id": 701, "p_sigma": 10315.484187104353, "q_sigma": 72.94513554720425},
+        {"id": 801, "p_sigma": 10434.478236955598, "q_sigma": 73.78659261681624}
+      ]
+    }
+  ]
+}

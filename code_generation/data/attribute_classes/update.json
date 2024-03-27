@@ -22,7 +22,7 @@
                         "from_status",
                         "to_status"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "whether the branch is connected at each side"
                 }
             ]
         },
@@ -37,7 +37,7 @@
                         "status_2",
                         "status_3"
                     ],
-                    "description": "If the branch is connected at each side"
+                    "description": "whether the branch is connected at each side"
                 }
             ]
         },
@@ -48,7 +48,7 @@
                 {
                     "data_type": "IntS",
                     "names": "status",
-                    "description": "If the appliance is connected"
+                    "description": "whether the appliance is connected"
                 }
             ]
         },
@@ -85,7 +85,7 @@
                         "p_specified",
                         "q_specified"
                     ],
-                    "description": "Specified active/reactive power"
+                    "description": "specified active/reactive power"
                 }
             ]
         },
@@ -100,6 +100,28 @@
                         "u_ref_angle"
                     ],
                     "description": "reference voltage"
+                }
+            ]
+        },
+        {
+            "name": "ShuntUpdate",
+            "base": "ApplianceUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g1",
+                        "b1"
+                    ],
+                    "description": "positive sequence admittance"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "g0",
+                        "b0"
+                    ],
+                    "description": "zero sequence admittance"
                 }
             ]
         },
@@ -140,6 +162,85 @@
                         "q_measured"
                     ],
                     "description": "measured active/reactive power"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "p_sigma",
+                        "q_sigma"
+                    ],
+                    "description": "sigma of error margin of active/reactive power measurement"
+                }
+            ]
+        },
+        {
+            "name": "FaultUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "whether the fault is connected"
+                },
+                {
+                    "data_type": "FaultType",
+                    "names": "fault_type",
+                    "description": "type of the fault"
+                },
+                {
+                    "data_type": "FaultPhase",
+                    "names": "fault_phase",
+                    "description": "phase(s) of the fault"
+                },
+                {
+                    "data_type": "ID",
+                    "names": "fault_object",
+                    "description": "ID of the faulted object"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r_f",
+                        "x_f"
+                    ],
+                    "description": "short circuit impedance"
+                }
+            ]
+        },
+        {
+            "name": "RegulatorUpdate",
+            "base": "BaseUpdate",
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "regulator enables"
+                }
+            ]
+        },
+        {
+            "name": "TransformerTapRegulatorUpdate",
+            "base": "RegulatorUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_set",
+                    "description": "voltage setpoint"
+                },
+                {
+                    "data_type": "double",
+                    "names": "u_band",
+                    "description": "voltage bandwidth"
+                },
+                {
+                    "data_type": "double",
+                    "names": "line_drop_compensation_r",
+                    "description": "line drop compensation resistance"
+                },
+                {
+                    "data_type": "double",
+                    "names": "line_drop_compensation_x",
+                    "description": "line drop compensation reactance"
                 }
             ]
         }

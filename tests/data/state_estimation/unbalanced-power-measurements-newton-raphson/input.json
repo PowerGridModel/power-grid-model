@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "u_rated": 10.5e3
+      },
+      {
+        "id": 2,
+        "u_rated": 10.5e3
+      },
+      {
+        "id": 3,
+        "u_rated": 10.5e3
+      }
+    ],
+    "line": [
+      {
+        "id": 4,
+        "from_node": 1,
+        "to_node": 2,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.11,
+        "x1": 0.5,
+        "c1": 1.0e-4,
+        "tan1": 1.0,
+        "i_n": 510.0
+      },
+      {
+        "id": 5,
+        "from_node": 2,
+        "to_node": 3,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.15,
+        "x1": 0.5,
+        "c1": 1.0e-4,
+        "tan1": 1.0,
+        "i_n": 520.0
+      }
+    ],
+    "source": [
+      {
+        "id": 6,
+        "node": 1,
+        "status": 1,
+        "u_ref": 1.01047619047619,
+        "sk": 200e6
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 7,
+        "node": 2,
+        "status": 1,
+        "type": 4
+      },
+      {
+        "id": 8,
+        "node": 3,
+        "status": 1,
+        "type": 4
+      }
+    ],
+    "sym_voltage_sensor": [
+      {
+        "id": 101,
+        "measured_object": 1,
+        "u_measured": 10751.072595758282,
+        "u_angle_measured": 0.0,
+        "u_sigma": 105.0
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 701,
+        "measured_object": 7,
+        "measured_terminal_type": 4,
+        "p_measured": 1010000.0,
+        "q_measured": 210000.0,
+        "power_sigma": 10316.0
+      },
+      {
+        "id": 801,
+        "measured_object": 8,
+        "measured_terminal_type": 4,
+        "p_measured": 1020000.0,
+        "q_measured": 220000.0,
+        "power_sigma": 10435.0
+      }
+    ]
+  }
+}

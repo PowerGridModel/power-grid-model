@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -52,3 +52,13 @@ def test_sensor_meta_data():
 
 def test_dict_like_access():
     assert power_grid_meta_data["input"]["node"].dtype == power_grid_meta_data["input"]["node"]["dtype"]
+
+
+def test_all_datasets():
+    assert set(power_grid_meta_data.keys()) == {
+        "input",
+        "update",
+        "sym_output",
+        "asym_output",
+        "sc_output",
+    }

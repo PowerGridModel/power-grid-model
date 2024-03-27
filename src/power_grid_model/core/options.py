@@ -1,15 +1,13 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 
 """
 Option class
 """
 from typing import Any, Callable
 
-from power_grid_model.core.power_grid_core import OptionsPtr
-from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model.core.power_grid_core import OptionsPtr, power_grid_core as pgc
 
 
 class OptionSetter:
@@ -40,8 +38,10 @@ class Options:
     calculation_method = OptionSetter(pgc.set_calculation_method)
     symmetric = OptionSetter(pgc.set_symmetric)
     error_tolerance = OptionSetter(pgc.set_err_tol)
-    max_iteration = OptionSetter(pgc.set_max_iter)
+    max_iterations = OptionSetter(pgc.set_max_iter)
     threading = OptionSetter(pgc.set_threading)
+    short_circuit_voltage_scaling = OptionSetter(pgc.set_short_circuit_voltage_scaling)
+    experimental_features = OptionSetter(pgc.set_experimental_features)
 
     @property
     def opt(self) -> OptionsPtr:

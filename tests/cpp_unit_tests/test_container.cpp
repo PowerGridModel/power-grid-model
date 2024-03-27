@@ -1,38 +1,34 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/container.hpp"
+#include <power_grid_model/container.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
 struct C {
-    C(Idx a1) : a{a1} {
-    }
+    explicit C(Idx a1) : a{a1} {}
 
     Idx a;
 };
 
 struct C1 : C {
-    C1(Idx a1, double b1) : C{a1}, b{b1} {
-    }
+    C1(Idx a1, double b1) : C{a1}, b{b1} {}
     double b;
 };
 
 struct C2 : C {
-    C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {
-    }
+    C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {}
     uint16_t b;
 };
 
 TEST_CASE("Test component container") {
     using CompContainer = Container<C, C1, C2>;
-    CompContainer container;
-    container.reserve<C>(3);
-    container.reserve<C1>(2);
-    container.reserve<C2>(1);
     using CompContainer2 = Container<ExtraRetrievableTypes<C>, C1, C2>;
+
+    CompContainer container;
     CompContainer2 container2;
 
     container.emplace<C>(1, 5);
@@ -72,8 +68,8 @@ TEST_CASE("Test component container") {
             CHECK(c.a == i);
             i++;
         }
-        auto it_begin = container.iter<C>().begin();
-        auto it_end = container.iter<C>().end();
+        auto it_begin = container.iter<C const>().begin();
+        auto it_end = container.iter<C const>().end();
         auto const_it_begin = const_container.iter<C>().begin();
         auto const_it_end = const_container.iter<C>().end();
         CHECK(it_begin != const_it_end);
@@ -114,6 +110,18 @@ TEST_CASE("Test component container") {
         CHECK(const_container.size<C>() == 6);
         CHECK(const_container.size<C1>() == 2);
         CHECK(const_container.size<C2>() == 1);
+    }
+
+    SUBCASE("Test get sequence based on idx_2d") {
+        CHECK(const_container.get_seq<C>(Idx2D{0, 0}) == 0);
+        CHECK(const_container.get_seq<C>(Idx2D{0, 1}) == 1);
+        CHECK(const_container.get_seq<C>(Idx2D{0, 2}) == 2);
+        CHECK(const_container.get_seq<C>(Idx2D{1, 0}) == 3);
+        CHECK(const_container.get_seq<C>(Idx2D{1, 1}) == 4);
+        CHECK(const_container.get_seq<C>(Idx2D{2, 0}) == 5);
+        CHECK(const_container.get_seq<C1>(Idx2D{1, 0}) == 0);
+        CHECK(const_container.get_seq<C1>(Idx2D{1, 1}) == 1);
+        CHECK(const_container.get_seq<C2>(Idx2D{2, 0}) == 0);
     }
 
     SUBCASE("Test get sequence based on id") {
@@ -165,71 +173,6 @@ TEST_CASE("Test component container") {
         CHECK(const_container2.get_item_by_seq<C>(1).a == 66);
         CHECK(const_container2.get_item_by_seq<C>(2).a == 7);
     }
-
-    SUBCASE("Test cache / restore") {
-        constexpr auto id = ID{2};
-        constexpr auto idx = Idx{0};
-        constexpr auto reset_value = Idx{6};
-        constexpr auto other_value_a = Idx{7};
-        constexpr auto other_value_b = Idx{11};
-
-        container.restore_values();
-        CHECK(container.get_idx_by_id(id).pos == idx);
-        CHECK(container.get_item<C>(id).a == reset_value);
-        CHECK(container.get_item<C1>(id).a == reset_value);
-
-        SUBCASE("No prior caching results in no reset") {
-            container.get_item<C>(id).a = other_value_a;
-            CHECK(container.get_item<C>(id).a == other_value_a);
-            CHECK(container.get_item<C1>(id).a == other_value_a);
-
-            container.restore_values();
-            CHECK(container.get_item<C>(id).a == other_value_a);
-            CHECK(container.get_item<C1>(id).a == other_value_a);
-        }
-
-        SUBCASE("Restore single change") {
-            container.cache_item<C1>(idx);
-
-            container.get_item<C1>(id).a = other_value_a;
-            CHECK(container.get_item<C>(id).a == other_value_a);
-            CHECK(container.get_item<C1>(id).a == other_value_a);
-
-            container.restore_values();
-            CHECK(container.get_item<C>(id).a == reset_value);
-            CHECK(container.get_item<C1>(id).a == reset_value);
-        }
-
-        SUBCASE("Restore double change") {
-            container.cache_item<C1>(idx);
-
-            container.get_item<C1>(id).a = other_value_a;
-            container.get_item<C>(id).a = other_value_b;
-            CHECK(container.get_item<C>(id).a == other_value_b);
-            CHECK(container.get_item<C1>(id).a == other_value_b);
-
-            container.restore_values();
-            CHECK(container.get_item<C>(id).a == reset_value);
-            CHECK(container.get_item<C1>(id).a == reset_value);
-        }
-
-        SUBCASE("Originally cached value is restored") {
-            container.cache_item<C1>(idx);
-
-            container.get_item<C>(id).a = other_value_a;
-            CHECK(container.get_item<C>(id).a == other_value_a);
-            CHECK(container.get_item<C1>(id).a == other_value_a);
-
-            container.cache_item<C1>(idx);
-            container.restore_values();
-            CHECK(container.get_item<C>(id).a == reset_value);
-
-            container.get_item<C>(id).a = other_value_a;
-            container.cache_item<C1>(idx);
-            container.restore_values();
-            CHECK(container.get_item<C>(id).a == other_value_a);
-        }
-    }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

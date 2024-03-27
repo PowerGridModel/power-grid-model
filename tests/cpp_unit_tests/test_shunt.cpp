@@ -1,21 +1,31 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "doctest/doctest.h"
-#include "power_grid_model/component/shunt.hpp"
+#include <power_grid_model/component/shunt.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
 
 TEST_CASE("Test shunt") {
-    ShuntInput shunt_input{{{1}, 2, true}, 1.0, 2.0, 3.0, 4.0};
+    ShuntInput const shunt_input{.id = 1, .node = 2, .status = 1, .g1 = 1.0, .b1 = 2.0, .g0 = 3.0, .b0 = 4.0};
     Shunt shunt{shunt_input, 10e3};
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_power_3p / 10e3 / 10e3;
     DoubleComplex const y1 = (1.0 + 2.0i) / base_y;
     DoubleComplex const y0 = (3.0 + 4.0i) / base_y;
     DoubleComplex const u{1.0};
-    ComplexValue<false> ua{1.0};
+    ComplexValue<asymmetric_t> const ua{1.0};
     double const p = 10e3 * 10e3 * 1.0;
     double const q = -10e3 * 10e3 * 2.0;
     double const s = std::sqrt(p * p + q * q);
@@ -25,19 +35,19 @@ TEST_CASE("Test shunt") {
     CHECK(shunt.math_model_type() == ComponentType::shunt);
 
     SUBCASE("test parameters") {
-        ComplexTensor<true> y = shunt.calc_param<true>();
+        ComplexTensor<symmetric_t> const y = shunt.calc_param<symmetric_t>();
         CHECK(cabs(y - y1) < numerical_tolerance);
-        ComplexTensor<false> ya = shunt.calc_param<false>();
+        ComplexTensor<asymmetric_t> ya = shunt.calc_param<asymmetric_t>();
         CHECK(cabs(ya(0, 0) - (2.0 * y1 + y0) / 3.0) < numerical_tolerance);
         CHECK(cabs(ya(0, 1) - (y0 - y1) / 3.0) < numerical_tolerance);
         // no source
-        ya = shunt.calc_param<false>(false);
+        ya = shunt.calc_param<asymmetric_t>(false);
         CHECK(cabs(ya(0, 0)) < numerical_tolerance);
         CHECK(cabs(ya(0, 1)) < numerical_tolerance);
     }
 
     SUBCASE("test results; u as input") {
-        ApplianceOutput<true> sym_result = shunt.get_output<true>(u);
+        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(u);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(p));
@@ -45,7 +55,7 @@ TEST_CASE("Test shunt") {
         CHECK(sym_result.s == doctest::Approx(s));
         CHECK(sym_result.i == doctest::Approx(i));
         CHECK(sym_result.pf == doctest::Approx(pf));
-        ApplianceOutput<false> asym_result = shunt.get_output<false>(ua);
+        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(ua);
         CHECK(asym_result.p(0) == doctest::Approx(p / 3));
         CHECK(asym_result.q(1) == doctest::Approx(q / 3));
         CHECK(asym_result.s(2) == doctest::Approx(s / 3));
@@ -54,43 +64,149 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("Symmetric test results; s, i as input") {
-        ApplianceMathOutput<true> appliance_math_output_sym;
+        ApplianceMathOutput<symmetric_t> appliance_math_output_sym;
         appliance_math_output_sym.i = 1.0 + 2.0i;
         appliance_math_output_sym.s = 3.0 + 4.0i;
-        ApplianceOutput<true> sym_result = shunt.get_output<true>(appliance_math_output_sym);
+        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(appliance_math_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
-        CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<true>));
-        CHECK(sym_result.q == doctest::Approx(-4.0 * base_power<true>));
-        CHECK(sym_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<true>));
+        CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));
+        CHECK(sym_result.q == doctest::Approx(-4.0 * base_power<symmetric_t>));
+        CHECK(sym_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<symmetric_t>));
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
     }
 
     SUBCASE("Asymmetric test results; s, i as input") {
-        ApplianceMathOutput<false> appliance_math_output_asym;
-        ComplexValue<false> const i_a{1.0 + 2.0i};
-        ComplexValue<false> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
+        ApplianceMathOutput<asymmetric_t> appliance_math_output_asym;
+        ComplexValue<asymmetric_t> const i_a{1.0 + 2.0i};
+        ComplexValue<asymmetric_t> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
         appliance_math_output_asym.i = i_a;
         appliance_math_output_asym.s = s_a;
-        ApplianceOutput<false> asym_result = shunt.get_output<false>(appliance_math_output_asym);
+        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(appliance_math_output_asym);
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
-        CHECK(asym_result.p(0) == doctest::Approx(-3.0 * base_power<false>));
-        CHECK(asym_result.q(1) == doctest::Approx(-4.0 * base_power<false>));
-        CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<false>));
+        CHECK(asym_result.p(0) == doctest::Approx(-3.0 * base_power<asymmetric_t>));
+        CHECK(asym_result.q(1) == doctest::Approx(-4.0 * base_power<asymmetric_t>));
+        CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<asymmetric_t>));
         CHECK(asym_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(asym_result.pf(1) == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
     }
 
     SUBCASE("test change") {
-        auto changed = shunt.update(ApplianceUpdate{{1}, true});
-        CHECK(!changed.topo);
-        CHECK(!changed.param);
-        changed = shunt.update(ApplianceUpdate{{1}, false});
-        CHECK(!changed.topo);
-        CHECK(changed.param);
+        SUBCASE("status") {
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{1, 0, nan, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{1, 1, 1.0, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{1, 1, 10.0, nan, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, 2.0, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{1, 1, nan, 20.0, nan, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 3.0, nan});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 30.0, nan});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("g1") {
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 4.0});
+            CHECK(!changed.topo);
+            CHECK(!changed.param);
+            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 40.0});
+            CHECK(!changed.topo);
+            CHECK(changed.param);
+        }
+        SUBCASE("all or none") {
+            auto changed_ = shunt.update(ShuntUpdate{1, 1, 1.0, 2.0, 3.0, 4.0});
+            CHECK(!changed_.topo);
+            CHECK(!changed_.param);
+            changed_ = shunt.update(ShuntUpdate{1, 0, 10.0, 20.0, 30.0, 40.0});
+            CHECK(!changed_.topo);
+            CHECK(changed_.param);
+            changed_ = shunt.update(ShuntUpdate{1, na_IntS, nan, nan, nan, nan});
+            CHECK(!changed_.topo);
+            CHECK(!changed_.param);
+        }
+    }
+
+    SUBCASE("Update inverse") {
+        ShuntUpdate shunt_update{1, na_IntS, nan, nan, nan, nan};
+        auto expected = shunt_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("Status") {
+            SUBCASE("same") { shunt_update.status = static_cast<IntS>(shunt.status()); }
+            SUBCASE("different") { shunt_update.status = IntS{0}; }
+            expected.status = static_cast<IntS>(shunt.status());
+        }
+
+        SUBCASE("g1") {
+            SUBCASE("same") { shunt_update.g1 = 1.0; }
+            SUBCASE("different") { shunt_update.g1 = 0.0; }
+            expected.g1 = 1.0;
+        }
+
+        SUBCASE("b1") {
+            SUBCASE("same") { shunt_update.b1 = 2.0; }
+            SUBCASE("different") { shunt_update.b1 = 0.0; }
+            expected.b1 = 2.0;
+        }
+
+        SUBCASE("g0") {
+            SUBCASE("same") { shunt_update.g0 = 3.0; }
+            SUBCASE("different") { shunt_update.g0 = 0.0; }
+            expected.g0 = 3.0;
+        }
+
+        SUBCASE("b0") {
+            SUBCASE("same") { shunt_update.b0 = 4.0; }
+            SUBCASE("different") { shunt_update.b0 = 0.0; }
+            expected.b0 = 4.0;
+        }
+
+        SUBCASE("multiple") {
+            shunt_update.status = IntS{0};
+            shunt_update.g1 = 0.0;
+            shunt_update.b1 = 0.1;
+            shunt_update.g0 = 0.2;
+            shunt_update.b0 = 0.3;
+            expected.status = static_cast<IntS>(shunt.status());
+            expected.g1 = 1.0;
+            expected.b1 = 2.0;
+            expected.g0 = 3.0;
+            expected.b0 = 4.0;
+        }
+
+        auto const inv = shunt.inverse(shunt_update);
+
+        CHECK(inv.id == expected.id);
+        CHECK(inv.status == expected.status);
+        check_nan_preserving_equality(inv.g1, expected.g1);
+        check_nan_preserving_equality(inv.b1, expected.b1);
+        check_nan_preserving_equality(inv.g0, expected.g0);
+        check_nan_preserving_equality(inv.b0, expected.b0);
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

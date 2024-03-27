@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -10,8 +10,8 @@ While many users use Python API for Power Grid Model.
 This library also provides a C API. 
 The main use case of C API is to integrate Power Grid Model into a non-Python application/library, namely, C, C++, JAVA, C#, etc. 
 
-The C API consists of a single 
-{{ "[header file]({}/power_grid_model_c/power_grid_model_c/include/power_grid_model_c.h)".format(gh_link_head_blob) }}
+The C API consists of some 
+{{ "[header files]({}/power_grid_model_c/power_grid_model_c/include)".format(gh_link_head_blob) }}
 and a dynamic library (`.so` or `.dll`) built by a 
 {{ "[cmake project]({}/power_grid_model_c/power_grid_model_c/CMakeLists.txt)".format(gh_link_head_blob) }}.
 Please refer to the [Build Guide](./build-guide.md) about how to build the library.
@@ -89,8 +89,10 @@ In this way, the library is handling the memory (de-)allocation.
 e.g., `aligned_alloc` and `free`.
 You need to first call `PGM_meta_*` functions to retrieve the size and alignment of a component.
 
-NOTE: Do not mix these two methods in creation and destruction.
+```{warning}
+Do not mix these two methods in creation and destruction.
 You cannot use `PGM_destroy_buffer` to release a buffer created in your own code, or vice versa.
+```
 
 ### Set and Get Attribute
 
@@ -127,5 +129,33 @@ The newly added attribute will have rubbish value in the memory.
 
 Therefore, it is your choice of trade-off: maximum performance or backwards compatibility.
 
-NOTE: you do not need to call `PGM_buffer_set_nan` on output buffers, 
+```{note}
+You do not need to call `PGM_buffer_set_nan` on output buffers, 
 because the buffer will be overwritten in the calculation core with the real output data.
+```
+
+## Dataset views
+
+For large datasets that cannot or should not be treated independently,
+`PGM_dataset_*` interfaces are provided.
+Currently implemented are `PGM_dataset_const`, `PGM_dataset_mutable`, and `PGM_dataset_writable`.
+These three dataset types expose a dataset to the power-grid-model with the following permissions on buffers:
+
+| Dataset interface        | power-grid-model permissions | User permissions    | Treat as        |
+|--------------------------| ---------------------------- | ------------------- | --------------- |
+| `PGM_dataset_const_*`    | Read                         | Create, read, write | `const * const` |
+| `PGM_dataset_mutable_*`  | Read, write                  | Create, read, write | `* const` |
+| `PGM_dataset_writable_*` | Read, write                  | Read                | `* const`       |
+
+A constant dataset is completely user-owned.
+The user is responsible for creating and destroying both the dataset and its buffers.
+This dataset is suited for input and (batch) update datasets.
+
+A mutable dataset is completely user-owned.
+The user is responsible for creating and destroying both the dataset and its buffers.
+This dataset is suited for (batch) output datasets.
+
+A writable dataset, instead, cannot be created by the user, but will be provided by the deserializer.
+The user can then provide buffers to which the deserializer can write its data (and `indptr`).
+This allows the buffers to have lifetimes beyond the lifetime of the deserializer.
+This dataset type is only meant to be used for providing user buffers to the deserializer.

@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
 repos:
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v1.0.0
+    rev: v3.0.1
     hooks:
       - id: reuse
   - repo: https://github.com/pycqa/isort
@@ -35,7 +35,7 @@ repos:
         pass_filenames: false
         always_run: true
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v14.0.6
+    rev: v15.0.7
     hooks:
       - id: clang-format
-        types_or: [ c++ ]
+        types_or: [ c++, c ]

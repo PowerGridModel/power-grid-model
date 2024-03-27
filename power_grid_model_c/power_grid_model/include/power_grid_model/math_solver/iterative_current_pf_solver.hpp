@@ -1,11 +1,9 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 // Check if the name means anything
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_ITERATIVE_CURRENT_PF_SOLVER_HPP
 
 /*
 Iterative Power Flow
@@ -54,60 +52,50 @@ Nomenclature:
 
 */
 
-#include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
 #include "block_matrix.hpp"
+#include "common_solver_functions.hpp"
 #include "iterative_pf_solver.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
-namespace power_grid_model {
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
+
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace iterative_current_pf {
 
 // solver
-template <bool sym>
+template <symmetry_tag sym>
 class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
-   public:
-    using BlockPermArray =
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+  public:
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    using BlockPermArray = typename SparseSolverType::BlockPermArray;
 
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
           rhs_u_(y_bus.size()),
-          y_data_ptr_(nullptr),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {
-    }
+          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, MathOutput<sym> const&) {
-        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        make_flat_start(input, output.u);
+
+        auto const& sources_per_bus = *this->sources_per_bus_;
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
-        if (y_data_ptr_ != &y_bus.admittance()) {
+        if (parameters_changed_) {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
-            // copy y bus data
-            std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {
-                if (k == -1) {
-                    return ComplexTensor<sym>{};
-                }
-                else {
-                    return ydata[k];
-                }
-            });
+            detail::copy_y_bus<sym>(y_bus, mat_data);
 
-            // loop bus
-            for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
+            for (auto const& [bus_number, sources] : enumerated_zip_sequence(sources_per_bus)) {
                 Idx const data_sequence = bus_entry[bus_number];
-                // loop sources
-                for (Idx source_number = source_bus_indptr[bus_number];
-                     source_number != source_bus_indptr[bus_number + 1]; ++source_number) {
+                for (auto source_number : sources) {
                     // YBus_diag += Y_source
                     mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
                 }
@@ -118,61 +106,29 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
             // move pre-factorized version into shared ptr
             mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
             perm_ = std::make_shared<BlockPermArray const>(std::move(perm));
-            // cache pointer
-            y_data_ptr_ = &y_bus.admittance();
         }
+        parameters_changed_ = false;
     }
 
     // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
 
         // set rhs to zero for iteration start
         std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
 
         // loop buses: i
-        for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
-            // loop loads/generation: j
-            for (Idx load_number = load_gen_bus_indptr[bus_number]; load_number != load_gen_bus_indptr[bus_number + 1];
-                 ++load_number) {
-                // load type
-                LoadGenType const type = load_gen_type[load_number];
-                switch (type) {
-                    case LoadGenType::const_pq:
-                        // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
-                        rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
-                        break;
-                    case LoadGenType::const_y:
-                        // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
-                        rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
-                        break;
-                    case LoadGenType::const_i:
-                        // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
-                        rhs_u_[bus_number] +=
-                            conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
-                        break;
-                    default:
-                        throw MissingCaseForEnumError("Injection current calculation", type);
-                }
-            }
-            // loop sources: j
-            for (Idx source_number = source_bus_indptr[bus_number]; source_number != source_bus_indptr[bus_number + 1];
-                 ++source_number) {
-                // I_inj_i += Y_source_j * U_ref_j
-                rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
-                                          ComplexValue<sym>{input.source[source_number]});
-            }
+        for (auto const& [bus_number, load_gens, sources] :
+             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+            add_loads(load_gens, bus_number, input, load_gen_type, u);
+            add_sources(sources, bus_number, y_bus, input);
         }
     }
 
     // Solve the linear equations I_inj = YU
     // inplace
-    void solve_matrix() {
-        sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_);
-    }
+    void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_); }
 
     // Find maximum deviation in voltage among all buses
     double iterate_unknown(ComplexValueVector<sym>& u) {
@@ -189,23 +145,77 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         return max_dev;
     }
 
-   private:
+    void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
+
+  private:
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
-    ComplexTensorVector<sym> const* y_data_ptr_;
     // sparse solver
-    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
+    SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
+    bool parameters_changed_ = true;
+
+    void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+                   std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {
+        for (Idx const load_number : load_gens) {
+            // load type
+            LoadGenType const type = load_gen_type[load_number];
+            switch (type) {
+                using enum LoadGenType;
+
+            case const_pq:
+                // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
+                rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
+                break;
+            case const_y:
+                // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
+                rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
+                break;
+            case const_i:
+                // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
+                rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
+                break;
+            default:
+                throw MissingCaseForEnumError("Injection current calculation", type);
+            }
+        }
+    }
+
+    void add_sources(boost::iterator_range<IdxCount> const& sources, Idx bus_number, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input) {
+        for (Idx const source_number : sources) {
+            // I_inj_i += Y_source_j * U_ref_j
+            rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+                                      ComplexValue<sym>{input.source[source_number]});
+        }
+    }
+
+    void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
+        std::vector<double> const& phase_shift = *this->phase_shift_;
+        // average u_ref of all sources
+        DoubleComplex const u_ref = [&]() {
+            DoubleComplex sum_u_ref = 0.0;
+            for (auto const& [bus, sources] : enumerated_zip_sequence(*this->sources_per_bus_)) {
+                for (Idx const source : sources) {
+                    sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
+                }
+            }
+            return sum_u_ref / static_cast<double>(input.source.size());
+        }();
+
+        // assign u_ref as flat start
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            // consider phase shift
+            output_u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
+        }
+    }
 };
 
-template class IterativeCurrentPFSolver<true>;
-template class IterativeCurrentPFSolver<false>;
+template class IterativeCurrentPFSolver<symmetric_t>;
+template class IterativeCurrentPFSolver<asymmetric_t>;
 
-}  // namespace math_model_impl
+} // namespace iterative_current_pf
 
-template <bool sym>
-using IterativeCurrentPFSolver = math_model_impl::IterativeCurrentPFSolver<sym>;
+using iterative_current_pf::IterativeCurrentPFSolver;
 
-}  // namespace power_grid_model
-
-#endif
+} // namespace power_grid_model::math_solver

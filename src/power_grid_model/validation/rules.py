@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -40,20 +40,23 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Un
 import numpy as np
 
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.enum import WindingType
+from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
     ComparisonError,
+    FaultPhaseError,
     IdNotInDatasetError,
     InfinityError,
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
+    MultiFieldValidationError,
     NotBetweenError,
     NotBetweenOrAtError,
     NotBooleanError,
     NotGreaterOrEqualError,
     NotGreaterThanError,
+    NotIdenticalError,
     NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
@@ -74,9 +77,9 @@ def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> Li
     zero. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
 
     Returns:
         A list containing zero or one NotGreaterThanErrors, listing all ids where the value in the field of interest
@@ -96,12 +99,13 @@ def all_greater_than_or_equal_to_zero(
     or equal to zero. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
-        default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
-        input validation, these default values should be included in the validation. It can be a fixed value for the
-        entire column (int/float) or be different for each element (np.ndarray).
+        data (SingleDataset): The input/update data set for all components
+        component (str) The component of interest
+        field (str): The field of interest
+        default_value (Optional[Union[np.ndarray, int, float]], optional): Some values are not required, but will
+            receive a default value in the C++ core. To do a proper input validation, these default values should be
+            included in the validation. It can be a fixed value for the entire column (int/float) or be different for
+            each element (np.ndarray).
 
     Returns:
         A list containing zero or one NotGreaterOrEqualErrors, listing all ids where the value in the field of
@@ -355,29 +359,77 @@ def none_match_comparison(
     return []
 
 
+def all_identical(data: SingleDataset, component: str, field: str) -> List[NotIdenticalError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are identical.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
+
+    Returns:
+        A list containing zero or one NotIdenticalError, listing all ids of that component if the value in the field
+        of interest was not identical across all components, all values for those ids, the set of unique values in
+        that field and the number of unique values in that field.
+    """
+    field_data = data[component][field]
+    if len(field_data) > 0:
+        first = field_data[0]
+        if np.any(field_data != first):
+            return [NotIdenticalError(component, field, data[component]["id"], list(field_data))]
+
+    return []
+
+
+def all_enabled_identical(
+    data: SingleDataset, component: str, field: str, status_field: str
+) -> List[NotIdenticalError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are identical.
+    Only entries are checked where the 'status' field is not 0.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
+        status_field (str): The status field based on which to decide whether a component is enabled
+
+    Returns:
+        A list containing zero or one NotIdenticalError, listing:
+
+            - all ids of enabled components if the value in the field of interest was not identical across all enabled
+              components
+            - all values of the 'field' column for enabled components (including duplications)
+            - the set of unique such values
+            - the amount of unique such values.
+    """
+    return all_identical(
+        {key: (value if key is not component else value[value[status_field] != 0]) for key, value in data.items()},
+        component,
+        field,
+    )
+
+
 def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
     the 'field' column of that component.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
 
     Returns:
         A list containing zero or one NotUniqueError, listing all ids where the value in the field of interest was
         not unique. If the field name was 'id' (a very common check), the id is added as many times as it occurred in
         the 'id' column, to maintain object counts.
     """
-    _, index, counts = np.unique(data[component][field], return_index=True, return_counts=True)
+    field_data = data[component][field]
+    _, inverse, counts = np.unique(field_data, return_inverse=True, return_counts=True)
     if any(counts != 1):
-        ids = data[component]["id"][index[counts != 1]].flatten().tolist()
-        if field == "id":  # Add ids multiple times
-            counts = counts[counts != 1]
-            for obj_id, count in zip(ids, counts):
-                ids += [obj_id] * (count - 1)
-            ids = sorted(ids)
+        ids = data[component]["id"][(counts != 1)[inverse]].flatten().tolist()
         return [NotUniqueError(component, field, ids)]
     return []
 
@@ -390,10 +442,11 @@ def all_cross_unique(
     the 'field' column of that component.
 
     Args:
-        data: The input/update data set for all components
-        fields: The fields of interest, formatted as [(component_1, field_1), (component_2, field_2)]
-        cross_only: Do not include duplicates within a single field. It is advised that you use all_unique() to
-        explicitly check uniqueness within a single field.
+        data (SingleDataset): The input/update data set for all components
+        fields (List[Tuple[str, str]]): The fields of interest, formatted as
+            [(component_1, field_1), (component_2, field_2)]
+        cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use
+            all_unique() to explicitly check uniqueness within a single field.
 
     Returns:
         A list containing zero or one MultiComponentNotUniqueError, listing all fields and ids where the value was not
@@ -425,10 +478,10 @@ def all_valid_enum_values(
     the supplied enum class. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
-        data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
-        enum: The enum type to validate against
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
+        enum (Type[Enum]): The enum type to validate against
 
     Returns:
         A list containing zero or one InvalidEnumValueError, listing all ids where the value in the field of interest
@@ -582,7 +635,7 @@ def all_ids_exist_in_data_set(
     return []
 
 
-def all_finite(data: SingleDataset) -> List[InfinityError]:
+def all_finite(data: SingleDataset, exceptions: Optional[Dict[str, List[str]]] = None) -> List[InfinityError]:
     """
     Check that for all records in all component, the values in all columns are finite value, i.e. float values other
     than inf, or -inf. Nan values are ignored, as in all other comparison functions. You can use non_missing() to
@@ -591,6 +644,8 @@ def all_finite(data: SingleDataset) -> List[InfinityError]:
 
     Args:
         data: The input/update data set for all components
+        exceptions:
+            A dictionary of fields per component type for which infinite values are supported. Defaults to empty.
 
     Returns:
         A list containing zero or one NotBooleanError, listing all ids where the value in the field of interest was not
@@ -601,6 +656,10 @@ def all_finite(data: SingleDataset) -> List[InfinityError]:
         for field, (dtype, _) in array.dtype.fields.items():
             if not np.issubdtype(dtype, np.floating):
                 continue
+
+            if exceptions and field in exceptions.get(component, []):
+                continue
+
             invalid = np.isinf(array[field])
             if invalid.any():
                 ids = data[component]["id"][invalid].flatten().tolist()
@@ -608,7 +667,9 @@ def all_finite(data: SingleDataset) -> List[InfinityError]:
     return errors
 
 
-def none_missing(data: SingleDataset, component: str, fields: Union[str, List[str]]) -> List[MissingValueError]:
+def none_missing(
+    data: SingleDataset, component: str, fields: Union[List[Union[str, List[str]]], str, List[str]], index: int = 0
+) -> List[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
     Returns an empty list on success, or a list containing a single error object on failure.
@@ -626,16 +687,51 @@ def none_missing(data: SingleDataset, component: str, fields: Union[str, List[st
     if isinstance(fields, str):
         fields = [fields]
     for field in fields:
+        if isinstance(field, list):
+            field = field[0]
         nan = nan_type(component, field)
         if np.isnan(nan):
-            invalid = np.isnan(data[component][field])
+            invalid = np.isnan(data[component][field][index])
         else:
-            invalid = np.equal(data[component][field], nan)
+            invalid = np.equal(data[component][field][index], nan)
+
         if invalid.any():
-            if invalid.ndim > 1:
-                invalid = invalid.any(axis=1)
+            if isinstance(invalid, np.ndarray):
+                invalid = np.any(invalid)
             ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
+    return errors
+
+
+def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValidationError]:
+    """
+    Check validity of the pair `(p_sigma, q_sigma)` for 'sym_power_sensor' and 'asym_power_sensor'.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest, in this case only 'sym_power_sensor' or 'asym_power_sensor'
+
+    Returns:
+        A list containing zero or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch.
+        Note that with asymetric power sensors, partial assignment of p_sigma and q_sigma is also considered mismatch.
+    """
+    errors = []
+    p_sigma = data[component]["p_sigma"]
+    q_sigma = data[component]["q_sigma"]
+    p_nan = np.isnan(p_sigma)
+    q_nan = np.isnan(q_sigma)
+    p_inf = np.isinf(p_sigma)
+    q_inf = np.isinf(q_sigma)
+    if p_sigma.ndim > 1:  # if component == 'asym_power_sensor':
+        p_nan = p_nan.any(axis=-1)
+        q_nan = q_nan.any(axis=-1)
+        p_inf = p_inf.any(axis=-1)
+        q_inf = q_inf.any(axis=-1)
+    mis_match = p_nan != q_nan
+    mis_match |= np.logical_or(p_inf, q_inf)
+    if mis_match.any():
+        ids = data[component]["id"][mis_match].flatten().tolist()
+        errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
     return errors
 
 
@@ -671,6 +767,60 @@ def all_valid_clocks(
             TransformerClockError(
                 component=component,
                 fields=[clock_field, winding_from_field, winding_to_field],
+                ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
+
+
+def all_valid_fault_phases(
+    data: SingleDataset, component: str, fault_type_field: str, fault_phase_field: str
+) -> List[FaultPhaseError]:
+    """
+    Custom validation rule: Only a subset of fault_phases is supported for each fault type.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        fault_type_field (str): The fault type field
+        fault_phase_field (str): The fault phase field
+
+    Returns:
+        A list containing zero or more FaultPhaseErrors; listing all the ids of faults where the fault phase was
+        invalid, given the fault phase.
+    """
+    fault_types = data[component][fault_type_field]
+    fault_phases = data[component][fault_phase_field]
+
+    supported_combinations: Dict[FaultType, List[FaultPhase]] = {
+        FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value, FaultPhase.nan],
+        FaultType.single_phase_to_ground: [
+            FaultPhase.a,
+            FaultPhase.b,
+            FaultPhase.c,
+            FaultPhase.default_value,
+            FaultPhase.nan,
+        ],
+        FaultType.two_phase: [FaultPhase.ab, FaultPhase.ac, FaultPhase.bc, FaultPhase.default_value, FaultPhase.nan],
+        FaultType.two_phase_to_ground: [
+            FaultPhase.ab,
+            FaultPhase.ac,
+            FaultPhase.bc,
+            FaultPhase.default_value,
+            FaultPhase.nan,
+        ],
+        FaultType.nan: [],
+    }
+
+    def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
+        return fault_phase not in supported_combinations.get(fault_type, [])
+
+    err = np.vectorize(_fault_phase_supported)(fault_type=fault_types, fault_phase=fault_phases)
+    if err.any():
+        return [
+            FaultPhaseError(
+                component=component,
+                fields=[fault_type_field, fault_phase_field],
                 ids=data[component]["id"][err].flatten().tolist(),
             )
         ]

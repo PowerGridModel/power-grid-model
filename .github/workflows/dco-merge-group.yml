@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: DCO for merge groups
+# Workaround because DCO plugin does not run on merge group. See https://github.com/dcoapp/app/issues/199
+
+# Controls when the workflow will run
+on:
+  # run pipeline on merge queue because DCO plugin does not
+  merge_group:
+  # Any other signals are handled by the actual DCO plugin
+
+jobs:
+  dco-merge-group:
+    name: DCO
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: "Workaround for DCO on merge groups"
+        run: |
+          echo "Workaround: signal DCO for merge queues because DCO plugin does not run for merge queues. See https://github.com/dcoapp/app/issues/199"

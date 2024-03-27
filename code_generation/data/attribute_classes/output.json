@@ -13,7 +13,7 @@
                 {
                     "data_type": "IntS",
                     "names": "energized",
-                    "description": "if the object is energized"
+                    "description": "whether the object is energized"
                 }
             ]
         },
@@ -53,12 +53,22 @@
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_from", "q_from", "i_from", "s_from"],
+                    "names": [
+                        "p_from",
+                        "q_from",
+                        "i_from",
+                        "s_from"
+                    ],
                     "description": "power flow at from-side"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_to", "q_to", "i_to", "s_to"],
+                    "names": [
+                        "p_to",
+                        "q_to",
+                        "i_to",
+                        "s_to"
+                    ],
                     "description": "power flow at to-side"
                 }
             ]
@@ -75,17 +85,32 @@
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_1", "q_1", "i_1", "s_1"],
+                    "names": [
+                        "p_1",
+                        "q_1",
+                        "i_1",
+                        "s_1"
+                    ],
                     "description": "power flow at side 1"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_2", "q_2", "i_2", "s_2"],
+                    "names": [
+                        "p_2",
+                        "q_2",
+                        "i_2",
+                        "s_2"
+                    ],
                     "description": "power flow at side 2"
                 },
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_3", "q_3", "i_3", "s_3"],
+                    "names": [
+                        "p_3",
+                        "q_3",
+                        "i_3",
+                        "s_3"
+                    ],
                     "description": "power flow at side 3"
                 }
             ]
@@ -97,7 +122,13 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p", "q", "i", "s", "pf"],
+                    "names": [
+                        "p",
+                        "q",
+                        "i",
+                        "s",
+                        "pf"
+                    ],
                     "description": "power flow of the appliance"
                 }
             ]
@@ -109,7 +140,10 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["u_residual", "u_angle_residual"],
+                    "names": [
+                        "u_residual",
+                        "u_angle_residual"
+                    ],
                     "description": "deviation between the measured value and calculated value"
                 }
             ]
@@ -121,10 +155,144 @@
             "attributes": [
                 {
                     "data_type": "RealValue<sym>",
-                    "names": ["p_residual", "q_residual"],
+                    "names": [
+                        "p_residual",
+                        "q_residual"
+                    ],
                     "description": "deviation between the measured value and calculated value"
                 }
             ]
+        },
+        {
+            "name": "FaultOutput",
+            "base": "BaseOutput",
+            "attributes": []
+        },
+        {
+            "name": "FaultShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": "i_f",
+                    "description": "three phase short circuit current magnitude"
+                },
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": "i_f_angle",
+                    "description": "three phase short circuit current angle"
+                }
+            ]
+        },
+        {
+            "name": "NodeShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "u_pu",
+                        "u",
+                        "u_angle"
+                    ],
+                    "description": "initial three phase line-to-ground short circuit voltage magnitude and angle"
+                }
+            ]
+        },
+        {
+            "name": "BranchShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "i_from",
+                        "i_from_angle"
+                    ],
+                    "description": "initial three phase short circuit current flow at from-side"
+                },
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "i_to",
+                        "i_to_angle"
+                    ],
+                    "description": "initial three phase short circuit current flow at to-side"
+                }
+            ]
+        },
+        {
+            "name": "Branch3ShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "i_1",
+                        "i_1_angle"
+                    ],
+                    "description": "initial three phase short circuit current flow at side 1"
+                },
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "i_2",
+                        "i_2_angle"
+                    ],
+                    "description": "initial three phase short circuit current flow at side 2"
+                },
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "i_3",
+                        "i_3_angle"
+                    ],
+                    "description": "initial three phase short circuit current flow at side 3"
+                }
+            ]
+        },
+        {
+            "name": "ApplianceShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "RealValue<asymmetric_t>",
+                    "names": [
+                        "i",
+                        "i_angle"
+                    ],
+                    "description": "initial three phase short circuit current flow of the appliance"
+                }
+            ]
+        },
+        {
+            "name": "SensorShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": []
+        },
+        {
+            "name": "TransformerTapRegulatorOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "tap_pos",
+                    "description": "result of regulated tap position"
+                }
+            ]
+        },
+        {
+            "name": "RegulatorShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": []
         }
     ]
 }

@@ -1,63 +1,58 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_META_DATA_GEN_HPP
-#define POWER_GRID_MODEL_META_DATA_GEN_HPP
+
+#include "input.hpp"
+#include "meta_data.hpp"
+#include "meta_gen/gen_getters.hpp"
+#include "meta_gen/input.hpp"
+#include "meta_gen/output.hpp"
+#include "meta_gen/update.hpp"
+#include "output.hpp"
+#include "update.hpp"
+
+#include "../all_components.hpp"
+#include "../common/common.hpp"
 
 #include <map>
 #include <string>
 
-#include "../all_components.hpp"
-#include "../power_grid_model.hpp"
-#include "input.hpp"
-#include "meta_data.hpp"
-#include "output.hpp"
-
 // generate of meta data
-namespace power_grid_model {
+namespace power_grid_model::meta_data {
 
-namespace meta_data {
+namespace meta_data_gen {
 
-// template function to add meta data
-template <class CT>
-void add_meta_data(AllPowerGridMetaData& meta) {
-    // TODO, remove this separate definition for UpdateType after migrating to gcc-11
-    // this is due to a wired bug in gcc-10
-    using UpdateType = typename CT::UpdateType;
-    meta["input"][CT::name] = get_meta<typename CT::InputType>{}();
-    meta["update"][CT::name] = get_meta<UpdateType>{}();
-    meta["sym_output"][CT::name] = get_meta<typename CT::template OutputType<true>>{}();
-    meta["asym_output"][CT::name] = get_meta<typename CT::template OutputType<false>>{}();
-}
-
-template <class T>
-struct MetaDataGeneratorImpl;
-
-template <class... ComponentType>
-struct MetaDataGeneratorImpl<ComponentList<ComponentType...>> {
-    using FuncPtr = std::add_pointer_t<void(AllPowerGridMetaData& meta)>;
-    static constexpr std::array<FuncPtr, sizeof...(ComponentType)> func_arr{&add_meta_data<ComponentType>...};
-
-    static AllPowerGridMetaData create_meta() {
-        AllPowerGridMetaData meta{};
-        for (auto const func : func_arr) {
-            func(meta);
-        }
-        return meta;
-    }
+// list of all dataset names
+template <class T> struct input_getter_s {
+    using type = typename T::InputType;
+};
+template <class T> struct update_getter_s {
+    using type = typename T::UpdateType;
+};
+template <class T> struct sym_output_getter_s {
+    using type = typename T::template OutputType<symmetric_t>;
+};
+template <class T> struct asym_output_getter_s {
+    using type = typename T::template OutputType<asymmetric_t>;
+};
+template <class T> struct sc_output_getter_s {
+    using type = typename T::ShortCircuitOutputType;
 };
 
-using MetaDataGenerator = MetaDataGeneratorImpl<AllComponents>;
+// generate meta data
+constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
+                                             dataset_mark<[] { return "input"; }, input_getter_s>,
+                                             dataset_mark<[] { return "update"; }, update_getter_s>,
+                                             dataset_mark<[] { return "sym_output"; }, sym_output_getter_s>,
+                                             dataset_mark<[] { return "asym_output"; }, asym_output_getter_s>,
+                                             dataset_mark<[] { return "sc_output"; }, sc_output_getter_s>
+                                             // end list of all marks
+                                             >::value;
 
-inline AllPowerGridMetaData const& meta_data() {
-    static AllPowerGridMetaData const meta_data = MetaDataGenerator::create_meta();
-    return meta_data;
-}
+} // namespace meta_data_gen
 
-}  // namespace meta_data
+constexpr MetaData meta_data = meta_data_gen::meta_data;
 
-}  // namespace power_grid_model
-
-#endif
+} // namespace power_grid_model::meta_data

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -6,13 +6,12 @@
 
 // clang-format off
 #pragma once
-#ifndef POWER_GRID_MODEL_AUXILIARY_UPDATE_HPP
-#define POWER_GRID_MODEL_AUXILIARY_UPDATE_HPP
 
-#include "../enum.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
 #include "meta_data.hpp"
+
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
@@ -20,209 +19,198 @@ struct BaseUpdate {
     ID id;  // ID of the object
 };
 
-struct BranchUpdate : BaseUpdate {
-    IntS from_status;  // If the branch is connected at each side
-    IntS to_status;  // If the branch is connected at each side
+struct BranchUpdate {
+    ID id;  // ID of the object
+    IntS from_status;  // whether the branch is connected at each side
+    IntS to_status;  // whether the branch is connected at each side
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-struct Branch3Update : BaseUpdate {
-    IntS status_1;  // If the branch is connected at each side
-    IntS status_2;  // If the branch is connected at each side
-    IntS status_3;  // If the branch is connected at each side
+struct Branch3Update {
+    ID id;  // ID of the object
+    IntS status_1;  // whether the branch is connected at each side
+    IntS status_2;  // whether the branch is connected at each side
+    IntS status_3;  // whether the branch is connected at each side
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-struct ApplianceUpdate : BaseUpdate {
-    IntS status;  // If the appliance is connected
+struct ApplianceUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-struct TransformerUpdate : BranchUpdate {
+struct TransformerUpdate {
+    ID id;  // ID of the object
+    IntS from_status;  // whether the branch is connected at each side
+    IntS to_status;  // whether the branch is connected at each side
     IntS tap_pos;  // tap changer parameters
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to BranchUpdate
+    operator BranchUpdate&() { return reinterpret_cast<BranchUpdate&>(*this); }
+    operator BranchUpdate const&() const { return reinterpret_cast<BranchUpdate const&>(*this); }
 };
 
-struct ThreeWindingTransformerUpdate : Branch3Update {
+struct ThreeWindingTransformerUpdate {
+    ID id;  // ID of the object
+    IntS status_1;  // whether the branch is connected at each side
+    IntS status_2;  // whether the branch is connected at each side
+    IntS status_3;  // whether the branch is connected at each side
     IntS tap_pos;  // tap changer parameters
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to Branch3Update
+    operator Branch3Update&() { return reinterpret_cast<Branch3Update&>(*this); }
+    operator Branch3Update const&() const { return reinterpret_cast<Branch3Update const&>(*this); }
 };
 
-template <bool sym>
-struct LoadGenUpdate : ApplianceUpdate {
-    RealValue<sym> p_specified;  // Specified active/reactive power
-    RealValue<sym> q_specified;  // Specified active/reactive power
-};
-using SymLoadGenUpdate = LoadGenUpdate<true>;
-using AsymLoadGenUpdate = LoadGenUpdate<false>;
+template <symmetry_tag sym_type>
+struct LoadGenUpdate {
+    using sym = sym_type;
 
-struct SourceUpdate : ApplianceUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
+    RealValue<sym> p_specified;  // specified active/reactive power
+    RealValue<sym> q_specified;  // specified active/reactive power
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to ApplianceUpdate
+    operator ApplianceUpdate&() { return reinterpret_cast<ApplianceUpdate&>(*this); }
+    operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
+};
+
+using SymLoadGenUpdate = LoadGenUpdate<symmetric_t>;
+using AsymLoadGenUpdate = LoadGenUpdate<asymmetric_t>;
+
+struct SourceUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
     double u_ref;  // reference voltage
     double u_ref_angle;  // reference voltage
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to ApplianceUpdate
+    operator ApplianceUpdate&() { return reinterpret_cast<ApplianceUpdate&>(*this); }
+    operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
 };
 
-template <bool sym>
-struct VoltageSensorUpdate : BaseUpdate {
+struct ShuntUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the appliance is connected
+    double g1;  // positive sequence admittance
+    double b1;  // positive sequence admittance
+    double g0;  // zero sequence admittance
+    double b0;  // zero sequence admittance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to ApplianceUpdate
+    operator ApplianceUpdate&() { return reinterpret_cast<ApplianceUpdate&>(*this); }
+    operator ApplianceUpdate const&() const { return reinterpret_cast<ApplianceUpdate const&>(*this); }
+};
+
+template <symmetry_tag sym_type>
+struct VoltageSensorUpdate {
+    using sym = sym_type;
+
+    ID id;  // ID of the object
     double u_sigma;  // sigma of error margin of voltage measurement
     RealValue<sym> u_measured;  // measured voltage magnitude and angle
     RealValue<sym> u_angle_measured;  // measured voltage magnitude and angle
-};
-using SymVoltageSensorUpdate = VoltageSensorUpdate<true>;
-using AsymVoltageSensorUpdate = VoltageSensorUpdate<false>;
 
-template <bool sym>
-struct PowerSensorUpdate : BaseUpdate {
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+};
+
+using SymVoltageSensorUpdate = VoltageSensorUpdate<symmetric_t>;
+using AsymVoltageSensorUpdate = VoltageSensorUpdate<asymmetric_t>;
+
+template <symmetry_tag sym_type>
+struct PowerSensorUpdate {
+    using sym = sym_type;
+
+    ID id;  // ID of the object
     double power_sigma;  // sigma of error margin of power measurement
     RealValue<sym> p_measured;  // measured active/reactive power
     RealValue<sym> q_measured;  // measured active/reactive power
-};
-using SymPowerSensorUpdate = PowerSensorUpdate<true>;
-using AsymPowerSensorUpdate = PowerSensorUpdate<false>;
+    RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
+    RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
 
-
-
-// template specialization functors to get meta data
-namespace meta_data {
-
-template<>
-struct get_meta<BaseUpdate> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "BaseUpdate";      
-        meta.size = sizeof(BaseUpdate);  
-        meta.alignment = alignof(BaseUpdate);
-        
-        meta.attributes.push_back(get_data_attribute<&BaseUpdate::id>("id"));
-        return meta;
-    }
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-template<>
-struct get_meta<BranchUpdate> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "BranchUpdate";      
-        meta.size = sizeof(BranchUpdate);  
-        meta.alignment = alignof(BranchUpdate);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&BranchUpdate::from_status>("from_status"));
-        meta.attributes.push_back(get_data_attribute<&BranchUpdate::to_status>("to_status"));
-        return meta;
-    }
+using SymPowerSensorUpdate = PowerSensorUpdate<symmetric_t>;
+using AsymPowerSensorUpdate = PowerSensorUpdate<asymmetric_t>;
+
+struct FaultUpdate {
+    ID id;  // ID of the object
+    IntS status;  // whether the fault is connected
+    FaultType fault_type;  // type of the fault
+    FaultPhase fault_phase;  // phase(s) of the fault
+    ID fault_object;  // ID of the faulted object
+    double r_f;  // short circuit impedance
+    double x_f;  // short circuit impedance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-template<>
-struct get_meta<Branch3Update> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "Branch3Update";      
-        meta.size = sizeof(Branch3Update);  
-        meta.alignment = alignof(Branch3Update);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&Branch3Update::status_1>("status_1"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Update::status_2>("status_2"));
-        meta.attributes.push_back(get_data_attribute<&Branch3Update::status_3>("status_3"));
-        return meta;
-    }
+struct RegulatorUpdate {
+    ID id;  // ID of the object
+    IntS status;  // regulator enables
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 };
 
-template<>
-struct get_meta<ApplianceUpdate> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "ApplianceUpdate";      
-        meta.size = sizeof(ApplianceUpdate);  
-        meta.alignment = alignof(ApplianceUpdate);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ApplianceUpdate::status>("status"));
-        return meta;
-    }
-};
+struct TransformerTapRegulatorUpdate {
+    ID id;  // ID of the object
+    IntS status;  // regulator enables
+    double u_set;  // voltage setpoint
+    double u_band;  // voltage bandwidth
+    double line_drop_compensation_r;  // line drop compensation resistance
+    double line_drop_compensation_x;  // line drop compensation reactance
 
-template<>
-struct get_meta<TransformerUpdate> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "TransformerUpdate";      
-        meta.size = sizeof(TransformerUpdate);  
-        meta.alignment = alignof(TransformerUpdate);
-        meta.attributes = get_meta<BranchUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&TransformerUpdate::tap_pos>("tap_pos"));
-        return meta;
-    }
-};
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
 
-template<>
-struct get_meta<ThreeWindingTransformerUpdate> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "ThreeWindingTransformerUpdate";      
-        meta.size = sizeof(ThreeWindingTransformerUpdate);  
-        meta.alignment = alignof(ThreeWindingTransformerUpdate);
-        meta.attributes = get_meta<Branch3Update>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&ThreeWindingTransformerUpdate::tap_pos>("tap_pos"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<LoadGenUpdate<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "LoadGenUpdate";      
-        meta.size = sizeof(LoadGenUpdate<sym>);  
-        meta.alignment = alignof(LoadGenUpdate<sym>);
-        meta.attributes = get_meta<ApplianceUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&LoadGenUpdate<sym>::p_specified>("p_specified"));
-        meta.attributes.push_back(get_data_attribute<&LoadGenUpdate<sym>::q_specified>("q_specified"));
-        return meta;
-    }
-};
-
-template<>
-struct get_meta<SourceUpdate> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "SourceUpdate";      
-        meta.size = sizeof(SourceUpdate);  
-        meta.alignment = alignof(SourceUpdate);
-        meta.attributes = get_meta<ApplianceUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&SourceUpdate::u_ref>("u_ref"));
-        meta.attributes.push_back(get_data_attribute<&SourceUpdate::u_ref_angle>("u_ref_angle"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<VoltageSensorUpdate<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "VoltageSensorUpdate";      
-        meta.size = sizeof(VoltageSensorUpdate<sym>);  
-        meta.alignment = alignof(VoltageSensorUpdate<sym>);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorUpdate<sym>::u_sigma>("u_sigma"));
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorUpdate<sym>::u_measured>("u_measured"));
-        meta.attributes.push_back(get_data_attribute<&VoltageSensorUpdate<sym>::u_angle_measured>("u_angle_measured"));
-        return meta;
-    }
-};
-
-template <bool sym>
-struct get_meta<PowerSensorUpdate<sym>> {
-    MetaData operator() () {
-        MetaData meta{};
-        meta.name = "PowerSensorUpdate";      
-        meta.size = sizeof(PowerSensorUpdate<sym>);  
-        meta.alignment = alignof(PowerSensorUpdate<sym>);
-        meta.attributes = get_meta<BaseUpdate>{}().attributes;
-        meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::power_sigma>("power_sigma"));
-        meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::p_measured>("p_measured"));
-        meta.attributes.push_back(get_data_attribute<&PowerSensorUpdate<sym>::q_measured>("q_measured"));
-        return meta;
-    }
+    // implicit conversions to RegulatorUpdate
+    operator RegulatorUpdate&() { return reinterpret_cast<RegulatorUpdate&>(*this); }
+    operator RegulatorUpdate const&() const { return reinterpret_cast<RegulatorUpdate const&>(*this); }
 };
 
 
-
-} // namespace meta_data
 
 } // namespace power_grid_model
 
-#endif
 // clang-format on

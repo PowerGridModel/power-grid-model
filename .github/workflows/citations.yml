@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Validate citation
+
+on:
+  # run pipeline on push event of main branch, or when CITATIONS path has changed
+  push:
+    branches:
+      - main
+    paths:
+      - CITATION.cff
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-citations:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: Validate CITATION.cff
+      uses: dieghernan/cff-validator@v2.3

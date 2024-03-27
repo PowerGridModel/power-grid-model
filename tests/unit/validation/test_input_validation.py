@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -8,8 +8,10 @@ import numpy as np
 import pytest
 
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
+from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
+    FaultPhaseError,
     InvalidEnumValueError,
     InvalidIdError,
     MultiComponentNotUniqueError,
@@ -18,6 +20,7 @@ from power_grid_model.validation.errors import (
     NotBooleanError,
     NotGreaterOrEqualError,
     NotGreaterThanError,
+    NotIdenticalError,
     NotLessThanError,
     NotUniqueError,
     TwoValuesZeroError,
@@ -220,6 +223,15 @@ def input_data() -> Dict[str, np.ndarray]:
     asym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
 
+    fault = initialize_array("input", "fault", 20)
+    fault["id"] = [1] + list(range(32, 51))
+    fault["status"] = [0, -1, 2] + 17 * [1]
+    fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4]
+    fault["fault_phase"] = list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7]
+    fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
+    fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "r_f")]
+    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "x_f")]
+
     data = {
         "node": node,
         "line": line,
@@ -236,6 +248,7 @@ def input_data() -> Dict[str, np.ndarray]:
         "asym_voltage_sensor": asym_voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
         "asym_power_sensor": asym_power_sensor,
+        "fault": fault,
     }
     return data
 
@@ -259,6 +272,7 @@ def test_validate_input_data_sym_calculation(input_data):
                 ("sym_voltage_sensor", "id"),
                 ("transformer", "id"),
                 ("three_winding_transformer", "id"),
+                ("fault", "id"),
             ],
             [
                 ("asym_gen", 1),
@@ -286,6 +300,7 @@ def test_validate_input_data_sym_calculation(input_data):
                 ("sym_voltage_sensor", 10),
                 ("transformer", 1),
                 ("three_winding_transformer", 1),
+                ("fault", 1),
             ],
         )
         in validation_errors
@@ -443,6 +458,9 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
 
+    assert NotBooleanError("fault", "status", [32, 33]) in validation_errors
+    assert InvalidIdError("fault", "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
+
 
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
@@ -530,6 +548,32 @@ def test_validate_three_winding_transformer_ukpkminmax(input_data):
     assert NotGreaterOrEqualError("three_winding_transformer", "pk_12_max", [1], 0) in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "pk_13_max", [1], 0) in validation_errors
     assert NotGreaterOrEqualError("three_winding_transformer", "pk_23_max", [1], 0) in validation_errors
+
+
+def test_fault(input_data):
+    validation_errors = validate_input_data(input_data, calculation_type=CalculationType.short_circuit)
+    assert InvalidEnumValueError("fault", "fault_type", [50], FaultType) in validation_errors
+    assert InvalidEnumValueError("fault", "fault_phase", [50], FaultPhase) in validation_errors
+    assert FaultPhaseError("fault", ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
+    assert NotGreaterOrEqualError("fault", "r_f", [1], 0) in validation_errors
+    assert (
+        NotIdenticalError(
+            "fault",
+            "fault_type",
+            list(range(32, 51)),
+            5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4],
+        )
+        in validation_errors
+    )
+    assert (
+        NotIdenticalError(
+            "fault",
+            "fault_phase",
+            list(range(32, 51)),
+            list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7],
+        )
+        in validation_errors
+    )
 
 
 def test_validate_input_data_asym_calculation(input_data):

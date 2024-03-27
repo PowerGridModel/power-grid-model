@@ -1,7 +1,6 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 
 """
 Error classes
@@ -13,16 +12,79 @@ import numpy as np
 
 
 class PowerGridError(RuntimeError):
-    """
-    Generic power grid error
-    """
+    """Generic power grid error"""
 
 
 class PowerGridBatchError(PowerGridError):
-    """
-    Error occurs in batch calculation
-    """
+    """Error occurs in batch calculation"""
 
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
     error_messages: List[str]
+    errors: List[PowerGridError]
+
+
+class MissingCaseForEnumError(PowerGridError):
+    """An enum value is not covered in a for loop.
+
+    This usually happens when an invalid combination of (enum) settings is provided."""
+
+
+class ConflictVoltage(PowerGridError):
+    """There is a confliciting voltage"""
+
+
+class InvalidBranch(PowerGridError):
+    """A branch is invalid"""
+
+
+class InvalidBranch3(PowerGridError):
+    """A branch3 is invalid"""
+
+
+class InvalidTransformerClock(PowerGridError):
+    """Invalid transformer clock found"""
+
+
+class SparseMatrixError(PowerGridError):
+    """Attempting to invert a non-invertible matrix"""
+
+
+class NotObservableError(SparseMatrixError):
+    """Attempting to solve a non-observable system"""
+
+
+class IterationDiverge(PowerGridError):
+    """Unable to iteratively converge to an optimum within the set number of iterations and precision"""
+
+
+class InvalidID(PowerGridError):
+    """An ID is invalid"""
+
+
+class ConflictID(InvalidID):
+    """Conflicting IDs found"""
+
+
+class IDNotFound(InvalidID):
+    """A reference to a non-existent ID was provided"""
+
+
+class InvalidMeasuredObject(InvalidID):
+    """A provided measured object is invalid"""
+
+
+class IDWrongType(InvalidID):
+    """A referenced ID points to a component that cannot be referenced here"""
+
+
+class InvalidCalculationMethod(PowerGridError):
+    """Invalid calculation method provided"""
+
+
+class InvalidShortCircuitPhaseOrType(PowerGridError):
+    """Invalid (combination of) short circuit types and phase(s) provided"""
+
+
+class PowerGridSerializationError(PowerGridError):
+    """Error occurs during (de-)serialization"""

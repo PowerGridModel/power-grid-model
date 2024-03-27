@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -12,14 +12,20 @@ SPDX-License-Identifier: MPL-2.0
 :align: right
 ```
 
-`power-grid-model` is a library for steady-state distribution power system analysis distributed for Python and C.
+`power-grid-model` is a library for steady-state distribution power system analysis.
+It is distributed for Python and C.
 The core of the library is written in C++.
-Currently, it supports the following calculations:
+Currently, it supports both symmetric and asymmetric calculations for the following calculation types:
 
-* Symmetric and asymmetric power flow calculation with Newton-Raphson method, iterative current method and linear method
-* Symmetric and asymmetric state estimation with iterative linear method
+* Power Flow
+* State Estimation
+* Short Circuit
 
-For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For conversions from various data format to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+
+```{note}
+Do you wish to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
+```
 
 ## Install from PyPI
 
@@ -29,9 +35,21 @@ You can directly install the package from PyPI.
 pip install power-grid-model
 ```
 
+## Install from Conda
+
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
+
+```
+conda install -c conda-forge power-grid-model
+```
+
 ## Build and install from Source
 
 To install the library from source, refer to the [Build Guide](advanced_documentation/build-guide.md).
+
+## Citations
+
+If you are using Power Grid Model in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md)
 
 # Contents
 
@@ -47,11 +65,13 @@ quickstart
 :caption: "User Manual"
 :maxdepth: 2
 user_manual/data-model
+user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
+user_manual/serialization
 ```
 ```{toctree}
 :caption: "API Reference"
@@ -64,9 +84,13 @@ api_reference/power-grid-model-c-api-reference
 :caption: "Examples"
 :maxdepth: 2
 examples/Power Flow Example.ipynb
+examples/Serialization Example.ipynb
 examples/State Estimation Example.ipynb
+examples/Short Circuit Example.ipynb
 examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
+examples/Asymmetric Calculation Example.ipynb
+examples/Transformer Examples.ipynb
 ```
 
 ```{toctree}
@@ -75,6 +99,7 @@ examples/Make Test Dataset.ipynb
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
+advanced_documentation/core-design
 ```
 ```{toctree}
 :caption: "Contribution"
@@ -82,11 +107,13 @@ advanced_documentation/c-api
 contribution/CODE_OF_CONDUCT.md
 contribution/CONTRIBUTING.md
 contribution/folder-structure.md
-contribution/PROJECT_GOVERNANCE.md
+contribution/GOVERNANCE.md
 ```
 ```{toctree}
 :caption: "Release and Support"
 :maxdepth: 2
 release_and_support/RELEASE.md
 release_and_support/SUPPORT.md
+release_and_support/SECURITY.md
+release_and_support/CITATION.md
 ```

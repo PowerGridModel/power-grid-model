@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -21,6 +21,7 @@ class Attribute(DataClassJsonMixin):
 class AttributeClass(DataClassJsonMixin):
     name: str
     attributes: List[Attribute]
+    full_attributes: Optional[List[Attribute]] = None
     base: Optional[str] = None
     is_template: bool = False
     full_name: Optional[str] = None
@@ -31,3 +32,21 @@ class DatasetMetaData(DataClassJsonMixin):
     name: str
     include_guard: str
     classes: List[AttributeClass]
+
+
+@dataclass
+class ObjectMapData(DataClassJsonMixin):
+    names: List[str]
+    class_name: str
+
+
+@dataclass
+class DatasetMapData(DataClassJsonMixin):
+    name: str
+    is_template: bool
+    components: List[ObjectMapData]
+
+
+@dataclass
+class AllDatasetMapData(DataClassJsonMixin):
+    all_datasets: List[DatasetMapData]

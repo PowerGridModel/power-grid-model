@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -9,10 +9,9 @@ import pytest
 
 from power_grid_model import PowerGridModel, initialize_array
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
-from power_grid_model.utils import convert_python_to_numpy
 from power_grid_model.validation import assert_valid_input_data
 
-from .utils import compare_result
+from .utils import compare_result, convert_python_to_numpy
 
 """
 Testing network
@@ -124,6 +123,10 @@ def test_single_calculation_error(model: PowerGridModel):
         model.calculate_power_flow(max_iterations=1, error_tolerance=1e-100)
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
         model.calculate_state_estimation(calculation_method="iterative_current")
+
+    for calculation_method in ("linear", "newton_raphson", "iterative_current", "linear_current", "iterative_linear"):
+        with pytest.raises(PowerGridError):
+            model.calculate_short_circuit(calculation_method=calculation_method)
 
 
 def test_batch_calculation_error(model: PowerGridModel, case_data):

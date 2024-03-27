@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node":
+      [
+        {"id": 0, "u_rated": 150000.0},
+        {"id": 1, "u_rated": 10000.0},
+        {"id": 2, "u_rated": 10000.0},
+        {"id": 3, "u_rated": 10000.0}
+      ],
+    "line":
+      [
+        {"id": 7, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "r1": 0.049, "x1": 0.153, "c1": 6.4e-07, "tan1": 0.0, "r0": 0.75, "x0": 0.04, "c0": 6.4e-07, "tan0": 0.0, "i_n": 660.0},
+        {"id": 8, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1, "r1": 0.0245, "x1": 0.0765, "c1": 3.2e-07, "tan1": 0.0, "r0": 0.375, "x0": 0.02, "c0": 3.2e-07, "tan0": 0.0, "i_n": 660.0}
+      ],
+    "transformer":
+      [
+        {"id": 6, "from_node": 0, "to_node": 1, "from_status": 1, "to_status": 1, "u1": 150000.0, "u2": 10000.0, "sn": 20000000.0, "uk": 0.05, "pk": 0.0, "i0": 0.0, "p0": 0.0, "winding_from": 1, "winding_to": 2, "clock": 1, "tap_side": 0, "tap_pos": 0, "tap_min": -1, "tap_max": 1, "tap_nom": 0, "tap_size": 100.0}
+      ],
+    "source":
+      [
+        {"id": 4, "node": 0, "status": 1, "u_ref": 1.0, "u_ref_angle": 0.0, "sk": 20000000000.0, "rx_ratio": 0.1, "z01_ratio": 1.0},
+        {"id": 5, "node": 2, "status": 1, "u_ref": 1.0, "u_ref_angle": -0.5235987755982988, "sk": 2000000000.0, "rx_ratio": 0.1, "z01_ratio": 1.0}
+      ],
+    "shunt":
+      [
+        {"id": 9, "node": 1, "status": 1, "g1": 0.0, "b1": 0.0, "g0": 0.0, "b0": 5.0}
+      ],
+    "fault":
+      [
+        {"id": 10, "status": 1, "fault_type": 3, "fault_phase": -1, "fault_object": 3, "r_f": 0.01, "x_f": 0.01}
+      ]
+  }
+}

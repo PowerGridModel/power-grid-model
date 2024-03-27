@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -23,8 +23,8 @@ repository there are three builds:
 ## Build Requirements
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies. In this
-section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 22.04)
-, Windows 10, and macOS (Big Sur).
+section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 22.04),
+Windows 10, and macOS (Big Sur).
 
 ### Architecture Support
 
@@ -41,11 +41,13 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
 **Linux**
 
-* gcc >= 10.0
-  * Version 10.0 tested using the version in the `manylinux2014` container.
-  * Version 11.x tested in CI
-* Clang >= 14.0
-  * Version 14.x tested in CI
+* gcc >= 11.0
+  * Version 12.x tested using the version in the `manylinux_2_28` container.
+  * Version 12.x tested using the musllinux build with custom compiler
+  * Version 13.x tested in CI
+* Clang >= 15.0
+  * Version 15.x tested in CI
+  * Version 15.x tested in CI with code quality checks
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
@@ -53,15 +55,17 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 * MSVC >= 17.5
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
+* Clang CL >= 15.0
+  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
 **macOS**
 
-* Clang >= 14.0
+* Clang >= 14.0.3
   * Latest release tested in CI
 
 ### Build System for CMake Project
 
-This repository uses [CMake](https://cmake.org/) and [Ninja](https://ninja-build.org/) as C++ build system.
+This repository uses [CMake](https://cmake.org/) (version 3.23 or later) and [Ninja](https://ninja-build.org/) as C++ build system.
 
 ### Build Dependencies
 
@@ -69,24 +73,26 @@ This repository uses [CMake](https://cmake.org/) and [Ninja](https://ninja-build
 
 The table below shows the C++ build dependencies
 
-| Library name                                      | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                       |
-| ------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| [boost](https://www.boost.org/)                   | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt) |
-| [eigen3](https://eigen.tuxfamily.org/)            | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/) |
-| [doctest](https://github.com/doctest/doctest)     | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)             |
-| [nlohmann-json](https://github.com/nlohmann/json) | None                                 | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)              |
+| Library name                                                        | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                                                      |
+| ------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
+| [boost](https://www.boost.org/)                                     | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt)                                |
+| [eigen3](https://eigen.tuxfamily.org/)                              | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
+| [nlohmann-json](https://github.com/nlohmann/json)                   | Will be installed automatically      | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
+| [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Will be installed automatically      | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
+| [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
 
 #### Python
 
 The table below shows the Python dependencies
 
-| Library name                                                                            | Remark                   | License                                                                               |
-| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
-| [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE) |
-| [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                         |
-| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                            |
-| [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                         |
-| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                   |
+| Library name                                                                            | Remark                   | License                                                                                    |
+| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE)      |
+| [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
+| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                                 |
+| [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
+| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
+| [msgpack-python](https://github.com/msgpack/msgpack-python)                             | Development dependency   | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
 
 ## Build Python Package
 
@@ -112,13 +118,14 @@ library `power_grid_model`. There are four sub-projects defined in the root cmak
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
 * `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
-* `tests/c_api_tests`: the C API test target using the `doctest` framework
+* `tests/cpp_integration_tests`: the integration test target for the C++ core using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
+* `tests/c_api_tests`: the C API test target using the `doctest` framework
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. It is also possible to use
-the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.19+). Supported presets
+the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.23+). Supported presets
 for your development platform can be listed using `cmake --list-presets`.
 
 ## Visual Studio Code Support
@@ -131,7 +138,7 @@ using `cmake <project_dir>` from a terminal that has the environment set up. E.g
 
 * For x64 Windows native development using MSVC or Clang CL, use the `x64 Native Command Prompt`, which uses
   `vcvarsall.bat` to set the appropriate build environment.
-* For Linux/WSL using the LLVM-14 `clang`, `source` or `export` `CC=clang-14`, `CXX=clang++-14` and `LLVM_COV=llvm-cov-14`.
+* For Linux/WSL using the LLVM-15 `clang`, `source` or `export` `CC=clang-15`, `CXX=clang++-15` and `LLVM_COV=llvm-cov-15`. Optionally, you can `export` `CLANG_TIDY=clang-tidy-15`.
 ```
 
 ## Build Script for Linux/macOS
@@ -160,10 +167,11 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-14  # or g++-11
-export CC=clang-14  # gcc-11
+export CXX=clang++-15            # or g++-13
+export CC=clang-15               # gcc-13
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
-export LLVM_COV=llvm-cov-14
+export LLVM_COV=llvm-cov-15
+export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
 ```
 
 ### Ubuntu Software Packages
@@ -172,18 +180,21 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang make cmake gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-15 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
 ```
 
 ### C++ packages
 
-The recommended way to get C++ package is via [Homebrew](https://brew.sh/). 
+The recommended way to get C++ package is via [Homebrew](https://brew.sh/).
+
+```note
 Go to its website to follow the installation instruction.
+```
 
 Install the C++ dependencies
 
 ```shell
-brew install boost eigen nlohmann-json doctest
+brew install boost eigen nlohmann-json msgpack-cxx doctest cmake
 ```
 
 ### Build Python Library from Source
@@ -267,7 +278,7 @@ Other toolchains:
 The recommended way to get C++ package is via `conda`. Open a miniconda console.
 
 ```shell
-conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge boost-cpp eigen nlohmann_json doctest
+conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 ```
 
 ### Build Python Library from Source
@@ -292,6 +303,10 @@ Install from source in develop mode, and run `pytest`.
 ```shell
 pip install -e .[dev]
 pytest
+```
+```{note}
+Long paths for (dependencies in) the miniconda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
 ### Build CMake Project
@@ -332,7 +347,7 @@ export CMAKE_PREFIX_PATH=/usr/local
 Install the following packages with [Homebrew](https://brew.sh/).
 
 ```shell
-brew install ninja cmake boost eigen nlohmann-json doctest
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest
 ```
 
 ### Build Python Library from Source

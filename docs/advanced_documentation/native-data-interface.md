@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -111,10 +111,15 @@ line_update['to_status'] = [-128]
 
 All the enumeration types are defined as 8-bit signed integer as underlying type:
 `int8_t` in C++ and `'i1'` in Python.
-The enumerations are defined in the Python module `power_grid_model.enum`
+The enumerations are defined in the Python module `power_grid_model.enum`.
 In C++ the enumeration is defined with the same integer values.
 Please refer the [Enum](../api_reference/python-api-reference.md#enum) for list of enumerations.
 
+For updateable enums, we choose to always use `-128` as a special NaN value, representing unspecified values.
+In case an explicit option for default behaviour is desired,
+that value shall be different from the NaN value `-128`, e.g. `-1`.
+This prevents conflicts when updating, because providing the default value shall override the existing value,
+while an unspecified value (which is also the initial value when creating a new update data set) does not.
 
 ## Meta-data Helper Module
 

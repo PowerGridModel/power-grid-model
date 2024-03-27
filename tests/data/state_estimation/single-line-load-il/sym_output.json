@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "line": [
+      {
+        "id": 21,
+        "energized": 1,
+        "p_from": 1501363.636462,
+        "p_to": -1499319.107870
+      }
+    ],
+    "node": [
+      {
+        "id": 11,
+        "energized": 1,
+        "u": 10499.999938870853
+      },
+      {
+        "id": 12,
+        "energized": 1,
+        "u": 10485.701289
+      }
+    ],
+    "source": [
+      {
+        "id": 41,
+        "energized": 1,
+        "p": 1501363.636462
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 31,
+        "energized": 1,
+        "p": 1499319.107870,
+        "q": 0.0
+      }
+    ]
+  }
+}

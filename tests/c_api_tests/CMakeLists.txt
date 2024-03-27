@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -6,6 +6,7 @@ set(PROJECT_SOURCES
     "test_c_api_meta_data.cpp"
     "test_c_api_model.cpp"
     "test_entry_point.cpp"
+    "test_serialization.cpp"
 )
 
 add_executable(power_grid_model_c_api_tests ${PROJECT_SOURCES})

@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: conda-pgm-env
+channels:
+  - conda-forge
+dependencies:
+  # build env
+  - python=3.11
+  - pip
+  - wheel
+  - setuptools
+  # build deps
+  - libboost-headers
+  - eigen
+  - nlohmann_json
+  - msgpack-cxx
+  - numpy
+  # test deps
+  - pytest
+  - pytest-cov
+  - msgpack-python

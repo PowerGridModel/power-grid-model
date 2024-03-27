@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -47,8 +47,8 @@ def assert_valid_input_data(
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
     Raises:
-        KeyError, TypeError or ValueError if the data structure is invalid.
-        ValidationException if the contents are invalid.
+        KeyError | TypeError | ValueError: if the data structure is invalid.
+        ValidationException: if the contents are invalid.
     """
     validation_errors = validate_input_data(
         input_data=input_data, calculation_type=calculation_type, symmetric=symmetric
@@ -64,7 +64,7 @@ def assert_valid_batch_data(
     symmetric: bool = True,
 ):
     """
-    Ihe input dataset is validated:
+    The input dataset is validated:
 
         1. Is the data structure correct? (checking data types and numpy array shapes)
         2. Are all input data ID's unique? (checking object identifiers across all components)
@@ -84,8 +84,8 @@ def assert_valid_batch_data(
         symmetric: A boolean to state whether input data will be used for a symmetric or asymmetric calculation
 
     Raises:
-        KeyError, TypeError or ValueError if the data structure is invalid.
-        ValidationException if the contents are invalid.
+        KeyError | TypeError | ValueError: if the data structure is invalid.
+        ValidationException: if the contents are invalid.
     """
     validation_errors = validate_batch_data(
         input_data=input_data, update_data=update_data, calculation_type=calculation_type, symmetric=symmetric

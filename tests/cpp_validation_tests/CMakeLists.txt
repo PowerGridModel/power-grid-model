@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -16,7 +16,7 @@ target_link_libraries(power_grid_model_validation_tests
         nlohmann_json nlohmann_json::nlohmann_json
 )
 target_compile_definitions(power_grid_model_validation_tests
-	PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data"
+	PRIVATE POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests/data"
 )
 
 doctest_discover_tests(power_grid_model_validation_tests)

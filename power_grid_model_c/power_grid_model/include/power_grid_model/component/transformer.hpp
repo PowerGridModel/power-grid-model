@@ -1,30 +1,29 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_TRANSFORMER_HPP
-#define POWER_GRID_MODEL_COMPONENT_TRANSFORMER_HPP
+
+#include "branch.hpp"
+#include "transformer_utils.hpp"
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "branch.hpp"
-#include "transformer_utils.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
 
 class Transformer : public Branch {
-   public:
+  public:
     using InputType = TransformerInput;
     using UpdateType = TransformerUpdate;
     static constexpr char const* name = "transformer";
 
-    Transformer(TransformerInput const& transformer_input, double u1_rated, double u2_rated)
+    explicit Transformer(TransformerInput const& transformer_input, double u1_rated, double u2_rated)
         : Branch{transformer_input},
           u1_{transformer_input.u1},
           u2_{transformer_input.u2},
@@ -54,44 +53,30 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
-        // check on clock
-        bool const is_from_wye = winding_from_ == WindingType::wye || winding_from_ == WindingType::wye_n;
-        bool const is_to_wye = winding_to_ == WindingType::wye || winding_to_ == WindingType::wye_n;
-        if (  // clock should be between 0 and 12
-            clock_ < 0 || clock_ > 12 ||
-            // even number is not possible if one side is wye winding and the other side is not wye winding.
-            ((clock_ % 2) == 0 && (is_from_wye != is_to_wye)) ||
-            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
-            ((clock_ % 2) == 1 && (is_from_wye == is_to_wye))) {
+        if (!is_valid_clock(clock_, winding_from_, winding_to_)) {
             throw InvalidTransformerClock{id(), clock_};
         }
+
         // set clock to zero if it is 12
-        clock_ = clock_ % 12;
+        clock_ = static_cast<IntS>(clock_ % 12);
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
 
     // override getter
-    double base_i_from() const final {
-        return base_i_from_;
-    }
-    double base_i_to() const final {
-        return base_i_to_;
-    }
-    double loading(double max_s, double) const final {
-        return max_s / sn_;
-    };
+    double base_i_from() const final { return base_i_from_; }
+    double base_i_to() const final { return base_i_to_; }
+    double loading(double max_s, double /* max_i */) const final { return max_s / sn_; };
     // phase shift is theta_from - theta_to
-    double phase_shift() const final {
-        return clock_ * deg_30;
-    }
-    bool is_param_mutable() const final {
-        return true;
-    }
-    // get tap
-    IntS tap_pos() const {
-        return tap_pos_;
-    }
+    double phase_shift() const final { return clock_ * deg_30; }
+    bool is_param_mutable() const final { return true; }
+    // getters
+    IntS tap_pos() const { return tap_pos_; }
+    BranchSide tap_side() const { return tap_side_; }
+    IntS tap_min() const { return tap_min_; }
+    IntS tap_max() const { return tap_max_; }
+    IntS tap_nom() const { return tap_nom_; }
+
     // setter
     bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
@@ -102,34 +87,55 @@ class Transformer : public Branch {
     }
 
     // update for transformer, hide default update for branch
-    UpdateChange update(TransformerUpdate const& update) {
-        assert(update.id == id());
-        bool topo_changed = set_status(update.from_status, update.to_status);
-        bool param_changed = set_tap(update.tap_pos) || topo_changed;
+    UpdateChange update(TransformerUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool const topo_changed = set_status(update_data.from_status, update_data.to_status);
+        bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
     }
 
-   private:
+    TransformerUpdate inverse(TransformerUpdate update_data) const {
+        assert(update_data.id == id());
+
+        update_data = Branch::inverse(update_data);
+        set_if_not_nan(update_data.tap_pos, tap_pos_);
+
+        return update_data;
+    }
+
+  private:
     // transformer parameter
-    double u1_, u2_;
+    double u1_;
+    double u2_;
     double sn_;
     double tap_size_;
-    double uk_, pk_, i0_, p0_;
-    WindingType winding_from_, winding_to_;
+    double uk_;
+    double pk_;
+    double i0_;
+    double p0_;
+    WindingType winding_from_;
+    WindingType winding_to_;
     IntS clock_;
     BranchSide tap_side_;
-    IntS tap_pos_, tap_min_, tap_max_, tap_nom_;
+    IntS tap_pos_;
+    IntS tap_min_;
+    IntS tap_max_;
+    IntS tap_nom_;
     IntS tap_direction_;
-    double uk_min_, uk_max_, pk_min_, pk_max_;
+    double uk_min_;
+    double uk_max_;
+    double pk_min_;
+    double pk_max_;
 
     // calculation parameter
     double base_i_from_;
     double base_i_to_;
     double nominal_ratio_;
-    DoubleComplex z_grounding_from_, z_grounding_to_;
+    DoubleComplex z_grounding_from_;
+    DoubleComplex z_grounding_to_;
 
     // calculate z in per unit with NaN detection
-    DoubleComplex calculate_z_pu(double r, double x, double u) {
+    static DoubleComplex calculate_z_pu(double r, double x, double u) {
         r = is_nan(r) ? 0 : r;
         x = is_nan(x) ? 0 : x;
         double const base_z = u * u / base_power_3p;
@@ -147,14 +153,14 @@ class Transformer : public Branch {
         double const base_y_to = base_i_to_ * base_i_to_ / base_power_1p;
         // off nominal tap ratio
         auto const [u1, u2] = [this]() {
-            double u1 = u1_, u2 = u2_;
+            double result_u1 = u1_;
+            double result_u2 = u2_;
             if (tap_side_ == BranchSide::from) {
-                u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+            } else {
+                result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            else {
-                u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            return std::pair{u1, u2};
+            return std::pair{result_u1, result_u2};
         }();
         double const k = (u1 / u2) / nominal_ratio_;
         // pk and uk
@@ -162,7 +168,8 @@ class Transformer : public Branch {
         double const pk = tap_adjust_impedance(tap_pos_, tap_min_, tap_max_, tap_nom_, pk_, pk_min_, pk_max_);
 
         // series
-        DoubleComplex z_series, y_series;
+        DoubleComplex z_series{};
+        DoubleComplex y_series{};
         // sign of uk
         // uk can be negative for artificial transformer from 3-winding
         // in this case, the imaginary part of z_series should be negative
@@ -174,7 +181,8 @@ class Transformer : public Branch {
         // in this case, the real part of z_series should be negative
         z_series.real(pk * u2 * u2 / sn_ / sn_);
         // X = uk_sign * sqrt(Z^2 - R^2)
-        z_series.imag(uk_sign * std::sqrt(z_series_abs * z_series_abs - z_series.real() * z_series.real()));
+        auto const z_series_imag_squared = z_series_abs * z_series_abs - z_series.real() * z_series.real();
+        z_series.imag(uk_sign * (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0));
         // y series
         y_series = (1.0 / z_series) / base_y_to;
         // shunt
@@ -183,12 +191,10 @@ class Transformer : public Branch {
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);
-        if (y_shunt.real() > y_shunt_abs) {
-            y_shunt.imag(0.0);
-        }
-        else {
-            y_shunt.imag(-std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real()));
-        }
+
+        auto const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
+        y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);
+
         // y shunt
         y_shunt = y_shunt / base_y_to;
         // return
@@ -196,18 +202,18 @@ class Transformer : public Branch {
     }
 
     // branch param
-    BranchCalcParam<true> sym_calc_param() const final {
+    BranchCalcParam<symmetric_t> sym_calc_param() const final {
         auto const [y_series, y_shunt, k] = transformer_params();
         return calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
     }
-    BranchCalcParam<false> asym_calc_param() const final {
+    BranchCalcParam<asymmetric_t> asym_calc_param() const final {
         auto const [y_series, y_shunt, k] = transformer_params();
         // positive sequence
         auto const param1 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
         // negative sequence
         auto const param2 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (-clock_ * deg_30)));
         // zero sequence, default zero
-        BranchCalcParam<true> param0{};
+        BranchCalcParam<symmetric_t> param0{};
         // YNyn
         if (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) {
             double phase_shift_0 = 0.0;
@@ -246,12 +252,12 @@ class Transformer : public Branch {
 
         // for the rest param0 is zero
         // calculate yabc
-        ComplexTensor<false> const sym_matrix = get_sym_matrix();
-        ComplexTensor<false> const sym_matrix_inv = get_sym_matrix_inv();
-        BranchCalcParam<false> param;
+        ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
+        ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
+        BranchCalcParam<asymmetric_t> param;
         for (size_t i = 0; i != 4; ++i) {
             // Yabc = A * Y012 * A^-1
-            ComplexTensor<false> y012;
+            ComplexTensor<asymmetric_t> y012;
             y012 << param0.value[i], 0.0, 0.0, 0.0, param1.value[i], 0.0, 0.0, 0.0, param2.value[i];
             param.value[i] = dot(sym_matrix, y012, sym_matrix_inv);
         }
@@ -259,6 +265,4 @@ class Transformer : public Branch {
     }
 };
 
-}  // namespace power_grid_model
-
-#endif
+} // namespace power_grid_model

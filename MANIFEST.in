@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+include PYPI_VERSION
+include VERSION
+recursive-include power_grid_model_c *
+
+# the following is needed for running tests in conda recipe
+recursive-include tests/unit *
+recursive-include tests/data *

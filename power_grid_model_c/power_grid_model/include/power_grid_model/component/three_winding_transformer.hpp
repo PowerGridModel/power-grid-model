@@ -1,10 +1,8 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_THREE_WINDING_TRANSFORMER_HPP
-#define POWER_GRID_MODEL_COMPONENT_THREE_WINDING_TRANSFORMER_HPP
 
 #include "branch3.hpp"
 #include "transformer.hpp"
@@ -13,13 +11,13 @@
 namespace power_grid_model {
 
 class ThreeWindingTransformer : public Branch3 {
-   public:
+  public:
     using InputType = ThreeWindingTransformerInput;
     using UpdateType = ThreeWindingTransformerUpdate;
     static constexpr char const* name = "three_winding_transformer";
 
-    ThreeWindingTransformer(ThreeWindingTransformerInput const& three_winding_transformer_input, double u1_rated,
-                            double u2_rated, double u3_rated)
+    explicit ThreeWindingTransformer(ThreeWindingTransformerInput const& three_winding_transformer_input,
+                                     double u1_rated, double u2_rated, double u3_rated)
         : Branch3{three_winding_transformer_input},
           u1_{three_winding_transformer_input.u1},
           u2_{three_winding_transformer_input.u2},
@@ -81,47 +79,24 @@ class ThreeWindingTransformer : public Branch3 {
           z_grounding_1_{three_winding_transformer_input.r_grounding_1, three_winding_transformer_input.x_grounding_1},
           z_grounding_2_{three_winding_transformer_input.r_grounding_2, three_winding_transformer_input.x_grounding_2},
           z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
-        // check clock number
-        bool const is_1_wye = winding_1_ == WindingType::wye || winding_1_ == WindingType::wye_n;
-        bool const is_2_wye = winding_2_ == WindingType::wye || winding_2_ == WindingType::wye_n;
-        bool const is_3_wye = winding_3_ == WindingType::wye || winding_3_ == WindingType::wye_n;
-
-        // check clock 12
-        if (  // clock should be between 0 and 12
-            clock_12_ < 0 || clock_12_ > 12 ||
-            // even number is not possible if one side is wye winding and the other side is not wye winding.
-            ((clock_12_ % 2) == 0 && (is_1_wye != is_2_wye)) ||
-            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
-            ((clock_12_ % 2) == 1 && (is_1_wye == is_2_wye))) {
+        if (!is_valid_clock(clock_12_, winding_1_, winding_2_)) {
             throw InvalidTransformerClock{id(), clock_12_};
         }
-        // check clock 13
-        if (  // clock should be between 0 and 12
-            clock_13_ < 0 || clock_13_ > 12 ||
-            // even number is not possible if one side is wye winding and the other side is not wye winding.
-            ((clock_13_ % 2) == 0 && (is_1_wye != is_3_wye)) ||
-            // odd number is not possible, if both sides are wye winding or both sides are not wye winding.
-            ((clock_13_ % 2) == 1 && (is_1_wye == is_3_wye))) {
+        if (!is_valid_clock(clock_13_, winding_1_, winding_3_)) {
             throw InvalidTransformerClock{id(), clock_13_};
         }
 
         // set clock to zero if it is 12
-        clock_12_ = clock_12_ % 12;
-        clock_13_ = clock_13_ % 12;
+        clock_12_ = static_cast<IntS>(clock_12_ % 12);
+        clock_13_ = static_cast<IntS>(clock_13_ % 12);
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
 
     // override getter
-    double base_i_1() const final {
-        return base_i_1_;
-    }
-    double base_i_2() const final {
-        return base_i_2_;
-    }
-    double base_i_3() const final {
-        return base_i_3_;
-    }
+    double base_i_1() const final { return base_i_1_; }
+    double base_i_2() const final { return base_i_2_; }
+    double base_i_3() const final { return base_i_3_; }
     double loading(double s_1, double s_2, double s_3) const final {
         return std::max(std::max(s_1 / sn_1_, s_2 / sn_2_), s_3 / sn_3_);
     }
@@ -129,9 +104,14 @@ class ThreeWindingTransformer : public Branch3 {
     // the clock_12 and clock_13 is reverted
     // because clock_12 is the phase shift node_1 - node_2
     // and the phase shift in the math model is node_x - node_internal
-    std::array<double, 3> phase_shift() const final {
-        return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30};
-    }
+    std::array<double, 3> phase_shift() const final { return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30}; }
+
+    // getters
+    IntS tap_pos() const { return tap_pos_; }
+    Branch3Side tap_side() const { return tap_side_; }
+    IntS tap_min() const { return tap_min_; }
+    IntS tap_max() const { return tap_max_; }
+    IntS tap_nom() const { return tap_nom_; }
 
     // setter
     bool set_tap(IntS new_tap) {
@@ -142,26 +122,65 @@ class ThreeWindingTransformer : public Branch3 {
         return true;
     }
 
-    UpdateChange update(ThreeWindingTransformerUpdate const& update) {
-        assert(update.id == id());
-        bool topo_changed = set_status(update.status_1, update.status_2, update.status_3);
-        bool param_changed = set_tap(update.tap_pos) || topo_changed;
+    UpdateChange update(ThreeWindingTransformerUpdate const& update_data) {
+        assert(update_data.id == id());
+        bool const topo_changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
+        bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
     }
 
-   private:
+    ThreeWindingTransformerUpdate inverse(ThreeWindingTransformerUpdate update_data) const {
+        assert(update_data.id == id());
+
+        update_data = Branch3::inverse(update_data);
+        set_if_not_nan(update_data.tap_pos, tap_pos_);
+
+        return update_data;
+    }
+
+  private:
     // three winding transformer parameters
-    double u1_, u2_, u3_;
-    double u1_rated_, u2_rated_, u3_rated_;
-    double sn_1_, sn_2_, sn_3_;
-    double uk_12_, uk_13_, uk_23_, pk_12_, pk_13_, pk_23_, i0_, p0_;
-    WindingType winding_1_, winding_2_, winding_3_;
-    IntS clock_12_, clock_13_;
+    double u1_;
+    double u2_;
+    double u3_;
+    double u1_rated_;
+    double u2_rated_;
+    double u3_rated_;
+    double sn_1_;
+    double sn_2_;
+    double sn_3_;
+    double uk_12_;
+    double uk_13_;
+    double uk_23_;
+    double pk_12_;
+    double pk_13_;
+    double pk_23_;
+    double i0_;
+    double p0_;
+    WindingType winding_1_;
+    WindingType winding_2_;
+    WindingType winding_3_;
+    IntS clock_12_;
+    IntS clock_13_;
     Branch3Side tap_side_;
-    IntS tap_pos_, tap_min_, tap_max_, tap_nom_, tap_direction_;
+    IntS tap_pos_;
+    IntS tap_min_;
+    IntS tap_max_;
+    IntS tap_nom_;
+    IntS tap_direction_;
     double tap_size_;
-    double uk_12_min_, uk_12_max_, uk_13_min_, uk_13_max_, uk_23_min_, uk_23_max_;
-    double pk_12_min_, pk_12_max_, pk_13_min_, pk_13_max_, pk_23_min_, pk_23_max_;
+    double uk_12_min_;
+    double uk_12_max_;
+    double uk_13_min_;
+    double uk_13_max_;
+    double uk_23_min_;
+    double uk_23_max_;
+    double pk_12_min_;
+    double pk_12_max_;
+    double pk_13_min_;
+    double pk_13_max_;
+    double pk_23_min_;
+    double pk_23_max_;
 
     // calculation parameters
     double base_i_1_;
@@ -260,103 +279,109 @@ class ThreeWindingTransformer : public Branch3 {
     std::array<Transformer, 3> convert_to_two_winding_transformers() const {
         // off nominal tap ratio
         auto const [u1, u2, u3] = [this]() {
-            double u1 = u1_, u2 = u2_, u3 = u3_;
+            double result_u1 = u1_;
+            double result_u2 = u2_;
+            double result_u3 = u3_;
             if (tap_side_ == Branch3Side::side_1) {
-                u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+                result_u1 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+            } else if (tap_side_ == Branch3Side::side_2) {
+                result_u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
+            } else {
+                result_u3 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
             }
-            else if (tap_side_ == Branch3Side::side_2) {
-                u2 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            else {
-                u3 += tap_direction_ * (tap_pos_ - tap_nom_) * tap_size_;
-            }
-            return std::make_tuple(u1, u2, u3);
+            return std::make_tuple(result_u1, result_u2, result_u3);
         }();
 
         auto const [uk_T1, uk_T2, uk_T3] = calculate_uk();
         auto const [pk_T1, pk_T2, pk_T3] = calculate_pk();
 
-        TransformerInput const transformer_input_T1{
-            {{2}, 0, 1, status_1(), true},  // {{id}, from_node, to_node, from_status, to_status}
-            u1,                             // u1
-            u1,                             // u2
-            sn_1_,                          // sn
-            uk_T1,                          // uk
-            pk_T1,                          // pk
-            i0_,                            // i0
-            p0_,                            // p0
-            WindingType::wye_n,             // winding_from
-            WindingType::wye_n,             // winding_to
-            0,                              // clock
-            BranchSide::from,               // tap_side
-            0,                              // tap_pos
-            0,                              // tap_min
-            0,                              // tap_max
-            0,                              // tap_nom
-            0.0,                            // tap_size
-            nan,                            // uk_min
-            nan,                            // uk_max
-            nan,                            // pk_min
-            nan,                            // pk_max
-            z_grounding_1_.real(),          // r_grounding_from
-            z_grounding_1_.imag(),          // x_grounding_from
-            0,                              // r_grounding_to
-            0                               // x_grounding_to
-        };
-        TransformerInput const transformer_input_T2{
-            {{2}, 0, 1, status_2(), true},      // {{id}, from_node, to_node, from_status, to_status}
-            u2,                                 // u1
-            u1,                                 // u2
-            sn_2_,                              // sn
-            uk_T2,                              // uk
-            pk_T2,                              // pk
-            0.0,                                // i0
-            0.0,                                // p0
-            winding_2_,                         // winding_from
-            winding_1_,                         // winding_to
-            static_cast<IntS>(12 - clock_12_),  // clock, reversed
-            BranchSide::from,                   // tap_side
-            0,                                  // tap_pos
-            0,                                  // tap_min
-            0,                                  // tap_max
-            0,                                  // tap_nom
-            0.0,                                // tap_size
-            nan,                                // uk_min
-            nan,                                // uk_max
-            nan,                                // pk_min
-            nan,                                // pk_max
-            z_grounding_2_.real(),              // r_grounding_from
-            z_grounding_2_.imag(),              // x_grounding_from
-            0,                                  // r_grounding_to
-            0                                   // x_grounding_to
-        };
-        TransformerInput const transformer_input_T3{
-            {{2}, 0, 1, status_3(), true},      // {{id}, from_node, to_node, from_status, to_status}
-            u3,                                 // u1
-            u1,                                 // u2
-            sn_3_,                              // sn
-            uk_T3,                              // uk
-            pk_T3,                              // pk
-            0.0,                                // i0
-            0.0,                                // p0
-            winding_3_,                         // winding_from
-            winding_1_,                         // winding_to
-            static_cast<IntS>(12 - clock_13_),  // clock, reversed
-            BranchSide::from,                   // tap_side
-            0,                                  // tap_pos
-            0,                                  // tap_min
-            0,                                  // tap_max
-            0,                                  // tap_nom
-            0.0,                                // tap_size
-            nan,                                // uk_min
-            nan,                                // uk_max
-            nan,                                // pk_min
-            nan,                                // pk_max
-            z_grounding_3_.real(),              // r_grounding_from
-            z_grounding_3_.imag(),              // x_grounding_from
-            0,                                  // r_grounding_to
-            0                                   // x_grounding_to
-        };
+        TransformerInput const transformer_input_T1{.id = 2,
+                                                    .from_node = 0,
+                                                    .to_node = 1,
+                                                    .from_status = static_cast<IntS>(status_1()),
+                                                    .to_status = 1,
+                                                    .u1 = u1,
+                                                    .u2 = u1,
+                                                    .sn = sn_1_,
+                                                    .uk = uk_T1,
+                                                    .pk = pk_T1,
+                                                    .i0 = i0_,
+                                                    .p0 = p0_,
+                                                    .winding_from = WindingType::wye_n,
+                                                    .winding_to = WindingType::wye_n,
+                                                    .clock = 0,
+                                                    .tap_side = BranchSide::from,
+                                                    .tap_pos = 0,
+                                                    .tap_min = 0,
+                                                    .tap_max = 0,
+                                                    .tap_nom = 0,
+                                                    .tap_size = 0.0,
+                                                    .uk_min = nan,
+                                                    .uk_max = nan,
+                                                    .pk_min = nan,
+                                                    .pk_max = nan,
+                                                    .r_grounding_from = z_grounding_1_.real(),
+                                                    .x_grounding_from = z_grounding_1_.imag(),
+                                                    .r_grounding_to = 0,
+                                                    .x_grounding_to = 0};
+        TransformerInput const transformer_input_T2{.id = 2,
+                                                    .from_node = 0,
+                                                    .to_node = 1,
+                                                    .from_status = static_cast<IntS>(status_2()),
+                                                    .to_status = 1,
+                                                    .u1 = u2,
+                                                    .u2 = u1,
+                                                    .sn = sn_2_,
+                                                    .uk = uk_T2,
+                                                    .pk = pk_T2,
+                                                    .i0 = 0.0,
+                                                    .p0 = 0.0,
+                                                    .winding_from = winding_2_,
+                                                    .winding_to = winding_1_,
+                                                    .clock = static_cast<IntS>(12 - clock_12_), // reversed
+                                                    .tap_side = BranchSide::from,
+                                                    .tap_pos = 0,
+                                                    .tap_min = 0,
+                                                    .tap_max = 0,
+                                                    .tap_nom = 0,
+                                                    .tap_size = 0.0,
+                                                    .uk_min = nan,
+                                                    .uk_max = nan,
+                                                    .pk_min = nan,
+                                                    .pk_max = nan,
+                                                    .r_grounding_from = z_grounding_2_.real(),
+                                                    .x_grounding_from = z_grounding_2_.imag(),
+                                                    .r_grounding_to = 0,
+                                                    .x_grounding_to = 0};
+        TransformerInput const transformer_input_T3{.id = 2,
+                                                    .from_node = 0,
+                                                    .to_node = 1,
+                                                    .from_status = static_cast<IntS>(status_3()),
+                                                    .to_status = 1,
+                                                    .u1 = u3,
+                                                    .u2 = u1,
+                                                    .sn = sn_3_,
+                                                    .uk = uk_T3,
+                                                    .pk = pk_T3,
+                                                    .i0 = 0.0,
+                                                    .p0 = 0.0,
+                                                    .winding_from = winding_3_,
+                                                    .winding_to = winding_1_,
+                                                    .clock = static_cast<IntS>(12 - clock_13_), // reversed
+                                                    .tap_side = BranchSide::from,
+                                                    .tap_pos = 0,
+                                                    .tap_min = 0,
+                                                    .tap_max = 0,
+                                                    .tap_nom = 0,
+                                                    .tap_size = 0.0,
+                                                    .uk_min = nan,
+                                                    .uk_max = nan,
+                                                    .pk_min = nan,
+                                                    .pk_max = nan,
+                                                    .r_grounding_from = z_grounding_3_.real(),
+                                                    .x_grounding_from = z_grounding_3_.imag(),
+                                                    .r_grounding_to = 0,
+                                                    .x_grounding_to = 0};
 
         Transformer const T1{transformer_input_T1, u1_rated_, u1_rated_};
         Transformer const T2{transformer_input_T2, u2_rated_, u1_rated_};
@@ -366,24 +391,22 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     // calculate branch parameters
-    std::array<BranchCalcParam<true>, 3> sym_calc_param() const final {
+    std::array<BranchCalcParam<symmetric_t>, 3> sym_calc_param() const final {
         std::array<Transformer, 3> const transformer_array = convert_to_two_winding_transformers();
-        std::array<BranchCalcParam<true>, 3> transformer_params{};
+        std::array<BranchCalcParam<symmetric_t>, 3> transformer_params{};
         for (size_t i = 0; i < transformer_array.size(); i++) {
-            transformer_params[i] = transformer_array[i].calc_param<true>();
+            transformer_params[i] = transformer_array[i].calc_param<symmetric_t>();
         }
         return transformer_params;
     }
-    std::array<BranchCalcParam<false>, 3> asym_calc_param() const final {
+    std::array<BranchCalcParam<asymmetric_t>, 3> asym_calc_param() const final {
         std::array<Transformer, 3> const transformer_array = convert_to_two_winding_transformers();
-        std::array<BranchCalcParam<false>, 3> transformer_params{};
+        std::array<BranchCalcParam<asymmetric_t>, 3> transformer_params{};
         for (size_t i = 0; i < transformer_array.size(); i++) {
-            transformer_params[i] = transformer_array[i].calc_param<false>();
+            transformer_params[i] = transformer_array[i].calc_param<asymmetric_t>();
         }
         return transformer_params;
     }
 };
 
-}  // namespace power_grid_model
-
-#endif
+} // namespace power_grid_model

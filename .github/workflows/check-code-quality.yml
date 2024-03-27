@@ -1,7 +1,6 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 
 # GitHub Action that uses
 #     isort, black, mypy and pylint to reformat the Python code in an incoming pull request.
@@ -12,27 +11,32 @@
 name: Check Code Quality
 
 on:
-  # run pipeline on push event of main or release branch
+  # run pipeline on push event of main branch
   push:
     branches:
       - main
-      - 'release/**'
   # run pipeline on pull request
   pull_request:
+  # run pipeline on merge queue
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check-code-quality:
-    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
+
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Upgrade pip
         run: pip install --upgrade pip
@@ -60,8 +64,8 @@ jobs:
 
       - name: Install and run clang-format
         run: |
-          sudo apt-get update && sudo apt-get install -y clang-format
-          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
+          sudo apt-get update && sudo apt-get install -y clang-format-15
+          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format-15 -style=file -i {} \;
 
       - name: If needed raise error
         run: |
@@ -71,4 +75,3 @@ jobs:
             git status --porcelain --untracked-files=no
             exit 1
           fi
-     

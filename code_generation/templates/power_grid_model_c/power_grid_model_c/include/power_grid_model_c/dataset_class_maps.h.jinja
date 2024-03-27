@@ -1,0 +1,47 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+/**
+ * @brief header file which includes helper extern global variables of meta data pointers 
+ *    to all datasets, compoments, and attributes
+ *
+ */
+
+#pragma once
+#ifndef POWER_GRID_MODEL_C_DATASET_DEFINITIONS_H
+#define POWER_GRID_MODEL_C_DATASET_DEFINITIONS_H
+
+#include "basics.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+{% for dataset, components in all_map.items() -%}
+// dataset {{ dataset }}
+PGM_API extern PGM_MetaDataset const* const PGM_def_{{ dataset }};
+// components of {{ dataset }}
+{% for component, attributes in components.items() -%}
+// component {{ component }}
+PGM_API extern PGM_MetaComponent const* const PGM_def_{{ dataset }}_{{ component }};
+// attributes of {{ dataset }} {{ component }}
+{% for attribute in attributes -%}
+PGM_API extern PGM_MetaAttribute const* const PGM_def_{{ dataset }}_{{ component }}_{{ attribute }};
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+
+//
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+// clang-format on
+

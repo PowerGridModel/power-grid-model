@@ -1,24 +1,20 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
+
+#include "power_grid_model_c.h"
 
 #include <iostream>
 #include <memory>
 
-#include "power_grid_model_c.h"
-
 namespace {
 // custom deleter
-template <auto func>
-struct DeleterFunctor {
-    template <typename T>
-    void operator()(T* arg) const {
-        func(arg);
-    }
+template <auto func> struct DeleterFunctor {
+    template <typename T> void operator()(T* arg) const { func(arg); }
 };
 
-using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<PGM_destroy_handle>>;
-}  // namespace
+using HandlePtr = std::unique_ptr<PGM_Handle, DeleterFunctor<&PGM_destroy_handle>>;
+} // namespace
 
 auto main() -> int {
     // get handle

@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
 # CMakeList.txt : CMake project for power_grid_model, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.15)
+cmake_minimum_required (VERSION 3.23)
 
 include("cmake/pgm_version.cmake")
 
@@ -32,6 +32,8 @@ include(GNUInstallDirs)
 
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Boost REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(msgpack-cxx REQUIRED)
 
 if(NOT WIN32)
   # thread

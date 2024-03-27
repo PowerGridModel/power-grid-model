@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Clang Tidy
+
+on:
+  # run pipeline on push event of main branch
+  push:
+    branches:
+      - main
+  # run pipeline on pull request
+  pull_request:
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      target:
+        type: choice
+        description: The CMake target to run
+        default: power_grid_model_c
+        options:
+          - all
+          - power_grid_model_c
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      CC: clang-15
+      CXX: clang++-15
+      CLANG_TIDY: clang-tidy-15
+      PRESET: ci-clang-tidy-${{ matrix.build-option }}
+      TARGET: nonexistent  # will be overwritten later in this action
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang-15 clang-tidy-15
+
+      - name: Enable brew
+        run: |
+          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
+
+      - name: Set build target in case of push
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          echo "TARGET=power_grid_model_c" >> $GITHUB_ENV
+
+      - name: Set build target in case of workflow dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "TARGET=${{ github.event.inputs.target }}" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --target ${{ env.TARGET }}

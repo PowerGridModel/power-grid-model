@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -6,14 +6,15 @@
 requires = [
     "setuptools",
     "wheel",
-    "requests",
     "pybuild-header-dependency",
+    "msgpack-cxx",
+    "nlohmann-json",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "power-grid-model"
-authors = [{ name = "Alliander Dynamic Grid Calculation", email = "dynamic.grid.calculation@alliander.com" }]
+authors = [{ name = "Contributors to the Power Grid Model project", email = "powergridmodel@lfenergy.org" }]
 description = "Python/C++ library for distribution power system analysis"
 readme = "README.md"
 license = { text = "MPL-2.0" }
@@ -30,7 +31,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.21.0",
 ]
@@ -39,12 +40,11 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+    "msgpack",
     "pre-commit",
     "pylint",
     "pytest",
     "pytest-cov",
-    "dataclasses_json",
-    "jinja2",
 ]
 doc = [
     "sphinx",
@@ -60,8 +60,11 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://github.com/PowerGridModel/power-grid-model"
+Home-page = "https://lfenergy.org/projects/power-grid-model/"
+GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
+Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
+Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -73,13 +76,15 @@ version = {file = "PYPI_VERSION"}
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=95"]
+xfail_strict = true
 
 [tool.black]
 line-length = 120
-target-version = ['py38']
+target-version = ['py39']
 
 [tool.isort]
 profile = "black"
+combine_as_imports = true
 line_length = 120
 
 [tool.pylint]
@@ -99,21 +104,25 @@ build-frontend = "build"
 build-verbosity = 1
 test-extras = ["dev"]
 test-command = "pytest {package}/tests"
+# we do not support 
+#    PyPy
+#    musllinux in aarch64
+skip = ["pp*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
-build = ["cp*-manylinux_x86_64", "cp*-manylinux_aarch64"]
 archs = ["x86_64", "aarch64"]
+# force auditwheel to use manylinux_2_24 to support Amazon Linux 2 when building in manylinux_2_28
+repair-wheel-command = "auditwheel repair --plat ${AUDITWHEEL_PLAT//2_28/2_24} -w {dest_dir} {wheel}"
 environment = { CC="gcc", CXX="g++" }
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+musllinux-x86_64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
-build = ["cp*-macosx_*"]
 archs = ["x86_64", "arm64"]
 environment = { CC="clang", CXX="clang++" }
 # Skip trying to test arm64 builds on Intel Macs
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 
 [tool.cibuildwheel.windows]
-build = ["cp*-win_amd64"]
 archs = ["AMD64"]

@@ -1,69 +1,68 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <iostream>
+#include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 
-#include "doctest/doctest.h"
-#include "power_grid_model/auxiliary/meta_data.hpp"
-#include "power_grid_model/auxiliary/meta_data_gen.hpp"
-#include "power_grid_model/three_phase_tensor.hpp"
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
+using namespace std::string_literals;
+
 TEST_CASE("Test column row conversion") {
     SUBCASE("Test meta input data generation") {
-        auto const meta_map = meta_data::meta_data().at("input");
-        auto const node = meta_map.at("node");
-        auto const node_attr = node.attributes;
-        CHECK(node_attr[0].name == "id");
-        CHECK(node_attr[0].numpy_type == "i4");
-        CHECK(node_attr[1].name == "u_rated");
-        CHECK(node_attr[1].numpy_type == "f8");
+        auto const& meta_map = meta_data::meta_data.get_dataset("input");
+        auto const& node = meta_map.get_component("node");
+        auto const& node_attr = node.attributes;
+        CHECK(node_attr[0].name == "id"s);
+        CHECK(node_attr[0].ctype == CType::c_int32);
+        CHECK(node_attr[1].name == "u_rated"s);
+        CHECK(node_attr[1].ctype == CType::c_double);
 
-        auto const sym_voltage_sensor = meta_map.at("sym_voltage_sensor");
-        auto const sensor_attr = sym_voltage_sensor.attributes;
-        CHECK(sensor_attr[0].name == "id");
-        CHECK(sensor_attr[0].numpy_type == "i4");
-        CHECK(sensor_attr[1].name == "measured_object");
-        CHECK(sensor_attr[1].numpy_type == "i4");
+        auto const& sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor"s);
+        auto const& sensor_attr = sym_voltage_sensor.attributes;
+        CHECK(sensor_attr[0].name == "id"s);
+        CHECK(sensor_attr[0].ctype == CType::c_int32);
+        CHECK(sensor_attr[1].name == "measured_object"s);
+        CHECK(sensor_attr[1].ctype == CType::c_int32);
     }
 
     SUBCASE("Test meta ouput data generation") {
-        auto const meta_map = meta_data::meta_data().at("asym_output");
-        auto const node = meta_map.at("node");
-        auto const node_attr = node.attributes;
-        CHECK(node_attr[0].name == "id");
-        CHECK(node_attr[0].numpy_type == "i4");
-        CHECK(node_attr[2].name == "u_pu");
-        CHECK(node_attr[2].numpy_type == "f8");
-        CHECK(node_attr[2].dims == std::vector<size_t>{3});
+        auto const& meta_map = meta_data::meta_data.get_dataset("asym_output");
+        auto const& node = meta_map.get_component("node");
+        auto const& node_attr = node.attributes;
+        CHECK(node_attr[0].name == "id"s);
+        CHECK(node_attr[0].ctype == CType::c_int32);
+        CHECK(node_attr[2].name == "u_pu"s);
+        CHECK(node_attr[2].ctype == CType::c_double3);
 
-        auto const sym_voltage_sensor = meta_map.at("sym_voltage_sensor");
-        auto const sensor_attr = sym_voltage_sensor.attributes;
-        CHECK(sensor_attr[0].name == "id");
-        CHECK(sensor_attr[0].numpy_type == "i4");
-        CHECK(sensor_attr[2].name == "u_residual");
-        CHECK(sensor_attr[2].numpy_type == "f8");
+        auto const& sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
+        auto const& sensor_attr = sym_voltage_sensor.attributes;
+        CHECK(sensor_attr[0].name == "id"s);
+        CHECK(sensor_attr[0].ctype == CType::c_int32);
+        CHECK(sensor_attr[2].name == "u_residual"s);
+        CHECK(sensor_attr[2].ctype == CType::c_double3);
     }
 
     SUBCASE("Test meta update data generation") {
-        auto const meta_map = meta_data::meta_data().at("update");
-        auto const load = meta_map.at("asym_load");
-        auto const load_attr = load.attributes;
-        CHECK(load_attr[0].name == "id");
-        CHECK(load_attr[0].numpy_type == "i4");
-        CHECK(load_attr[2].name == "p_specified");
-        CHECK(load_attr[2].numpy_type == "f8");
-        CHECK(load_attr[2].dims == std::vector<size_t>{3});
+        auto const& meta_map = meta_data::meta_data.get_dataset("update");
+        auto const& load = meta_map.get_component("asym_load");
+        auto const& load_attr = load.attributes;
+        CHECK(load_attr[0].name == "id"s);
+        CHECK(load_attr[0].ctype == CType::c_int32);
+        CHECK(load_attr[2].name == "p_specified"s);
+        CHECK(load_attr[2].ctype == CType::c_double3);
 
-        auto const sym_voltage_sensor = meta_map.at("sym_voltage_sensor");
-        auto const sensor_attr = sym_voltage_sensor.attributes;
-        CHECK(sensor_attr[0].name == "id");
-        CHECK(sensor_attr[0].numpy_type == "i4");
-        CHECK(sensor_attr[1].name == "u_sigma");
-        CHECK(sensor_attr[1].numpy_type == "f8");
+        auto const& sym_voltage_sensor = meta_map.get_component("sym_voltage_sensor");
+        auto const& sensor_attr = sym_voltage_sensor.attributes;
+        CHECK(sensor_attr[0].name == "id"s);
+        CHECK(sensor_attr[0].ctype == CType::c_int32);
+        CHECK(sensor_attr[1].name == "u_sigma"s);
+        CHECK(sensor_attr[1].ctype == CType::c_double);
     }
 }
 
-}  // namespace power_grid_model
+} // namespace power_grid_model

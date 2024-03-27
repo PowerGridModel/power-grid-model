@@ -1,10 +1,8 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
-#define POWER_GRID_MODEL_MATH_SOLVER_NEWTON_RAPHSON_PF_SOLVER_HPP
 
 /*
 Newton Raphson Power Flow
@@ -146,49 +144,39 @@ J.L -= -dQ_cal_m/dV
 
 */
 
-#include "../calculation_parameters.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
-#include "../timer.hpp"
 #include "block_matrix.hpp"
 #include "iterative_pf_solver.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
-namespace power_grid_model {
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/timer.hpp"
+
+namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
-namespace math_model_impl {
+namespace newton_raphson_pf {
 
 // class for phasor in polar coordinate and/or complex power
-template <bool sym>
-struct PolarPhasor : public Block<double, sym, false, 2> {
-    template <int r, int c>
-    using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
+template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false, 2> {
+    template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, false, 2>::Block;
     using Block<double, sym, false, 2>::operator=;
 
-    GetterType<0, 0> theta() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> v() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> theta() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> v() { return this->template get_val<1, 0>(); }
 
-    GetterType<0, 0> p() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<1, 0> q() {
-        return this->template get_val<1, 0>();
-    }
+    GetterType<0, 0> p() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
 };
 
 // class for complex power
-template <bool sym>
-using ComplexPower = PolarPhasor<sym>;
+template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
 
 // class of pf block
 // block of incomplete power flow jacobian
@@ -197,45 +185,49 @@ using ComplexPower = PolarPhasor<sym>;
 // [M = dQ/dTheta = -N, L = V * dQ/dV = H] ]
 // Hij = Gij .* sij - Bij .* cij = L
 // Nij = Gij .* cij + Bij .* sij = -M
-template <bool sym>
-class PFJacBlock : public Block<double, sym, true, 2> {
-   public:
-    template <int r, int c>
-    using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
+template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2> {
+  public:
+    template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, true, 2>::Block;
     using Block<double, sym, true, 2>::operator=;
 
-    GetterType<0, 0> h() {
-        return this->template get_val<0, 0>();
-    }
-    GetterType<0, 1> n() {
-        return this->template get_val<0, 1>();
-    }
-    GetterType<1, 0> m() {
-        return this->template get_val<1, 0>();
-    }
-    GetterType<1, 1> l() {
-        return this->template get_val<1, 1>();
-    }
+    GetterType<0, 0> h() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> n() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> m() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> l() { return this->template get_val<1, 1>(); }
 };
 
 // solver
-template <bool sym>
-class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
-   public:
+template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
+  public:
+    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
+    using BlockPermArray =
+        typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
           data_jac_(y_bus.nnz_lu()),
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {
-    }
+          perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const&, MathOutput<sym> const& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+        using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+
+        ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
+        LinearSparseSolverType linear_sparse_solver{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(),
+                                                    y_bus.shared_diag_lu()};
+        typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
+
+        detail::copy_y_bus<sym>(y_bus, linear_mat_data);
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
+                                              linear_mat_data);
+        linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
+
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
@@ -246,125 +238,21 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        IdxVector const& load_gen_bus_indptr = *this->load_gen_bus_indptr_;
-        IdxVector const& source_bus_indptr = *this->source_bus_indptr_;
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        IdxVector const& indptr = y_bus.row_indptr_lu();
-        IdxVector const& indices = y_bus.col_indices_lu();
         IdxVector const& bus_entry = y_bus.lu_diag();
-        IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
 
-        // loop for row indices as i for whole matrix
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            // reset power injection
-            del_x_pq_[i].p() = RealValue<sym>{0.0};
-            del_x_pq_[i].q() = RealValue<sym>{0.0};
-            // loop for column for incomplete jacobian and injection
-            // k as data indices
-            // j as column indices
-            for (Idx k = indptr[i]; k != indptr[i + 1]; ++k) {
-                // set to zero and skip if it is a fill-in
-                Idx const k_y_bus = map_lu_y_bus[k];
-                if (k_y_bus == -1) {
-                    data_jac_[k] = PFJacBlock<sym>{};
-                    continue;
-                }
-                Idx const j = indices[k];
-                // incomplete jacobian
-                data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[i], u[j]);
-                // accumulate negative power injection
-                // -P = sum(-N)
-                del_x_pq_[i].p() -= sum_row(data_jac_[k].n());
-                // -Q = sum (-H)
-                del_x_pq_[i].q() -= sum_row(data_jac_[k].h());
-            }
-            // correct diagonal part of jacobian
-            Idx const k = bus_entry[i];
-            // diagonal correction
-            // del_pq has negative injection
-            // H += (-Q)
-            add_diag(data_jac_[k].h(), del_x_pq_[i].q());
-            // N -= (-P)
-            add_diag(data_jac_[k].n(), -del_x_pq_[i].p());
-            // M -= (-P)
-            add_diag(data_jac_[k].m(), -del_x_pq_[i].p());
-            // L -= (-Q)
-            add_diag(data_jac_[k].l(), -del_x_pq_[i].q());
-        }
+        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
-        // loop individual load/source, i as bus number, j as load/source number
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            // k as data sequence number
-            Idx const k = bus_entry[i];
-
-            // loop load
-            for (Idx j = load_gen_bus_indptr[i]; j != load_gen_bus_indptr[i + 1]; ++j) {
-                // load type
-                LoadGenType const type = load_gen_type[j];
-                // modify jacobian and del_pq based on type
-                switch (type) {
-                    case LoadGenType::const_pq:
-                        // PQ_sp = PQ_base
-                        del_x_pq_[i].p() += real(input.s_injection[j]);
-                        del_x_pq_[i].q() += imag(input.s_injection[j]);
-                        // -dPQ_sp/dV * V = 0
-                        break;
-                    case LoadGenType::const_y:
-                        // PQ_sp = PQ_base * V^2
-                        del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v() * x_[i].v();
-                        del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v() * x_[i].v();
-                        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
-                        add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
-                        add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * 2.0 * x_[i].v() * x_[i].v());
-                        break;
-                    case LoadGenType::const_i:
-                        // PQ_sp = PQ_base * V
-                        del_x_pq_[i].p() += real(input.s_injection[j]) * x_[i].v();
-                        del_x_pq_[i].q() += imag(input.s_injection[j]) * x_[i].v();
-                        // -dPQ_sp/dV * V = -PQ_base * V
-                        add_diag(data_jac_[k].n(), -real(input.s_injection[j]) * x_[i].v());
-                        add_diag(data_jac_[k].l(), -imag(input.s_injection[j]) * x_[i].v());
-                        break;
-                    default:
-                        throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
-                }
-            }
-
-            // loop source
-            for (Idx j = source_bus_indptr[i]; j != source_bus_indptr[i + 1]; ++j) {
-                ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[j];
-                ComplexValue<sym> const u_ref{input.source[j]};
-                // calculate block, um = ui, us = uref
-                PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[i], u[i]);
-                PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[i], u_ref);
-                // P_cal_m = (Nmm + Nms) * I
-                RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
-                // Q_cal_m = (Hmm + Hms) * I
-                RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
-                // correct hnml for mm
-                add_diag(block_mm.h(), -q_cal);
-                add_diag(block_mm.n(), p_cal);
-                add_diag(block_mm.m(), p_cal);
-                add_diag(block_mm.l(), q_cal);
-                // append to del_pq
-                del_x_pq_[i].p() -= p_cal;
-                del_x_pq_[i].q() -= q_cal;
-                // append to jacobian block
-                // hnml -= -dPQ_cal/(dtheta,dV)
-                // hnml += dPQ_cal/(dtheta,dV)
-                data_jac_[k].h() += block_mm.h();
-                data_jac_[k].n() += block_mm.n();
-                data_jac_[k].m() += block_mm.m();
-                data_jac_[k].l() += block_mm.l();
-            }
+        for (auto const& [bus_number, load_gens, sources] :
+             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+            Idx const diagonal_position = bus_entry[bus_number];
+            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
+            add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
         }
     }
 
     // Solve the linear Equations
-    void solve_matrix() {
-        sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
-    }
+    void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
 
     // Get maximum deviation among all bus voltages
     double iterate_unknown(ComplexValueVector<sym>& u) {
@@ -387,59 +275,171 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolve
         return max_dev;
     }
 
-   private:
+  private:
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
     // calculation data
-    std::vector<PolarPhasor<sym>> x_;  // unknown
+    std::vector<PolarPhasor<sym>> x_; // unknown
     // this stores in different steps
     // 1. negative power injection: - p/q_calculated
     // 2. power unbalance: p/q_specified - p/q_calculated
     // 3. unknown iterative
     std::vector<ComplexPower<sym>> del_x_pq_;
-    SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>> sparse_solver_;
-    // permutation array
-    typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray perm_;
 
+    SparseSolverType sparse_solver_;
+    // permutation array
+    BlockPermArray perm_;
+
+    /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
+    /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
+    /// = imaginary(power_flow_ij)
+    /// Nij = diag(Vi) * ( Gij .* cos(theta_ij) + Bij .* sin(theta_ij) ) * diag(Vj)
+    /// = real(power_flow_ij)
+    /// Mij = -Nij
+    /// Lij = Hij
     static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {
         PFJacBlock<sym> block{};
-        // real and imag of addmittance
-        RealTensor<sym> const gij = real(yij);
-        RealTensor<sym> const bij = imag(yij);
-        // diag(Vi) * cos(theta_ij) * diag(Vj)
-        // Ui_r @* Uj_r + Ui_i @* Uj_i
-        // = cij
-        RealTensor<sym> const c_ij =
-            vector_outer_product(real(ui), real(uj)) + vector_outer_product(imag(ui), imag(uj));
-        // diag(Vi) * sin(theta_ij) * diag(Vj)
-        // = Ui_i @* Uj_r - Ui_r @* Uj_i
-        // = sij
-        RealTensor<sym> const s_ij =
-            vector_outer_product(imag(ui), real(uj)) - vector_outer_product(real(ui), imag(uj));
-        // calculate H, N, M, L
-        // Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
-        // = Gij .* sij - Bij .* cij
-        block.h() = gij * s_ij - bij * c_ij;
-        // Nij = diag(Vi) * ( Gij .* cos(Theta_ij) + Bij .* sin(Theta_ij) ) * diag(Vj)
-        // = Gij .* cij + Bij .* sij
-        block.n() = gij * c_ij + bij * s_ij;
-        // Mij = - Nij
+        ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
+        block.h() = imag(power_flow_ij);
+        block.n() = real(power_flow_ij);
         block.m() = -block.n();
-        // Lij = Hij
         block.l() = block.h();
         return block;
     }
+
+    void prepare_matrix_and_rhs_from_network_perspective(YBus<sym> const& y_bus, ComplexValueVector<sym> const& u,
+                                                         IdxVector const& bus_entry) {
+        IdxVector const& indptr = y_bus.row_indptr_lu();
+        IdxVector const& indices = y_bus.col_indices_lu();
+        IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
+        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
+
+        for (Idx row = 0; row != this->n_bus_; ++row) {
+            // reset power injection
+            del_x_pq_[row].p() = RealValue<sym>{0.0};
+            del_x_pq_[row].q() = RealValue<sym>{0.0};
+            // loop for column for incomplete jacobian and injection
+            // k as data indices
+            // j as column indices
+            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                // set to zero and skip if it is a fill-in
+                Idx const k_y_bus = map_lu_y_bus[k];
+                if (k_y_bus == -1) {
+                    data_jac_[k] = PFJacBlock<sym>{};
+                    continue;
+                }
+                Idx const j = indices[k];
+                // incomplete jacobian
+                data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[row], u[j]);
+                // accumulate negative power injection
+                // -P = sum(-N)
+                del_x_pq_[row].p() -= sum_row(data_jac_[k].n());
+                // -Q = sum (-H)
+                del_x_pq_[row].q() -= sum_row(data_jac_[k].h());
+            }
+            // correct diagonal part of jacobian
+            Idx const k = bus_entry[row];
+            // diagonal correction
+            // del_pq has negative injection
+            // H += (-Q)
+            add_diag(data_jac_[k].h(), del_x_pq_[row].q());
+            // N -= (-P)
+            add_diag(data_jac_[k].n(), -del_x_pq_[row].p());
+            // M -= (-P)
+            add_diag(data_jac_[k].m(), -del_x_pq_[row].p());
+            // L -= (-Q)
+            add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
+        }
+    }
+
+    void add_loads(IdxRange const& load_gens, Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
+                   std::vector<LoadGenType> const& load_gen_type) {
+        using enum LoadGenType;
+        for (Idx const load_number : load_gens) {
+            LoadGenType const type = load_gen_type[load_number];
+            // modify jacobian and del_pq based on type
+            switch (type) {
+            case const_pq:
+                add_const_power_load(bus_number, load_number, input);
+                break;
+            case const_y:
+                add_const_impedance_load(bus_number, load_number, diagonal_position, input);
+                break;
+            case const_i:
+                add_const_current_load(bus_number, load_number, diagonal_position, input);
+                break;
+            default:
+                throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
+            }
+        }
+    }
+
+    void add_const_power_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
+        // -dPQ_sp/dV * V = 0
+    }
+
+    void add_const_impedance_load(Idx bus_number, Idx load_number, Idx diagonal_position,
+                                  PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base * V^2
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
+        add_diag(data_jac_[diagonal_position].n(),
+                 -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(),
+                 -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+    }
+
+    void add_const_current_load(Idx bus_number, Idx load_number, Idx diagonal_position,
+                                PowerFlowInput<sym> const& input) {
+        // PQ_sp = PQ_base * V
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
+        // -dPQ_sp/dV * V = -PQ_base * V
+        add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
+    }
+
+    void add_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position, YBus<sym> const& y_bus,
+                     PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
+        for (Idx const source_number : sources) {
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
+            ComplexValue<sym> const u_ref{input.source[source_number]};
+            // calculate block, um = ui, us = uref
+            PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
+            PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[bus_number], u_ref);
+            // P_cal_m = (Nmm + Nms) * I
+            RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
+            // Q_cal_m = (Hmm + Hms) * I
+            RealValue<sym> const q_cal = sum_row(block_mm.h() + block_ms.h());
+            // correct hnml for mm
+            add_diag(block_mm.h(), -q_cal);
+            add_diag(block_mm.n(), p_cal);
+            add_diag(block_mm.m(), p_cal);
+            add_diag(block_mm.l(), q_cal);
+            // append to del_pq
+            del_x_pq_[bus_number].p() -= p_cal;
+            del_x_pq_[bus_number].q() -= q_cal;
+            // append to jacobian block
+            // hnml -= -dPQ_cal/(dtheta,dV)
+            // hnml += dPQ_cal/(dtheta,dV)
+            data_jac_[diagonal_position].h() += block_mm.h();
+            data_jac_[diagonal_position].n() += block_mm.n();
+            data_jac_[diagonal_position].m() += block_mm.m();
+            data_jac_[diagonal_position].l() += block_mm.l();
+        }
+    }
 };
 
-template class NewtonRaphsonPFSolver<true>;
-template class NewtonRaphsonPFSolver<false>;
+template class NewtonRaphsonPFSolver<symmetric_t>;
+template class NewtonRaphsonPFSolver<asymmetric_t>;
 
-}  // namespace math_model_impl
+} // namespace newton_raphson_pf
 
-template <bool sym>
-using NewtonRaphsonPFSolver = math_model_impl::NewtonRaphsonPFSolver<sym>;
+using newton_raphson_pf::NewtonRaphsonPFSolver;
 
-}  // namespace power_grid_model
-
-#endif
+} // namespace power_grid_model::math_solver

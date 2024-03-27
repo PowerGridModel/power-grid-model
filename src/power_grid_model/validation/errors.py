@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -8,7 +8,7 @@ Error classes
 import re
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 
 class ValidationError(ABC):
@@ -48,6 +48,8 @@ class ValidationError(ABC):
     """
 
     _message: str = "An unknown validation error occurred."
+
+    _delimiter: str = " and "
 
     @property
     def component_str(self) -> str:
@@ -115,7 +117,7 @@ class SingleFieldValidationError(ValidationError):
     field: str
     ids: List[int]
 
-    def __init__(self, component: str, field: str, ids: List[int]):
+    def __init__(self, component: str, field: str, ids: Iterable[int]):
         """
         Args:
             component: Component name
@@ -153,7 +155,7 @@ class MultiFieldValidationError(ValidationError):
 
     @property
     def field_str(self) -> str:
-        return " and ".join(f"'{field}'" for field in self.field)
+        return self._delimiter.join(f"'{field}'" for field in self.field)
 
 
 class MultiComponentValidationError(ValidationError):
@@ -189,7 +191,25 @@ class MultiComponentValidationError(ValidationError):
 
     @property
     def field_str(self) -> str:
-        return " and ".join(f"{component}.{field}" for component, field in self.field)
+        return self._delimiter.join(f"{component}.{field}" for component, field in self.field)
+
+
+class NotIdenticalError(SingleFieldValidationError):
+    """
+    The value is not unique within a single column in a dataset
+    E.g. When two nodes share the same id.
+    """
+
+    _message = "Field {field} is not unique for {n} {objects}: {num_unique} different values."
+    values: List[Any]
+    unique: Set[Any]
+    num_unique: int
+
+    def __init__(self, component: str, field: str, ids: Iterable[int], values: List[Any]):
+        super().__init__(component, field, ids)
+        self.values = values
+        self.unique = set(self.values)
+        self.num_unique = len(self.unique)
 
 
 class NotUniqueError(SingleFieldValidationError):
@@ -359,7 +379,7 @@ class ComparisonError(SingleFieldValidationError):
         A string representation of the reference value. E.g. 'zero', 'one', 'field_a and field_b' or '123'.
         """
         if isinstance(self.ref_value, tuple):
-            return " and ".join(map(str, self.ref_value))
+            return self._delimiter.join(map(str, self.ref_value))
         if self.ref_value == 0:
             return "zero"
         if self.ref_value == 1:
@@ -428,7 +448,7 @@ class InfinityError(SingleFieldValidationError):
 
 class TransformerClockError(MultiFieldValidationError):
     """
-    The value of a field is infinite.
+    Invalid clock number.
     """
 
     _message = (
@@ -436,3 +456,11 @@ class TransformerClockError(MultiFieldValidationError):
         "If one side has wye winding and the other side has not, the clock number should be odd. "
         "If either both or none of the sides have wye winding, the clock number should be even."
     )
+
+
+class FaultPhaseError(MultiFieldValidationError):
+    """
+    The fault phase does not match the fault type.
+    """
+
+    _message = "The fault phase is not applicable to the corresponding fault type for {n} {objects}."

@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
 add_library(power_grid_model INTERFACE)
 
 target_link_libraries(power_grid_model
-	INTERFACE Eigen3::Eigen Boost::boost
+	INTERFACE Eigen3::Eigen Boost::headers msgpack-cxx nlohmann_json::nlohmann_json
 )
 
 if(Threads_FOUND)

@@ -1,252 +1,191 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_META_DATA_HPP
-#define POWER_GRID_MODEL_META_DATA_HPP
+
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 #include <bit>
+#include <span>
 #include <string>
+#include <string_view>
 
-#include "../enum.hpp"
-#include "../exception.hpp"
-#include "../power_grid_model.hpp"
-#include "../three_phase_tensor.hpp"
+namespace power_grid_model::meta_data {
 
-namespace power_grid_model {
-
-namespace meta_data {
-
-template <class T>
-struct trait_pointer_to_member;
-template <class StructType, class ValueType>
-struct trait_pointer_to_member<ValueType StructType::*> {
-    using struct_type = StructType;
+// pointer to member
+template <class T> struct trait_pointer_to_member;
+template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
     using value_type = ValueType;
 };
 
-using SetNaNFunc = std::add_pointer_t<void(void*)>;
-using CheckNaNFunc = std::add_pointer_t<bool(void const*)>;
-using SetValueFunc = std::add_pointer_t<void(void*, void const*)>;
-using CompareValueFunc = std::add_pointer_t<bool(void const* ptr_x, void const* ptr_y, double atol, double rtol)>;
+// primary template to get the attribute list of a component
+// the specializations will contain static constexpr "value" field
+//    which is a std::array
+// the specializations are automatically generated
+template <class T> struct get_attributes_list;
+// primary template functor classes to generate nan value for a component
+// the specializations will contain operator() to return a component instance with NaNs
+// the specializations are automatically generated
+template <class T> struct get_component_nan;
 
+// ctype string
+template <class T> struct ctype_t;
+template <> struct ctype_t<double> {
+    static constexpr CType value = CType::c_double;
+};
+template <> struct ctype_t<int32_t> {
+    static constexpr CType value = CType::c_int32;
+};
+template <> struct ctype_t<int8_t> {
+    static constexpr CType value = CType::c_int8;
+};
+
+template <> struct ctype_t<RealValue<asymmetric_t>> {
+    static constexpr CType value = CType::c_double3;
+};
 template <class T>
-void set_value_template(void* dest, void const* src) {
-    *reinterpret_cast<T*>(dest) = *reinterpret_cast<T const*>(src);
-}
+    requires std::is_enum_v<T>
+struct ctype_t<T> : ctype_t<std::underlying_type_t<T>> {};
+template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 
-constexpr std::array<size_t, 1> three_phase_dimension{3};
+// function selector based on ctype
+// the operator() of the functor should have a single template parameter
+// the selector will instantiate the operator() with relevant type
+template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor f, Args&&... args) {
+    using enum CType;
 
-template <class T, bool is_enum = std::is_enum_v<T>>
-struct data_type;
-
-template <>
-struct data_type<double, false> {
-    static constexpr const char* numpy_type = "f8";
-    static constexpr const char* ctype = "double";
-    static constexpr size_t ndim = 0;
-    static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
-        *reinterpret_cast<double*>(ptr) = nan;
-    };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
-        return is_nan(*reinterpret_cast<double const*>(ptr));
-    };
-    static constexpr SetValueFunc set_value = set_value_template<double>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double atol,
-                                                         double rtol) -> bool {
-        double const x = *reinterpret_cast<double const*>(ptr_x);
-        double const y = *reinterpret_cast<double const*>(ptr_y);
-        return std::abs(y - x) < (std::abs(x) * rtol + atol);
-    };
-};
-
-template <>
-struct data_type<int32_t, false> {
-    static constexpr const char* numpy_type = "i4";
-    static constexpr const char* ctype = "int32_t";
-    static constexpr size_t ndim = 0;
-    static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
-        *reinterpret_cast<int32_t*>(ptr) = na_IntID;
-    };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
-        return *reinterpret_cast<int32_t const*>(ptr) == na_IntID;
-    };
-    static constexpr SetValueFunc set_value = set_value_template<int32_t>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double, double) -> bool {
-        return *reinterpret_cast<int32_t const*>(ptr_x) == *reinterpret_cast<int32_t const*>(ptr_y);
-    };
-};
-
-template <>
-struct data_type<int8_t, false> {
-    static constexpr const char* numpy_type = "i1";
-    static constexpr const char* ctype = "int8_t";
-    static constexpr size_t ndim = 0;
-    static constexpr size_t const* dims = nullptr;
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
-        *reinterpret_cast<int8_t*>(ptr) = na_IntS;
-    };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
-        return *reinterpret_cast<int8_t const*>(ptr) == na_IntS;
-    };
-    static constexpr SetValueFunc set_value = set_value_template<int8_t>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double, double) -> bool {
-        return *reinterpret_cast<int8_t const*>(ptr_x) == *reinterpret_cast<int8_t const*>(ptr_y);
-    };
-};
-
-template <>
-struct data_type<RealValue<false>, false> {
-    static constexpr const char* numpy_type = "f8";
-    static constexpr const char* ctype = "double[3]";
-    static constexpr size_t ndim = 1;
-    static constexpr size_t const* dims = three_phase_dimension.data();
-    static constexpr SetNaNFunc set_nan = [](void* ptr) {
-        *reinterpret_cast<RealValue<false>*>(ptr) = RealValue<false>{nan, nan, nan};
-    };
-    static constexpr CheckNaNFunc check_nan = [](void const* ptr) -> bool {
-        return is_nan(*reinterpret_cast<RealValue<false> const*>(ptr));
-    };
-    static constexpr SetValueFunc set_value = set_value_template<RealValue<false>>;
-    static constexpr CompareValueFunc compare_value = [](void const* ptr_x, void const* ptr_y, double atol,
-                                                         double rtol) -> bool {
-        RealValue<false> const x = *reinterpret_cast<RealValue<false> const*>(ptr_x);
-        RealValue<false> const y = *reinterpret_cast<RealValue<false> const*>(ptr_y);
-        return (abs(y - x) < (abs(x) * rtol + atol)).all();
-    };
-};
-
-template <class T>
-struct data_type<T, true> : data_type<std::underlying_type_t<T>> {};
-
-struct DataAttribute {
-    std::string name;
-    std::string numpy_type;
-    std::string ctype;
-    std::vector<size_t> dims;
-    size_t offset;
-    size_t size;
-    SetNaNFunc set_nan;
-    CheckNaNFunc check_nan;
-    SetValueFunc set_value;
-    CompareValueFunc compare_value;
-};
-
-template <auto member_ptr>
-inline size_t get_offset() {
-    using struct_type = typename trait_pointer_to_member<decltype(member_ptr)>::struct_type;
-    struct_type const obj{};
-    return (size_t)(&(obj.*member_ptr)) - (size_t)&obj;
-}
-
-constexpr bool is_little_endian() {
-    return std::endian::native == std::endian::little;
-}
-
-template <auto member_ptr>
-inline DataAttribute get_data_attribute(std::string const& name) {
-    using value_type = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
-    using single_data_type = data_type<value_type>;
-    DataAttribute attr{};
-    attr.name = name;
-    attr.numpy_type = single_data_type::numpy_type;
-    attr.ctype = single_data_type::ctype;
-    attr.offset = get_offset<member_ptr>();
-    attr.size = sizeof(value_type);
-    if constexpr (single_data_type::ndim > 0) {
-        attr.dims = std::vector<size_t>(single_data_type::dims, single_data_type::dims + single_data_type::ndim);
+    switch (ctype) {
+    case c_double:
+        return f.template operator()<double>(std::forward<Args>(args)...);
+    case c_double3:
+        return f.template operator()<RealValue<asymmetric_t>>(std::forward<Args>(args)...);
+    case c_int8:
+        return f.template operator()<int8_t>(std::forward<Args>(args)...);
+    case c_int32:
+        return f.template operator()<int32_t>(std::forward<Args>(args)...);
+    default:
+        throw MissingCaseForEnumError{"CType selector", ctype};
     }
-    attr.set_nan = single_data_type::set_nan;
-    attr.check_nan = single_data_type::check_nan;
-    attr.set_value = single_data_type::set_value;
-    attr.compare_value = single_data_type::compare_value;
-    return attr;
 }
 
-// struct for meta data per type (input/update/output)
-struct MetaData {
-    std::string name;
+// set nan
+inline void set_nan(double& x) { x = nan; }
+inline void set_nan(IntS& x) { x = na_IntS; }
+inline void set_nan(ID& x) { x = na_IntID; }
+inline void set_nan(RealValue<asymmetric_t>& x) { x = RealValue<asymmetric_t>{nan}; }
+template <class Enum>
+    requires std::same_as<std::underlying_type_t<Enum>, IntS>
+inline void set_nan(Enum& x) {
+    x = static_cast<Enum>(na_IntS);
+}
+
+using RawDataPtr = void*;            // raw mutable data ptr
+using RawDataConstPtr = void const*; // raw read-only data ptr
+
+// meta attribute
+struct MetaAttribute {
+    // meta data
+    char const* name{};
+    CType ctype{};
+    size_t offset{};
+    size_t size{};
+    size_t component_size{};
+
+    // function pointers
+    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_nan{};
+    std::add_pointer_t<bool(RawDataConstPtr, Idx)> check_all_nan{};
+    std::add_pointer_t<void(RawDataPtr, RawDataConstPtr, Idx)> set_value{};
+    std::add_pointer_t<void(RawDataConstPtr, RawDataPtr, Idx)> get_value{};
+    std::add_pointer_t<bool(RawDataConstPtr, RawDataConstPtr, double, double, Idx)> compare_value{};
+
+    // get attribute by offsetting the pointer
+    template <class T> T& get_attribute(std::conditional_t<std::is_const_v<T>, RawDataConstPtr, RawDataPtr> ptr) const {
+        assert(ctype_v<std::remove_cv_t<T>> == ctype);
+        using CharType = std::conditional_t<std::is_const_v<T>, char const*, char*>;
+        return *reinterpret_cast<T*>(reinterpret_cast<CharType>(ptr) + offset);
+    }
+};
+
+// meta component
+struct MetaComponent {
+    // meta data
+    char const* name;
     size_t size;
     size_t alignment;
-    std::vector<DataAttribute> attributes;
+    std::span<MetaAttribute const> attributes;
 
-    DataAttribute const& get_attr(std::string const& attr_name) const {
-        Idx const found = find_attr(attr_name);
-        if (found >= 0) {
-            return attributes[found];
+    // function pointers
+    std::add_pointer_t<void(RawDataPtr, Idx, Idx)> set_nan;
+    std::add_pointer_t<RawDataPtr(Idx)> create_buffer;
+    std::add_pointer_t<void(RawDataConstPtr)> destroy_buffer;
+
+    Idx n_attributes() const { return static_cast<Idx>(attributes.size()); }
+
+    MetaAttribute const& get_attribute(std::string_view attribute_name) const {
+        Idx const found = find_attribute(attribute_name);
+        if (found < 0) {
+            throw std::out_of_range{"Cannot find attribute with name: " + std::string(attribute_name) + "!\n"};
         }
-        throw std::out_of_range{std::string("Unknown attribute name: ") + attr_name + "!\n"};
+        return attributes[found];
     }
 
-    Idx find_attr(std::string const& attr_name) const {
-        for (Idx i = 0; i != (Idx)attributes.size(); ++i) {
-            if (attributes[i].name == attr_name) {
+    Idx find_attribute(std::string_view attribute_name) const {
+        for (Idx i = 0; i != n_attributes(); ++i) {
+            if (attributes[i].name == attribute_name) {
                 return i;
             }
         }
         return -1;
     }
 
-    bool has_attr(std::string const& attr_name) const {
-        return find_attr(attr_name) >= 0;
-    }
+    bool has_attribute(std::string_view attribute_name) const { return find_attribute(attribute_name) >= 0; }
 
-    void* get_position(void* ptr, Idx position) const {
-        return reinterpret_cast<char*>(ptr) + position * size;
+    RawDataPtr advance_ptr(RawDataPtr ptr, Idx difference) const {
+        return reinterpret_cast<char*>(ptr) + difference * size;
     }
-    void const* get_position(void const* ptr, Idx position) const {
-        return reinterpret_cast<char const*>(ptr) + position * size;
-    }
-
-    // set nan for all attributes
-    void set_nan(void* ptr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        for (DataAttribute const& attr : attributes) {
-            void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
-            attr.set_nan(offset_ptr);
-        }
-    }
-    // check nan for a attribute
-    bool check_nan(void const* ptr, DataAttribute const& attr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
-        return attr.check_nan(offset_ptr);
-    }
-    // set value of one attribute
-    void set_attr(void* ptr, void const* value_ptr, DataAttribute const& attr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        void* const offset_ptr = reinterpret_cast<char*>(ptr) + attr.offset;
-        attr.set_value(offset_ptr, value_ptr);
-    }
-    // get value of one attribute
-    void get_attr(void const* ptr, void* value_ptr, DataAttribute const& attr, Idx position = 0) const {
-        ptr = get_position(ptr, position);
-        void const* const offset_ptr = reinterpret_cast<char const*>(ptr) + attr.offset;
-        attr.set_value(value_ptr, offset_ptr);
-    }
-    // compare value of one attribute
-    bool compare_attr(void const* ptr_x, void const* ptr_y, double atol, double rtol, DataAttribute const& attr,
-                      Idx position = 0) const {
-        ptr_x = get_position(ptr_x, position);
-        ptr_y = get_position(ptr_y, position);
-        void const* const attr_ptr_x = reinterpret_cast<char const*>(ptr_x) + attr.offset;
-        void const* const attr_ptr_y = reinterpret_cast<char const*>(ptr_y) + attr.offset;
-        return attr.compare_value(attr_ptr_x, attr_ptr_y, atol, rtol);
+    RawDataConstPtr advance_ptr(RawDataConstPtr ptr, Idx difference) const {
+        return reinterpret_cast<char const*>(ptr) + difference * size;
     }
 };
 
-using PowerGridMetaData = std::map<std::string, MetaData>;
-using AllPowerGridMetaData = std::map<std::string, PowerGridMetaData>;
+// meta dataset
+struct MetaDataset {
+    char const* name;
+    std::span<MetaComponent const> components;
 
-// empty template class for meta data generation functor
-template <class T>
-struct get_meta;
+    Idx n_components() const { return static_cast<Idx>(components.size()); }
 
-}  // namespace meta_data
+    MetaComponent const& get_component(std::string_view component_name) const {
+        for (auto const& component : components) {
+            if (component.name == component_name) {
+                return component;
+            }
+        }
+        throw std::out_of_range{"Cannot find component with name: " + std::string{component_name} + "!\n"};
+    }
+};
 
-}  // namespace power_grid_model
+// meta data
+struct MetaData {
+    std::span<MetaDataset const> datasets;
 
-#endif
+    Idx n_datasets() const { return static_cast<Idx>(datasets.size()); }
+
+    MetaDataset const& get_dataset(std::string_view dataset_name) const {
+        for (auto const& dataset : datasets) {
+            if (dataset.name == dataset_name) {
+                return dataset;
+            }
+        }
+        throw std::out_of_range{"Cannot find dataset with name: " + std::string{dataset_name} + "!\n"};
+    }
+};
+
+// little endian
+constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
+
+} // namespace power_grid_model::meta_data

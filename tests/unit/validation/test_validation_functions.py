@@ -1,16 +1,26 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from itertools import product
 from typing import List, Union
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
 import pytest
 
-from power_grid_model import MeasuredTerminalType, initialize_array, power_grid_meta_data
-from power_grid_model.enum import CalculationType
-from power_grid_model.validation.errors import IdNotInDatasetError, MissingValueError, MultiComponentNotUniqueError
+from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
+from power_grid_model.enum import CalculationType, FaultPhase, FaultType
+from power_grid_model.validation import assert_valid_input_data
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    InfinityError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    MultiFieldValidationError,
+    NotUniqueError,
+)
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
     validate_generic_power_sensor,
@@ -134,6 +144,7 @@ def test_validate_ids_exist():
         pytest.param(None, id="no calculation type specified"),
         pytest.param(CalculationType.power_flow, id="power_flow"),
         pytest.param(CalculationType.state_estimation, id="state_estimation"),
+        pytest.param(CalculationType.short_circuit, id="short_circuit"),
     ],
 )
 @pytest.mark.parametrize("symmetric", [pytest.param(True, id="symmetric"), pytest.param(False, id="asymmetric")])
@@ -160,6 +171,8 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     asym_power_sensor["p_measured"] = [[np.nan, 2.0, 1.0]]
     asym_power_sensor["q_measured"] = [[2.0, 1.0, np.nan]]
 
+    fault = initialize_array("input", "fault", 1)
+
     data = {
         "node": node,
         "line": line,
@@ -176,11 +189,13 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
         "asym_voltage_sensor": asym_voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
         "asym_power_sensor": asym_power_sensor,
+        "fault": fault,
     }
     required_values_errors = validate_required_values(data=data, calculation_type=calculation_type, symmetric=symmetric)
 
     pf_dependent = calculation_type == CalculationType.power_flow or calculation_type is None
     se_dependent = calculation_type == CalculationType.state_estimation or calculation_type is None
+    sc_dependent = calculation_type == CalculationType.short_circuit or calculation_type is None
     asym_dependent = not symmetric
 
     assert MissingValueError("node", "id", [NaN]) in required_values_errors
@@ -195,11 +210,13 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("line", "x1", [NaN]) in required_values_errors
     assert MissingValueError("line", "c1", [NaN]) in required_values_errors
     assert MissingValueError("line", "tan1", [NaN]) in required_values_errors
-    assert MissingValueError("line", "i_n", [NaN]) in required_values_errors
     assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "x0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "c0", [NaN]) in required_values_errors) == asym_dependent
     assert (MissingValueError("line", "tan0", [NaN]) in required_values_errors) == asym_dependent
+
+    # i_n made optional later in lines
+    assert MissingValueError("line", "i_n", [NaN]) not in required_values_errors
 
     assert MissingValueError("link", "id", [NaN]) in required_values_errors
     assert MissingValueError("link", "from_node", [NaN]) in required_values_errors
@@ -325,6 +342,10 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert (MissingValueError("asym_power_sensor", "p_measured", [NaN]) in required_values_errors) == se_dependent
     assert (MissingValueError("asym_power_sensor", "q_measured", [NaN]) in required_values_errors) == se_dependent
 
+    assert MissingValueError("fault", "id", [NaN]) in required_values_errors
+    assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
+    assert (MissingValueError("fault", "fault_type", [NaN]) in required_values_errors) == sc_dependent
+
 
 def test_validate_required_values_asym_calculation():
     line = initialize_array("input", "line", 1)
@@ -342,6 +363,29 @@ def test_validate_required_values_asym_calculation():
     assert MissingValueError("shunt", "b0", [NaN]) in required_values_errors
 
 
+@pytest.mark.parametrize("fault_types", product(list(FaultType), list(FaultType)))
+def test_validate_fault_sc_calculation(fault_types):
+    line = initialize_array("input", "line", 1)
+    shunt = initialize_array("input", "shunt", 1)
+    fault = initialize_array("input", "fault", 2)
+    fault["fault_type"] = fault_types
+
+    data = {"line": line, "shunt": shunt, "fault": fault}
+    required_values_errors = validate_required_values(data=data, calculation_type=CalculationType.short_circuit)
+
+    asym_sc_calculation = np.any(
+        list(fault_type not in (FaultType.three_phase, FaultType.nan) for fault_type in fault_types)
+    )
+
+    assert (MissingValueError("line", "r0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "x0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "c0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("line", "tan0", [NaN]) in required_values_errors) == asym_sc_calculation
+
+    assert (MissingValueError("shunt", "g0", [NaN]) in required_values_errors) == asym_sc_calculation
+    assert (MissingValueError("shunt", "b0", [NaN]) in required_values_errors) == asym_sc_calculation
+
+
 def test_validate_values():
     # Create invalid nodes and lines
     node = initialize_array("input", "node", 3)
@@ -356,6 +400,205 @@ def test_validate_values():
 
     # The errors should add up (in this simple case)
     assert both_errors == node_errors + line_errors
+
+
+def test_validate_values__calculation_types():
+    # Create invalid sensor
+    sym_voltage_sensor = initialize_array("input", "sym_voltage_sensor", 3)
+    all_errors = validate_values({"sym_voltage_sensor": sym_voltage_sensor})
+    power_flow_errors = validate_values(
+        {"sym_voltage_sensor": sym_voltage_sensor}, calculation_type=CalculationType.power_flow
+    )
+    state_estimation_errors = validate_values(
+        {"sym_voltage_sensor": sym_voltage_sensor}, calculation_type=CalculationType.state_estimation
+    )
+
+    assert not power_flow_errors
+    assert all_errors == state_estimation_errors
+
+
+@pytest.mark.parametrize(
+    ("sensor_type", "parameter"),
+    [
+        ("sym_voltage_sensor", "u_sigma"),
+        ("asym_voltage_sensor", "u_sigma"),
+        ("sym_power_sensor", "power_sigma"),
+        ("asym_power_sensor", "power_sigma"),
+    ],
+)
+def test_validate_values__infinite_sigmas(sensor_type, parameter):
+    sensor_array = initialize_array("input", sensor_type, 3)
+    sensor_array[parameter] = np.inf
+    all_errors = validate_values({sensor_type: sensor_array})
+
+    for error in all_errors:
+        assert not isinstance(error, InfinityError)
+
+
+@pytest.mark.parametrize(
+    ("sensor_type", "values", "error_types"),
+    [
+        (
+            "sym_power_sensor",
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError],
+        ),
+        (
+            "sym_power_sensor",
+            [[0.1, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "sym_power_sensor",
+            [[np.nan, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "sym_power_sensor",
+            [[0.1, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, np.nan, 0.1], [np.nan, 0.1, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, 0.1, 0.1]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+        ),
+        (
+            "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            [InvalidIdError, NotUniqueError],
+        ),
+    ],
+)
+def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
+    def arbitrary_fill(array, sensor_type, values):
+        if sensor_type == "sym_power_sensor":
+            array["p_sigma"] = values[0][0]
+            array["q_sigma"] = values[0][1]
+        else:
+            array["p_sigma"][0] = values[1][0]
+            array["p_sigma"][1] = values[1][1]
+            array["p_sigma"][2] = values[1][2]
+            array["q_sigma"][0] = values[2][0]
+            array["q_sigma"][1] = values[2][1]
+            array["q_sigma"][2] = values[2][2]
+        array["id"] = [123, 234, 345]
+
+    sensor_array = initialize_array("input", sensor_type, 3)
+    arbitrary_fill(sensor_array, sensor_type, values)
+    all_errors = validate_values({sensor_type: sensor_array})
+
+    for error in all_errors:
+        assert any(isinstance(error, error_type) for error_type in error_types)
+        assert set(error.ids).issubset(set(sensor_array["id"]))
+
+
+@pytest.mark.parametrize(
+    ("values", "error_types"),
+    [
+        ([[np.nan, np.nan], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]], [InvalidIdError]),
+        (
+            [[0.1, np.nan], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            [[np.nan, np.nan], [[np.nan, 0.1, np.nan], [np.nan, np.nan, np.nan]]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            [[np.nan, np.nan], [[np.nan, 0.1, np.nan], [np.nan, 0.1, np.nan]]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        (
+            [[0.1, 0.1], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]],
+            [InvalidIdError, MultiFieldValidationError],
+        ),
+        ([[0.1, 0.1], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]], [InvalidIdError]),
+        ([[np.nan, np.nan], [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]], [InvalidIdError]),
+        ([[0.1, 0.1], [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]], [InvalidIdError]),
+    ],
+)
+def test_validate_values__bad_p_q_sigma_both_components(values, error_types):
+    def two_component_data(values):
+        node = initialize_array("input", "node", 1)
+        node["id"] = 123
+        sym_power_sensor = initialize_array("input", "sym_power_sensor", 1)
+        sym_power_sensor["p_sigma"] = values[0][0]
+        sym_power_sensor["q_sigma"] = values[0][1]
+        sym_power_sensor["id"] = 456
+        asym_power_sensor = initialize_array("input", "asym_power_sensor", 1)
+        asym_power_sensor["p_measured"] = values[1][0]
+        asym_power_sensor["q_measured"] = values[1][1]
+        asym_power_sensor["id"] = 789
+
+        return {
+            "node": node,
+            "sym_power_sensor": sym_power_sensor,
+            "asym_power_sensor": asym_power_sensor,
+        }
+
+    data = two_component_data(values)
+    all_errors = validate_values(data)
+    for error in all_errors:
+        assert any(isinstance(error, error_type) for error_type in error_types)
+        assert (data[error.component]["id"] == error.ids).all()
+
+
+def test_validate_values__bad_p_q_sigma_single_component_twice():
+    def single_component_twice_data():
+        node = initialize_array("input", "node", 1)
+        node["id"] = 123
+        sym_power_sensor = initialize_array("input", "sym_power_sensor", 2)
+        sym_power_sensor["p_sigma"] = [np.nan, 0.1]
+        sym_power_sensor["q_sigma"] = [np.nan, np.nan]
+        sym_power_sensor["id"] = [456, 789]
+
+        return {
+            "node": node,
+            "sym_power_sensor": sym_power_sensor,
+        }
+
+    data = single_component_twice_data()
+    all_errors = validate_values(data)
+    for error in all_errors:
+        assert any(isinstance(error, error_type) for error_type in [InvalidIdError, MultiFieldValidationError])
+        if isinstance(error, MultiFieldValidationError):
+            assert error.ids[0] == 789
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
@@ -404,3 +647,73 @@ def test_validate_generic_power_sensor__terminal_types(
     all_valid_ids.assert_any_call(
         ANY, ANY, field=ANY, ref_components=ref_component, measured_terminal_type=measured_terminal_type
     )
+
+
+def test_power_sigma_or_p_q_sigma():
+    # node
+    node = initialize_array("input", "node", 2)
+    node["id"] = np.array([0, 3])
+    node["u_rated"] = [10.5e3, 10.5e3]
+
+    # line
+    line = initialize_array("input", "line", 1)
+    line["id"] = [2]
+    line["from_node"] = [0]
+    line["to_node"] = [3]
+    line["from_status"] = [1]
+    line["to_status"] = [1]
+    line["r1"] = [0.001]
+    line["x1"] = [0.02]
+    line["c1"] = [0.0]
+    line["tan1"] = [0.0]
+    line["i_n"] = [1000.0]
+
+    # load
+    sym_load = initialize_array("input", "sym_load", 2)
+    sym_load["id"] = [4, 9]
+    sym_load["node"] = [3, 0]
+    sym_load["status"] = [1, 1]
+    sym_load["type"] = [LoadGenType.const_power, LoadGenType.const_power]
+    sym_load["p_specified"] = [1e6, 1e6]
+    sym_load["q_specified"] = [-1e6, -1e6]
+
+    # source
+    source = initialize_array("input", "source", 1)
+    source["id"] = [1]
+    source["node"] = [0]
+    source["status"] = [1]
+    source["u_ref"] = [1.0]
+
+    # voltage sensor
+    voltage_sensor = initialize_array("input", "sym_voltage_sensor", 1)
+    voltage_sensor["id"] = 5
+    voltage_sensor["measured_object"] = 0
+    voltage_sensor["u_sigma"] = [100.0]
+    voltage_sensor["u_measured"] = [10.5e3]
+
+    # power sensor
+    sym_power_sensor = initialize_array("input", "sym_power_sensor", 3)
+    sym_power_sensor["id"] = [6, 7, 8]
+    sym_power_sensor["measured_object"] = [2, 4, 9]
+    sym_power_sensor["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.load,
+        MeasuredTerminalType.load,
+    ]
+    sym_power_sensor["p_measured"] = [1e6, -1e6, -1e6]
+    sym_power_sensor["q_measured"] = [1e6, -1e6, -1e6]
+    sym_power_sensor["power_sigma"] = [np.nan, 1e9, 1e9]
+    sym_power_sensor["p_sigma"] = [1e4, np.nan, 1e4]
+    sym_power_sensor["q_sigma"] = [1e9, np.nan, 1e9]
+
+    # all
+    input_data = {
+        "node": node,
+        "line": line,
+        "sym_load": sym_load,
+        "source": source,
+        "sym_voltage_sensor": voltage_sensor,
+        "sym_power_sensor": sym_power_sensor,
+    }
+
+    assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)

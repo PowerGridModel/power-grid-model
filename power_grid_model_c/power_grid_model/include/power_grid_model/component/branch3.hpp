@@ -1,64 +1,50 @@
-// SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
-#ifndef POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
-#define POWER_GRID_MODEL_COMPONENT_BRANCH3_HPP
+
+#include "base.hpp"
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
-#include "base.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model {
 
 class Branch3 : public Base {
-   public:
+  public:
     using InputType = Branch3Input;
     using UpdateType = Branch3Update;
-    template <bool sym>
-    using OutputType = Branch3Output<sym>;
+    template <symmetry_tag sym> using OutputType = Branch3Output<sym>;
+    using ShortCircuitOutputType = Branch3ShortCircuitOutput;
     static constexpr char const* name = "branch3";
-    ComponentType math_model_type() const final {
-        return ComponentType::branch3;
-    }
+    ComponentType math_model_type() const final { return ComponentType::branch3; }
 
-    Branch3(Branch3Input const& branch3_input)
+    explicit Branch3(Branch3Input const& branch3_input)
         : Base{branch3_input},
           node_1_{branch3_input.node_1},
           node_2_{branch3_input.node_2},
           node_3_{branch3_input.node_3},
-          status_1_{(bool)branch3_input.status_1},
-          status_2_{(bool)branch3_input.status_2},
-          status_3_{(bool)branch3_input.status_3} {
+          status_1_{static_cast<bool>(branch3_input.status_1)},
+          status_2_{static_cast<bool>(branch3_input.status_2)},
+          status_3_{static_cast<bool>(branch3_input.status_3)} {
         if (node_1_ == node_2_ || node_1_ == node_3_ || node_2_ == node_3_) {
             throw InvalidBranch3{id(), node_1_, node_2_, node_3_};
         }
     }
 
     // getter
-    ID node_1() const {
-        return node_1_;
-    }
-    ID node_2() const {
-        return node_2_;
-    }
-    ID node_3() const {
-        return node_3_;
-    }
-    bool status_1() const {
-        return status_1_;
-    }
-    bool status_2() const {
-        return status_2_;
-    }
-    bool status_3() const {
-        return status_3_;
-    }
+    ID node_1() const { return node_1_; }
+    ID node_2() const { return node_2_; }
+    ID node_3() const { return node_3_; }
+    bool status_1() const { return status_1_; }
+    bool status_2() const { return status_2_; }
+    bool status_3() const { return status_3_; }
     bool branch3_status() const {
-        return status_1_ && status_2_ && status_3_;  // TODO: check if this makes sense for branch3
+        return status_1_ && status_2_ && status_3_; // TODO: check if this makes sense for branch3
     }
 
     // virtual getter
@@ -71,20 +57,19 @@ class Branch3 : public Base {
     virtual double loading(double s_1, double s_2, double s_3) const = 0;
     virtual std::array<double, 3> phase_shift() const = 0;
 
-    template <bool sym>
+    template <symmetry_tag sym>
     std::array<BranchCalcParam<sym>, 3> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return std::array<BranchCalcParam<sym>, 3>{};
         }
-        if constexpr (sym) {
+        if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
-        }
-        else {
+        } else {
             return asym_calc_param();
         }
     }
 
-    template <bool sym>
+    template <symmetry_tag sym>
     Branch3Output<sym> get_output(BranchMathOutput<sym> const& branch_math_output1,
                                   BranchMathOutput<sym> const& branch_math_output2,
                                   BranchMathOutput<sym> const& branch_math_output3) const {
@@ -112,9 +97,43 @@ class Branch3 : public Base {
         return output;
     }
 
-    template <bool sym>
-    Branch3Output<sym> get_null_output() const {
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> const& i_1,
+                                            ComplexValue<asymmetric_t> const& i_2,
+                                            ComplexValue<asymmetric_t> const& i_3) const {
+        // result object
+        Branch3ShortCircuitOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(true);
+        // calculate result
+        output.i_1 = base_i_1() * cabs(i_1);
+        output.i_2 = base_i_2() * cabs(i_2);
+        output.i_3 = base_i_3() * cabs(i_3);
+        output.i_1_angle = arg(i_1);
+        output.i_2_angle = arg(i_2);
+        output.i_3_angle = arg(i_3);
+        return output;
+    }
+    Branch3ShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& i_1, ComplexValue<symmetric_t> const& i_2,
+                                            ComplexValue<symmetric_t> const& i_3) const {
+        ComplexValue<asymmetric_t> const iabc_1{i_1};
+        ComplexValue<asymmetric_t> const iabc_2{i_2};
+        ComplexValue<asymmetric_t> const iabc_3{i_3};
+        return get_sc_output(iabc_1, iabc_2, iabc_3);
+    }
+    template <symmetry_tag sym>
+    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<sym> const& branch_math_output1,
+                                            BranchShortCircuitMathOutput<sym> const& branch_math_output2,
+                                            BranchShortCircuitMathOutput<sym> const& branch_math_output3) const {
+        return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
+    }
+
+    template <symmetry_tag sym> Branch3Output<sym> get_null_output() const {
         Branch3Output<sym> output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
+
+    Branch3ShortCircuitOutput get_null_sc_output() const {
+        Branch3ShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -126,29 +145,39 @@ class Branch3 : public Base {
         bool const set_3 = new_status_3 != na_IntS;
         bool changed = false;
         if (set_1) {
-            changed = changed || (status_1_ != (bool)new_status_1);
-            status_1_ = (bool)new_status_1;
+            changed = changed || (status_1_ != static_cast<bool>(new_status_1));
+            status_1_ = static_cast<bool>(new_status_1);
         }
         if (set_2) {
-            changed = changed || (status_2_ != (bool)new_status_2);
-            status_2_ = (bool)new_status_2;
+            changed = changed || (status_2_ != static_cast<bool>(new_status_2));
+            status_2_ = static_cast<bool>(new_status_2);
         }
         if (set_3) {
-            changed = changed || (status_3_ != (bool)new_status_3);
-            status_3_ = (bool)new_status_3;
+            changed = changed || (status_3_ != static_cast<bool>(new_status_3));
+            status_3_ = static_cast<bool>(new_status_3);
         }
         return changed;
     }
 
     // default update for branch3, will be hidden for three winding transformer
-    UpdateChange update(Branch3Update const& update) {
-        assert(update.id == id());
-        bool const changed = set_status(update.status_1, update.status_2, update.status_3);
+    UpdateChange update(Branch3Update const& update_data) {
+        assert(update_data.id == id());
+        bool const changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
         // change in branch3 connection will change both topo and param
         return {changed, changed};
     }
 
-   private:
+    auto inverse(std::convertible_to<Branch3Update> auto update_data) const {
+        assert(update_data.id == id());
+
+        set_if_not_nan(update_data.status_1, static_cast<IntS>(status_1_));
+        set_if_not_nan(update_data.status_2, static_cast<IntS>(status_2_));
+        set_if_not_nan(update_data.status_3, static_cast<IntS>(status_3_));
+
+        return update_data;
+    }
+
+  private:
     ID node_1_;
     ID node_2_;
     ID node_3_;
@@ -156,10 +185,8 @@ class Branch3 : public Base {
     bool status_2_;
     bool status_3_;
 
-    virtual std::array<BranchCalcParam<true>, 3> sym_calc_param() const = 0;
-    virtual std::array<BranchCalcParam<false>, 3> asym_calc_param() const = 0;
+    virtual std::array<BranchCalcParam<symmetric_t>, 3> sym_calc_param() const = 0;
+    virtual std::array<BranchCalcParam<asymmetric_t>, 3> asym_calc_param() const = 0;
 };
 
-}  // namespace power_grid_model
-
-#endif
+} // namespace power_grid_model
