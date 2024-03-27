@@ -21,6 +21,25 @@ SPDX-License-Identifier: MPL-2.0
    :show-inheritance:
 ```
 
+## data types
+
+```{eval-rst}
+.. autoclass:: power_grid_model.data_types.Dataset
+.. autoclass:: power_grid_model.data_types.SingleDataset
+.. autoclass:: power_grid_model.data_types.BatchDataset
+.. autoclass:: power_grid_model.data_types.DataArray
+.. autoclass:: power_grid_model.data_types.SingleArray
+.. autoclass:: power_grid_model.data_types.BatchArray
+.. autoclass:: power_grid_model.data_types.DenseBatchArray
+.. autoclass:: power_grid_model.data_types.SparseBatchArray
+```
+
+## error types
+
+```{eval-rst}
+.. automodule:: power_grid_model.errors
+```
+
 ## validation
 
 ```{eval-rst}
@@ -35,19 +54,6 @@ SPDX-License-Identifier: MPL-2.0
 
 ```{eval-rst}
 .. autoclass:: power_grid_model.validation.errors.ValidationError
-```
-
-## data types
-
-```{eval-rst}
-.. autoclass:: power_grid_model.data_types.Dataset
-.. autoclass:: power_grid_model.data_types.SingleDataset
-.. autoclass:: power_grid_model.data_types.BatchDataset
-.. autoclass:: power_grid_model.data_types.DataArray
-.. autoclass:: power_grid_model.data_types.SingleArray
-.. autoclass:: power_grid_model.data_types.BatchArray
-.. autoclass:: power_grid_model.data_types.DenseBatchArray
-.. autoclass:: power_grid_model.data_types.SparseBatchArray
 ```
 
 ## utils
