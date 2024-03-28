@@ -7,7 +7,10 @@
 #include "base_optimizer.hpp"
 
 #include "../auxiliary/dataset.hpp"
+#include "../auxiliary/meta_gen/update.hpp"
 #include "../common/enum.hpp"
+#include "../component/three_winding_transformer.hpp"
+#include "../component/transformer.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <functional>
@@ -108,7 +111,9 @@ template <main_core::main_model_state_c State> inline auto rank_transformers(Sta
 }
 
 template <typename StateCalculator, typename StateUpdater_, typename State_>
-    requires detail::steady_state_calculator_c<StateCalculator, State_> &&
+    requires main_core::component_container_c<typename State_::ComponentContainer, Transformer> &&
+             main_core::component_container_c<typename State_::ComponentContainer, ThreeWindingTransformer> &&
+             detail::steady_state_calculator_c<StateCalculator, State_> &&
              std::invocable<std::remove_cvref_t<StateUpdater_>, ConstDataset const&>
 class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
   public:
@@ -118,20 +123,101 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     using typename Base::State;
     using StateUpdater = StateUpdater_;
 
+  private:
+    using ComponentContainer = typename State::ComponentContainer;
+
+    struct UpdateBuffer {
+        std::vector<TransformerUpdate> transformer_update;
+        std::vector<ThreeWindingTransformerUpdate> three_winding_transformer_update;
+        std::vector<Idx> transformer_rank;
+        std::vector<Idx> three_winding_transformer_rank;
+    };
+
+  public:
     TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state) -> ResultType final {
         auto const order = rank_transformers(state);
-        return optimize(state, order);
+
+        auto const cache = this->cache_state(state, order);
+        auto optimal_output = optimize(state, order);
+        update_state(cache);
+        return optimal_output;
     }
 
     constexpr auto get_strategy() { return strategy_; }
 
   private:
-    auto optimize(State const& /*state*/, std::vector<Idx2D> const& /*order*/) -> ResultType {
-        // TODO(mgovers): implement outter loop tap changer
-        throw PowerGridError{};
+    // If regulation tactic is max voltage
+    // * Call adjust_voltage(set_to_max)  // tap_pos = tap_min
+    // If regulation tactic is min voltage
+    // * Call adjust_voltage(set_to_min)  // tap_pos = tap_max
+    // (If regulation tactic is none, do nothing)
+    // math_result = try_power_flow_with_regulation(calculation_method=user_specified_method)
+    // If regulation tactic is max voltage
+    // * Call adjust_voltage(one_step_voltage_up)  // tap_pos one step towards tap_min
+    // * math_result = try_power_flow_with_regulation(calculation_method=user_specified_method)
+    // If regulation tactic is min voltage
+    // * Call adjust_voltage(one_step_voltage_down)  // tap_pos  one step towards tap_max
+    // * math_result = try_power_flow_with_regulation(calculation_method=user_specified_method)
+    // Return math_result
+    auto optimize(State const& state, std::vector<Idx2D> const& order) -> ResultType {
+
+        // TODO(mgovers): implement outer loop tap changer
+        auto output = calculate_(state);
+    }
+
+    void update_state(UpdateBuffer const& update_data) {
+        ConstDataset const update_dataset{
+            {"transformer", ConstDataPointer{update_data.transformer_update.data(),
+                                             static_cast<Idx>(update_data.transformer_update.size())}},
+            {"three_winding_transformer",
+             ConstDataPointer{update_data.three_winding_transformer_update.data(),
+                              static_cast<Idx>(update_data.three_winding_transformer_update.size())}}};
+
+        update_(update_dataset);
+    }
+
+    auto adjust_voltage(State const& state) {}
+
+    auto get_to_max() { return; }
+
+    template <typename T> constexpr static T component_cache_update(State const& state, Idx2D const& index) {
+        auto const& component = state.components.template get_item<T>(index);
+
+        auto result = meta_data::get_component_nan<typename T::UpdateType>{}();
+        result.id = component.id();
+        result.tap_pos = component.tap_pos();
+
+        return component.inverse(result);
+    }
+
+    static UpdateBuffer cache_state(State const& state, std::vector<Idx2D> const& order) {
+        auto buffer = create_buffer(order);
+
+        for (Idx rank : boost::counting_range(Idx{}, static_cast<Idx>(order.size()))) {
+            auto const& index = order[rank];
+            if (is_in_group<Transformer>(index)) {
+                buffer.transformer_update = component_cache_update<Transformer>(state, index);
+                buffer.transformer_rank = rank;
+            }
+            if (is_in_group<ThreeWindingTransformer>(index)) {
+                buffer.three_winding_transformer_update = component_cache_update<ThreeWindingTransformer>(state, index);
+                buffer.three_winding_transformer_rank = rank;
+            }
+        }
+
+        return buffer;
+    }
+
+    template <typename T> static constexpr auto group_count(std::vector<Idx2D> const& indices) {
+        return std::ranges::count_if(indices, is_in_group<T>);
+    }
+
+    template <typename T> static constexpr auto is_in_group(Idx2D const& index) {
+        constexpr auto group_idx = ComponentContainer::template get_type_idx<T>();
+        return index.group == group_idx;
     }
 
     Calculator calculate_;

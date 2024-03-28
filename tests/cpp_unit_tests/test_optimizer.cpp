@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/container.hpp>
 #include <power_grid_model/optimizer/optimizer.hpp>
 
 #include <doctest/doctest.h>
 
 namespace power_grid_model::optimizer {
 namespace {
-struct StubComponentContainer {};
+using StubComponentContainer = Container<Transformer, ThreeWindingTransformer>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);
@@ -79,7 +80,7 @@ TEST_CASE("Test tap position optimizer") {
             CAPTURE(strategy);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO(mgovers): implement this check
+            CHECK(optimizer.optimize({}).empty());
         }
     }
     SUBCASE("asymmetric") {
@@ -87,7 +88,7 @@ TEST_CASE("Test tap position optimizer") {
             CAPTURE(strategy);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO(mgovers): implement this check
+            CHECK(optimizer.optimize({}).empty());
         }
     }
 }
@@ -138,7 +139,7 @@ TEST_CASE("Test get optimizer") {
                 REQUIRE(tap_optimizer != nullptr);
                 CHECK(tap_optimizer->get_strategy() == strategy);
 
-                CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO(mgovers): implement this check
+                CHECK(optimizer->optimize({}).empty());
             }
         }
     }
