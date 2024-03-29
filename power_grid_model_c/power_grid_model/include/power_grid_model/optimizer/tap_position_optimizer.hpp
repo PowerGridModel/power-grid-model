@@ -102,7 +102,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList
 //       i. Infinity(INT_MAX), if tap side of the transformer is disconnected.
 //          The transformer regulation should be ignored
 //       ii.Rank of the vertex at the tap side of the transformer, if tap side of the transformer is connected
-inline auto transformer_disconnected(Idx2D const& pos) -> bool {
+inline auto transformer_disconnected(Idx2D const& /*pos*/) -> bool {
     // <TODO: jguo> waiting for the functionalities in step 1 to be implemented
     return false;
 }
