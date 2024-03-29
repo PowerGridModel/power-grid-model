@@ -23,6 +23,7 @@ using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using WeightedTrafo = std::pair<Idx2D, EdgeWeight>;
 using WeightedTrafoList = std::vector<WeightedTrafo>;
+using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 const int infty = INT_MAX;
 
 struct TrafoGraphVertex {
@@ -44,19 +45,19 @@ inline auto build_transformer_graph(State const& /*state*/) -> TransformerGraph 
     return {};
 }
 
-inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& rank, std::vector<Idx2D>& sources,
+inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& edge_weight, std::vector<Idx2D>& edge_pos,
                                    TransformerGraph const& graph) -> void {
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
-    rank[v] = 0;
-    sources[v] = {v, v};
+    edge_weight[v] = 0;
+    edge_pos[v] = {v, v};
     pq.push({0, v});
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
         pq.pop();
 
-        if (dist != rank[u]) {
+        if (dist != edge_weight[u]) {
             continue;
         }
 
@@ -64,10 +65,10 @@ inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& rank, std::ve
             auto v = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            if (rank[u] + weight < rank[v]) {
-                rank[v] = rank[u] + weight;
-                sources[v] = {sources[u].group, static_cast<Idx>(v)};
-                pq.push({rank[v], v});
+            if (edge_weight[u] + weight < edge_weight[v]) {
+                edge_weight[v] = edge_weight[u] + weight;
+                edge_pos[v] = graph[e].pos;
+                pq.push({edge_weight[v], v});
             }
         }
     }
@@ -78,18 +79,18 @@ inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& rank, std::ve
 //      a. Perform Dijkstra shortest path algorithm from the vertex with that source.
 //         This is to determine the shortest path of all vertices to this particular source.
 inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList {
-    std::vector<EdgeWeight> rank(boost::num_vertices(graph), infty);
-    std::vector<Idx2D> sources(boost::num_vertices(graph));
+    std::vector<EdgeWeight> edge_weight(boost::num_vertices(graph), infty);
+    std::vector<Idx2D> edge_pos(boost::num_vertices(graph));
 
     for (auto v : boost::make_iterator_range(boost::vertices(graph))) {
         if (graph[v].is_source) {
-            process_edges_dijkstra(v, rank, sources, graph);
+            process_edges_dijkstra(v, edge_weight, edge_pos, graph);
         }
     }
 
     WeightedTrafoList result;
-    for (size_t i = 0; i < rank.size(); ++i) {
-        result.emplace_back(sources[i], rank[i]);
+    for (size_t i = 0; i < edge_weight.size(); ++i) {
+        result.emplace_back(edge_pos[i], edge_weight[i]);
     }
 
     return result;
@@ -101,9 +102,36 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList
 //       i. Infinity(INT_MAX), if tap side of the transformer is disconnected.
 //          The transformer regulation should be ignored
 //       ii.Rank of the vertex at the tap side of the transformer, if tap side of the transformer is connected
-inline auto rank_transformers(WeightedTrafoList const& /*w_trafo_list*/) -> std::vector<Idx2D> { return {}; }
+inline auto transformer_disconnected(Idx2D const& pos) -> bool {
+    // <TODO: jguo> waiting for the functionalities in step 1 to be implemented
+    return false;
+}
 
-template <main_core::main_model_state_c State> inline auto rank_transformers(State const& state) -> std::vector<Idx2D> {
+inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> RankedTransformerGroups {
+    auto sorted_trafos = w_trafo_list;
+
+    for (auto& trafo : sorted_trafos) {
+        if (transformer_disconnected(trafo.first)) {
+            trafo.second = infty;
+        }
+    }
+
+    std::sort(sorted_trafos.begin(), sorted_trafos.end(),
+              [](const WeightedTrafo& a, const WeightedTrafo& b) { return a.second < b.second; });
+
+    RankedTransformerGroups groups;
+    for (const auto& trafo : sorted_trafos) {
+        if (groups.empty() || groups.back().back().pos != trafo.second) {
+            groups.push_back(std::vector<Idx2D>{trafo.first});
+        } else {
+            groups.back().push_back(trafo.first);
+        }
+    }
+    return groups;
+}
+
+template <main_core::main_model_state_c State>
+inline auto rank_transformers(State const& state) -> RankedTransformerGroups {
     return rank_transformers(get_edge_weights(build_transformer_graph(state)));
 }
 
@@ -129,7 +157,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     constexpr auto get_strategy() { return strategy_; }
 
   private:
-    auto optimize(State const& /*state*/, std::vector<Idx2D> const& /*order*/) -> ResultType {
+    auto optimize(State const& /*state*/, RankedTransformerGroups const& /*order*/) -> ResultType {
         // TODO(mgovers): implement outter loop tap changer
         throw PowerGridError{};
     }
