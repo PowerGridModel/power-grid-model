@@ -24,7 +24,7 @@ using EdgeWeight = int64_t;
 using WeightedTrafo = std::pair<Idx2D, EdgeWeight>;
 using WeightedTrafoList = std::vector<WeightedTrafo>;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
-const int infty = INT_MAX;
+constexpr auto infty = std::numeric_limits<Idx>::max();
 
 struct TrafoGraphVertex {
     bool is_source{}; // is_source = true if the vertex is a source
