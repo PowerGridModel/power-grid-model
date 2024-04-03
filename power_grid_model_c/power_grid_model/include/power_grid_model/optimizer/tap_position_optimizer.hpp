@@ -36,6 +36,9 @@ struct TrafoGraphEdge {
     EdgeWeight weight{};
 };
 
+using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
+using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
+
 struct RegulatorInfo {
     Idx regulated_branch{};
     bool status{};
@@ -52,7 +55,7 @@ struct NonTransformerBranchInfo {
     BranchConnected status{};
 };
 
-struct TransformerBranchInfo {
+struct TransformerInfo {
     BranchIdx nodes{};
     BranchConnected status{};
     BranchSide tap_side{};
@@ -70,61 +73,78 @@ struct ThreeWindingTransformerInfo {
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
                                                             boost::no_property, TrafoGraphIdx, TrafoGraphIdx>;
 
+template <main_core::main_model_state_c State> inline std::vector<SourceInfo> retrieve_source_info(State const& state) {
+    auto const& iter = state.components.template citer<Source>();
+    std::vector<SourceInfo> sources(iter.size());
+    std::transform(iter.begin(), iter.end(), sources.begin(), [](Source const& source) {
+        return SourceInfo{source.node(), source.status()};
+    });
+    return sources;
+}
+
 template <main_core::main_model_state_c State>
-inline auto build_transformer_graph(State const& state) -> TransformerGraph {
-    auto const n_node = state.components.template citer<Node>().size();
+inline std::vector<ThreeWindingTransformerInfo> retrieve_transformers3w_info(State const& state) {
+    auto const& iter = state.components.template citer<ThreeWindingTransformer>();
+    std::vector<ThreeWindingTransformerInfo> transformers3w(iter.size());
+    std::transform(iter.begin(), iter.end(), transformers3w.begin(), [](ThreeWindingTransformer const& branch3) {
+        return ThreeWindingTransformerInfo{Branch3Idx{branch3.node_1(), branch3.node_2(), branch3.node_3()},
+                                           Branch3Connected{static_cast<IntS>(branch3.status_1()),
+                                                            static_cast<IntS>(branch3.status_2()),
+                                                            static_cast<IntS>(branch3.status_3())},
+                                           branch3.tap_side(), false};
+    });
+    return transformers3w;
+}
 
-    // retrieve attributes sources
-    std::vector<SourceInfo> sources(state.components.template citer<Source>().size());
-    std::transform(state.components.template citer<Source>().begin(), state.components.template citer<Source>().end(),
-                   sources.begin(), [](Source const& source) {
-                       return SourceInfo{source.node(), source.status()};
+template <main_core::main_model_state_c State>
+inline std::vector<TransformerInfo> retrieve_transformer_info(State const& state) {
+    auto const& iter = state.components.template citer<Transformer>();
+    std::vector<TransformerInfo> transformers(iter.size());
+    std::transform(iter.begin(), iter.end(), transformers.begin(), [](Transformer const& transformer) {
+        return TransformerInfo{BranchIdx{transformer.from_node(), transformer.to_node()},
+                               BranchConnected{transformer.from_status(), transformer.to_status()},
+                               transformer.tap_side(), false};
+    });
+    return transformers;
+}
+
+template <main_core::main_model_state_c State>
+inline std::vector<NonTransformerBranchInfo> retrieve_other_branches_info(State const& state) {
+    auto const& line_iter = state.components.template citer<Line>();
+    auto const& link_iter = state.components.template citer<Link>();
+    std::vector<NonTransformerBranchInfo> other_branches(line_iter.size() + link_iter.size());
+    std::transform(line_iter.begin(), line_iter.end(), other_branches.begin(), [](Line const& branch) {
+        return NonTransformerBranchInfo{
+            BranchIdx{branch.from_node(), branch.to_node()},
+            BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())}};
+    });
+    std::transform(link_iter.begin(), link_iter.end(), other_branches.begin() + line_iter.size(),
+                   [](Link const& branch) {
+                       return NonTransformerBranchInfo{BranchIdx{branch.from_node(), branch.to_node()},
+                                                       BranchConnected{static_cast<IntS>(branch.from_status()),
+                                                                       static_cast<IntS>(branch.to_status())}};
                    });
+    return other_branches;
+}
 
-    // retrieve branch 3 info
-    std::vector<ThreeWindingTransformerInfo> branch3s(
-        state.components.template citer<ThreeWindingTransformer>().size());
-    std::transform(state.components.template citer<ThreeWindingTransformer>().begin(),
-                   state.components.template citer<ThreeWindingTransformer>().end(), branch3s.begin(),
-                   [](ThreeWindingTransformer const& branch3) {
-                       return ThreeWindingTransformerInfo{
-                           Branch3Idx{branch3.node_1(), branch3.node_2(), branch3.node_3()},
-                           Branch3Connected{static_cast<IntS>(branch3.status_1()),
-                                            static_cast<IntS>(branch3.status_2()),
-                                            static_cast<IntS>(branch3.status_3())},
-                           branch3.tap_side(), false};
-                   });
+template <main_core::main_model_state_c State>
+inline std::vector<RegulatorInfo> retrieve_regulators_info(State const& state) {
+    auto const& iter = state.components.template citer<TransformerTapRegulator>();
+    std::vector<RegulatorInfo> regulators(iter.size());
+    std::transform(iter.begin(), iter.end(), regulators.begin(), [&state](TransformerTapRegulator const& regulator) {
+        using enum ControlSide;
 
-    // retrieve attributes transformers
-    std::vector<TransformerBranchInfo> transformers(state.components.template citer<Transformer>().size());
-    std::transform(state.components.template citer<Transformer>().begin(),
-                   state.components.template citer<Transformer>().end(), transformers.begin(),
-                   [](Transformer const& transformer) {
-                       return TransformerBranchInfo{BranchIdx{transformer.from_node(), transformer.to_node()},
-                                                    BranchConnected{transformer.from_status(), transformer.to_status()},
-                                                    transformer.tap_side(), false};
-                   });
+        if (regulator.control_side() == from || regulator.control_side() == to) {
+            return RegulatorInfo{state.components.template get_seq<Transformer>(regulator.regulated_object()),
+                                 regulator.status(), false};
+        }
+        return RegulatorInfo{state.components.template get_seq<ThreeWindingTransformer>(regulator.regulated_object()),
+                             regulator.status(), true};
+    });
+    return regulators;
+}
 
-    // retrieve attributes regulators
-    std::vector<RegulatorInfo> regulators(state.components.template citer<TransformerTapRegulator>().size());
-    std::transform(state.components.template citer<TransformerTapRegulator>().begin(),
-                   state.components.template citer<TransformerTapRegulator>().end(), regulators.begin(),
-                   [&state](TransformerTapRegulator const& regulator) {
-                       using enum ControlSide;
-                       if (regulator.control_side() == from || regulator.control_side() == to) {
-                           return RegulatorInfo{
-                               state.components.template get_seq<Transformer>(regulator.regulated_object()),
-                               regulator.status(), false};
-                       } else {
-                           assert(regulator.control_side() == side_1 || regulator.control_side() == side_2 ||
-                                  regulator.control_side() == side_3);
-                           return RegulatorInfo{
-                               state.components.template get_seq<ThreeWindingTransformer>(regulator.regulated_object()),
-                               regulator.status(), true};
-                       }
-                   });
-
-    // Mark regulated branches
+inline void mark_regulated_branches(const auto& regulators, auto& transformers, auto& transformers3w) {
     for (auto const& regulator : regulators) {
         if (regulator.status != 1) {
             continue;
@@ -132,56 +152,39 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
         if (!regulator.is_three_winding) {
             transformers[regulator.regulated_branch].regulator_present = true;
         } else {
-            branch3s[regulator.regulated_branch].regulator_present = true;
+            transformers3w[regulator.regulated_branch].regulator_present = true;
         }
     }
+}
 
-    // retrieve attributes lines and links
-    auto const n_lines = state.components.template citer<Line>().size();
-    auto const n_links = state.components.template citer<Link>().size();
-    std::vector<NonTransformerBranchInfo> other_branches(n_lines + n_links);
-    std::transform(state.components.template citer<Line>().begin(), state.components.template citer<Line>().end(),
-                   other_branches.begin(), [](Line const& branch) {
-                       return NonTransformerBranchInfo{BranchIdx{branch.from_node(), branch.to_node()},
-                                                       BranchConnected{static_cast<IntS>(branch.from_status()),
-                                                                       static_cast<IntS>(branch.to_status())}};
-                   });
-    std::transform(state.components.template citer<Link>().begin(), state.components.template citer<Link>().end(),
-                   other_branches.begin() + n_lines, [](Link const& branch) {
-                       return NonTransformerBranchInfo{BranchIdx{branch.from_node(), branch.to_node()},
-                                                       BranchConnected{static_cast<IntS>(branch.from_status()),
-                                                                       static_cast<IntS>(branch.to_status())}};
-                   });
+inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx from_idx, Idx to_idx,
+                        EdgeWeight weight) {
+    edges.emplace_back(static_cast<TrafoGraphIdx>(from_idx), static_cast<TrafoGraphIdx>(to_idx));
+    edge_props.push_back(TrafoGraphEdge{{}, weight});
+}
 
-    // Prepare edges / vertices
-    std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>> edges;
-    std::vector<TrafoGraphEdge> edge_props;
-
-    // add transformers
+inline void add_transformers_to_edges(auto& transformers, TrafoGraphEdges& edges,
+                                      TrafoGraphEdgeProperties& edge_props) {
     for (auto const& transformer : transformers) {
         if (transformer.status[0] != 1 || transformer.status[1] != 1) {
             continue;
         }
         if (transformer.regulator_present) {
-            Idx from_idx = 0 ? transformer.tap_side == BranchSide::from : 1;
-            Idx to_idx = 1 ? transformer.tap_side == BranchSide::from : 0;
-            edges.emplace_back(static_cast<TrafoGraphIdx>(transformer.nodes[from_idx]),
-                               static_cast<TrafoGraphIdx>(transformer.nodes[to_idx]));
-            edge_props.push_back(TrafoGraphEdge{1});
+            Idx const from_pos = 0 ? transformer.tap_side == BranchSide::from : 1;
+            Idx const to_pos = 1 ? transformer.tap_side == BranchSide::from : 0;
+            create_edge(edges, edge_props, transformer.nodes[from_pos], transformer.nodes[to_pos], 1);
         } else {
-            edges.emplace_back(static_cast<TrafoGraphIdx>(transformer.nodes[0]),
-                               static_cast<TrafoGraphIdx>(transformer.nodes[1]));
-            edge_props.push_back(TrafoGraphEdge{1});
-            edges.emplace_back(static_cast<TrafoGraphIdx>(transformer.nodes[1]),
-                               static_cast<TrafoGraphIdx>(transformer.nodes[0]));
-            edge_props.push_back(TrafoGraphEdge{1});
+            create_edge(edges, edge_props, transformer.nodes[0], transformer.nodes[1], 1);
+            create_edge(edges, edge_props, transformer.nodes[1], transformer.nodes[0], 1);
         }
     }
+}
 
-    // k as branch number for 3-way branch
+inline void add_transformers3w_to_edges(auto& transformers3w, TrafoGraphEdges& edges,
+                                        TrafoGraphEdgeProperties& edge_props) {
     std::array<Branch3Side, 3> branch3_side_map = {Branch3Side::side_1, Branch3Side::side_2, Branch3Side::side_3};
     std::array<std::tuple<IntS, IntS>, 3> branch3_combinations{{{0, 1}, {1, 2}, {0, 2}}};
-    for (auto const& branch3 : branch3s) {
+    for (auto const& branch3 : transformers3w) {
         for (auto const [from_pos, to_pos] : branch3_combinations) {
             if (branch3.status[from_pos] != 1 || branch3.status[to_pos] != 1) {
                 continue;
@@ -189,37 +192,54 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
             if (branch3.regulator_present) {
                 Idx single_from_pos = from_pos ? branch3.tap_side == branch3_side_map[from_pos] : to_pos;
                 Idx single_to_pos = to_pos ? branch3.tap_side == branch3_side_map[from_pos] : from_pos;
-                edges.emplace_back(static_cast<TrafoGraphIdx>(branch3.nodes[single_from_pos]),
-                                   static_cast<TrafoGraphIdx>(branch3.nodes[single_to_pos]));
-                edge_props.push_back(TrafoGraphEdge{1});
+                create_edge(edges, edge_props, branch3.nodes[single_from_pos], branch3.nodes[single_to_pos], 1);
             } else {
-                edges.emplace_back(static_cast<TrafoGraphIdx>(branch3.nodes[from_pos]),
-                                   static_cast<TrafoGraphIdx>(branch3.nodes[to_pos]));
-                edge_props.push_back(TrafoGraphEdge{1});
-                edges.emplace_back(static_cast<TrafoGraphIdx>(branch3.nodes[to_pos]),
-                                   static_cast<TrafoGraphIdx>(branch3.nodes[from_pos]));
-                edge_props.push_back(TrafoGraphEdge{1});
+                create_edge(edges, edge_props, branch3.nodes[from_pos], branch3.nodes[to_pos], 1);
+                create_edge(edges, edge_props, branch3.nodes[to_pos], branch3.nodes[from_pos], 1);
             }
         }
     }
+}
 
+inline void add_other_branches_to_edges(auto& other_branches, TrafoGraphEdges& edges,
+                                        TrafoGraphEdgeProperties& edge_props) {
     for (auto const& branch : other_branches) {
         if (branch.status[0] != 1 || branch.status[1] != 1) {
             continue;
         }
-        edges.emplace_back(static_cast<TrafoGraphIdx>(branch.nodes[0]), static_cast<TrafoGraphIdx>(branch.nodes[1]));
-        edges.emplace_back(static_cast<TrafoGraphIdx>(branch.nodes[1]), static_cast<TrafoGraphIdx>(branch.nodes[0]));
-        edge_props.push_back(TrafoGraphEdge{0});
-        edge_props.push_back(TrafoGraphEdge{0});
+        create_edge(edges, edge_props, branch.nodes[0], branch.nodes[1], 0);
+        create_edge(edges, edge_props, branch.nodes[1], branch.nodes[0], 1);
     }
+}
+
+template <main_core::main_model_state_c State>
+inline auto build_transformer_graph(State const& state) -> TransformerGraph {
+    // Retrieve attributes needed for graph
+    auto const n_node = state.components.template citer<Node>().size();
+    auto const& sources = retrieve_source_info(state);
+    auto const& other_branches = retrieve_other_branches_info(state);
+    auto const& regulators = retrieve_regulators_info(state);
+    auto transformers = retrieve_transformer_info(state);
+    auto transformers3w = retrieve_transformers3w_info(state);
+    mark_regulated_branches(regulators, transformers, transformers3w);
+
+    // Prepare edges
+    TrafoGraphEdges edges;
+    TrafoGraphEdgeProperties edge_props;
+    add_transformers_to_edges(transformers, edges, edge_props);
+    add_transformers3w_to_edges(transformers3w, edges, edge_props);
+    add_other_branches_to_edges(other_branches, edges, edge_props);
 
     // build graph
     TransformerGraph trafo_graph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
                                  edge_props.cbegin(), static_cast<TrafoGraphIdx>(n_node)};
+
+    // Mark sources
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }
     for (auto const& source : sources) {
         trafo_graph[source.node].is_source = source.status;
     }
+
     return trafo_graph;
 }
 
