@@ -39,12 +39,6 @@ struct TrafoGraphEdge {
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
-struct RegulatorInfo {
-    Idx regulated_branch{};
-    bool status{};
-    bool is_three_winding{};
-};
-
 struct SourceInfo {
     Idx node{};
     IntS status{};
@@ -128,31 +122,17 @@ inline std::vector<NonTransformerBranchInfo> retrieve_other_branches_info(State 
 }
 
 template <main_core::main_model_state_c State>
-inline std::vector<RegulatorInfo> retrieve_regulators_info(State const& state) {
-    auto const& iter = state.components.template citer<TransformerTapRegulator>();
-    std::vector<RegulatorInfo> regulators(iter.size());
-    std::transform(iter.begin(), iter.end(), regulators.begin(), [&state](TransformerTapRegulator const& regulator) {
-        using enum ControlSide;
-
-        if (regulator.control_side() == from || regulator.control_side() == to) {
-            return RegulatorInfo{state.components.template get_seq<Transformer>(regulator.regulated_object()),
-                                 regulator.status(), false};
-        }
-        return RegulatorInfo{state.components.template get_seq<ThreeWindingTransformer>(regulator.regulated_object()),
-                             regulator.status(), true};
-    });
-    return regulators;
-}
-
-inline void mark_regulated_branches(const auto& regulators, auto& transformers, auto& transformers3w) {
-    for (auto const& regulator : regulators) {
-        if (regulator.status != 1) {
+inline void set_regulators_info(State const& state, auto& transformers, auto& transformers3w) {
+    for (auto const& regulator : state.components.template citer<TransformerTapRegulator>()) {
+        if (!regulator.status()) {
             continue;
         }
-        if (!regulator.is_three_winding) {
-            transformers[regulator.regulated_branch].regulator_present = true;
+        if (regulator.control_side() == ControlSide::from || regulator.control_side() == ControlSide::to) {
+            transformers[state.components.template get_seq<Transformer>(regulator.regulated_object())]
+                .regulator_present = true;
         } else {
-            transformers3w[regulator.regulated_branch].regulator_present = true;
+            transformers3w[state.components.template get_seq<ThreeWindingTransformer>(regulator.regulated_object())]
+                .regulator_present = true;
         }
     }
 }
@@ -163,7 +143,7 @@ inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_p
     edge_props.push_back(TrafoGraphEdge{{}, weight});
 }
 
-inline void add_transformers_to_edges(auto& transformers, TrafoGraphEdges& edges,
+inline void add_transformers_to_edges(auto const& transformers, TrafoGraphEdges& edges,
                                       TrafoGraphEdgeProperties& edge_props) {
     for (auto const& transformer : transformers) {
         if (transformer.status[0] != 1 || transformer.status[1] != 1) {
@@ -180,7 +160,7 @@ inline void add_transformers_to_edges(auto& transformers, TrafoGraphEdges& edges
     }
 }
 
-inline void add_transformers3w_to_edges(auto& transformers3w, TrafoGraphEdges& edges,
+inline void add_transformers3w_to_edges(auto const& transformers3w, TrafoGraphEdges& edges,
                                         TrafoGraphEdgeProperties& edge_props) {
     std::array<Branch3Side, 3> branch3_side_map = {Branch3Side::side_1, Branch3Side::side_2, Branch3Side::side_3};
     std::array<std::tuple<IntS, IntS>, 3> branch3_combinations{{{0, 1}, {1, 2}, {0, 2}}};
@@ -190,8 +170,8 @@ inline void add_transformers3w_to_edges(auto& transformers3w, TrafoGraphEdges& e
                 continue;
             }
             if (branch3.regulator_present) {
-                Idx single_from_pos = from_pos ? branch3.tap_side == branch3_side_map[from_pos] : to_pos;
-                Idx single_to_pos = to_pos ? branch3.tap_side == branch3_side_map[from_pos] : from_pos;
+                Idx const single_from_pos = from_pos ? branch3.tap_side == branch3_side_map[from_pos] : to_pos;
+                Idx const single_to_pos = to_pos ? branch3.tap_side == branch3_side_map[from_pos] : from_pos;
                 create_edge(edges, edge_props, branch3.nodes[single_from_pos], branch3.nodes[single_to_pos], 1);
             } else {
                 create_edge(edges, edge_props, branch3.nodes[from_pos], branch3.nodes[to_pos], 1);
@@ -201,7 +181,7 @@ inline void add_transformers3w_to_edges(auto& transformers3w, TrafoGraphEdges& e
     }
 }
 
-inline void add_other_branches_to_edges(auto& other_branches, TrafoGraphEdges& edges,
+inline void add_other_branches_to_edges(auto const& other_branches, TrafoGraphEdges& edges,
                                         TrafoGraphEdgeProperties& edge_props) {
     for (auto const& branch : other_branches) {
         if (branch.status[0] != 1 || branch.status[1] != 1) {
@@ -217,11 +197,10 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     // Retrieve attributes needed for graph
     auto const n_node = state.components.template citer<Node>().size();
     auto const& sources = retrieve_source_info(state);
-    auto const& other_branches = retrieve_other_branches_info(state);
-    auto const& regulators = retrieve_regulators_info(state);
     auto transformers = retrieve_transformer_info(state);
     auto transformers3w = retrieve_transformers3w_info(state);
-    mark_regulated_branches(regulators, transformers, transformers3w);
+    auto const& other_branches = retrieve_other_branches_info(state);
+    set_regulators_info(state, transformers, transformers3w);
 
     // Prepare edges
     TrafoGraphEdges edges;
