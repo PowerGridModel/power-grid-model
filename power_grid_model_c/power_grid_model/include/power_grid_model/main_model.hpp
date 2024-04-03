@@ -362,38 +362,36 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }();
     }
 
-    template <symmetry_tag sym>
-    auto calculate_power_flow_(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return
-            [this, err_tol, max_iter, calculation_method](MainModelState const& state) -> std::vector<MathOutput<sym>> {
-                return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                    [&state](Idx n_math_solvers) { return prepare_power_flow_input<sym>(state, n_math_solvers); },
-                    [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
-                                                                  PowerFlowInput<sym> const& input) {
-                        return solver.run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                     y_bus);
-                    });
-            };
+    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter) {
+        return [this, err_tol, max_iter](MainModelState const& state,
+                                         CalculationMethod calculation_method) -> std::vector<MathOutput<sym>> {
+            return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, PowerFlowInput<sym>>(
+                [&state](Idx n_math_solvers) { return prepare_power_flow_input<sym>(state, n_math_solvers); },
+                [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                                                              PowerFlowInput<sym> const& input) {
+                    return solver.run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
+                                                 y_bus);
+                });
+        };
     }
 
-    template <symmetry_tag sym>
-    auto calculate_state_estimation_(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return
-            [this, err_tol, max_iter, calculation_method](MainModelState const& state) -> std::vector<MathOutput<sym>> {
-                return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                    [&state](Idx n_math_solvers) { return prepare_state_estimation_input<sym>(state, n_math_solvers); },
-                    [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
-                                                                  StateEstimationInput<sym> const& input) {
-                        return solver.run_state_estimation(input, err_tol, max_iter, calculation_info_,
-                                                           calculation_method, y_bus);
-                    });
-            };
+    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter) {
+        return [this, err_tol, max_iter](MainModelState const& state,
+                                         CalculationMethod calculation_method) -> std::vector<MathOutput<sym>> {
+            return calculate_<MathOutput<sym>, MathSolver<sym>, YBus<sym>, StateEstimationInput<sym>>(
+                [&state](Idx n_math_solvers) { return prepare_state_estimation_input<sym>(state, n_math_solvers); },
+                [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                                                              StateEstimationInput<sym> const& input) {
+                    return solver.run_state_estimation(input, err_tol, max_iter, calculation_info_, calculation_method,
+                                                       y_bus);
+                });
+        };
     }
 
-    template <symmetry_tag sym>
-    auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
+    template <symmetry_tag sym> auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling) {
         return [this, voltage_scaling,
-                calculation_method](MainModelState const& /*state*/) -> std::vector<ShortCircuitMathOutput<sym>> {
+                calculation_method](MainModelState const& /*state*/,
+                                    CalculationMethod calculation_method) -> std::vector<ShortCircuitMathOutput<sym>> {
             return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
                 [this, voltage_scaling](Idx /* n_math_solvers */) {
                     assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
@@ -671,9 +669,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                       CalculationMethod calculation_method) {
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    OptimizerType::no_optimization, OptimizerStrategy::any,
-                   calculate_power_flow_<sym>(err_tol, max_iter, calculation_method),
+                   calculate_power_flow_<sym>(err_tol, max_iter),
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
-            ->optimize(state_);
+            ->optimize(state_, calculation_method);
     }
 
     // Single load flow calculation, propagating the results to result_data
@@ -706,7 +704,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym>
     std::vector<MathOutput<sym>> calculate_state_estimation(double err_tol, Idx max_iter,
                                                             CalculationMethod calculation_method) {
-        return calculate_state_estimation_<sym>(err_tol, max_iter, calculation_method)(state_);
+        return calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method);
     }
 
     // Single state estimation calculation, propagating the results to result_data
@@ -737,7 +735,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym>
     std::vector<ShortCircuitMathOutput<sym>> calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
                                                                      CalculationMethod calculation_method) {
-        return calculate_short_circuit_<sym>(voltage_scaling, calculation_method)(state_);
+        return calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method);
     }
 
     // Single short circuit calculation, propagating the results to result_data

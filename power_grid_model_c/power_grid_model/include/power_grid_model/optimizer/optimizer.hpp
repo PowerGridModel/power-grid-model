@@ -14,7 +14,7 @@
 namespace power_grid_model::optimizer {
 
 template <typename State, typename UpdateType, typename StateCalculator, typename StateUpdater>
-    requires main_core::main_model_state_c<State> && std::invocable<std::remove_cvref_t<StateCalculator>, State&> &&
+    requires detail::state_calculator_c<StateCalculator, State> &&
              std::invocable<std::remove_cvref_t<StateUpdater>, UpdateType>
 constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy strategy, StateCalculator calculator,
                              StateUpdater updater) {

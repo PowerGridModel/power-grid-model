@@ -154,6 +154,20 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
         IntS tap_max() const {
             return apply([](auto const& t) { return t.tap_max(); });
         }
+        bool connected_at_tap_side() const {
+            return apply([](auto const& t) { return t.status(t.tap_side()); });
+        }
+        bool connected_at_control_side(TransformerTapRegulator const& regulator) const {
+            return apply([side = regulator.control_side()](auto const& t) {
+                if constexpr (std::derived_from<std::remove_cvref_t<decltype(t)>, Transformer>) {
+                    return t.status(static_cast<BranchSide>(side));
+                }
+                if constexpr (std::derived_from<std::remove_cvref_t<decltype(t)>, ThreeWindingTransformer>) {
+                    return t.status(static_cast<Branch3Side>(side));
+                }
+            });
+        }
+
         template <typename Func>
             requires std::invocable<Func, Transformer const&> && std::invocable<Func, ThreeWindingTransformer const&>
         auto apply(Func const& func) const {
@@ -165,9 +179,13 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
             if (three_winding_transformer_) {
                 return func(three_winding_transformer_->get());
             }
+
+            throw Unreachable{"TransformerRef::apply"};
         }
 
       private:
+        static bool connected_at_side(transformer_c auto const& t, ControlSide side) {}
+
         Idx2D index_;
 
         std::optional<std::reference_wrapper<const Transformer>> transformer_;
@@ -175,7 +193,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     };
 
     struct TapRegulatorRef {
-        std::reference_wrapper<const TransformerTapRegulator> tap_regulator;
+        std::reference_wrapper<const TransformerTapRegulator> regulator;
         TransformerRef transformer;
     };
 
@@ -188,11 +206,11 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
-    auto optimize(State const& state) -> ResultType final {
+    auto optimize(State const& state, CalculationMethod method) -> ResultType final {
         auto const order = this->regulator_mapping(state, rank_transformers(state));
 
         auto const cache = this->cache_state(state, order);
-        auto const optimal_output = optimize(state, order);
+        auto const optimal_output = optimize(state, order, method);
         update_state(cache);
 
         return optimal_output;
@@ -201,31 +219,47 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     constexpr auto get_strategy() { return strategy_; }
 
   private:
-    auto optimize(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order) -> ResultType {
+    auto optimize(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order,
+                  CalculationMethod method) -> ResultType {
         initialize(state, regulator_order);
 
-        if (auto const result = try_calculation_with_regulation(state, regulator_order);
+        if (auto const result = try_calculation_with_regulation(state, regulator_order, method);
             strategy_ == OptimizerStrategy::any) {
             return result;
         }
 
         // refine solution
         step_all(state, regulator_order);
-        return try_calculation_with_regulation(state, regulator_order);
+        return try_calculation_with_regulation(state, regulator_order, method);
     }
 
     auto try_calculation_with_regulation(State const& state,
-                                         std::vector<std::vector<TapRegulatorRef>> const& /*regulator_order*/)
-        -> ResultType {
+                                         std::vector<std::vector<TapRegulatorRef>> const& regulator_order,
+                                         CalculationMethod method) -> ResultType {
         // TODO(mgovers): implement outer loop tap changer
-        class InvalidPFResult : public PowerGridError {};
-
         ResultType result;
-        // try {
-        //     auto const result = calculate_(state);
 
-        // }
-        return calculate_(state);
+        try {
+            result = calculate_(state, method);
+        } catch (SparseMatrixError) {
+            result = calculate_(state, CalculationMethod::linear);
+        } catch (IterationDiverge) {
+            result = calculate_(state, CalculationMethod::linear);
+        }
+
+        bool tap_changed = true;
+        while (tap_changed) {
+            tap_changed = false;
+            for (auto const& same_rank_regulators : regulator_order) {
+                for (auto const& regulator : same_rank_regulators) {
+                    if (regulator.transformer.connected_at_tap_side() &&
+                        regulator.transformer.connected_at_control_side(regulator.regulator)) {
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     void update_state(UpdateBuffer const& update_data) {
@@ -327,8 +361,8 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
 
         auto map_regulator = [&regulator, &state, &transformer_index]<typename T>() {
             return TapRegulatorRef{
-                std::cref(regulator),
-                {transformer_index, std::cref(get_component<Transformer>(state, transformer_index))}};
+                .regulator = std::cref(regulator),
+                .transformer = {transformer_index, std::cref(get_component<Transformer>(state, transformer_index))}};
         };
         if (is_in_group<Transformer>(transformer_index)) {
             return map_regulator.template operator()<Transformer>();

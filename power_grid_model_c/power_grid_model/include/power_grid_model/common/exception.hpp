@@ -185,4 +185,12 @@ class DatasetError : public PowerGridError {
     explicit DatasetError(std::string const& msg) { append_msg(msg); }
 };
 
+class Unreachable : public PowerGridError {
+  public:
+    Unreachable(const std::string& method) {
+        append_msg("Unreachable code hit when executing " + method +
+                   ".\n This means that some assumptions are not met and may be a bug in the library\n");
+    }
+};
+
 } // namespace power_grid_model

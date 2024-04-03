@@ -37,11 +37,21 @@ class Branch : public Base {
     }
 
     // getter
-    ID from_node() const { return from_node_; }
-    ID to_node() const { return to_node_; }
-    bool from_status() const { return from_status_; }
-    bool to_status() const { return to_status_; }
-    bool branch_status() const { return from_status_ && to_status_; }
+    constexpr ID from_node() const { return from_node_; }
+    constexpr ID to_node() const { return to_node_; }
+    constexpr bool from_status() const { return from_status_; }
+    constexpr bool to_status() const { return to_status_; }
+    constexpr bool branch_status() const { return from_status_ && to_status_; }
+    constexpr bool status(BranchSide side) const {
+        switch (side) {
+        case BranchSide::from:
+            return from_status_;
+        case BranchSide::to:
+            return to_status_;
+        default:
+            throw MissingCaseForEnumError{"connected_at_side<BranchSide>", side};
+        }
+    }
     template <symmetry_tag sym> BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return BranchCalcParam<sym>{};

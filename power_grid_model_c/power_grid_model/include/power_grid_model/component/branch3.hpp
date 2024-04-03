@@ -37,18 +37,30 @@ class Branch3 : public Base {
     }
 
     // getter
-    ID node_1() const { return node_1_; }
-    ID node_2() const { return node_2_; }
-    ID node_3() const { return node_3_; }
-    bool status_1() const { return status_1_; }
-    bool status_2() const { return status_2_; }
-    bool status_3() const { return status_3_; }
-    bool branch3_status() const {
+    constexpr ID node_1() const { return node_1_; }
+    constexpr ID node_2() const { return node_2_; }
+    constexpr ID node_3() const { return node_3_; }
+    constexpr bool status_1() const { return status_1_; }
+    constexpr bool status_2() const { return status_2_; }
+    constexpr bool status_3() const { return status_3_; }
+    constexpr bool branch3_status() const {
         return status_1_ && status_2_ && status_3_; // TODO: check if this makes sense for branch3
+    }
+    constexpr bool status(Branch3Side side) const {
+        switch (side) {
+        case Branch3Side::side_1:
+            return status_1_;
+        case Branch3Side::side_2:
+            return status_2_;
+        case Branch3Side::side_3:
+            return status_3_;
+        default:
+            throw MissingCaseForEnumError{"connected_at_side<Branch3Side>", side};
+        }
     }
 
     // virtual getter
-    bool energized(bool is_connected_to_source = true) const final {
+    constexpr bool energized(bool is_connected_to_source = true) const final {
         return is_connected_to_source && (status_1_ || status_2_ || status_3_);
     }
     virtual double base_i_1() const = 0;

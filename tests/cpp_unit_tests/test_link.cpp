@@ -34,6 +34,8 @@ TEST_CASE("Test link") {
     CHECK(link.math_model_type() == ComponentType::branch);
 
     SUBCASE("General") {
+        CHECK(branch.status(BranchSide::from) == branch.from_status());
+        CHECK(branch.status(BranchSide::to) == branch.to_status());
         CHECK(branch.base_i_from() == doctest::Approx(base_i_from));
         CHECK(branch.base_i_to() == doctest::Approx(base_i_to));
         CHECK(!branch.is_param_mutable());
