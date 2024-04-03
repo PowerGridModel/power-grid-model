@@ -74,6 +74,10 @@ class InvalidMeasuredObject(InvalidID):
     """A provided measured object is invalid"""
 
 
+class InvalidRegulatedObject(InvalidID):
+    """A provided regulated object is invalid"""
+
+
 class IDWrongType(InvalidID):
     """A referenced ID points to a component that cannot be referenced here"""
 

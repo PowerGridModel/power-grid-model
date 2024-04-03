@@ -22,6 +22,7 @@ from power_grid_model.errors import (
     InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
+    InvalidRegulatedObject,
     InvalidShortCircuitPhaseOrType,
     InvalidTransformerClock,
     IterationDiverge,
@@ -56,7 +57,8 @@ _NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for st
 _ITERATION_DIVERGE_RE = re.compile(r"Iteration failed to converge")  # potentially multiple different flavors
 _CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (-?\d+)\n")
 _ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (-?\d+)\n")
-_INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) is not supported for (\w+)")
+_INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) measurement is not supported for object of type (\w+)")
+_INVALID_REGULATED_OBJECT_RE = re.compile(r"(\w+) regulator is not supported for object of type (\w+)")
 _ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
@@ -73,6 +75,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _CONFLICT_ID_RE: ConflictID,
     _ID_NOT_FOUND_RE: IDNotFound,
     _INVALID_MEASURED_OBJECT_RE: InvalidMeasuredObject,
+    _INVALID_REGULATED_OBJECT_RE: InvalidRegulatedObject,
     _ID_WRONG_TYPE_RE: IDWrongType,
     _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,

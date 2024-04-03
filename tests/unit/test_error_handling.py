@@ -162,6 +162,11 @@ def test_handle_invalid_measured_object_error():
         PowerGridModel(input_data={"node": node_input, "link": link_input, "sym_power_sensor": sym_power_sensor_input})
 
 
+@pytest.mark.skip(reason="TODO")
+def test_handle_invalid_regulated_object_error():
+    pass
+
+
 def test_handle_id_wrong_type_error():
     node_input = initialize_array("input", "node", 1)
     node_input["id"] = [0]

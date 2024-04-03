@@ -104,7 +104,14 @@ class IDNotFound : public PowerGridError {
 class InvalidMeasuredObject : public PowerGridError {
   public:
     InvalidMeasuredObject(const std::string& object, const std::string& sensor) {
-        append_msg(sensor + " is not supported for " + object);
+        append_msg(sensor + " measurement is not supported for object of type " + object);
+    }
+};
+
+class InvalidRegulatedObject : public PowerGridError {
+  public:
+    InvalidRegulatedObject(const std::string& object, const std::string& regulator) {
+        append_msg(regulator + " regulator is not supported for object of type " + object);
     }
 };
 
