@@ -23,7 +23,7 @@ class PowerGridError : public std::exception {
 
 template <typename T> class MissingCaseForEnumError : public PowerGridError {
   public:
-    MissingCaseForEnumError(const std::string& method, const T& value) {
+    MissingCaseForEnumError(std::string const& method, const T& value) {
         append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
     }
 };
@@ -103,17 +103,17 @@ class IDNotFound : public PowerGridError {
 
 class InvalidMeasuredObject : public PowerGridError {
   public:
-    InvalidMeasuredObject(const std::string& object, const std::string& sensor) {
+    InvalidMeasuredObject(std::string const& object, std::string const& sensor) {
         append_msg(sensor + " measurement is not supported for object of type " + object);
     }
 };
 
 class InvalidRegulatedObject : public PowerGridError {
   public:
-    InvalidRegulatedObject(const std::string& object, const std::string& regulator) {
+    InvalidRegulatedObject(std::string const& object, std::string const& regulator) {
         append_msg(regulator + " regulator is not supported for object of type " + object);
     }
-    InvalidRegulatedObject(ID id, const std::string& regulator) {
+    InvalidRegulatedObject(ID id, std::string const& regulator) {
         append_msg(regulator + " regulator is not supported for object with ID " + std::to_string(id));
     }
 };
@@ -182,14 +182,15 @@ class SerializationError : public PowerGridError {
 
 class DatasetError : public PowerGridError {
   public:
-    explicit DatasetError(std::string const& msg) { append_msg(msg); }
+    explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
 };
 
 class Unreachable : public PowerGridError {
   public:
-    Unreachable(const std::string& method) {
+    Unreachable(std::string const& method, std::string const& reason_for_assumption) {
         append_msg("Unreachable code hit when executing " + method +
-                   ".\n This means that some assumptions are not met and may be a bug in the library\n");
+                   ".\n The following assumption for unreachability was not met: " + reason_for_assumption +
+                   ".\n This may be a bug in the library\n");
     }
 };
 

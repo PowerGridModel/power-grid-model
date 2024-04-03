@@ -203,3 +203,13 @@ def test_handle_invalid_calculation_method_error():
     model = PowerGridModel(input_data={"node": node_input, "source": source_input, "sym_load": sym_load_input})
     with pytest.raises(InvalidCalculationMethod):
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
+
+
+@pytest.mark.skip(reason="TODO")
+def test_handle_power_grid_dataset_error():
+    pass
+
+
+@pytest.mark.skip(reason="TODO")
+def test_handle_power_grid_unreachable_error():
+    pass

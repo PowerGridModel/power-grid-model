@@ -92,3 +92,13 @@ class InvalidShortCircuitPhaseOrType(PowerGridError):
 
 class PowerGridSerializationError(PowerGridError):
     """Error occurs during (de-)serialization"""
+
+
+class PowerGridDatasetError(PowerGridError):
+    """Error occurs during dataset handling"""
+
+
+class PowerGridUnreachableError(PowerGridError):
+    """Supposedly unreachable code was hit
+
+    This usually means a failed assumption and may be caused by a bug in the PGM library."""
