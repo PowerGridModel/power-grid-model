@@ -58,7 +58,9 @@ _ITERATION_DIVERGE_RE = re.compile(r"Iteration failed to converge")  # potential
 _CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (-?\d+)\n")
 _ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (-?\d+)\n")
 _INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) measurement is not supported for object of type (\w+)")
-_INVALID_REGULATED_OBJECT_RE = re.compile(r"(\w+) regulator is not supported for object of type (\w+)")
+_INVALID_REGULATED_OBJECT_RE = re.compile(
+    r"(\w+) regulator is not supported for object "
+)  # potentially multiple different flavors
 _ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors

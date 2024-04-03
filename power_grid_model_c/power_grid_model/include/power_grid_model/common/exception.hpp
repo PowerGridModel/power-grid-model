@@ -113,6 +113,9 @@ class InvalidRegulatedObject : public PowerGridError {
     InvalidRegulatedObject(const std::string& object, const std::string& regulator) {
         append_msg(regulator + " regulator is not supported for object of type " + object);
     }
+    InvalidRegulatedObject(ID id, const std::string& regulator) {
+        append_msg(regulator + " regulator is not supported for object with ID " + std::to_string(id));
+    }
 };
 
 class IDWrongType : public PowerGridError {
