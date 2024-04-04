@@ -165,7 +165,7 @@ inline void add_transformers3w_to_edges(auto const& transformers3w, TrafoGraphEd
     std::array<Branch3Side, 3> branch3_side_map = {Branch3Side::side_1, Branch3Side::side_2, Branch3Side::side_3};
     std::array<std::tuple<IntS, IntS>, 3> branch3_combinations{{{0, 1}, {1, 2}, {0, 2}}};
     for (auto const& branch3 : transformers3w) {
-        for (auto const [from_pos, to_pos] : branch3_combinations) {
+        for (auto const& [from_pos, to_pos] : branch3_combinations) {
             if (branch3.status[from_pos] != 1 || branch3.status[to_pos] != 1) {
                 continue;
             }
