@@ -31,8 +31,6 @@ TEST_CASE("Test transformer tap regulator") {
 
     TransformerTapRegulator transformer_tap_regulator{input, u_rated};
 
-    // TODO: test inverse update
-
     SUBCASE("Test energized") {
         CHECK(transformer_tap_regulator.energized(true));
         CHECK(transformer_tap_regulator.energized(false));
