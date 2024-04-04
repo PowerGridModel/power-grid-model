@@ -389,19 +389,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym> auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling) {
-        return [this, voltage_scaling,
-                calculation_method](MainModelState const& /*state*/,
+        return
+            [this, voltage_scaling](MainModelState const& /*state*/,
                                     CalculationMethod calculation_method) -> std::vector<ShortCircuitMathOutput<sym>> {
-            return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
-                [this, voltage_scaling](Idx /* n_math_solvers */) {
-                    assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-                    return prepare_short_circuit_input<sym>(voltage_scaling);
-                },
-                [this, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
-                                           ShortCircuitInput const& input) {
-                    return solver.run_short_circuit(input, calculation_info_, calculation_method, y_bus);
-                });
-        };
+                return calculate_<ShortCircuitMathOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
+                    [this, voltage_scaling](Idx /* n_math_solvers */) {
+                        assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
+                        return prepare_short_circuit_input<sym>(voltage_scaling);
+                    },
+                    [this, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                                               ShortCircuitInput const& input) {
+                        return solver.run_short_circuit(input, calculation_info_, calculation_method, y_bus);
+                    });
+            };
     }
 
     /*

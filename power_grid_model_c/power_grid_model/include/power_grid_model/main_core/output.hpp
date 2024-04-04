@@ -127,65 +127,65 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 // output branch
-template <std::derived_from<Branch> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
-          std::forward_iterator ResIt>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Branch const& branch, Idx2D math_id) {
-        using sym = typename MathOutputType::sym;
+template <std::derived_from<Branch> Component, steady_state_math_output_type MathOutputType>
+constexpr BranchOutput<typename MathOutputType::sym>
+output_result(Branch const& branch, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
+    using sym = typename MathOutputType::sym;
 
-        if (math_id.group == -1) {
-            return branch.get_null_output<sym>();
-        }
-        return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
-    });
+    if (math_id.group == -1) {
+        return branch.get_null_output<sym>();
+    }
+    return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
 }
-template <std::derived_from<Branch> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+template <std::derived_from<Branch> Component, short_circuit_math_output_type MathOutputType>
+BranchShortCircuitOutput output_result(Branch const& branch, std::vector<MathOutputType> const& math_output,
+                                       Idx2D math_id) {
+    if (math_id.group == -1) {
+        return branch.get_null_sc_output();
+    }
+    return branch.get_sc_output(math_output[math_id.group].branch[math_id.pos]);
+}
+template <std::derived_from<Branch> Component, class ComponentContainer, math_output_type MathOutputType,
           std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(state, res_it, [&math_output](Branch const& branch, Idx2D math_id) {
-        if (math_id.group == -1) {
-            return branch.get_null_sc_output();
-        }
-        return branch.get_sc_output(math_output[math_id.group].branch[math_id.pos]);
+        return output_result<Component, MathOutputType>(branch, math_output, math_id);
     });
 }
 
 // output branch3
-template <std::derived_from<Branch3> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
-          std::forward_iterator ResIt>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx2DBranch3>(
-        state, res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
-            using sym = typename MathOutputType::sym;
+template <std::derived_from<Branch3> Component, steady_state_math_output_type MathOutputType>
+constexpr Branch3Output<typename MathOutputType::sym>
+output_result(Branch3 const& branch3, std::vector<MathOutputType> const& math_output, Idx2DBranch3 const& math_id) {
+    using sym = typename MathOutputType::sym;
 
-            if (math_id.group == -1) {
-                return branch3.get_null_output<sym>();
-            }
+    if (math_id.group == -1) {
+        return branch3.get_null_output<sym>();
+    }
 
-            auto const& branches = math_output[math_id.group].branch;
-            return branch3.get_output<sym>(branches[math_id.pos[0]], branches[math_id.pos[1]],
-                                           branches[math_id.pos[2]]);
-        });
+    auto const& branches = math_output[math_id.group].branch;
+    return branch3.get_output<sym>(branches[math_id.pos[0]], branches[math_id.pos[1]], branches[math_id.pos[2]]);
 }
-template <std::derived_from<Branch3> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+template <std::derived_from<Branch3> Component, short_circuit_math_output_type MathOutputType>
+Branch3ShortCircuitOutput output_result(Branch3 const& branch3, std::vector<MathOutputType> const& math_output,
+                                        Idx2DBranch3 const& math_id) {
+    if (math_id.group == -1) {
+        return branch3.get_null_sc_output();
+    }
+
+    auto const& branches = math_output[math_id.group].branch;
+    return branch3.get_sc_output(branches[math_id.pos[0]], branches[math_id.pos[1]], branches[math_id.pos[2]]);
+}
+template <std::derived_from<Branch3> Component, class ComponentContainer, math_output_type MathOutputType,
           std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2DBranch3>(
-        state, res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 math_id) {
-            if (math_id.group == -1) {
-                return branch3.get_null_sc_output();
-            }
-
-            auto const& branches = math_output[math_id.group].branch;
-            return branch3.get_sc_output(branches[math_id.pos[0]], branches[math_id.pos[1]], branches[math_id.pos[2]]);
+        state, res_it, [&math_output](Branch3 const& branch3, Idx2DBranch3 const& math_id) {
+            return output_result<Component>(branch3, math_output, math_id);
         });
 }
 
