@@ -109,7 +109,7 @@ constexpr auto output_result(Node const& node, std::vector<MathOutputType> const
                                 math_output[math_id.group].bus_injection[math_id.pos]);
 }
 template <std::same_as<Node> Component, short_circuit_math_output_type MathOutputType>
-auto output_result(Node const& node, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
+inline auto output_result(Node const& node, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
     if (math_id.group == -1) {
         return node.get_null_sc_output();
     }
@@ -136,7 +136,7 @@ constexpr auto output_result(Branch const& branch, std::vector<MathOutputType> c
     return branch.get_output<sym>(math_output[math_id.group].branch[math_id.pos]);
 }
 template <std::derived_from<Branch> Component, short_circuit_math_output_type MathOutputType>
-auto output_result(Branch const& branch, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
+inline auto output_result(Branch const& branch, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
     if (math_id.group == -1) {
         return branch.get_null_sc_output();
     }
@@ -166,8 +166,8 @@ constexpr auto output_result(Branch3 const& branch3, std::vector<MathOutputType>
     return branch3.get_output<sym>(branches[math_id.pos[0]], branches[math_id.pos[1]], branches[math_id.pos[2]]);
 }
 template <std::derived_from<Branch3> Component, short_circuit_math_output_type MathOutputType>
-auto output_result(Branch3 const& branch3, std::vector<MathOutputType> const& math_output,
-                   Idx2DBranch3 const& math_id) {
+inline auto output_result(Branch3 const& branch3, std::vector<MathOutputType> const& math_output,
+                          Idx2DBranch3 const& math_id) {
     if (math_id.group == -1) {
         return branch3.get_null_sc_output();
     }
@@ -210,7 +210,7 @@ constexpr auto output_result(Source const& source, std::vector<MathOutputType> c
     return source.get_output<sym>(math_output[math_id.group].source[math_id.pos]);
 }
 template <std::derived_from<Source> Component, short_circuit_math_output_type MathOutputType>
-auto output_result(Source const& source, std::vector<MathOutputType> const& math_output, Idx2D const& math_id) {
+inline auto output_result(Source const& source, std::vector<MathOutputType> const& math_output, Idx2D const& math_id) {
     if (math_id.group == -1) {
         return source.get_null_sc_output();
     }
@@ -238,8 +238,8 @@ constexpr auto output_result(GenericLoadGen const& load_gen, std::vector<MathOut
     return load_gen.get_output<sym>(math_output[math_id.group].load_gen[math_id.pos]);
 }
 template <std::derived_from<GenericLoadGen> Component, short_circuit_math_output_type MathOutputType>
-auto output_result(GenericLoadGen const& load_gen, std::vector<MathOutputType> const& /*math_output*/,
-                   Idx2D const& /*math_id*/) {
+inline auto output_result(GenericLoadGen const& load_gen, std::vector<MathOutputType> const& /*math_output*/,
+                          Idx2D const& /*math_id*/) {
     return load_gen.get_null_sc_output();
 }
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer, math_output_type MathOutputType,
@@ -264,7 +264,7 @@ constexpr auto output_result(Shunt const& shunt, std::vector<MathOutputType> con
     return shunt.get_output<sym>(math_output[math_id.group].shunt[math_id.pos]);
 }
 template <std::derived_from<Shunt> Component, short_circuit_math_output_type MathOutputType>
-auto output_result(Shunt const& shunt, std::vector<MathOutputType> const& math_output, Idx2D const& math_id) {
+inline auto output_result(Shunt const& shunt, std::vector<MathOutputType> const& math_output, Idx2D const& math_id) {
     if (math_id.group == -1) {
         return shunt.get_null_sc_output();
     }
@@ -393,15 +393,26 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 // output fault
-template <std::same_as<Fault> Component, class ComponentContainer, steady_state_math_output_type MathOutputType,
-          std::forward_iterator ResIt>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(
-        state, res_it, [](Fault const& fault, Idx2D /* math_id */) { return fault.get_output(); });
+template <std::same_as<Fault> Component, class ComponentContainer, steady_state_math_output_type MathOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
+             model_component_state_c<MainModelState, ComponentContainer, Node>
+constexpr auto output_result(Fault const& fault, MainModelState<ComponentContainer> const& state,
+                             std::vector<MathOutputType> const& math_output, Idx2D /* math_id */) {
+    return fault.get_output();
 }
-template <std::same_as<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType,
+template <std::same_as<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
+             model_component_state_c<MainModelState, ComponentContainer, Node>
+inline auto output_result(Fault const& fault, MainModelState<ComponentContainer> const& state,
+                          std::vector<MathOutputType> const& math_output, Idx2D math_id) {
+    if (math_id.group == -1) {
+        return fault.get_null_sc_output();
+    }
+
+    auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+    return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
+}
+template <std::same_as<Fault> Component, class ComponentContainer, math_output_type MathOutputType,
           std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              model_component_state_c<MainModelState, ComponentContainer, Node>
@@ -409,36 +420,31 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
         state, res_it, [&state, &math_output](Fault const& fault, Idx2D math_id) {
-            if (math_id.group == -1) {
-                return fault.get_null_sc_output();
-            }
-
-            auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-            return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
+            return output_result<Component, ComponentContainer>(fault, state, math_output, math_id);
         });
 }
 
 // output transformer tap regulator
-template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
-          steady_state_math_output_type MathOutputType, std::forward_iterator ResIt>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(
-        state, res_it, [](TransformerTapRegulator const& /* transformer_tap_regulator */, Idx2D const /* math_id */) {
-            // TODO: this function is not implemented
-            using sym = typename MathOutputType::sym;
-            return typename TransformerTapRegulator::OutputType<sym>{};
-        });
+template <std::derived_from<TransformerTapRegulator> Component, steady_state_math_output_type MathOutputType>
+constexpr auto output_result(TransformerTapRegulator const& /* transformer_tap_regulator */,
+                             std::vector<MathOutputType> const& /* math_output */, Idx2D const /* math_id */) {
+    // TODO: this function is not implemented
+    using sym = typename MathOutputType::sym;
+    return typename TransformerTapRegulator::OutputType<sym>{};
 }
-template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
-          short_circuit_math_output_type MathOutputType, std::forward_iterator ResIt>
+template <std::derived_from<TransformerTapRegulator> Component, short_circuit_math_output_type MathOutputType>
+inline auto output_result(TransformerTapRegulator const& transformer_tap_regulator,
+                          std::vector<MathOutputType> const& /* math_output */, Idx2D const /* math_id */) {
+    return transformer_tap_regulator.get_null_sc_output();
+}
+template <std::derived_from<TapRegulator> Component, class ComponentContainer, math_output_type MathOutputType,
+          std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<MathOutputType> const& /* math_output */, ResIt res_it) {
+                              std::vector<MathOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
-        state, res_it, [](TransformerTapRegulator const& transformer_tap_regulator, Idx2D const /* math_id */) {
-            return transformer_tap_regulator.get_null_sc_output();
+        state, res_it, [&math_output](TapRegulator const& regulator, Idx2D const math_id) {
+            return output_result<Component>(regulator, math_output, math_id);
         });
 }
 
