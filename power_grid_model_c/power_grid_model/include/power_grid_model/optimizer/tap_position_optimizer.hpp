@@ -133,9 +133,9 @@ inline void set_regulators_info(State const& state, auto& transformers, auto& tr
     }
 }
 
-inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx from_idx, Idx to_idx,
+inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx start, Idx end,
                         EdgeWeight weight) {
-    edges.emplace_back(static_cast<TrafoGraphIdx>(from_idx), static_cast<TrafoGraphIdx>(to_idx));
+    edges.emplace_back(static_cast<TrafoGraphIdx>(start), static_cast<TrafoGraphIdx>(end));
     edge_props.push_back(TrafoGraphEdge{{}, weight});
 }
 
