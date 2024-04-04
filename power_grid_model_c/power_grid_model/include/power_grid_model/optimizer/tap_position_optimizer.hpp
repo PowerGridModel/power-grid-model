@@ -41,24 +41,24 @@ using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
 struct SourceInfo {
     Idx node{};
-    IntS status{};
+    bool status{};
 };
 
 struct NonTransformerBranchInfo {
     BranchIdx nodes{};
-    BranchConnected status{};
+    bool status{};
 };
 
 struct TransformerInfo {
     BranchIdx nodes{};
-    BranchConnected status{};
+    bool status{};
     BranchSide tap_side{};
     bool regulator_present{};
 };
 
 struct ThreeWindingTransformerInfo {
     Branch3Idx nodes{};
-    Branch3Connected status{};
+    bool status{};
     Branch3Side tap_side{};
     bool regulator_present{};
 };
@@ -80,12 +80,11 @@ template <main_core::main_model_state_c State>
 inline std::vector<ThreeWindingTransformerInfo> retrieve_transformers3w_info(State const& state) {
     auto const& iter = state.components.template iter<ThreeWindingTransformer>();
     std::vector<ThreeWindingTransformerInfo> transformers3w(iter.size());
-    std::transform(iter.begin(), iter.end(), transformers3w.begin(), [](ThreeWindingTransformer const& branch3) {
-        return ThreeWindingTransformerInfo{Branch3Idx{branch3.node_1(), branch3.node_2(), branch3.node_3()},
-                                           Branch3Connected{static_cast<IntS>(branch3.status_1()),
-                                                            static_cast<IntS>(branch3.status_2()),
-                                                            static_cast<IntS>(branch3.status_3())},
-                                           branch3.tap_side(), false};
+    std::transform(iter.begin(), iter.end(), transformers3w.begin(), [](ThreeWindingTransformer const& transformer3w) {
+        return ThreeWindingTransformerInfo{
+            Branch3Idx{transformer3w.node_1(), transformer3w.node_2(), transformer3w.node_3()},
+            transformer3w.status_1() && transformer3w.status_2() && transformer3w.status_3(), transformer3w.tap_side(),
+            false};
     });
     return transformers3w;
 }
@@ -96,8 +95,7 @@ inline std::vector<TransformerInfo> retrieve_transformer_info(State const& state
     std::vector<TransformerInfo> transformers(iter.size());
     std::transform(iter.begin(), iter.end(), transformers.begin(), [](Transformer const& transformer) {
         return TransformerInfo{BranchIdx{transformer.from_node(), transformer.to_node()},
-                               BranchConnected{transformer.from_status(), transformer.to_status()},
-                               transformer.tap_side(), false};
+                               transformer.from_status() && transformer.to_status(), transformer.tap_side(), false};
     });
     return transformers;
 }
@@ -108,15 +106,13 @@ inline std::vector<NonTransformerBranchInfo> retrieve_other_branches_info(State 
     auto const& link_iter = state.components.template iter<Link>();
     std::vector<NonTransformerBranchInfo> other_branches(line_iter.size() + link_iter.size());
     std::transform(line_iter.begin(), line_iter.end(), other_branches.begin(), [](Line const& branch) {
-        return NonTransformerBranchInfo{
-            BranchIdx{branch.from_node(), branch.to_node()},
-            BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())}};
+        return NonTransformerBranchInfo{BranchIdx{branch.from_node(), branch.to_node()},
+                                        branch.from_status() && branch.to_status()};
     });
     std::transform(link_iter.begin(), link_iter.end(), other_branches.begin() + line_iter.size(),
                    [](Link const& branch) {
                        return NonTransformerBranchInfo{BranchIdx{branch.from_node(), branch.to_node()},
-                                                       BranchConnected{static_cast<IntS>(branch.from_status()),
-                                                                       static_cast<IntS>(branch.to_status())}};
+                                                       branch.from_status() && branch.to_status()};
                    });
     return other_branches;
 }
@@ -146,36 +142,39 @@ inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_p
 inline void add_transformers_to_edges(auto const& transformers, TrafoGraphEdges& edges,
                                       TrafoGraphEdgeProperties& edge_props) {
     for (auto const& transformer : transformers) {
-        if (transformer.status[0] != 1 || transformer.status[1] != 1) {
+        auto const& [from_node, to_node] = transformer.nodes;
+        if (!transformer.status) {
             continue;
         }
         if (transformer.regulator_present) {
-            Idx const from_pos = 0 ? transformer.tap_side == BranchSide::from : 1;
-            Idx const to_pos = 1 ? transformer.tap_side == BranchSide::from : 0;
-            create_edge(edges, edge_props, transformer.nodes[from_pos], transformer.nodes[to_pos], 1);
+            auto const& from_pos = from_node ? transformer.tap_side == BranchSide::from : to_node;
+            auto const& to_pos = to_node ? transformer.tap_side == BranchSide::from : from_node;
+            create_edge(edges, edge_props, from_pos, to_pos, 1);
         } else {
-            create_edge(edges, edge_props, transformer.nodes[0], transformer.nodes[1], 1);
-            create_edge(edges, edge_props, transformer.nodes[1], transformer.nodes[0], 1);
+            create_edge(edges, edge_props, from_node, to_node, 1);
+            create_edge(edges, edge_props, to_node, from_node, 1);
         }
     }
 }
 
 inline void add_transformers3w_to_edges(auto const& transformers3w, TrafoGraphEdges& edges,
                                         TrafoGraphEdgeProperties& edge_props) {
-    std::array<Branch3Side, 3> branch3_side_map = {Branch3Side::side_1, Branch3Side::side_2, Branch3Side::side_3};
-    std::array<std::tuple<IntS, IntS>, 3> branch3_combinations{{{0, 1}, {1, 2}, {0, 2}}};
-    for (auto const& branch3 : transformers3w) {
+    std::array<Branch3Side, 3> const branch3_side_map = {Branch3Side::side_1, Branch3Side::side_2, Branch3Side::side_3};
+    std::array<std::tuple<IntS, IntS>, 3> const branch3_combinations{{{0, 1}, {1, 2}, {0, 2}}};
+    for (auto const& transformer3w : transformers3w) {
         for (auto const& [from_pos, to_pos] : branch3_combinations) {
-            if (branch3.status[from_pos] != 1 || branch3.status[to_pos] != 1) {
+            auto const& from_node = transformer3w.nodes[from_pos];
+            auto const& to_node = transformer3w.nodes[to_pos];
+            if (!transformer3w.status) {
                 continue;
             }
-            if (branch3.regulator_present) {
-                Idx const single_from_pos = from_pos ? branch3.tap_side == branch3_side_map[from_pos] : to_pos;
-                Idx const single_to_pos = to_pos ? branch3.tap_side == branch3_side_map[from_pos] : from_pos;
-                create_edge(edges, edge_props, branch3.nodes[single_from_pos], branch3.nodes[single_to_pos], 1);
+            if (transformer3w.regulator_present) {
+                auto const& tap_from = from_node ? transformer3w.tap_side == branch3_side_map[from_pos] : to_node;
+                auto const& tap_to = to_node ? transformer3w.tap_side == branch3_side_map[from_pos] : from_node;
+                create_edge(edges, edge_props, tap_from, tap_to, 1);
             } else {
-                create_edge(edges, edge_props, branch3.nodes[from_pos], branch3.nodes[to_pos], 1);
-                create_edge(edges, edge_props, branch3.nodes[to_pos], branch3.nodes[from_pos], 1);
+                create_edge(edges, edge_props, from_node, to_node, 1);
+                create_edge(edges, edge_props, to_node, from_node, 1);
             }
         }
     }
@@ -184,7 +183,7 @@ inline void add_transformers3w_to_edges(auto const& transformers3w, TrafoGraphEd
 inline void add_other_branches_to_edges(auto const& other_branches, TrafoGraphEdges& edges,
                                         TrafoGraphEdgeProperties& edge_props) {
     for (auto const& branch : other_branches) {
-        if (branch.status[0] != 1 || branch.status[1] != 1) {
+        if (!branch.status) {
             continue;
         }
         create_edge(edges, edge_props, branch.nodes[0], branch.nodes[1], 0);
