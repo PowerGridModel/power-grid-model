@@ -8,7 +8,7 @@
 
 namespace power_grid_model::optimizer {
 namespace {
-struct StubComponentContainer {};
+using StubComponentContainer = Container<Transformer, ThreeWindingTransformer>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);

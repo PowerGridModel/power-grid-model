@@ -68,7 +68,7 @@ using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, Tr
                                                             boost::no_property, TrafoGraphIdx, TrafoGraphIdx>;
 
 template <main_core::main_model_state_c State> inline std::vector<SourceInfo> retrieve_source_info(State const& state) {
-    auto const& iter = state.components.template iter<Source>();
+    auto const& iter = state.components.template citer<Source>();
     std::vector<SourceInfo> sources(iter.size());
     std::transform(iter.begin(), iter.end(), sources.begin(), [](Source const& source) {
         return SourceInfo{source.node(), source.status()};
@@ -78,7 +78,7 @@ template <main_core::main_model_state_c State> inline std::vector<SourceInfo> re
 
 template <main_core::main_model_state_c State>
 inline std::vector<ThreeWindingTransformerInfo> retrieve_transformers3w_info(State const& state) {
-    auto const& iter = state.components.template iter<ThreeWindingTransformer>();
+    auto const& iter = state.components.template citer<ThreeWindingTransformer>();
     std::vector<ThreeWindingTransformerInfo> transformers3w(iter.size());
     std::transform(iter.begin(), iter.end(), transformers3w.begin(), [](ThreeWindingTransformer const& transformer3w) {
         return ThreeWindingTransformerInfo{
@@ -91,7 +91,7 @@ inline std::vector<ThreeWindingTransformerInfo> retrieve_transformers3w_info(Sta
 
 template <main_core::main_model_state_c State>
 inline std::vector<TransformerInfo> retrieve_transformer_info(State const& state) {
-    auto const& iter = state.components.template iter<Transformer>();
+    auto const& iter = state.components.template citer<Transformer>();
     std::vector<TransformerInfo> transformers(iter.size());
     std::transform(iter.begin(), iter.end(), transformers.begin(), [](Transformer const& transformer) {
         return TransformerInfo{BranchIdx{transformer.from_node(), transformer.to_node()},
@@ -102,8 +102,8 @@ inline std::vector<TransformerInfo> retrieve_transformer_info(State const& state
 
 template <main_core::main_model_state_c State>
 inline std::vector<NonTransformerBranchInfo> retrieve_other_branches_info(State const& state) {
-    auto const& line_iter = state.components.template iter<Line>();
-    auto const& link_iter = state.components.template iter<Link>();
+    auto const& line_iter = state.components.template citer<Line>();
+    auto const& link_iter = state.components.template citer<Link>();
     std::vector<NonTransformerBranchInfo> other_branches(line_iter.size() + link_iter.size());
     std::transform(line_iter.begin(), line_iter.end(), other_branches.begin(), [](Line const& branch) {
         return NonTransformerBranchInfo{BranchIdx{branch.from_node(), branch.to_node()},
@@ -119,7 +119,7 @@ inline std::vector<NonTransformerBranchInfo> retrieve_other_branches_info(State 
 
 template <main_core::main_model_state_c State>
 inline void set_regulators_info(State const& state, auto& transformers, auto& transformers3w) {
-    for (auto const& regulator : state.components.template iter<TransformerTapRegulator>()) {
+    for (auto const& regulator : state.components.template citer<TransformerTapRegulator>()) {
         if (!regulator.status()) {
             continue;
         }
