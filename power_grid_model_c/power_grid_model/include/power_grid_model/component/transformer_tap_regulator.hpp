@@ -22,8 +22,8 @@ class TransformerTapRegulator : public Regulator {
     static constexpr char const* name = "transformer_tap_regulator";
 
     explicit TransformerTapRegulator(TransformerTapRegulatorInput const& transformer_tap_regulator_input,
-                                     double u_rated)
-        : Regulator{transformer_tap_regulator_input},
+                                     ComponentType regulated_object_type, double u_rated)
+        : Regulator{transformer_tap_regulator_input, regulated_object_type},
           control_side_{transformer_tap_regulator_input.control_side},
           u_rated_{u_rated},
           u_set_{transformer_tap_regulator_input.u_set},
