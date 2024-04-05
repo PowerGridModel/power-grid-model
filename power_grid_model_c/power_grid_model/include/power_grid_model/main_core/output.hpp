@@ -233,8 +233,8 @@ constexpr auto output_result(Component const& voltage_sensor, MainModelState<Com
 template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline auto output_result(Component const& voltage_sensor, MainModelState<ComponentContainer> const& state,
-                          std::vector<MathOutputType> const& math_output, Idx const /* node_seq */) {
+inline auto output_result(Component const& voltage_sensor, MainModelState<ComponentContainer> const& /* state */,
+                          std::vector<MathOutputType> const& /* math_output */, Idx const /* node_seq */) {
     return voltage_sensor.get_null_sc_output();
 }
 
@@ -306,7 +306,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& power_sensor, MainModelState<ComponentContainer> const& state,
+constexpr auto output_result(Component const& power_sensor, MainModelState<ComponentContainer> const& /* state */,
                              std::vector<MathOutputType> const& /* math_output */, Idx const /* obj_seq */) {
     return power_sensor.get_null_sc_output();
 }
@@ -315,8 +315,8 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
 template <std::derived_from<Fault> Component, class ComponentContainer, steady_state_math_output_type MathOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              model_component_state_c<MainModelState, ComponentContainer, Node>
-constexpr auto output_result(Component const& fault, MainModelState<ComponentContainer> const& state,
-                             std::vector<MathOutputType> const& math_output, Idx2D /* math_id */) {
+constexpr auto output_result(Component const& fault, MainModelState<ComponentContainer> const& /* state */,
+                             std::vector<MathOutputType> const& /* math_output */, Idx2D /* math_id */) {
     return fault.get_output();
 }
 template <std::derived_from<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType>
@@ -359,7 +359,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
              requires(Component const& component, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, math_output, math_id)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -375,7 +375,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
                       std::vector<MathOutputType> const& math_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, state, math_output, math_id)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -391,7 +391,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
                       std::vector<MathOutputType> const& math_output, Idx obj_seq) {
                  {
                      output_result<Component>(component, state, math_output, obj_seq)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -407,7 +407,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
                       Idx2DBranch3 const& math_id) {
                  {
                      output_result<Component>(component, math_output, math_id)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
