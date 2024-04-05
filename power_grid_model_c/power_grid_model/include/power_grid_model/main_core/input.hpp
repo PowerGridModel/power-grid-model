@@ -106,7 +106,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     case to:
                         return regulated_object.to_node();
                     default:
-                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
+                        throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
                                                       input.control_side};
                     }
                 } else if (regulated_object_idx.group ==
@@ -121,7 +121,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     case side_3:
                         return regulated_object.node_3();
                     default:
-                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
+                        throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
                                                       input.control_side};
                     }
                 } else {
