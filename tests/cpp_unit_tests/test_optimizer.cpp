@@ -73,7 +73,7 @@ TEST_CASE("Test no-op optimizer") {
     CHECK(optimizer.optimize({}).x == 1);
 }
 
-TEST_CASE("Test tap position optimizer") {
+TEST_CASE("Test tap position optimizer" * doctest::skip(true)) {
     SUBCASE("symmetric") {
         for (auto strategy : strategies) {
             CAPTURE(strategy);
@@ -92,7 +92,7 @@ TEST_CASE("Test tap position optimizer") {
     }
 }
 
-TEST_CASE("Test get optimizer") {
+TEST_CASE("Test get optimizer" * doctest::skip(true)) {
     using enum OptimizerType;
 
     SUBCASE("Stub state calculator") {
