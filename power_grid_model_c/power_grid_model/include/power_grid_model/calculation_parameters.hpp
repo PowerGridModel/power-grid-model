@@ -330,6 +330,8 @@ struct ComponentTopology {
     IdxVector voltage_sensor_node_idx;
     IdxVector power_sensor_object_idx; // the index is relative to branch, source, shunt, or load_gen
     std::vector<MeasuredTerminalType> power_sensor_terminal_type;
+    IdxVector regulated_object_idx; // the index is relative to branch
+    std::vector<ComponentType> regulated_object_type;
 
     inline Idx n_node_total() const { return n_node + static_cast<Idx>(branch3_node_idx.size()); }
 };
@@ -369,7 +371,6 @@ struct Idx2DBranch3 {
 //		pos = -1 means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
     std::vector<Idx2D> fault;
-    std::vector<Idx2D> transformer_tap_regulator; // TODO: should this be in TopologicalComponentToMathCoupling?
 };
 
 // couple component to math model
@@ -388,6 +389,7 @@ struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
     std::vector<Idx2D> power_sensor; // can be coupled to branch-from/to, source, load_gen, or shunt sensor
+    std::vector<Idx2D> regulator;
 };
 
 // change of update cause topology and param change, or just param change

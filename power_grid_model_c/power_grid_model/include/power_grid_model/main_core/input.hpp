@@ -91,6 +91,49 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
             // check that fault object exists (currently, only faults at nodes are supported)
             state.components.template get_item<Node>(input.fault_object);
             state.components.template emplace<Component>(id, input);
+        } else if constexpr (std::derived_from<Component, TransformerTapRegulator>) {
+            Idx2D const regulated_object_idx = state.components.template get_idx_by_id(input.regulated_object);
+
+            ID const regulated_terminal = [&input, &state, &regulated_object_idx] {
+                using enum ControlSide;
+
+                if (regulated_object_idx.group == state.components.template get_type_idx<Transformer>()) {
+                    auto const& regulated_object =
+                        state.components.template get_item<Transformer>(regulated_object_idx);
+                    switch (input.control_side) {
+                    case from:
+                        return regulated_object.from_node();
+                    case to:
+                        return regulated_object.to_node();
+                    default:
+                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
+                                                      input.control_side};
+                    }
+                } else if (regulated_object_idx.group ==
+                           state.components.template get_type_idx<ThreeWindingTransformer>()) {
+                    auto const& regulated_object =
+                        state.components.template get_item<ThreeWindingTransformer>(regulated_object_idx);
+                    switch (input.control_side) {
+                    case side_1:
+                        return regulated_object.node_1();
+                    case side_2:
+                        return regulated_object.node_2();
+                    case side_3:
+                        return regulated_object.node_3();
+                    default:
+                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
+                                                      input.control_side};
+                    }
+                } else {
+                    throw InvalidRegulatedObject(input.regulated_object, Component::name);
+                }
+            }();
+
+            auto const regulated_object_type =
+                state.components.template get_item<Base>(regulated_object_idx).math_model_type();
+            double const u_rated = state.components.template get_item<Node>(regulated_terminal).u_rated();
+
+            state.components.template emplace<Component>(id, input, regulated_object_type, u_rated);
         }
     }
 }

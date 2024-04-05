@@ -264,7 +264,7 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                             InvalidMeasuredObject);
             CHECK_THROWS_WITH(main_model.add_component<SymPowerSensor>(
                                   {{4, 3, MeasuredTerminalType::branch_from, 0, 0, 0, nan, nan}}),
-                              "PowerSensor is not supported for Link");
+                              "PowerSensor measurement is not supported for object of type Link");
             CHECK_THROWS_AS(
                 main_model.add_component<SymPowerSensor>({{4, 3, MeasuredTerminalType::branch_to, 0, 0, 0, nan, nan}}),
                 InvalidMeasuredObject);
