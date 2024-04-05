@@ -180,7 +180,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         return cum_size[get_sub_cls_pos_v<StorageableSubType, StorageableTypes...>];
     }
 
-    template <class Storageable> Idx get_type_idx() const {
+    template <class Storageable> static constexpr Idx get_type_idx() {
         return static_cast<Idx>(get_type_index<Storageable, StorageableTypes...>());
     }
 

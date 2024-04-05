@@ -74,6 +74,10 @@ class InvalidMeasuredObject(InvalidID):
     """A provided measured object is invalid"""
 
 
+class InvalidRegulatedObject(InvalidID):
+    """A provided regulated object is invalid"""
+
+
 class IDWrongType(InvalidID):
     """A referenced ID points to a component that cannot be referenced here"""
 
@@ -88,3 +92,13 @@ class InvalidShortCircuitPhaseOrType(PowerGridError):
 
 class PowerGridSerializationError(PowerGridError):
     """Error occurs during (de-)serialization"""
+
+
+class PowerGridDatasetError(PowerGridError):
+    """Error occurs during dataset handling"""
+
+
+class PowerGridUnreachableError(PowerGridError):
+    """Supposedly unreachable code was hit
+
+    This usually means a failed assumption and may be caused by a bug in the PGM library."""
