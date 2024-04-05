@@ -359,7 +359,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
              requires(Component const& component, std::vector<MathOutputType> const& math_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, math_output, math_id)
-                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -375,7 +375,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
                       std::vector<MathOutputType> const& math_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, state, math_output, math_id)
-                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -391,7 +391,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
                       std::vector<MathOutputType> const& math_output, Idx obj_seq) {
                  {
                      output_result<Component>(component, state, math_output, obj_seq)
-                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
@@ -407,7 +407,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, math_outp
                       Idx2DBranch3 const& math_id) {
                  {
                      output_result<Component>(component, math_output, math_id)
-                 } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               std::vector<MathOutputType> const& math_output, ResIt res_it) {
