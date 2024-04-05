@@ -92,7 +92,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
             state.components.template get_item<Node>(input.fault_object);
             state.components.template emplace<Component>(id, input);
         } else if constexpr (std::derived_from<Component, TransformerTapRegulator>) {
-            Idx2D const regulated_object_idx = state.components.template get_idx_by_id(input.regulated_object);
+            Idx2D const regulated_object_idx = state.components.get_idx_by_id(input.regulated_object);
 
             ID const regulated_terminal = [&input, &state, &regulated_object_idx] {
                 using enum ControlSide;
@@ -106,7 +106,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     case to:
                         return regulated_object.to_node();
                     default:
-                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
+                        throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
                                                       input.control_side};
                     }
                 } else if (regulated_object_idx.group ==
@@ -121,7 +121,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     case side_3:
                         return regulated_object.node_3();
                     default:
-                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
+                        throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
                                                       input.control_side};
                     }
                 } else {

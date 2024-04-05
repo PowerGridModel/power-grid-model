@@ -233,8 +233,8 @@ constexpr auto output_result(Component const& voltage_sensor, MainModelState<Com
 template <std::derived_from<GenericVoltageSensor> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline auto output_result(Component const& voltage_sensor, MainModelState<ComponentContainer> const& state,
-                          std::vector<MathOutputType> const& math_output, Idx const /* node_seq */) {
+inline auto output_result(Component const& voltage_sensor, MainModelState<ComponentContainer> const& /* state */,
+                          std::vector<MathOutputType> const& /* math_output */, Idx const /* node_seq */) {
     return voltage_sensor.get_null_sc_output();
 }
 
@@ -306,7 +306,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
           short_circuit_math_output_type MathOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& power_sensor, MainModelState<ComponentContainer> const& state,
+constexpr auto output_result(Component const& power_sensor, MainModelState<ComponentContainer> const& /* state */,
                              std::vector<MathOutputType> const& /* math_output */, Idx const /* obj_seq */) {
     return power_sensor.get_null_sc_output();
 }
@@ -315,8 +315,8 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
 template <std::derived_from<Fault> Component, class ComponentContainer, steady_state_math_output_type MathOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              model_component_state_c<MainModelState, ComponentContainer, Node>
-constexpr auto output_result(Component const& fault, MainModelState<ComponentContainer> const& state,
-                             std::vector<MathOutputType> const& math_output, Idx2D /* math_id */) {
+constexpr auto output_result(Component const& fault, MainModelState<ComponentContainer> const& /* state */,
+                             std::vector<MathOutputType> const& /* math_output */, Idx2D /* math_id */) {
     return fault.get_output();
 }
 template <std::derived_from<Fault> Component, class ComponentContainer, short_circuit_math_output_type MathOutputType>
