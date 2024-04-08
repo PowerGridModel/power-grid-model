@@ -185,9 +185,9 @@ class DatasetError : public PowerGridError {
     explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
 };
 
-class Unreachable : public PowerGridError {
+class UnreachableHit : public PowerGridError {
   public:
-    Unreachable(std::string const& method, std::string const& reason_for_assumption) {
+    UnreachableHit(std::string const& method, std::string const& reason_for_assumption) {
         append_msg("Unreachable code hit when executing " + method +
                    ".\n The following assumption for unreachability was not met: " + reason_for_assumption +
                    ".\n This may be a bug in the library\n");

@@ -113,6 +113,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 
             switch (power_sensor.get_terminal_type()) {
             case branch_from:
+                [[fallthrough]];
             case branch_to:
                 return detail::get_seq<Branch>(state, measured_object);
             case source:
@@ -120,10 +121,13 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
             case shunt:
                 return detail::get_seq<Shunt>(state, measured_object);
             case load:
+                [[fallthrough]];
             case generator:
                 return detail::get_seq<GenericLoadGen>(state, measured_object);
             case branch3_1:
+                [[fallthrough]];
             case branch3_2:
+                [[fallthrough]];
             case branch3_3:
                 return detail::get_seq<Branch3>(state, measured_object);
             case node:
