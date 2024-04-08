@@ -286,11 +286,8 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
 
     case branch_from:
         // all power sensors in branch3 are at from side in the mathematical model
-        [[fallthrough]];
     case branch3_1:
-        [[fallthrough]];
     case branch3_2:
-        [[fallthrough]];
     case branch3_3:
         return power_sensor.template get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
     case branch_to:

@@ -125,9 +125,7 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
             case generator:
                 return detail::get_seq<GenericLoadGen>(state, measured_object);
             case branch3_1:
-                [[fallthrough]];
             case branch3_2:
-                [[fallthrough]];
             case branch3_3:
                 return detail::get_seq<Branch3>(state, measured_object);
             case node:
