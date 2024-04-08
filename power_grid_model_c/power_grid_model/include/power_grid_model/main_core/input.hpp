@@ -58,11 +58,14 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 using enum MeasuredTerminalType;
 
             case branch_from:
+                [[fallthrough]];
             case branch_to:
                 state.components.template get_item<Branch>(measured_object);
                 break;
             case branch3_1:
+                [[fallthrough]];
             case branch3_2:
+                [[fallthrough]];
             case branch3_3:
                 state.components.template get_item<Branch3>(measured_object);
                 break;
@@ -101,10 +104,11 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     auto const& regulated_object =
                         state.components.template get_item<Transformer>(regulated_object_idx);
                     switch (input.control_side) {
-                    case from:
-                        return regulated_object.from_node();
                     case to:
-                        return regulated_object.to_node();
+                        [[fallthrough]];
+                    case from:
+                        [[fallthrough]];
+                        return regulated_object.node(static_cast<BranchSide>(input.control_side));
                     default:
                         throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
                                                       input.control_side};
@@ -115,11 +119,11 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                         state.components.template get_item<ThreeWindingTransformer>(regulated_object_idx);
                     switch (input.control_side) {
                     case side_1:
-                        return regulated_object.node_1();
+                        [[fallthrough]];
                     case side_2:
-                        return regulated_object.node_2();
+                        [[fallthrough]];
                     case side_3:
-                        return regulated_object.node_3();
+                        return regulated_object.node(static_cast<Branch3Side>(input.control_side));
                     default:
                         throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
                                                       input.control_side};

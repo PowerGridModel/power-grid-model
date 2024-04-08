@@ -98,7 +98,7 @@ class PowerGridDatasetError(PowerGridError):
     """Error occurs during dataset handling"""
 
 
-class PowerGridUnreachableError(PowerGridError):
+class PowerGridUnreachableHitError(PowerGridError):
     """Supposedly unreachable code was hit
 
     This usually means a failed assumption and may be caused by a bug in the PGM library."""

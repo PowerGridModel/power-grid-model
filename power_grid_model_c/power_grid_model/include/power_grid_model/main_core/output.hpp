@@ -252,6 +252,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
             using enum MeasuredTerminalType;
 
         case branch_from:
+            [[fallthrough]];
         case branch_to:
             return state.topo_comp_coup->branch[obj_seq];
         case source:
@@ -259,6 +260,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         case shunt:
             return state.topo_comp_coup->shunt[obj_seq];
         case load:
+            [[fallthrough]];
         case generator:
             return state.topo_comp_coup->load_gen[obj_seq];
         // from branch3, get relevant math object branch based on the measured side
@@ -283,9 +285,12 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         using enum MeasuredTerminalType;
 
     case branch_from:
-    // all power sensors in branch3 are at from side in the mathematical model
+        // all power sensors in branch3 are at from side in the mathematical model
+        [[fallthrough]];
     case branch3_1:
+        [[fallthrough]];
     case branch3_2:
+        [[fallthrough]];
     case branch3_3:
         return power_sensor.template get_output<sym>(math_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
     case branch_to:
@@ -295,6 +300,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
     case shunt:
         return power_sensor.template get_output<sym>(math_output[obj_math_id.group].shunt[obj_math_id.pos].s);
     case load:
+        [[fallthrough]];
     case generator:
         return power_sensor.template get_output<sym>(math_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
     case node:

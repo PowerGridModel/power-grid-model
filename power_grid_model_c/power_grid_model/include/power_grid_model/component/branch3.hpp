@@ -40,28 +40,44 @@ class Branch3 : public Base {
     constexpr ID node_1() const { return node_1_; }
     constexpr ID node_2() const { return node_2_; }
     constexpr ID node_3() const { return node_3_; }
+    constexpr bool node(Branch3Side side) const {
+        using enum Branch3Side;
+
+        switch (side) {
+        case side_1:
+            return node_1();
+        case side_2:
+            return node_2();
+        case side_3:
+            return node_3();
+        default:
+            throw MissingCaseForEnumError{"node(Branch3Side)", side};
+        }
+    }
     constexpr bool status_1() const { return status_1_; }
     constexpr bool status_2() const { return status_2_; }
     constexpr bool status_3() const { return status_3_; }
     constexpr bool branch3_status() const {
-        return status_1_ && status_2_ && status_3_; // TODO: check if this makes sense for branch3
+        return status_1() && status_2() && status_3(); // TODO: check if this makes sense for branch3
     }
     constexpr bool status(Branch3Side side) const {
+        using enum Branch3Side;
+
         switch (side) {
-        case Branch3Side::side_1:
-            return status_1_;
-        case Branch3Side::side_2:
-            return status_2_;
-        case Branch3Side::side_3:
-            return status_3_;
+        case side_1:
+            return status_1();
+        case side_2:
+            return status_2();
+        case side_3:
+            return status_3();
         default:
-            throw MissingCaseForEnumError{"connected_at_side<Branch3Side>", side};
+            throw MissingCaseForEnumError{"status(Branch3Side)", side};
         }
     }
 
     // virtual getter
     constexpr bool energized(bool is_connected_to_source = true) const final {
-        return is_connected_to_source && (status_1_ || status_2_ || status_3_);
+        return is_connected_to_source && branch3_status();
     }
     virtual double base_i_1() const = 0;
     virtual double base_i_2() const = 0;
