@@ -77,7 +77,7 @@ class Branch3 : public Base {
 
     // virtual getter
     constexpr bool energized(bool is_connected_to_source = true) const final {
-        return is_connected_to_source && branch3_status();
+        return is_connected_to_source && (status_1_ || status_2_ || status_3_);
     }
     virtual double base_i_1() const = 0;
     virtual double base_i_2() const = 0;
