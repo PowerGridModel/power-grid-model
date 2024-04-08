@@ -74,7 +74,9 @@ class Branch : public Base {
     }
 
     // virtual getter
-    bool energized(bool is_connected_to_source) const final { return is_connected_to_source && branch_status(); }
+    bool energized(bool is_connected_to_source) const final {
+        return is_connected_to_source && (from_status_ || to_status_);
+    }
     virtual double base_i_from() const = 0;
     virtual double base_i_to() const = 0;
     virtual double loading(double max_s, double max_i) const = 0;
