@@ -139,7 +139,7 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     strategy:
       matrix:
         build-option: [ debug, release ]
@@ -179,7 +179,7 @@ jobs:
             os: ubuntu-latest
             cibw_build: "*_aarch64"
           - platform: macos
-            os: macos-13
+            os: macos-latest
             cibw_build: "*"
           - platform: windows
             os: windows-latest
@@ -201,7 +201,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Set up XCode
-        if: matrix.os == 'macos-13'
+        if: matrix.os == 'macos-latest'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
@@ -251,47 +251,8 @@ jobs:
       - name: Test
         run: pytest
 
-  test-python-macos-arm64:
-    runs-on: flyci-macos-large-latest-m1
-    needs: [build-cpp-test-macos, build-and-test-python]
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'merge_group')
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      
-      - name: Check python version
-        run: |
-          uname -a
-          uname -m
-          python -c 'import platform; print(platform.platform())'
-          python --version
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: version
-          path: .
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: wheelhouse-macos
-          path: wheelhouse-macos/.
-   
-      - name: Install
-        run: |
-          pip install power-grid-model[dev]==$(cat PYPI_VERSION) --find-links=wheelhouse-macos
-      
-      - name: test
-        run: |
-          pytest
-
-
   publish-wheels:
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()
     runs-on: ubuntu-latest
