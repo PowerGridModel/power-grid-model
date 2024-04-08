@@ -40,7 +40,7 @@ class Branch3 : public Base {
     constexpr ID node_1() const { return node_1_; }
     constexpr ID node_2() const { return node_2_; }
     constexpr ID node_3() const { return node_3_; }
-    constexpr bool node(Branch3Side side) const {
+    constexpr ID node(Branch3Side side) const {
         using enum Branch3Side;
 
         switch (side) {
