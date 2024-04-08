@@ -107,7 +107,6 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     case to:
                         [[fallthrough]];
                     case from:
-                        [[fallthrough]];
                         return regulated_object.node(static_cast<BranchSide>(input.control_side));
                     default:
                         throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
