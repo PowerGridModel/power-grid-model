@@ -2,15 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <boost/graph/compressed_sparse_row_graph.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <boost/graph/graph_traits.hpp>
-#include <limits>
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
-#include <utility>
-#include <vector>
-
-#include <boost/graph/graph_utility.hpp>
 
 #include <doctest/doctest.h>
 
