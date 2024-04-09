@@ -25,6 +25,8 @@ namespace tap_position_optimizer {
 
 namespace detail = power_grid_model::optimizer::detail;
 
+using container_impl::get_type_index;
+
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using WeightedTrafo = std::pair<Idx2D, EdgeWeight>;
@@ -235,6 +237,12 @@ static_assert(std::same_as<transformer_types_t<A, Transformer, A, B, ThreeWindin
 static_assert(std::same_as<transformer_types_t<std::tuple<A, Transformer, A, B, ThreeWindingTransformer, C>>,
                            std::tuple<Transformer, ThreeWindingTransformer>>);
 
+template <typename... Ts> struct update_buffer_s;
+template <typename... Ts> struct update_buffer_s<std::tuple<Ts...>> {
+    using type = std::tuple<std::vector<typename Ts::UpdateType>...>;
+};
+template <typename T> using update_buffer_t = typename update_buffer_s<T>::type;
+
 template <typename StateCalculator, typename StateUpdater_, typename State_>
     requires main_core::component_container_c<typename State_::ComponentContainer, Transformer> &&
              main_core::component_container_c<typename State_::ComponentContainer, ThreeWindingTransformer> &&
@@ -254,10 +262,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
 
     using TapRegulatorRef = TapRegulatorRef<TransformerTypes>;
 
-    struct UpdateBuffer {
-        std::vector<TransformerUpdate> transformer_update;
-        std::vector<ThreeWindingTransformerUpdate> three_winding_transformer_update;
-    };
+    using UpdateBuffer = update_buffer_t<TransformerTypes>;
 
   public:
     TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
@@ -445,9 +450,22 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     }
 
     void update_state(UpdateBuffer const& update_data) const {
-        ConstDataset const update_dataset{
-            {"transformer", this->get_data_ptr<Transformer>(update_data)},
-            {"three_winding_transformer", this->get_data_ptr<ThreeWindingTransformer>(update_data)}};
+        static_assert(std::tuple_size_v<TransformerTypes> == std::tuple_size_v<UpdateBuffer>);
+
+        ConstDataset update_dataset;
+        auto const update_components =
+            [ this, &update_data, &update_dataset ]<size_t... I>(std::index_sequence<I...> /* indices */) {
+            (
+                [&] {
+                    using TransformerType = std::tuple_element_t<I, TransformerTypes>;
+                    auto const& component_update = std::get<I>(update_data);
+                    if (!component_update.empty()) {
+                        update_dataset.emplace(TransformerType::name, this->get_data_ptr<TransformerType>(update_data));
+                    }
+                }(),
+                ...);
+        };
+        update_components(std::make_index_sequence<std::tuple_size_v<TransformerTypes>>{});
 
         update_(update_dataset);
     }
@@ -626,22 +644,14 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
         return index.group == group_idx;
     }
 
-    template <transformer_c T> static auto get(UpdateBuffer& update_data) {
-        if constexpr (std::derived_from<std::remove_cvref_t<T>, Transformer>) {
-            return update_data.transformer_update;
-        }
-        if constexpr (std::derived_from<std::remove_cvref_t<T>, ThreeWindingTransformer>) {
-            return update_data.three_winding_transformer_update;
-        }
+    template <typename T> static auto& get(UpdateBuffer& update_data) {
+        using UpdateType = std::vector<typename T::UpdateType>;
+        return std::get<UpdateType>(update_data);
     }
 
-    template <transformer_c T> static auto const& get(UpdateBuffer const& update_data) {
-        if constexpr (std::derived_from<std::remove_cvref_t<T>, Transformer>) {
-            return update_data.transformer_update;
-        }
-        if constexpr (std::derived_from<std::remove_cvref_t<T>, ThreeWindingTransformer>) {
-            return update_data.three_winding_transformer_update;
-        }
+    template <typename T> static auto const& get(UpdateBuffer const& update_data) {
+        using UpdateType = std::vector<typename T::UpdateType>;
+        return std::get<UpdateType>(update_data);
     }
 
     template <typename T>
