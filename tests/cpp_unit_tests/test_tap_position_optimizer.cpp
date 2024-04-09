@@ -2,7 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <boost/graph/compressed_sparse_row_graph.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/graph_traits.hpp>
+#include <limits>
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
+#include <utility>
+#include <vector>
 
 #include <boost/graph/graph_utility.hpp>
 
@@ -11,29 +17,38 @@
 namespace pgm_tap = power_grid_model::optimizer::tap_position_optimizer;
 
 namespace power_grid_model {
-namespace {} // namespace
 
 TEST_CASE("Test Transformer ranking") {
-    // The grid
+    // ToDo: The grid from OntNote page
 
     // Subcases
     SUBCASE("Building the graph") {
-        // graph creation
+        // ToDo: graph creation
     }
 
-    std::vector<pgm_tap::TrafoGraphEdge> edge_array;
-    edge_array.push_back(pgm_tap::TrafoGraphEdge({{0, 1}, 1}));
-    edge_array.push_back(pgm_tap::TrafoGraphEdge({{1, 2}, 2}));
+    // Dummy graph
+    std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
 
-    pgm_tap::TransformerGraph g;
-    //{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(), 3};
+    std::vector<pgm_tap::TrafoGraphEdge> edge_prop;
+    edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 1}, 1}));
+    edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 2}, 2}));
+    edge_prop.push_back(pgm_tap::TrafoGraphEdge({{2, 3}, 3}));
 
-    SUBCASE("Process edge weights") { auto const res = get_edge_weights(g); }
+    std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
-    SUBCASE("Dijkstra shortest path") {
-        std::vector<pgm_tap::EdgeWeight> edge_weight(3, pgm_tap::infty);
-        std::vector<Idx2D> edge_pos(3);
-        // process_edges_dijkstra(0, edge_weight, edge_pos, g);
+    pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
+                                edge_prop.cbegin(), 4};
+
+    // Vertex properties can not be set during graph creation
+    boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+        g[*vi].is_source = vertex_props[*vi].is_source;
+    }
+
+    SUBCASE("Process edge weights") {
+        auto const all_edge_weights = get_edge_weights(g);
+        const pgm_tap::WeightedTrafoList ref_edge_weights{{{0, 0}, 0}, {{0, 1}, 1}, {{0, 2}, 2}, {{2, 3}, 5}};
+        CHECK(all_edge_weights == ref_edge_weights);
     }
 
     SUBCASE("Sorting transformer edges") {
