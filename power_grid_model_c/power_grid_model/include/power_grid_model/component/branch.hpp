@@ -37,11 +37,31 @@ class Branch : public Base {
     }
 
     // getter
-    ID from_node() const { return from_node_; }
-    ID to_node() const { return to_node_; }
-    bool from_status() const { return from_status_; }
-    bool to_status() const { return to_status_; }
-    bool branch_status() const { return from_status_ && to_status_; }
+    constexpr ID from_node() const { return from_node_; }
+    constexpr ID to_node() const { return to_node_; }
+    constexpr ID node(BranchSide side) const {
+        switch (side) {
+        case BranchSide::from:
+            return from_node();
+        case BranchSide::to:
+            return to_node();
+        default:
+            throw MissingCaseForEnumError{"node(BranchSide)", side};
+        }
+    }
+    constexpr bool from_status() const { return from_status_; }
+    constexpr bool to_status() const { return to_status_; }
+    constexpr bool branch_status() const { return from_status() && to_status(); }
+    constexpr bool status(BranchSide side) const {
+        switch (side) {
+        case BranchSide::from:
+            return from_status();
+        case BranchSide::to:
+            return to_status();
+        default:
+            throw MissingCaseForEnumError{"status(BranchSide)", side};
+        }
+    }
     template <symmetry_tag sym> BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return BranchCalcParam<sym>{};
@@ -175,9 +195,9 @@ class Branch : public Base {
         double const tap = cabs(tap_ratio);
         BranchCalcParam<symmetric_t> param{};
         // not both connected
-        if (!(from_status_ && to_status_)) {
+        if (!branch_status()) {
             // single connected
-            if (from_status_ || to_status_) {
+            if (from_status() || to_status()) {
                 DoubleComplex branch_shunt;
                 // shunt value
                 if (cabs(y_shunt) < numerical_tolerance) {
@@ -187,8 +207,8 @@ class Branch : public Base {
                     branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 }
                 // from or to connected
-                param.yff() = from_status_ ? (1.0 / tap / tap) * branch_shunt : 0.0;
-                param.ytt() = to_status_ ? branch_shunt : 0.0;
+                param.yff() = from_status() ? (1.0 / tap / tap) * branch_shunt : 0.0;
+                param.ytt() = to_status() ? branch_shunt : 0.0;
             }
         }
         // both connected
