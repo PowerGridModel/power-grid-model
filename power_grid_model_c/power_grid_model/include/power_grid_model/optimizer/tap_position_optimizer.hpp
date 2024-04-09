@@ -24,10 +24,6 @@ namespace tap_position_optimizer {
 
 namespace detail = power_grid_model::optimizer::detail;
 
-template <typename T>
-concept transformer_c = std::derived_from<std::remove_cvref_t<T>, Transformer> ||
-                        std::derived_from<std::remove_cvref_t<T>, ThreeWindingTransformer>;
-
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using WeightedTrafo = std::pair<Idx2D, EdgeWeight>;
@@ -156,6 +152,70 @@ constexpr IntS tap_one_step_down(transformer_c auto const& transformer) {
     return tap_pos > tap_min ? tap_pos - 1 : tap_min;
 }
 
+template <transformer_c... TransformerTypes> class TransformerWrapper {
+  public:
+    TransformerWrapper() = default;
+
+    TransformerWrapper(std::reference_wrapper<const Transformer> transformer, Idx2D const& index, Idx topology_index)
+        : transformer_{std::move(transformer)}, index_{index}, topology_index_{topology_index} {}
+
+    TransformerWrapper(std::reference_wrapper<const ThreeWindingTransformer> three_winding_transformer,
+                       Idx2D const& index, Idx topology_index)
+        : three_winding_transformer_{std::move(three_winding_transformer)},
+          index_{index},
+          topology_index_{topology_index} {}
+
+    constexpr auto index() const { return index_; }
+    constexpr auto topology_index() const { return topology_index_; }
+
+    IntS tap_pos() const {
+        return apply([](auto const& t) { return t.tap_pos(); });
+    }
+    IntS tap_min() const {
+        return apply([](auto const& t) { return t.tap_min(); });
+    }
+    IntS tap_max() const {
+        return apply([](auto const& t) { return t.tap_max(); });
+    }
+    bool connected_at_tap_side() const {
+        return apply([](auto const& t) { return t.status(t.tap_side()); });
+    }
+    bool connected_at_control_side(TransformerTapRegulator const& regulator) const {
+        return apply([side = regulator.control_side()](auto const& t) {
+            using SideType = typename std::remove_cvref_t<decltype(t)>::SideType;
+            return t.status(static_cast<SideType>(side));
+        });
+    }
+
+    template <typename Func>
+        requires(std::invocable<Func, TransformerTypes const&> && ...)
+    auto apply(Func const& func) const {
+        assert(transformer_ || three_winding_transformer_);
+
+        if (transformer_) {
+            return func(transformer_->get());
+        }
+        if (three_winding_transformer_) {
+            return func(three_winding_transformer_->get());
+        }
+
+        throw UnreachableHit{"TransformerWrapper::apply",
+                             "This function should only be called on actual transformer references"};
+    }
+
+  private:
+    Idx2D index_;
+    Idx topology_index_;
+
+    std::optional<std::reference_wrapper<const Transformer>> transformer_;
+    std::optional<std::reference_wrapper<const ThreeWindingTransformer>> three_winding_transformer_;
+};
+
+template <transformer_c... TransformerTypes> struct TapRegulatorRef {
+    std::reference_wrapper<const TransformerTapRegulator> regulator;
+    TransformerWrapper<TransformerTypes...> transformer;
+};
+
 template <typename StateCalculator, typename StateUpdater_, typename State_>
     requires main_core::component_container_c<typename State_::ComponentContainer, Transformer> &&
              main_core::component_container_c<typename State_::ComponentContainer, ThreeWindingTransformer> &&
@@ -172,75 +232,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
   private:
     using ComponentContainer = typename State::ComponentContainer;
 
-    class TransformerRef {
-      public:
-        TransformerRef() = default;
-
-        TransformerRef(std::reference_wrapper<const Transformer> transformer, Idx2D const& index, Idx topology_index)
-            : transformer_{std::move(transformer)}, index_{index}, topology_index_{topology_index} {}
-
-        TransformerRef(std::reference_wrapper<const ThreeWindingTransformer> three_winding_transformer,
-                       Idx2D const& index, Idx topology_index)
-            : three_winding_transformer_{std::move(three_winding_transformer)},
-              index_{index},
-              topology_index_{topology_index} {}
-
-        constexpr auto index() const { return index_; }
-        constexpr auto topology_index() const { return topology_index_; }
-
-        IntS tap_pos() const {
-            return apply([](auto const& t) { return t.tap_pos(); });
-        }
-        IntS tap_min() const {
-            return apply([](auto const& t) { return t.tap_min(); });
-        }
-        IntS tap_max() const {
-            return apply([](auto const& t) { return t.tap_max(); });
-        }
-        bool connected_at_tap_side() const {
-            return apply([](auto const& t) { return t.status(t.tap_side()); });
-        }
-        bool connected_at_control_side(TransformerTapRegulator const& regulator) const {
-            return apply([side = regulator.control_side()](auto const& t) {
-                if constexpr (std::derived_from<std::remove_cvref_t<decltype(t)>, Transformer>) {
-                    return t.status(static_cast<BranchSide>(side));
-                }
-                if constexpr (std::derived_from<std::remove_cvref_t<decltype(t)>, ThreeWindingTransformer>) {
-                    return t.status(static_cast<Branch3Side>(side));
-                }
-            });
-        }
-
-        template <typename Func>
-            requires std::invocable<Func, Transformer const&> && std::invocable<Func, ThreeWindingTransformer const&>
-        auto apply(Func const& func) const {
-            assert(transformer_ || three_winding_transformer_);
-
-            if (transformer_) {
-                return func(transformer_->get());
-            }
-            if (three_winding_transformer_) {
-                return func(three_winding_transformer_->get());
-            }
-
-            throw UnreachableHit{"TransformerRef::apply",
-                                 "This function should only be called on actual transformer references"};
-        }
-
-      private:
-        static bool connected_at_side(transformer_c auto const& t, ControlSide side) {}
-
-        Idx2D index_;
-        Idx topology_index_;
-
-        std::optional<std::reference_wrapper<const Transformer>> transformer_;
-        std::optional<std::reference_wrapper<const ThreeWindingTransformer>> three_winding_transformer_;
-    };
-
-    struct TapRegulatorRef {
-        std::reference_wrapper<const TransformerTapRegulator> regulator;
-        TransformerRef transformer;
-    };
+    using TapRegulatorRef = TapRegulatorRef<Transformer, ThreeWindingTransformer>;
 
     struct UpdateBuffer {
         std::vector<TransformerUpdate> transformer_update;
@@ -251,7 +243,7 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
-    auto optimize(State const& state, CalculationMethod method) const -> ResultType final {
+    auto optimize(State const& state, CalculationMethod method) -> ResultType final {
         auto const order = this->regulator_mapping(state, rank_transformers(state));
 
         auto const cache = this->cache_state(state, order);
