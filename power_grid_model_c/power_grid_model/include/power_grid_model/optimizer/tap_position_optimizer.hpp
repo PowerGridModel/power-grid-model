@@ -17,6 +17,7 @@
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <functional>
 #include <queue>
+#include <variant>
 #include <vector>
 
 namespace power_grid_model::optimizer {
@@ -156,14 +157,10 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
   public:
     TransformerWrapper() = default;
 
-    TransformerWrapper(std::reference_wrapper<const Transformer> transformer, Idx2D const& index, Idx topology_index)
+    template <transformer_c TransformerType>
+    TransformerWrapper(std::reference_wrapper<const TransformerType> transformer, Idx2D const& index,
+                       Idx topology_index)
         : transformer_{std::move(transformer)}, index_{index}, topology_index_{topology_index} {}
-
-    TransformerWrapper(std::reference_wrapper<const ThreeWindingTransformer> three_winding_transformer,
-                       Idx2D const& index, Idx topology_index)
-        : three_winding_transformer_{std::move(three_winding_transformer)},
-          index_{index},
-          topology_index_{topology_index} {}
 
     constexpr auto index() const { return index_; }
     constexpr auto topology_index() const { return topology_index_; }
@@ -190,25 +187,14 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     template <typename Func>
         requires(std::invocable<Func, TransformerTypes const&> && ...)
     auto apply(Func const& func) const {
-        assert(transformer_ || three_winding_transformer_);
-
-        if (transformer_) {
-            return func(transformer_->get());
-        }
-        if (three_winding_transformer_) {
-            return func(three_winding_transformer_->get());
-        }
-
-        throw UnreachableHit{"TransformerWrapper::apply",
-                             "This function should only be called on actual transformer references"};
+        return std::visit([&func](auto const& t) { return func(t.get()); }, transformer_);
     }
 
   private:
     Idx2D index_;
     Idx topology_index_;
 
-    std::optional<std::reference_wrapper<const Transformer>> transformer_;
-    std::optional<std::reference_wrapper<const ThreeWindingTransformer>> three_winding_transformer_;
+    std::variant<std::reference_wrapper<const TransformerTypes>...> transformer_;
 };
 
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
