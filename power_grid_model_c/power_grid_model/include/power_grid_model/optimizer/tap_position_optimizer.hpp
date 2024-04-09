@@ -197,10 +197,43 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     std::variant<std::reference_wrapper<const TransformerTypes>...> transformer_;
 };
 
-template <transformer_c... TransformerTypes> struct TapRegulatorRef {
+template <typename... TransformerTypes> struct TapRegulatorRef;
+template <transformer_c... TransformerTypes> struct TapRegulatorRef<std::tuple<TransformerTypes...>> {
     std::reference_wrapper<const TransformerTapRegulator> regulator;
     TransformerWrapper<TransformerTypes...> transformer;
 };
+
+template <typename... Ts> struct transformer_types_s;
+template <> struct transformer_types_s<std::tuple<>> {
+    using type = std::tuple<>;
+};
+template <typename T, typename... Ts> struct transformer_types_s<T, std::tuple<Ts...>> {
+    using type = std::tuple<T, Ts...>;
+};
+template <typename T, typename... Ts> struct transformer_types_s<std::tuple<T, Ts...>> {
+    using type =
+        std::conditional_t<transformer_c<T>,
+                           typename transformer_types_s<T, typename transformer_types_s<std::tuple<Ts...>>::type>::type,
+                           typename transformer_types_s<std::tuple<Ts...>>::type>;
+};
+template <typename... Ts> struct transformer_types_s<std::tuple<std::tuple<Ts...>>> {
+    using type = typename transformer_types_s<std::tuple<Ts...>>::type;
+};
+
+template <typename... Ts> using transformer_types_t = typename transformer_types_s<std::tuple<Ts...>>::type;
+
+struct A {};
+struct B {};
+struct C {};
+static_assert(std::same_as<transformer_types_t<A, A>, std::tuple<>>);
+static_assert(std::same_as<transformer_types_t<A, B>, std::tuple<>>);
+static_assert(std::same_as<transformer_types_t<A, Transformer>, std::tuple<Transformer>>);
+static_assert(std::same_as<transformer_types_t<Transformer, ThreeWindingTransformer>,
+                           std::tuple<Transformer, ThreeWindingTransformer>>);
+static_assert(std::same_as<transformer_types_t<A, Transformer, A, B, ThreeWindingTransformer, C>,
+                           std::tuple<Transformer, ThreeWindingTransformer>>);
+static_assert(std::same_as<transformer_types_t<std::tuple<A, Transformer, A, B, ThreeWindingTransformer, C>>,
+                           std::tuple<Transformer, ThreeWindingTransformer>>);
 
 template <typename StateCalculator, typename StateUpdater_, typename State_>
     requires main_core::component_container_c<typename State_::ComponentContainer, Transformer> &&
@@ -217,8 +250,9 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
 
   private:
     using ComponentContainer = typename State::ComponentContainer;
+    using TransformerTypes = transformer_types_t<typename ComponentContainer::gettable_types>;
 
-    using TapRegulatorRef = TapRegulatorRef<Transformer, ThreeWindingTransformer>;
+    using TapRegulatorRef = TapRegulatorRef<TransformerTypes>;
 
     struct UpdateBuffer {
         std::vector<TransformerUpdate> transformer_update;
