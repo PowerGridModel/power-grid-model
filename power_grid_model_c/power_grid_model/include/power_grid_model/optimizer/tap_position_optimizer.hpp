@@ -264,6 +264,25 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
 
     using UpdateBuffer = update_buffer_t<TransformerTypes>;
 
+    template <transformer_c T>
+    static constexpr auto transformer_index_of = []() {
+        constexpr auto n_transformers = std::tuple_size_v<TransformerTypes>;
+
+        constexpr auto is_same_type = []<size_t... I>(std::index_sequence<I...> /* indices */) {
+            return std::array{std::same_as<T, std::tuple_element_t<I, TransformerTypes>>...};
+        }
+        (std::make_index_sequence<n_transformers>{});
+
+        static_assert(std::ranges::any_of(is_same_type, [](bool a) { return a; }));
+        for (size_t k = 0; k < is_same_type.size(); ++k) {
+            if (is_same_type[k]) {
+                return k;
+            }
+        }
+        assert(false); // unreachable
+        return n_transformers;
+    }();
+
   public:
     TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
@@ -644,17 +663,15 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
         return index.group == group_idx;
     }
 
-    template <typename T> static auto& get(UpdateBuffer& update_data) {
-        using UpdateType = std::vector<typename T::UpdateType>;
-        return std::get<UpdateType>(update_data);
+    template <transformer_c T> static std::vector<typename T::UpdateType>& get(UpdateBuffer& update_data) {
+        return std::get<transformer_index_of<T>>(update_data);
     }
 
-    template <typename T> static auto const& get(UpdateBuffer const& update_data) {
-        using UpdateType = std::vector<typename T::UpdateType>;
-        return std::get<UpdateType>(update_data);
+    template <transformer_c T> static std::vector<typename T::UpdateType> const& get(UpdateBuffer const& update_data) {
+        return std::get<transformer_index_of<T>>(update_data);
     }
 
-    template <typename T>
+    template <transformer_c T>
         requires requires(UpdateBuffer const& u) {
                      { get<T>(u).data() } -> std::convertible_to<void const*>;
                      { get<T>(u).size() } -> std::convertible_to<Idx>;
