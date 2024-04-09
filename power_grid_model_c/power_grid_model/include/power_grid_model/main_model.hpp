@@ -251,6 +251,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
         main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
         main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
+        main_core::register_topology_components<Regulator>(state_, comp_topo);
         state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
     }
 
@@ -1233,7 +1234,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             sc_input[i].source.resize(state_.math_topology[i]->n_source());
         }
 
-        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup), .transformer_tap_regulator = {}};
+        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
 
         prepare_input<ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
             state_, state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
@@ -1321,7 +1322,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
 using MainModel =
     MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad,
-                                        GenericGenerator, GenericPowerSensor, GenericVoltageSensor>,
+                                        GenericGenerator, GenericPowerSensor, GenericVoltageSensor, Regulator>,
                   AllComponents>;
 
 } // namespace power_grid_model

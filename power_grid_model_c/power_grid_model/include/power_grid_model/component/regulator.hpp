@@ -19,6 +19,7 @@ class Regulator : public Base {
     static constexpr char const* name = "regulator";
 
     ID regulated_object() const { return regulated_object_; };
+    ComponentType regulated_object_type() const { return regulated_object_type_; };
 
     // regulator always energized
     bool energized(bool /* is_connected_to_source */) const final { return true; }
@@ -35,9 +36,10 @@ class Regulator : public Base {
 
   protected:
     // constructor
-    explicit Regulator(RegulatorInput const& regulator_input)
+    explicit Regulator(RegulatorInput const& regulator_input, ComponentType regulated_object_type)
         : Base{regulator_input},
           regulated_object_{regulator_input.regulated_object},
+          regulated_object_type_{regulated_object_type},
           status_{regulator_input.status != 0} {}
 
     Regulator(Regulator const&) = default;
@@ -50,6 +52,7 @@ class Regulator : public Base {
 
   private:
     ID regulated_object_;
+    ComponentType regulated_object_type_;
     bool status_;
 };
 

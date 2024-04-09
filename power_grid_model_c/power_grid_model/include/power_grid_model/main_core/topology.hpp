@@ -107,25 +107,29 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(
         state, comp_topo.power_sensor_object_idx, [&state](GenericPowerSensor const& power_sensor) {
-            switch (power_sensor.get_terminal_type()) {
-                using enum MeasuredTerminalType;
+            using enum MeasuredTerminalType;
 
+            auto const measured_object = power_sensor.measured_object();
+
+            switch (power_sensor.get_terminal_type()) {
             case branch_from:
+                [[fallthrough]];
             case branch_to:
-                return detail::get_seq<Branch>(state, power_sensor.measured_object());
+                return detail::get_seq<Branch>(state, measured_object);
             case source:
-                return detail::get_seq<Source>(state, power_sensor.measured_object());
+                return detail::get_seq<Source>(state, measured_object);
             case shunt:
-                return detail::get_seq<Shunt>(state, power_sensor.measured_object());
+                return detail::get_seq<Shunt>(state, measured_object);
             case load:
+                [[fallthrough]];
             case generator:
-                return detail::get_seq<GenericLoadGen>(state, power_sensor.measured_object());
+                return detail::get_seq<GenericLoadGen>(state, measured_object);
             case branch3_1:
             case branch3_2:
             case branch3_3:
-                return detail::get_seq<Branch3>(state, power_sensor.measured_object());
+                return detail::get_seq<Branch3>(state, measured_object);
             case node:
-                return detail::get_seq<Node>(state, power_sensor.measured_object());
+                return detail::get_seq<Node>(state, measured_object);
             default:
                 throw MissingCaseForEnumError("Power sensor idx to seq transformation",
                                               power_sensor.get_terminal_type());
@@ -135,6 +139,27 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
     detail::register_topo_components<Component>(
         state, comp_topo.power_sensor_terminal_type,
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
+}
+
+template <std::derived_from<Regulator> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
+                                            ComponentTopology& comp_topo) {
+    detail::register_topo_components<Component>(
+        state, comp_topo.regulated_object_idx, [&state](Regulator const& regulator) {
+            switch (regulator.regulated_object_type()) {
+            case ComponentType::branch:
+                return detail::get_seq<Branch>(state, regulator.regulated_object());
+            case ComponentType::branch3:
+                return detail::get_seq<Branch3>(state, regulator.regulated_object());
+            default:
+                throw MissingCaseForEnumError("Regulator idx to seq transformation", regulator.regulated_object_type());
+            }
+        });
+
+    detail::register_topo_components<Component>(state, comp_topo.regulated_object_type, [](Regulator const& regulator) {
+        return regulator.regulated_object_type();
+    });
 }
 
 } // namespace power_grid_model::main_core
