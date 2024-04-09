@@ -29,11 +29,17 @@ TEST_CASE("Test transformer tap regulator") {
 
     double const u_rated{10.0e3};
 
-    TransformerTapRegulator transformer_tap_regulator{input, u_rated};
+    TransformerTapRegulator transformer_tap_regulator{input, ComponentType::branch, u_rated};
 
     SUBCASE("Test energized") {
         CHECK(transformer_tap_regulator.energized(true));
         CHECK(transformer_tap_regulator.energized(false));
+    }
+
+    SUBCASE("Test regulated object") { CHECK(transformer_tap_regulator.regulated_object() == ID{2}); }
+
+    SUBCASE("Test regulated object type") {
+        CHECK(transformer_tap_regulator.regulated_object_type() == ComponentType::branch);
     }
 
     SUBCASE("Test math model type") { CHECK(transformer_tap_regulator.math_model_type() == ComponentType::regulator); }

@@ -162,6 +162,11 @@ def test_handle_invalid_measured_object_error():
         PowerGridModel(input_data={"node": node_input, "link": link_input, "sym_power_sensor": sym_power_sensor_input})
 
 
+@pytest.mark.skip(reason="TODO")
+def test_handle_invalid_regulated_object_error():
+    pass
+
+
 def test_handle_id_wrong_type_error():
     node_input = initialize_array("input", "node", 1)
     node_input["id"] = [0]
@@ -198,3 +203,13 @@ def test_handle_invalid_calculation_method_error():
     model = PowerGridModel(input_data={"node": node_input, "source": source_input, "sym_load": sym_load_input})
     with pytest.raises(InvalidCalculationMethod):
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
+
+
+@pytest.mark.skip(reason="TODO")
+def test_handle_power_grid_dataset_error():
+    pass
+
+
+@pytest.mark.skip(reason="TODO")
+def test_handle_power_grid_unreachable_error():
+    pass
