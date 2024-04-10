@@ -67,19 +67,23 @@ struct ThreeWindingTransformerInfo {
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
                                                             boost::no_property, TrafoGraphIdx, TrafoGraphIdx>;
 
-template <main_core::main_model_state_c State>
-inline void retrieve_source_info(State const& state, std::vector<SourceInfo>& sources) {
+template <std::same_as<Source> Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+constexpr void retrieve_info(main_core::MainModelState<ComponentContainer> const& state,
+                             std::vector<SourceInfo>& sources) {
     auto const& iter = state.components.template citer<Source>();
-    sources.resize(iter.size());
+    sources.resize(std::distance(iter.begin(), iter.end()));
     std::transform(iter.begin(), iter.end(), sources.begin(), [](Source const& source) {
         return SourceInfo{source.node(), source.status()};
     });
 }
 
-template <main_core::main_model_state_c State>
-inline void retrieve_transformers3w_info(State const& state, std::vector<ThreeWindingTransformerInfo>& transformers3w) {
+template <std::same_as<ThreeWindingTransformer> Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+constexpr void retrieve_info(main_core::MainModelState<ComponentContainer> const& state,
+                             std::vector<ThreeWindingTransformerInfo>& transformers3w) {
     auto const& iter = state.components.template citer<ThreeWindingTransformer>();
-    transformers3w.resize(iter.size());
+    transformers3w.resize(std::distance(iter.begin(), iter.end()));
     std::transform(iter.begin(), iter.end(), transformers3w.begin(), [](ThreeWindingTransformer const& transformer3w) {
         return ThreeWindingTransformerInfo{
             Branch3Idx{transformer3w.node_1(), transformer3w.node_2(), transformer3w.node_3()},
@@ -88,18 +92,25 @@ inline void retrieve_transformers3w_info(State const& state, std::vector<ThreeWi
     });
 }
 
-template <main_core::main_model_state_c State>
-inline void retrieve_transformer_info(State const& state, std::vector<TransformerInfo>& transformers) {
+template <std::same_as<Transformer> Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+constexpr void retrieve_info(main_core::MainModelState<ComponentContainer> const& state,
+                             std::vector<TransformerInfo>& transformers) {
     auto const& iter = state.components.template citer<Transformer>();
-    transformers.resize(iter.size());
+    transformers.resize(std::distance(iter.begin(), iter.end()));
     std::transform(iter.begin(), iter.end(), transformers.begin(), [](Transformer const& transformer) {
         return TransformerInfo{BranchIdx{transformer.from_node(), transformer.to_node()},
                                transformer.from_status() && transformer.to_status(), transformer.tap_side(), false};
     });
 }
 
-template <main_core::main_model_state_c State>
-inline void retrieve_other_branches_info(State const& state, std::vector<NonTransformerBranchInfo>& other_branches) {
+template <typename Component>
+concept non_regulating_branch_c = std::same_as<Link, Component> || std::same_as<Line, Component>;
+
+template <non_regulating_branch_c Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+constexpr void retrieve_info(main_core::MainModelState<ComponentContainer> const& state,
+                             std::vector<NonTransformerBranchInfo>& other_branches) {
     auto const& line_iter = state.components.template citer<Line>();
     auto const& link_iter = state.components.template citer<Link>();
     other_branches.resize(line_iter.size() + link_iter.size());
@@ -128,6 +139,11 @@ inline void set_regulators_info(State const& state, auto& transformers, auto& tr
                 .regulator_present = true;
         }
     }
+}
+
+template <typename Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+inline void retrieve_info(main_core::MainModelState<ComponentContainer> const& /*state*/, auto& /*graph_componenets*/) {
 }
 
 inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx start, Idx end,
@@ -191,15 +207,19 @@ inline void add_other_branches_to_edges(auto const& other_branches, TrafoGraphEd
 template <main_core::main_model_state_c State>
 inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     // Retrieve attributes needed for graph
-    auto const n_node = state.components.template size<Node>();
     std::vector<TransformerInfo> transformers;
     std::vector<SourceInfo> sources;
     std::vector<ThreeWindingTransformerInfo> transformers3w;
     std::vector<NonTransformerBranchInfo> other_branches;
-    retrieve_source_info(state, sources);
-    retrieve_transformer_info(state, transformers);
-    retrieve_transformers3w_info(state, transformers3w);
-    retrieve_other_branches_info(state, other_branches);
+    // retrieve info to component type individually
+    // (retrieve_info<ComponentType>(state, trafo_graph_components), ...);
+    retrieve_info<Source>(state, sources);
+    retrieve_info<Transformer>(state, transformers);
+    retrieve_info<ThreeWindingTransformer>(state, transformers3w);
+    retrieve_info<Line>(state, other_branches);
+    retrieve_info<Link>(state, other_branches);
+
+    // from ComponentTopology
     set_regulators_info(state, transformers, transformers3w);
 
     // Prepare edges
@@ -211,7 +231,8 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
 
     // build graph
     TransformerGraph trafo_graph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
-                                 edge_props.cbegin(), static_cast<TrafoGraphIdx>(n_node)};
+                                 edge_props.cbegin(),
+                                 static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
     // Mark sources
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }

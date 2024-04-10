@@ -8,7 +8,7 @@
 
 namespace power_grid_model::optimizer {
 namespace {
-using StubComponentContainer = Container<Transformer, ThreeWindingTransformer>;
+using StubComponentContainer = Container<Node, Transformer, ThreeWindingTransformer, Source, Line, Link>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);
@@ -73,7 +73,7 @@ TEST_CASE("Test no-op optimizer") {
     CHECK(optimizer.optimize({}).x == 1);
 }
 
-TEST_CASE("Test tap position optimizer" * doctest::skip(true)) {
+TEST_CASE("Test tap position optimizer") {
     SUBCASE("symmetric") {
         for (auto strategy : strategies) {
             CAPTURE(strategy);
@@ -92,7 +92,7 @@ TEST_CASE("Test tap position optimizer" * doctest::skip(true)) {
     }
 }
 
-TEST_CASE("Test get optimizer" * doctest::skip(true)) {
+TEST_CASE("Test get optimizer") {
     using enum OptimizerType;
 
     SUBCASE("Stub state calculator") {
