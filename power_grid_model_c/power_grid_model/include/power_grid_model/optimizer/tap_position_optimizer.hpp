@@ -120,9 +120,11 @@ inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> RankedTr
               [](const WeightedTrafo& a, const WeightedTrafo& b) { return a.second < b.second; });
 
     RankedTransformerGroups groups;
+    Idx last_weight = -1;
     for (const auto& trafo : sorted_trafos) {
-        if (groups.empty() || groups.back().back().pos != trafo.second) {
+        if (groups.empty() || last_weight != trafo.second) {
             groups.push_back(std::vector<Idx2D>{trafo.first});
+            last_weight = trafo.second;
         } else {
             groups.back().push_back(trafo.first);
         }
