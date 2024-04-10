@@ -35,6 +35,7 @@ set(PROJECT_SOURCES
     "test_typing.cpp"
     "test_transformer_tap_regulator.cpp"
     "test_optimizer.cpp"
+    "test_tap_position_optimizer.cpp"
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
