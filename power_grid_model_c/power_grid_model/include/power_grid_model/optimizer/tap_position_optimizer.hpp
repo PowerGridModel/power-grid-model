@@ -35,28 +35,71 @@ using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
 
-template <typename T, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, T>
+template <typename ComponentType, typename ComponentContainer>
+    requires main_core::component_container_c<ComponentContainer, ComponentType>
+constexpr auto is_in_group(Idx2D const& index) {
+    constexpr auto group_idx = ComponentContainer::template get_type_idx<ComponentType>();
+    return index.group == group_idx;
+}
+
+template <typename ComponentType, typename ComponentContainer>
+    requires main_core::component_container_c<ComponentContainer, ComponentType>
+constexpr auto group_count(std::vector<Idx2D> const& indices) {
+    return std::ranges::count_if(indices, is_in_group<ComponentType>);
+}
+
+template <typename ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto& get_component(State const& state, auto const& id_or_index) {
-    return state.components.template get_item<T>(id_or_index);
+    return state.components.template get_item<ComponentType>(id_or_index);
 }
 
-template <typename T, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, T>
+template <typename ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_sequence(State const& state, auto const& id_or_index) {
-    return state.components.template get_seq<T>(id_or_index);
+    return state.components.template get_seq<ComponentType>(id_or_index);
 }
 
-template <std::derived_from<Branch> T, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, T>
+template <std::derived_from<Branch> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
     return get_sequence<Branch>(state, id_or_index);
 }
 
-template <std::derived_from<Branch3> T, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, T>
+template <std::derived_from<Branch3> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
     return get_sequence<Branch3>(state, id_or_index);
+}
+
+template <std::derived_from<Branch> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
+    return state.comp_topo->branch_node_idx[topology_sequence_idx];
+}
+
+template <std::derived_from<Branch3> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
+    return state.comp_topo->branch3_node_idx[topology_sequence_idx];
+}
+
+template <std::derived_from<Node> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
+    return state.topo_comp_coup->node[topology_sequence_idx];
+}
+
+template <std::derived_from<Branch> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
+    return state.topo_comp_coup->branch[topology_sequence_idx];
+}
+
+template <std::derived_from<Branch3> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
+    return state.topo_comp_coup->branch3[topology_sequence_idx];
 }
 
 struct TrafoGraphVertex {
@@ -266,19 +309,6 @@ static_assert(std::same_as<transformer_types_t<std::tuple<A, Transformer, A, B, 
 
 template <typename... Ts> using update_buffer_t = std::tuple<std::vector<typename Ts::UpdateType>...>;
 
-template <typename T, typename ComponentContainer>
-    requires main_core::component_container_c<ComponentContainer, T>
-constexpr auto is_in_group(Idx2D const& index) {
-    constexpr auto group_idx = ComponentContainer::template get_type_idx<T>();
-    return index.group == group_idx;
-}
-
-template <typename T, typename ComponentContainer>
-    requires main_core::component_container_c<ComponentContainer, T>
-constexpr auto group_count(std::vector<Idx2D> const& indices) {
-    return std::ranges::count_if(indices, is_in_group<T>);
-}
-
 template <typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
 TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
@@ -341,6 +371,69 @@ inline auto regulator_mapping(State const& state, RankedTransformerGroups const&
     }
 
     return result;
+}
+
+template <std::derived_from<Branch> ComponentType, steady_state_math_output_type MathOutputType>
+inline auto i_pu_controlled_node(std::vector<MathOutputType> const& math_output, Idx2D const& math_id,
+                                 ControlSide control_side) {
+    using enum ControlSide;
+
+    auto const& branch_output = math_output[math_id.group].branch[math_id.pos];
+
+    switch (control_side) {
+    case from:
+        return branch_output.i_f;
+    case to:
+        return branch_output.i_t;
+    default:
+        throw MissingCaseForEnumError("control_transformer<Branch>", control_side);
+    }
+}
+
+template <std::derived_from<Branch3> ComponentType, steady_state_math_output_type MathOutputType>
+inline auto i_pu_controlled_node(std::vector<MathOutputType> const& math_output, Idx2DBranch3 const& math_id,
+                                 ControlSide control_side) {
+    using enum ControlSide;
+
+    auto const& branch_outputs = math_output[math_id.group].branch;
+
+    switch (control_side) {
+    case side_1:
+        return branch_outputs[math_id.pos[0]].i_f;
+    case side_2:
+        return branch_outputs[math_id.pos[1]].i_f;
+    case side_3:
+        return branch_outputs[math_id.pos[2]].i_f;
+    default:
+        throw MissingCaseForEnumError("control_transformer<Branch3>", control_side);
+    }
+}
+
+template <typename ComponentType, typename... RegulatedTypes, typename State,
+          steady_state_math_output_type MathOutputType>
+    requires(std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>) &&
+            main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
+                                 std::vector<MathOutputType> const& math_output) {
+
+    auto const& branch_math_id = get_math_id<ComponentType>(state, regulator.transformer.topology_index());
+    return i_pu_controlled_node<ComponentType>(math_output, branch_math_id, regulator.regulator.get().control_side());
+}
+
+template <typename ComponentType, typename... RegulatedTypes, typename State,
+          steady_state_math_output_type MathOutputType>
+    requires(std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>) &&
+            main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
+                                 std::vector<MathOutputType> const& math_output) {
+    auto const& nodes = get_branch_nodes<ComponentType>(state, regulator.transformer.topology_index());
+
+    auto const control_side_idx = static_cast<Idx>(regulator.regulator.get().control_side());
+    assert(control_side_idx < nodes.size());
+
+    auto const controlled_node_idx = nodes[control_side_idx];
+    auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
+    return math_output[node_math_id.group].u[node_math_id.pos];
 }
 
 template <typename... T> class TapPositionOptimizerImpl;
@@ -484,89 +577,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         });
 
         return tap_changed;
-    }
-
-    template <typename ComponentType>
-        requires std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>
-    static auto u_pu_controlled_node(TapRegulatorRef const& regulator, State const& state,
-                                     ResultType const& math_output) {
-        auto const& nodes = get_branch_nodes<ComponentType>(state, regulator.transformer.topology_index());
-
-        auto const control_side_idx = static_cast<Idx>(regulator.regulator.get().control_side());
-        assert(control_side_idx < nodes.size());
-
-        auto const controlled_node_idx = nodes[control_side_idx];
-        auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
-        return math_output[node_math_id.group].u[node_math_id.pos];
-    }
-
-    template <typename ComponentType>
-        requires std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>
-    static auto i_pu_controlled_node(TapRegulatorRef const& regulator, State const& state,
-                                     ResultType const& math_output) {
-
-        auto const& branch_math_id = get_math_id<ComponentType>(state, regulator.transformer.topology_index());
-        return i_pu_controlled_node<ComponentType>(math_output, branch_math_id,
-                                                   regulator.regulator.get().control_side());
-    }
-
-    template <std::derived_from<Branch> ComponentType>
-    static auto i_pu_controlled_node(ResultType const& math_output, Idx2D const& math_id, ControlSide control_side) {
-        using enum ControlSide;
-
-        auto const& branch_output = math_output[math_id.group].branch[math_id.pos];
-
-        switch (control_side) {
-        case from:
-            return branch_output.i_f;
-        case to:
-            return branch_output.i_t;
-        default:
-            throw MissingCaseForEnumError("control_transformer<Branch>", control_side);
-        }
-    }
-    template <std::derived_from<Branch3> ComponentType>
-    static auto i_pu_controlled_node(ResultType const& math_output, Idx2DBranch3 const& math_id,
-                                     ControlSide control_side) {
-        using enum ControlSide;
-
-        auto const& branch_outputs = math_output[math_id.group].branch;
-
-        switch (control_side) {
-        case side_1:
-            return branch_outputs[math_id.pos[0]].i_f;
-        case side_2:
-            return branch_outputs[math_id.pos[1]].i_f;
-        case side_3:
-            return branch_outputs[math_id.pos[2]].i_f;
-        default:
-            throw MissingCaseForEnumError("control_transformer<Branch3>", control_side);
-        }
-    }
-
-    template <std::derived_from<Branch> ComponentType>
-    static auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
-        return state.comp_topo->branch_node_idx[topology_sequence_idx];
-    }
-
-    template <std::derived_from<Branch3> ComponentType>
-    static auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
-        return state.comp_topo->branch3_node_idx[topology_sequence_idx];
-    }
-
-    template <std::derived_from<Node> ComponentType>
-    static auto get_math_id(State const& state, Idx topology_sequence_idx) {
-        return state.topo_comp_coup->node[topology_sequence_idx];
-    }
-
-    template <std::derived_from<Branch> ComponentType>
-    static auto get_math_id(State const& state, Idx topology_sequence_idx) {
-        return state.topo_comp_coup->branch[topology_sequence_idx];
-    }
-
-    template <std::derived_from<Branch3> ComponentType>
-    static auto get_math_id(State const& state, Idx topology_sequence_idx) {
-        return state.topo_comp_coup->branch3[topology_sequence_idx];
     }
 
     void update_state(UpdateBuffer const& update_data) const {
