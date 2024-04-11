@@ -10,34 +10,73 @@ namespace pgm_tap = power_grid_model::optimizer::tap_position_optimizer;
 
 namespace power_grid_model {
 
+namespace {
+using TestComponentContainer = Container<Line, Link, Node, Transformer, Source>;
+using TestState = main_core::MainModelState<TestComponentContainer>;
+} // namespace
+
 TEST_CASE("Test Transformer ranking") {
     // ToDo: The grid from OntNote page
+    // TestState state{50.0}; TODO figure out
+    state.add_component<Node>({{0, 150e3},
+                               {1, 10e3},
+                               {2, 10e3},
+                               {3, 10e3},
+                               {4, 10e3},
+                               {5, 50e3},
+                               {6, 10e3},
+                               {7, 10e3},
+                               {8, 10e3},
+                               {9, 10e3}});
+    state.add_component<Source>({{10, 0, 1, 1.0, nan, nan, nan, nan}});
+    state.add_component<Transformer>({{11,  0,   1,   1,   1,   150e3, 10e3, nan, nan, nan, nan, nan, nan, nan,
+                                       nan, nan, nan, nan, nan, nan,   nan,  nan, nan, nan, nan, nan, nan},
+                                      {12,  0,   1,   1,   1,   150e3, 10e3, nan, nan, nan, nan, nan, nan, nan,
+                                       nan, nan, nan, nan, nan, nan,   nan,  nan, nan, nan, nan, nan, nan},
+                                      {13,  5,   7,   1,   1,   50e3, 10e3, nan, nan, nan, nan, nan, nan, nan,
+                                       nan, nan, nan, nan, nan, nan,  nan,  nan, nan, nan, nan, nan, nan},
+                                      {14,  2,   3,   1,   1,   10e3, 10e3, nan, nan, nan, nan, nan, nan, nan,
+                                       nan, nan, nan, nan, nan, nan,  nan,  nan, nan, nan, nan, nan, nan},
+                                      {15,  8,   9,   1,   1,   10e3, 10e3, nan, nan, nan, nan, nan, nan, nan,
+                                       nan, nan, nan, nan, nan, nan,  nan,  nan, nan, nan, nan, nan, nan}});
+    state.add_component<Line>({{16, 1, 2, 1, 1, nan, nan, nan, nan, nan, nan, nan, nan, nan},
+                               {17, 4, 6, 1, 1, nan, nan, nan, nan, nan, nan, nan, nan, nan},
+                               {18, 7, 8, 1, 1, nan, nan, nan, nan, nan, nan, nan, nan, nan},
+                               {19, 3, 6, 1, 1, nan, nan, nan, nan, nan, nan, nan, nan, nan}});
+    state.add_component<Link>({{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}, {23, 9, 3, 1, 1}});
 
     // Subcases
     SUBCASE("Building the graph") {
         // ToDo: graph creation
-    }
+        std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
 
-    // Dummy graph
-    std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
-
-    std::vector<pgm_tap::TrafoGraphEdge> edge_prop;
-    edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 1}, 1}));
-    edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 2}, 2}));
-    edge_prop.push_back(pgm_tap::TrafoGraphEdge({{2, 3}, 3}));
-
-    std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
-
-    pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
-                                edge_prop.cbegin(), 4};
-
-    // Vertex properties can not be set during graph creation
-    boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
-        g[*vi].is_source = vertex_props[*vi].is_source;
+        std::vector<pgm_tap::TrafoGraphEdge> edge_prop{{{0, 1}, 1}, {{0, 1}, 1}, {{0, 1}, 1}};
+        pgm_tap::TransformerGraph expected_graph{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(),
+                                                 edge_array.cend(), edge_prop.cbegin(), 10};
+        pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
+        // CHECK (actual_graph == expected_graph);
     }
 
     SUBCASE("Process edge weights") {
+        // Dummy graph
+        std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
+
+        std::vector<pgm_tap::TrafoGraphEdge> edge_prop;
+        edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 1}, 1}));
+        edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 2}, 2}));
+        edge_prop.push_back(pgm_tap::TrafoGraphEdge({{2, 3}, 3}));
+
+        std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
+
+        pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
+                                    edge_prop.cbegin(), 4};
+
+        // Vertex properties can not be set during graph creation
+        boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+            g[*vi].is_source = vertex_props[*vi].is_source;
+        }
+
         auto const all_edge_weights = get_edge_weights(g);
         const pgm_tap::WeightedTrafoList ref_edge_weights{{{0, 0}, 0}, {{0, 1}, 1}, {{0, 2}, 2}, {{2, 3}, 5}};
         CHECK(all_edge_weights == ref_edge_weights);
@@ -58,6 +97,10 @@ TEST_CASE("Test Transformer ranking") {
 
         auto const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         CHECK(sortedTrafoList == referenceList);
+    }
+
+    SUBCASE("Ranking complete the graph") {
+        // CHECK (transformer[1] == 1);
     }
 }
 
