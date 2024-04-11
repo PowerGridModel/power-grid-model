@@ -22,7 +22,8 @@ concept transformer_c = requires(T const& t, typename T::UpdateType u, typename 
                             { T::name } -> std::convertible_to<std::string_view>;
                             { t.math_model_type() } -> std::convertible_to<ComponentType>;
 
-                            { t.node(s) } -> std::convertible_to<ID>;
+                            { t.id() } -> std::same_as<ID>;
+                            { t.node(s) } -> std::same_as<ID>;
                             { t.status(s) } -> std::convertible_to<bool>;
 
                             { t.tap_side() } -> std::same_as<typename T::SideType>;

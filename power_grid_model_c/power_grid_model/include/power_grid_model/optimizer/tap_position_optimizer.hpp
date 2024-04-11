@@ -32,7 +32,32 @@ using EdgeWeight = int64_t;
 using WeightedTrafo = std::pair<Idx2D, EdgeWeight>;
 using WeightedTrafoList = std::vector<WeightedTrafo>;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
+
 constexpr auto infty = std::numeric_limits<Idx>::max();
+
+template <typename T, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, T>
+constexpr auto& get_component(State const& state, auto const& id_or_index) {
+    return state.components.template get_item<T>(id_or_index);
+}
+
+template <typename T, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, T>
+constexpr auto get_sequence(State const& state, auto const& id_or_index) {
+    return state.components.template get_seq<T>(id_or_index);
+}
+
+template <std::derived_from<Branch> T, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, T>
+constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
+    return get_sequence<Branch>(state, id_or_index);
+}
+
+template <std::derived_from<Branch3> T, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, T>
+constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
+    return get_sequence<Branch3>(state, id_or_index);
+}
 
 struct TrafoGraphVertex {
     bool is_source{}; // is_source = true if the vertex is a source
@@ -157,8 +182,6 @@ constexpr IntS tap_one_step_down(transformer_c auto const& transformer) {
 
 template <transformer_c... TransformerTypes> class TransformerWrapper {
   public:
-    TransformerWrapper() = default;
-
     template <transformer_c TransformerType>
     TransformerWrapper(std::reference_wrapper<const TransformerType> transformer, Idx2D const& index,
                        Idx topology_index)
@@ -167,6 +190,9 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     constexpr auto index() const { return index_; }
     constexpr auto topology_index() const { return topology_index_; }
 
+    IntS id() const {
+        return apply([](auto const& t) { return t.id(); });
+    }
     IntS tap_pos() const {
         return apply([](auto const& t) { return t.tap_pos(); });
     }
@@ -199,10 +225,11 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     std::variant<std::reference_wrapper<const TransformerTypes>...> transformer_;
 };
 
-template <typename... TransformerTypes> struct TapRegulatorRef;
-template <transformer_c... TransformerTypes> struct TapRegulatorRef<std::tuple<TransformerTypes...>> {
+template <transformer_c... TransformerTypes> struct TapRegulatorRef {
+    using TransformerWrapper = TransformerWrapper<TransformerTypes...>;
+
     std::reference_wrapper<const TransformerTapRegulator> regulator;
-    TransformerWrapper<TransformerTypes...> transformer;
+    TransformerWrapper transformer;
 };
 
 template <typename... Ts> struct transformer_types_s;
@@ -237,18 +264,92 @@ static_assert(std::same_as<transformer_types_t<A, Transformer, A, B, ThreeWindin
 static_assert(std::same_as<transformer_types_t<std::tuple<A, Transformer, A, B, ThreeWindingTransformer, C>>,
                            std::tuple<Transformer, ThreeWindingTransformer>>);
 
-template <typename... Ts> struct update_buffer_s;
-template <typename... Ts> struct update_buffer_s<std::tuple<Ts...>> {
-    using type = std::tuple<std::vector<typename Ts::UpdateType>...>;
-};
-template <typename T> using update_buffer_t = typename update_buffer_s<T>::type;
+template <typename... Ts> using update_buffer_t = std::tuple<std::vector<typename Ts::UpdateType>...>;
 
-template <typename StateCalculator, typename StateUpdater_, typename State_>
-    requires main_core::component_container_c<typename State_::ComponentContainer, Transformer> &&
-             main_core::component_container_c<typename State_::ComponentContainer, ThreeWindingTransformer> &&
-             detail::steady_state_calculator_c<StateCalculator, State_> &&
-             std::invocable<std::remove_cvref_t<StateUpdater_>, ConstDataset const&>
-class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
+template <typename T, typename ComponentContainer>
+    requires main_core::component_container_c<ComponentContainer, T>
+constexpr auto is_in_group(Idx2D const& index) {
+    constexpr auto group_idx = ComponentContainer::template get_type_idx<T>();
+    return index.group == group_idx;
+}
+
+template <typename T, typename ComponentContainer>
+    requires main_core::component_container_c<ComponentContainer, T>
+constexpr auto group_count(std::vector<Idx2D> const& indices) {
+    return std::ranges::count_if(indices, is_in_group<T>);
+}
+
+template <typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
+TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
+    auto const regulators = state.components.template iter<TransformerTapRegulator>();
+
+    auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
+        return regulator.regulated_object() == regulated_object;
+    });
+    assert(result_it != regulators.end());
+
+    return *result_it;
+}
+
+template <transformer_c... TransformerTypes, typename State>
+    requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
+inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state, Idx2D const& transformer_index) {
+    using ComponentContainer = typename State::ComponentContainer;
+    using ResultType = TapRegulatorRef<TransformerTypes...>;
+    using IsType = bool (*)(Idx2D const&);
+    using TransformerMapping = ResultType (*)(State const&, Idx2D const&);
+
+    constexpr auto n_types = sizeof...(TransformerTypes);
+
+    constexpr auto is_type = std::array<IsType, n_types>{is_in_group<TransformerTypes, ComponentContainer>...};
+    constexpr auto transformer_mappings =
+        std::array<TransformerMapping, n_types>{[](State const& state_, Idx2D const& transformer_index_) {
+            auto const& transformer = get_component<TransformerTypes>(state_, transformer_index_);
+            auto const topology_index = get_topology_index<TransformerTypes>(state_, transformer_index_);
+            return ResultType{.regulator = std::cref(find_regulator(state_, transformer.id())),
+                              .transformer = {std::cref(transformer), transformer_index_, topology_index}};
+        }...};
+
+    for (Idx idx = 0; idx < n_types; ++idx) {
+        if (is_type[idx](transformer_index)) {
+            return transformer_mappings[idx](state, transformer_index);
+        }
+    }
+    throw UnreachableHit{"TapPositionOptimizer::regulator_mapping", "Transformer must be regulated"};
+}
+
+template <transformer_c... TransformerTypes, typename State>
+    requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
+inline auto regulator_mapping(State const& state, std::vector<Idx2D> const& order) {
+    std::vector<TapRegulatorRef<TransformerTypes...>> result;
+
+    for (auto const& index : order) {
+        result.push_back(regulator_mapping<TransformerTypes...>(state, index));
+    }
+
+    return result;
+}
+
+template <transformer_c... TransformerTypes, typename State>
+    requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
+inline auto regulator_mapping(State const& state, RankedTransformerGroups const& order) {
+    std::vector<std::vector<TapRegulatorRef<TransformerTypes...>>> result;
+
+    for (auto const& sub_order : order) {
+        result.push_back(regulator_mapping<TransformerTypes...>(state, sub_order));
+    }
+
+    return result;
+}
+
+template <typename... T> class TapPositionOptimizerImpl;
+template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_>
+    requires(main_core::component_container_c<typename State_::ComponentContainer, TransformerTypes> && ...) &&
+            detail::steady_state_calculator_c<StateCalculator, State_> &&
+            std::invocable<std::remove_cvref_t<StateUpdater_>, ConstDataset const&>
+class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator, StateUpdater_, State_>
+    : public detail::BaseOptimizer<StateCalculator, State_> {
   public:
     using Base = detail::BaseOptimizer<StateCalculator, State_>;
     using typename Base::Calculator;
@@ -258,18 +359,18 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
 
   private:
     using ComponentContainer = typename State::ComponentContainer;
-    using TransformerTypes = transformer_types_t<typename ComponentContainer::gettable_types>;
 
-    using TapRegulatorRef = TapRegulatorRef<TransformerTypes>;
+    using TapRegulatorRef = TapRegulatorRef<TransformerTypes...>;
 
-    using UpdateBuffer = update_buffer_t<TransformerTypes>;
+    using UpdateBuffer = update_buffer_t<TransformerTypes...>;
 
     template <transformer_c T>
-    static constexpr auto transformer_index_of = []() {
-        constexpr auto n_transformers = std::tuple_size_v<TransformerTypes>;
+    static constexpr auto transformer_index_of = [] {
+        using TransformerTypesTuple = std::tuple<TransformerTypes...>;
+        constexpr auto n_transformers = std::tuple_size_v<TransformerTypesTuple>;
 
         constexpr auto is_same_type = []<size_t... I>(std::index_sequence<I...> /* indices */) {
-            return std::array{std::same_as<T, std::tuple_element_t<I, TransformerTypes>>...};
+            return std::array{std::same_as<T, std::tuple_element_t<I, TransformerTypesTuple>>...};
         }
         (std::make_index_sequence<n_transformers>{});
 
@@ -284,11 +385,11 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     }();
 
   public:
-    TapPositionOptimizer(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
+    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state, CalculationMethod method) -> ResultType final {
-        auto const order = this->regulator_mapping(state, rank_transformers(state));
+        auto const order = regulator_mapping<TransformerTypes...>(state, rank_transformers(state));
 
         auto const cache = this->cache_state(state, order);
         auto const optimal_output = optimize(state, order, method);
@@ -469,22 +570,16 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     }
 
     void update_state(UpdateBuffer const& update_data) const {
-        static_assert(std::tuple_size_v<TransformerTypes> == std::tuple_size_v<UpdateBuffer>);
+        static_assert(sizeof...(TransformerTypes) == std::tuple_size_v<UpdateBuffer>);
 
         ConstDataset update_dataset;
-        auto const update_components =
-            [ this, &update_data, &update_dataset ]<size_t... I>(std::index_sequence<I...> /* indices */) {
-            (
-                [&] {
-                    using TransformerType = std::tuple_element_t<I, TransformerTypes>;
-                    auto const& component_update = std::get<I>(update_data);
-                    if (!component_update.empty()) {
-                        update_dataset.emplace(TransformerType::name, this->get_data_ptr<TransformerType>(update_data));
-                    }
-                }(),
-                ...);
+        auto const update_component = [this, &update_data, &update_dataset]<transformer_c TransformerType>() {
+            auto const& component_update = get<TransformerType>(update_data);
+            if (!component_update.empty()) {
+                update_dataset.emplace(TransformerType::name, this->get_data_ptr<TransformerType>(update_data));
+            }
         };
-        update_components(std::make_index_sequence<std::tuple_size_v<TransformerTypes>>{});
+        (update_component.template operator()<TransformerTypes>(), ...);
 
         update_(update_dataset);
     }
@@ -570,64 +665,6 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
         update_state(update_data);
     }
 
-    template <typename T> static constexpr auto& get_component(State const& state, auto const& id_or_index) {
-        return state.components.template get_item<T>(id_or_index);
-    }
-
-    template <typename T> static constexpr auto get_sequence(State const& state, auto const& id_or_index) {
-        return state.components.template get_seq<T>(id_or_index);
-    }
-
-    static TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
-        auto const regulators = state.components.template iter<TransformerTapRegulator>();
-
-        auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
-            return regulator.regulated_object() == regulated_object;
-        });
-        assert(result_it != regulators.end());
-
-        return *result_it;
-    }
-
-    static TapRegulatorRef regulator_mapping(State const& state, Idx2D const& transformer_index) {
-        auto map_regulator = [&state, &transformer_index]<typename T>() {
-            static_assert(std::derived_from<T, Branch> || std::derived_from<T, Branch3>);
-            using BranchType = std::conditional_t<std::derived_from<T, Branch>, Branch, Branch3>;
-
-            auto const& transformer = get_component<T>(state, transformer_index);
-            auto const topology_index = get_sequence<BranchType>(state, transformer_index);
-            return TapRegulatorRef{.regulator = std::cref(find_regulator(state, transformer.id())),
-                                   .transformer = {std::cref(transformer), transformer_index, topology_index}};
-        };
-        if (is_in_group<Transformer>(transformer_index)) {
-            return map_regulator.template operator()<Transformer>();
-        }
-        if (is_in_group<ThreeWindingTransformer>(transformer_index)) {
-            return map_regulator.template operator()<ThreeWindingTransformer>();
-        }
-        throw UnreachableHit{"TapPositionOptimizer::regulator_mapping", "Ranked transformers are regulated"};
-    }
-
-    static auto regulator_mapping(State const& state, std::vector<Idx2D> const& order) {
-        std::vector<TapRegulatorRef> result;
-
-        for (auto const& index : order) {
-            result.push_back(regulator_mapping(state, index));
-        }
-
-        return result;
-    }
-
-    static auto regulator_mapping(State const& state, RankedTransformerGroups const& order) {
-        std::vector<std::vector<TapRegulatorRef>> result;
-
-        for (auto const& sub_order : order) {
-            result.push_back(regulator_mapping(state, sub_order));
-        }
-
-        return result;
-    }
-
     static constexpr auto component_cache_update(transformer_c auto const& transformer) {
         auto result = get_nan_update(transformer);
 
@@ -654,20 +691,13 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
         return result;
     }
 
-    template <typename T> static constexpr auto group_count(std::vector<Idx2D> const& indices) {
-        return std::ranges::count_if(indices, is_in_group<T>);
-    }
-
-    template <typename T> static constexpr auto is_in_group(Idx2D const& index) {
-        constexpr auto group_idx = ComponentContainer::template get_type_idx<T>();
-        return index.group == group_idx;
-    }
-
     template <transformer_c T> static std::vector<typename T::UpdateType>& get(UpdateBuffer& update_data) {
+        using ResultType = std::vector<typename T::UpdateType>;
         return std::get<transformer_index_of<T>>(update_data);
     }
 
     template <transformer_c T> static std::vector<typename T::UpdateType> const& get(UpdateBuffer const& update_data) {
+        using ResultType = std::vector<typename T::UpdateType>;
         return std::get<transformer_index_of<T>>(update_data);
     }
 
@@ -689,6 +719,13 @@ class TapPositionOptimizer : public detail::BaseOptimizer<StateCalculator, State
     StateUpdater update_;
     OptimizerStrategy strategy_;
 };
+
+template <typename StateCalculator, typename StateUpdater, main_core::main_model_state_c State>
+    requires detail::steady_state_calculator_c<StateCalculator, State> &&
+                 std::invocable<std::remove_cvref_t<StateUpdater>, ConstDataset const&>
+using TapPositionOptimizer =
+    TapPositionOptimizerImpl<transformer_types_t<typename State::ComponentContainer::gettable_types>, StateCalculator,
+                             StateUpdater, State>;
 
 } // namespace tap_position_optimizer
 
