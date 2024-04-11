@@ -15,23 +15,73 @@ namespace power_grid_model {
 namespace {
 using TestComponentContainer = Container<Line, Link, Node, Transformer, Source>;
 using TestState = main_core::MainModelState<TestComponentContainer>;
+
+TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
+    return TransformerInput{.id = id,
+                            .from_node = from,
+                            .to_node = to,
+                            .from_status = 1,
+                            .to_status = 1,
+                            .u1 = u1,
+                            .u2 = u2,
+                            .sn = nan,
+                            .uk = nan,
+                            .pk = nan,
+                            .i0 = nan,
+                            .p0 = nan,
+                            .winding_from = WindingType::wye_n,
+                            .winding_to = WindingType::wye_n,
+                            .clock = na_IntS,
+                            .tap_side = BranchSide::from,
+                            .tap_pos = na_IntS,
+                            .tap_min = na_IntS,
+                            .tap_max = na_IntS,
+                            .tap_nom = na_IntS,
+                            .tap_size = nan,
+                            .uk_min = nan,
+                            .uk_max = nan,
+                            .pk_min = nan,
+                            .pk_max = nan,
+                            .r_grounding_from = nan,
+                            .x_grounding_from = nan,
+                            .r_grounding_to = nan,
+                            .x_grounding_to = nan};
+}
+
+LineInput get_line_input(ID id, ID from, ID to) {
+    return LineInput{.id = id,
+                     .from_node = from,
+                     .to_node = to,
+                     .from_status = 1,
+                     .to_status = 1,
+                     .r1 = nan,
+                     .x1 = nan,
+                     .c1 = nan,
+                     .tan1 = nan,
+                     .r0 = nan,
+                     .x0 = nan,
+                     .c0 = nan,
+                     .tan0 = nan,
+                     .i_n = nan};
+}
+
 } // namespace
 
 TEST_CASE("Test Transformer ranking") {
-    // The grid from OntNote page
+    // Minimum test grid
     TestState state;
     std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
                                  {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
     main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
-    std::vector<TransformerInput> transformers{{11, 0, 1, 1, 1, 150e3, 10e3},
-                                               {12, 0, 1, 1, 1, 150e3, 10e3},
-                                               {13, 5, 7, 1, 1, 50e3, 10e3},
-                                               {14, 2, 3, 1, 1, 10e3, 10e3},
-                                               {15, 8, 9, 1, 1, 10e3, 10e3}};
+    std::vector<TransformerInput> transformers{
+        get_transformer(11, 0, 1, 150e3, 10e3), get_transformer(12, 0, 1, 150e3, 10e3),
+        get_transformer(13, 5, 7, 50e3, 10e3), get_transformer(14, 2, 3, 10e3, 10e3),
+        get_transformer(15, 8, 9, 10e3, 10e3)};
     main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
-    std::vector<LineInput> lines{{16, 1, 2, 1, 1}, {17, 4, 6, 1, 1}, {18, 7, 8, 1, 1}, {19, 3, 6, 1, 1}};
+    std::vector<LineInput> lines{get_line_input(16, 1, 2), get_line_input(17, 4, 6), get_line_input(18, 7, 8),
+                                 get_line_input(19, 3, 6)};
     main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
 
     std::vector<LinkInput> links{{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}, {23, 9, 3, 1, 1}};
