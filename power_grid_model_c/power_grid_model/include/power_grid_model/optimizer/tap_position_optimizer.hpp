@@ -51,8 +51,9 @@ using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, Tr
 
 template <std::same_as<ThreeWindingTransformer> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
-constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state, RegulatedObjects regulated_objects,
-                         TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props) {
+constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state,
+                         RegulatedObjects const& regulated_objects, TrafoGraphEdges& edges,
+                         TrafoGraphEdgeProperties& edge_props) {
     std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
         {{Branch3Side::side_1, Branch3Side::side_2},
          {Branch3Side::side_2, Branch3Side::side_3},
@@ -78,8 +79,9 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
 
 template <std::same_as<Transformer> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
-constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state, RegulatedObjects regulated_objects,
-                         TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props) {
+constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state,
+                         RegulatedObjects const& regulated_objects, TrafoGraphEdges& edges,
+                         TrafoGraphEdgeProperties& edge_props) {
     for (auto const& transformer : state.components.template citer<Transformer>()) {
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
@@ -103,7 +105,7 @@ concept non_regulating_branch_c = std::same_as<Link, Component> || std::same_as<
 template <non_regulating_branch_c Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
 constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state,
-                         RegulatedObjects /* regulated_objects */, TrafoGraphEdges& edges,
+                         RegulatedObjects const& /* regulated_objects */, TrafoGraphEdges& edges,
                          TrafoGraphEdgeProperties& edge_props) {
     auto const& iter = state.components.template citer<Component>();
     edges.reserve(std::distance(iter.begin(), iter.end()) * 2);
