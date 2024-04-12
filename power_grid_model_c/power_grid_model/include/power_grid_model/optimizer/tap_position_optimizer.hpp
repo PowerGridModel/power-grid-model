@@ -106,8 +106,8 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
                          RegulatedObjects /* regulated_objects */, TrafoGraphEdges& edges,
                          TrafoGraphEdgeProperties& edge_props) {
     auto const& iter = state.components.template citer<Component>();
-    edges.reserve(std::distance(iter.begin(), iter.end()));
-    edge_props.reserve(std::distance(iter.begin(), iter.end()));
+    edges.reserve(std::distance(iter.begin(), iter.end()) * 2);
+    edge_props.reserve(std::distance(iter.begin(), iter.end()) * 2);
     for (auto const& branch : iter) {
         if (!branch.from_status() || branch.to_status()) {
             continue;
@@ -116,12 +116,6 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         create_edge(edges, edge_props, branch.to_node(), branch.from_node(), 0);
     }
 }
-
-template <typename Component, class ComponentContainer>
-    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
-inline void add_edges(main_core::MainModelState<ComponentContainer> const& /*state*/,
-                      RegulatedObjects /* regulated_objects */, TrafoGraphEdges& /* edges */,
-                      TrafoGraphEdgeProperties& /* edge_props */) {}
 
 inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx start, Idx end,
                         EdgeWeight weight) {
@@ -143,21 +137,13 @@ inline void retrieve_regulator_info(State const& state, RegulatedObjects& regula
     }
 }
 
-// template <typename Component, class State>
-// constexpr bool state_contains_component = (std::derived_from<Source, typename
-// State::ComponentContainer::gettable_types> || ...)
-
-// template <typename Component, class ComponentContainer>
-//     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
 template <main_core::main_model_state_c State>
 inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     TrafoGraphEdges edges;
     TrafoGraphEdgeProperties edge_props;
     RegulatedObjects regulated_objects;
 
-    // TODO if regualtors are present
     retrieve_regulator_info(state, regulated_objects);
-
     add_edges<Transformer>(state, regulated_objects, edges, edge_props);
     add_edges<ThreeWindingTransformer>(state, regulated_objects, edges, edge_props);
     add_edges<Line>(state, regulated_objects, edges, edge_props);
@@ -168,10 +154,9 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  edge_props.cbegin(),
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
-    // Mark sources
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }
 
-    // TODO  if sources are present
+    // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
         // ignore disabled sources
         trafo_graph[source.node()].is_source = source.status();
