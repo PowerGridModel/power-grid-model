@@ -8,7 +8,8 @@
 
 namespace power_grid_model::optimizer {
 namespace {
-using StubComponentContainer = Container<Node, Transformer, ThreeWindingTransformer, Source, Line, Link>;
+using StubComponentContainer =
+    Container<Node, Transformer, ThreeWindingTransformer, Source, Line, Link, TransformerTapRegulator>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);
