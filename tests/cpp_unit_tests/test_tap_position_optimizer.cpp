@@ -28,24 +28,7 @@ TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
                             .uk = nan,
                             .pk = nan,
                             .i0 = nan,
-                            .p0 = nan,
-                            .winding_from = WindingType::wye_n,
-                            .winding_to = WindingType::wye_n,
-                            .clock = na_IntS,
-                            .tap_side = BranchSide::from,
-                            .tap_pos = na_IntS,
-                            .tap_min = na_IntS,
-                            .tap_max = na_IntS,
-                            .tap_nom = na_IntS,
-                            .tap_size = nan,
-                            .uk_min = nan,
-                            .uk_max = nan,
-                            .pk_min = nan,
-                            .pk_max = nan,
-                            .r_grounding_from = nan,
-                            .x_grounding_from = nan,
-                            .r_grounding_to = nan,
-                            .x_grounding_to = nan};
+                            .p0 = nan};
 }
 
 LineInput get_line_input(ID id, ID from, ID to) {
@@ -73,6 +56,8 @@ TEST_CASE("Test Transformer ranking") {
     std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
                                  {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
     main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+    std::vector<SourceInput> sources{{24, 0, 1, 150e3}};
+    main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
     std::vector<TransformerInput> transformers{
         get_transformer(11, 0, 1, 150e3, 10e3), get_transformer(12, 0, 1, 150e3, 10e3),
@@ -86,6 +71,8 @@ TEST_CASE("Test Transformer ranking") {
 
     std::vector<LinkInput> links{{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}, {23, 9, 3, 1, 1}};
     main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
+
+    state.components.set_construction_complete();
 
     // Subcases
     SUBCASE("Building the graph") {

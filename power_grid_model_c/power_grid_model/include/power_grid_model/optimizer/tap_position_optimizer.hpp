@@ -213,12 +213,21 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     std::vector<NonTransformerBranchInfo> other_branches;
     // retrieve info to component type individually
     // (retrieve_info<ComponentType>(state, trafo_graph_components), ...);
-    retrieve_info<Source>(state, sources);
-    retrieve_info<Transformer>(state, transformers);
-    retrieve_info<ThreeWindingTransformer>(state, transformers3w);
-    retrieve_info<Line>(state, other_branches);
-    retrieve_info<Link>(state, other_branches);
-
+    if (state.components.size<Source>() > 0) {
+        retrieve_info<Source>(state, sources);
+    }
+    if (state.components.size<Transformer>() > 0) {
+        retrieve_info<Transformer>(state, transformers);
+    }
+    if (state.components.size<ThreeWindingTransformer>() > 0) {
+        retrieve_info<ThreeWindingTransformer>(state, transformers3w);
+    }
+    if (state.components.size<Line>() > 0) {
+        retrieve_info<Line>(state, other_branches);
+    }
+    if (state.components.size<Link>() > 0) {
+        retrieve_info<Link>(state, other_branches);
+    }
     // from ComponentTopology
     set_regulators_info(state, transformers, transformers3w);
 
