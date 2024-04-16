@@ -59,6 +59,7 @@ template <class... GettableTypes, class... StorageableTypes>
 class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
   public:
     using gettable_types = std::tuple<GettableTypes...>;
+
     static constexpr size_t num_storageable = sizeof...(StorageableTypes);
     static constexpr size_t num_gettable = sizeof...(GettableTypes);
 

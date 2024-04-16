@@ -265,4 +265,6 @@ class Transformer : public Branch {
     }
 };
 
+static_assert(transformer_c<Transformer>);
+
 } // namespace power_grid_model

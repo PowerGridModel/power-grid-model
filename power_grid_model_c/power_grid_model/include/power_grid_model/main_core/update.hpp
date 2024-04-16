@@ -11,13 +11,6 @@
 namespace power_grid_model::main_core {
 
 namespace detail {
-template <std::derived_from<Base> Component, class ComponentContainer, typename UpdateType>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
-             std::same_as<std::remove_cvref_t<typename Component::UpdateType>, std::remove_cvref_t<UpdateType>>
-inline Idx2D get_idx_by_id(MainModelState<ComponentContainer> const& state, UpdateType const& update) {
-    return state.components.template get_idx_by_id<Component>(update.id);
-}
-
 template <std::derived_from<Base> Component, std::forward_iterator ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
@@ -40,7 +33,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
     using UpdateType = typename Component::UpdateType;
 
     std::transform(begin, end, destination,
-                   [&state](UpdateType const& update) { return detail::get_idx_by_id<Component>(state, update); });
+                   [&state](UpdateType const& update) { return get_component_idx_by_id<Component>(state, update.id); });
 }
 
 template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
@@ -69,7 +62,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 
     detail::iterate_component_sequence<Component>(
         [&state_changed, &changed_it, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
-            auto& comp = state.components.template get_item<Component>(sequence_single);
+            auto& comp = get_component<Component>(state, sequence_single);
             auto const comp_changed = comp.update(update_data);
 
             state_changed = state_changed || comp_changed;
@@ -96,7 +89,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 
     detail::iterate_component_sequence<Component>(
         [&destination, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
-            auto const& comp = state.components.template get_item<Component>(sequence_single);
+            auto const& comp = get_component<Component>(state, sequence_single);
             *destination++ = comp.inverse(update_data);
         },
         begin, end, sequence_idx);
