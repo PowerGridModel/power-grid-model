@@ -13,7 +13,7 @@ namespace main_core = power_grid_model::main_core;
 namespace power_grid_model {
 
 namespace {
-using TestComponentContainer = Container<Line, Link, Node, Transformer, Source>;
+using TestComponentContainer = Container<Line, Link, Node, Transformer, TransformerTapRegulator, Source>;
 using TestState = main_core::MainModelState<TestComponentContainer>;
 
 TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
