@@ -22,13 +22,13 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::derived_from<Branch> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->branch.cbegin() + comp_sequence_offset<Branch, Component>(state);
+    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Branch, Component>(state);
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->branch3.cbegin() + comp_sequence_offset<Branch3, Component>(state);
+    return state.topo_comp_coup->branch3.cbegin() + get_component_sequence_offset<Branch3, Component>(state);
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
@@ -40,7 +40,7 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->load_gen.cbegin() + comp_sequence_offset<GenericLoadGen, Component>(state);
+    return state.topo_comp_coup->load_gen.cbegin() + get_component_sequence_offset<GenericLoadGen, Component>(state);
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
@@ -53,14 +53,14 @@ template <std::derived_from<GenericVoltageSensor> Component, class ComponentCont
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->voltage_sensor_node_idx.cbegin() +
-           comp_sequence_offset<GenericVoltageSensor, Component>(state);
+           get_component_sequence_offset<GenericVoltageSensor, Component>(state);
 }
 
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->power_sensor_object_idx.cbegin() +
-           comp_sequence_offset<GenericPowerSensor, Component>(state);
+           get_component_sequence_offset<GenericPowerSensor, Component>(state);
 }
 
 template <std::same_as<Fault> Component, class ComponentContainer>
@@ -72,7 +72,7 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::same_as<TransformerTapRegulator> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_topo->regulated_object_idx.cbegin() + comp_sequence_offset<Regulator, Component>(state);
+    return state.comp_topo->regulated_object_idx.cbegin() + get_component_sequence_offset<Regulator, Component>(state);
 }
 
 template <typename Component, typename IndexType, class ComponentContainer, std::forward_iterator ResIt,

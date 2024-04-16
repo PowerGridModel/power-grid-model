@@ -954,7 +954,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                Idx2D const& changed_component_idx) {
                 if constexpr (std::derived_from<ComponentType, Branch>) {
                     Idx2D const math_idx =
-                        state.topo_comp_coup->branch[get_component_sequence<Branch>(state, changed_component_idx)];
+                        state.topo_comp_coup
+                            ->branch[main_core::get_component_sequence<Branch>(state, changed_component_idx)];
                     if (math_idx.group == -1) {
                         return;
                     }
@@ -962,7 +963,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
                 } else if constexpr (std::derived_from<ComponentType, Branch3>) {
                     Idx2DBranch3 const math_idx =
-                        state.topo_comp_coup->branch3[get_component_sequence<Branch3>(state, changed_component_idx)];
+                        state.topo_comp_coup
+                            ->branch3[main_core::get_component_sequence<Branch3>(state, changed_component_idx)];
                     if (math_idx.group == -1) {
                         return;
                     }
@@ -974,7 +976,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     }
                 } else if constexpr (std::same_as<ComponentType, Shunt>) {
                     Idx2D const math_idx =
-                        state.topo_comp_coup->shunt[get_component_sequence<Shunt>(state, changed_component_idx)];
+                        state.topo_comp_coup
+                            ->shunt[main_core::get_component_sequence<Shunt>(state, changed_component_idx)];
                     if (math_idx.group == -1) {
                         return;
                     }
@@ -1112,7 +1115,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (math_idx.group == -1) {
                 continue;
             }
-            (input[math_idx.group].*component)[math_idx.pos] = get_component_by_sequence<Component>(state, i).status();
+            (input[math_idx.group].*component)[math_idx.pos] =
+                main_core::get_component_by_sequence<Component>(state, i).status();
         }
     }
 

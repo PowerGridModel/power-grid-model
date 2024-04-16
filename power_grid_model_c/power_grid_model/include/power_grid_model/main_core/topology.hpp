@@ -5,6 +5,7 @@
 #pragma once
 
 #include "state.hpp"
+#include "state_queries.hpp"
 
 #include "../all_components.hpp"
 
