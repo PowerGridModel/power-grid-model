@@ -409,4 +409,6 @@ class ThreeWindingTransformer : public Branch3 {
     }
 };
 
+static_assert(transformer_c<ThreeWindingTransformer>);
+
 } // namespace power_grid_model

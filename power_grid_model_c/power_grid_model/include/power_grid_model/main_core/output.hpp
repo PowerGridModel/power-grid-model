@@ -5,19 +5,13 @@
 #pragma once
 
 #include "state.hpp"
+#include "state_queries.hpp"
 
 #include "../all_components.hpp"
 
 namespace power_grid_model::main_core {
 
 namespace detail {
-
-template <std::derived_from<Base> BaseComponent, std::derived_from<Base> Component, class ComponentContainer>
-    requires std::derived_from<Component, BaseComponent> &&
-             model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto comp_sequence_offset(MainModelState<ComponentContainer> const& state) {
-    return state.components.template get_start_idx<BaseComponent, Component>();
-}
 
 template <std::same_as<Node> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
@@ -90,8 +84,7 @@ template <typename Component, typename IndexType, class ComponentContainer, std:
              std::convertible_to<IndexType,
                                  decltype(*comp_base_sequence_cbegin<Component>(MainModelState<ComponentContainer>{}))>
 constexpr ResIt produce_output(MainModelState<ComponentContainer> const& state, ResIt res_it, ResFunc&& func) {
-    return std::transform(state.components.template citer<Component>().begin(),
-                          state.components.template citer<Component>().end(),
+    return std::transform(get_component_citer<Component>(state).begin(), get_component_citer<Component>(state).end(),
                           comp_base_sequence_cbegin<Component>(state), res_it, func);
 }
 
@@ -331,7 +324,7 @@ inline auto output_result(Component const& fault, MainModelState<ComponentContai
         return fault.get_null_sc_output();
     }
 
-    auto const u_rated = state.components.template get_item<Node>(fault.get_fault_object()).u_rated();
+    auto const u_rated = get_component<Node>(state, fault.get_fault_object()).u_rated();
     return fault.get_sc_output(math_output[math_id.group].fault[math_id.pos], u_rated);
 }
 
