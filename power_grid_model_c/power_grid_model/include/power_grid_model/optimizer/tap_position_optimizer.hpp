@@ -145,11 +145,21 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     TrafoGraphEdgeProperties edge_props;
     RegulatedObjects regulated_objects;
 
-    retrieve_regulator_info(state, regulated_objects);
-    add_edges<Transformer>(state, regulated_objects, edges, edge_props);
-    add_edges<ThreeWindingTransformer>(state, regulated_objects, edges, edge_props);
-    add_edges<Line>(state, regulated_objects, edges, edge_props);
-    add_edges<Link>(state, regulated_objects, edges, edge_props);
+    if (state.components.template size<TransformerTapRegulator>() > 0) {
+        retrieve_regulator_info(state, regulated_objects);
+    }
+    if (state.components.template size<Transformer>() > 0) {
+        add_edges<Transformer>(state, regulated_objects, edges, edge_props);
+    }
+    if (state.components.template size<ThreeWindingTransformer>() > 0) {
+        add_edges<ThreeWindingTransformer>(state, regulated_objects, edges, edge_props);
+    }
+    if (state.components.template size<Line>() > 0) {
+        add_edges<Line>(state, regulated_objects, edges, edge_props);
+    }
+    if (state.components.template size<Link>() > 0) {
+        add_edges<Link>(state, regulated_objects, edges, edge_props);
+    }
 
     // build graph
     TransformerGraph trafo_graph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
@@ -157,6 +167,10 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }
+
+    if (state.components.template size<Source>() == 0) {
+        return trafo_graph;
+    }
 
     // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
