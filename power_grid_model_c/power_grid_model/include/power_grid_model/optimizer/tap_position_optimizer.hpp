@@ -145,19 +145,19 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     TrafoGraphEdgeProperties edge_props;
     RegulatedObjects regulated_objects;
 
-    if (state.components.size<TransformerTapRegulator>() > 0) {
+    if (state.components.template size<TransformerTapRegulator>() > 0) {
         retrieve_regulator_info(state, regulated_objects);
     }
-    if (state.components.size<Transformer>() > 0) {
+    if (state.components.template size<Transformer>() > 0) {
         add_edges<Transformer>(state, regulated_objects, edges, edge_props);
     }
-    if (state.components.size<ThreeWindingTransformer>() > 0) {
+    if (state.components.template size<ThreeWindingTransformer>() > 0) {
         add_edges<ThreeWindingTransformer>(state, regulated_objects, edges, edge_props);
     }
-    if (state.components.size<Line>() > 0) {
+    if (state.components.template size<Line>() > 0) {
         add_edges<Line>(state, regulated_objects, edges, edge_props);
     }
-    if (state.components.size<Link>() > 0) {
+    if (state.components.template size<Link>() > 0) {
         add_edges<Link>(state, regulated_objects, edges, edge_props);
     }
 
