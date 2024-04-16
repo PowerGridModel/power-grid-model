@@ -18,7 +18,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, std::forw
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
                           double system_frequency) {
-    reserve<Component>(state, std::distance(begin, end));
+    reserve_component<Component>(state, std::distance(begin, end));
     // loop to add component
     for (auto it = begin; it != end; ++it) {
         auto const& input = *it;
