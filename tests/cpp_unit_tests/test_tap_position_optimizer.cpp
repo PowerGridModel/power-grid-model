@@ -57,7 +57,7 @@ TEST_CASE("Test Transformer ranking") {
     std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
                                  {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
     main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
-    std::vector<SourceInput> sources{{24, 0, 1, 150e3, 0}};
+    std::vector<SourceInput> sources{{24, 0, 1, 150e3, 0, nan, nan, nan}};
     main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
     std::vector<TransformerInput> transformers{
