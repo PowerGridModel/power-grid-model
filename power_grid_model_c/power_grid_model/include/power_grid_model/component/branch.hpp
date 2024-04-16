@@ -22,6 +22,8 @@ class Branch : public Base {
     using UpdateType = BranchUpdate;
     template <symmetry_tag sym> using OutputType = BranchOutput<sym>;
     using ShortCircuitOutputType = BranchShortCircuitOutput;
+    using SideType = BranchSide;
+
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final { return ComponentType::branch; }
 
