@@ -12,7 +12,7 @@ namespace power_grid_model {
 namespace detail {
 template <typename T>
 concept enum_c = std::is_enum_v<T>;
-}
+} // namespace detail
 
 template <typename T>
 concept transformer_c = requires(T const& t, typename T::UpdateType u, typename T::SideType s) {
