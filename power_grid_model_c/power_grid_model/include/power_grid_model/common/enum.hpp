@@ -58,7 +58,8 @@ enum class ComponentType : IntS {
     branch3 = 9,
     fault = 10,
     regulator = 11,
-    transformer_tap_regulator = 12
+    transformer_tap_regulator = 12,
+    test = -128 // any stub or mock may use this. do not use this in production
 };
 
 // DO NOT change the order of enumerations

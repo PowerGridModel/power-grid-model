@@ -13,6 +13,7 @@
 #include "../component/transformer.hpp"
 #include "../component/transformer_tap_regulator.hpp"
 #include "../main_core/output.hpp"
+#include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <functional>
@@ -26,6 +27,7 @@ namespace tap_position_optimizer {
 namespace detail = power_grid_model::optimizer::detail;
 
 using container_impl::get_type_index;
+using main_core::get_component;
 
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
@@ -48,28 +50,16 @@ constexpr auto group_count(std::vector<Idx2D> const& indices) {
     return std::ranges::count_if(indices, is_in_group<ComponentType>);
 }
 
-template <typename ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto& get_component(State const& state, auto const& id_or_index) {
-    return state.components.template get_item<ComponentType>(id_or_index);
-}
-
-template <typename ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_sequence(State const& state, auto const& id_or_index) {
-    return state.components.template get_seq<ComponentType>(id_or_index);
-}
-
 template <std::derived_from<Branch> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    return get_sequence<Branch>(state, id_or_index);
+    return main_core::get_component_sequence<Branch>(state, id_or_index);
 }
 
 template <std::derived_from<Branch3> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    return get_sequence<Branch3>(state, id_or_index);
+    return main_core::get_component_sequence<Branch3>(state, id_or_index);
 }
 
 template <std::derived_from<Branch> ComponentType, typename State>
@@ -82,6 +72,20 @@ template <std::derived_from<Branch3> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
     return state.comp_topo->branch3_node_idx[topology_sequence_idx];
+}
+
+template <transformer_c ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType> &&
+             requires(State const& state, Idx const i) {
+                 { get_branch_nodes<ComponentType>(state, i)[i] } -> std::convertible_to<Idx>;
+             }
+inline auto get_topo_node(State const& state, Idx topology_index, ControlSide control_side) {
+    auto const& nodes = get_branch_nodes<ComponentType>(state, topology_index);
+
+    auto const control_side_idx = static_cast<Idx>(control_side);
+    assert(control_side_idx < nodes.size());
+
+    return nodes[control_side_idx];
 }
 
 template <std::derived_from<Node> ComponentType, typename State>
@@ -213,6 +217,13 @@ inline auto rank_transformers(State const& state) -> RankedTransformerGroups {
     return rank_transformers(get_edge_weights(build_transformer_graph(state)));
 }
 
+struct TransformerRanker {
+    template <main_core::main_model_state_c State>
+    auto operator()(State const& state) const -> RankedTransformerGroups {
+        return rank_transformers(state);
+    }
+};
+
 constexpr IntS tap_one_step_up(transformer_c auto const& transformer) {
     auto const tap_pos = transformer.tap_pos();
     auto const tap_max = transformer.tap_max();
@@ -296,25 +307,10 @@ template <typename... Ts> struct transformer_types_s<std::tuple<std::tuple<Ts...
 
 template <typename... Ts> using transformer_types_t = typename transformer_types_s<std::tuple<Ts...>>::type;
 
-struct A {};
-struct B {};
-struct C {};
-static_assert(std::same_as<transformer_types_t<A, A>, std::tuple<>>);
-static_assert(std::same_as<transformer_types_t<A, B>, std::tuple<>>);
-static_assert(std::same_as<transformer_types_t<A, Transformer>, std::tuple<Transformer>>);
-static_assert(std::same_as<transformer_types_t<Transformer, ThreeWindingTransformer>,
-                           std::tuple<Transformer, ThreeWindingTransformer>>);
-static_assert(std::same_as<transformer_types_t<A, Transformer, A, B, ThreeWindingTransformer, C>,
-                           std::tuple<Transformer, ThreeWindingTransformer>>);
-static_assert(std::same_as<transformer_types_t<std::tuple<A, Transformer, A, B, ThreeWindingTransformer, C>>,
-                           std::tuple<Transformer, ThreeWindingTransformer>>);
-
-template <typename... Ts> using update_buffer_t = std::tuple<std::vector<typename Ts::UpdateType>...>;
-
 template <typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
 TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
-    auto const regulators = state.components.template iter<TransformerTapRegulator>();
+    auto const regulators = get_component_citer<TransformerTapRegulator>(state);
 
     auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
         return regulator.regulated_object() == regulated_object;
@@ -376,8 +372,7 @@ inline auto regulator_mapping(State const& state, RankedTransformerGroups const&
 }
 
 template <std::derived_from<Branch> ComponentType, steady_state_math_output_type MathOutputType>
-inline auto i_pu_controlled_node(std::vector<MathOutputType> const& math_output, Idx2D const& math_id,
-                                 ControlSide control_side) {
+inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2D const& math_id, ControlSide control_side) {
     using enum ControlSide;
 
     auto const& branch_output = math_output[math_id.group].branch[math_id.pos];
@@ -393,8 +388,8 @@ inline auto i_pu_controlled_node(std::vector<MathOutputType> const& math_output,
 }
 
 template <std::derived_from<Branch3> ComponentType, steady_state_math_output_type MathOutputType>
-inline auto i_pu_controlled_node(std::vector<MathOutputType> const& math_output, Idx2DBranch3 const& math_id,
-                                 ControlSide control_side) {
+inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2DBranch3 const& math_id,
+                 ControlSide control_side) {
     using enum ControlSide;
 
     auto const& branch_outputs = math_output[math_id.group].branch;
@@ -413,51 +408,47 @@ inline auto i_pu_controlled_node(std::vector<MathOutputType> const& math_output,
 
 template <typename ComponentType, typename... RegulatedTypes, typename State,
           steady_state_math_output_type MathOutputType>
-    requires(std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>) &&
-            main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
                                  std::vector<MathOutputType> const& math_output) {
-
     auto const& branch_math_id = get_math_id<ComponentType>(state, regulator.transformer.topology_index());
-    return i_pu_controlled_node<ComponentType>(math_output, branch_math_id, regulator.regulator.get().control_side());
+    return i_pu<ComponentType>(math_output, branch_math_id, regulator.regulator.get().control_side());
 }
 
 template <typename ComponentType, typename... RegulatedTypes, typename State,
           steady_state_math_output_type MathOutputType>
-    requires(std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>) &&
-            main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
                                  std::vector<MathOutputType> const& math_output) {
-    auto const& nodes = get_branch_nodes<ComponentType>(state, regulator.transformer.topology_index());
-
-    auto const control_side_idx = static_cast<Idx>(regulator.regulator.get().control_side());
-    assert(control_side_idx < nodes.size());
-
-    auto const controlled_node_idx = nodes[control_side_idx];
+    auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
+                                                                  regulator.regulator.get().control_side());
     auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
     return math_output[node_math_id.group].u[node_math_id.pos];
 }
 
 template <typename... T> class TapPositionOptimizerImpl;
-template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_>
+template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
+          typename TransformerRanker_>
     requires(main_core::component_container_c<typename State_::ComponentContainer, TransformerTypes> && ...) &&
             detail::steady_state_calculator_c<StateCalculator, State_> &&
-            std::invocable<std::remove_cvref_t<StateUpdater_>, ConstDataset const&>
-class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator, StateUpdater_, State_>
-    : public detail::BaseOptimizer<StateCalculator, State_> {
+            std::invocable<std::remove_cvref_t<StateUpdater_>, ConstDataset const&> &&
+            requires(TransformerRanker_ const& ranker, State_ const& state) {
+                { ranker(state) } -> std::convertible_to<RankedTransformerGroups>;
+            }
+class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator, StateUpdater_, State_,
+                               TransformerRanker_> : public detail::BaseOptimizer<StateCalculator, State_> {
   public:
     using Base = detail::BaseOptimizer<StateCalculator, State_>;
     using typename Base::Calculator;
     using typename Base::ResultType;
     using typename Base::State;
     using StateUpdater = StateUpdater_;
+    using TransformerRanker = TransformerRanker_;
 
   private:
     using ComponentContainer = typename State::ComponentContainer;
-
     using TapRegulatorRef = TapRegulatorRef<TransformerTypes...>;
-
-    using UpdateBuffer = update_buffer_t<TransformerTypes...>;
+    using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
 
     template <transformer_c T>
     static constexpr auto transformer_index_of = [] {
@@ -478,13 +469,14 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         assert(false); // unreachable
         return n_transformers;
     }();
+    static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
   public:
     TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state, CalculationMethod method) -> ResultType final {
-        auto const order = regulator_mapping<TransformerTypes...>(state, rank_transformers(state));
+        auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
 
         auto const cache = this->cache_state(state, order);
         auto const optimal_output = optimize(state, order, method);
@@ -513,15 +505,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto try_calculation_with_regulation(State const& state,
                                          std::vector<std::vector<TapRegulatorRef>> const& regulator_order,
                                          CalculationMethod method) const -> ResultType {
-        ResultType result;
-
-        try {
-            result = calculate_(state, method);
-        } catch (SparseMatrixError) {
-            result = calculate_(state, CalculationMethod::linear);
-        } catch (IterationDiverge) {
-            result = calculate_(state, CalculationMethod::linear);
-        }
+        auto result = calculate_with_retry(state, method);
 
         bool tap_changed = true;
         while (tap_changed) {
@@ -546,6 +530,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         return result;
+    }
+
+    auto calculate_with_retry(State const& state, CalculationMethod method) const {
+        try {
+            return calculate_(state, method);
+        } catch (SparseMatrixError const&) {
+            return calculate_(state, CalculationMethod::linear);
+        } catch (IterationDiverge const&) {
+            return calculate_(state, CalculationMethod::linear);
+        }
     }
 
     bool control_transformer(TapRegulatorRef const& regulator, State const& state, ResultType const& math_output,
@@ -732,16 +726,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     OptimizerStrategy strategy_;
 };
 
-template <typename StateCalculator, typename StateUpdater, main_core::main_model_state_c State>
+template <typename StateCalculator, typename StateUpdater, main_core::main_model_state_c State,
+          typename TransformerRanker_>
     requires detail::steady_state_calculator_c<StateCalculator, State> &&
                  std::invocable<std::remove_cvref_t<StateUpdater>, ConstDataset const&>
 using TapPositionOptimizer =
     TapPositionOptimizerImpl<transformer_types_t<typename State::ComponentContainer::gettable_types>, StateCalculator,
-                             StateUpdater, State>;
+                             StateUpdater, State, TransformerRanker_>;
 
 } // namespace tap_position_optimizer
 
 template <typename StateCalculator, typename StateUpdater, typename State>
-using TapPositionOptimizer = tap_position_optimizer::TapPositionOptimizer<StateCalculator, StateUpdater, State>;
+using TapPositionOptimizer = tap_position_optimizer::TapPositionOptimizer<StateCalculator, StateUpdater, State,
+                                                                          tap_position_optimizer::TransformerRanker>;
 
 } // namespace power_grid_model::optimizer

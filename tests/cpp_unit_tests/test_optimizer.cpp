@@ -2,96 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/container.hpp>
-#include <power_grid_model/optimizer/optimizer.hpp>
+#include "test_optimizer.hpp"
 
-#include <doctest/doctest.h>
-
-namespace power_grid_model::optimizer {
-namespace {
-using StubComponentContainer = Container<Transformer, ThreeWindingTransformer>;
-
-using StubState = main_core::MainModelState<StubComponentContainer>;
-static_assert(main_core::main_model_state_c<StubState>);
-
-struct StubStateCalculatorResultType {
-    Idx x{};
-};
-
-struct StubUpdateType {};
-
-using StubStateCalculator = StubStateCalculatorResultType (*)(StubState const& /* state */,
-                                                              CalculationMethod /* method */);
-using SymStubSteadyStateCalculator = std::vector<MathOutput<symmetric_t>> (*)(StubState const& /* state */,
-                                                                              CalculationMethod /* method */);
-using AsymStubSteadyStateCalculator = std::vector<MathOutput<asymmetric_t>> (*)(StubState const& /* state */,
-                                                                                CalculationMethod /* method */);
-using StubUpdate = void (*)(StubUpdateType const& /* update_data */);
-using ConstDatasetUpdate = void (*)(ConstDataset const& /* update_data */);
-
-static_assert(std::invocable<StubStateCalculator, StubState const&, CalculationMethod>);
-static_assert(std::same_as<std::invoke_result_t<StubStateCalculator, StubState const&, CalculationMethod>,
-                           StubStateCalculatorResultType>);
-static_assert(std::invocable<SymStubSteadyStateCalculator, StubState const&, CalculationMethod>);
-static_assert(std::same_as<std::invoke_result_t<SymStubSteadyStateCalculator, StubState const&, CalculationMethod>,
-                           std::vector<MathOutput<symmetric_t>>>);
-static_assert(std::invocable<SymStubSteadyStateCalculator, StubState const&, CalculationMethod>);
-static_assert(std::same_as<std::invoke_result_t<AsymStubSteadyStateCalculator, StubState const&, CalculationMethod>,
-                           std::vector<MathOutput<asymmetric_t>>>);
-static_assert(std::invocable<StubUpdate, StubUpdateType const&>);
-static_assert(std::invocable<ConstDatasetUpdate, ConstDataset const&>);
-
-static_assert(optimizer_c<NoOptimizer<StubStateCalculator, StubState>>);
-static_assert(optimizer_c<TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>);
-static_assert(optimizer_c<TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>);
-
-constexpr auto mock_state_calculator(StubState const& /* state */, CalculationMethod /* method */) {
-    return StubStateCalculatorResultType{.x = 1};
-}
-static_assert(std::convertible_to<decltype(mock_state_calculator), StubStateCalculator>);
-
-template <symmetry_tag sym>
-constexpr auto stub_steady_state_state_calculator(StubState const& /* state */, CalculationMethod /* method */) {
-    return std::vector<MathOutput<sym>>{};
-}
-static_assert(
-    std::convertible_to<decltype(stub_steady_state_state_calculator<symmetric_t>), SymStubSteadyStateCalculator>);
-static_assert(
-    std::convertible_to<decltype(stub_steady_state_state_calculator<asymmetric_t>), AsymStubSteadyStateCalculator>);
-
-constexpr void stub_update(StubUpdateType const& /* update_data */){
-    // stub
-};
-static_assert(std::convertible_to<decltype(stub_update), StubUpdate>);
-
-constexpr void stub_const_dataset_update(ConstDataset const& /* update_data */){
-    // stub
-};
-static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstDatasetUpdate>);
-
-constexpr auto strategies = [] {
-    using enum OptimizerStrategy;
-    return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
-}();
-
-constexpr auto calculation_methods = [] {
-    using enum CalculationMethod;
-    return std::array{default_method,    linear,         linear_current, iterative_linear,
-                      iterative_current, newton_raphson, iec60909};
-}();
-
-constexpr auto strategies_and_methods = [] {
-    std::array<std::pair<OptimizerStrategy, CalculationMethod>, strategies.size() * calculation_methods.size()> result;
-    size_t idx{};
-    for (auto strategy : strategies) {
-        for (auto method : calculation_methods) {
-            result[idx++] = std::make_pair(strategy, method);
-        }
-    }
-    return result;
-}();
-} // namespace
-
+namespace power_grid_model::optimizer::test {
 TEST_CASE("Test no-op optimizer") {
     for (auto method : calculation_methods) {
         CAPTURE(method);
@@ -176,4 +89,4 @@ TEST_CASE("Test get optimizer") {
         }
     }
 }
-} // namespace power_grid_model::optimizer
+} // namespace power_grid_model::optimizer::test
