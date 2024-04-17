@@ -30,7 +30,8 @@ TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
                             .uk = nan,
                             .pk = nan,
                             .i0 = nan,
-                            .p0 = nan};
+                            .p0 = nan,
+                            .tap_side = BranchSide::from};
 }
 
 LineInput get_line_input(ID id, ID from, ID to) {
@@ -65,11 +66,10 @@ TEST_CASE("Test Transformer ranking") {
         get_transformer(15, 8, 9, 10e3, 10e3)};
     main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
-    std::vector<LineInput> lines{get_line_input(16, 1, 2), get_line_input(17, 4, 6), get_line_input(18, 7, 8),
-                                 get_line_input(19, 3, 6)};
+    std::vector<LineInput> lines{get_line_input(16, 3, 6), get_line_input(17, 3, 9)};
     main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
 
-    std::vector<LinkInput> links{{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}, {23, 9, 3, 1, 1}};
+    std::vector<LinkInput> links{{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}};
     main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
 
     std::vector<SourceInput> sources{{24, 0, 1, 1.0, 0, nan, nan, nan}};
@@ -87,15 +87,21 @@ TEST_CASE("Test Transformer ranking") {
     // Subcases
     SUBCASE("Building the graph") {
         // reference graph creation
-        std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
+        std::vector<std::pair<Idx, Idx>> expected_edges = {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9},
+                                                           {3, 6}, {6, 3}, {3, 9}, {9, 3}, {1, 2},
+                                                           {2, 1}, {4, 6}, {6, 4}, {7, 8}, {8, 7}};
 
-        std::vector<pgm_tap::TrafoGraphEdge> edge_prop{{{0, 1}, 1}, {{0, 1}, 1}, {{0, 1}, 1}};
-        pgm_tap::TransformerGraph expected_graph{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(),
-                                                 edge_array.cend(), edge_prop.cbegin(), 10};
-        pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
+        // Only weight allocation to be tested
+        std::vector<pgm_tap::TrafoGraphEdge> expected_edges_prop{{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}, {{}, 1},
+                                                                 {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0},
+                                                                 {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}};
+        pgm_tap::TransformerGraph expected_graph{boost::edges_are_unsorted_multi_pass, expected_edges.cbegin(),
+                                                 expected_edges.cend(), expected_edges_prop.cbegin(), 10};
 
         std::vector<pgm_tap::TrafoGraphVertex> expected_vertex_props{{true},  {false}, {false}, {false}, {false},
                                                                      {false}, {false}, {false}, {false}, {false}};
+
+        pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
 
         boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
