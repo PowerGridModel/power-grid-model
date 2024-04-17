@@ -91,9 +91,9 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-            TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
-                                         state.components.template get_seq<Component>(transformer3.id())),
-                                     1};
+        TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
+                                     state.components.template get_seq<Component>(transformer.id())),
+                                 1};
 
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const& from_pos = from_node ? transformer.tap_side() == BranchSide::from : to_node;
