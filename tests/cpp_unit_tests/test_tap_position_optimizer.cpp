@@ -14,7 +14,8 @@ namespace power_grid_model {
 
 namespace {
 using TestComponentContainer =
-    Container<Line, Link, Node, Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>;
+    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, Regulator>, Line, Link, Node, Transformer,
+              ThreeWindingTransformer, TransformerTapRegulator, Source>;
 using TestState = main_core::MainModelState<TestComponentContainer>;
 
 TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
@@ -57,8 +58,6 @@ TEST_CASE("Test Transformer ranking") {
     std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
                                  {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
     main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
-    std::vector<SourceInput> sources{{24, 0, 1, 150e3, 1, nan, nan, nan}};
-    main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
     std::vector<TransformerInput> transformers{
         get_transformer(11, 0, 1, 150e3, 10e3), get_transformer(12, 0, 1, 150e3, 10e3),
@@ -73,6 +72,16 @@ TEST_CASE("Test Transformer ranking") {
     std::vector<LinkInput> links{{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}, {23, 9, 3, 1, 1}};
     main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
 
+    std::vector<SourceInput> sources{{24, 0, 1, 1.0, 0, nan, nan, nan}};
+    main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+    std::vector<TransformerTapRegulatorInput> regulators{{25, 11, 1, ControlSide::from, nan, nan, nan, nan},
+                                                         {26, 12, 1, ControlSide::from, nan, nan, nan, nan},
+                                                         {27, 13, 1, ControlSide::from, nan, nan, nan, nan},
+                                                         {28, 14, 1, ControlSide::from, nan, nan, nan, nan},
+                                                         {29, 15, 1, ControlSide::from, nan, nan, nan, nan}};
+    main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
     state.components.set_construction_complete();
 
     // Subcases
@@ -84,7 +93,14 @@ TEST_CASE("Test Transformer ranking") {
         pgm_tap::TransformerGraph expected_graph{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(),
                                                  edge_array.cend(), edge_prop.cbegin(), 10};
         pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
-        // CHECK (actual_graph == expected_graph);
+
+        std::vector<pgm_tap::TrafoGraphVertex> expected_vertex_props{{true},  {false}, {false}, {false}, {false},
+                                                                     {false}, {false}, {false}, {false}, {false}};
+
+        boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
+            actual_graph[*vi].is_source = expected_vertex_props[*vi].is_source;
+        }
     }
 
     SUBCASE("Process edge weights") {
