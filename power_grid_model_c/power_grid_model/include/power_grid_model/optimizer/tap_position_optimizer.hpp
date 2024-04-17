@@ -10,6 +10,7 @@
 #include "../auxiliary/dataset.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <functional>
@@ -65,9 +66,8 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             }
             auto const& from_node = transformer3w.node(from_side);
             auto const& to_node = transformer3w.node(to_side);
-            TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
-                                         state.components.template get_seq<Component>(transformer3w.id())),
-                                     1};
+            TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer3w.id()), 1};
+
             if (regulated_objects.transformers3w.contains(transformer3w.id())) {
                 auto const& tap_from = from_node ? transformer3w.tap_side() == from_side : to_node;
                 auto const& tap_to = to_node ? transformer3w.tap_side() == from_side : from_node;
@@ -91,9 +91,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
-                                     state.components.template get_seq<Component>(transformer.id())),
-                                 1};
+        TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer.id()), 1};
 
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const& from_pos = from_node ? transformer.tap_side() == BranchSide::from : to_node;
@@ -121,9 +119,8 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         if (!branch.from_status() || branch.to_status()) {
             continue;
         }
-        TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
-                                     state.components.template get_seq<Component>(branch.id())),
-                                 0};
+        TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, branch.id()), 0};
+
         create_edge(edges, edge_props, branch.from_node(), branch.to_node(), edge_prop);
         create_edge(edges, edge_props, branch.to_node(), branch.from_node(), edge_prop);
     }
