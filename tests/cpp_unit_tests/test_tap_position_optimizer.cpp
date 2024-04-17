@@ -146,6 +146,7 @@ TEST_CASE("Test Transformer ranking") {
     }
 
     SUBCASE("Ranking complete the graph") {
+        auto const order = pgm_tap::rank_transformers(state);
         // CHECK (transformer[1] == 1);
     }
 }
