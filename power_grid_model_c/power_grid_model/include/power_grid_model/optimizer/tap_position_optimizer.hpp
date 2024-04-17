@@ -96,6 +96,9 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const& from_pos = from_node ? transformer.tap_side() == BranchSide::from : to_node;
             auto const& to_pos = to_node ? transformer.tap_side() == BranchSide::from : from_node;
+            if (get_component<Node>(state, from_pos).u_rated() < get_component<Node>(state, from_pos).u_rated()) {
+                throw AutomaticTapCalculationError(transformer.id());
+            }
             create_edge(edges, edge_props, from_pos, to_pos, edge_prop);
         } else {
             create_edge(edges, edge_props, from_node, to_node, edge_prop);
