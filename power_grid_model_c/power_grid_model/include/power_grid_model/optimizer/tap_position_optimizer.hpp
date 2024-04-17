@@ -60,18 +60,21 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
          {Branch3Side::side_1, Branch3Side::side_3}}};
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
         for (auto const& [from_side, to_side] : branch3_combinations) {
-            auto const& from_node = transformer3w.node(from_side);
-            auto const& to_node = transformer3w.node(to_side);
             if (!transformer3w.status(from_side) || !transformer3w.status(to_side)) {
                 continue;
             }
+            auto const& from_node = transformer3w.node(from_side);
+            auto const& to_node = transformer3w.node(to_side);
+            TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
+                                         state.components.template get_seq<Component>(transformer3w.id())),
+                                     1};
             if (regulated_objects.transformers3w.contains(transformer3w.id())) {
                 auto const& tap_from = from_node ? transformer3w.tap_side() == from_side : to_node;
                 auto const& tap_to = to_node ? transformer3w.tap_side() == from_side : from_node;
-                create_edge(edges, edge_props, tap_from, tap_to, 1);
+                create_edge(edges, edge_props, tap_from, tap_to, edge_prop);
             } else {
-                create_edge(edges, edge_props, from_node, to_node, 1);
-                create_edge(edges, edge_props, to_node, from_node, 1);
+                create_edge(edges, edge_props, from_node, to_node, edge_prop);
+                create_edge(edges, edge_props, to_node, from_node, edge_prop);
             }
         }
     }
@@ -83,18 +86,22 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
                          RegulatedObjects const& regulated_objects, TrafoGraphEdges& edges,
                          TrafoGraphEdgeProperties& edge_props) {
     for (auto const& transformer : state.components.template citer<Transformer>()) {
-        auto const& from_node = transformer.from_node();
-        auto const& to_node = transformer.to_node();
         if (!transformer.from_status() || !transformer.to_status()) {
             continue;
         }
+        auto const& from_node = transformer.from_node();
+        auto const& to_node = transformer.to_node();
+            TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
+                                         state.components.template get_seq<Component>(transformer3.id())),
+                                     1};
+
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const& from_pos = from_node ? transformer.tap_side() == BranchSide::from : to_node;
             auto const& to_pos = to_node ? transformer.tap_side() == BranchSide::from : from_node;
-            create_edge(edges, edge_props, from_pos, to_pos, 1);
+            create_edge(edges, edge_props, from_pos, to_pos, edge_prop);
         } else {
-            create_edge(edges, edge_props, from_node, to_node, 1);
-            create_edge(edges, edge_props, to_node, from_node, 1);
+            create_edge(edges, edge_props, from_node, to_node, edge_prop);
+            create_edge(edges, edge_props, to_node, from_node, edge_prop);
         }
     }
 }
@@ -114,15 +121,18 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         if (!branch.from_status() || branch.to_status()) {
             continue;
         }
-        create_edge(edges, edge_props, branch.from_node(), branch.to_node(), 0);
-        create_edge(edges, edge_props, branch.to_node(), branch.from_node(), 0);
+        TrafoGraphEdge edge_prop{state.components.template get_idx_2d_by_seq<Component>(
+                                     state.components.template get_seq<Component>(branch.id())),
+                                 0};
+        create_edge(edges, edge_props, branch.from_node(), branch.to_node(), edge_prop);
+        create_edge(edges, edge_props, branch.to_node(), branch.from_node(), edge_prop);
     }
 }
 
-inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx start, Idx end,
-                        EdgeWeight weight) {
+inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx const& start, Idx const& end,
+                        TrafoGraphEdge const& edge_prop) {
     edges.emplace_back(static_cast<TrafoGraphIdx>(start), static_cast<TrafoGraphIdx>(end));
-    edge_props.emplace_back(TrafoGraphEdge{{}, weight});
+    edge_props.emplace_back(edge_prop);
 }
 
 template <main_core::main_model_state_c State>
