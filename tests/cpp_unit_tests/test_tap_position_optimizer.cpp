@@ -99,7 +99,7 @@ TEST_CASE("Test Transformer ranking") {
 
         boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
-            actual_graph[*vi].is_source = expected_vertex_props[*vi].is_source;
+            CHECK(actual_graph[*vi].is_source == expected_vertex_props[*vi].is_source);
         }
     }
 

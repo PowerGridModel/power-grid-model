@@ -97,6 +97,9 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
             auto const& from_pos = tap_at_from_side ? from_node : to_node;
             auto const& to_pos = tap_at_from_side ? to_node : from_node;
+            if (get_component<Node>(state, from_pos).u_rated() < get_component<Node>(state, from_pos).u_rated()) {
+                throw AutomaticTapCalculationError(transformer.id());
+            }
             create_edge(edges, edge_props, from_pos, to_pos, edge_prop);
         } else {
             create_edge(edges, edge_props, from_node, to_node, edge_prop);

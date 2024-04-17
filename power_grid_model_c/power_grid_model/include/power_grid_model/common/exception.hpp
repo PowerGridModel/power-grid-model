@@ -118,6 +118,14 @@ class InvalidRegulatedObject : public PowerGridError {
     }
 };
 
+class AutomaticTapCalculationError : public PowerGridError {
+  public:
+    AutomaticTapCalculationError(ID id) {
+        append_msg("Automatic tap changing regulator is at LV side for id" + std::to_string(id) +
+                   "which is not supported");
+    }
+};
+
 class IDWrongType : public PowerGridError {
   public:
     explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + std::to_string(id) + '\n'); }

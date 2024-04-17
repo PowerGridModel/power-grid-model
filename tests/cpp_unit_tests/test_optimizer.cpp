@@ -8,8 +8,10 @@
 
 namespace power_grid_model::optimizer {
 namespace {
+
 using StubComponentContainer =
-    Container<Node, Transformer, ThreeWindingTransformer, Source, Line, Link, TransformerTapRegulator>;
+    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, Regulator>, Line, Link, Node, Transformer,
+              ThreeWindingTransformer, TransformerTapRegulator, Source>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);
@@ -75,12 +77,15 @@ TEST_CASE("Test no-op optimizer") {
 }
 
 TEST_CASE("Test tap position optimizer") {
+    StubState empty_state{};
+    empty_state.components.set_construction_complete();
+
     SUBCASE("symmetric") {
         for (auto strategy : strategies) {
             CAPTURE(strategy);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO(mgovers): implement this check
+            CHECK_THROWS_AS(optimizer.optimize(empty_state), PowerGridError); // TODO(mgovers): implement this check
         }
     }
     SUBCASE("asymmetric") {
@@ -88,7 +93,7 @@ TEST_CASE("Test tap position optimizer") {
             CAPTURE(strategy);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize({}), PowerGridError); // TODO(mgovers): implement this check
+            CHECK_THROWS_AS(optimizer.optimize(empty_state), PowerGridError); // TODO(mgovers): implement this check
         }
     }
 }
@@ -139,7 +144,10 @@ TEST_CASE("Test get optimizer") {
                 REQUIRE(tap_optimizer != nullptr);
                 CHECK(tap_optimizer->get_strategy() == strategy);
 
-                CHECK_THROWS_AS(optimizer->optimize({}), PowerGridError); // TODO(mgovers): implement this check
+                StubState empty_state{};
+                empty_state.components.set_construction_complete();
+                CHECK_THROWS_AS(optimizer->optimize(empty_state),
+                                PowerGridError); // TODO(mgovers): implement this check
             }
         }
     }
