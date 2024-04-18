@@ -167,33 +167,6 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
         return Impl<typename State::ComponentContainer::gettable_types>{}(state);
     }
 };
-
-struct MockTapOptimizerRunner {
-    using MockContainer = Container<test::MockTransformer>;
-    using MockState = main_core::MainModelState<MockContainer>;
-    using MockStateCalculator = test::MockStateCalculator<MockContainer>;
-    using MockTransformerRanker = test::MockTransformerRanker<MockState>;
-
-    auto optimizer() {
-        auto const updater = [this](ConstDataset const& update_dataset) {
-            REQUIRE(!update_dataset.empty());
-            REQUIRE(update_dataset.size() == 1);
-            REQUIRE(update_dataset.contains(MockTransformer::name));
-            auto const& transformers_dataset = update_dataset.at(MockTransformer::name);
-            auto const [transformers_update_begin, transformers_update_end] =
-                transformers_dataset.get_iterators<typename MockTransformer::UpdateType>(-1);
-            auto changed_components = std::vector<Idx2D>{};
-            main_core::update_component<MockTransformer>(state.get(), transformers_update_begin,
-                                                         transformers_update_end,
-                                                         std::back_inserter(changed_components));
-        };
-
-        return TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
-            mock_state_calculator, updater, OptimizerStrategy::any};
-    }
-
-    std::reference_wrapper<MockState> state;
-};
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
 
@@ -252,16 +225,34 @@ TEST_CASE("Test Transformer ranking") {
 }
 
 TEST_CASE("Test Tap position optimizer") {
-    using MockContainer = Container<test::MockTransformer>;
+    using MockTransformer = test::MockTransformer;
+    using MockContainer = Container<MockTransformer>;
     using MockState = main_core::MainModelState<MockContainer>;
+    using MockStateCalculator = test::MockStateCalculator<MockContainer>;
+    using MockStateUpdater = void (*)(ConstDataset const& update_dataset);
+    using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
     MockState state;
+
+    auto const updater = [&state](ConstDataset const& update_dataset) {
+        REQUIRE(!update_dataset.empty());
+        REQUIRE(update_dataset.size() == 1);
+        REQUIRE(update_dataset.contains(MockTransformer::name));
+        auto const& transformers_dataset = update_dataset.at(MockTransformer::name);
+        auto const [transformers_update_begin, transformers_update_end] =
+            transformers_dataset.get_iterators<typename MockTransformer::UpdateType>(-1);
+        auto changed_components = std::vector<Idx2D>{};
+        main_core::update_component<MockTransformer>(state, transformers_update_begin, transformers_update_end,
+                                                     std::back_inserter(changed_components));
+    };
 
     main_core::emplace_component<test::MockTransformer>(state, 1);
     main_core::emplace_component<test::MockTransformer>(state, 2);
     state.components.set_construction_complete();
 
-    test::MockTapOptimizerRunner optimizer{state};
+    auto optimizer =
+        pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
+            test::mock_state_calculator, updater, OptimizerStrategy::any};
 }
 
 } // namespace power_grid_model
