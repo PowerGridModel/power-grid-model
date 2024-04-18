@@ -245,7 +245,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList
 
     WeightedTrafoList result;
     for (size_t i = 0; i < edge_weight.size(); ++i) {
-        result.emplace_back(edge_pos[i], edge_weight[i]);
+        const TrafoGraphEdge edge = {edge_pos[i], edge_weight[i]};
+        result.push_back(edge);
     }
 
     return result;
