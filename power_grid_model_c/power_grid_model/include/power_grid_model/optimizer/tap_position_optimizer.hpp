@@ -183,7 +183,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) {
-        //auto const out_degree = boost::out_degree(v, trafo_graph); // NOSONAR
+        // auto const out_degree = boost::out_degree(v, trafo_graph); // NOSONAR
         trafo_graph[v].is_source = false;
     }
 
