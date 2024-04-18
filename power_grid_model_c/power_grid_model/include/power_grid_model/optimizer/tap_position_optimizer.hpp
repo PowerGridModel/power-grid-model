@@ -69,11 +69,10 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             auto const& to_node = transformer3w.node(to_side);
             const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer3w.id()), 1};
 
-            const bool single_direction_condition =
-                regulated_objects.transformers3w.contains(transformer3w.id()) &&
-                (transformer3w.tap_side() == from_side || transformer3w.tap_side() == to_side);
+            auto const tap_at_from_side = transformer3w.tap_side() == from_side;
+            auto const single_direction_condition = regulated_objects.transformers3w.contains(transformer3w.id()) &&
+                                                    (tap_at_from_side || transformer3w.tap_side() == to_side);
             if (single_direction_condition) {
-                auto const tap_at_from_side = transformer3w.tap_side() == from_side;
                 auto const& tap_from = tap_at_from_side ? from_node : to_node;
                 auto const& tap_to = tap_at_from_side ? to_node : from_node;
                 create_edge(edges, edge_props, tap_from, tap_to, edge_prop);
@@ -102,7 +101,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
             auto const& from_pos = tap_at_from_side ? from_node : to_node;
             auto const& to_pos = tap_at_from_side ? to_node : from_node;
-            if (get_component<Node>(state, from_pos).u_rated() < get_component<Node>(state, from_pos).u_rated()) {
+            if (get_component<Node>(state, from_pos).u_rated() < get_component<Node>(state, to_pos).u_rated()) {
                 throw AutomaticTapCalculationError(transformer.id());
             }
             create_edge(edges, edge_props, from_pos, to_pos, edge_prop);

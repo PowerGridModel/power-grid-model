@@ -18,20 +18,20 @@ using TestComponentContainer =
               ThreeWindingTransformer, TransformerTapRegulator, Source>;
 using TestState = main_core::MainModelState<TestComponentContainer>;
 
-TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
+TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side) {
     return TransformerInput{.id = id,
                             .from_node = from,
                             .to_node = to,
                             .from_status = 1,
                             .to_status = 1,
-                            .u1 = u1,
-                            .u2 = u2,
+                            .u1 = nan,
+                            .u2 = nan,
                             .sn = nan,
                             .uk = nan,
                             .pk = nan,
                             .i0 = nan,
                             .p0 = nan,
-                            .tap_side = BranchSide::from};
+                            .tap_side = tap_side};
 }
 
 ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3) {
@@ -105,6 +105,16 @@ LineInput get_line_input(ID id, ID from, ID to) {
                      .tan0 = nan,
                      .i_n = nan};
 }
+TransformerTapRegulatorInput get_regulator(ID id, ID regulated_object, ControlSide control_side) {
+    return TransformerTapRegulatorInput{.id = id,
+                                        .regulated_object = regulated_object,
+                                        .status = 1,
+                                        .control_side = control_side,
+                                        .u_set = nan,
+                                        .u_band = nan,
+                                        .line_drop_compensation_r = nan,
+                                        .line_drop_compensation_x = nan};
+}
 
 } // namespace
 
@@ -117,9 +127,9 @@ TEST_CASE("Test Transformer ranking") {
     main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
     std::vector<TransformerInput> transformers{
-        get_transformer(11, 0, 1, 150e3, 10e3), get_transformer(12, 0, 1, 150e3, 10e3),
-        get_transformer(13, 5, 7, 50e3, 10e3), get_transformer(14, 2, 3, 10e3, 10e3),
-        get_transformer(15, 8, 9, 10e3, 10e3)};
+        get_transformer(11, 0, 1, BranchSide::from), get_transformer(12, 0, 1, BranchSide::from),
+        get_transformer(13, 5, 7, BranchSide::from), get_transformer(14, 2, 3, BranchSide::from),
+        get_transformer(15, 8, 9, BranchSide::from)};
     main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
     std::vector<ThreeWindingTransformerInput> transformers3w{get_transformer3w(16, 0, 4, 5)};
@@ -135,9 +145,9 @@ TEST_CASE("Test Transformer ranking") {
     main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
     std::vector<TransformerTapRegulatorInput> regulators{
-        {23, 11, 1, ControlSide::from, nan, nan, nan, nan}, {24, 12, 1, ControlSide::from, nan, nan, nan, nan},
-        {25, 13, 1, ControlSide::from, nan, nan, nan, nan}, {26, 14, 1, ControlSide::from, nan, nan, nan, nan},
-        {27, 15, 1, ControlSide::from, nan, nan, nan, nan}, {28, 16, 1, ControlSide::side_1, nan, nan, nan, nan}};
+        get_regulator(23, 11, ControlSide::from), get_regulator(24, 12, ControlSide::from),
+        get_regulator(25, 13, ControlSide::from), get_regulator(26, 14, ControlSide::from),
+        get_regulator(27, 15, ControlSide::from), get_regulator(28, 16, ControlSide::side_1)};
     main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
 
     state.components.set_construction_complete();
@@ -152,12 +162,13 @@ TEST_CASE("Test Transformer ranking") {
         expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
         expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
 
-        // Only weight allocation to be tested
         std::vector<pgm_tap::TrafoGraphEdge> expected_edges_prop;
-        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
-        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
+        expected_edges_prop.insert(expected_edges_prop.end(),
+                                   {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{4, 0}, 1}, {{4, 0}, 1}, {{4, 0}, 1}, {{4, 0}, 1}});
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{0, 1}, 0}, {{0, 1}, 0}, {{0, 2}, 0}, {{0, 2}, 0}});
+        expected_edges_prop.insert(expected_edges_prop.end(),
+                                   {{{1, 0}, 0}, {{1, 0}, 0}, {{1, 1}, 0}, {{1, 1}, 0}, {{1, 2}, 0}, {{1, 2}, 0}});
 
         std::vector<pgm_tap::TrafoGraphVertex> expected_vertex_props{{true},  {false}, {false}, {false}, {false},
                                                                      {false}, {false}, {false}, {false}, {false}};
@@ -168,6 +179,22 @@ TEST_CASE("Test Transformer ranking") {
         for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
             CHECK(actual_graph[*vi].is_source == expected_vertex_props[*vi].is_source);
         }
+    }
+
+    SUBCASE("Automatic tap unsupported tap side at LV") {
+        TestState bad_state;
+        std::vector<NodeInput> bad_nodes{{0, 50e3}, {1, 10e3}};
+        main_core::add_component<Node>(bad_state, bad_nodes.begin(), bad_nodes.end(), 50.0);
+
+        std::vector<TransformerInput> bad_trafo{get_transformer(2, 0, 1, BranchSide::to)};
+        main_core::add_component<Transformer>(bad_state, bad_trafo.begin(), bad_trafo.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> bad_regulators{get_regulator(3, 2, ControlSide::from)};
+        main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(), bad_regulators.end(),
+                                                          50.0);
+
+        bad_state.components.set_construction_complete();
+        CHECK_THROWS_AS(pgm_tap::build_transformer_graph(bad_state), AutomaticTapCalculationError);
     }
 
     SUBCASE("Process edge weights") {
