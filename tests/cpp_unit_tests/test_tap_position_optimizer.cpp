@@ -147,18 +147,16 @@ TEST_CASE("Test Transformer ranking") {
         // Inserted in order of transformer, transformer3w, line and link
         std::vector<std::pair<Idx, Idx>> expected_edges;
         expected_edges.insert(expected_edges.end(), {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9}});
-        expected_edges.insert(expected_edges.end(), {{0, 4}, {0, 5}, {4, 5}, {5, 4}});
-        expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}, {1, 2}});
-        expected_edges.insert(expected_edges.end(), {{2, 1}, {4, 6}, {6, 4}, {7, 8}, {8, 7}});
+        expected_edges.insert(expected_edges.end(), {{0, 4}, {4, 5}, {5, 4}, {0, 5}});
+        expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
+        expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
 
         // Only weight allocation to be tested
         std::vector<pgm_tap::TrafoGraphEdge> expected_edges_prop;
         expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}});
         expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
-        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
-        pgm_tap::TransformerGraph expected_graph{boost::edges_are_unsorted_multi_pass, expected_edges.cbegin(),
-                                                 expected_edges.cend(), expected_edges_prop.cbegin(), 10};
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
 
         std::vector<pgm_tap::TrafoGraphVertex> expected_vertex_props{{true},  {false}, {false}, {false}, {false},
                                                                      {false}, {false}, {false}, {false}, {false}};
@@ -174,12 +172,7 @@ TEST_CASE("Test Transformer ranking") {
     SUBCASE("Process edge weights") {
         // Dummy graph
         std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
-
-        std::vector<pgm_tap::TrafoGraphEdge> edge_prop;
-        edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 1}, 1}));
-        edge_prop.push_back(pgm_tap::TrafoGraphEdge({{0, 2}, 2}));
-        edge_prop.push_back(pgm_tap::TrafoGraphEdge({{2, 3}, 3}));
-
+        std::vector<pgm_tap::TrafoGraphEdge> edge_prop{{{0, 1}, 1}, {{0, 2}, 2}, {{2, 3}, 3}};
         std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
         pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),

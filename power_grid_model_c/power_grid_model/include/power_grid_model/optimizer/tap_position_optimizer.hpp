@@ -24,7 +24,7 @@ namespace detail = power_grid_model::optimizer::detail;
 
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
-using WeightedTrafo = std::pair<Idx2D, EdgeWeight>;
+using WeightedTrafo = std::pair<Idx2D, EdgeWeight>; // why not use TrafoGraphEdge?
 using WeightedTrafoList = std::vector<WeightedTrafo>;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 constexpr auto infty = std::numeric_limits<Idx>::max();
@@ -124,7 +124,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
     edges.reserve(std::distance(iter.begin(), iter.end()) * 2);
     edge_props.reserve(std::distance(iter.begin(), iter.end()) * 2);
     for (auto const& branch : iter) {
-        if (!branch.from_status() || branch.to_status()) {
+        if (!branch.from_status() || !branch.to_status()) {
             continue;
         }
         TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, branch.id()), 0};
