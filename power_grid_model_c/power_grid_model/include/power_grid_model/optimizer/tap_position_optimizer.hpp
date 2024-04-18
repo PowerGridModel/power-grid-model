@@ -24,9 +24,6 @@ namespace detail = power_grid_model::optimizer::detail;
 
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
-using WeightedTrafo = std::pair<Idx2D, EdgeWeight>; // why not use TrafoGraphEdge?
-using WeightedTrafoList = std::vector<WeightedTrafo>;
-using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 constexpr auto infty = std::numeric_limits<Idx>::max();
 
 struct TrafoGraphVertex {
@@ -36,10 +33,14 @@ struct TrafoGraphVertex {
 struct TrafoGraphEdge {
     Idx2D pos{};
     EdgeWeight weight{};
+
+    bool operator==(const TrafoGraphEdge& other) const { return pos == other.pos && weight == other.weight; }
 };
 
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
+using WeightedTrafoList = std::vector<TrafoGraphEdge>;
+using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 struct RegulatedObjects {
     std::set<Idx> transformers{};
@@ -66,9 +67,9 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             }
             auto const& from_node = transformer3w.node(from_side);
             auto const& to_node = transformer3w.node(to_side);
-            TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer3w.id()), 1};
+            const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer3w.id()), 1};
 
-            bool single_direction_condition =
+            const bool single_direction_condition =
                 regulated_objects.transformers3w.contains(transformer3w.id()) &&
                 (transformer3w.tap_side() == from_side || transformer3w.tap_side() == to_side);
             if (single_direction_condition) {
@@ -95,7 +96,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer.id()), 1};
+        const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer.id()), 1};
 
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
@@ -127,7 +128,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         if (!branch.from_status() || !branch.to_status()) {
             continue;
         }
-        TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, branch.id()), 0};
+        const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, branch.id()), 0};
 
         create_edge(edges, edge_props, branch.from_node(), branch.to_node(), edge_prop);
         create_edge(edges, edge_props, branch.to_node(), branch.from_node(), edge_prop);
@@ -182,7 +183,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) {
-        auto const out_degree = boost::out_degree(v, trafo_graph);
+        auto const out_degree = boost::out_degree(v, trafo_graph); // NOSONAR
         trafo_graph[v].is_source = false;
     }
 
@@ -265,22 +266,22 @@ inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> RankedTr
     auto sorted_trafos = w_trafo_list;
 
     for (auto& trafo : sorted_trafos) {
-        if (transformer_disconnected(trafo.first)) {
-            trafo.second = infty;
+        if (transformer_disconnected(trafo.pos)) {
+            trafo.weight = infty;
         }
     }
 
     std::sort(sorted_trafos.begin(), sorted_trafos.end(),
-              [](const WeightedTrafo& a, const WeightedTrafo& b) { return a.second < b.second; });
+              [](const TrafoGraphEdge& a, const TrafoGraphEdge& b) { return a.weight < b.weight; });
 
     RankedTransformerGroups groups;
     Idx last_weight = -1;
     for (const auto& trafo : sorted_trafos) {
-        if (groups.empty() || last_weight != trafo.second) {
-            groups.push_back(std::vector<Idx2D>{trafo.first});
-            last_weight = trafo.second;
+        if (groups.empty() || last_weight != trafo.weight) {
+            groups.push_back(std::vector<Idx2D>{trafo.pos});
+            last_weight = trafo.weight;
         } else {
-            groups.back().push_back(trafo.first);
+            groups.back().push_back(trafo.pos);
         }
     }
     return groups;

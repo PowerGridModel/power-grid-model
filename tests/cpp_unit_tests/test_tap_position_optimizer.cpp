@@ -108,6 +108,7 @@ LineInput get_line_input(ID id, ID from, ID to) {
 
 } // namespace
 
+// TEST_SUITE("Automatic Tap Changer") {
 TEST_CASE("Test Transformer ranking") {
     // Minimum test grid
     TestState state;
@@ -215,5 +216,5 @@ TEST_CASE("Test Transformer ranking") {
 TEST_CASE("Test Tap position optimizer" * doctest::skip(true)) {
     // TODO: Implement unit tests for the tap position optimizer
 }
-
+//}
 } // namespace power_grid_model
