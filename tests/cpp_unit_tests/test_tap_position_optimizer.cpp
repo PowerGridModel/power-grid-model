@@ -34,6 +34,61 @@ TransformerInput get_transformer(ID id, ID from, ID to, double u1, double u2) {
                             .tap_side = BranchSide::from};
 }
 
+ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3) {
+    return ThreeWindingTransformerInput{
+        .id = id,
+        .node_1 = node_1,
+        .node_2 = node_2,
+        .node_3 = node_3,
+        .status_1 = 1,
+        .status_2 = 1,
+        .status_3 = 1,
+        .u1 = nan,
+        .u2 = nan,
+        .u3 = nan,
+        .sn_1 = nan,
+        .sn_2 = nan,
+        .sn_3 = nan,
+        .uk_12 = nan,
+        .uk_13 = nan,
+        .uk_23 = nan,
+        .pk_12 = nan,
+        .pk_13 = nan,
+        .pk_23 = nan,
+        .i0 = nan,
+        .p0 = nan,
+        .winding_1 = WindingType::wye_n,
+        .winding_2 = WindingType::wye_n,
+        .winding_3 = WindingType::wye_n,
+        .clock_12 = 0,
+        .clock_13 = 0,
+        .tap_side = Branch3Side::side_1,
+        .tap_pos = 0,
+        .tap_min = 0,
+        .tap_max = 0,
+        .tap_nom = 0,
+        .tap_size = nan,
+        .uk_12_min = nan,
+        .uk_12_max = nan,
+        .uk_13_min = nan,
+        .uk_13_max = nan,
+        .uk_23_min = nan,
+        .uk_23_max = nan,
+        .pk_12_min = nan,
+        .pk_12_max = nan,
+        .pk_13_min = nan,
+        .pk_13_max = nan,
+        .pk_23_min = nan,
+        .pk_23_max = nan,
+        .r_grounding_1 = nan,
+        .x_grounding_1 = nan,
+        .r_grounding_2 = nan,
+        .x_grounding_2 = nan,
+        .r_grounding_3 = nan,
+        .x_grounding_3 = nan,
+    };
+}
+
 LineInput get_line_input(ID id, ID from, ID to) {
     return LineInput{.id = id,
                      .from_node = from,
@@ -66,20 +121,22 @@ TEST_CASE("Test Transformer ranking") {
         get_transformer(15, 8, 9, 10e3, 10e3)};
     main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
-    std::vector<LineInput> lines{get_line_input(16, 3, 6), get_line_input(17, 3, 9)};
+    std::vector<ThreeWindingTransformerInput> transformers3w{get_transformer3w(16, 0, 4, 5)};
+    main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+
+    std::vector<LineInput> lines{get_line_input(17, 3, 6), get_line_input(18, 3, 9)};
     main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
 
-    std::vector<LinkInput> links{{20, 2, 1, 1, 1}, {21, 6, 4, 1, 1}, {22, 8, 7, 1, 1}};
+    std::vector<LinkInput> links{{19, 2, 1, 1, 1}, {20, 6, 4, 1, 1}, {21, 8, 7, 1, 1}};
     main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
 
-    std::vector<SourceInput> sources{{24, 0, 1, 1.0, 0, nan, nan, nan}};
+    std::vector<SourceInput> sources{{22, 0, 1, 1.0, 0, nan, nan, nan}};
     main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
-    std::vector<TransformerTapRegulatorInput> regulators{{25, 11, 1, ControlSide::from, nan, nan, nan, nan},
-                                                         {26, 12, 1, ControlSide::from, nan, nan, nan, nan},
-                                                         {27, 13, 1, ControlSide::from, nan, nan, nan, nan},
-                                                         {28, 14, 1, ControlSide::from, nan, nan, nan, nan},
-                                                         {29, 15, 1, ControlSide::from, nan, nan, nan, nan}};
+    std::vector<TransformerTapRegulatorInput> regulators{
+        {23, 11, 1, ControlSide::from, nan, nan, nan, nan}, {24, 12, 1, ControlSide::from, nan, nan, nan, nan},
+        {25, 13, 1, ControlSide::from, nan, nan, nan, nan}, {26, 14, 1, ControlSide::from, nan, nan, nan, nan},
+        {27, 15, 1, ControlSide::from, nan, nan, nan, nan}, {28, 16, 1, ControlSide::side_1, nan, nan, nan, nan}};
     main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
 
     state.components.set_construction_complete();
@@ -87,14 +144,19 @@ TEST_CASE("Test Transformer ranking") {
     // Subcases
     SUBCASE("Building the graph") {
         // reference graph creation
-        std::vector<std::pair<Idx, Idx>> expected_edges = {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9},
-                                                           {3, 6}, {6, 3}, {3, 9}, {9, 3}, {1, 2},
-                                                           {2, 1}, {4, 6}, {6, 4}, {7, 8}, {8, 7}};
+        // Inserted in order of transformer, transformer3w, line and link
+        std::vector<std::pair<Idx, Idx>> expected_edges;
+        expected_edges.insert(expected_edges.end(), {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9}});
+        expected_edges.insert(expected_edges.end(), {{0, 4}, {0, 5}, {4, 5}, {5, 4}});
+        expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}, {1, 2}});
+        expected_edges.insert(expected_edges.end(), {{2, 1}, {4, 6}, {6, 4}, {7, 8}, {8, 7}});
 
         // Only weight allocation to be tested
-        std::vector<pgm_tap::TrafoGraphEdge> expected_edges_prop{{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}, {{}, 1},
-                                                                 {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0},
-                                                                 {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}};
+        std::vector<pgm_tap::TrafoGraphEdge> expected_edges_prop;
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}});
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 1}, {{}, 1}, {{}, 1}, {{}, 1}});
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
+        expected_edges_prop.insert(expected_edges_prop.end(), {{{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}, {{}, 0}});
         pgm_tap::TransformerGraph expected_graph{boost::edges_are_unsorted_multi_pass, expected_edges.cbegin(),
                                                  expected_edges.cend(), expected_edges_prop.cbegin(), 10};
 
