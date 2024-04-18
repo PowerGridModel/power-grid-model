@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "component.hpp"
+
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"

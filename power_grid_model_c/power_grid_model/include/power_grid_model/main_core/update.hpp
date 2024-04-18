@@ -11,7 +11,7 @@
 namespace power_grid_model::main_core {
 
 namespace detail {
-template <std::derived_from<Base> Component, std::forward_iterator ForwardIterator, typename Func>
+template <component_c Component, std::forward_iterator ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
                                        std::vector<Idx2D> const& sequence_idx) {
@@ -25,7 +25,7 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
 }
 } // namespace detail
 
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
@@ -36,7 +36,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
                    [&state](UpdateType const& update) { return get_component_idx_by_id<Component>(state, update.id); });
 }
 
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
                                                  ForwardIterator end) {
@@ -50,7 +50,7 @@ inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContain
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
@@ -80,7 +80,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
@@ -93,45 +93,6 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
             *destination++ = comp.inverse(update_data);
         },
         begin, end, sequence_idx);
-}
-
-template <symmetry_tag sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
-    auto& y_bus_vec = [&math_state]() -> auto& {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state.y_bus_vec_sym;
-        } else {
-            return math_state.y_bus_vec_asym;
-        }
-    }
-    ();
-
-    assert(y_bus_vec.size() == math_model_params.size());
-
-    for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
-        y_bus_vec[i].update_admittance(std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])));
-    }
-}
-
-template <symmetry_tag sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
-                         std::vector<MathModelParamIncrement> const& math_model_param_increments) {
-    auto& y_bus_vec = [&math_state]() -> auto& {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state.y_bus_vec_sym;
-        } else {
-            return math_state.y_bus_vec_asym;
-        }
-    }
-    ();
-
-    assert(y_bus_vec.size() == math_model_params.size());
-
-    for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
-        y_bus_vec[i].update_admittance_increment(
-            std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])),
-            math_model_param_increments[i]);
-    }
 }
 
 } // namespace power_grid_model::main_core

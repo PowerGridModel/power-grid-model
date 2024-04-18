@@ -16,11 +16,29 @@
 #include <power_grid_model/component/source.hpp>
 #include <power_grid_model/component/three_winding_transformer.hpp>
 #include <power_grid_model/component/transformer.hpp>
+#include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/component/voltage_sensor.hpp>
 
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+
+static_assert(component_c<Node>);
+static_assert(component_c<Line>);
+static_assert(component_c<Branch>);
+static_assert(component_c<Link>);
+static_assert(component_c<Transformer>);
+static_assert(component_c<Source>);
+static_assert(component_c<SymLoad>);
+static_assert(component_c<AsymLoad>);
+static_assert(component_c<SymGenerator>);
+static_assert(component_c<AsymGenerator>);
+static_assert(component_c<SymVoltageSensor>);
+static_assert(component_c<AsymVoltageSensor>);
+static_assert(component_c<SymPowerSensor>);
+static_assert(component_c<AsymPowerSensor>);
+static_assert(component_c<Fault>);
+static_assert(component_c<TransformerTapRegulator>);
 
 // Test whether it is possible to copy a class to its base class
 // (This would mean that we lose private member variables or overloads)
@@ -59,6 +77,9 @@ static_assert(!is_copyable_to<ThreeWindingTransformer, Base>);
 static_assert(is_copyable_to<Transformer, Transformer>);
 static_assert(!is_copyable_to<Transformer, Branch>);
 static_assert(!is_copyable_to<Transformer, Base>);
+
+static_assert(is_copyable_to<TransformerTapRegulator, TransformerTapRegulator>);
+static_assert(!is_copyable_to<TransformerTapRegulator, Base>);
 
 // abstract classes (no constructors)
 static_assert(std::is_abstract_v<Appliance>);

@@ -10,6 +10,7 @@
 namespace power_grid_model::optimizer::test {
 struct StubComponent {};
 
+struct StubTransformerInput {};
 struct StubTransformerUpdate {
     ID id{};
     IntS tap_pos{};
@@ -18,6 +19,7 @@ enum class StubTransformerSideType : IntS {};
 struct StubTransformerMathIdType {};
 
 struct StubTransformer {
+    using InputType = StubTransformerInput;
     using UpdateType = StubTransformerUpdate;
     using SideType = StubTransformerSideType;
 
@@ -34,6 +36,7 @@ struct StubTransformer {
     constexpr auto tap_max() const { return IntS{}; }
     constexpr auto tap_nom() const { return IntS{}; }
 
+    constexpr auto update(UpdateType const& /* update */) const { return UpdateChange{}; }
     constexpr auto inverse(UpdateType /* update */) const { return UpdateType{}; }
 };
 struct StubTransformerA : public StubTransformer {};

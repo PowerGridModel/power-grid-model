@@ -4,6 +4,8 @@
 
 #include "test_optimizer.hpp"
 
+#include <power_grid_model/main_core/input.hpp>
+#include <power_grid_model/main_core/update.hpp>
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
 
 #include <doctest/doctest.h>
@@ -11,8 +13,22 @@
 namespace power_grid_model {
 namespace optimizer::tap_position_optimizer::test {
 namespace {
+using power_grid_model::optimizer::test::ConstDatasetUpdate;
 using power_grid_model::optimizer::test::StubTransformer;
+using power_grid_model::optimizer::test::StubTransformerInput;
 using power_grid_model::optimizer::test::StubTransformerUpdate;
+
+template <typename ContainerType>
+    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
+struct MockMathOutput : public MathOutput<symmetric_t> {
+    Idx call_index;
+    std::optional<std::reference_wrapper<main_core::MainModelState<ContainerType> const>> state;
+    CalculationMethod method;
+};
+
+template <typename ContainerType>
+using MockStateCalculator = std::vector<MockMathOutput<ContainerType>> (*)(
+    main_core::MainModelState<ContainerType> const& state, CalculationMethod method);
 
 struct A {};
 struct B {};
@@ -46,9 +62,11 @@ struct MockTransformerState {
     IntS tap_nom{};
 
     Idx topology_index{};
+    Idx rank{};
 };
 
 struct MockTransformer {
+    using InputType = StubTransformerInput;
     using UpdateType = StubTransformerUpdate;
     using SideType = typename MockTransformerState::SideType;
 
@@ -65,6 +83,16 @@ struct MockTransformer {
     constexpr auto tap_max() const { return state.tap_max; }
     constexpr auto tap_nom() const { return state.tap_nom; }
 
+    auto update(UpdateType const& update) {
+        CHECK(update.id == state.id);
+        if (!is_nan(update.tap_pos)) {
+            CHECK(update.tap_pos >= tap_min());
+            CHECK(update.tap_pos <= tap_max());
+            state.tap_pos = update.tap_pos;
+        }
+        return UpdateChange{};
+    }
+
     auto inverse(UpdateType update) const {
         CHECK(update.id == state.id);
         auto const tap_pos_update = is_nan(update.tap_pos) ? na_IntS : tap_pos();
@@ -78,31 +106,99 @@ static_assert(transformer_c<MockTransformer>);
 template <std::derived_from<MockTransformer> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    auto const& transformer = get_component_item<ComponentType>(id_or_index);
+    auto const& transformer = main_core::get_component<ComponentType>(state, id_or_index);
     return transformer.state.topology_index;
 }
 
-template <std::derived_from<StubTransformer> ComponentType, typename State>
+template <std::derived_from<MockTransformer> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_math_id(State const& /* state */, Idx /* topology_sequence_idx */) {
     return Idx2D{};
 }
 
-template <std::derived_from<StubTransformer> ComponentType, typename State>
+template <std::derived_from<MockTransformer> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topo_node(State const& /* state */, Idx /* topology_index */, ControlSide /* side */) {
     return Idx{};
 }
 
-template <std::derived_from<StubTransformer> ComponentType, steady_state_math_output_type MathOutputType>
-inline auto i_pu(std::vector<MathOutputType> const& /* math_output */, Idx2DBranch3 const& /* math_id */,
+template <std::derived_from<MockTransformer> ComponentType, typename ContainerType>
+inline auto i_pu(std::vector<MockMathOutput<ContainerType>> const& /* math_output */, Idx2D const& /* math_id */,
                  ControlSide /* side */) {
-    return ComplexValue<typename MathOutputType::sym>{};
+    return ComplexValue<typename MockMathOutput<ContainerType>::sym>{};
 }
+
+template <typename ContainerType>
+std::vector<MockMathOutput<ContainerType>> mock_state_calculator(main_core::MainModelState<ContainerType> const& state,
+                                                                 CalculationMethod method) {
+    static Idx call_count{};
+
+    return {{.call_index = call_count++, .state = std::cref(state), .method = method}};
+}
+
+template <main_core::main_model_state_c State> class MockTransformerRanker {
+  private:
+    template <typename... Ts> struct Impl;
+    template <component_c ComponentType> struct Impl<ComponentType> {
+        void operator()(State const& state, RankedTransformerGroups& ranking) const {
+            if constexpr (std::derived_from<ComponentType, MockTransformer>) {
+                for (Idx idx = 0; idx < main_core::get_component_size<ComponentType>(state); ++idx) {
+                    auto const& comp = main_core::get_component<ComponentType>(state, idx);
+                    auto const rank = comp.state.rank;
+                    REQUIRE(rank >= 0);
+                    if (rank >= ranking.size()) {
+                        ranking.resize(rank + 1);
+                    }
+                    ranking[rank].emplace_back(main_core::get_component_type_index<ComponentType>(state), idx);
+                }
+            }
+        }
+    };
+    template <component_c... ComponentTypes> struct Impl<std::tuple<ComponentTypes...>> {
+        auto operator()(State const& state) const -> RankedTransformerGroups {
+            RankedTransformerGroups ranking;
+            (Impl<ComponentTypes>{}(state, ranking), ...);
+            return ranking;
+        }
+    };
+
+  public:
+    auto operator()(State const& state) const -> RankedTransformerGroups {
+        return Impl<typename State::ComponentContainer::gettable_types>{}(state);
+    }
+};
+
+struct MockTapOptimizerRunner {
+    using MockContainer = Container<test::MockTransformer>;
+    using MockState = main_core::MainModelState<MockContainer>;
+    using MockStateCalculator = test::MockStateCalculator<MockContainer>;
+    using MockTransformerRanker = test::MockTransformerRanker<MockState>;
+
+    auto optimizer() {
+        auto const updater = [this](ConstDataset const& update_dataset) {
+            REQUIRE(!update_dataset.empty());
+            REQUIRE(update_dataset.size() == 1);
+            REQUIRE(update_dataset.contains(MockTransformer::name));
+            auto const& transformers_dataset = update_dataset.at(MockTransformer::name);
+            auto const [transformers_update_begin, transformers_update_end] =
+                transformers_dataset.get_iterators<typename MockTransformer::UpdateType>(-1);
+            auto changed_components = std::vector<Idx2D>{};
+            main_core::update_component<MockTransformer>(state.get(), transformers_update_begin,
+                                                         transformers_update_end,
+                                                         std::back_inserter(changed_components));
+        };
+
+        return TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
+            mock_state_calculator, updater, OptimizerStrategy::any};
+    }
+
+    std::reference_wrapper<MockState> state;
+};
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
 
 namespace pgm_tap = optimizer::tap_position_optimizer;
+namespace test = pgm_tap::test;
 
 TEST_CASE("Test Transformer ranking") {
     // ToDo: The grid from OntNote page
@@ -155,6 +251,17 @@ TEST_CASE("Test Transformer ranking") {
     }
 }
 
-TEST_CASE("Test Tap position optimizer") {}
+TEST_CASE("Test Tap position optimizer") {
+    using MockContainer = Container<test::MockTransformer>;
+    using MockState = main_core::MainModelState<MockContainer>;
+
+    MockState state;
+
+    main_core::emplace_component<test::MockTransformer>(state, 1);
+    main_core::emplace_component<test::MockTransformer>(state, 2);
+    state.components.set_construction_complete();
+
+    test::MockTapOptimizerRunner optimizer{state};
+}
 
 } // namespace power_grid_model
