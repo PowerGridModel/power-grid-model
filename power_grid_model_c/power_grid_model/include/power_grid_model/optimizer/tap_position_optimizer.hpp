@@ -68,7 +68,10 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             auto const& to_node = transformer3w.node(to_side);
             TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer3w.id()), 1};
 
-            if (regulated_objects.transformers3w.contains(transformer3w.id())) {
+            bool single_direction_condition =
+                regulated_objects.transformers3w.contains(transformer3w.id()) &&
+                (transformer3w.tap_side() == from_side || transformer3w.tap_side() == to_side);
+            if (single_direction_condition) {
                 auto const tap_at_from_side = transformer3w.tap_side() == from_side;
                 auto const& tap_from = tap_at_from_side ? from_node : to_node;
                 auto const& tap_to = tap_at_from_side ? to_node : from_node;
