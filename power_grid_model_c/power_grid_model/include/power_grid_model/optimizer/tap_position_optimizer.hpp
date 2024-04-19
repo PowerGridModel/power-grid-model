@@ -191,9 +191,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  edge_props.cbegin(),
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
-    BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) {
-        trafo_graph[v].is_source = false;
-    }
+    BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }
 
     if (state.components.template size<Source>() == 0) {
         return trafo_graph;
