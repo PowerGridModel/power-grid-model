@@ -86,10 +86,10 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             if (single_direction_condition) {
                 auto const& tap_from = tap_at_from_side ? from_node : to_node;
                 auto const& tap_to = tap_at_from_side ? to_node : from_node;
-                create_edge(edges, edge_props, tap_from, tap_to, {true, {tap_from, tap_to}, 1}, true);
+                create_edge(edges, edge_props, tap_from, tap_to, {true, {tap_from, tap_to}, 1});
             } else {
-                create_edge(edges, edge_props, from_node, to_node, {true, {from_node, to_node}, 1}, true);
-                create_edge(edges, edge_props, to_node, from_node, {true, {to_node, from_node}, 1}, true);
+                create_edge(edges, edge_props, from_node, to_node, {true, {from_node, to_node}, 1});
+                create_edge(edges, edge_props, to_node, from_node, {true, {to_node, from_node}, 1});
             }
         }
     }
@@ -114,10 +114,10 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             if (get_component<Node>(state, from_pos).u_rated() < get_component<Node>(state, to_pos).u_rated()) {
                 throw AutomaticTapCalculationError(transformer.id());
             }
-            create_edge(edges, edge_props, from_pos, to_pos, {true, {from_pos, to_pos}, 1}, true);
+            create_edge(edges, edge_props, from_pos, to_pos, {true, {from_pos, to_pos}, 1});
         } else {
-            create_edge(edges, edge_props, from_node, to_node, {true, {from_node, to_node}, 1}, true);
-            create_edge(edges, edge_props, to_node, from_node, {true, {to_node, from_node}, 1}, true);
+            create_edge(edges, edge_props, from_node, to_node, {true, {from_node, to_node}, 1});
+            create_edge(edges, edge_props, to_node, from_node, {true, {to_node, from_node}, 1});
         }
     }
 }
@@ -138,14 +138,14 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             continue;
         }
         create_edge(edges, edge_props, branch.from_node(), branch.to_node(),
-                    {false, {branch.from_node(), branch.to_node()}, 0}, false);
+                    {false, {branch.from_node(), branch.to_node()}, 0});
         create_edge(edges, edge_props, branch.to_node(), branch.from_node(),
-                    {false, {branch.to_node(), branch.from_node()}, 0}, false);
+                    {false, {branch.to_node(), branch.from_node()}, 0});
     }
 }
 
 inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx const& start, Idx const& end,
-                        TrafoGraphEdge const& edge_prop, bool is_trafo) {
+                        TrafoGraphEdge const& edge_prop) {
     edges.emplace_back(static_cast<TrafoGraphIdx>(start), static_cast<TrafoGraphIdx>(end));
     edge_props.emplace_back(edge_prop);
 }
