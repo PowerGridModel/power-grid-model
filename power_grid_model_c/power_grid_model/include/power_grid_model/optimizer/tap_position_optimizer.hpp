@@ -587,7 +587,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         };
         (update_component.template operator()<TransformerTypes>(), ...);
 
-        update_(update_dataset);
+        if (!update_dataset.empty()) {
+            update_(update_dataset);
+        }
     }
 
     auto initialize(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
