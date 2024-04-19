@@ -31,10 +31,23 @@ struct TrafoGraphVertex {
 };
 
 struct TrafoGraphEdge {
-    Idx2D pos{};
+    bool is_trafo{false};
+    Idx2D from_to{};
     EdgeWeight weight{};
 
-    bool operator==(const TrafoGraphEdge& other) const { return pos == other.pos && weight == other.weight; }
+    bool operator==(const TrafoGraphEdge& other) const {
+        return is_trafo == other.is_trafo && from_to == other.from_to && weight == other.weight;
+    }
+
+    bool operator<(const TrafoGraphEdge& other) const {
+        if (weight != other.weight) {
+            return weight < other.weight;
+        }
+        if (from_to.group != other.from_to.group) {
+            return from_to.group < other.from_to.group;
+        }
+        return from_to.pos < other.from_to.pos;
+    }
 };
 
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
@@ -47,7 +60,6 @@ struct RegulatedObjects {
     std::set<Idx> transformers3w{};
 };
 
-// TODO(mgovers): investigate whether this really is the correct graph structure
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
                                                             boost::no_property, TrafoGraphIdx, TrafoGraphIdx>;
 
@@ -67,7 +79,6 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             }
             auto const& from_node = transformer3w.node(from_side);
             auto const& to_node = transformer3w.node(to_side);
-            const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer3w.id()), 1};
 
             auto const tap_at_from_side = transformer3w.tap_side() == from_side;
             auto const single_direction_condition = regulated_objects.transformers3w.contains(transformer3w.id()) &&
@@ -75,10 +86,10 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             if (single_direction_condition) {
                 auto const& tap_from = tap_at_from_side ? from_node : to_node;
                 auto const& tap_to = tap_at_from_side ? to_node : from_node;
-                create_edge(edges, edge_props, tap_from, tap_to, edge_prop);
+                create_edge(edges, edge_props, tap_from, tap_to, {true, {tap_from, tap_to}, 1}, true);
             } else {
-                create_edge(edges, edge_props, from_node, to_node, edge_prop);
-                create_edge(edges, edge_props, to_node, from_node, edge_prop);
+                create_edge(edges, edge_props, from_node, to_node, {true, {from_node, to_node}, 1}, true);
+                create_edge(edges, edge_props, to_node, from_node, {true, {to_node, from_node}, 1}, true);
             }
         }
     }
@@ -95,7 +106,6 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, transformer.id()), 1};
 
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
@@ -104,10 +114,10 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             if (get_component<Node>(state, from_pos).u_rated() < get_component<Node>(state, to_pos).u_rated()) {
                 throw AutomaticTapCalculationError(transformer.id());
             }
-            create_edge(edges, edge_props, from_pos, to_pos, edge_prop);
+            create_edge(edges, edge_props, from_pos, to_pos, {true, {from_pos, to_pos}, 1}, true);
         } else {
-            create_edge(edges, edge_props, from_node, to_node, edge_prop);
-            create_edge(edges, edge_props, to_node, from_node, edge_prop);
+            create_edge(edges, edge_props, from_node, to_node, {true, {from_node, to_node}, 1}, true);
+            create_edge(edges, edge_props, to_node, from_node, {true, {to_node, from_node}, 1}, true);
         }
     }
 }
@@ -127,15 +137,15 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
         if (!branch.from_status() || !branch.to_status()) {
             continue;
         }
-        const TrafoGraphEdge edge_prop{main_core::get_component_idx_by_id(state, branch.id()), 0};
-
-        create_edge(edges, edge_props, branch.from_node(), branch.to_node(), edge_prop);
-        create_edge(edges, edge_props, branch.to_node(), branch.from_node(), edge_prop);
+        create_edge(edges, edge_props, branch.from_node(), branch.to_node(),
+                    {false, {branch.from_node(), branch.to_node()}, 0}, false);
+        create_edge(edges, edge_props, branch.to_node(), branch.from_node(),
+                    {false, {branch.to_node(), branch.from_node()}, 0}, false);
     }
 }
 
 inline void create_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props, Idx const& start, Idx const& end,
-                        TrafoGraphEdge const& edge_prop) {
+                        TrafoGraphEdge const& edge_prop, bool is_trafo) {
     edges.emplace_back(static_cast<TrafoGraphIdx>(start), static_cast<TrafoGraphIdx>(end));
     edge_props.emplace_back(edge_prop);
 }
@@ -182,7 +192,6 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
     BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) {
-        // auto const out_degree = boost::out_degree(v, trafo_graph); // NOSONAR
         trafo_graph[v].is_source = false;
     }
 
@@ -199,12 +208,12 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     return trafo_graph;
 }
 
-inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& edge_weight, std::vector<Idx2D>& edge_pos,
-                                   TransformerGraph const& graph) -> void {
+inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& edge_weight, std::vector<Idx2D>& edge_from_to,
+                                   std::vector<bool>& edge_is_trafo, TransformerGraph const& graph) -> void {
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
     edge_weight[v] = 0;
-    edge_pos[v] = {v, v};
+    edge_from_to[v] = {v, v};
     pq.push({0, v});
 
     while (!pq.empty()) {
@@ -215,61 +224,42 @@ inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& edge_weight, 
             continue;
         }
 
-        for (auto e : boost::make_iterator_range(boost::out_edges(u, graph))) {
+        BGL_FORALL_OUTEDGES(u, e, graph, TransformerGraph) {
             auto v = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
             if (edge_weight[u] + weight < edge_weight[v]) {
                 edge_weight[v] = edge_weight[u] + weight;
-                edge_pos[v] = graph[e].pos;
+                edge_from_to[v] = graph[e].from_to;
+                edge_is_trafo[v] = graph[e].is_trafo;
                 pq.push({edge_weight[v], v});
             }
         }
     }
 }
 
-// Step 2: Initialize the rank of all vertices (transformer nodes) as infinite (INT_MAX)
-// Step 3: Loop all the connected sources (status == 1)
-//      a. Perform Dijkstra shortest path algorithm from the vertex with that source.
-//         This is to determine the shortest path of all vertices to this particular source.
 inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList {
     std::vector<EdgeWeight> edge_weight(boost::num_vertices(graph), infty);
-    std::vector<Idx2D> edge_pos(boost::num_vertices(graph));
+    std::vector<Idx2D> edge_from_to(boost::num_vertices(graph));
+    std::vector<bool> edge_is_trafo(boost::num_vertices(graph), false);
 
-    for (auto v : boost::make_iterator_range(boost::vertices(graph))) {
+    BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
         if (graph[v].is_source) {
-            process_edges_dijkstra(v, edge_weight, edge_pos, graph);
+            process_edges_dijkstra(v, edge_weight, edge_from_to, edge_is_trafo, graph);
         }
     }
 
     WeightedTrafoList result;
     for (size_t i = 0; i < edge_weight.size(); ++i) {
-        const TrafoGraphEdge edge = {edge_pos[i], edge_weight[i]};
+        const TrafoGraphEdge edge = {edge_is_trafo[i], edge_from_to[i], edge_weight[i]};
         result.push_back(edge);
     }
 
     return result;
 }
 
-// Step 4: Loop all transformers with automatic tap changers, including the transformers which are not
-//         fully connected
-//   a.Rank of the transformer <-
-//       i. Infinity(INT_MAX), if tap side of the transformer is disconnected.
-//          The transformer regulation should be ignored
-//       ii.Rank of the vertex at the tap side of the transformer, if tap side of the transformer is connected
-inline auto transformer_disconnected(Idx2D const& /*pos*/) -> bool {
-    // <TODO: jguo> waiting for the functionalities in step 1 to be implemented
-    return false;
-}
-
 inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> RankedTransformerGroups {
     auto sorted_trafos = w_trafo_list;
-
-    for (auto& trafo : sorted_trafos) {
-        if (transformer_disconnected(trafo.pos)) {
-            trafo.weight = infty;
-        }
-    }
 
     std::sort(sorted_trafos.begin(), sorted_trafos.end(),
               [](const TrafoGraphEdge& a, const TrafoGraphEdge& b) { return a.weight < b.weight; });
@@ -278,10 +268,10 @@ inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> RankedTr
     Idx last_weight = -1;
     for (const auto& trafo : sorted_trafos) {
         if (groups.empty() || last_weight != trafo.weight) {
-            groups.push_back(std::vector<Idx2D>{trafo.pos});
+            groups.push_back(std::vector<Idx2D>{trafo.from_to});
             last_weight = trafo.weight;
         } else {
-            groups.back().push_back(trafo.pos);
+            groups.back().push_back(trafo.from_to);
         }
     }
     return groups;
