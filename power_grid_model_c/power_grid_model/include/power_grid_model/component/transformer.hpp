@@ -23,7 +23,7 @@ class Transformer : public Branch {
     using UpdateType = TransformerUpdate;
     static constexpr char const* name = "transformer";
 
-    explicit Transformer(TransformerInput const& transformer_input, double u1_rated, double u2_rated)
+    explicit Transformer(TransformerInput const& transformer_input, double u1_rated = 1.0, double u2_rated = 1.0)
         : Branch{transformer_input},
           u1_{transformer_input.u1},
           u2_{transformer_input.u2},

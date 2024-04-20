@@ -36,7 +36,21 @@ TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side) {
                             .p0 = nan,
                             .winding_from = WindingType::wye_n,
                             .winding_to = WindingType::wye_n,
-                            .tap_side = tap_side};
+                            .clock = 0,
+                            .tap_side = tap_side,
+                            .tap_pos = na_IntS,
+                            .tap_min = na_IntS,
+                            .tap_max = na_IntS,
+                            .tap_nom = na_IntS,
+                            .tap_size = nan,
+                            .uk_min = nan,
+                            .uk_max = nan,
+                            .pk_min = nan,
+                            .pk_max = nan,
+                            .r_grounding_from = nan,
+                            .x_grounding_from = nan,
+                            .r_grounding_to = nan,
+                            .x_grounding_to = nan};
 }
 
 ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3) {
