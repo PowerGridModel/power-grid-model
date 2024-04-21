@@ -268,10 +268,31 @@ TEST_CASE("Test Transformer ranking") {
     }
 
     SUBCASE("Ranking complete the graph") {
-        const pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-        const pgm_tap::RankedTransformerGroups ref_order{{Idx2D{0, 1}, Idx2D{0, 1}, Idx2D{0, 4}, Idx2D{0, 5}},
-                                                         {Idx2D{2, 3}, Idx2D{4, 5}, Idx2D{5, 7}, Idx2D{5, 4}},
-                                                         {Idx2D{8, 9}}};
+        pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+        pgm_tap::RankedTransformerGroups ref_order{{Idx2D{0, 1}, Idx2D{0, 1}, Idx2D{0, 4}, Idx2D{0, 5}},
+                                                   {Idx2D{2, 3}, Idx2D{4, 5}, Idx2D{5, 4}, Idx2D{5, 7}},
+                                                   {Idx2D{8, 9}}};
+        // necessary evil, made possible by platform differences
+        auto compareIdx2D = [](const Idx2D& a, const Idx2D& b) {
+            if (a.group != b.group) {
+                return a.group < b.group;
+            }
+            if (a.pos != b.pos) {
+                return a.pos < b.pos;
+            }
+            if (a.group != b.group) {
+                return a.group < b.group;
+            }
+            return a.pos < b.pos;
+        };
+
+        for (auto& o : order) {
+            std::sort(o.begin(), o.end(), compareIdx2D);
+        }
+
+        for (auto& ro : ref_order) {
+            std::sort(ro.begin(), ro.end(), compareIdx2D);
+        }
         CHECK(order == ref_order);
     }
 }
