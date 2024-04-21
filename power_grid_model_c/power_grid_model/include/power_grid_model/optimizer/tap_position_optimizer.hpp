@@ -13,6 +13,7 @@
 #include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <functional>
 #include <queue>
 #include <vector>
@@ -27,7 +28,7 @@ using EdgeWeight = int64_t;
 constexpr auto infty = std::numeric_limits<Idx>::max();
 
 struct TrafoGraphVertex {
-    bool is_source{}; // is_source = true if the vertex is a source
+    bool is_source{};
 };
 
 struct TrafoGraphEdge {
@@ -206,19 +207,18 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     return trafo_graph;
 }
 
-inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& edge_weight, std::vector<Idx2D>& edge_from_to,
-                                   std::vector<bool>& edge_is_trafo, TransformerGraph const& graph) -> void {
+inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vtx_distances, TransformerGraph const& graph)
+    -> void {
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
-    edge_weight[v] = 0;
-    edge_from_to[v] = {v, v};
+    vtx_distances[v] = 0;
     pq.push({0, v});
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
         pq.pop();
 
-        if (dist != edge_weight[u]) {
+        if (dist != vtx_distances[u]) {
             continue;
         }
 
@@ -226,31 +226,26 @@ inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& edge_weight, 
             auto v = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            if (edge_weight[u] + weight < edge_weight[v]) {
-                edge_weight[v] = edge_weight[u] + weight;
-                edge_from_to[v] = graph[e].from_to;
-                edge_is_trafo[v] = graph[e].is_trafo;
-                pq.push({edge_weight[v], v});
+            if (vtx_distances[u] + weight < vtx_distances[v]) {
+                vtx_distances[v] = vtx_distances[u] + weight;
+                pq.push({vtx_distances[v], v});
             }
         }
     }
 }
 
 inline auto get_edge_weights(TransformerGraph const& graph) -> WeightedTrafoList {
-    std::vector<EdgeWeight> edge_weight(boost::num_vertices(graph), infty);
-    std::vector<Idx2D> edge_from_to(boost::num_vertices(graph));
-    std::vector<bool> edge_is_trafo(boost::num_vertices(graph), false);
-
+    std::vector<EdgeWeight> vtx_dist(boost::num_vertices(graph), infty);
     BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
         if (graph[v].is_source) {
-            process_edges_dijkstra(v, edge_weight, edge_from_to, edge_is_trafo, graph);
+            process_edges_dijkstra(v, vtx_dist, graph);
         }
     }
 
     WeightedTrafoList result;
-    for (size_t i = 0; i < edge_weight.size(); ++i) {
-        const TrafoGraphEdge edge = {edge_is_trafo[i], edge_from_to[i], edge_weight[i]};
-        result.push_back(edge);
+    BGL_FORALL_EDGES(e, graph, TransformerGraph) {
+        const EdgeWeight weight = vtx_dist[boost::source(e, graph)] + graph[e].weight;
+        result.push_back(TrafoGraphEdge{graph[e].is_trafo, graph[e].from_to, weight});
     }
 
     return result;
@@ -265,6 +260,9 @@ inline auto rank_transformers(WeightedTrafoList const& w_trafo_list) -> RankedTr
     RankedTransformerGroups groups;
     Idx last_weight = -1;
     for (const auto& trafo : sorted_trafos) {
+        if (!trafo.is_trafo) {
+            continue;
+        }
         if (groups.empty() || last_weight != trafo.weight) {
             groups.push_back(std::vector<Idx2D>{trafo.from_to});
             last_weight = trafo.weight;

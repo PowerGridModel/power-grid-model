@@ -246,8 +246,7 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         const pgm_tap::WeightedTrafoList all_edge_weights = get_edge_weights(g);
-        const pgm_tap::WeightedTrafoList ref_edge_weights{
-            {false, {0, 0}, 0}, {true, {0, 1}, 1}, {true, {0, 2}, 2}, {true, {2, 3}, 5}};
+        const pgm_tap::WeightedTrafoList ref_edge_weights{{true, {0, 1}, 1}, {true, {0, 2}, 2}, {true, {2, 3}, 5}};
         CHECK(all_edge_weights == ref_edge_weights);
     }
 
@@ -261,8 +260,8 @@ TEST_CASE("Test Transformer ranking") {
                                              {true, Idx2D{3, 2}, 1},
                                              {true, Idx2D{3, 3}, 1}};
 
-        const pgm_tap::RankedTransformerGroups referenceList{{Idx2D{3, 2}, Idx2D{3, 3}}, {Idx2D{3, 1}}, {Idx2D{2, 2}},
-                                                             {Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
+        const pgm_tap::RankedTransformerGroups referenceList{
+            {Idx2D{3, 2}, Idx2D{3, 3}}, {Idx2D{3, 1}}, {Idx2D{2, 2}}, {Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}};
 
         const pgm_tap::RankedTransformerGroups sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         CHECK(sortedTrafoList == referenceList);
@@ -270,7 +269,10 @@ TEST_CASE("Test Transformer ranking") {
 
     SUBCASE("Ranking complete the graph") {
         const pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-        // CHECK (transformer[1] == 1);
+        const pgm_tap::RankedTransformerGroups ref_order{{Idx2D{0, 1}, Idx2D{0, 1}, Idx2D{0, 4}, Idx2D{0, 5}},
+                                                         {Idx2D{2, 3}, Idx2D{4, 5}, Idx2D{5, 7}, Idx2D{5, 4}},
+                                                         {Idx2D{8, 9}}};
+        CHECK(order == ref_order);
     }
 }
 
