@@ -86,6 +86,10 @@ class InvalidCalculationMethod(PowerGridError):
     """Invalid calculation method provided"""
 
 
+class AutomaticTapCalculationError(PowerGridError):
+    """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation."""
+
+
 class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided"""
 

@@ -14,6 +14,7 @@ import numpy as np
 from power_grid_model.core.index_integer import IdxNp
 from power_grid_model.core.power_grid_core import power_grid_core as pgc
 from power_grid_model.errors import (
+    AutomaticTapCalculationError,
     ConflictID,
     ConflictVoltage,
     IDNotFound,
@@ -63,6 +64,9 @@ _INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) measurement is not supported fo
 _INVALID_REGULATED_OBJECT_RE = re.compile(
     r"(\w+) regulator is not supported for object "
 )  # potentially multiple different flavors
+_AUTOMATIC_TAP_CALCULATION_ERROR_RE = re.compile(
+    r"Automatic tap changing regulator is at LV side is not supported. Found at id (-?\d+)\n"
+)
 _ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
@@ -82,6 +86,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _ID_NOT_FOUND_RE: IDNotFound,
     _INVALID_MEASURED_OBJECT_RE: InvalidMeasuredObject,
     _INVALID_REGULATED_OBJECT_RE: InvalidRegulatedObject,
+    _AUTOMATIC_TAP_CALCULATION_ERROR_RE: AutomaticTapCalculationError,
     _ID_WRONG_TYPE_RE: IDWrongType,
     _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
