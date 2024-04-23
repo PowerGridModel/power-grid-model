@@ -41,10 +41,10 @@ struct TrafoGraphEdge {
     } // thanks boost
 
     auto operator<=>(const TrafoGraphEdge& other) const {
-        if (auto cmp = weight <=> other.weight; cmp != 0) {
+        if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
-        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; cmp != 0) {
+        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
         return regulated_idx.pos <=> other.regulated_idx.pos;
@@ -149,7 +149,7 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
 }
 
 template <typename... ComponentTypes, main_core::main_model_state_c State>
-inline auto add_edges(State const& state, RegulatedObjects& regulated_objects, TrafoGraphEdges& edges,
+inline auto add_edges(State const& state, RegulatedObjects const& regulated_objects, TrafoGraphEdges& edges,
                       TrafoGraphEdgeProperties& edge_props) {
     (add_edge<ComponentTypes>(state, regulated_objects, edges, edge_props), ...);
 }
@@ -181,7 +181,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     TrafoGraphEdges edges;
     TrafoGraphEdgeProperties edge_props;
 
-    RegulatedObjects regulated_objects = retrieve_regulator_info(state);
+    const RegulatedObjects regulated_objects = retrieve_regulator_info(state);
 
     add_edges<Transformer, ThreeWindingTransformer, Line, Link>(state, regulated_objects, edges, edge_props);
 
@@ -245,7 +245,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (graph[e].regulated_idx == unregulated_idx) {
             continue;
         }
-        result.emplace_back(graph[e].regulated_idx, vertex_distances[boost::source(e, graph)]);
+        // result.emplace_back(graph[e].regulated_idx, vertex_distances[boost::source(e, graph)]);
+        result.push_back({graph[e].regulated_idx, vertex_distances[boost::source(e, graph)]});
     }
 
     return result;
