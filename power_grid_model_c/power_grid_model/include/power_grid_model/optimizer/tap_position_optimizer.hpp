@@ -63,7 +63,7 @@ struct RegulatedObjects {
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
                                                             boost::no_property, TrafoGraphIdx, TrafoGraphIdx>;
 
-template <std::same_as<ThreeWindingTransformer> Component, class ComponentContainer>
+template <std::derived_from<ThreeWindingTransformer> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
 constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state,
                          RegulatedObjects const& regulated_objects, TrafoGraphEdges& edges,
@@ -99,7 +99,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
     }
 }
 
-template <std::same_as<Transformer> Component, class ComponentContainer>
+template <std::derived_from<Transformer> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
 constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& state,
                          RegulatedObjects const& regulated_objects, TrafoGraphEdges& edges,
@@ -129,7 +129,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
 }
 
 template <typename Component>
-concept non_regulating_branch_c = std::same_as<Link, Component> || std::same_as<Line, Component>;
+concept non_regulating_branch_c = std::derived_from<Link, Component> || std::derived_from<Line, Component>;
 
 template <non_regulating_branch_c Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
@@ -210,18 +210,18 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     return trafo_graph;
 }
 
-inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vtx_distances, TransformerGraph const& graph)
+inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distances, TransformerGraph const& graph)
     -> void {
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
-    vtx_distances[v] = 0;
+    vertex_distances[v] = 0;
     pq.push({0, v});
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
         pq.pop();
 
-        if (dist != vtx_distances[u]) {
+        if (dist != vertex_distances[u]) {
             continue;
         }
 
@@ -229,19 +229,19 @@ inline auto process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vtx_distances
             auto v = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            if (vtx_distances[u] + weight < vtx_distances[v]) {
-                vtx_distances[v] = vtx_distances[u] + weight;
-                pq.push({vtx_distances[v], v});
+            if (vertex_distances[u] + weight < vertex_distances[v]) {
+                vertex_distances[v] = vertex_distances[u] + weight;
+                pq.push({vertex_distances[v], v});
             }
         }
     }
 }
 
 inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgeProperties {
-    std::vector<EdgeWeight> vtx_dist(boost::num_vertices(graph), infty);
+    std::vector<EdgeWeight> vertex_distances(boost::num_vertices(graph), infty);
     BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
         if (graph[v].is_source) {
-            process_edges_dijkstra(v, vtx_dist, graph);
+            process_edges_dijkstra(v, vertex_distances, graph);
         }
     }
 
@@ -251,7 +251,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             continue;
         }
         // The regulated object will always be the single directional edge from tap_side to non_tap_side
-        result.push_back(TrafoGraphEdge{graph[e].regulated_idx, vtx_dist[boost::source(e, graph)]});
+        result.push_back(TrafoGraphEdge{graph[e].regulated_idx, vertex_distances[boost::source(e, graph)]});
     }
 
     return result;
