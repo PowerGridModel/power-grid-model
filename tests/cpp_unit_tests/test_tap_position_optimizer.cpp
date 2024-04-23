@@ -137,7 +137,7 @@ TransformerTapRegulatorInput get_regulator(ID id, ID regulated_object, ControlSi
 
 } // namespace
 
-// TEST_SUITE("Automatic Tap Changer") {
+TEST_SUITE_BEGIN("Automatic Tap Changer");
 TEST_CASE("Test Transformer ranking") {
     // Minimum test grid
     TestState state;
@@ -264,4 +264,5 @@ TEST_CASE("Test Transformer ranking") {
 TEST_CASE("Test Tap position optimizer" * doctest::skip(true)) {
     // TODO: Implement unit tests for the tap position optimizer
 }
+TEST_SUITE_END();
 } // namespace power_grid_model
