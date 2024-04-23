@@ -164,6 +164,7 @@ class Topology {
         comp_coup_.source.resize(comp_topo_.source_node_idx.size(), Idx2D{-1, -1});
         comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(), Idx2D{-1, -1});
         comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), Idx2D{-1, -1});
+        comp_coup_.regulator.resize(comp_topo_.regulator_type.size(), Idx2D{-1, -1});
     }
 
     void build_sparse_graph() {
@@ -511,10 +512,10 @@ class Topology {
     // they are all coupled to the from-side of some branches in math model
     // the key is to find relevant coupling, either via branch or branch3
     struct SensorBranchObjectFinder {
-        Idx size() const { return static_cast<Idx>(sensor_obj_idx.size()); }
+        Idx size() const { return static_cast<Idx>(object_idx.size()); }
         Idx2D find_math_object(Idx component_i) const {
-            Idx const obj_idx = sensor_obj_idx[component_i];
-            switch (power_sensor_terminal_type[component_i]) {
+            Idx const obj_idx = object_idx[component_i];
+            switch (terminal_type[component_i]) {
                 using enum MeasuredTerminalType;
 
             case branch_from:
@@ -533,8 +534,37 @@ class Topology {
         }
 
         // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
-        IdxVector const& sensor_obj_idx;
-        std::vector<MeasuredTerminalType> const& power_sensor_terminal_type;
+        IdxVector const& object_idx;
+        std::vector<MeasuredTerminalType> const& terminal_type;
+        std::vector<Idx2D> const& branch_coupling;
+        std::vector<Idx2DBranch3> const& branch3_coupling;
+        // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
+    };
+
+    // proxy class to find coupled branch in math model for sensor measured at from side, or at 1/2/3 side of branch3
+    // they are all coupled to the from-side of some branches in math model
+    // the key is to find relevant coupling, either via branch or branch3
+    struct RegulatorBranchObjectFinder {
+        Idx size() const { return static_cast<Idx>(object_idx.size()); }
+        Idx2D find_math_object(Idx component_i) const {
+            // TODO(mgovers): return control side and/or tap side
+            Idx const obj_idx = object_idx[component_i];
+            switch (regulated_object_type[component_i]) {
+                using enum ComponentType;
+
+            case branch:
+                return branch_coupling[obj_idx];
+            case branch3:
+                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[0]};
+            default:
+                assert(false);
+                return {};
+            }
+        }
+
+        // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
+        IdxVector const& object_idx;
+        std::vector<ComponentType> const& regulated_object_type;
         std::vector<Idx2D> const& branch_coupling;
         std::vector<Idx2DBranch3> const& branch3_coupling;
         // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -686,6 +716,16 @@ class Topology {
             [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_bus; },
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
+    }
+
+    void couple_regulators() {
+        RegulatorBranchObjectFinder const object_finder_from_regulator{
+            comp_topo_.regulated_object_idx, comp_topo_.regulated_object_type, comp_coup_.branch, comp_coup_.branch3};
+
+        // branch 'from' power sensors
+        couple_object_components<&MathModelTopology::n_branch>(
+            [](MathModelTopology & math_topo) -> auto& { return math_topo.transformer_tap_regulators_per_branch; },
+            object_finder_from_regulator, comp_coup_.regulator);
     }
 }; // namespace power_grid_model
 

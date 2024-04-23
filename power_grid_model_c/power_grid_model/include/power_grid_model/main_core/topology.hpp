@@ -140,6 +140,9 @@ template <std::derived_from<Regulator> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
+    detail::register_topo_components<Component>(state, comp_topo.regulator_type,
+                                                [](Regulator const& regulator) { return regulator.math_model_type(); });
+
     detail::register_topo_components<Component>(
         state, comp_topo.regulated_object_idx, [&state](Regulator const& regulator) {
             switch (regulator.regulated_object_type()) {

@@ -62,6 +62,12 @@ constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
     return main_core::get_component_sequence<Branch3>(state, id_or_index);
 }
 
+template <std::derived_from<Regulator> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
+    return main_core::get_component_sequence<Regulator>(state, id_or_index);
+}
+
 template <std::derived_from<Branch> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
@@ -104,6 +110,12 @@ template <std::derived_from<Branch3> ComponentType, typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
     return state.topo_comp_coup->branch3[topology_sequence_idx];
+}
+
+template <std::derived_from<Regulator> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
+    return state.topo_comp_coup->regulator[topology_sequence_idx];
 }
 
 struct TrafoGraphVertex {
@@ -406,7 +418,7 @@ inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2DBranch3 co
     }
 }
 
-template <typename ComponentType, typename... RegulatedTypes, typename State,
+template <component_c ComponentType, typename... RegulatedTypes, typename State,
           steady_state_math_output_type MathOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
@@ -415,7 +427,7 @@ inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
     return i_pu<ComponentType>(math_output, branch_math_id, regulator.regulator.get().control_side());
 }
 
-template <typename ComponentType, typename... RegulatedTypes, typename State,
+template <component_c ComponentType, typename... RegulatedTypes, typename State,
           steady_state_math_output_type MathOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
@@ -424,6 +436,36 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
                                                                   regulator.regulator.get().control_side());
     auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
     return math_output[node_math_id.group].u[node_math_id.pos];
+}
+
+template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
+inline void create_tap_regulator_output(State const& state, std::vector<MathOutputType>& math_output) {
+    for (Idx group = 0; group < math_output.size(); ++group) {
+        math_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
+                                                            {.tap_pos = na_IntS});
+    }
+}
+
+template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
+inline void add_tap_regulator_output(State const& state, TransformerTapRegulator const& regulator, IntS tap_pos,
+                                     std::vector<MathOutputType>& math_output) {
+    Idx2D const& math_id =
+        get_math_id<TransformerTapRegulator>(state, get_topology_index<TransformerTapRegulator>(state, regulator.id()));
+    math_output[math_id.group].transformer_tap_regulator[math_id.pos] = {tap_pos};
+}
+
+template <typename... RegulatedTypes, main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
+    requires(main_core::component_container_c<typename State::ComponentContainer, RegulatedTypes> && ...)
+void add_tap_regulator_output(State const& state,
+                              std::vector<std::vector<TapRegulatorRef<RegulatedTypes...>>> const& regulator_order,
+                              std::vector<MathOutputType>& math_output) {
+    create_tap_regulator_output(state, math_output);
+
+    for (auto const& same_rank_regulators : regulator_order) {
+        for (auto const& regulator : same_rank_regulators) {
+            add_tap_regulator_output(state, regulator.regulator.get(), regulator.transformer.tap_pos(), math_output);
+        }
+    }
 }
 
 template <typename... T> class TapPositionOptimizerImpl;
@@ -528,6 +570,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 result = calculate_(state, method);
             }
         }
+
+        add_tap_regulator_output(state, regulator_order, result);
 
         return result;
     }

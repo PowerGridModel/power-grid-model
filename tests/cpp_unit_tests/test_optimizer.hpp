@@ -69,7 +69,8 @@ inline auto i_pu(std::vector<MathOutputType> const& /* math_output */, StubTrans
     return ComplexValue<typename MathOutputType::sym>{};
 }
 
-using StubComponentContainer = Container<StubComponent, StubTransformerA, StubTransformerB>;
+using StubComponentContainer = Container<ExtraRetrievableTypes<Regulator>, StubComponent, Node, StubTransformerA,
+                                         TransformerTapRegulator, StubTransformerB>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);

@@ -35,13 +35,6 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
     ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
-struct TransformerTapRegulatorCalcParam {
-    double u_set{};
-    double u_band{};
-    DoubleComplex z_compensation{};
-    IntS status{};
-};
-
 template <symmetry_tag sym_type> struct BranchMathOutput {
     using sym = sym_type;
 
@@ -126,6 +119,18 @@ static_assert(sensor_calc_param_type<VoltageSensorCalcParam<asymmetric_t>>);
 static_assert(sensor_calc_param_type<PowerSensorCalcParam<symmetric_t>>);
 static_assert(sensor_calc_param_type<PowerSensorCalcParam<asymmetric_t>>);
 
+struct TransformerTapRegulatorCalcParam {
+    double u_set{};
+    double u_band{};
+    DoubleComplex z_compensation{};
+    IntS status{};
+};
+template <symmetry_tag sym_type> struct TransformerTapRegulatorMathOutput {
+    using sym = sym_type;
+
+    IntS tap_pos{na_IntS};
+};
+
 // from, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
 using BranchIdx = std::array<Idx, 2>;
@@ -149,6 +154,7 @@ struct MathModelTopology {
     DenseGroupedIdxVector power_sensors_per_branch_from;
     DenseGroupedIdxVector power_sensors_per_branch_to;
     DenseGroupedIdxVector power_sensors_per_bus;
+    DenseGroupedIdxVector transformer_tap_regulators_per_branch;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
@@ -173,6 +179,8 @@ struct MathModelTopology {
     Idx n_branch_to_power_sensor() const { return power_sensors_per_branch_to.element_size(); }
 
     Idx n_bus_power_sensor() const { return power_sensors_per_bus.element_size(); }
+
+    Idx n_transformer_tap_regulator() const { return transformer_tap_regulators_per_branch.element_size(); }
 };
 
 template <symmetry_tag sym_type> struct MathModelParam {
@@ -262,6 +270,7 @@ template <symmetry_tag sym_type> struct MathOutput {
     std::vector<ApplianceMathOutput<sym>> source;
     std::vector<ApplianceMathOutput<sym>> shunt;
     std::vector<ApplianceMathOutput<sym>> load_gen;
+    std::vector<TransformerTapRegulatorMathOutput<sym>> transformer_tap_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitMathOutput {
@@ -329,12 +338,13 @@ struct ComponentTopology {
     IdxVector load_gen_node_idx;
     std::vector<LoadGenType> load_gen_type;
     IdxVector voltage_sensor_node_idx;
-    IdxVector power_sensor_object_idx; // the index is relative to branch, source, shunt, or load_gen
+    IdxVector power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
     std::vector<MeasuredTerminalType> power_sensor_terminal_type;
-    IdxVector regulated_object_idx; // the index is relative to branch
+    std::vector<ComponentType> regulator_type;
+    IdxVector regulated_object_idx; // the index is relative to branch or branch3
     std::vector<ComponentType> regulated_object_type;
 
-    inline Idx n_node_total() const { return n_node + static_cast<Idx>(branch3_node_idx.size()); }
+    constexpr Idx n_node_total() const { return n_node + static_cast<Idx>(branch3_node_idx.size()); }
 };
 
 // connection property

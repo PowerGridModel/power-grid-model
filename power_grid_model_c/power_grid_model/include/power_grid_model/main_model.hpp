@@ -664,13 +664,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single load flow calculation, returning math output results
-    template <symmetry_tag sym>
-    std::vector<MathOutput<sym>> calculate_power_flow(double err_tol, Idx max_iter,
-                                                      CalculationMethod calculation_method) {
+    template <steady_state_math_output_type MathOutputType>
+    std::vector<MathOutputType> calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
+                                                     OptimizerType optimizer_type) {
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    OptimizerType::no_optimization, OptimizerStrategy::any,
                    calculate_power_flow_<sym>(err_tol, max_iter),
-                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
+                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
+                   [this](MathOutputType const& math_output) { this->output_result(math_output); })
             ->optimize(state_, calculation_method);
     }
 
