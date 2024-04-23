@@ -8,7 +8,6 @@
 #include "enum.hpp"
 
 #include <exception>
-#include <format>
 #include <string>
 
 namespace power_grid_model {
@@ -25,57 +24,57 @@ class PowerGridError : public std::exception {
 template <typename T> class MissingCaseForEnumError : public PowerGridError {
   public:
     MissingCaseForEnumError(std::string const& method, const T& value) {
-        append_msg(std::format("{} is not implemented for {} #{}", method, typeid(T).name(), IntS(value)));
+        append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
     }
 };
 
 class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
-        append_msg(std::format(
-            "Conflicting voltage for line {}\n voltage at from node {} is {}\n voltage at to node {} is {}\n", id, id1,
-            u1, id2, u2));
+        append_msg("Conflicting voltage for line " + std::to_string(id) + "\n voltage at from node " +
+                   std::to_string(id1) + " is " + std::to_string(u1) + "\n voltage at to node " + std::to_string(id2) +
+                   " is " + std::to_string(u2) + '\n');
     }
 };
 
 class InvalidBranch : public PowerGridError {
   public:
     InvalidBranch(ID branch_id, ID node_id) {
-        append_msg(
-            std::format("Branch {} has the same from- and to-node {},\n This is not allowed!\n", branch_id, node_id));
+        append_msg("Branch " + std::to_string(branch_id) + " has the same from- and to-node " +
+                   std::to_string(node_id) + ",\n This is not allowed!\n");
     }
 };
 
 class InvalidBranch3 : public PowerGridError {
   public:
     InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id) {
-        append_msg(std::format(
-            "Branch3 {} is connected to the same node at least twice. Node 1/2/3: {}/{}/{},\n This is not allowed!\n",
-            branch3_id, node_1_id, node_2_id, node_3_id));
+        append_msg("Branch3 " + std::to_string(branch3_id) +
+                   " is connected to the same node at least twice. Node 1/2/3: " + std::to_string(node_1_id) + "/" +
+                   std::to_string(node_2_id) + "/" + std::to_string(node_3_id) + ",\n This is not allowed!\n");
     }
 };
 
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock) {
-        append_msg(std::format("Invalid clock for transformer {}, clock {}\n", id, clock));
+        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock " + std::to_string(clock) + '\n');
     }
 };
 
 class SparseMatrixError : public PowerGridError {
   public:
     SparseMatrixError(Idx err, std::string const& msg = "") {
-        append_msg(std::format("Sparse matrix error with error code #{} (possibly singular)\n", err));
+        append_msg("Sparse matrix error with error code #" + std::to_string(err) + " (possibly singular)\n");
         if (!msg.empty()) {
-            append_msg(std::format("{}\n", msg));
+            append_msg(msg + "\n");
         }
         append_msg("If you get this error from state estimation, ");
         append_msg("it usually means the system is not fully observable, i.e. not enough measurements.");
     }
     SparseMatrixError() {
-        append_msg("Sparse matrix error, possibly singular matrix!\n");
-        append_msg("If you get this error from state estimation, it ");
-        append_msg("usually means the system is not fully observable, i.e., not enough measurements.");
+        append_msg("Sparse matrix error, possibly singular matrix!\n" +
+                   std::string("If you get this error from state estimation, ") +
+                   "it usually means the system is not fully observable, i.e. not enough measurements.");
     }
 };
 
@@ -87,20 +86,19 @@ class NotObservableError : public PowerGridError {
 class IterationDiverge : public PowerGridError {
   public:
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
-        append_msg(
-            std::format("Iteration failed to converge after {} iterations! Max deviation: {}, error tolerance: {}\n",
-                        num_iter, max_dev, err_tol));
+        append_msg("Iteration failed to converge after " + std::to_string(num_iter) + " iterations! Max deviation: " +
+                   std::to_string(max_dev) + ", error tolerance: " + std::to_string(err_tol) + ".\n");
     }
 };
 
 class ConflictID : public PowerGridError {
   public:
-    explicit ConflictID(ID id) { append_msg(std::format("Conflicting id detected: {}\n", id)); }
+    explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + std::to_string(id) + '\n'); }
 };
 
 class IDNotFound : public PowerGridError {
   public:
-    explicit IDNotFound(ID id) { append_msg(std::format("The id cannot be found: {}\n", id)); }
+    explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + std::to_string(id) + '\n'); }
 };
 
 class InvalidMeasuredObject : public PowerGridError {
@@ -113,23 +111,24 @@ class InvalidMeasuredObject : public PowerGridError {
 class InvalidRegulatedObject : public PowerGridError {
   public:
     InvalidRegulatedObject(std::string const& object, std::string const& regulator) {
-        append_msg(std::format("{} regulator is not supported for object of type {}", regulator, object));
+        append_msg(regulator + " regulator is not supported for object of type " + object);
     }
     InvalidRegulatedObject(ID id, std::string const& regulator) {
-        append_msg(std::format("{} regulator is not supported for object with ID {}", regulator, id));
+        append_msg(regulator + " regulator is not supported for object with ID " + std::to_string(id));
     }
 };
 
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id) {
-        append_msg(std::format("Automatic tap changing regulator is at LV side is not supported. Found at id{}", id));
+        append_msg("Automatic tap changing regulator is at LV side is not supported. Found at id" +
+                   std::to_string(id)); // NOSONAR
     }
 };
 
 class IDWrongType : public PowerGridError {
   public:
-    explicit IDWrongType(ID id) { append_msg(std::format("Wrong type for object with id {}\n", id)); }
+    explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + std::to_string(id) + '\n'); }
 };
 
 class CalculationError : public PowerGridError {
@@ -159,19 +158,21 @@ class InvalidCalculationMethod : public CalculationError {
 class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
-        append_msg(std::format("The short circuit type ({}) is invalid!\n", static_cast<IntS>(short_circuit_type)));
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") is invalid!\n");
     }
     InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
-        append_msg(std::format("The short circuit type ({}) does not match the calculation type (symmetric={})\n",
-                               static_cast<IntS>(short_circuit_type), static_cast<int>(sym)));
+        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") does not match the calculation type (symmetric=" + std::to_string(static_cast<int>(sym)) + ")\n");
     }
 };
 
 class InvalidShortCircuitPhases : public PowerGridError {
   public:
     InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
-        append_msg(std::format("The short circuit phases ({}) do not match the short circuit type ({})\n",
-                               static_cast<IntS>(short_circuit_phases), static_cast<IntS>(short_circuit_type)));
+        append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
+                   ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ")\n");
     }
 };
 
@@ -189,15 +190,15 @@ class SerializationError : public PowerGridError {
 
 class DatasetError : public PowerGridError {
   public:
-    explicit DatasetError(std::string const& msg) { append_msg(std::format("Dataset error: {}", msg)); }
+    explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
 };
 
 class UnreachableHit : public PowerGridError {
   public:
     UnreachableHit(std::string const& method, std::string const& reason_for_assumption) {
-        append_msg(std::format("Unreachable code hit when executing {}.\n The following assumption for unreachability "
-                               "was not met: {}.\n This may be a bug in the library\n",
-                               method, reason_for_assumption));
+        append_msg("Unreachable code hit when executing " + method +
+                   ".\n The following assumption for unreachability was not met: " + reason_for_assumption +
+                   ".\n This may be a bug in the library\n");
     }
 };
 
