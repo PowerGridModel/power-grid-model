@@ -10,6 +10,7 @@ from power_grid_model import PowerGridModel
 from power_grid_model.core.power_grid_meta import initialize_array
 from power_grid_model.enum import CalculationMethod, LoadGenType, MeasuredTerminalType
 from power_grid_model.errors import (
+    AutomaticTapCalculationError,
     ConflictID,
     ConflictVoltage,
     IDWrongType,
@@ -17,7 +18,6 @@ from power_grid_model.errors import (
     InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
-    AutomaticTapCalculationError,
     InvalidTransformerClock,
     NotObservableError,
 )
@@ -205,6 +205,7 @@ def test_handle_invalid_calculation_method_error():
     with pytest.raises(InvalidCalculationMethod):
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
+
 @pytest.mark.skip(reason="TODO: Automatic tap changer")
 def test_transformer_tap_regulator_at_lv_tap_side():
     node_input = initialize_array("input", "node", 2)
@@ -242,6 +243,7 @@ def test_transformer_tap_regulator_at_lv_tap_side():
     model = PowerGridModel(input_data={"node": node_input, "transformer": transformer_input, "source": source_input})
     with pytest.raises(AutomaticTapCalculationError):
         model.calculate_power_flow()
+
 
 @pytest.mark.skip(reason="TODO")
 def test_handle_power_grid_dataset_error():

@@ -181,26 +181,19 @@ TEST_CASE("Test Transformer ranking") {
         expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
         expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
 
-        std::vector<pgm_tap::TrafoGraphEdge> expected_edges_prop;
+        using pgm_tap::unregulated_idx;
+        pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
         expected_edges_prop.insert(expected_edges_prop.end(),
-                                   {{true, {0, 1}, 1}, {false, {1, 2}, 0}, {false, {2, 1}, 0}, {true, {2, 3}, 1}});
+                                   {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
         expected_edges_prop.insert(expected_edges_prop.end(),
-                                   {{true, {0, 4}, 1}, {true, {0, 5}, 1}, {true, {4, 5}, 1}, {true, {5, 4}, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(), {{false, {4, 6}, 0},
-                                                               {false, {6, 4}, 0},
-                                                               {false, {3, 6}, 0},
-                                                               {false, {6, 3}, 0},
-                                                               {false, {3, 9}, 0},
-                                                               {false, {9, 3}, 0},
-                                                               {true, {0, 1}, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(),
-                                   {{false, {7, 8}, 0}, {false, {8, 7}, 0}, {true, {5, 7}, 1}, {true, {8, 9}, 1}});
+                                   {{{4, 0}, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}});
+        expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0});
 
         const std::vector<pgm_tap::TrafoGraphVertex> expected_vertex_props{{true},  {false}, {false}, {false}, {false},
                                                                            {false}, {false}, {false}, {false}, {false}};
 
         pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
-        std::vector<pgm_tap::TrafoGraphEdge> actual_edges_prop;
+        pgm_tap::TrafoGraphEdgeProperties actual_edges_prop;
 
         boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
@@ -232,8 +225,8 @@ TEST_CASE("Test Transformer ranking") {
 
     SUBCASE("Process edge weights") {
         // Dummy graph
-        std::vector<std::pair<Idx, Idx>> edge_array = {{0, 1}, {0, 2}, {2, 3}};
-        std::vector<pgm_tap::TrafoGraphEdge> edge_prop{{true, {0, 1}, 1}, {true, {0, 2}, 2}, {true, {2, 3}, 3}};
+        pgm_tap::TrafoGraphEdges edge_array = {{0, 1}, {0, 2}, {2, 3}};
+        pgm_tap::TrafoGraphEdgeProperties edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
         std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
         pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -245,23 +238,16 @@ TEST_CASE("Test Transformer ranking") {
             g[*vi].is_source = vertex_props[*vi].is_source;
         }
 
-        const pgm_tap::WeightedTrafoList all_edge_weights = get_edge_weights(g);
-        const pgm_tap::WeightedTrafoList ref_edge_weights{{true, {0, 1}, 1}, {true, {0, 2}, 2}, {true, {2, 3}, 5}};
-        CHECK(all_edge_weights == ref_edge_weights);
+        const pgm_tap::TrafoGraphEdgeProperties regulated_edge_weights = get_edge_weights(g);
+        const pgm_tap::TrafoGraphEdgeProperties ref_regulated_edge_weights{{{0, 1}, 0}, {{2, 3}, 2}};
+        CHECK(regulated_edge_weights == ref_regulated_edge_weights);
     }
 
     SUBCASE("Sorting transformer edges") {
-        pgm_tap::WeightedTrafoList trafoList{{false, Idx2D{1, 1}, pgm_tap::infty},
-                                             {true, Idx2D{1, 2}, 5},
-                                             {true, Idx2D{1, 3}, 4},
-                                             {true, Idx2D{2, 1}, 4},
-                                             {true, Idx2D{2, 2}, 3},
-                                             {true, Idx2D{3, 1}, 2},
-                                             {true, Idx2D{3, 2}, 1},
-                                             {true, Idx2D{3, 3}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties trafoList{
+            {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
 
-        const pgm_tap::RankedTransformerGroups referenceList{
-            {Idx2D{3, 2}, Idx2D{3, 3}}, {Idx2D{3, 1}}, {Idx2D{2, 2}}, {Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}};
+        const pgm_tap::RankedTransformerGroups referenceList{Idx2D{1, 3}, Idx2D{2, 1}, Idx2D{1, 2}, Idx2D{1, 1}};
 
         const pgm_tap::RankedTransformerGroups sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         CHECK(sortedTrafoList == referenceList);
@@ -269,30 +255,8 @@ TEST_CASE("Test Transformer ranking") {
 
     SUBCASE("Ranking complete the graph") {
         pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-        pgm_tap::RankedTransformerGroups ref_order{{Idx2D{0, 1}, Idx2D{0, 1}, Idx2D{0, 4}, Idx2D{0, 5}},
-                                                   {Idx2D{2, 3}, Idx2D{4, 5}, Idx2D{5, 4}, Idx2D{5, 7}},
-                                                   {Idx2D{8, 9}}};
-        // necessary evil, made possible by platform differences
-        auto compareIdx2D = [](const Idx2D& a, const Idx2D& b) {
-            if (a.group != b.group) {
-                return a.group < b.group;
-            }
-            if (a.pos != b.pos) {
-                return a.pos < b.pos;
-            }
-            if (a.group != b.group) {
-                return a.group < b.group;
-            }
-            return a.pos < b.pos;
-        };
-
-        for (auto& o : order) {
-            std::sort(o.begin(), o.end(), compareIdx2D);
-        }
-
-        for (auto& ro : ref_order) {
-            std::sort(ro.begin(), ro.end(), compareIdx2D);
-        }
+        pgm_tap::RankedTransformerGroups ref_order{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0},
+                                                   Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}};
         CHECK(order == ref_order);
     }
 }
@@ -300,5 +264,4 @@ TEST_CASE("Test Transformer ranking") {
 TEST_CASE("Test Tap position optimizer" * doctest::skip(true)) {
     // TODO: Implement unit tests for the tap position optimizer
 }
-//}
 } // namespace power_grid_model
