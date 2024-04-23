@@ -87,7 +87,7 @@ constexpr void add_edges(main_core::MainModelState<ComponentContainer> const& st
             if (single_direction_condition) {
                 auto const& tap_side_node = tap_at_first_side ? from_node : to_node;
                 auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
-                Idx2D regulated_idx =
+                Idx2D const regulated_idx =
                     assigned_idx ? unregulated_idx : main_core::get_component_idx_by_id(state, transformer3w.id());
                 assigned_idx = true;
                 create_edge(edges, edge_props, tap_side_node, non_tap_side_node, {regulated_idx, 1});
