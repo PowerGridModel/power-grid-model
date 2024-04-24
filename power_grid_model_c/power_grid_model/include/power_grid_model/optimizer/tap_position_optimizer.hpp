@@ -31,7 +31,7 @@ constexpr Idx2D unregulated_idx = {-1, -1};
 using enum Branch3Side;
 
 constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
-    {{side_1, side_2}, {side_2, side_3}, {side_1, side_3}}};
+    {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
 
 struct TrafoGraphVertex {
     bool is_source{};
@@ -75,7 +75,7 @@ inline void add_to_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_p
 }
 
 inline void process_trafo3w_edge(ThreeWindingTransformer const& transformer3w, bool const& trafo3w_is_regulated,
-                                 bool& assigned_idx, Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
+                                 Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
                                  TrafoGraphEdgeProperties& edge_props) {
     for (auto const& [first_side, second_side] : branch3_combinations) {
         if (!transformer3w.status(first_side) || !transformer3w.status(second_side)) {
@@ -87,13 +87,13 @@ inline void process_trafo3w_edge(ThreeWindingTransformer const& transformer3w, b
         auto const tap_at_first_side = transformer3w.tap_side() == first_side;
         auto const single_direction_condition =
             trafo3w_is_regulated && (tap_at_first_side || transformer3w.tap_side() == second_side);
-        // Only add idx2d to one of the 2 directional edges of 3 winding transformer which ensures a single
         // ranking
         if (single_direction_condition) {
             auto const& tap_side_node = tap_at_first_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
-            Idx2D const regulated_idx = assigned_idx ? unregulated_idx : trafo3w_idx;
-            assigned_idx = true;
+            // add regulated idx only when the first side node is tap side node.
+            // This is done to add only one directional edge with regulated idx.
+            Idx2D const regulated_idx = from_node == tap_side_node ? unregulated_idx : trafo3w_idx;
             add_to_edge(edges, edge_props, tap_side_node, non_tap_side_node, {regulated_idx, 1});
         } else {
             add_to_edge(edges, edge_props, from_node, to_node, {unregulated_idx, 1});
@@ -109,10 +109,9 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
                         TrafoGraphEdgeProperties& edge_props) {
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
-        bool assigned_idx{};
         bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
         Idx2D const trafo3w_idx = main_core::get_component_idx_by_id(state, transformer3w.id());
-        process_trafo3w_edge(transformer3w, trafo3w_is_regulated, assigned_idx, trafo3w_idx, edges, edge_props);
+        process_trafo3w_edge(transformer3w, trafo3w_is_regulated, trafo3w_idx, edges, edge_props);
     }
 }
 
@@ -132,10 +131,6 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
             auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
-            if (get_component<Node>(state, tap_side_node).u_rated() <
-                get_component<Node>(state, non_tap_side_node).u_rated()) {
-                throw AutomaticTapCalculationError(transformer.id());
-            }
             add_to_edge(edges, edge_props, tap_side_node, non_tap_side_node,
                         {main_core::get_component_idx_by_id(state, transformer.id()), 1});
         } else {
@@ -145,14 +140,13 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
     }
 }
 
-template <typename Component>
-concept non_regulating_branch_c = std::derived_from<Link, Component> || std::derived_from<Line, Component>;
-
-template <non_regulating_branch_c Component, class ComponentContainer>
-    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
-constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& state,
-                        RegulatedObjects const& /* regulated_objects */, TrafoGraphEdges& edges,
-                        TrafoGraphEdgeProperties& edge_props) {
+template <std::derived_from<Branch> Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
+             !
+             transformer_c<Component> constexpr void add_edge(
+                 main_core::MainModelState<ComponentContainer> const& state,
+                 RegulatedObjects const& /* regulated_objects */, TrafoGraphEdges& edges,
+                 TrafoGraphEdgeProperties& edge_props) {
     auto const& iter = state.components.template citer<Component>();
     edges.reserve(std::distance(iter.begin(), iter.end()) * 2);
     edge_props.reserve(std::distance(iter.begin(), iter.end()) * 2);

@@ -217,11 +217,10 @@ TEST_CASE("Test Transformer ranking") {
         main_core::add_component<Transformer>(bad_state, bad_trafo.begin(), bad_trafo.end(), 50.0);
 
         std::vector<TransformerTapRegulatorInput> bad_regulators{get_regulator(3, 2, ControlSide::from)};
-        main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(), bad_regulators.end(),
-                                                          50.0);
 
-        bad_state.components.set_construction_complete();
-        CHECK_THROWS_AS(pgm_tap::build_transformer_graph(bad_state), AutomaticTapCalculationError);
+        CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(),
+                                                                          bad_regulators.end(), 50.0),
+                        AutomaticTapCalculationError);
     }
 
     SUBCASE("Process edge weights") {
