@@ -9,6 +9,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - CITATION.cff
+      - .github/workflows/citations.yml
 
   pull_request:
     paths:
