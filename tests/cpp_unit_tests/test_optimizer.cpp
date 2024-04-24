@@ -5,7 +5,7 @@
 #include "test_optimizer.hpp"
 
 namespace power_grid_model::optimizer::test {
-TEST_CASE("Test no-op optimizer") {
+TEST_CASE("Test construct no-op optimizer") {
     for (auto method : calculation_methods) {
         CAPTURE(method);
         auto optimizer = NoOptimizer<StubStateCalculator, StubState>{mock_state_calculator};
@@ -14,7 +14,7 @@ TEST_CASE("Test no-op optimizer") {
     }
 }
 
-TEST_CASE("Test tap position optimizer") {
+TEST_CASE("Test construct tap position optimizer") {
     SUBCASE("symmetric") {
         for (auto [strategy, method] : strategies_and_methods) {
             CAPTURE(strategy);

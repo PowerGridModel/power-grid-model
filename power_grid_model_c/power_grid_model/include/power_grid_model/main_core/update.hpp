@@ -15,6 +15,8 @@ template <component_c Component, std::forward_iterator ForwardIterator, typename
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
                                        std::vector<Idx2D> const& sequence_idx) {
+    assert(std::distance(begin, end) >= static_cast<ptrdiff_t>(sequence_idx.size()));
+
     Idx seq = 0;
 
     // loop to to update component
@@ -55,7 +57,7 @@ template <component_c Component, class ComponentContainer, std::forward_iterator
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
                                      ForwardIterator end, OutputIterator changed_it,
-                                     std::vector<Idx2D> const& sequence_idx = {}) {
+                                     std::vector<Idx2D> const& sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
     UpdateChange state_changed;
@@ -75,6 +77,14 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 
     return state_changed;
 }
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<Idx2D> OutputIterator>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
+                                     ForwardIterator end, OutputIterator changed_it) {
+    return update_component<Component>(state, begin, end, changed_it,
+                                       get_component_sequence<Component>(state, begin, end));
+}
 
 // template to get the inverse update for components
 // using forward interators
@@ -84,7 +94,7 @@ template <component_c Component, class ComponentContainer, std::forward_iterator
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
-                           OutputIterator destination, std::vector<Idx2D> const& sequence_idx = {}) {
+                           OutputIterator destination, std::vector<Idx2D> const& sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
     detail::iterate_component_sequence<Component>(
@@ -93,6 +103,14 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
             *destination++ = comp.inverse(update_data);
         },
         begin, end, sequence_idx);
+}
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+          std::output_iterator<typename Component::UpdateType> OutputIterator>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
+                           OutputIterator destination) {
+    return update_inverse<Component>(state, begin, end, destination,
+                                     get_component_sequence<Component>(state, begin, end));
 }
 
 } // namespace power_grid_model::main_core

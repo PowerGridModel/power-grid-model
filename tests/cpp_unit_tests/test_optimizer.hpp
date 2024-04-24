@@ -57,19 +57,21 @@ constexpr auto get_math_id(State const& /* state */, Idx /* topology_sequence_id
     return StubTransformerMathIdType{};
 }
 
-template <std::derived_from<StubTransformer> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topo_node(State const& /* state */, Idx /* topology_index */, ControlSide /* side */) {
-    return Idx{};
-}
-
 template <std::derived_from<StubTransformer> ComponentType, steady_state_math_output_type MathOutputType>
 inline auto i_pu(std::vector<MathOutputType> const& /* math_output */, StubTransformerMathIdType const& /* math_id */,
                  ControlSide /* side */) {
     return ComplexValue<typename MathOutputType::sym>{};
 }
 
-using StubComponentContainer = Container<ExtraRetrievableTypes<Regulator>, StubComponent, Node, StubTransformerA,
+template <std::derived_from<StubTransformer> ComponentType, typename State,
+          steady_state_math_output_type MathOutputType>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+inline auto u_pu(State const& state, std::vector<MathOutputType> const& math_output, Idx topology_index,
+                 ControlSide control_side) {
+    return ComplexValue<typename MathOutputType::sym>{};
+}
+
+using StubComponentContainer = Container<ExtraRetrievableTypes<Regulator>, StubComponent, StubTransformerA,
                                          TransformerTapRegulator, StubTransformerB>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;

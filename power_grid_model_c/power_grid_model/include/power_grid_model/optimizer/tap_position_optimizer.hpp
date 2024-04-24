@@ -427,15 +427,25 @@ inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
     return i_pu<ComponentType>(math_output, branch_math_id, regulator.regulator.get().control_side());
 }
 
+template <transformer_c ComponentType, typename State, steady_state_math_output_type MathOutputType>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType> &&
+             requires(State const& state, Idx const i) {
+                 { get_branch_nodes<ComponentType>(state, i)[i] } -> std::convertible_to<Idx>;
+             }
+inline auto u_pu(State const& state, std::vector<MathOutputType> const& math_output, Idx topology_index,
+                 ControlSide control_side) {
+    auto const controlled_node_idx = get_topo_node<ComponentType>(state, topology_index, control_side);
+    auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
+    return math_output[node_math_id.group].u[node_math_id.pos];
+}
+
 template <component_c ComponentType, typename... RegulatedTypes, typename State,
           steady_state_math_output_type MathOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
                                  std::vector<MathOutputType> const& math_output) {
-    auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
-                                                                  regulator.regulator.get().control_side());
-    auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
-    return math_output[node_math_id.group].u[node_math_id.pos];
+    return u_pu<ComponentType>(state, math_output, regulator.transformer.topology_index(),
+                               regulator.regulator.get().control_side());
 }
 
 template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
