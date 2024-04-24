@@ -142,11 +142,10 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
 
 template <std::derived_from<Branch> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
-             !
-             transformer_c<Component> constexpr void add_edge(
-                 main_core::MainModelState<ComponentContainer> const& state,
-                 RegulatedObjects const& /* regulated_objects */, TrafoGraphEdges& edges,
-                 TrafoGraphEdgeProperties& edge_props) {
+             (!transformer_c<Component>)
+constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& state,
+                        RegulatedObjects const& /* regulated_objects */, TrafoGraphEdges& edges,
+                        TrafoGraphEdgeProperties& edge_props) {
     auto const& iter = state.components.template citer<Component>();
     edges.reserve(std::distance(iter.begin(), iter.end()) * 2);
     edge_props.reserve(std::distance(iter.begin(), iter.end()) * 2);
