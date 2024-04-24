@@ -206,7 +206,7 @@ def test_handle_invalid_calculation_method_error():
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
 
-@pytest.mark.skip(reason="TODO: Automatic tap changer")
+@pytest.mark.xfail(reason="TODO: Automatic tap changer")
 def test_transformer_tap_regulator_at_lv_tap_side():
     node_input = initialize_array("input", "node", 2)
     node_input["id"] = [0, 1]

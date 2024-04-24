@@ -5,10 +5,10 @@
 #include <power_grid_model/main_core/input.hpp>
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
 
+#include <doctest/doctest.h>
+
 #include <algorithm>
 #include <ranges>
-
-#include <doctest/doctest.h>
 
 namespace pgm_tap = power_grid_model::optimizer::tap_position_optimizer;
 namespace main_core = power_grid_model::main_core;
@@ -173,6 +173,8 @@ TEST_CASE("Test Transformer ranking") {
 
     // Subcases
     SUBCASE("Building the graph") {
+        using pgm_tap::unregulated_idx;
+
         // reference graph creation
         // Inserted in order of transformer, transformer3w, line and link
         std::vector<std::pair<Idx, Idx>> expected_edges;
@@ -181,7 +183,6 @@ TEST_CASE("Test Transformer ranking") {
         expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
         expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
 
-        using pgm_tap::unregulated_idx;
         pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
         expected_edges_prop.insert(expected_edges_prop.end(),
                                    {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
