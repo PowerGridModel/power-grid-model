@@ -137,7 +137,9 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     }
 
     // get size
-    template <class Gettable> Idx size() const {
+    template <class Gettable>
+        requires(std::same_as<Gettable, GettableTypes> || ...)
+    Idx size() const {
         assert(construction_complete_);
         return size_[get_cls_pos_v<Gettable, GettableTypes...>];
     }
