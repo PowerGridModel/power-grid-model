@@ -13,7 +13,7 @@
 #include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
+
 #include <functional>
 #include <queue>
 #include <vector>
@@ -27,11 +27,6 @@ using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr Idx2D unregulated_idx = {-1, -1};
-
-using enum Branch3Side;
-
-constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
-    {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
 
 struct TrafoGraphVertex {
     bool is_source{};
@@ -77,6 +72,11 @@ inline void add_to_edge(TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_p
 inline void process_trafo3w_edge(ThreeWindingTransformer const& transformer3w, bool const& trafo3w_is_regulated,
                                  Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
                                  TrafoGraphEdgeProperties& edge_props) {
+    using enum Branch3Side;
+
+    constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
+        {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
+
     for (auto const& [first_side, second_side] : branch3_combinations) {
         if (!transformer3w.status(first_side) || !transformer3w.status(second_side)) {
             continue;
