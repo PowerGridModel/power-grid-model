@@ -651,10 +651,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         constexpr auto get_max = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_max(); };
         constexpr auto get_min = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_min(); };
+        constexpr auto get_clamped = [](transformer_c auto const& transformer) -> IntS {
+            return std::clamp(transformer.tap_pos(), transformer.tap_min(), transformer.tap_max());
+        };
 
         switch (strategy_) {
         case OptimizerStrategy::any:
-            break;
+            adjust_voltage(get_clamped, state, regulator_order);
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:

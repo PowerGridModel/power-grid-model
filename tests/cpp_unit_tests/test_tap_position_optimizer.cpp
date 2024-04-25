@@ -163,10 +163,12 @@ struct MockTransformer {
 
     auto update(UpdateType const& update) {
         CHECK(update.id == id());
+        UpdateChange result;
         if (!is_nan(update.tap_pos)) {
+            result.param = state.tap_pos != update.tap_pos;
             state.tap_pos = update.tap_pos;
         }
-        return UpdateChange{};
+        return result;
     }
 
     auto inverse(UpdateType update) const {
