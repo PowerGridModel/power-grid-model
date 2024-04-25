@@ -71,8 +71,12 @@ inline auto u_pu(State const& state, std::vector<MathOutputType> const& math_out
     return ComplexValue<typename MathOutputType::sym>{};
 }
 
-using StubComponentContainer = Container<ExtraRetrievableTypes<Regulator>, StubComponent, StubTransformerA,
-                                         TransformerTapRegulator, StubTransformerB>;
+// TODO(mgovers) revert
+// using StubComponentContainer = Container<ExtraRetrievableTypes<Regulator>, StubComponent, StubTransformerA,
+//                                          TransformerTapRegulator, StubTransformerB>;
+using StubComponentContainer =
+    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, Regulator>, Line, Link, Node, Transformer,
+              ThreeWindingTransformer, TransformerTapRegulator, Source>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);
