@@ -8,6 +8,7 @@
 
 namespace power_grid_model {
 
+namespace {
 struct C {
     explicit C(Idx a1) : a{a1} {}
 
@@ -23,6 +24,27 @@ struct C2 : C {
     C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {}
     uint16_t b;
 };
+
+static_assert(Container<C1>::is_storageable_v<C1>);
+static_assert(!Container<C1>::is_storageable_v<C2>);
+static_assert(!Container<C1>::is_storageable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1>::is_storageable_v<C1>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1>::is_storageable_v<C2>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1>::is_storageable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_storageable_v<C1>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_storageable_v<C2>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1, C2>::is_storageable_v<C>);
+
+static_assert(Container<C1>::is_gettable_v<C1>);
+static_assert(!Container<C1>::is_gettable_v<C2>);
+static_assert(!Container<C1>::is_gettable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1>::is_gettable_v<C1>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1>::is_gettable_v<C2>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1>::is_gettable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_gettable_v<C1>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_gettable_v<C2>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_gettable_v<C>);
+} // namespace
 
 TEST_CASE("Test component container") {
     using CompContainer = Container<C, C1, C2>;
