@@ -53,7 +53,7 @@ struct TrafoGraphEdge {
 
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
-using RankedTransformerGroups = std::vector<Idx2D>;
+using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 struct RegulatedObjects {
     std::set<Idx> transformers{};
@@ -256,8 +256,15 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
     std::sort(sorted_trafos.begin(), sorted_trafos.end(),
               [](const TrafoGraphEdge& a, const TrafoGraphEdge& b) { return a.weight < b.weight; });
 
-    RankedTransformerGroups groups(sorted_trafos.size());
-    std::ranges::transform(sorted_trafos, groups.begin(), [](const TrafoGraphEdge& x) { return x.regulated_idx; });
+    RankedTransformerGroups groups;
+    auto previous_weight = std::numeric_limits<EdgeWeight>::lowest();
+    for (auto const& trafo : sorted_trafos) {
+        if (trafo.weight > previous_weight) {
+            groups.emplace_back();
+            previous_weight = trafo.weight;
+        }
+        groups.back().push_back(trafo.regulated_idx);
+    }
     return groups;
 }
 
