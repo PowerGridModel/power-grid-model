@@ -472,6 +472,40 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
+        SUBCASE("multipe valid values") {
+            state_b.tap_min = 1;
+            state_b.tap_max = 3;
+            state_b.rank = 0;
+            check_b = [&state_b](IntS value, OptimizerStrategy strategy) {
+                switch (strategy) {
+                    using enum OptimizerStrategy;
+                case any:
+                    CHECK(value == std::clamp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
+                    break;
+                case local_minimum:
+                case global_minimum:
+                    CHECK(value == state_b.tap_min);
+                    break;
+                case local_maximum:
+                case global_maximum:
+                    CHECK(value == state_b.tap_max);
+                    break;
+                default:
+                    FAIL("unreachable");
+                }
+            };
+
+            SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+            SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+            SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
+            SUBCASE("start too low") { state_b.tap_pos = 0; }
+            SUBCASE("start too high") { state_b.tap_pos = 4; }
+            SUBCASE("start too low with different tap side") {
+                state_b.tap_pos = 0;
+                state_b.tap_side = ControlSide::side_2;
+            }
+        }
+
         auto const initial_a{transformer_a.tap_pos()};
         auto const initial_b{transformer_b.tap_pos()};
 

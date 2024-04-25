@@ -108,17 +108,19 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
     // get idx by id
-    template <supported_type_c<GettableTypes...> Gettable = void> Idx2D get_idx_by_id(ID id) const {
+    Idx2D get_idx_by_id(ID id) const {
         auto const found = map_.find(id);
         if (found == map_.end()) {
             throw IDNotFound{id};
         }
-        if constexpr (!std::is_void_v<Gettable>) {
-            if (!is_base<Gettable>[found->second.group]) {
-                throw IDWrongType{id};
-            }
-        }
         return found->second;
+    }
+    template <supported_type_c<GettableTypes...> Gettable> Idx2D get_idx_by_id(ID id) const {
+        auto const result = get_idx_by_id(id);
+        if (!is_base<Gettable>[result.group]) {
+            throw IDWrongType{id};
+        }
+        return result;
     }
     // get item based on ID
     template <supported_type_c<GettableTypes...> Gettable> Gettable& get_item(ID id) {

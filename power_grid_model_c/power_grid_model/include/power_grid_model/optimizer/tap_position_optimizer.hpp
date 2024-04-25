@@ -658,6 +658,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         switch (strategy_) {
         case OptimizerStrategy::any:
             adjust_voltage(get_clamped, state, regulator_order);
+            break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
