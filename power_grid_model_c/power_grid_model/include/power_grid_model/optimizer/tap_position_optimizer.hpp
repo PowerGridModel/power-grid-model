@@ -244,7 +244,6 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (graph[e].regulated_idx == unregulated_idx) {
             continue;
         }
-        // result.emplace_back(graph[e].regulated_idx, vertex_distances[boost::source(e, graph)]);
         result.push_back({graph[e].regulated_idx, vertex_distances[boost::source(e, graph)]});
     }
 
