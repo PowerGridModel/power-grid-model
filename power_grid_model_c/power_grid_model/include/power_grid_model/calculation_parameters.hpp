@@ -131,7 +131,7 @@ template <symmetry_tag sym_type> struct TransformerTapRegulatorMathOutput {
     IntS tap_pos{na_IntS};
 };
 
-// from, to side
+// from side, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
 using BranchIdx = std::array<Idx, 2>;
 // node 0, 1, 2 side
@@ -154,7 +154,6 @@ struct MathModelTopology {
     DenseGroupedIdxVector power_sensors_per_branch_from;
     DenseGroupedIdxVector power_sensors_per_branch_to;
     DenseGroupedIdxVector power_sensors_per_bus;
-    DenseGroupedIdxVector transformer_tap_regulators_per_branch;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
@@ -179,8 +178,6 @@ struct MathModelTopology {
     Idx n_branch_to_power_sensor() const { return power_sensors_per_branch_to.element_size(); }
 
     Idx n_bus_power_sensor() const { return power_sensors_per_bus.element_size(); }
-
-    Idx n_transformer_tap_regulator() const { return transformer_tap_regulators_per_branch.element_size(); }
 };
 
 template <symmetry_tag sym_type> struct MathModelParam {
