@@ -431,6 +431,9 @@ struct MockTransformer {
         CHECK(update.id == id());
         UpdateChange result;
         if (!is_nan(update.tap_pos)) {
+            CHECK(update.tap_pos >= std::min(state.tap_min, state.tap_max));
+            CHECK(update.tap_pos <= std::max(state.tap_min, state.tap_max));
+
             result.param = state.tap_pos != update.tap_pos;
             state.tap_pos = update.tap_pos;
         }
@@ -535,6 +538,8 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateUpdater = void (*)(ConstDataset const& update_dataset);
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
+    constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
+
     MockState state;
 
     auto const updater = [&state](ConstDataset const& update_dataset) {
@@ -621,51 +626,29 @@ TEST_CASE("Test Tap position optimizer") {
         auto check_b = check_exact(0);
 
         SUBCASE("not regulatable") {
+            state_b.tap_pos = 1;
             state_b.tap_min = 1;
             state_b.tap_max = 1;
             state_b.rank = 0;
             check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == state_b.tap_pos); };
             auto const control_side = main_core::get_component<TransformerTapRegulator>(state, 4).control_side();
 
-            SUBCASE("not regulated") {
-                state_b.rank = MockTransformerState::unregulated;
-                SUBCASE("start in range") { state_b.tap_pos = 1; }
-                SUBCASE("start too low") { state_b.tap_pos = 0; }
+            SUBCASE("not regulated") { state_b.rank = MockTransformerState::unregulated; }
+
+            SUBCASE("not connected at tap side") {
+                state_b.status = [tap_side = state_b.tap_side](ControlSide side) { return side != tap_side; };
             }
 
-            // SUBCASE("not connected at tap side") {
-            //     state_b.status = [tap_side = state_b.tap_side](ControlSide side) { return side != tap_side;
-            //     }; SUBCASE("start in range") { state_b.tap_pos = 1; } SUBCASE("start too low") {
-            //     state_b.tap_pos = 0; } SUBCASE("start too low with different tap side") {
-            //         state_b.tap_pos = 0;
-            //         state_b.tap_side = ControlSide::side_2;
-            //     }
-            // }
+            SUBCASE("not connected at control side") {
+                state_b.status = [control_side](ControlSide side) { return side != control_side; };
+            }
 
-            // SUBCASE("not connected at control side") {
-            //     state_b.status = [control_side](ControlSide side) { return side != control_side; };
-
-            //     SUBCASE("start in range") { state_b.tap_pos = 1; }
-            //     SUBCASE("start too low") { state_b.tap_pos = 0; }
-            //     SUBCASE("start too low with different tap side") {
-            //         state_b.tap_pos = 0;
-            //         state_b.tap_side = ControlSide::side_3;
-            //     }
-            // }
-
-            // SUBCASE("not connected at third side doesn't matter") {
-            //     auto check_b = check_exact(1);
-            //     state_b.status = [control_side, tap_side = state_b.tap_side](ControlSide side) {
-            //         return side != control_side && side != tap_side;
-            //     };
-
-            //     SUBCASE("start in range") { state_b.tap_pos = 1; }
-            //     SUBCASE("start too low") { state_b.tap_pos = 0; }
-            //     SUBCASE("start too low with different tap side") {
-            //         state_b.tap_pos = 0;
-            //         state_b.tap_side = ControlSide::side_3;
-            //     }
-            // }
+            SUBCASE("not connected at third side doesn't matter") {
+                auto check_b = check_exact(1);
+                state_b.status = [control_side, tap_side = state_b.tap_side](ControlSide side) {
+                    return side != control_side && side != tap_side;
+                };
+            }
         }
 
         SUBCASE("single valid value") {
@@ -673,14 +656,6 @@ TEST_CASE("Test Tap position optimizer") {
             state_b.tap_max = 1;
             state_b.rank = 0;
             check_b = check_exact(1);
-
-            SUBCASE("start in range") { state_b.tap_pos = 1; }
-            SUBCASE("start too low") { state_b.tap_pos = 0; }
-            SUBCASE("start too high") { state_b.tap_pos = 2; }
-            SUBCASE("start too low with different tap side") {
-                state_b.tap_pos = 0;
-                state_b.tap_side = ControlSide::side_2;
-            }
         }
 
         SUBCASE("multipe valid values") {
@@ -709,12 +684,6 @@ TEST_CASE("Test Tap position optimizer") {
             SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
             SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
             SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
-            SUBCASE("start too low") { state_b.tap_pos = 0; }
-            SUBCASE("start too high") { state_b.tap_pos = 4; }
-            SUBCASE("start too low with different tap side") {
-                state_b.tap_pos = 0;
-                state_b.tap_side = ControlSide::side_2;
-            }
         }
 
         auto const initial_a{transformer_a.tap_pos()};
@@ -723,17 +692,22 @@ TEST_CASE("Test Tap position optimizer") {
         for (auto strategy : test::strategies) {
             CAPTURE(strategy);
 
-            auto optimizer = get_optimizer(strategy);
-            auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+            for (auto tap_side : tap_sides) {
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
 
-            // correctness
-            CHECK(result.size() == 1);
-            check_a(get_state_tap_pos(result, state_a.id), strategy);
-            check_b(get_state_tap_pos(result, state_b.id), strategy);
+                auto optimizer = get_optimizer(strategy);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
 
-            // reset
-            CHECK(transformer_a.tap_pos() == initial_a);
-            CHECK(transformer_b.tap_pos() == initial_b);
+                // correctness
+                CHECK(result.size() == 1);
+                check_a(get_state_tap_pos(result, state_a.id), strategy);
+                check_b(get_state_tap_pos(result, state_b.id), strategy);
+
+                // reset
+                CHECK(transformer_a.tap_pos() == initial_a);
+                CHECK(transformer_b.tap_pos() == initial_b);
+            }
         }
     }
 }

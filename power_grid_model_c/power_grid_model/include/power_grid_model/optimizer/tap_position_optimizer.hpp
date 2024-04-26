@@ -769,13 +769,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         constexpr auto get_max = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_max(); };
         constexpr auto get_min = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_min(); };
-        constexpr auto get_clamped = [](transformer_c auto const& transformer) -> IntS {
-            return std::clamp(transformer.tap_pos(), transformer.tap_min(), transformer.tap_max());
-        };
 
         switch (strategy_) {
         case OptimizerStrategy::any:
-            adjust_voltage(get_clamped, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
@@ -796,10 +792,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         using namespace std::string_literals;
 
         constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return tap_one_step_up(transformer);
+            return tap_one_step_down(transformer);
         };
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return tap_one_step_down(transformer);
+            return tap_one_step_up(transformer);
         };
 
         switch (strategy_) {
