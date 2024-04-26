@@ -256,14 +256,14 @@ TEST_CASE("Test Transformer ranking") {
     }
 
     SUBCASE("Sorting transformer edges") {
-        pgm_tap::TrafoGraphEdgeProperties trafoList{
+        pgm_tap::TrafoGraphEdgeProperties const trafoList{
             {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
 
         pgm_tap::RankedTransformerGroups const referenceList{{Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
 
         pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         REQUIRE(sortedTrafoList.size() == referenceList.size());
-        for (Idx idx = 0; idx < sortedTrafoList.size(); ++idx) {
+        for (Idx idx = 0; idx < static_cast<Idx>(sortedTrafoList.size()); ++idx) {
             CAPTURE(idx);
             CHECK(sortedTrafoList[idx] == referenceList[idx]);
         }
