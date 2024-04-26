@@ -497,24 +497,19 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
 template <transformer_c... TransformerTypes, typename State>
     requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline auto regulator_mapping(State const& state, std::vector<Idx2D> const& order) {
-    std::vector<TapRegulatorRef<TransformerTypes...>> result;
-
-    for (auto const& index : order) {
-        result.push_back(regulator_mapping<TransformerTypes...>(state, index));
-    }
-
+    std::vector<TapRegulatorRef<TransformerTypes...>> result(order.size());
+    std::ranges::transform(order, result.begin(),
+                           [](auto const& index) { return regulator_mapping<TransformerTypes...>(state, index); });
     return result;
 }
 
 template <transformer_c... TransformerTypes, typename State>
     requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline auto regulator_mapping(State const& state, RankedTransformerGroups const& order) {
-    std::vector<std::vector<TapRegulatorRef<TransformerTypes...>>> result;
-
-    for (auto const& sub_order : order) {
-        result.push_back(regulator_mapping<TransformerTypes...>(state, sub_order));
-    }
-
+    std::vector<TapRegulatorRef<TransformerTypes...>> result(order.size());
+    std::ranges::transform(order, result.begin(), [](auto const& sub_order) {
+        return regulator_mapping<TransformerTypes...>(state, sub_order);
+    });
     return result;
 }
 
@@ -585,7 +580,7 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
 
 template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
 inline void create_tap_regulator_output(State const& state, std::vector<MathOutputType>& math_output) {
-    for (Idx group : boost::counting_range(Idx{0}, static_cast<Idx>(math_output.size()))) {
+    for (Idx const group : boost::counting_range(Idx{0}, static_cast<Idx>(math_output.size()))) {
         math_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
                                                             {.tap_pos = na_IntS});
     }
@@ -870,12 +865,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     template <transformer_c T> static std::vector<typename T::UpdateType>& get(UpdateBuffer& update_data) {
-        using ResultType = std::vector<typename T::UpdateType>;
         return std::get<transformer_index_of<T>>(update_data);
     }
 
     template <transformer_c T> static std::vector<typename T::UpdateType> const& get(UpdateBuffer const& update_data) {
-        using ResultType = std::vector<typename T::UpdateType>;
         return std::get<transformer_index_of<T>>(update_data);
     }
 
