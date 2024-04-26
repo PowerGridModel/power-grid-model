@@ -344,7 +344,7 @@ struct ComponentTopology {
     IdxVector regulated_object_idx; // the index is relative to branch or branch3
     std::vector<ComponentType> regulated_object_type;
 
-    constexpr Idx n_node_total() const { return n_node + static_cast<Idx>(branch3_node_idx.size()); }
+    Idx n_node_total() const { return n_node + static_cast<Idx>(branch3_node_idx.size()); }
 };
 
 // connection property

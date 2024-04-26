@@ -68,6 +68,9 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // default constructor, operator
 
+    template <typename T> static constexpr bool is_storageable_v = supported_type_c<T, StorageableTypes...>;
+    template <typename T> static constexpr bool is_gettable_v = supported_type_c<T, GettableTypes...>;
+
     // reserve space
     template <supported_type_c<StorageableTypes...> Storageable> void reserve(size_t size) {
         auto& vec = std::get<std::vector<Storageable>>(vectors_);
