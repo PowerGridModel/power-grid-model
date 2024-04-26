@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <doctest/doctest.h>
 #include <power_grid_model/common/grouped_index_vector.hpp>
+
+#include <doctest/doctest.h>
 
 namespace power_grid_model {
 
