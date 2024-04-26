@@ -887,7 +887,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     static auto get_data_ptr(UpdateBuffer const& update_buffer) {
         auto const& data = get<T>(update_buffer);
         return ConstDataPointer{data.data(), static_cast<Idx>(data.size())};
-    };
+    }
 
     static auto get_nan_update(auto const& component) {
         return meta_data::get_component_nan<typename std::remove_cvref_t<decltype(component)>::UpdateType>{}();
