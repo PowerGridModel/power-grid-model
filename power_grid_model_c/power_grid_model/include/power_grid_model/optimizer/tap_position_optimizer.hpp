@@ -488,7 +488,7 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
                               .transformer = {std::cref(transformer), transformer_index_, topology_index}};
         }...};
 
-    for (Idx idx = 0; idx < n_types; ++idx) {
+    for (Idx idx = 0; idx < static_cast<Idx>(n_types); ++idx) {
         if (is_type[idx](transformer_index)) {
             return transformer_mappings[idx](state, transformer_index);
         }
@@ -662,7 +662,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
   private:
     auto optimize(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order,
                   CalculationMethod method) const -> ResultType {
-        initialize(state, regulator_order);
+        initialize(regulator_order);
 
         if (auto result = try_calculation_with_regulation(state, regulator_order, method);
             strategy_ == OptimizerStrategy::any) {
@@ -670,7 +670,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         // refine solution
-        step_all(state, regulator_order);
+        step_all(regulator_order);
         return try_calculation_with_regulation(state, regulator_order, method);
     }
 
@@ -766,7 +766,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto initialize(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
+    auto initialize(std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto get_max = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_max(); };
@@ -794,7 +794,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    void step_all(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
+    void step_all(std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
