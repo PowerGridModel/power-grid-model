@@ -561,7 +561,6 @@ TEST_CASE("Test Tap position optimizer") {
 
     SUBCASE("empty state") {
         state.components.set_construction_complete();
-        state.math_topology = {std::make_shared<MathModelTopology>()};
         auto optimizer = get_optimizer(OptimizerStrategy::any);
         auto result = optimizer.optimize(state, CalculationMethod::default_method);
         CHECK(result.size() == 1);
@@ -574,7 +573,6 @@ TEST_CASE("Test Tap position optimizer") {
         main_core::emplace_component<test::MockTransformer>(
             state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
         state.components.set_construction_complete();
-        state.math_topology = {std::make_shared<MathModelTopology>()};
 
         for (auto [strategy, calculation_method] : test::strategies_and_methods) {
             CAPTURE(strategy);
@@ -615,8 +613,6 @@ TEST_CASE("Test Tap position optimizer") {
             transformer_b.math_model_type(), 1.0);
 
         auto math_topo = MathModelTopology{};
-        math_topo.transformer_tap_regulators_per_branch = {from_dense, {0, 1}, 2};
-        state.math_topology.emplace_back(std::make_shared<MathModelTopology const>(std::move(math_topo)));
         state.components.set_construction_complete();
 
         auto strategy = OptimizerStrategy::any;
@@ -652,10 +648,11 @@ TEST_CASE("Test Tap position optimizer") {
         }
 
         SUBCASE("single valid value") {
-            state_b.tap_min = 1;
-            state_b.tap_max = 1;
+            state_b.tap_pos = 1;
+            state_b.tap_min = state_b.tap_pos;
+            state_b.tap_max = state_b.tap_pos;
             state_b.rank = 0;
-            check_b = check_exact(1);
+            check_b = check_exact(state_b.tap_pos);
         }
 
         SUBCASE("multipe valid values") {
