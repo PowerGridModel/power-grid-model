@@ -498,8 +498,9 @@ template <transformer_c... TransformerTypes, typename State>
     requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline auto regulator_mapping(State const& state, std::vector<Idx2D> const& order) {
     std::vector<TapRegulatorRef<TransformerTypes...>> result(order.size());
-    std::ranges::transform(order, result.begin(),
-                           [](auto const& index) { return regulator_mapping<TransformerTypes...>(state, index); });
+    std::ranges::transform(order, result.begin(), [&state](auto const& index) {
+        return regulator_mapping<TransformerTypes...>(state, index);
+    });
     return result;
 }
 
@@ -507,7 +508,7 @@ template <transformer_c... TransformerTypes, typename State>
     requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline auto regulator_mapping(State const& state, RankedTransformerGroups const& order) {
     std::vector<TapRegulatorRef<TransformerTypes...>> result(order.size());
-    std::ranges::transform(order, result.begin(), [](auto const& sub_order) {
+    std::ranges::transform(order, result.begin(), [&state](auto const& sub_order) {
         return regulator_mapping<TransformerTypes...>(state, sub_order);
     });
     return result;
