@@ -263,7 +263,7 @@ TEST_CASE("Test Transformer ranking") {
 
         pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         REQUIRE(sortedTrafoList.size() == referenceList.size());
-        for (Idx idx = 0; idx < static_cast<Idx>(sortedTrafoList.size()); ++idx) {
+        for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
             CAPTURE(idx);
             CHECK(sortedTrafoList[idx] == referenceList[idx]);
         }
@@ -418,8 +418,8 @@ struct MockTransformer {
     constexpr auto math_model_type() const { return ComponentType::test; }
 
     constexpr auto id() const { return state.id; }
-    constexpr auto node(SideType side) const { return state.node(side); }
-    constexpr auto status(SideType side) const { return state.status(side); }
+    auto node(SideType side) const { return state.node(side); }
+    auto status(SideType side) const { return state.status(side); }
 
     constexpr auto tap_side() const { return state.tap_side; }
     constexpr auto tap_pos() const { return state.tap_pos; }
@@ -494,7 +494,7 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
     template <typename ComponentType> struct Impl<ComponentType> {
         void operator()(State const& state, RankedTransformerGroups& ranking) const {
             if constexpr (std::derived_from<ComponentType, MockTransformer>) {
-                for (Idx idx = 0; idx < main_core::get_component_size<ComponentType>(state); ++idx) {
+                for (Idx idx : boost::counting_range(Idx{0}, main_core::get_component_size<ComponentType>(state))) {
                     auto const& comp = main_core::get_component_by_sequence<ComponentType>(state, idx);
                     auto const rank = comp.state.rank;
                     if (rank == MockTransformerState::unregulated) {
@@ -502,7 +502,7 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
                     }
 
                     REQUIRE(rank >= 0);
-                    if (rank >= ranking.size()) {
+                    if (rank >= static_cast<Idx>(ranking.size())) {
                         ranking.resize(rank + 1);
                     }
                     ranking[rank].emplace_back(main_core::get_component_type_index<ComponentType>(state), idx);

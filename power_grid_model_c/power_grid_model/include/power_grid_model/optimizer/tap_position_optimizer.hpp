@@ -90,9 +90,10 @@ template <transformer_c ComponentType, typename State>
              }
 inline auto get_topo_node(State const& state, Idx topology_index, ControlSide control_side) {
     auto const& nodes = get_branch_nodes<ComponentType>(state, topology_index);
-
     auto const control_side_idx = static_cast<Idx>(control_side);
-    assert(control_side_idx < nodes.size());
+
+    assert(0 <= control_side_idx);
+    assert(control_side_idx < static_cast<Idx>(nodes.size()));
 
     return nodes[control_side_idx];
 }
@@ -586,7 +587,7 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
 
 template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
 inline void create_tap_regulator_output(State const& state, std::vector<MathOutputType>& math_output) {
-    for (Idx group = 0; group < math_output.size(); ++group) {
+    for (Idx group : boost::counting_range(Idx{0}, static_cast<Idx>(math_output.size()))) {
         math_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
                                                             {.tap_pos = na_IntS});
     }
@@ -639,24 +640,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
 
     template <transformer_c T>
-    static constexpr auto transformer_index_of = [] {
-        using TransformerTypesTuple = std::tuple<TransformerTypes...>;
-        constexpr auto n_transformers = std::tuple_size_v<TransformerTypesTuple>;
-
-        constexpr auto is_same_type = []<size_t... I>(std::index_sequence<I...> /* indices */) {
-            return std::array{std::same_as<T, std::tuple_element_t<I, TransformerTypesTuple>>...};
-        }
-        (std::make_index_sequence<n_transformers>{});
-
-        static_assert(std::ranges::any_of(is_same_type, [](bool a) { return a; }));
-        for (size_t k = 0; k < is_same_type.size(); ++k) {
-            if (is_same_type[k]) {
-                return k;
-            }
-        }
-        assert(false); // unreachable
-        return n_transformers;
-    }();
+    static constexpr auto transformer_index_of = container_impl::get_cls_pos_v<T, TransformerTypes...>;
     static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
   public:
