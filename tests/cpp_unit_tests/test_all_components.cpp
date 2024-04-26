@@ -25,7 +25,6 @@ namespace power_grid_model {
 
 static_assert(component_c<Node>);
 static_assert(component_c<Line>);
-static_assert(component_c<Branch>);
 static_assert(component_c<Link>);
 static_assert(component_c<Transformer>);
 static_assert(component_c<Source>);
