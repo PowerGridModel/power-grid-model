@@ -154,6 +154,7 @@ struct MathModelTopology {
     DenseGroupedIdxVector power_sensors_per_branch_from;
     DenseGroupedIdxVector power_sensors_per_branch_to;
     DenseGroupedIdxVector power_sensors_per_bus;
+    DenseGroupedIdxVector tap_regulators_per_branch;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
@@ -178,6 +179,8 @@ struct MathModelTopology {
     Idx n_branch_to_power_sensor() const { return power_sensors_per_branch_to.element_size(); }
 
     Idx n_bus_power_sensor() const { return power_sensors_per_bus.element_size(); }
+
+    Idx n_transformer_tap_regulator() const { return tap_regulators_per_branch.element_size(); }
 };
 
 template <symmetry_tag sym_type> struct MathModelParam {
