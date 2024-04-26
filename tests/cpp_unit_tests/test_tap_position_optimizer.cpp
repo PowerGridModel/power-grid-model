@@ -414,6 +414,9 @@ struct MockTransformer {
     using UpdateType = StubTransformerUpdate;
     using SideType = typename MockTransformerState::SideType;
 
+    MockTransformer() = default;
+    MockTransformer(MockTransformerState state_) : state{state_} {}
+
     static constexpr auto name = "MockTransformer";
     constexpr auto math_model_type() const { return ComponentType::test; }
 
@@ -508,7 +511,8 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
                     if (rank >= static_cast<Idx>(ranking.size())) {
                         ranking.resize(rank + 1);
                     }
-                    ranking[rank].emplace_back(main_core::get_component_type_index<ComponentType>(state), idx);
+                    ranking[rank].push_back(
+                        {.group = main_core::get_component_type_index<ComponentType>(state), .pos = idx});
                 }
             }
         }
@@ -535,7 +539,6 @@ TEST_CASE("Test Tap position optimizer") {
     using MockContainer = Container<ExtraRetrievableTypes<Regulator>, MockTransformer, TransformerTapRegulator>;
     using MockState = main_core::MainModelState<MockContainer>;
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
-    using MockStateUpdater = void (*)(ConstDataset const& update_dataset);
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
@@ -574,26 +577,20 @@ TEST_CASE("Test Tap position optimizer") {
             state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
         state.components.set_construction_complete();
 
-        for (auto [strategy, calculation_method] : test::strategies_and_methods) {
-            CAPTURE(strategy);
-            CAPTURE(calculation_method);
+        for (auto strategy_method : test::strategies_and_methods) {
+            CAPTURE(strategy_method.strategy);
+            CAPTURE(strategy_method.method);
 
-            auto optimizer = get_optimizer(strategy);
-            auto result = optimizer.optimize(state, calculation_method);
+            auto optimizer = get_optimizer(strategy_method.strategy);
+            auto result = optimizer.optimize(state, strategy_method.method);
 
             CHECK(result.size() == 1);
-            CHECK(result[0].method == calculation_method);
+            CHECK(result[0].method == strategy_method.method);
         }
     }
 
     SUBCASE("tap position in range") {
-        auto const check_in_range = [](IntS tap_min, IntS tap_max) -> std::function<void(IntS, OptimizerStrategy)> {
-            return [=](IntS value, OptimizerStrategy /*strategy*/) {
-                CHECK(value >= tap_min);
-                CHECK(value <= tap_max);
-            };
-        };
-        auto const check_exact = [&check_in_range](IntS tap_pos) -> std::function<void(IntS, OptimizerStrategy)> {
+        auto const check_exact = [](IntS tap_pos) -> std::function<void(IntS, OptimizerStrategy)> {
             return [=](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == tap_pos); };
         };
 
@@ -615,7 +612,6 @@ TEST_CASE("Test Tap position optimizer") {
         auto math_topo = MathModelTopology{};
         state.components.set_construction_complete();
 
-        auto strategy = OptimizerStrategy::any;
         auto& state_a = transformer_a.state;
         auto& state_b = transformer_b.state;
         auto check_a = check_exact(0);
