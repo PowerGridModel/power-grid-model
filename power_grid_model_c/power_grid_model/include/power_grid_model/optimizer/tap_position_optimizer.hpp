@@ -424,17 +424,15 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     }
 
   private:
+    std::variant<std::reference_wrapper<const TransformerTypes>...> transformer_;
+
     Idx2D index_;
     Idx topology_index_;
-
-    std::variant<std::reference_wrapper<const TransformerTypes>...> transformer_;
 };
 
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
-    using TransformerWrapper = TransformerWrapper<TransformerTypes...>;
-
     std::reference_wrapper<const TransformerTapRegulator> regulator;
-    TransformerWrapper transformer;
+    TransformerWrapper<TransformerTypes...> transformer;
 };
 
 template <typename... Ts> struct transformer_types_s;
@@ -636,7 +634,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
   private:
     using ComponentContainer = typename State::ComponentContainer;
-    using TapRegulatorRef = TapRegulatorRef<TransformerTypes...>;
+    using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
 
     template <transformer_c T>
@@ -660,7 +658,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     constexpr auto get_strategy() const { return strategy_; }
 
   private:
-    auto optimize(State const& state, std::vector<std::vector<TapRegulatorRef>> const& regulator_order,
+    auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                   CalculationMethod method) const -> ResultType {
         initialize(regulator_order);
 
@@ -675,7 +673,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     auto try_calculation_with_regulation(State const& state,
-                                         std::vector<std::vector<TapRegulatorRef>> const& regulator_order,
+                                         std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                                          CalculationMethod method) const -> ResultType {
         auto result = calculate_with_retry(state, method);
 
@@ -716,7 +714,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    bool control_transformer(TapRegulatorRef const& regulator, State const& state, ResultType const& math_output,
+    bool control_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& math_output,
                              UpdateBuffer& update_data) const {
         bool tap_changed = false;
 
@@ -766,7 +764,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto initialize(std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
+    auto initialize(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto get_max = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_max(); };
@@ -794,7 +792,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    void step_all(std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
+    void step_all(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
@@ -833,7 +831,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         requires((std::invocable<Func, TransformerTypes const&> &&
                   std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
                  ...)
-    auto adjust_voltage(Func new_tap_pos, std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
+    auto adjust_voltage(Func new_tap_pos, std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
         auto const get_update = [new_tap_pos = std::move(new_tap_pos),
@@ -859,7 +857,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return transformer.inverse(result);
     }
 
-    static UpdateBuffer cache_states(std::vector<std::vector<TapRegulatorRef>> const& regulator_order) {
+    static UpdateBuffer cache_states(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         UpdateBuffer result;
 
         auto const cache_transformer = [&result](transformer_c auto const& transformer) {
