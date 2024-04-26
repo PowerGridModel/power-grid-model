@@ -666,8 +666,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto optimize(State const& state, CalculationMethod method) -> ResultType final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
 
-        auto const cache = this->cache_state(state, order);
-        auto const optimal_output = optimize(state, order, method);
+        auto const cache = this->cache_states(order);
+        auto optimal_output = optimize(state, order, method);
         update_state(cache);
 
         return optimal_output;
@@ -680,7 +680,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                   CalculationMethod method) const -> ResultType {
         initialize(state, regulator_order);
 
-        if (auto const result = try_calculation_with_regulation(state, regulator_order, method);
+        if (auto result = try_calculation_with_regulation(state, regulator_order, method);
             strategy_ == OptimizerStrategy::any) {
             return result;
         }
@@ -793,17 +793,17 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         switch (strategy_) {
         case OptimizerStrategy::any:
-            adjust_voltage(get_clamped, state, regulator_order);
+            adjust_voltage(get_clamped, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            adjust_voltage(get_min, state, regulator_order);
+            adjust_voltage(get_min, regulator_order);
             break;
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            adjust_voltage(get_max, state, regulator_order);
+            adjust_voltage(get_max, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
@@ -826,12 +826,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            adjust_voltage(one_step_down, state, regulator_order);
+            adjust_voltage(one_step_down, regulator_order);
             break;
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            adjust_voltage(one_step_up, state, regulator_order);
+            adjust_voltage(one_step_up, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
@@ -846,11 +846,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     template <typename Func>
-        requires std::invocable<Func, Transformer const&> && std::invocable<Func, ThreeWindingTransformer const&> &&
-                 std::same_as<std::invoke_result_t<Func, Transformer const&>, IntS> &&
-                 std::same_as<std::invoke_result_t<Func, ThreeWindingTransformer const&>, IntS>
-    auto adjust_voltage(Func new_tap_pos, State const& state,
-                        std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
+        requires((std::invocable<Func, TransformerTypes const&> &&
+                  std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
+                 ...)
+    auto adjust_voltage(Func new_tap_pos, std::vector<std::vector<TapRegulatorRef>> const& regulator_order) const {
         UpdateBuffer update_data;
 
         auto const get_update = [new_tap_pos = std::move(new_tap_pos),
@@ -876,8 +875,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return transformer.inverse(result);
     }
 
-    static UpdateBuffer cache_state(State const& state,
-                                    std::vector<std::vector<TapRegulatorRef>> const& regulator_order) {
+    static UpdateBuffer cache_states(std::vector<std::vector<TapRegulatorRef>> const& regulator_order) {
         UpdateBuffer result;
 
         auto const cache_transformer = [&result](transformer_c auto const& transformer) {
@@ -908,7 +906,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                      { get<T>(u).data() } -> std::convertible_to<void const*>;
                      { get<T>(u).size() } -> std::convertible_to<Idx>;
                  }
-    static auto const get_data_ptr(UpdateBuffer const& update_buffer) {
+    static auto get_data_ptr(UpdateBuffer const& update_buffer) {
         auto const& data = get<T>(update_buffer);
         return ConstDataPointer{data.data(), static_cast<Idx>(data.size())};
     };
