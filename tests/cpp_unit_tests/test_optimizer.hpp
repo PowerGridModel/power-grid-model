@@ -66,8 +66,8 @@ inline auto i_pu(std::vector<MathOutputType> const& /* math_output */, StubTrans
 template <std::derived_from<StubTransformer> ComponentType, typename State,
           steady_state_math_output_type MathOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-inline auto u_pu(State const& state, std::vector<MathOutputType> const& math_output, Idx topology_index,
-                 ControlSide control_side) {
+inline auto u_pu(State const& /* state */, std::vector<MathOutputType> const& /* math_output */,
+                 Idx /* topology_index */, ControlSide /* control_side */) {
     return ComplexValue<typename MathOutputType::sym>{};
 }
 
@@ -147,12 +147,17 @@ constexpr auto calculation_methods = [] {
                       iterative_current, newton_raphson, iec60909};
 }();
 
+struct OptimizerStrategyMethod {
+    OptimizerStrategy strategy{};
+    CalculationMethod method{};
+};
+
 constexpr auto strategies_and_methods = [] {
-    std::array<std::pair<OptimizerStrategy, CalculationMethod>, strategies.size() * calculation_methods.size()> result;
+    std::array<OptimizerStrategyMethod, strategies.size() * calculation_methods.size()> result;
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
-            result[idx++] = std::make_pair(strategy, method);
+            result[idx++] = {strategy, method};
         }
     }
     return result;
