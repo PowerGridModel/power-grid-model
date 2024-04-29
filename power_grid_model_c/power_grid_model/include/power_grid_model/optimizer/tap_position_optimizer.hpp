@@ -292,14 +292,14 @@ struct TransformerRanker {
 };
 
 constexpr IntS tap_one_step_up(transformer_c auto const& transformer) {
-    auto const tap_pos = transformer.tap_pos();
-    auto const tap_max = transformer.tap_max();
+    IntS const tap_pos = transformer.tap_pos();
+    IntS const tap_max = transformer.tap_max();
     return tap_pos < tap_max ? tap_pos + 1 : tap_max;
 }
 
 constexpr IntS tap_one_step_down(transformer_c auto const& transformer) {
-    auto const tap_pos = transformer.tap_pos();
-    auto const tap_min = transformer.tap_min();
+    IntS const tap_pos = transformer.tap_pos();
+    IntS const tap_min = transformer.tap_min();
     return tap_pos > tap_min ? tap_pos - 1 : tap_min;
 }
 
