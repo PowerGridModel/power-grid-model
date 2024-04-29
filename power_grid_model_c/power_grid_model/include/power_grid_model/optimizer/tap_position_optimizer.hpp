@@ -690,10 +690,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp] {
-                if (cmp > 0) {
+                if (cmp > 0) { // NOLINT(modernize-use-nullptr)
                     return one_step_voltage_down(transformer);
                 }
-                if (cmp < 0) {
+                if (cmp < 0) { // NOLINT(modernize-use-nullptr)
                     return one_step_voltage_up(transformer);
                 }
                 return transformer.tap_pos();
