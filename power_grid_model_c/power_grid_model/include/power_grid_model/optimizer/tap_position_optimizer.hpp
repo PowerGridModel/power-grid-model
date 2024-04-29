@@ -309,11 +309,11 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
     IntS const tap_max = transformer.tap_max();
     IntS const tap_min = transformer.tap_min();
 
-    if (tap_pos == tap_max) {
-        return tap_max;
+    if (tap_pos == tap_min) {
+        return tap_min;
     }
 
-    assert((tap_min <=> tap_max) == (tap_pos <=> tap_max));
+    assert((tap_min <=> tap_min) == (tap_pos <=> tap_min));
 
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
@@ -341,15 +341,6 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     }
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
-    }
-    bool connected_at_tap_side() const {
-        return apply([](auto const& t) { return t.status(t.tap_side()); });
-    }
-    bool connected_at_control_side(TransformerTapRegulator const& regulator) const {
-        return apply([side = regulator.control_side()](auto const& t) {
-            using SideType = typename std::remove_cvref_t<decltype(t)>::SideType;
-            return t.status(static_cast<SideType>(side));
-        });
     }
 
     template <typename Func>
@@ -417,8 +408,13 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
     constexpr auto transformer_mappings =
         std::array<TransformerMapping, n_types>{[](State const& state_, Idx2D const& transformer_index_) {
             auto const& transformer = get_component<TransformerTypes>(state_, transformer_index_);
+            auto const& regulator = find_regulator(state_, transformer.id());
+
+            assert(transformer.status(transformer.tap_side()));
+            assert(transformer.status(static_cast<typename TransformerTypes::SideType>(regulator.control_side())));
+
             auto const topology_index = get_topology_index<TransformerTypes>(state_, transformer_index_);
-            return ResultType{.regulator = std::cref(find_regulator(state_, transformer.id())),
+            return ResultType{.regulator = std::cref(regulator),
                               .transformer = {std::cref(transformer), transformer_index_, topology_index}};
         }...};
 
@@ -632,7 +628,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         // refine solution
-        step_all(regulator_order);
+        step_all_back(regulator_order);
         return try_calculation_with_regulation(state, regulator_order, method);
     }
 
@@ -648,10 +644,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             for (auto const& same_rank_regulators : regulator_order) {
                 for (auto const& regulator : same_rank_regulators) {
-                    if (regulator.transformer.connected_at_tap_side() &&
-                        regulator.transformer.connected_at_control_side(regulator.regulator)) {
-                        tap_changed = tap_changed || control_transformer(regulator, state, result, update_data);
-                    }
+                    tap_changed = tap_changed || control_transformer(regulator, state, result, update_data);
                 }
                 if (tap_changed) {
                     break;
@@ -731,13 +724,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto initialize(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
-        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // min voltage => max tap pos
-            return transformer.tap_max();
-        };
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
             // max voltage => min tap pos
             return transformer.tap_min();
+        };
+        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+            // min voltage => max tap pos
+            return transformer.tap_max();
         };
 
         switch (strategy_) {
@@ -746,19 +739,19 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            adjust_voltage(min_voltage_pos, regulator_order);
+            adjust_voltage(max_voltage_pos, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            adjust_voltage(max_voltage_pos, regulator_order);
+            adjust_voltage(min_voltage_pos, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
         }
     }
 
-    void step_all(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    void step_all_back(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
