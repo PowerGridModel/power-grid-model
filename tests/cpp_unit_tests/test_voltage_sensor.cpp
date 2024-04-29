@@ -31,7 +31,7 @@ void check_nan_preserving_equality(RealValue<asymmetric_t> const& actual, RealVa
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
-        VoltageSensorInput<symmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -40,7 +40,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test Sensor math_model_type") {
-        VoltageSensorInput<symmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -48,7 +48,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test get_null_output") {
-        VoltageSensorInput<symmetric_t> voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> voltage_sensor_input{.id = 0, .measured_object = 1};
         voltage_sensor_input.id = 12;
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
@@ -65,7 +65,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - sym") {
-        VoltageSensorInput<symmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 2.0;
         VoltageSensor<symmetric_t> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -97,7 +97,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - asym") {
-        VoltageSensorInput<asymmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<asymmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 2.0;
         VoltageSensor<asymmetric_t> voltage_sensor{voltage_sensor_input, u_rated};
 

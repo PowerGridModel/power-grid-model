@@ -16,13 +16,13 @@
 namespace power_grid_model {
 
 struct BaseUpdate {
-    ID id;  // ID of the object
+    ID id{na_IntID};  // ID of the object
 };
 
 struct BranchUpdate {
-    ID id;  // ID of the object
-    IntS from_status;  // whether the branch is connected at each side
-    IntS to_status;  // whether the branch is connected at each side
+    ID id{na_IntID};  // ID of the object
+    IntS from_status{na_IntS};  // whether the branch is connected at each side
+    IntS to_status{na_IntS};  // whether the branch is connected at each side
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -30,10 +30,10 @@ struct BranchUpdate {
 };
 
 struct Branch3Update {
-    ID id;  // ID of the object
-    IntS status_1;  // whether the branch is connected at each side
-    IntS status_2;  // whether the branch is connected at each side
-    IntS status_3;  // whether the branch is connected at each side
+    ID id{na_IntID};  // ID of the object
+    IntS status_1{na_IntS};  // whether the branch is connected at each side
+    IntS status_2{na_IntS};  // whether the branch is connected at each side
+    IntS status_3{na_IntS};  // whether the branch is connected at each side
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -41,8 +41,8 @@ struct Branch3Update {
 };
 
 struct ApplianceUpdate {
-    ID id;  // ID of the object
-    IntS status;  // whether the appliance is connected
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // whether the appliance is connected
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -50,10 +50,10 @@ struct ApplianceUpdate {
 };
 
 struct TransformerUpdate {
-    ID id;  // ID of the object
-    IntS from_status;  // whether the branch is connected at each side
-    IntS to_status;  // whether the branch is connected at each side
-    IntS tap_pos;  // tap changer parameters
+    ID id{na_IntID};  // ID of the object
+    IntS from_status{na_IntS};  // whether the branch is connected at each side
+    IntS to_status{na_IntS};  // whether the branch is connected at each side
+    IntS tap_pos{na_IntS};  // tap changer parameters
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -65,11 +65,11 @@ struct TransformerUpdate {
 };
 
 struct ThreeWindingTransformerUpdate {
-    ID id;  // ID of the object
-    IntS status_1;  // whether the branch is connected at each side
-    IntS status_2;  // whether the branch is connected at each side
-    IntS status_3;  // whether the branch is connected at each side
-    IntS tap_pos;  // tap changer parameters
+    ID id{na_IntID};  // ID of the object
+    IntS status_1{na_IntS};  // whether the branch is connected at each side
+    IntS status_2{na_IntS};  // whether the branch is connected at each side
+    IntS status_3{na_IntS};  // whether the branch is connected at each side
+    IntS tap_pos{na_IntS};  // tap changer parameters
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -84,10 +84,10 @@ template <symmetry_tag sym_type>
 struct LoadGenUpdate {
     using sym = sym_type;
 
-    ID id;  // ID of the object
-    IntS status;  // whether the appliance is connected
-    RealValue<sym> p_specified;  // specified active/reactive power
-    RealValue<sym> q_specified;  // specified active/reactive power
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // whether the appliance is connected
+    RealValue<sym> p_specified{nan};  // specified active/reactive power
+    RealValue<sym> q_specified{nan};  // specified active/reactive power
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -102,10 +102,10 @@ using SymLoadGenUpdate = LoadGenUpdate<symmetric_t>;
 using AsymLoadGenUpdate = LoadGenUpdate<asymmetric_t>;
 
 struct SourceUpdate {
-    ID id;  // ID of the object
-    IntS status;  // whether the appliance is connected
-    double u_ref;  // reference voltage
-    double u_ref_angle;  // reference voltage
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // whether the appliance is connected
+    double u_ref{nan};  // reference voltage
+    double u_ref_angle{nan};  // reference voltage
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -117,12 +117,12 @@ struct SourceUpdate {
 };
 
 struct ShuntUpdate {
-    ID id;  // ID of the object
-    IntS status;  // whether the appliance is connected
-    double g1;  // positive sequence admittance
-    double b1;  // positive sequence admittance
-    double g0;  // zero sequence admittance
-    double b0;  // zero sequence admittance
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // whether the appliance is connected
+    double g1{nan};  // positive sequence admittance
+    double b1{nan};  // positive sequence admittance
+    double g0{nan};  // zero sequence admittance
+    double b0{nan};  // zero sequence admittance
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -137,10 +137,10 @@ template <symmetry_tag sym_type>
 struct VoltageSensorUpdate {
     using sym = sym_type;
 
-    ID id;  // ID of the object
-    double u_sigma;  // sigma of error margin of voltage measurement
-    RealValue<sym> u_measured;  // measured voltage magnitude and angle
-    RealValue<sym> u_angle_measured;  // measured voltage magnitude and angle
+    ID id{na_IntID};  // ID of the object
+    double u_sigma{nan};  // sigma of error margin of voltage measurement
+    RealValue<sym> u_measured{nan};  // measured voltage magnitude and angle
+    RealValue<sym> u_angle_measured{nan};  // measured voltage magnitude and angle
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -154,12 +154,12 @@ template <symmetry_tag sym_type>
 struct PowerSensorUpdate {
     using sym = sym_type;
 
-    ID id;  // ID of the object
-    double power_sigma;  // sigma of error margin of power measurement
-    RealValue<sym> p_measured;  // measured active/reactive power
-    RealValue<sym> q_measured;  // measured active/reactive power
-    RealValue<sym> p_sigma;  // sigma of error margin of active/reactive power measurement
-    RealValue<sym> q_sigma;  // sigma of error margin of active/reactive power measurement
+    ID id{na_IntID};  // ID of the object
+    double power_sigma{nan};  // sigma of error margin of power measurement
+    RealValue<sym> p_measured{nan};  // measured active/reactive power
+    RealValue<sym> q_measured{nan};  // measured active/reactive power
+    RealValue<sym> p_sigma{nan};  // sigma of error margin of active/reactive power measurement
+    RealValue<sym> q_sigma{nan};  // sigma of error margin of active/reactive power measurement
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -170,13 +170,13 @@ using SymPowerSensorUpdate = PowerSensorUpdate<symmetric_t>;
 using AsymPowerSensorUpdate = PowerSensorUpdate<asymmetric_t>;
 
 struct FaultUpdate {
-    ID id;  // ID of the object
-    IntS status;  // whether the fault is connected
-    FaultType fault_type;  // type of the fault
-    FaultPhase fault_phase;  // phase(s) of the fault
-    ID fault_object;  // ID of the faulted object
-    double r_f;  // short circuit impedance
-    double x_f;  // short circuit impedance
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // whether the fault is connected
+    FaultType fault_type{static_cast<FaultType>(na_IntS)};  // type of the fault
+    FaultPhase fault_phase{static_cast<FaultPhase>(na_IntS)};  // phase(s) of the fault
+    ID fault_object{na_IntID};  // ID of the faulted object
+    double r_f{nan};  // short circuit impedance
+    double x_f{nan};  // short circuit impedance
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -184,8 +184,8 @@ struct FaultUpdate {
 };
 
 struct RegulatorUpdate {
-    ID id;  // ID of the object
-    IntS status;  // regulator enables
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // regulator enables
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
@@ -193,12 +193,12 @@ struct RegulatorUpdate {
 };
 
 struct TransformerTapRegulatorUpdate {
-    ID id;  // ID of the object
-    IntS status;  // regulator enables
-    double u_set;  // voltage setpoint
-    double u_band;  // voltage bandwidth
-    double line_drop_compensation_r;  // line drop compensation resistance
-    double line_drop_compensation_x;  // line drop compensation reactance
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // regulator enables
+    double u_set{nan};  // voltage setpoint
+    double u_band{nan};  // voltage bandwidth
+    double line_drop_compensation_r{nan};  // line drop compensation resistance
+    double line_drop_compensation_x{nan};  // line drop compensation reactance
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
