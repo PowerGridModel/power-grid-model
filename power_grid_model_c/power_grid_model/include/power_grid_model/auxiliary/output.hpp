@@ -158,8 +158,8 @@ struct FaultOutput {
 struct FaultShortCircuitOutput {
     ID id{ na_IntID };  // ID of the object
     IntS energized{ na_IntS };  // whether the object is energized
-    RealValue<asymmetric_t> i_f{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // three phase short circuit current magnitude
-    RealValue<asymmetric_t> i_f_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // three phase short circuit current angle
+    RealValue<asymmetric_t> i_f{ nan };  // three phase short circuit current magnitude
+    RealValue<asymmetric_t> i_f_angle{ nan };  // three phase short circuit current angle
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -169,9 +169,9 @@ struct FaultShortCircuitOutput {
 struct NodeShortCircuitOutput {
     ID id{ na_IntID };  // ID of the object
     IntS energized{ na_IntS };  // whether the object is energized
-    RealValue<asymmetric_t> u_pu{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<asymmetric_t> u{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase line-to-ground short circuit voltage magnitude and angle
-    RealValue<asymmetric_t> u_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<asymmetric_t> u_pu{ nan };  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<asymmetric_t> u{ nan };  // initial three phase line-to-ground short circuit voltage magnitude and angle
+    RealValue<asymmetric_t> u_angle{ nan };  // initial three phase line-to-ground short circuit voltage magnitude and angle
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -181,10 +181,10 @@ struct NodeShortCircuitOutput {
 struct BranchShortCircuitOutput {
     ID id{ na_IntID };  // ID of the object
     IntS energized{ na_IntS };  // whether the object is energized
-    RealValue<asymmetric_t> i_from{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at from-side
-    RealValue<asymmetric_t> i_from_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at from-side
-    RealValue<asymmetric_t> i_to{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at to-side
-    RealValue<asymmetric_t> i_to_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at to-side
+    RealValue<asymmetric_t> i_from{ nan };  // initial three phase short circuit current flow at from-side
+    RealValue<asymmetric_t> i_from_angle{ nan };  // initial three phase short circuit current flow at from-side
+    RealValue<asymmetric_t> i_to{ nan };  // initial three phase short circuit current flow at to-side
+    RealValue<asymmetric_t> i_to_angle{ nan };  // initial three phase short circuit current flow at to-side
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -194,12 +194,12 @@ struct BranchShortCircuitOutput {
 struct Branch3ShortCircuitOutput {
     ID id{ na_IntID };  // ID of the object
     IntS energized{ na_IntS };  // whether the object is energized
-    RealValue<asymmetric_t> i_1{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at side 1
-    RealValue<asymmetric_t> i_1_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at side 1
-    RealValue<asymmetric_t> i_2{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at side 2
-    RealValue<asymmetric_t> i_2_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at side 2
-    RealValue<asymmetric_t> i_3{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at side 3
-    RealValue<asymmetric_t> i_3_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow at side 3
+    RealValue<asymmetric_t> i_1{ nan };  // initial three phase short circuit current flow at side 1
+    RealValue<asymmetric_t> i_1_angle{ nan };  // initial three phase short circuit current flow at side 1
+    RealValue<asymmetric_t> i_2{ nan };  // initial three phase short circuit current flow at side 2
+    RealValue<asymmetric_t> i_2_angle{ nan };  // initial three phase short circuit current flow at side 2
+    RealValue<asymmetric_t> i_3{ nan };  // initial three phase short circuit current flow at side 3
+    RealValue<asymmetric_t> i_3_angle{ nan };  // initial three phase short circuit current flow at side 3
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
@@ -209,8 +209,8 @@ struct Branch3ShortCircuitOutput {
 struct ApplianceShortCircuitOutput {
     ID id{ na_IntID };  // ID of the object
     IntS energized{ na_IntS };  // whether the object is energized
-    RealValue<asymmetric_t> i{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow of the appliance
-    RealValue<asymmetric_t> i_angle{ static_cast<RealValue<asymmetric_t>>(na_IntS) };  // initial three phase short circuit current flow of the appliance
+    RealValue<asymmetric_t> i{ nan };  // initial three phase short circuit current flow of the appliance
+    RealValue<asymmetric_t> i_angle{ nan };  // initial three phase short circuit current flow of the appliance
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }

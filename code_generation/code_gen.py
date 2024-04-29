@@ -19,7 +19,7 @@ JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 def _data_type_nan(data_type: str):
     if data_type == "ID":
         return "na_IntID"
-    elif data_type == "double" or data_type == "RealValue<sym>":
+    elif data_type == "double" or "RealValue" in data_type:
         return "nan"
     elif data_type == "IntS":
         return "na_IntS"
