@@ -54,7 +54,7 @@ class Appliance : public Base {
         return output;
     }
     ApplianceShortCircuitOutput get_null_sc_output() const {
-        ApplianceShortCircuitOutput output{};
+        ApplianceShortCircuitOutput output{.i = 0.0, .i_angle = 0.0};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

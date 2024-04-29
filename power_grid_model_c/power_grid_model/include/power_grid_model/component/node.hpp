@@ -63,7 +63,7 @@ class Node final : public Base {
     }
 
     NodeShortCircuitOutput get_null_sc_output() const {
-        NodeShortCircuitOutput output{};
+        NodeShortCircuitOutput output{.u_pu = 0.0, .u = 0.0, .u_angle = 0.0};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

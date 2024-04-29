@@ -150,7 +150,7 @@ class Branch : public Base {
     }
 
     BranchShortCircuitOutput get_null_sc_output() const {
-        BranchShortCircuitOutput output{};
+        BranchShortCircuitOutput output{.i_from = 0.0, .i_to = 0.0, .i_from_angle = 0.0, .i_to_angle = 0.0};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
