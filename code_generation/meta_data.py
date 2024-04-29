@@ -15,6 +15,7 @@ class Attribute(DataClassJsonMixin):
     data_type: str
     names: Union[str, List[str]]
     description: str
+    nan_value: Optional[str] = None
 
 
 @dataclass

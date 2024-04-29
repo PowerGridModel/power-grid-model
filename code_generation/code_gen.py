@@ -16,6 +16,17 @@ OUTPUT_PATH = Path(__file__).parents[1]
 JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
 
+def _data_type_nan(data_type: str):
+    if data_type == "ID":
+        return "na_IntID"
+    elif data_type == "double" or data_type == "RealValue<sym>":
+        return "nan"
+    elif data_type == "IntS":
+        return "na_IntS"
+    else:
+        return f"static_cast<{data_type}>(na_IntS)"
+
+
 class CodeGenerator:
     all_classes: Dict[str, AttributeClass]
     base_output_path: Path
@@ -54,6 +65,7 @@ class CodeGenerator:
                 attribute_class.specification_names = [attribute_class.name]
             new_attribute_list = []
             for attribute in attribute_class.attributes:
+                attribute.nan_value = _data_type_nan(attribute.data_type)
                 if isinstance(attribute.names, str):
                     new_attribute_list.append(attribute)
                 else:
