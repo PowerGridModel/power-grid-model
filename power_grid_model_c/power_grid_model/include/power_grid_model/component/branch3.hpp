@@ -157,26 +157,28 @@ class Branch3 : public Base {
     }
 
     template <symmetry_tag sym> Branch3Output<sym> get_null_output() const {
-        Branch3Output<sym> output{.p_1 = {},
-                                  .q_1 = {},
-                                  .i_1 = {},
-                                  .s_1 = {},
-                                  .p_2 = {},
-                                  .q_2 = {},
-                                  .i_2 = {},
-                                  .s_2 = {},
-                                  .p_3 = {},
-                                  .q_3 = {},
-                                  .i_3 = {},
-                                  .s_3 = {},
-                                  .loading = {}};
+        Branch3Output<sym> output{
+            .loading = {},
+            .p_1 = {},
+            .q_1 = {},
+            .i_1 = {},
+            .s_1 = {},
+            .p_2 = {},
+            .q_2 = {},
+            .i_2 = {},
+            .s_2 = {},
+            .p_3 = {},
+            .q_3 = {},
+            .i_3 = {},
+            .s_3 = {},
+        };
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     Branch3ShortCircuitOutput get_null_sc_output() const {
         Branch3ShortCircuitOutput output{
-            .i_1 = {}, .i_2 = {}, .i_3 = {}, .i_1_angle = {}, .i_2_angle = {}, .i_3_angle = {}};
+            .i_1 = {}, .i_1_angle = {}, .i_2 = {}, .i_2_angle = {}, .i_3 = {}, .i_3_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
