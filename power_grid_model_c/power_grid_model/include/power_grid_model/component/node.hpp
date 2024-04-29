@@ -57,7 +57,7 @@ class Node final : public Base {
         return get_sc_output(uabc_pu);
     }
     template <symmetry_tag sym> NodeOutput<sym> get_null_output() const {
-        NodeOutput<sym> output{};
+        NodeOutput<sym> output{.u = 0.0, .u_pu = 0.0, .u_angle = 0.0, .p = 0.0, .q = 0.0};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

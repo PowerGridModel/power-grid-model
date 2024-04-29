@@ -144,7 +144,8 @@ class Branch : public Base {
     }
 
     template <symmetry_tag sym> BranchOutput<sym> get_null_output() const {
-        BranchOutput<sym> output{};
+        BranchOutput<sym> output{.p_from = 0.0, .q_from = 0.0, .i_from = 0.0, .s_from = 0.0,
+                                 .p_to = 0.0, .q_to = 0.0, .i_to = 0.0, .s_to = 0.0, .loading = 0.0};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
