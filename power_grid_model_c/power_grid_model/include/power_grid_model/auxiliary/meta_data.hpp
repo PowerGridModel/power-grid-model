@@ -27,10 +27,6 @@ template <class StructType, class ValueType> struct trait_pointer_to_member<Valu
 //    which is a std::array
 // the specializations are automatically generated
 template <class T> struct get_attributes_list;
-// primary template functor classes to generate nan value for a component
-// the specializations will contain operator() to return a component instance with NaNs
-// the specializations are automatically generated
-template <class T> struct get_component_nan;
 
 // ctype string
 template <class T> struct ctype_t;

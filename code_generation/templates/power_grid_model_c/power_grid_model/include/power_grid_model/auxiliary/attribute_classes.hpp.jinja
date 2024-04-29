@@ -26,7 +26,7 @@ struct {{ attribute_class.name }} {
 {%- endif -%}
 
 {%- for attribute in attribute_class.full_attributes %}
-    {{ attribute.data_type }} {{ attribute.names }};
+    {{ attribute.data_type }} {{ attribute.names }}{ {{ attribute.nan_value }} };
     {%- if attribute.description %}  // {{ attribute.description }}{%- endif %}
 {%- endfor %}
 {% for base_class in attribute_class.base_attributes %}
