@@ -291,17 +291,34 @@ struct TransformerRanker {
     }
 };
 
-constexpr IntS tap_one_step_up(transformer_c auto const& transformer) {
+constexpr IntS one_step_tap_up(transformer_c auto const& transformer) {
     IntS const tap_pos = transformer.tap_pos();
     IntS const tap_max = transformer.tap_max();
-    return tap_pos < tap_max ? tap_pos + 1 : tap_max;
-}
-
-constexpr IntS tap_one_step_down(transformer_c auto const& transformer) {
-    IntS const tap_pos = transformer.tap_pos();
     IntS const tap_min = transformer.tap_min();
-    return tap_pos > tap_min ? tap_pos - 1 : tap_min;
+
+    if (tap_pos == tap_max) {
+        return tap_max;
+    }
+
+    assert((tap_min <=> tap_max) == (tap_pos <=> tap_max));
+
+    return tap_min < tap_max ? tap_pos + IntS{1} : tap_pos - IntS{1};
 }
+constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
+    IntS const tap_pos = transformer.tap_pos();
+    IntS const tap_max = transformer.tap_max();
+    IntS const tap_min = transformer.tap_min();
+
+    if (tap_pos == tap_max) {
+        return tap_max;
+    }
+
+    assert((tap_min <=> tap_max) == (tap_pos <=> tap_max));
+
+    return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
+}
+constexpr IntS one_step_voltage_up(transformer_c auto const& transformer) { return one_step_tap_down(transformer); }
+constexpr IntS one_step_voltage_down(transformer_c auto const& transformer) { return one_step_tap_up(transformer); }
 
 template <transformer_c... TransformerTypes> class TransformerWrapper {
   public:
@@ -504,6 +521,32 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
                                regulator.regulator.get().control_side());
 }
 
+struct VoltageBand {
+    double u_set{};
+    double u_band{};
+
+    friend auto operator<=>(double voltage, VoltageBand const& band) {
+        if (voltage > band.u_set + 0.5 * band.u_band) {
+            return std::weak_ordering::greater;
+        }
+        if (voltage < band.u_set - 0.5 * band.u_band) {
+            return std::weak_ordering::less;
+        }
+        return std::weak_ordering::equivalent;
+    }
+};
+
+template <symmetry_tag sym> struct NodeState {
+    ComplexValue<sym> u;
+    ComplexValue<sym> i;
+
+    friend auto operator<=>(NodeState<sym> state, TransformerTapRegulatorCalcParam const& param) {
+        auto const u_compensated = state.u + param.z_compensation * state.i;
+        auto const v_compensated = mean_val(cabs(u_compensated)); // TODO(mgovers): handle asym correctly
+        return v_compensated <=> VoltageBand{.u_set = param.u_set, .u_band = param.u_band};
+    }
+};
+
 template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
 inline void create_tap_regulator_output(State const& state, std::vector<MathOutputType>& math_output) {
     for (Idx const group : boost::counting_range(Idx{0}, static_cast<Idx>(math_output.size()))) {
@@ -641,24 +684,24 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
+            using sym = typename ResultType::value_type::sym;
 
-            auto const param = regulator.regulator.get().template calc_param<typename ResultType::value_type::sym>();
+            auto const param = regulator.regulator.get().template calc_param<sym>();
+            auto const node_state =
+                NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, math_output),
+                               .i = i_pu_controlled_node<TransformerType>(regulator, state, math_output)};
 
-            auto const& u_node = u_pu_controlled_node<TransformerType>(regulator, state, math_output);
-            auto const& i_node = i_pu_controlled_node<TransformerType>(regulator, state, math_output);
-            auto const u_measured = u_node + param.z_compensation * i_node;
-
-            auto const v_measured = mean_val(cabs(u_measured)); // TODO(mgovers): handle asym correctly
-
-            auto new_tap_pos = [&transformer, &v_measured, &param] {
-                if (v_measured > param.u_set + 0.5 * param.u_band) {
-                    return tap_one_step_up(transformer);
+            auto const cmp = node_state <=> param;
+            auto new_tap_pos = [&transformer, &cmp] {
+                if (cmp > 0) {
+                    return one_step_voltage_down(transformer);
                 }
-                if (v_measured < param.u_set - 0.5 * param.u_band) {
-                    return tap_one_step_down(transformer);
+                if (cmp < 0) {
+                    return one_step_voltage_up(transformer);
                 }
                 return transformer.tap_pos();
             }();
+
             if (new_tap_pos != transformer.tap_pos()) {
                 add_tap_pos_update(new_tap_pos, transformer, update_data);
                 tap_changed = true;
@@ -688,21 +731,27 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto initialize(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
-        constexpr auto get_max = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_max(); };
-        constexpr auto get_min = [](transformer_c auto const& transformer) -> IntS { return transformer.tap_min(); };
+        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+            // min voltage => max tap pos
+            return transformer.tap_max();
+        };
+        constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+            // max voltage => min tap pos
+            return transformer.tap_min();
+        };
 
         switch (strategy_) {
         case OptimizerStrategy::any:
             break;
-        case OptimizerStrategy::global_minimum:
-            [[fallthrough]];
-        case OptimizerStrategy::local_minimum:
-            adjust_voltage(get_min, regulator_order);
-            break;
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            adjust_voltage(get_max, regulator_order);
+            adjust_voltage(min_voltage_pos, regulator_order);
+            break;
+        case OptimizerStrategy::global_minimum:
+            [[fallthrough]];
+        case OptimizerStrategy::local_minimum:
+            adjust_voltage(max_voltage_pos, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
@@ -712,25 +761,25 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void step_all(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
-        constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return tap_one_step_down(transformer);
-        };
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return tap_one_step_up(transformer);
+            return one_step_voltage_up(transformer);
+        };
+        constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
+            return one_step_voltage_down(transformer);
         };
 
         switch (strategy_) {
         case OptimizerStrategy::any:
             break;
-        case OptimizerStrategy::global_minimum:
-            [[fallthrough]];
-        case OptimizerStrategy::local_minimum:
-            adjust_voltage(one_step_down, regulator_order);
-            break;
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
             adjust_voltage(one_step_up, regulator_order);
+            break;
+        case OptimizerStrategy::global_minimum:
+            [[fallthrough]];
+        case OptimizerStrategy::local_minimum:
+            adjust_voltage(one_step_down, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
