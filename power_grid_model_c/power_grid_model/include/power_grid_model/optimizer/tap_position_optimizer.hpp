@@ -40,88 +40,6 @@ using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr Idx2D unregulated_idx = {-1, -1};
 
-template <typename ComponentType, typename ComponentContainer>
-    requires main_core::component_container_c<ComponentContainer, ComponentType>
-constexpr auto is_in_group(Idx2D const& index) {
-    constexpr auto group_idx = ComponentContainer::template get_type_idx<ComponentType>();
-    return index.group == group_idx;
-}
-
-template <typename ComponentType, typename ComponentContainer>
-    requires main_core::component_container_c<ComponentContainer, ComponentType>
-constexpr auto group_count(std::vector<Idx2D> const& indices) {
-    return std::ranges::count_if(indices, is_in_group<ComponentType>);
-}
-
-template <std::derived_from<Branch> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    return main_core::get_component_sequence<Branch>(state, id_or_index);
-}
-
-template <std::derived_from<Branch3> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    return main_core::get_component_sequence<Branch3>(state, id_or_index);
-}
-
-template <std::derived_from<Regulator> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    return main_core::get_component_sequence<Regulator>(state, id_or_index);
-}
-
-template <std::derived_from<Branch> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
-    return state.comp_topo->branch_node_idx[topology_sequence_idx];
-}
-
-template <std::derived_from<Branch3> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_branch_nodes(State const& state, Idx topology_sequence_idx) {
-    return state.comp_topo->branch3_node_idx[topology_sequence_idx];
-}
-
-template <transformer_c ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType> &&
-             requires(State const& state, Idx const i) {
-                 { get_branch_nodes<ComponentType>(state, i)[i] } -> std::convertible_to<Idx>;
-             }
-inline auto get_topo_node(State const& state, Idx topology_index, ControlSide control_side) {
-    auto const& nodes = get_branch_nodes<ComponentType>(state, topology_index);
-    auto const control_side_idx = static_cast<Idx>(control_side);
-
-    assert(0 <= control_side_idx);
-    assert(control_side_idx < static_cast<Idx>(nodes.size()));
-
-    return nodes[control_side_idx];
-}
-
-template <std::derived_from<Node> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
-    return state.topo_comp_coup->node[topology_sequence_idx];
-}
-
-template <std::derived_from<Branch> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
-    return state.topo_comp_coup->branch[topology_sequence_idx];
-}
-
-template <std::derived_from<Branch3> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
-    return state.topo_comp_coup->branch3[topology_sequence_idx];
-}
-
-template <std::derived_from<Regulator> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_math_id(State const& state, Idx topology_sequence_idx) {
-    return state.topo_comp_coup->regulator[topology_sequence_idx];
-}
-
 struct TrafoGraphVertex {
     bool is_source{};
 };
@@ -435,6 +353,19 @@ template <transformer_c... TransformerTypes> struct TapRegulatorRef {
     TransformerWrapper<TransformerTypes...> transformer;
 };
 
+template <typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
+TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
+    auto const regulators = get_component_citer<TransformerTapRegulator>(state);
+
+    auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
+        return regulator.regulated_object() == regulated_object;
+    });
+    assert(result_it != regulators.end());
+
+    return *result_it;
+}
+
 template <typename... Ts> struct transformer_types_s;
 template <> struct transformer_types_s<std::tuple<>> {
     using type = std::tuple<>;
@@ -454,30 +385,18 @@ template <typename... Ts> struct transformer_types_s<std::tuple<std::tuple<Ts...
 
 template <typename... Ts> using transformer_types_t = typename transformer_types_s<std::tuple<Ts...>>::type;
 
-template <typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
-TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
-    auto const regulators = get_component_citer<TransformerTapRegulator>(state);
-
-    auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
-        return regulator.regulated_object() == regulated_object;
-    });
-    assert(result_it != regulators.end());
-
-    return *result_it;
-}
-
 template <transformer_c... TransformerTypes, typename State>
     requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state, Idx2D const& transformer_index) {
-    using ComponentContainer = typename State::ComponentContainer;
     using ResultType = TapRegulatorRef<TransformerTypes...>;
     using IsType = bool (*)(Idx2D const&);
     using TransformerMapping = ResultType (*)(State const&, Idx2D const&);
 
     constexpr auto n_types = sizeof...(TransformerTypes);
-
-    constexpr auto is_type = std::array<IsType, n_types>{is_in_group<TransformerTypes, ComponentContainer>...};
+    constexpr auto is_type = std::array<IsType, n_types>{[](Idx2D const& index) {
+        constexpr auto group_idx = State::ComponentContainer::template get_type_idx<TransformerTypes>();
+        return index.group == group_idx;
+    }...};
     constexpr auto transformer_mappings =
         std::array<TransformerMapping, n_types>{[](State const& state_, Idx2D const& transformer_index_) {
             auto const& transformer = get_component<TransformerTypes>(state_, transformer_index_);
