@@ -317,8 +317,14 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
 
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
-constexpr IntS one_step_voltage_up(transformer_c auto const& transformer) { return one_step_tap_down(transformer); }
-constexpr IntS one_step_voltage_down(transformer_c auto const& transformer) { return one_step_tap_up(transformer); }
+constexpr IntS one_step_voltage_up(transformer_c auto const& transformer) {
+    // higher voltage at control side => lower tap pos
+    return one_step_tap_down(transformer);
+}
+constexpr IntS one_step_voltage_down(transformer_c auto const& transformer) {
+    // lower voltage at control side => higher tap pos
+    return one_step_tap_up(transformer);
+}
 
 template <transformer_c... TransformerTypes> class TransformerWrapper {
   public:
@@ -622,19 +628,17 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                   CalculationMethod method) const -> ResultType {
         initialize(regulator_order);
 
-        if (auto result = try_calculation_with_regulation(state, regulator_order, method);
-            strategy_ == OptimizerStrategy::any) {
+        if (auto result = iterate(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
             return result;
         }
 
         // refine solution
         step_all_back(regulator_order);
-        return try_calculation_with_regulation(state, regulator_order, method);
+        return iterate(state, regulator_order, method);
     }
 
-    auto try_calculation_with_regulation(State const& state,
-                                         std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                                         CalculationMethod method) const -> ResultType {
+    auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                 CalculationMethod method) const -> ResultType {
         auto result = calculate_with_retry(state, method);
 
         bool tap_changed = true;
@@ -725,11 +729,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // max voltage => min tap pos
+            // max voltage at control side => min tap pos
             return transformer.tap_min();
         };
         constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // min voltage => max tap pos
+            // min voltage at control side => max tap pos
             return transformer.tap_max();
         };
 
