@@ -603,10 +603,26 @@ TEST_CASE("Test Tap position optimizer") {
         auto& transformer_b = main_core::get_component<MockTransformer>(state, 2);
 
         main_core::emplace_component<TransformerTapRegulator>(
-            state, 3, TransformerTapRegulatorInput{.id = 3, .regulated_object = 1, .control_side = ControlSide::side_1},
+            state, 3,
+            TransformerTapRegulatorInput{.id = 3,
+                                         .regulated_object = 1,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_1,
+                                         .u_set = nan,
+                                         .u_band = nan,
+                                         .line_drop_compensation_r = nan,
+                                         .line_drop_compensation_x = nan},
             transformer_a.math_model_type(), 1.0);
         main_core::emplace_component<TransformerTapRegulator>(
-            state, 4, TransformerTapRegulatorInput{.id = 4, .regulated_object = 2, .control_side = ControlSide::side_2},
+            state, 4,
+            TransformerTapRegulatorInput{.id = 4,
+                                         .regulated_object = 2,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_2,
+                                         .u_set = nan,
+                                         .u_band = nan,
+                                         .line_drop_compensation_r = nan,
+                                         .line_drop_compensation_x = nan},
             transformer_b.math_model_type(), 1.0);
 
         auto math_topo = MathModelTopology{};
