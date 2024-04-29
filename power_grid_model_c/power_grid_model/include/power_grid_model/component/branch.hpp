@@ -144,14 +144,14 @@ class Branch : public Base {
     }
 
     template <symmetry_tag sym> BranchOutput<sym> get_null_output() const {
-        BranchOutput<sym> output{.p_from = 0.0, .q_from = 0.0, .i_from = 0.0, .s_from = 0.0,
-                                 .p_to = 0.0, .q_to = 0.0, .i_to = 0.0, .s_to = 0.0, .loading = 0.0};
+        BranchOutput<sym> output{.p_from = {}, .q_from = {}, .i_from = {}, .s_from = {},
+                                 .p_to = {}, .q_to = {}, .i_to = {}, .s_to = {}, .loading = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     BranchShortCircuitOutput get_null_sc_output() const {
-        BranchShortCircuitOutput output{.i_from = 0.0, .i_to = 0.0, .i_from_angle = 0.0, .i_to_angle = 0.0};
+        BranchShortCircuitOutput output{.i_from = {}, .i_to = {}, .i_from_angle = {}, .i_to_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

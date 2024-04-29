@@ -67,7 +67,7 @@ class Fault final : public Base {
     }
 
     FaultShortCircuitOutput get_null_sc_output() const {
-        FaultShortCircuitOutput output{.i_f = 0.0, .i_f_angle = 0.0};
+        FaultShortCircuitOutput output{.i_f = {}, .i_f_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

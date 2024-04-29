@@ -57,13 +57,13 @@ class Node final : public Base {
         return get_sc_output(uabc_pu);
     }
     template <symmetry_tag sym> NodeOutput<sym> get_null_output() const {
-        NodeOutput<sym> output{.u = 0.0, .u_pu = 0.0, .u_angle = 0.0, .p = 0.0, .q = 0.0};
+        NodeOutput<sym> output{.u = {}, .u_pu = {}, .u_angle = {}, .p = {}, .q = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     NodeShortCircuitOutput get_null_sc_output() const {
-        NodeShortCircuitOutput output{.u_pu = 0.0, .u = 0.0, .u_angle = 0.0};
+        NodeShortCircuitOutput output{.u_pu = {}, .u = {}, .u_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

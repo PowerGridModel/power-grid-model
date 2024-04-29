@@ -49,12 +49,12 @@ class Appliance : public Base {
 
     // empty output
     template <symmetry_tag sym> ApplianceOutput<sym> get_null_output() const {
-        ApplianceOutput<sym> output{.p = 0.0, .q = 0.0, .i = 0.0, .s = 0.0, .pf = 0.0};
+        ApplianceOutput<sym> output{.p = {}, .q = {}, .i = {}, .s = {}, .pf = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
     ApplianceShortCircuitOutput get_null_sc_output() const {
-        ApplianceShortCircuitOutput output{.i = 0.0, .i_angle = 0.0};
+        ApplianceShortCircuitOutput output{.i = {}, .i_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
