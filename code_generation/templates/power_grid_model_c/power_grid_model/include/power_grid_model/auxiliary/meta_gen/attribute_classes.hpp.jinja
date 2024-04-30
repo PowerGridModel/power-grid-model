@@ -41,29 +41,6 @@ struct get_attributes_list<{{ attribute_class.name }}> {
 
 {% endfor %}
 
-// template specialization functors to get nan
-
-{% for attribute_class in classes -%}
-
-{%- if attribute_class.is_template -%}
-template <symmetry_tag sym_type>
-struct get_component_nan<{{ attribute_class.name }}<sym_type>> {
-    using sym = sym_type;
-{% else -%}
-template<>
-struct get_component_nan<{{ attribute_class.name }}> {
-{%- endif %}
-    {{ attribute_class.full_name }} operator() () const {
-        {{ attribute_class.full_name }} comp;
-        // all attributes including base class
-        {% for attribute in attribute_class.full_attributes %}
-        set_nan(comp.{{ attribute.names }});
-        {%- endfor %}
-        return comp;
-    }
-};
-
-{% endfor %}
 
 } // namespace power_grid_model::meta_data
 

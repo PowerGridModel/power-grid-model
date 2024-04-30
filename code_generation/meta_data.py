@@ -5,7 +5,7 @@
 # define dataclass for meta data
 
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -15,6 +15,7 @@ class Attribute(DataClassJsonMixin):
     data_type: str
     names: Union[str, List[str]]
     description: str
+    nan_value: Optional[str] = None
 
 
 @dataclass
@@ -25,6 +26,8 @@ class AttributeClass(DataClassJsonMixin):
     base: Optional[str] = None
     is_template: bool = False
     full_name: Optional[str] = None
+    specification_names: Optional[List[str]] = None
+    base_attributes: Optional[Dict[str, List[Attribute]]] = None
 
 
 @dataclass

@@ -61,9 +61,8 @@ template <class StructType, auto component_name_getter> struct get_meta_componen
         .attributes = get_attributes_list<StructType>::value,
         .set_nan =
             [](RawDataPtr buffer_ptr, Idx pos, Idx size) {
-                static StructType const nan_value = get_component_nan<StructType>{}();
                 auto ptr = reinterpret_cast<StructType*>(buffer_ptr);
-                std::fill(ptr + pos, ptr + pos + size, nan_value);
+                std::fill(ptr + pos, ptr + pos + size, StructType{});
             },
         .create_buffer = [](Idx size) -> RawDataPtr { return new StructType[size]; },
         .destroy_buffer = [](RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); },
