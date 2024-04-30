@@ -639,7 +639,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                  CalculationMethod method) const -> ResultType {
-        auto result = calculate_with_retry(state, method);
+        auto result = calculate_(state, method);
 
         bool tap_changed = true;
         while (tap_changed) {
@@ -663,16 +663,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         add_tap_regulator_output(state, regulator_order, result);
 
         return result;
-    }
-
-    auto calculate_with_retry(State const& state, CalculationMethod method) const {
-        try {
-            return calculate_(state, method);
-        } catch (SparseMatrixError const&) {
-            return calculate_(state, CalculationMethod::linear);
-        } catch (IterationDiverge const&) {
-            return calculate_(state, CalculationMethod::linear);
-        }
     }
 
     bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& math_output,
