@@ -779,7 +779,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             adjust_voltage(one_step_down, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
+            throw MissingCaseForEnumError{"TapPositionOptimizer::step_all_back"s, strategy_};
         }
     }
 
