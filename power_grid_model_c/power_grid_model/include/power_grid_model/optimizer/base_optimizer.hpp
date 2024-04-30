@@ -12,15 +12,16 @@ namespace power_grid_model::optimizer {
 
 namespace detail {
 template <typename StateCalculator, typename State>
-concept state_calculator_c = main_core::main_model_state_c<State> &&
-                             std::invocable<std::remove_cvref_t<StateCalculator>, std::remove_cvref_t<State> const&>;
+concept state_calculator_c =
+    main_core::main_model_state_c<State> &&
+    std::invocable<std::remove_cvref_t<StateCalculator>, std::remove_cvref_t<State> const&, CalculationMethod>;
 
 template <typename StateCalculator, typename State_>
     requires state_calculator_c<StateCalculator, State_>
 struct state_calculator_type {
     using Calculator = StateCalculator;
     using State = State_;
-    using result_type = std::invoke_result_t<std::remove_cvref_t<StateCalculator>, State_ const&>;
+    using result_type = std::invoke_result_t<std::remove_cvref_t<StateCalculator>, State_ const&, CalculationMethod>;
 };
 
 template <typename StateCalculator, typename State_>
@@ -33,8 +34,7 @@ concept steady_state_calculator_c =
                  std::vector<typename detail::state_calculator_result_t<StateCalculator, State>::value_type>>;
 
 template <typename StateCalculator, typename State_>
-    requires main_core::main_model_state_c<State_> &&
-             std::invocable<std::remove_cvref_t<StateCalculator>, State_ const&>
+    requires state_calculator_c<StateCalculator, State_>
 class BaseOptimizer {
   public:
     using Calculator = StateCalculator;
@@ -48,7 +48,7 @@ class BaseOptimizer {
     BaseOptimizer& operator=(BaseOptimizer&&) noexcept = default;
     virtual ~BaseOptimizer() = default;
 
-    virtual auto optimize(State const& state) -> ResultType = 0;
+    virtual auto optimize(State const& state, CalculationMethod method) -> ResultType = 0;
 
     template <std::derived_from<BaseOptimizer> Optimizer, typename... Args>
         requires std::constructible_from<Optimizer, Args...>
@@ -61,11 +61,11 @@ class BaseOptimizer {
 template <typename Optimizer>
 concept optimizer_c =
     detail::state_calculator_c<typename Optimizer::Calculator, typename Optimizer::State> &&
-    requires(Optimizer optimizer, typename Optimizer::State& state) {
+    requires(Optimizer optimizer, typename Optimizer::State const& state, CalculationMethod method) {
         {
-            optimizer.optimize(state)
-            } -> std::same_as<std::invoke_result_t<typename Optimizer::Calculator,
-                                                   std::add_lvalue_reference_t<typename Optimizer::State>>>;
+            optimizer.optimize(state, method)
+            } -> std::same_as<
+                detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>;
     };
 
 template <typename StateCalculator, typename State_>
@@ -78,7 +78,7 @@ class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
 
     NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
-    auto optimize(State const& state) -> ResultType final { return func_(state); }
+    auto optimize(State const& state, CalculationMethod method) -> ResultType final { return func_(state, method); }
 
   private:
     Calculator func_;

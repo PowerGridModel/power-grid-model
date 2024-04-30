@@ -14,7 +14,7 @@
 namespace power_grid_model::optimizer {
 
 template <typename State, typename UpdateType, typename StateCalculator, typename StateUpdater>
-    requires main_core::main_model_state_c<State> && std::invocable<std::remove_cvref_t<StateCalculator>, State&> &&
+    requires detail::state_calculator_c<StateCalculator, State> &&
              std::invocable<std::remove_cvref_t<StateUpdater>, UpdateType>
 constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy strategy, StateCalculator calculator,
                              StateUpdater updater) {
@@ -27,7 +27,8 @@ constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy str
         return BaseOptimizer::template make_shared<NoOptimizer<StateCalculator, State>>(std::move(calculator));
     case automatic_tap_adjustment:
         if constexpr (detail::steady_state_calculator_c<StateCalculator, State> &&
-                      std::invocable<std::remove_cvref_t<StateUpdater>, ConstDataset const&>) {
+                      std::invocable<std::remove_cvref_t<StateUpdater>, ConstDataset const&> &&
+                      main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>) {
             return BaseOptimizer::template make_shared<TapPositionOptimizer<StateCalculator, StateUpdater, State>>(
                 std::move(calculator), std::move(updater), strategy);
         }

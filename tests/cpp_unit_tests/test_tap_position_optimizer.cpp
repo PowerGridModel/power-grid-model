@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "test_optimizer.hpp"
+
 #include <power_grid_model/main_core/input.hpp>
+#include <power_grid_model/main_core/update.hpp>
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
 
 #include <doctest/doctest.h>
@@ -10,11 +13,10 @@
 #include <algorithm>
 #include <ranges>
 
-namespace pgm_tap = power_grid_model::optimizer::tap_position_optimizer;
-namespace main_core = power_grid_model::main_core;
+TEST_SUITE_BEGIN("Automatic Tap Changer");
 
 namespace power_grid_model {
-
+namespace optimizer::tap_position_optimizer::test {
 namespace {
 using TestComponentContainer =
     Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, Regulator>, Line, Link, Node, Transformer,
@@ -134,11 +136,21 @@ TransformerTapRegulatorInput get_regulator(ID id, ID regulated_object, ControlSi
                                         .line_drop_compensation_r = nan,
                                         .line_drop_compensation_x = nan};
 }
+} // namespace
+} // namespace optimizer::tap_position_optimizer::test
 
+namespace {
+namespace pgm_tap = optimizer::tap_position_optimizer;
+namespace test = pgm_tap::test;
 } // namespace
 
-TEST_SUITE_BEGIN("Automatic Tap Changer");
 TEST_CASE("Test Transformer ranking") {
+    using test::get_line_input;
+    using test::get_regulator;
+    using test::get_transformer;
+    using test::get_transformer3w;
+    using test::TestState;
+
     // Minimum test grid
     TestState state;
     std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
@@ -251,7 +263,7 @@ TEST_CASE("Test Transformer ranking") {
 
         pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         REQUIRE(sortedTrafoList.size() == referenceList.size());
-        for (Idx idx = 0; idx < static_cast<Idx>(sortedTrafoList.size()); ++idx) {
+        for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
             CAPTURE(idx);
             CHECK(sortedTrafoList[idx] == referenceList[idx]);
         }
@@ -265,8 +277,478 @@ TEST_CASE("Test Transformer ranking") {
     }
 }
 
-TEST_CASE("Test Tap position optimizer" * doctest::skip(true)) {
-    // TODO: Implement unit tests for the tap position optimizer
+namespace optimizer::tap_position_optimizer::test {
+namespace {
+using power_grid_model::optimizer::test::ConstDatasetUpdate;
+using power_grid_model::optimizer::test::strategies;
+using power_grid_model::optimizer::test::strategies_and_methods;
+using power_grid_model::optimizer::test::StubTransformer;
+using power_grid_model::optimizer::test::StubTransformerInput;
+using power_grid_model::optimizer::test::StubTransformerUpdate;
+
+template <typename ContainerType>
+    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
+class MockMathOutput : public MathOutput<symmetric_t> {
+  public:
+    using type = math_output_t;
+    using sym = typename MathOutput<symmetric_t>::sym;
+
+    Idx call_index{-1};
+    CalculationMethod method;
+    std::optional<std::reference_wrapper<main_core::MainModelState<ContainerType> const>> state;
+    std::map<ID, IntS> state_tap_positions;
+    std::map<ID, IntS> output_tap_positions;
+
+    template <component_c... Ts>
+    MockMathOutput(Idx call_index_, CalculationMethod method_,
+                   std::reference_wrapper<main_core::MainModelState<ContainerType> const> state_)
+        : call_index{call_index_}, method{method_}, state{state_} {
+        add_tap_positions(state.value().get());
+    }
+
+  private:
+    void add_tap_positions(main_core::MainModelState<ContainerType> const& state) {
+        AddTapPositions<typename ContainerType::gettable_types>{}(state, state_tap_positions);
+    }
+
+    template <typename... T> struct AddTapPositions;
+    template <typename T> struct AddTapPositions<T> {
+        void operator()(main_core::MainModelState<ContainerType> const& state, std::map<ID, IntS>& target) {
+            if constexpr (transformer_c<T> && main_core::component_container_c<ContainerType, T>) {
+                for (auto const& component : state.components.template citer<T>()) {
+                    target[component.id()] = component.tap_pos();
+                }
+            }
+        }
+    };
+    template <typename... Ts> struct AddTapPositions<std::tuple<Ts...>> {
+        void operator()(main_core::MainModelState<ContainerType> const& state, std::map<ID, IntS>& target) {
+            (AddTapPositions<Ts>{}(state, target), ...);
+        }
+    };
+};
+
+template <typename ContainerType>
+    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
+inline void create_tap_regulator_output(main_core::MainModelState<ContainerType> const& /* state */,
+                                        std::vector<MockMathOutput<ContainerType>>& /* math_output */) {}
+
+template <typename ContainerType>
+    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
+inline void add_tap_regulator_output(main_core::MainModelState<ContainerType> const& /* state */,
+                                     TransformerTapRegulator const& regulator, IntS tap_pos,
+                                     std::vector<MockMathOutput<ContainerType>>& math_output) {
+    REQUIRE(math_output.size() > 0);
+
+    // state consistency
+    CHECK(math_output.front().state_tap_positions[regulator.regulated_object()] == tap_pos);
+
+    // add to output
+    REQUIRE(!math_output.front().output_tap_positions.contains(regulator.id()));
+    math_output.front().output_tap_positions[regulator.id()] = tap_pos;
 }
-TEST_SUITE_END();
+
+template <typename ContainerType>
+    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
+inline IntS get_state_tap_pos(std::vector<MockMathOutput<ContainerType>> const& math_output, ID id) {
+    REQUIRE(math_output.size() > 0);
+    return math_output.front().state_tap_positions.at(id);
+}
+
+template <typename ContainerType>
+    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
+inline IntS get_output_tap_pos(std::vector<MockMathOutput<ContainerType>> const& math_output, ID id) {
+    REQUIRE(math_output.size() > 0);
+    return math_output.front().output_tap_positions.at(id);
+}
+
+template <typename ContainerType>
+using MockStateCalculator = std::vector<MockMathOutput<ContainerType>> (*)(
+    main_core::MainModelState<ContainerType> const& state, CalculationMethod method);
+
+struct A {};
+struct B {};
+struct C {};
+static_assert(std::same_as<transformer_types_t<A, A>, std::tuple<>>);
+static_assert(std::same_as<transformer_types_t<A, B>, std::tuple<>>);
+static_assert(std::same_as<transformer_types_t<A, Transformer>, std::tuple<Transformer>>);
+static_assert(std::same_as<transformer_types_t<Transformer, ThreeWindingTransformer>,
+                           std::tuple<Transformer, ThreeWindingTransformer>>);
+static_assert(std::same_as<transformer_types_t<A, Transformer, A, B, ThreeWindingTransformer, C>,
+                           std::tuple<Transformer, ThreeWindingTransformer>>);
+static_assert(std::same_as<transformer_types_t<std::tuple<A, Transformer, A, B, ThreeWindingTransformer, C>>,
+                           std::tuple<Transformer, ThreeWindingTransformer>>);
+static_assert(std::same_as<transformer_types_t<std::tuple<A, StubTransformer, A, B, StubTransformer, C>>,
+                           std::tuple<StubTransformer, StubTransformer>>);
+
+struct MockTransformerState {
+    using SideType = ControlSide;
+
+    static constexpr auto unregulated{-1};
+
+    ID id{};
+
+    std::function<ID(SideType)> node = [](SideType /*side*/) { return ID{}; };
+    std::function<bool(SideType)> status = [](SideType /*side*/) { return true; };
+
+    SideType tap_side{};
+    IntS tap_pos{};
+    IntS tap_min{};
+    IntS tap_max{};
+    IntS tap_nom{};
+
+    Idx topology_index{};
+    Idx rank{unregulated};
+    Idx2D math_id{};
+
+    std::function<ComplexValue<symmetric_t>(SideType)> i_pu = [](SideType /*side*/) {
+        return ComplexValue<symmetric_t>{};
+    };
+    std::function<ComplexValue<symmetric_t>(SideType)> u_pu = [](SideType /*side*/) {
+        return ComplexValue<symmetric_t>{};
+    };
+};
+
+struct MockTransformer {
+    using InputType = StubTransformerInput;
+    using UpdateType = StubTransformerUpdate;
+    using SideType = typename MockTransformerState::SideType;
+
+    MockTransformer() = default;
+    MockTransformer(MockTransformerState state_) : state{state_} {}
+
+    static constexpr auto name = "MockTransformer";
+    constexpr auto math_model_type() const { return ComponentType::test; }
+
+    constexpr auto id() const { return state.id; }
+    auto node(SideType side) const { return state.node(side); }
+    auto status(SideType side) const { return state.status(side); }
+
+    constexpr auto tap_side() const { return state.tap_side; }
+    constexpr auto tap_pos() const { return state.tap_pos; }
+    constexpr auto tap_min() const { return state.tap_min; }
+    constexpr auto tap_max() const { return state.tap_max; }
+    constexpr auto tap_nom() const { return state.tap_nom; }
+
+    auto update(UpdateType const& update) {
+        CHECK(update.id == id());
+        UpdateChange result;
+        if (!is_nan(update.tap_pos)) {
+            CHECK(update.tap_pos >= std::min(state.tap_min, state.tap_max));
+            CHECK(update.tap_pos <= std::max(state.tap_min, state.tap_max));
+
+            result.param = state.tap_pos != update.tap_pos;
+            state.tap_pos = update.tap_pos;
+        }
+        return result;
+    }
+
+    auto inverse(UpdateType update) const {
+        CHECK(update.id == state.id);
+        auto const tap_pos_update = is_nan(update.tap_pos) ? na_IntS : tap_pos();
+        return UpdateType{.id = id(), .tap_pos = tap_pos_update};
+    }
+
+    MockTransformerState state{};
+};
+static_assert(transformer_c<MockTransformer>);
+
+template <std::derived_from<MockTransformer> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
+    auto const& transformer = main_core::get_component<ComponentType>(state, id_or_index);
+    return transformer.state.topology_index;
+}
+
+template <std::derived_from<MockTransformer> ComponentType, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+constexpr auto get_math_id(State const& state, Idx topology_index) {
+    return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.math_id;
+}
+
+template <std::derived_from<MockTransformer> ComponentType, typename ContainerType>
+inline auto i_pu(std::vector<MockMathOutput<ContainerType>> const& math_output, Idx2D const& math_id,
+                 ControlSide side) {
+    REQUIRE(math_id.group >= 0);
+    REQUIRE(math_id.group < math_output.size());
+    REQUIRE(math_output[math_id.group].state.has_value());
+    CHECK(math_output[math_id.group].call_index >= 0);
+    return main_core::get_component_by_sequence<MockTransformer>(math_output[math_id.group].state.value().get(),
+                                                                 math_id.pos)
+        .state.i_pu(side);
+}
+
+template <std::derived_from<MockTransformer> ComponentType, typename State,
+          steady_state_math_output_type MathOutputType>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+inline auto u_pu(State const& state, std::vector<MathOutputType> const& /* math_output */, Idx topology_index,
+                 ControlSide side) {
+    return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.u_pu(side);
+}
+
+template <typename ContainerType>
+std::vector<MockMathOutput<ContainerType>> mock_state_calculator(main_core::MainModelState<ContainerType> const& state,
+                                                                 CalculationMethod method) {
+    static Idx call_count{};
+
+    return {{call_count++, method, std::cref(state)}};
+}
+
+template <main_core::main_model_state_c State> class MockTransformerRanker {
+  private:
+    template <typename... Ts> struct Impl;
+    template <typename ComponentType> struct Impl<ComponentType> {
+        void operator()(State const& state, RankedTransformerGroups& ranking) const {
+            if constexpr (std::derived_from<ComponentType, MockTransformer>) {
+                for (Idx idx : boost::counting_range(Idx{0}, main_core::get_component_size<ComponentType>(state))) {
+                    auto const& comp = main_core::get_component_by_sequence<ComponentType>(state, idx);
+                    auto const rank = comp.state.rank;
+                    if (rank == MockTransformerState::unregulated) {
+                        continue;
+                    }
+
+                    REQUIRE(rank >= 0);
+                    if (rank >= static_cast<Idx>(ranking.size())) {
+                        ranking.resize(rank + 1);
+                    }
+                    ranking[rank].push_back(
+                        {.group = main_core::get_component_type_index<ComponentType>(state), .pos = idx});
+                }
+            }
+        }
+    };
+    template <typename... ComponentTypes> struct Impl<std::tuple<ComponentTypes...>> {
+        auto operator()(State const& state) const -> RankedTransformerGroups {
+            RankedTransformerGroups ranking;
+            (Impl<ComponentTypes>{}(state, ranking), ...);
+            return ranking;
+        }
+    };
+
+  public:
+    auto operator()(State const& state) const -> RankedTransformerGroups {
+        return Impl<typename State::ComponentContainer::gettable_types>{}(state);
+    }
+};
+} // namespace
+} // namespace optimizer::tap_position_optimizer::test
+
+TEST_CASE("Test Tap position optimizer") {
+    using MockTransformerState = test::MockTransformerState;
+    using MockTransformer = test::MockTransformer;
+    using MockContainer = Container<ExtraRetrievableTypes<Regulator>, MockTransformer, TransformerTapRegulator>;
+    using MockState = main_core::MainModelState<MockContainer>;
+    using MockStateCalculator = test::MockStateCalculator<MockContainer>;
+    using MockTransformerRanker = test::MockTransformerRanker<MockState>;
+
+    constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
+
+    MockState state;
+
+    auto const updater = [&state](ConstDataset const& update_dataset) {
+        REQUIRE(!update_dataset.empty());
+        REQUIRE(update_dataset.size() == 1);
+        REQUIRE(update_dataset.contains(MockTransformer::name));
+        auto const& transformers_dataset = update_dataset.at(MockTransformer::name);
+        auto const [transformers_update_begin, transformers_update_end] =
+            transformers_dataset.get_iterators<typename MockTransformer::UpdateType>(-1);
+        auto changed_components = std::vector<Idx2D>{};
+        main_core::update_component<MockTransformer>(state, transformers_update_begin, transformers_update_end,
+                                                     std::back_inserter(changed_components));
+    };
+
+    auto const get_optimizer = [&](OptimizerStrategy strategy) {
+        return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
+            test::mock_state_calculator, updater, strategy};
+    };
+
+    SUBCASE("empty state") {
+        state.components.set_construction_complete();
+        auto optimizer = get_optimizer(OptimizerStrategy::any);
+        auto result = optimizer.optimize(state, CalculationMethod::default_method);
+        CHECK(result.size() == 1);
+        CHECK(result[0].method == CalculationMethod::default_method);
+    }
+
+    SUBCASE("Calculation method") {
+        main_core::emplace_component<test::MockTransformer>(
+            state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
+        main_core::emplace_component<test::MockTransformer>(
+            state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
+        state.components.set_construction_complete();
+
+        for (auto strategy_method : test::strategies_and_methods) {
+            CAPTURE(strategy_method.strategy);
+            CAPTURE(strategy_method.method);
+
+            auto optimizer = get_optimizer(strategy_method.strategy);
+            auto result = optimizer.optimize(state, strategy_method.method);
+
+            CHECK(result.size() == 1);
+            CHECK(result[0].method == strategy_method.method);
+        }
+    }
+
+    SUBCASE("tap position in range") {
+        auto const check_exact = [](IntS tap_pos) -> std::function<void(IntS, OptimizerStrategy)> {
+            return [=](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == tap_pos); };
+        };
+
+        main_core::emplace_component<test::MockTransformer>(
+            state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
+        main_core::emplace_component<test::MockTransformer>(
+            state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
+
+        auto& transformer_a = main_core::get_component<MockTransformer>(state, 1);
+        auto& transformer_b = main_core::get_component<MockTransformer>(state, 2);
+
+        main_core::emplace_component<TransformerTapRegulator>(
+            state, 3,
+            TransformerTapRegulatorInput{.id = 3,
+                                         .regulated_object = 1,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_1,
+                                         .u_set = nan,
+                                         .u_band = nan,
+                                         .line_drop_compensation_r = nan,
+                                         .line_drop_compensation_x = nan},
+            transformer_a.math_model_type(), 1.0);
+        main_core::emplace_component<TransformerTapRegulator>(
+            state, 4,
+            TransformerTapRegulatorInput{.id = 4,
+                                         .regulated_object = 2,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_2,
+                                         .u_set = nan,
+                                         .u_band = nan,
+                                         .line_drop_compensation_r = nan,
+                                         .line_drop_compensation_x = nan},
+            transformer_b.math_model_type(), 1.0);
+
+        auto math_topo = MathModelTopology{};
+        state.components.set_construction_complete();
+
+        auto& state_a = transformer_a.state;
+        auto& state_b = transformer_b.state;
+        auto check_a = check_exact(0);
+        auto check_b = check_exact(0);
+
+        SUBCASE("not regulatable") {
+            state_b.tap_pos = 1;
+            state_b.tap_min = 1;
+            state_b.tap_max = 1;
+            state_b.rank = MockTransformerState::unregulated;
+            check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == state_b.tap_pos); };
+            auto const control_side = main_core::get_component<TransformerTapRegulator>(state, 4).control_side();
+
+            SUBCASE("not regulated") {}
+
+            SUBCASE("not connected at tap side") {
+                state_b.status = [&state_b](ControlSide side) { return side != state_b.tap_side; };
+            }
+
+            SUBCASE("not connected at control side") {
+                state_b.status = [control_side](ControlSide side) { return side != control_side; };
+            }
+
+            SUBCASE("not connected at third side doesn't matter") {
+                auto check_b = check_exact(1);
+                state_b.rank = 0;
+                state_b.status = [control_side, &state_b](ControlSide side) {
+                    return side == control_side || side == state_b.tap_side;
+                };
+            }
+        }
+
+        SUBCASE("single valid value") {
+            state_b.tap_pos = 1;
+            state_b.tap_min = state_b.tap_pos;
+            state_b.tap_max = state_b.tap_pos;
+            state_b.rank = 0;
+            check_b = check_exact(state_b.tap_pos);
+        }
+
+        SUBCASE("multipe valid values") {
+            state_b.rank = 0;
+            check_b = [&state_b](IntS value, OptimizerStrategy strategy) {
+                switch (strategy) {
+                    using enum OptimizerStrategy;
+                case any:
+                    CHECK(value == state_b.tap_pos);
+                    break;
+                case local_maximum:
+                case global_maximum:
+                    // max voltage => min tap pos
+                    CHECK(value == state_b.tap_min);
+                    break;
+                case local_minimum:
+                case global_minimum:
+                    // min voltage => max tap pos
+                    CHECK(value == state_b.tap_max);
+                    break;
+                default:
+                    FAIL("unreachable");
+                }
+            };
+
+            SUBCASE("normal tap range") {
+                state_b.tap_min = 1;
+                state_b.tap_max = 3;
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
+            }
+            SUBCASE("inverted tap range") {
+                state_b.tap_min = 3;
+                state_b.tap_max = 1;
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min - 1; }
+            }
+            SUBCASE("extreme tap range") {
+                state_b.tap_min = IntS{0};
+                state_b.tap_max = IntS{127};
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = 64; }
+            }
+            SUBCASE("extreme inverted tap range") {
+                state_b.tap_min = IntS{127};
+                state_b.tap_max = IntS{0};
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = 64; }
+            }
+        }
+
+        auto const initial_a{transformer_a.tap_pos()};
+        auto const initial_b{transformer_b.tap_pos()};
+
+        for (auto strategy : test::strategies) {
+            CAPTURE(strategy);
+
+            for (auto tap_side : tap_sides) {
+                CAPTURE(tap_side);
+
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
+
+                auto optimizer = get_optimizer(strategy);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                // correctness
+                CHECK(result.size() == 1);
+                check_a(get_state_tap_pos(result, state_a.id), strategy);
+                check_b(get_state_tap_pos(result, state_b.id), strategy);
+
+                // reset
+                CHECK(transformer_a.tap_pos() == initial_a);
+                CHECK(transformer_b.tap_pos() == initial_b);
+            }
+        }
+    }
+}
+
 } // namespace power_grid_model
+
+TEST_SUITE_END();

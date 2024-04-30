@@ -2,98 +2,38 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/optimizer/optimizer.hpp>
+#include "test_optimizer.hpp"
 
-#include <doctest/doctest.h>
-
-namespace power_grid_model::optimizer {
-namespace {
-
-using StubComponentContainer =
-    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, Regulator>, Line, Link, Node, Transformer,
-              ThreeWindingTransformer, TransformerTapRegulator, Source>;
-
-using StubState = main_core::MainModelState<StubComponentContainer>;
-static_assert(main_core::main_model_state_c<StubState>);
-
-struct StubStateCalculatorResultType {
-    Idx x{};
-};
-
-struct StubUpdateType {};
-
-using StubStateCalculator = StubStateCalculatorResultType (*)(StubState const& /* state */);
-using SymStubSteadyStateCalculator = std::vector<MathOutput<symmetric_t>> (*)(StubState const& /* state */);
-using AsymStubSteadyStateCalculator = std::vector<MathOutput<asymmetric_t>> (*)(StubState const& /* state */);
-using StubUpdate = void (*)(StubUpdateType const& /* update_data */);
-using ConstDatasetUpdate = void (*)(ConstDataset const& /* update_data */);
-
-static_assert(std::invocable<StubStateCalculator, StubState const&>);
-static_assert(std::same_as<std::invoke_result_t<StubStateCalculator, StubState const&>, StubStateCalculatorResultType>);
-static_assert(std::invocable<SymStubSteadyStateCalculator, StubState const&>);
-static_assert(std::same_as<std::invoke_result_t<SymStubSteadyStateCalculator, StubState const&>,
-                           std::vector<MathOutput<symmetric_t>>>);
-static_assert(std::invocable<SymStubSteadyStateCalculator, StubState const&>);
-static_assert(std::same_as<std::invoke_result_t<AsymStubSteadyStateCalculator, StubState const&>,
-                           std::vector<MathOutput<asymmetric_t>>>);
-static_assert(std::invocable<StubUpdate, StubUpdateType const&>);
-static_assert(std::invocable<ConstDatasetUpdate, ConstDataset const&>);
-
-static_assert(optimizer_c<NoOptimizer<StubStateCalculator, StubState>>);
-static_assert(optimizer_c<TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>);
-static_assert(optimizer_c<TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>);
-
-constexpr auto mock_state_calculator(StubState const& /* state */) { return StubStateCalculatorResultType{.x = 1}; }
-static_assert(std::convertible_to<decltype(mock_state_calculator), StubStateCalculator>);
-
-template <symmetry_tag sym> constexpr auto stub_steady_state_state_calculator(StubState const& /* state */) {
-    return std::vector<MathOutput<sym>>{};
-}
-static_assert(
-    std::convertible_to<decltype(stub_steady_state_state_calculator<symmetric_t>), SymStubSteadyStateCalculator>);
-static_assert(
-    std::convertible_to<decltype(stub_steady_state_state_calculator<asymmetric_t>), AsymStubSteadyStateCalculator>);
-
-constexpr void stub_update(StubUpdateType const& /* update_data */){
-    // stub
-};
-static_assert(std::convertible_to<decltype(stub_update), StubUpdate>);
-
-constexpr void stub_const_dataset_update(ConstDataset const& /* update_data */){
-    // stub
-};
-static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstDatasetUpdate>);
-
-constexpr auto strategies = [] {
-    using enum OptimizerStrategy;
-    return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
-}();
-} // namespace
-
-TEST_CASE("Test no-op optimizer") {
-    auto optimizer = NoOptimizer<StubStateCalculator, StubState>{mock_state_calculator};
-    CHECK(optimizer.optimize({}).x == 1);
-    CHECK(optimizer.optimize({}).x == 1);
+namespace power_grid_model::optimizer::test {
+TEST_CASE("Test construct no-op optimizer") {
+    for (auto method : calculation_methods) {
+        CAPTURE(method);
+        auto optimizer = NoOptimizer<StubStateCalculator, StubState>{mock_state_calculator};
+        CHECK(optimizer.optimize({}, method).x == 1);
+        CHECK(optimizer.optimize({}, method).x == 1);
+    }
 }
 
-TEST_CASE("Test tap position optimizer") {
+TEST_CASE("Test construct tap position optimizer") {
     StubState empty_state{};
     empty_state.components.set_construction_complete();
 
     SUBCASE("symmetric") {
-        for (auto strategy : strategies) {
-            CAPTURE(strategy);
+        for (auto strategy_method : strategies_and_methods) {
+            CAPTURE(strategy_method.strategy);
+            CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize(empty_state), PowerGridError); // TODO(mgovers): implement this check
+                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy};
+            CHECK(optimizer.optimize(empty_state, strategy_method.method).empty());
         }
     }
     SUBCASE("asymmetric") {
-        for (auto strategy : strategies) {
-            CAPTURE(strategy);
+        for (auto strategy_method : strategies_and_methods) {
+            CAPTURE(strategy_method.strategy);
+            CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy};
-            CHECK_THROWS_AS(optimizer.optimize(empty_state), PowerGridError); // TODO(mgovers): implement this check
+                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy_method.strategy};
+            CHECK(optimizer.optimize(empty_state, strategy_method.method).empty());
         }
     }
 }
@@ -101,13 +41,17 @@ TEST_CASE("Test tap position optimizer") {
 TEST_CASE("Test get optimizer") {
     using enum OptimizerType;
 
+    StubState empty_state;
+    empty_state.components.set_construction_complete();
+
     SUBCASE("Stub state calculator") {
         SUBCASE("Noop") {
-            for (auto strategy : strategies) {
-                CAPTURE(strategy);
-                auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy,
+            for (auto strategy_method : strategies_and_methods) {
+                CAPTURE(strategy_method.strategy);
+                CAPTURE(strategy_method.method);
+                auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy_method.strategy,
                                                                           mock_state_calculator, stub_update);
-                CHECK(optimizer->optimize({}).x == 1);
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).x == 1);
             }
         }
 
@@ -128,28 +72,29 @@ TEST_CASE("Test get optimizer") {
         };
 
         SUBCASE("Noop") {
-            for (auto strategy : strategies) {
-                CAPTURE(strategy);
-                auto optimizer = get_instance(no_optimization, strategy);
-                CHECK(optimizer->optimize({}).empty());
+            for (auto strategy_method : strategies_and_methods) {
+                CAPTURE(strategy_method.strategy);
+                CAPTURE(strategy_method.method);
+                auto optimizer = get_instance(no_optimization, strategy_method.strategy);
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).empty());
             }
         }
         SUBCASE("Automatic tap adjustment") {
-            for (auto strategy : strategies) {
-                CAPTURE(strategy);
-                auto optimizer = get_instance(automatic_tap_adjustment, strategy);
+            for (auto strategy_method : strategies_and_methods) {
+                CAPTURE(strategy_method.strategy);
+                CAPTURE(strategy_method.method);
+                auto optimizer = get_instance(automatic_tap_adjustment, strategy_method.strategy);
 
                 auto tap_optimizer = std::dynamic_pointer_cast<
                     TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
                 REQUIRE(tap_optimizer != nullptr);
-                CHECK(tap_optimizer->get_strategy() == strategy);
+                CHECK(tap_optimizer->get_strategy() == strategy_method.strategy);
 
                 StubState empty_state{};
                 empty_state.components.set_construction_complete();
-                CHECK_THROWS_AS(optimizer->optimize(empty_state),
-                                PowerGridError); // TODO(mgovers): implement this check
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).empty());
             }
         }
     }
 }
-} // namespace power_grid_model::optimizer
+} // namespace power_grid_model::optimizer::test
