@@ -633,7 +633,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         // refine solution
-        step_all_back(regulator_order);
+        exploit_neighborhood(regulator_order);
         return iterate(state, regulator_order, method);
     }
 
@@ -745,7 +745,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    void step_all_back(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    void exploit_neighborhood(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
@@ -769,7 +769,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(one_step_down, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::step_all_back"s, strategy_};
+            throw MissingCaseForEnumError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
         }
     }
 
