@@ -12,8 +12,8 @@ struct StubComponent {};
 
 struct StubTransformerInput {};
 struct StubTransformerUpdate {
-    ID id{};
-    IntS tap_pos{};
+    ID id{na_IntID};
+    IntS tap_pos{na_IntS};
 };
 enum class StubTransformerSideType : IntS {};
 struct StubTransformerMathIdType {};
@@ -163,9 +163,3 @@ constexpr auto strategies_and_methods = [] {
     return result;
 }();
 } // namespace power_grid_model::optimizer::test
-
-namespace power_grid_model::meta_data {
-template <> struct get_component_nan<optimizer::test::StubTransformerUpdate> {
-    constexpr optimizer::test::StubTransformerUpdate operator()() const { return {.id = na_IntID, .tap_pos = na_IntS}; }
-};
-} // namespace power_grid_model::meta_data
