@@ -470,7 +470,7 @@ inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2D const& ma
     case to:
         return branch_output.i_t;
     default:
-        throw MissingCaseForEnumError("control_transformer<Branch>", control_side);
+        throw MissingCaseForEnumError("adjust_transformer<Branch>", control_side);
     }
 }
 
@@ -489,7 +489,7 @@ inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2DBranch3 co
     case side_3:
         return branch_outputs[math_id.pos[2]].i_f;
     default:
-        throw MissingCaseForEnumError("control_transformer<Branch3>", control_side);
+        throw MissingCaseForEnumError("adjust_transformer<Branch3>", control_side);
     }
 }
 
@@ -648,7 +648,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             for (auto const& same_rank_regulators : regulator_order) {
                 for (auto const& regulator : same_rank_regulators) {
-                    tap_changed = tap_changed || control_transformer(regulator, state, result, update_data);
+                    tap_changed = tap_changed || adjust_transformer(regulator, state, result, update_data);
                 }
                 if (tap_changed) {
                     break;
@@ -675,8 +675,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    bool control_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& math_output,
-                             UpdateBuffer& update_data) const {
+    bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& math_output,
+                            UpdateBuffer& update_data) const {
         bool tap_changed = false;
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
@@ -743,12 +743,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            adjust_voltage(max_voltage_pos, regulator_order);
+            regulate_transformers(max_voltage_pos, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            adjust_voltage(min_voltage_pos, regulator_order);
+            regulate_transformers(min_voltage_pos, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
@@ -771,12 +771,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            adjust_voltage(one_step_up, regulator_order);
+            regulate_transformers(one_step_up, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            adjust_voltage(one_step_down, regulator_order);
+            regulate_transformers(one_step_down, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::step_all_back"s, strategy_};
@@ -794,7 +794,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         requires((std::invocable<Func, TransformerTypes const&> &&
                   std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
                  ...)
-    auto adjust_voltage(Func new_tap_pos, std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    auto regulate_transformers(Func new_tap_pos,
+                               std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
         auto const get_update = [new_tap_pos = std::move(new_tap_pos),
