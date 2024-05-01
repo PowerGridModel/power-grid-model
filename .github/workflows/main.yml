@@ -112,6 +112,11 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
         with:
           miniforge-version: latest
+      
+      - name: List conda
+        run: |
+          conda info
+          conda list
 
       - name: Install conda environment
         run: |
