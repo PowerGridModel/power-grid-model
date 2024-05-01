@@ -234,6 +234,7 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
+          miniforge-version: latest  # use miniforge instead of miniconda
           activate-environment: conda-pgm-env
           environment-file: .github/conda_pgm_env.yml
           auto-activate-base: false
