@@ -100,27 +100,27 @@ class Branch3 : public Base {
     }
 
     template <symmetry_tag sym>
-    Branch3Output<sym> get_output(BranchMathOutput<sym> const& branch_math_output1,
-                                  BranchMathOutput<sym> const& branch_math_output2,
-                                  BranchMathOutput<sym> const& branch_math_output3) const {
+    Branch3Output<sym> get_output(BranchSolverOutput<sym> const& branch_solver_output1,
+                                  BranchSolverOutput<sym> const& branch_solver_output2,
+                                  BranchSolverOutput<sym> const& branch_solver_output3) const {
         // result object
         Branch3Output<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.p_1 = base_power<sym> * real(branch_math_output1.s_f);
-        output.q_1 = base_power<sym> * imag(branch_math_output1.s_f);
-        output.i_1 = base_i_1() * cabs(branch_math_output1.i_f);
-        output.s_1 = base_power<sym> * cabs(branch_math_output1.s_f);
+        output.p_1 = base_power<sym> * real(branch_solver_output1.s_f);
+        output.q_1 = base_power<sym> * imag(branch_solver_output1.s_f);
+        output.i_1 = base_i_1() * cabs(branch_solver_output1.i_f);
+        output.s_1 = base_power<sym> * cabs(branch_solver_output1.s_f);
 
-        output.p_2 = base_power<sym> * real(branch_math_output2.s_f);
-        output.q_2 = base_power<sym> * imag(branch_math_output2.s_f);
-        output.i_2 = base_i_2() * cabs(branch_math_output2.i_f);
-        output.s_2 = base_power<sym> * cabs(branch_math_output2.s_f);
+        output.p_2 = base_power<sym> * real(branch_solver_output2.s_f);
+        output.q_2 = base_power<sym> * imag(branch_solver_output2.s_f);
+        output.i_2 = base_i_2() * cabs(branch_solver_output2.i_f);
+        output.s_2 = base_power<sym> * cabs(branch_solver_output2.s_f);
 
-        output.p_3 = base_power<sym> * real(branch_math_output3.s_f);
-        output.q_3 = base_power<sym> * imag(branch_math_output3.s_f);
-        output.i_3 = base_i_3() * cabs(branch_math_output3.i_f);
-        output.s_3 = base_power<sym> * cabs(branch_math_output3.s_f);
+        output.p_3 = base_power<sym> * real(branch_solver_output3.s_f);
+        output.q_3 = base_power<sym> * imag(branch_solver_output3.s_f);
+        output.i_3 = base_i_3() * cabs(branch_solver_output3.i_f);
+        output.s_3 = base_power<sym> * cabs(branch_solver_output3.s_f);
 
         output.loading = loading(sum_val(output.s_1), sum_val(output.s_2), sum_val(output.s_3));
 
@@ -150,10 +150,10 @@ class Branch3 : public Base {
         return get_sc_output(iabc_1, iabc_2, iabc_3);
     }
     template <symmetry_tag sym>
-    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<sym> const& branch_math_output1,
-                                            BranchShortCircuitMathOutput<sym> const& branch_math_output2,
-                                            BranchShortCircuitMathOutput<sym> const& branch_math_output3) const {
-        return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
+    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitSolverOutput<sym> const& branch_solver_output1,
+                                            BranchShortCircuitSolverOutput<sym> const& branch_solver_output2,
+                                            BranchShortCircuitSolverOutput<sym> const& branch_solver_output3) const {
+        return get_sc_output(branch_solver_output1.i_f, branch_solver_output2.i_f, branch_solver_output3.i_f);
     }
 
     template <symmetry_tag sym> Branch3Output<sym> get_null_output() const {

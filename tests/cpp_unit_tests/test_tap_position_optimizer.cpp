@@ -288,10 +288,10 @@ using power_grid_model::optimizer::test::StubTransformerUpdate;
 
 template <typename ContainerType>
     requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
-class MockMathOutput : public MathOutput<symmetric_t> {
+class MockSolverOutput : public SolverOutput<symmetric_t> {
   public:
-    using type = math_output_t;
-    using sym = typename MathOutput<symmetric_t>::sym;
+    using type = solver_output_t;
+    using sym = typename SolverOutput<symmetric_t>::sym;
 
     Idx call_index{-1};
     CalculationMethod method;
@@ -300,8 +300,8 @@ class MockMathOutput : public MathOutput<symmetric_t> {
     std::map<ID, IntS> output_tap_positions;
 
     template <component_c... Ts>
-    MockMathOutput(Idx call_index_, CalculationMethod method_,
-                   std::reference_wrapper<main_core::MainModelState<ContainerType> const> state_)
+    MockSolverOutput(Idx call_index_, CalculationMethod method_,
+                     std::reference_wrapper<main_core::MainModelState<ContainerType> const> state_)
         : call_index{call_index_}, method{method_}, state{state_} {
         add_tap_positions(state.value().get());
     }
@@ -331,39 +331,39 @@ class MockMathOutput : public MathOutput<symmetric_t> {
 template <typename ContainerType>
     requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
 inline void create_tap_regulator_output(main_core::MainModelState<ContainerType> const& /* state */,
-                                        std::vector<MockMathOutput<ContainerType>>& /* math_output */) {}
+                                        std::vector<MockSolverOutput<ContainerType>>& /* solver_output */) {}
 
 template <typename ContainerType>
     requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
 inline void add_tap_regulator_output(main_core::MainModelState<ContainerType> const& /* state */,
                                      TransformerTapRegulator const& regulator, IntS tap_pos,
-                                     std::vector<MockMathOutput<ContainerType>>& math_output) {
-    REQUIRE(math_output.size() > 0);
+                                     std::vector<MockSolverOutput<ContainerType>>& solver_output) {
+    REQUIRE(solver_output.size() > 0);
 
     // state consistency
-    CHECK(math_output.front().state_tap_positions[regulator.regulated_object()] == tap_pos);
+    CHECK(solver_output.front().state_tap_positions[regulator.regulated_object()] == tap_pos);
 
     // add to output
-    REQUIRE(!math_output.front().output_tap_positions.contains(regulator.id()));
-    math_output.front().output_tap_positions[regulator.id()] = tap_pos;
+    REQUIRE(!solver_output.front().output_tap_positions.contains(regulator.id()));
+    solver_output.front().output_tap_positions[regulator.id()] = tap_pos;
 }
 
 template <typename ContainerType>
     requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
-inline IntS get_state_tap_pos(std::vector<MockMathOutput<ContainerType>> const& math_output, ID id) {
-    REQUIRE(math_output.size() > 0);
-    return math_output.front().state_tap_positions.at(id);
+inline IntS get_state_tap_pos(std::vector<MockSolverOutput<ContainerType>> const& solver_output, ID id) {
+    REQUIRE(solver_output.size() > 0);
+    return solver_output.front().state_tap_positions.at(id);
 }
 
 template <typename ContainerType>
     requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
-inline IntS get_output_tap_pos(std::vector<MockMathOutput<ContainerType>> const& math_output, ID id) {
-    REQUIRE(math_output.size() > 0);
-    return math_output.front().output_tap_positions.at(id);
+inline IntS get_output_tap_pos(std::vector<MockSolverOutput<ContainerType>> const& solver_output, ID id) {
+    REQUIRE(solver_output.size() > 0);
+    return solver_output.front().output_tap_positions.at(id);
 }
 
 template <typename ContainerType>
-using MockStateCalculator = std::vector<MockMathOutput<ContainerType>> (*)(
+using MockStateCalculator = std::vector<MockSolverOutput<ContainerType>> (*)(
     main_core::MainModelState<ContainerType> const& state, CalculationMethod method);
 
 struct A {};
@@ -467,28 +467,28 @@ constexpr auto get_math_id(State const& state, Idx topology_index) {
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename ContainerType>
-inline auto i_pu(std::vector<MockMathOutput<ContainerType>> const& math_output, Idx2D const& math_id,
+inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_output, Idx2D const& math_id,
                  ControlSide side) {
     REQUIRE(math_id.group >= 0);
-    REQUIRE(math_id.group < math_output.size());
-    REQUIRE(math_output[math_id.group].state.has_value());
-    CHECK(math_output[math_id.group].call_index >= 0);
-    return main_core::get_component_by_sequence<MockTransformer>(math_output[math_id.group].state.value().get(),
+    REQUIRE(math_id.group < solver_output.size());
+    REQUIRE(solver_output[math_id.group].state.has_value());
+    CHECK(solver_output[math_id.group].call_index >= 0);
+    return main_core::get_component_by_sequence<MockTransformer>(solver_output[math_id.group].state.value().get(),
                                                                  math_id.pos)
         .state.i_pu(side);
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State,
-          steady_state_math_output_type MathOutputType>
+          steady_state_solver_output_type SolverOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-inline auto u_pu(State const& state, std::vector<MathOutputType> const& /* math_output */, Idx topology_index,
+inline auto u_pu(State const& state, std::vector<SolverOutputType> const& /* solver_output */, Idx topology_index,
                  ControlSide side) {
     return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.u_pu(side);
 }
 
 template <typename ContainerType>
-std::vector<MockMathOutput<ContainerType>> mock_state_calculator(main_core::MainModelState<ContainerType> const& state,
-                                                                 CalculationMethod method) {
+std::vector<MockSolverOutput<ContainerType>>
+mock_state_calculator(main_core::MainModelState<ContainerType> const& state, CalculationMethod method) {
     static Idx call_count{};
 
     return {{call_count++, method, std::cref(state)}};

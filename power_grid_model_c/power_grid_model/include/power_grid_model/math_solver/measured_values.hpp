@@ -105,13 +105,13 @@ template <symmetry_tag sym> class MeasuredValues {
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
-    using FlowVector = std::vector<ApplianceMathOutput<sym>>;
+    using FlowVector = std::vector<ApplianceSolverOutput<sym>>;
     using LoadGenSourceFlow = std::pair<FlowVector, FlowVector>;
 
     LoadGenSourceFlow calculate_load_gen_source(ComplexValueVector<sym> const& u,
                                                 ComplexValueVector<sym> const& s) const {
-        std::vector<ApplianceMathOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
-        std::vector<ApplianceMathOutput<sym>> source_flow(math_topology_->n_source());
+        std::vector<ApplianceSolverOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
+        std::vector<ApplianceSolverOutput<sym>> source_flow(math_topology_->n_source());
 
         // loop all buses
         for (auto const& [bus, load_gens, sources] :

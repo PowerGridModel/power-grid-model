@@ -57,18 +57,18 @@ constexpr auto get_math_id(State const& /* state */, Idx /* topology_sequence_id
     return StubTransformerMathIdType{};
 }
 
-template <std::derived_from<StubTransformer> ComponentType, steady_state_math_output_type MathOutputType>
-inline auto i_pu(std::vector<MathOutputType> const& /* math_output */, StubTransformerMathIdType const& /* math_id */,
-                 ControlSide /* side */) {
-    return ComplexValue<typename MathOutputType::sym>{};
+template <std::derived_from<StubTransformer> ComponentType, steady_state_solver_output_type SolverOutputType>
+inline auto i_pu(std::vector<SolverOutputType> const& /* solver_output */,
+                 StubTransformerMathIdType const& /* math_id */, ControlSide /* side */) {
+    return ComplexValue<typename SolverOutputType::sym>{};
 }
 
 template <std::derived_from<StubTransformer> ComponentType, typename State,
-          steady_state_math_output_type MathOutputType>
+          steady_state_solver_output_type SolverOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-inline auto u_pu(State const& /* state */, std::vector<MathOutputType> const& /* math_output */,
+inline auto u_pu(State const& /* state */, std::vector<SolverOutputType> const& /* solver_output */,
                  Idx /* topology_index */, ControlSide /* control_side */) {
-    return ComplexValue<typename MathOutputType::sym>{};
+    return ComplexValue<typename SolverOutputType::sym>{};
 }
 
 // TODO(mgovers) revert
@@ -89,10 +89,10 @@ struct StubUpdateType {};
 
 using StubStateCalculator = StubStateCalculatorResultType (*)(StubState const& /* state */,
                                                               CalculationMethod /* method */);
-using SymStubSteadyStateCalculator = std::vector<MathOutput<symmetric_t>> (*)(StubState const& /* state */,
-                                                                              CalculationMethod /* method */);
-using AsymStubSteadyStateCalculator = std::vector<MathOutput<asymmetric_t>> (*)(StubState const& /* state */,
+using SymStubSteadyStateCalculator = std::vector<SolverOutput<symmetric_t>> (*)(StubState const& /* state */,
                                                                                 CalculationMethod /* method */);
+using AsymStubSteadyStateCalculator = std::vector<SolverOutput<asymmetric_t>> (*)(StubState const& /* state */,
+                                                                                  CalculationMethod /* method */);
 using StubUpdate = void (*)(StubUpdateType const& /* update_data */);
 using ConstDatasetUpdate = void (*)(ConstDataset const& /* update_data */);
 
@@ -101,10 +101,10 @@ static_assert(std::same_as<std::invoke_result_t<StubStateCalculator, StubState c
                            StubStateCalculatorResultType>);
 static_assert(std::invocable<SymStubSteadyStateCalculator, StubState const&, CalculationMethod>);
 static_assert(std::same_as<std::invoke_result_t<SymStubSteadyStateCalculator, StubState const&, CalculationMethod>,
-                           std::vector<MathOutput<symmetric_t>>>);
+                           std::vector<SolverOutput<symmetric_t>>>);
 static_assert(std::invocable<SymStubSteadyStateCalculator, StubState const&, CalculationMethod>);
 static_assert(std::same_as<std::invoke_result_t<AsymStubSteadyStateCalculator, StubState const&, CalculationMethod>,
-                           std::vector<MathOutput<asymmetric_t>>>);
+                           std::vector<SolverOutput<asymmetric_t>>>);
 static_assert(std::invocable<StubUpdate, StubUpdateType const&>);
 static_assert(std::invocable<ConstDatasetUpdate, ConstDataset const&>);
 
@@ -119,7 +119,7 @@ static_assert(std::convertible_to<decltype(mock_state_calculator), StubStateCalc
 
 template <symmetry_tag sym>
 constexpr auto stub_steady_state_state_calculator(StubState const& /* state */, CalculationMethod /* method */) {
-    return std::vector<MathOutput<sym>>{};
+    return std::vector<SolverOutput<sym>>{};
 }
 static_assert(
     std::convertible_to<decltype(stub_steady_state_state_calculator<symmetric_t>), SymStubSteadyStateCalculator>);

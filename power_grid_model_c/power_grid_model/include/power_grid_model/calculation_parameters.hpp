@@ -35,7 +35,7 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
     ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
-template <symmetry_tag sym_type> struct BranchMathOutput {
+template <symmetry_tag sym_type> struct BranchSolverOutput {
     using sym = sym_type;
 
     ComplexValue<sym> s_f{};
@@ -44,7 +44,7 @@ template <symmetry_tag sym_type> struct BranchMathOutput {
     ComplexValue<sym> i_t{};
 };
 
-template <symmetry_tag sym_type> struct BranchShortCircuitMathOutput {
+template <symmetry_tag sym_type> struct BranchShortCircuitSolverOutput {
     using sym = sym_type;
 
     ComplexValue<sym> i_f{};
@@ -58,7 +58,7 @@ struct FaultCalcParam {
     FaultPhase fault_phase{};
 };
 
-template <symmetry_tag sym_type> struct FaultShortCircuitMathOutput {
+template <symmetry_tag sym_type> struct FaultShortCircuitSolverOutput {
     using sym = sym_type;
 
     ComplexValue<sym> i_fault{};
@@ -66,13 +66,13 @@ template <symmetry_tag sym_type> struct FaultShortCircuitMathOutput {
 
 // appliance math output, always injection direction
 // s > 0, energy appliance -> node
-template <symmetry_tag sym_type> struct ApplianceMathOutput {
+template <symmetry_tag sym_type> struct ApplianceSolverOutput {
     using sym = sym_type;
 
     ComplexValue<sym> s{};
     ComplexValue<sym> i{};
 };
-template <symmetry_tag sym_type> struct ApplianceShortCircuitMathOutput {
+template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
     using sym = sym_type;
 
     ComplexValue<sym> i{};
@@ -125,7 +125,7 @@ struct TransformerTapRegulatorCalcParam {
     DoubleComplex z_compensation{};
     IntS status{};
 };
-template <symmetry_tag sym_type> struct TransformerTapRegulatorMathOutput {
+template <symmetry_tag sym_type> struct TransformerTapRegulatorOptimizerOutput {
     using sym = sym_type;
 
     IntS tap_pos{na_IntS};
@@ -258,72 +258,72 @@ static_assert(calculation_input_type<PowerFlowInput<asymmetric_t>>);
 static_assert(calculation_input_type<StateEstimationInput<asymmetric_t>>);
 static_assert(calculation_input_type<ShortCircuitInput>);
 
-struct math_output_t {};
+struct solver_output_t {};
 
-template <symmetry_tag sym_type> struct MathOutput {
-    using type = math_output_t;
+template <symmetry_tag sym_type> struct SolverOutput {
+    using type = solver_output_t;
     using sym = sym_type;
 
     std::vector<ComplexValue<sym>> u;
     std::vector<ComplexValue<sym>> bus_injection;
-    std::vector<BranchMathOutput<sym>> branch;
-    std::vector<ApplianceMathOutput<sym>> source;
-    std::vector<ApplianceMathOutput<sym>> shunt;
-    std::vector<ApplianceMathOutput<sym>> load_gen;
-    std::vector<TransformerTapRegulatorMathOutput<sym>> transformer_tap_regulator;
+    std::vector<BranchSolverOutput<sym>> branch;
+    std::vector<ApplianceSolverOutput<sym>> source;
+    std::vector<ApplianceSolverOutput<sym>> shunt;
+    std::vector<ApplianceSolverOutput<sym>> load_gen;
+    std::vector<TransformerTapRegulatorOptimizerOutput<sym>> transformer_tap_regulator;
 };
 
-template <symmetry_tag sym_type> struct ShortCircuitMathOutput {
-    using type = math_output_t;
+template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
+    using type = solver_output_t;
     using sym = sym_type;
 
     std::vector<ComplexValue<sym>> u_bus;
-    std::vector<FaultShortCircuitMathOutput<sym>> fault;
-    std::vector<BranchShortCircuitMathOutput<sym>> branch;
-    std::vector<ApplianceShortCircuitMathOutput<sym>> source;
-    std::vector<ApplianceShortCircuitMathOutput<sym>> shunt;
+    std::vector<FaultShortCircuitSolverOutput<sym>> fault;
+    std::vector<BranchShortCircuitSolverOutput<sym>> branch;
+    std::vector<ApplianceShortCircuitSolverOutput<sym>> source;
+    std::vector<ApplianceShortCircuitSolverOutput<sym>> shunt;
 };
 
 template <typename T>
-concept math_output_type = std::derived_from<typename T::type, math_output_t>;
+concept solver_output_type = std::derived_from<typename T::type, solver_output_t>;
 
-static_assert(math_output_type<MathOutput<symmetric_t>>);
-static_assert(math_output_type<MathOutput<asymmetric_t>>);
-static_assert(math_output_type<ShortCircuitMathOutput<symmetric_t>>);
-static_assert(math_output_type<ShortCircuitMathOutput<asymmetric_t>>);
-
-template <typename T>
-concept symmetric_math_output_type = math_output_type<T> && is_symmetric_v<typename T::sym>;
-
-static_assert(symmetric_math_output_type<MathOutput<symmetric_t>>);
-static_assert(!symmetric_math_output_type<MathOutput<asymmetric_t>>);
-static_assert(symmetric_math_output_type<ShortCircuitMathOutput<symmetric_t>>);
-static_assert(!symmetric_math_output_type<ShortCircuitMathOutput<asymmetric_t>>);
+static_assert(solver_output_type<SolverOutput<symmetric_t>>);
+static_assert(solver_output_type<SolverOutput<asymmetric_t>>);
+static_assert(solver_output_type<ShortCircuitSolverOutput<symmetric_t>>);
+static_assert(solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
 
 template <typename T>
-concept asymmetric_math_output_type = math_output_type<T> && is_asymmetric_v<typename T::sym>;
+concept symmetric_solver_output_type = solver_output_type<T> && is_symmetric_v<typename T::sym>;
 
-static_assert(!asymmetric_math_output_type<MathOutput<symmetric_t>>);
-static_assert(asymmetric_math_output_type<MathOutput<asymmetric_t>>);
-static_assert(!asymmetric_math_output_type<ShortCircuitMathOutput<symmetric_t>>);
-static_assert(asymmetric_math_output_type<ShortCircuitMathOutput<asymmetric_t>>);
-
-template <typename T>
-concept steady_state_math_output_type = math_output_type<T> && std::derived_from<T, MathOutput<typename T::sym>>;
-
-static_assert(steady_state_math_output_type<MathOutput<symmetric_t>>);
-static_assert(steady_state_math_output_type<MathOutput<asymmetric_t>>);
-static_assert(!steady_state_math_output_type<ShortCircuitMathOutput<symmetric_t>>);
-static_assert(!steady_state_math_output_type<ShortCircuitMathOutput<asymmetric_t>>);
+static_assert(symmetric_solver_output_type<SolverOutput<symmetric_t>>);
+static_assert(!symmetric_solver_output_type<SolverOutput<asymmetric_t>>);
+static_assert(symmetric_solver_output_type<ShortCircuitSolverOutput<symmetric_t>>);
+static_assert(!symmetric_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
 
 template <typename T>
-concept short_circuit_math_output_type =
-    math_output_type<T> && std::derived_from<T, ShortCircuitMathOutput<typename T::sym>>;
+concept asymmetric_solver_output_type = solver_output_type<T> && is_asymmetric_v<typename T::sym>;
 
-static_assert(!short_circuit_math_output_type<MathOutput<symmetric_t>>);
-static_assert(!short_circuit_math_output_type<MathOutput<asymmetric_t>>);
-static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<symmetric_t>>);
-static_assert(short_circuit_math_output_type<ShortCircuitMathOutput<asymmetric_t>>);
+static_assert(!asymmetric_solver_output_type<SolverOutput<symmetric_t>>);
+static_assert(asymmetric_solver_output_type<SolverOutput<asymmetric_t>>);
+static_assert(!asymmetric_solver_output_type<ShortCircuitSolverOutput<symmetric_t>>);
+static_assert(asymmetric_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
+
+template <typename T>
+concept steady_state_solver_output_type = solver_output_type<T> && std::derived_from<T, SolverOutput<typename T::sym>>;
+
+static_assert(steady_state_solver_output_type<SolverOutput<symmetric_t>>);
+static_assert(steady_state_solver_output_type<SolverOutput<asymmetric_t>>);
+static_assert(!steady_state_solver_output_type<ShortCircuitSolverOutput<symmetric_t>>);
+static_assert(!steady_state_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
+
+template <typename T>
+concept short_circuit_solver_output_type =
+    solver_output_type<T> && std::derived_from<T, ShortCircuitSolverOutput<typename T::sym>>;
+
+static_assert(!short_circuit_solver_output_type<SolverOutput<symmetric_t>>);
+static_assert(!short_circuit_solver_output_type<SolverOutput<asymmetric_t>>);
+static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<symmetric_t>>);
+static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
 
 // component indices at physical model side
 // from, to node indices for branches

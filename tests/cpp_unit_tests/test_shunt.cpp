@@ -64,10 +64,10 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("Symmetric test results; s, i as input") {
-        ApplianceMathOutput<symmetric_t> appliance_math_output_sym;
-        appliance_math_output_sym.i = 1.0 + 2.0i;
-        appliance_math_output_sym.s = 3.0 + 4.0i;
-        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
+        appliance_solver_output_sym.i = 1.0 + 2.0i;
+        appliance_solver_output_sym.s = 3.0 + 4.0i;
+        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));
@@ -78,12 +78,12 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("Asymmetric test results; s, i as input") {
-        ApplianceMathOutput<asymmetric_t> appliance_math_output_asym;
+        ApplianceSolverOutput<asymmetric_t> appliance_solver_output_asym;
         ComplexValue<asymmetric_t> const i_a{1.0 + 2.0i};
         ComplexValue<asymmetric_t> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
-        appliance_math_output_asym.i = i_a;
-        appliance_math_output_asym.s = s_a;
-        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(appliance_math_output_asym);
+        appliance_solver_output_asym.i = i_a;
+        appliance_solver_output_asym.s = s_a;
+        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
         CHECK(asym_result.p(0) == doctest::Approx(-3.0 * base_power<asymmetric_t>));

@@ -35,8 +35,8 @@ inline void add_linear_loads(boost::iterator_range<IdxCount> const& load_gens_pe
 template <symmetry_tag sym>
 inline void prepare_linear_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                           grouped_idx_vector_type auto const& load_gens_per_bus,
-                                          grouped_idx_vector_type auto const& sources_per_bus, MathOutput<sym>& output,
-                                          ComplexTensorVector<sym>& mat_data) {
+                                          grouped_idx_vector_type auto const& sources_per_bus,
+                                          SolverOutput<sym>& output, ComplexTensorVector<sym>& mat_data) {
     IdxVector const& bus_entry = y_bus.lu_diag();
     for (auto const& [bus_number, load_gens, sources] : enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
         Idx const diagonal_position = bus_entry[bus_number];
@@ -59,7 +59,7 @@ template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, Compl
 
 template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
-                                    PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+                                    PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
     for (Idx const source : sources) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
@@ -72,7 +72,7 @@ template <symmetry_tag sym, class LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
-                                      MathOutput<sym>& output, LoadGenFunc&& load_gen_func) {
+                                      SolverOutput<sym>& output, LoadGenFunc&& load_gen_func) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
@@ -101,13 +101,13 @@ template <symmetry_tag sym, typename LoadGenFunc>
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 grouped_idx_vector_type auto const& sources_per_bus,
-                                grouped_idx_vector_type auto const& load_gens_per_bus, MathOutput<sym>& output,
+                                grouped_idx_vector_type auto const& load_gens_per_bus, SolverOutput<sym>& output,
                                 LoadGenFunc&& load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
     // call y bus
-    output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-    output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
+    output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);
+    output.shunt = y_bus.template calculate_shunt_flow<ApplianceSolverOutput<sym>>(output.u);
 
     // prepare source, load gen and node injection
     output.source.resize(sources_per_bus.element_size());
@@ -123,10 +123,10 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
 
 template <symmetry_tag sym>
 inline void calculate_se_result(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
-                                MathOutput<sym>& output) {
+                                SolverOutput<sym>& output) {
     // call y bus
-    output.branch = y_bus.template calculate_branch_flow<BranchMathOutput<sym>>(output.u);
-    output.shunt = y_bus.template calculate_shunt_flow<ApplianceMathOutput<sym>>(output.u);
+    output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);
+    output.shunt = y_bus.template calculate_shunt_flow<ApplianceSolverOutput<sym>>(output.u);
     output.bus_injection = y_bus.calculate_injection(output.u);
     std::tie(output.load_gen, output.source) = measured_value.calculate_load_gen_source(output.u, output.bus_injection);
 }

@@ -120,19 +120,19 @@ class Source : public Appliance {
     DoubleComplex y1_ref_{};
     DoubleComplex y0_ref_{};
 
-    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
-        ApplianceMathOutput<sym_calc> appliance_math_output;
+    template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+        ApplianceSolverOutput<sym_calc> appliance_solver_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
         ComplexTensor<sym_calc> const y_ref = math_param<sym_calc>();
-        appliance_math_output.i = dot(y_ref, u_ref - u);
-        appliance_math_output.s = u * conj(appliance_math_output.i);
-        return appliance_math_output;
+        appliance_solver_output.i = dot(y_ref, u_ref - u);
+        appliance_solver_output.s = u * conj(appliance_solver_output.i);
+        return appliance_solver_output;
     }
 
-    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
+    ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
         return u2si<symmetric_t>(u);
     }
-    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
+    ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
         return u2si<asymmetric_t>(u);
     }
 

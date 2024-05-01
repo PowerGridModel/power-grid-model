@@ -82,7 +82,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                   SolverOutput<sym>& output) {
         make_flat_start(input, output.u);
 
         auto const& sources_per_bus = *this->sources_per_bus_;

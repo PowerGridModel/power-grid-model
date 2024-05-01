@@ -31,7 +31,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
 
-    ShortCircuitMathOutput<sym> run_short_circuit(YBus<sym> const& y_bus, ShortCircuitInput const& input) {
+    ShortCircuitSolverOutput<sym> run_short_circuit(YBus<sym> const& y_bus, ShortCircuitInput const& input) {
         check_input_valid(input);
 
         auto const [fault_type, fault_phase] = extract_fault_type_phase(input.faults);
@@ -40,7 +40,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
         auto const [phase_1, phase_2] = set_phase_index(fault_phase);
 
         // output
-        ShortCircuitMathOutput<sym> output;
+        ShortCircuitSolverOutput<sym> output;
         output.u_bus.resize(n_bus_);
         output.fault.resize(input.faults.size());
         output.source.resize(n_source_);
@@ -73,7 +73,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
     BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, ShortCircuitInput const& input,
-                                ShortCircuitMathOutput<sym>& output, IdxVector& infinite_admittance_fault_counter,
+                                ShortCircuitSolverOutput<sym>& output, IdxVector& infinite_admittance_fault_counter,
                                 FaultType const& fault_type, IntS phase_1, IntS phase_2) {
         IdxVector const& bus_entry = y_bus.lu_diag();
 
@@ -221,7 +221,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
         }
     }
 
-    void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitMathOutput<sym>& output,
+    void calculate_result(YBus<sym> const& y_bus, ShortCircuitInput const& input, ShortCircuitSolverOutput<sym>& output,
                           IdxVector const& infinite_admittance_fault_counter, FaultType const fault_type,
                           int const phase_1, int const phase_2) const {
         using enum FaultType;
@@ -354,8 +354,8 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             }
         }
 
-        output.branch = y_bus.template calculate_branch_flow<BranchShortCircuitMathOutput<sym>>(output.u_bus);
-        output.shunt = y_bus.template calculate_shunt_flow<ApplianceShortCircuitMathOutput<sym>>(output.u_bus);
+        output.branch = y_bus.template calculate_branch_flow<BranchShortCircuitSolverOutput<sym>>(output.u_bus);
+        output.shunt = y_bus.template calculate_shunt_flow<ApplianceShortCircuitSolverOutput<sym>>(output.u_bus);
     }
 
     static constexpr auto set_phase_index(FaultPhase fault_phase) {
