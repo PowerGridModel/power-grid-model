@@ -5,6 +5,7 @@
 name: conda-pgm-env
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
   # build env
   - python=3.11
