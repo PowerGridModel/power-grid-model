@@ -145,16 +145,16 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         return piecewise_complex_value(s_specified_);
     }
     template <symmetry_tag calculation_symmetry>
-    ApplianceMathOutput<calculation_symmetry> u2si(ComplexValue<calculation_symmetry> const& u) const {
-        ApplianceMathOutput<calculation_symmetry> appliance_math_output;
-        appliance_math_output.s = scale_power<calculation_symmetry>(u);
-        appliance_math_output.i = conj(appliance_math_output.s / u);
-        return appliance_math_output;
+    ApplianceSolverOutput<calculation_symmetry> u2si(ComplexValue<calculation_symmetry> const& u) const {
+        ApplianceSolverOutput<calculation_symmetry> appliance_solver_output;
+        appliance_solver_output.s = scale_power<calculation_symmetry>(u);
+        appliance_solver_output.i = conj(appliance_solver_output.s / u);
+        return appliance_solver_output;
     }
-    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const override {
+    ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const override {
         return u2si<symmetric_t>(u);
     }
-    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const override {
+    ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const override {
         return u2si<asymmetric_t>(u);
     }
 

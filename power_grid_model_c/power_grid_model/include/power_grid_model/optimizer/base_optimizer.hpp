@@ -29,7 +29,7 @@ using state_calculator_result_t = typename state_calculator_type<StateCalculator
 
 template <typename StateCalculator, typename State>
 concept steady_state_calculator_c =
-    steady_state_math_output_type<typename detail::state_calculator_result_t<StateCalculator, State>::value_type> &&
+    steady_state_solver_output_type<typename detail::state_calculator_result_t<StateCalculator, State>::value_type> &&
     std::same_as<detail::state_calculator_result_t<StateCalculator, State>,
                  std::vector<typename detail::state_calculator_result_t<StateCalculator, State>::value_type>>;
 

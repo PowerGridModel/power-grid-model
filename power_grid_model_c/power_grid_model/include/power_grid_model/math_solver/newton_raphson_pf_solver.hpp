@@ -215,7 +215,8 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                   SolverOutput<sym>& output) {
         using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
 
         ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());

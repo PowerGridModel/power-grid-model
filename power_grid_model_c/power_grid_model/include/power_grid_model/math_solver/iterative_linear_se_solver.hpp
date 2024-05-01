@@ -74,12 +74,12 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(y_bus.size()) {}
 
-    MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
-                                         Idx max_iter, CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
+                                           double err_tol, Idx max_iter, CalculationInfo& calculation_info) {
         // prepare
         Timer main_timer;
         Timer sub_timer;
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
         output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();

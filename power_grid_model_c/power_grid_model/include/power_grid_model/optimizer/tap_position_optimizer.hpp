@@ -458,11 +458,11 @@ inline auto regulator_mapping(State const& state, RankedTransformerGroups const&
     return result;
 }
 
-template <std::derived_from<Branch> ComponentType, steady_state_math_output_type MathOutputType>
-inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2D const& math_id, ControlSide control_side) {
+template <std::derived_from<Branch> ComponentType, steady_state_solver_output_type SolverOutputType>
+inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const& math_id, ControlSide control_side) {
     using enum ControlSide;
 
-    auto const& branch_output = math_output[math_id.group].branch[math_id.pos];
+    auto const& branch_output = solver_output[math_id.group].branch[math_id.pos];
 
     switch (control_side) {
     case from:
@@ -474,12 +474,12 @@ inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2D const& ma
     }
 }
 
-template <std::derived_from<Branch3> ComponentType, steady_state_math_output_type MathOutputType>
-inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2DBranch3 const& math_id,
+template <std::derived_from<Branch3> ComponentType, steady_state_solver_output_type SolverOutputType>
+inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2DBranch3 const& math_id,
                  ControlSide control_side) {
     using enum ControlSide;
 
-    auto const& branch_outputs = math_output[math_id.group].branch;
+    auto const& branch_outputs = solver_output[math_id.group].branch;
 
     switch (control_side) {
     case side_1:
@@ -494,32 +494,32 @@ inline auto i_pu(std::vector<MathOutputType> const& math_output, Idx2DBranch3 co
 }
 
 template <component_c ComponentType, typename... RegulatedTypes, typename State,
-          steady_state_math_output_type MathOutputType>
+          steady_state_solver_output_type SolverOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
-                                 std::vector<MathOutputType> const& math_output) {
+                                 std::vector<SolverOutputType> const& solver_output) {
     auto const& branch_math_id = get_math_id<ComponentType>(state, regulator.transformer.topology_index());
-    return i_pu<ComponentType>(math_output, branch_math_id, regulator.regulator.get().control_side());
+    return i_pu<ComponentType>(solver_output, branch_math_id, regulator.regulator.get().control_side());
 }
 
-template <transformer_c ComponentType, typename State, steady_state_math_output_type MathOutputType>
+template <transformer_c ComponentType, typename State, steady_state_solver_output_type SolverOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType> &&
              requires(State const& state, Idx const i) {
                  { get_branch_nodes<ComponentType>(state, i)[i] } -> std::convertible_to<Idx>;
              }
-inline auto u_pu(State const& state, std::vector<MathOutputType> const& math_output, Idx topology_index,
+inline auto u_pu(State const& state, std::vector<SolverOutputType> const& solver_output, Idx topology_index,
                  ControlSide control_side) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, topology_index, control_side);
     auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
-    return math_output[node_math_id.group].u[node_math_id.pos];
+    return solver_output[node_math_id.group].u[node_math_id.pos];
 }
 
 template <component_c ComponentType, typename... RegulatedTypes, typename State,
-          steady_state_math_output_type MathOutputType>
+          steady_state_solver_output_type SolverOutputType>
     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
-                                 std::vector<MathOutputType> const& math_output) {
-    return u_pu<ComponentType>(state, math_output, regulator.transformer.topology_index(),
+                                 std::vector<SolverOutputType> const& solver_output) {
+    return u_pu<ComponentType>(state, solver_output, regulator.transformer.topology_index(),
                                regulator.regulator.get().control_side());
 }
 
@@ -549,32 +549,33 @@ template <symmetry_tag sym> struct NodeState {
     }
 };
 
-template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
-inline void create_tap_regulator_output(State const& state, std::vector<MathOutputType>& math_output) {
-    for (Idx const group : boost::counting_range(Idx{0}, static_cast<Idx>(math_output.size()))) {
-        math_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
-                                                            {.tap_pos = na_IntS});
+template <main_core::main_model_state_c State, steady_state_solver_output_type SolverOutputType>
+inline void create_tap_regulator_output(State const& state, std::vector<SolverOutputType>& solver_output) {
+    for (Idx const group : boost::counting_range(Idx{0}, static_cast<Idx>(solver_output.size()))) {
+        solver_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
+                                                              {.tap_pos = na_IntS});
     }
 }
 
-template <main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
+template <main_core::main_model_state_c State, steady_state_solver_output_type SolverOutputType>
 inline void add_tap_regulator_output(State const& state, TransformerTapRegulator const& regulator, IntS tap_pos,
-                                     std::vector<MathOutputType>& math_output) {
+                                     std::vector<SolverOutputType>& solver_output) {
     Idx2D const& math_id =
         get_math_id<TransformerTapRegulator>(state, get_topology_index<TransformerTapRegulator>(state, regulator.id()));
-    math_output[math_id.group].transformer_tap_regulator[math_id.pos] = {tap_pos};
+    solver_output[math_id.group].transformer_tap_regulator[math_id.pos] = {tap_pos};
 }
 
-template <typename... RegulatedTypes, main_core::main_model_state_c State, steady_state_math_output_type MathOutputType>
+template <typename... RegulatedTypes, main_core::main_model_state_c State,
+          steady_state_solver_output_type SolverOutputType>
     requires(main_core::component_container_c<typename State::ComponentContainer, RegulatedTypes> && ...)
 void add_tap_regulator_output(State const& state,
                               std::vector<std::vector<TapRegulatorRef<RegulatedTypes...>>> const& regulator_order,
-                              std::vector<MathOutputType>& math_output) {
-    create_tap_regulator_output(state, math_output);
+                              std::vector<SolverOutputType>& solver_output) {
+    create_tap_regulator_output(state, solver_output);
 
     for (auto const& same_rank_regulators : regulator_order) {
         for (auto const& regulator : same_rank_regulators) {
-            add_tap_regulator_output(state, regulator.regulator.get(), regulator.transformer.tap_pos(), math_output);
+            add_tap_regulator_output(state, regulator.regulator.get(), regulator.transformer.tap_pos(), solver_output);
         }
     }
 }
@@ -665,7 +666,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return result;
     }
 
-    bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& math_output,
+    bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& solver_output,
                             UpdateBuffer& update_data) const {
         bool tap_changed = false;
 
@@ -675,8 +676,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const param = regulator.regulator.get().template calc_param<sym>();
             auto const node_state =
-                NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, math_output),
-                               .i = i_pu_controlled_node<TransformerType>(regulator, state, math_output)};
+                NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
+                               .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp] {

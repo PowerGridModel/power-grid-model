@@ -71,7 +71,7 @@ TEST_CASE("Test block") {
 namespace {
 
 template <symmetry_tag sym>
-void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_ref, bool normalize_phase = false,
+void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> const& output_ref, bool normalize_phase = false,
                    double tolerance = numerical_tolerance) {
     DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
     for (size_t i = 0; i != output.u.size(); ++i) {
@@ -101,7 +101,7 @@ void assert_output(MathOutput<sym> const& output, MathOutput<sym> const& output_
 }
 
 template <symmetry_tag sym>
-void assert_sc_output(ShortCircuitMathOutput<sym> const& output, ShortCircuitMathOutput<sym> const& output_ref,
+void assert_sc_output(ShortCircuitSolverOutput<sym> const& output, ShortCircuitSolverOutput<sym> const& output_ref,
                       double tolerance = numerical_tolerance) {
     for (size_t i = 0; i != output.u_bus.size(); ++i) {
         check_close<sym>(output.u_bus[i], output_ref.u_bus[i], tolerance);
@@ -164,7 +164,7 @@ TEST_CASE("Test math solver") {
     // build param, pf input, output, backwards
     MathModelParam<symmetric_t> param;
     PowerFlowInput<symmetric_t> pf_input;
-    MathOutput<symmetric_t> output_ref;
+    SolverOutput<symmetric_t> output_ref;
     // voltage
     double const vref = 1.1;
     double const v0 = 1.08;
@@ -231,7 +231,7 @@ TEST_CASE("Test math solver") {
 
     // const z
     PowerFlowInput<symmetric_t> pf_input_z = pf_input;
-    MathOutput<symmetric_t> output_ref_z = output_ref;
+    SolverOutput<symmetric_t> output_ref_z = output_ref;
     for (size_t i = 0; i < 6; i++) {
         if (i % 3 == 2) {
             pf_input_z.s_injection[i] *= 3.0;
@@ -276,7 +276,7 @@ TEST_CASE("Test math solver") {
     }
 
     // output
-    MathOutput<asymmetric_t> output_ref_asym;
+    SolverOutput<asymmetric_t> output_ref_asym;
     output_ref_asym.u.resize(output_ref.u.size());
     for (size_t i = 0; i != output_ref.u.size(); ++i) {
         output_ref_asym.u[i] = ComplexValue<asymmetric_t>{output_ref.u[i]};
@@ -310,7 +310,7 @@ TEST_CASE("Test math solver") {
 
     // const z
     PowerFlowInput<asymmetric_t> pf_input_asym_z = pf_input_asym;
-    MathOutput<asymmetric_t> output_ref_asym_z = output_ref_asym;
+    SolverOutput<asymmetric_t> output_ref_asym_z = output_ref_asym;
     for (size_t i = 0; i < 6; i++) {
         if (i % 3 == 2) {
             pf_input_asym_z.s_injection[i] *= 3.0;
@@ -432,7 +432,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric pf solver") {
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<symmetric_t> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
+        SolverOutput<symmetric_t> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
         assert_output(output, output_ref);
         // copy
         MathSolver<symmetric_t> solver2{solver};
@@ -448,7 +448,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test symmetric iterative current pf solver") {
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<symmetric_t> const output =
+        SolverOutput<symmetric_t> const output =
             solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current, y_bus_sym);
         assert_output(output, output_ref);
     }
@@ -460,7 +460,7 @@ TEST_CASE("Test math solver") {
 
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<symmetric_t> const output =
+        SolverOutput<symmetric_t> const output =
             solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current, y_bus_sym);
         assert_output(output, output_ref, false, result_tolerance);
     }
@@ -479,7 +479,7 @@ TEST_CASE("Test math solver") {
         CalculationInfo info;
 
         // const z
-        MathOutput<symmetric_t> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
+        SolverOutput<symmetric_t> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
         assert_output(output, output_ref_z);
     }
 
@@ -509,7 +509,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asymmetric pf solver") {
         MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<asymmetric_t> const output =
+        SolverOutput<asymmetric_t> const output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson, y_bus_asym);
         assert_output(output, output_ref_asym);
     }
@@ -517,7 +517,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test iterative current asymmetric pf solver") {
         MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<asymmetric_t> const output =
+        SolverOutput<asymmetric_t> const output =
             solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current, y_bus_asym);
         assert_output(output, output_ref_asym);
     }
@@ -526,7 +526,7 @@ TEST_CASE("Test math solver") {
         MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
         // const z
-        MathOutput<asymmetric_t> const output =
+        SolverOutput<asymmetric_t> const output =
             solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear, y_bus_asym);
         assert_output(output, output_ref_asym_z);
     }
@@ -534,7 +534,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle") {
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<symmetric_t> output;
+        SolverOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -549,7 +549,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se without angle") {
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<symmetric_t> output;
+        SolverOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_no_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -564,7 +564,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test sym se with angle, const z") {
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<symmetric_t> output;
+        SolverOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_angle_const_z, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -582,7 +582,7 @@ TEST_CASE("Test math solver") {
         auto& branch_from_power = se_input_angle.measured_branch_from_power.front();
         branch_from_power.p_variance = 0.25;
         branch_from_power.q_variance = 0.75;
-        MathOutput<symmetric_t> output;
+        SolverOutput<symmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_angle, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -597,7 +597,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle") {
         MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<asymmetric_t> output;
+        SolverOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
@@ -612,7 +612,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se without angle") {
         MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<asymmetric_t> output;
+        SolverOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_asym_no_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
@@ -627,7 +627,7 @@ TEST_CASE("Test math solver") {
     SUBCASE("Test asym se with angle, const z") {
         MathSolver<asymmetric_t> solver{topo_ptr};
         CalculationInfo info;
-        MathOutput<asymmetric_t> output;
+        SolverOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output =
@@ -647,7 +647,7 @@ TEST_CASE("Test math solver") {
         auto& branch_from_power = se_input_asym_angle.measured_branch_from_power.front();
         branch_from_power.p_variance = RealValue<asymmetric_t>{0.25};
         branch_from_power.q_variance = RealValue<asymmetric_t>{0.75};
-        MathOutput<asymmetric_t> output;
+        SolverOutput<asymmetric_t> output;
 
         SUBCASE("iterative linear") {
             output = solver.run_state_estimation(se_input_asym_angle, 1e-10, 20, info, iterative_linear, y_bus_asym);
@@ -671,30 +671,31 @@ ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_ph
     return sc_input;
 }
 
-template <symmetry_tag sym> constexpr ShortCircuitMathOutput<sym> blank_sc_output(DoubleComplex vref) {
-    ShortCircuitMathOutput<sym> sc_output;
+template <symmetry_tag sym> constexpr ShortCircuitSolverOutput<sym> blank_sc_output(DoubleComplex vref) {
+    ShortCircuitSolverOutput<sym> sc_output;
     sc_output.u_bus = {ComplexValue<sym>(vref), ComplexValue<sym>(vref)};
     sc_output.fault = {{ComplexValue<sym>{}}};
-    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = {ComplexValue<sym>{}}, .i_t = {ComplexValue<sym>{}}}};
+    sc_output.branch = {
+        BranchShortCircuitSolverOutput<sym>{.i_f = {ComplexValue<sym>{}}, .i_t = {ComplexValue<sym>{}}}};
     sc_output.source = {{ComplexValue<sym>{}}};
     return sc_output;
 }
 
 template <symmetry_tag sym>
-constexpr ShortCircuitMathOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
-                                                            ComplexValue<sym> if_abc) {
-    ShortCircuitMathOutput<sym> sc_output;
+constexpr ShortCircuitSolverOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
+                                                              ComplexValue<sym> if_abc) {
+    ShortCircuitSolverOutput<sym> sc_output;
     sc_output.u_bus = {u0, u1};
     sc_output.fault = {{if_abc}};
-    sc_output.branch = {BranchShortCircuitMathOutput<sym>{.i_f = if_abc, .i_t = -if_abc}};
+    sc_output.branch = {BranchShortCircuitSolverOutput<sym>{.i_f = if_abc, .i_t = -if_abc}};
     sc_output.source = {{if_abc}};
     return sc_output;
 }
 
 template <symmetry_tag sym>
-ShortCircuitMathOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
-                                                  DoubleComplex const& z0, DoubleComplex const& z0_0, double const vref,
-                                                  DoubleComplex const& zref) {
+ShortCircuitSolverOutput<sym> create_sc_test_output(FaultType fault_type, DoubleComplex const& z_fault,
+                                                    DoubleComplex const& z0, DoubleComplex const& z0_0,
+                                                    double const vref, DoubleComplex const& zref) {
 
     if constexpr (is_symmetric_v<sym>) {
         DoubleComplex const if_abc = vref / (z0 + zref + z_fault);
@@ -985,7 +986,7 @@ TEST_CASE("Short circuit solver") {
         DoubleComplex const if_c_2phg_solid = vref * a / zref;
 
         SUBCASE("Source on 3ph sym fault") {
-            ShortCircuitMathOutput<symmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<symmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {uf_comp};
             sc_output_ref.fault = {{if_comp}};
             sc_output_ref.branch = {};
@@ -998,7 +999,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 3ph sym solid fault") {
-            ShortCircuitMathOutput<symmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<symmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {DoubleComplex{uf_comp_solid}};
             sc_output_ref.fault = {{if_comp_solid}};
             sc_output_ref.branch = {};
@@ -1011,7 +1012,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 3ph fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{uf_comp}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{if_comp}}};
             sc_output_ref.branch = {};
@@ -1024,7 +1025,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 1phg fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{uf_comp, vref * a * a, vref * a}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{if_comp, 0, 0}}};
             sc_output_ref.branch = {};
@@ -1037,7 +1038,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 1phg solid fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{uf_comp_solid, vref * a * a, vref * a}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{if_comp_solid, 0, 0}}};
             sc_output_ref.branch = {};
@@ -1051,7 +1052,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 2ph fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_comp, uf_c_comp}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_comp, -if_b_comp}}};
             sc_output_ref.branch = {};
@@ -1064,7 +1065,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 2ph solid fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_comp_solid, uf_c_comp_solid}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_comp_solid, -if_b_comp_solid}}};
             sc_output_ref.branch = {};
@@ -1077,7 +1078,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 2phg fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_2phg, uf_b_2phg}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_2phg, if_c_2phg}}};
             sc_output_ref.branch = {};
@@ -1090,7 +1091,7 @@ TEST_CASE("Short circuit solver") {
         }
 
         SUBCASE("Source on 2phg solid fault") {
-            ShortCircuitMathOutput<asymmetric_t> sc_output_ref;
+            ShortCircuitSolverOutput<asymmetric_t> sc_output_ref;
             sc_output_ref.u_bus = {ComplexValue<asymmetric_t>{vref, uf_b_2phg_solid, uf_b_2phg_solid}};
             sc_output_ref.fault = {{ComplexValue<asymmetric_t>{0.0, if_b_2phg_solid, if_c_2phg_solid}}};
             sc_output_ref.branch = {};
@@ -1139,7 +1140,7 @@ TEST_CASE("Math solver, zero variance test") {
 
     MathSolver<symmetric_t> solver{topo_ptr};
     CalculationInfo info;
-    MathOutput<symmetric_t> output;
+    SolverOutput<symmetric_t> output;
 
     SUBCASE("iterative linear") {
         output = solver.run_state_estimation(se_input, 1e-10, 20, info, iterative_linear, y_bus_sym);
@@ -1187,7 +1188,7 @@ TEST_CASE("Math solver, measurements") {
     se_input.measured_voltage = {{1.0, 0.1}};
 
     CalculationInfo info;
-    MathOutput<symmetric_t> output;
+    SolverOutput<symmetric_t> output;
 
     SUBCASE("Source and branch") {
         /*

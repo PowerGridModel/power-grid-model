@@ -40,29 +40,29 @@ TEST_CASE("Test main model - short circuit") {
             double const u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
 
             SUBCASE("Symmetric Calculation") {
-                std::vector<ShortCircuitMathOutput<symmetric_t>> const math_output =
+                std::vector<ShortCircuitSolverOutput<symmetric_t>> const solver_output =
                     main_model.calculate_short_circuit<symmetric_t>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(math_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output.begin());
 
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(math_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output.begin());
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
 
             SUBCASE("Asymmetric Calculation") {
-                std::vector<ShortCircuitMathOutput<asymmetric_t>> const math_output =
+                std::vector<ShortCircuitSolverOutput<asymmetric_t>> const solver_output =
                     main_model.calculate_short_circuit<asymmetric_t>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(math_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output.begin());
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(math_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output.begin());
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
         }
@@ -80,29 +80,29 @@ TEST_CASE("Test main model - short circuit") {
             double const u_node_abs_pu = u_node_abs / (u_rated / sqrt3);
 
             SUBCASE("Symmetric Calculation") {
-                std::vector<ShortCircuitMathOutput<symmetric_t>> const math_output =
+                std::vector<ShortCircuitSolverOutput<symmetric_t>> const solver_output =
                     main_model.calculate_short_circuit<symmetric_t>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(math_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output.begin());
 
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(math_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output.begin());
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
 
             SUBCASE("Asymmetric Calculation") {
-                std::vector<ShortCircuitMathOutput<asymmetric_t>> const math_output =
+                std::vector<ShortCircuitSolverOutput<asymmetric_t>> const solver_output =
                     main_model.calculate_short_circuit<asymmetric_t>(voltage_scaling, CalculationMethod::iec60909);
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(math_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output.begin());
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(math_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output.begin());
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
         }
@@ -121,15 +121,15 @@ TEST_CASE("Test main model - short circuit") {
                 {{5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}});
             main_model.set_construction_complete();
 
-            std::vector<ShortCircuitMathOutput<asymmetric_t>> const math_output =
+            std::vector<ShortCircuitSolverOutput<asymmetric_t>> const solver_output =
                 main_model.calculate_short_circuit<asymmetric_t>(voltage_scaling, CalculationMethod::iec60909);
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
-            main_model.output_result<Fault>(math_output, fault_output.begin());
+            main_model.output_result<Fault>(solver_output, fault_output.begin());
             CHECK(fault_output[0].i_f(0) == doctest::Approx(voltage_scaling_c * 10e4 / sqrt3));
 
             std::vector<NodeShortCircuitOutput> node_output(2);
-            main_model.output_result<Node>(math_output, node_output.begin());
+            main_model.output_result<Node>(solver_output, node_output.begin());
             CHECK(node_output[0].u_pu(0) != doctest::Approx(voltage_scaling_c)); // influenced by fault
             CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0));               // fault location
 

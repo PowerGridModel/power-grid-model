@@ -57,10 +57,10 @@ template <symmetry_tag sym> class LinearPFSolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(n_bus_) {}
 
-    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                   CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                     CalculationInfo& calculation_info) {
         // output
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
 
         Timer const main_timer(calculation_info, 2220, "Math solver");
@@ -94,11 +94,11 @@ template <symmetry_tag sym> class LinearPFSolver {
     SparseSolverType sparse_solver_;
     BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
         detail::prepare_linear_matrix_and_rhs(y_bus, input, *load_gens_per_bus_, *sources_per_bus_, output, mat_data_);
     }
 
-    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
         detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
                                     [](Idx /*i*/) { return LoadGenType::const_y; });
     }

@@ -89,9 +89,9 @@ class Fault final : public Base {
     }
 
     template <symmetry_tag sym>
-    FaultShortCircuitOutput get_sc_output(FaultShortCircuitMathOutput<sym> const& math_output,
+    FaultShortCircuitOutput get_sc_output(FaultShortCircuitSolverOutput<sym> const& solver_output,
                                           double const u_rated) const {
-        return get_sc_output(math_output.i_fault, u_rated);
+        return get_sc_output(solver_output.i_fault, u_rated);
     }
 
     // update faulted object
