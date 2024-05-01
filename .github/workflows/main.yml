@@ -109,8 +109,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Activate conda
+        uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
+        with:
+          miniforge-version: latest
+      
+      - name: List conda
         run: |
-          & "$env:CONDA\condabin\conda" init
+          conda info
+          conda list
 
       - name: Install conda environment
         run: |
@@ -233,6 +239,7 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
+          miniforge-version: latest  # use miniforge instead of miniconda
           activate-environment: conda-pgm-env
           environment-file: .github/conda_pgm_env.yml
           auto-activate-base: false
