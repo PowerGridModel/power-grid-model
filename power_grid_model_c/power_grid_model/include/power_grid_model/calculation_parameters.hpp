@@ -125,7 +125,7 @@ struct TransformerTapRegulatorCalcParam {
     DoubleComplex z_compensation{};
     IntS status{};
 };
-template <symmetry_tag sym_type> struct TransformerTapRegulatorSolverOutput {
+template <symmetry_tag sym_type> struct TransformerTapRegulatorOptimizerOutput {
     using sym = sym_type;
 
     IntS tap_pos{na_IntS};
@@ -270,7 +270,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
-    std::vector<TransformerTapRegulatorSolverOutput<sym>> transformer_tap_regulator;
+    std::vector<TransformerTapRegulatorOptimizerOutput<sym>> transformer_tap_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
