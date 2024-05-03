@@ -10,7 +10,7 @@
 #include "handle.hpp"
 #include "options.hpp"
 
-#include <power_grid_model/auxiliary/dataset_handler.hpp>
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_model.hpp>
@@ -30,7 +30,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     return call_with_catch(
         handle,
         [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, input_dataset->export_dataset<const_dataset_t>(), 0};
+            return new PGM_PowerGridModel{system_frequency, &input_dataset, 0};
         },
         PGM_regular_error);
 }
@@ -40,7 +40,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
     call_with_catch(
         handle,
         [model, update_dataset] {
-            model->update_component<MainModel::permanent_update_t>(update_dataset->export_dataset<const_dataset_t>());
+            model->update_component<MainModel::permanent_update_t>(&update_dataset);
         },
         PGM_regular_error);
 }

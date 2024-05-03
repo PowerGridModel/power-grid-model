@@ -77,7 +77,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
     // implicit conversion constructor to const
     template <dataset_type_tag other_dataset_type>
-        requires(is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_handler_type>)
+        requires(is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_type>)
     Dataset(Dataset<other_dataset_type> const& other) : dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
@@ -113,14 +113,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
-        requires is_indptr_mutable_v<dataset_handler_type>
+        requires is_indptr_mutable_v<dataset_type>
     {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
     void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
                     Data* data)
-        requires(!is_indptr_mutable_v<dataset_handler_type>)
+        requires(!is_indptr_mutable_v<dataset_type>)
     {
         check_non_uniform_integrity<immutable_t>(elements_per_scenario, total_elements, indptr);
         add_component_info_impl(component, elements_per_scenario, total_elements);
@@ -133,7 +133,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     void set_buffer(std::string_view component, Indptr* indptr, Data* data)
-        requires is_indptr_mutable_v<dataset_handler_type>
+        requires is_indptr_mutable_v<dataset_type>
     {
         Idx const idx = find_component(component, true);
         ComponentInfo const& info = dataset_info_.component_info[idx];
