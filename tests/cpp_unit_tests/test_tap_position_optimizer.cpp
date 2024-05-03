@@ -625,6 +625,9 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = nan},
             transformer_b.math_model_type(), 1.0);
 
+        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
+        auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
+
         auto math_topo = MathModelTopology{};
         state.components.set_construction_complete();
 
@@ -719,6 +722,79 @@ TEST_CASE("Test Tap position optimizer") {
                 SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
                 SUBCASE("start mid range") { state_b.tap_pos = 64; }
             }
+        }
+
+        SUBCASE("voltage band") {
+            auto const u_pu_func = [&state_b](IntS tap_pos) {
+                // higher voltage at tap side <=> lower voltage at control side
+                REQUIRE(state_b.tap_min != state_b.tap_max);
+                return (static_cast<DoubleComplex>(state_b.tap_max) - static_cast<DoubleComplex>(tap_pos)) /
+                       (static_cast<DoubleComplex>(state_b.tap_max) - static_cast<DoubleComplex>(state_b.tap_min));
+            };
+
+            state_b.rank = 0;
+            state_b.u_pu = [&state_b, &u_pu_func](ControlSide side) {
+                CHECK(side == state_b.tap_side);
+                return u_pu_func(state_b.tap_pos);
+            };
+            regulator_b.update({.id = 4, .u_set = 0.0, .u_band = 1.0});
+            check_b = [&state_b, &regulator_b, &u_pu_func](IntS value, OptimizerStrategy strategy) {
+                auto const params = regulator_b.calc_param<symmetric_t>();
+                auto const u_pu = cabs(u_pu_func(value));
+
+                CHECK(value >= std::min(state_b.tap_min, state_b.tap_max));
+                CHECK(value <= std::max(state_b.tap_min, state_b.tap_max));
+                CHECK(u_pu >= doctest::Approx(params.u_set));
+                CHECK(u_pu <= doctest::Approx(params.u_set + params.u_band));
+
+                switch (strategy) {
+                    using enum OptimizerStrategy;
+                case any:
+                    break;
+                case local_maximum:
+                case global_maximum:
+                    CHECK(u_pu == doctest::Approx(params.u_set + params.u_band));
+                    break;
+                case local_minimum:
+                case global_minimum:
+                    CHECK(u_pu == doctest::Approx(params.u_set));
+                    break;
+                default:
+                    FAIL("unreachable");
+                }
+            };
+
+            SUBCASE("normal tap range") {
+                state_b.tap_min = 1;
+                state_b.tap_max = 3;
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
+            }
+            SUBCASE("inverted tap range") {
+                state_b.tap_min = 3;
+                state_b.tap_max = 1;
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min - 1; }
+            }
+            SUBCASE("extreme tap range") {
+                state_b.tap_min = IntS{0};
+                state_b.tap_max = IntS{127};
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = 64; }
+            }
+            SUBCASE("extreme inverted tap range") {
+                state_b.tap_min = IntS{127};
+                state_b.tap_max = IntS{0};
+                SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                SUBCASE("start mid range") { state_b.tap_pos = 64; }
+            }
+
+            REQUIRE(cabs(u_pu_func(state_b.tap_min)) == doctest::Approx(1.0));
+            REQUIRE(cabs(u_pu_func(state_b.tap_max)) == doctest::Approx(0.0));
         }
 
         auto const initial_a{transformer_a.tap_pos()};

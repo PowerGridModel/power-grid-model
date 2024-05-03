@@ -317,12 +317,12 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
 
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
-constexpr IntS one_step_voltage_up(transformer_c auto const& transformer) {
-    // higher voltage at control side => lower tap pos
+// higher voltage at control side => lower voltage at tap side => lower tap pos
+constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer) {
     return one_step_tap_down(transformer);
 }
-constexpr IntS one_step_voltage_down(transformer_c auto const& transformer) {
-    // lower voltage at control side => higher tap pos
+// lower voltage at control side => higher voltage at tap side => higher tap pos
+constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer) {
     return one_step_tap_up(transformer);
 }
 
@@ -682,10 +682,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp] {
                 if (cmp > 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_voltage_down(transformer);
+                    return one_step_control_voltage_down(transformer);
                 }
                 if (cmp < 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_voltage_up(transformer);
+                    return one_step_control_voltage_up(transformer);
                 }
                 return transformer.tap_pos();
             }();
@@ -720,11 +720,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // max voltage at control side => min tap pos
+            // max voltage at control side => min voltage at tap side => min tap pos
             return transformer.tap_min();
         };
         constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // min voltage at control side => max tap pos
+            // min voltage at control side => max voltage at tap side => max tap pos
             return transformer.tap_max();
         };
 
@@ -750,10 +750,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         using namespace std::string_literals;
 
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_voltage_up(transformer);
+            return one_step_control_voltage_up(transformer);
         };
         constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_voltage_down(transformer);
+            return one_step_control_voltage_down(transformer);
         };
 
         switch (strategy_) {
