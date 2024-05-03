@@ -771,22 +771,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, threading);
     }
 
-    // template <typename Component, solver_output_type SolverOutputType, std::forward_iterator ResIt>
-    // ResIt output_result(std::vector<SolverOutputType> const& math_output, ResIt res_it) const {
-    //     assert(construction_complete_);
-    //     return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
-    // }
-
     template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
         assert(construction_complete_);
         return main_core::output_result<Component, ComponentContainer>(state_, math_output.solver_output, res_it);
     }
-    // template <typename Component, solver_output_type SolverOutputType, std::forward_iterator ResIt>
-    // ResIt output_result(MathOutput<SolverOutputType> const& math_output, ResIt res_it) const {
-    //     return this->output_result<Component>(math_output.solver_output, res_it);
-    // }
 
     template <solver_output_type SolverOutputType>
     void output_result(MathOutput<SolverOutputType> const& math_output, Dataset const& result_data, Idx pos = 0) {
