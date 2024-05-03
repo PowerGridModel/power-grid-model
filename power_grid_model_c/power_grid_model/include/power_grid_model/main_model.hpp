@@ -707,7 +707,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym>
     auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
         return MathOutput<SolverOutput<sym>>{
-            .solver_output = calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method)};
+            .solver_output = calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method),
+            .optimizer_output = {}};
     }
 
     // Single state estimation calculation, propagating the results to result_data
@@ -738,7 +739,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym>
     auto calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
         return MathOutput<ShortCircuitSolverOutput<sym>>{
-            .solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method)};
+            .solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method),
+            .optimizer_output = {}};
     }
 
     // Single short circuit calculation, propagating the results to result_data
