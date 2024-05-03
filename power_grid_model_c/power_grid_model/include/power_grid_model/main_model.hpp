@@ -665,13 +665,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <symmetry_tag sym>
     auto calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return MathOutput{.solver_output = optimizer::get_optimizer<MainModelState, ConstDataset>(
-                                               OptimizerType::no_optimization, OptimizerStrategy::any,
-                                               calculate_power_flow_<sym>(err_tol, max_iter),
-                                               [this](ConstDataset update_data) {
-                                                   this->update_component<permanent_update_t>(update_data);
-                                               })
-                                               ->optimize(state_, calculation_method)};
+        auto const result_pf =
+            optimizer::get_optimizer<MainModelState, ConstDataset>(
+                OptimizerType::no_optimization, OptimizerStrategy::any, calculate_power_flow_<sym>(err_tol, max_iter),
+                [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
+                ->optimize(state_, calculation_method);
+        if constexpr (std::is_same<decltype(result_pf), OptimizerOutput>::value) {
+            return result_pf;
+        }
+        return MathOutput{.solver_output = result_pf};
     }
 
     // Single load flow calculation, propagating the results to result_data
