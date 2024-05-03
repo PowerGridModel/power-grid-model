@@ -673,7 +673,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if constexpr (std::is_same<decltype(result_pf), OptimizerOutput>::value) {
             return result_pf;
         }
-        return MathOutput{.solver_output = result_pf};
+        return MathOutput<SolverOutput<sym>>{.solver_output = result_pf};
     }
 
     // Single load flow calculation, propagating the results to result_data
@@ -706,8 +706,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // Single state estimation calculation, returning math output results
     template <symmetry_tag sym>
     auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return MathOutput{.solver_output =
-                              calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method)};
+        return MathOutput<SolverOutput<sym>>{
+            .solver_output = calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method)};
     }
 
     // Single state estimation calculation, propagating the results to result_data
@@ -737,7 +737,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // Single short circuit calculation, returning short circuit math output results
     template <symmetry_tag sym>
     auto calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
-        return MathOutput{.solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method)};
+        return MathOutput<ShortCircuitSolverOutput<sym>>{
+            .solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method)};
     }
 
     // Single short circuit calculation, propagating the results to result_data
