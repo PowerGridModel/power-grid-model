@@ -64,7 +64,7 @@ template <symmetry_tag sym_type> struct FaultShortCircuitSolverOutput {
     ComplexValue<sym> i_fault{};
 };
 
-// appliance math output, always injection direction
+// appliance solver math output, always injection direction
 // s > 0, energy appliance -> node
 template <symmetry_tag sym_type> struct ApplianceSolverOutput {
     using sym = sym_type;
@@ -125,9 +125,8 @@ struct TransformerTapRegulatorCalcParam {
     DoubleComplex z_compensation{};
     IntS status{};
 };
-template <symmetry_tag sym_type> struct TransformerTapRegulatorOptimizerOutput {
-    using sym = sym_type;
 
+struct TransformerTapRegulatorOptimizerOutput {
     IntS tap_pos{na_IntS};
 };
 
@@ -270,7 +269,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
-    std::vector<TransformerTapRegulatorOptimizerOutput<sym>> transformer_tap_regulator;
+    std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
@@ -324,6 +323,18 @@ static_assert(!short_circuit_solver_output_type<SolverOutput<symmetric_t>>);
 static_assert(!short_circuit_solver_output_type<SolverOutput<asymmetric_t>>);
 static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<symmetric_t>>);
 static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
+
+struct OptimizerOutput {
+    std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
+};
+
+template <solver_output_type T> 
+struct MathOutput {
+    using SolverOutputType = T;
+
+    std::vector<SolverOutputType> solver_output;
+    OptimizerOutput optimizer_output;
+};
 
 // component indices at physical model side
 // from, to node indices for branches
