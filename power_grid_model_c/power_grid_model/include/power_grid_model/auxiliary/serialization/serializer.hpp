@@ -6,7 +6,7 @@
 
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
-#include "../dataset_handler.hpp"
+#include "../dataset.hpp"
 #include "../meta_data.hpp"
 #include "../meta_data_gen.hpp"
 
@@ -224,7 +224,7 @@ class Serializer {
     // destructor
     ~Serializer() = default;
 
-    Serializer(ConstDatasetHandler dataset_handler, SerializationFormat serialization_format)
+    Serializer(ConstDataset dataset_handler, SerializationFormat serialization_format)
         : serialization_format_{serialization_format},
           dataset_handler_{std::move(dataset_handler)},
           packer_{msgpack_buffer_} {
@@ -276,7 +276,7 @@ class Serializer {
   private:
     SerializationFormat serialization_format_{};
 
-    ConstDatasetHandler dataset_handler_;
+    ConstDataset dataset_handler_;
     std::vector<ScenarioBuffer> scenario_buffers_;   // list of scenarios, then list of components, omit empty
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
 
@@ -305,7 +305,7 @@ class Serializer {
         for (Idx component = 0; component != dataset_handler_.n_components(); ++component) {
             ComponentBuffer component_buffer{};
             ComponentInfo const& info = dataset_handler_.get_component_info(component);
-            ConstDatasetHandler::Buffer const& buffer = dataset_handler_.get_buffer(component);
+            ConstDataset::Buffer const& buffer = dataset_handler_.get_buffer(component);
             component_buffer.component = info.component;
             if (info.elements_per_scenario < 0) {
                 component_buffer.data =

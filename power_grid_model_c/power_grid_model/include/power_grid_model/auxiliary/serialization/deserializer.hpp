@@ -6,7 +6,7 @@
 
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
-#include "../dataset_handler.hpp"
+#include "../dataset.hpp"
 #include "../meta_data.hpp"
 #include "../meta_data_gen.hpp"
 
@@ -391,7 +391,7 @@ class Deserializer {
     Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data)
         : data_{msgpack_data.data()}, size_{msgpack_data.size()}, dataset_handler_{pre_parse()} {}
 
-    WritableDatasetHandler& get_dataset_info() { return dataset_handler_; }
+    WritableDataset& get_dataset_info() { return dataset_handler_; }
 
     void parse() {
         root_key_ = "data";
@@ -431,7 +431,7 @@ class Deserializer {
     //     for the actual data, per component (outer), per batch (inner)
     // if a component has no element for a certain scenario, that offset and size will be zero.
     std::vector<std::vector<ComponentByteMeta>> msg_data_offsets_;
-    WritableDatasetHandler dataset_handler_;
+    WritableDataset dataset_handler_;
 
     static msgpack::sbuffer json_to_msgpack(std::string_view json_string) {
         JsonSAXVisitor visitor{};
@@ -469,7 +469,7 @@ class Deserializer {
         msgpack::parse(data_, size_, offset_, visitor);
     }
 
-    WritableDatasetHandler pre_parse() {
+    WritableDataset pre_parse() {
         try {
             return pre_parse_impl();
         } catch (std::exception& e) {
@@ -477,7 +477,7 @@ class Deserializer {
         }
     }
 
-    WritableDatasetHandler pre_parse_impl() {
+    WritableDataset pre_parse_impl() {
         std::string_view dataset;
         Idx batch_size{};
         Idx global_map_size = parse_map_array<visit_map_t, move_forward>().size;
@@ -539,7 +539,7 @@ class Deserializer {
             throw SerializationError{"Key data not found!\n"};
         }
 
-        WritableDatasetHandler handler{is_batch_, batch_size, dataset};
+        WritableDataset handler{is_batch_, batch_size, dataset};
         count_data(handler, data_counts);
         parse_predefined_attributes(handler.dataset(), attributes);
         return handler;
@@ -614,7 +614,7 @@ class Deserializer {
         return count_per_scenario;
     }
 
-    void count_data(WritableDatasetHandler& handler, DataByteMeta const& data_counts) {
+    void count_data(WritableDataset& handler, DataByteMeta const& data_counts) {
         root_key_ = "data";
         // get set of all components
         std::set<MetaComponent const*> all_components;
@@ -634,7 +634,7 @@ class Deserializer {
         root_key_ = {};
     }
 
-    void count_component(WritableDatasetHandler& handler, DataByteMeta const& data_counts,
+    void count_component(WritableDataset& handler, DataByteMeta const& data_counts,
                          MetaComponent const& component) {
         component_key_ = component.name;
         Idx const batch_size = handler.batch_size();
