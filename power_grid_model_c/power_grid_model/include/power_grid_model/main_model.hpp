@@ -664,13 +664,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym>
-    auto calculate_power_flow(double err_tol, Idx max_iter,
-                                                        CalculationMethod calculation_method) {
-        return MathOutput { .solver_output =
-        optimizer::get_optimizer<MainModelState, ConstDataset>(
-                OptimizerType::no_optimization, OptimizerStrategy::any, calculate_power_flow_<sym>(err_tol, max_iter),
-                [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
-                ->optimize(state_, calculation_method)};
+    auto calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
+        return MathOutput{.solver_output = optimizer::get_optimizer<MainModelState, ConstDataset>(
+                                               OptimizerType::no_optimization, OptimizerStrategy::any,
+                                               calculate_power_flow_<sym>(err_tol, max_iter),
+                                               [this](ConstDataset update_data) {
+                                                   this->update_component<permanent_update_t>(update_data);
+                                               })
+                                               ->optimize(state_, calculation_method)};
     }
 
     // Single load flow calculation, propagating the results to result_data
@@ -702,11 +703,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single state estimation calculation, returning math output results
     template <symmetry_tag sym>
-    auto calculate_state_estimation(double err_tol, Idx max_iter,
-                                                              CalculationMethod calculation_method) {
-        return MathOutput{
-            .solver_output = calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method)
-        };
+    auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
+        return MathOutput{.solver_output =
+                              calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method)};
     }
 
     // Single state estimation calculation, propagating the results to result_data
@@ -735,9 +734,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single short circuit calculation, returning short circuit math output results
     template <symmetry_tag sym>
-    auto calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
-                                                                       CalculationMethod calculation_method) {
-        return MathOutput{.solver_output=calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method)};
+    auto calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
+        return MathOutput{.solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method)};
     }
 
     // Single short circuit calculation, propagating the results to result_data
@@ -768,39 +766,41 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, threading);
     }
 
-    //template <typename Component, solver_output_type SolverOutputType, std::forward_iterator ResIt>
-    //ResIt output_result(std::vector<SolverOutputType> const& math_output, ResIt res_it) const {
-    //    assert(construction_complete_);
-    //    return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
-    //}
-    
+    // template <typename Component, solver_output_type SolverOutputType, std::forward_iterator ResIt>
+    // ResIt output_result(std::vector<SolverOutputType> const& math_output, ResIt res_it) const {
+    //     assert(construction_complete_);
+    //     return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
+    // }
+
     template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
         assert(construction_complete_);
         return main_core::output_result<Component, ComponentContainer>(state_, math_output.solver_output, res_it);
     }
-    //template <typename Component, solver_output_type SolverOutputType, std::forward_iterator ResIt>
-    //ResIt output_result(MathOutput<SolverOutputType> const& math_output, ResIt res_it) const {
-    //    return this->output_result<Component>(math_output.solver_output, res_it);
-    //}
+    // template <typename Component, solver_output_type SolverOutputType, std::forward_iterator ResIt>
+    // ResIt output_result(MathOutput<SolverOutputType> const& math_output, ResIt res_it) const {
+    //     return this->output_result<Component>(math_output.solver_output, res_it);
+    // }
 
     template <solver_output_type SolverOutputType>
     void output_result(MathOutput<SolverOutputType> const& math_output, Dataset const& result_data, Idx pos = 0) {
         using OutputFunc = void (*)(MainModelImpl & x, MathOutput<SolverOutputType> const& math_output,
                                     MutableDataPointer const& data_ptr, Idx position);
 
-        static constexpr std::array<OutputFunc, n_types> get_result{
-            [](MainModelImpl& model, MathOutput<SolverOutputType> const& math_output_,
-               MutableDataPointer const& data_ptr, Idx position) {
-                auto const begin = data_ptr
-                                       .get_iterators<std::conditional_t<
-                                           steady_state_solver_output_type<SolverOutputType>,
+        static constexpr std::array<OutputFunc, n_types> get_result{[](MainModelImpl& model,
+                                                                       MathOutput<SolverOutputType> const& math_output_,
+                                                                       MutableDataPointer const& data_ptr,
+                                                                       Idx position) {
+            auto const begin =
+                data_ptr
+                    .get_iterators<
+                        std::conditional_t<steady_state_solver_output_type<SolverOutputType>,
                                            typename ComponentType::template OutputType<typename SolverOutputType::sym>,
                                            typename ComponentType::ShortCircuitOutputType>>(position)
-                                       .first;
-                model.output_result<ComponentType>(math_output_, begin);
-            }...};
+                    .first;
+            model.output_result<ComponentType>(math_output_, begin);
+        }...};
 
         Timer const t_output(calculation_info_, 3000, "Produce output");
         for (ComponentEntry const& entry : AllComponents::component_index_map) {

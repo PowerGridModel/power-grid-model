@@ -328,8 +328,7 @@ struct OptimizerOutput {
     std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
 };
 
-template <solver_output_type T> 
-struct MathOutput {
+template <solver_output_type T> struct MathOutput {
     using SolverOutputType = T;
 
     std::vector<SolverOutputType> solver_output;
