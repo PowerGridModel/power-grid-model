@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 //
 // SPDX-License-Identifier: MPL-2.0
-
+/*
 #pragma once
 
 // define dataset classes with void pointers
@@ -38,28 +38,6 @@ template <dataset_type_tag dataset_type_> class DataPointer {
   public:
     using dataset_type = dataset_type_;
 
-  private:
-    template <class T> using ptr_t = std::conditional_t<is_const_dataset_v<dataset_type>, T const*, T*>;
-
-  public:
-    DataPointer() : ptr_{nullptr}, indptr_{nullptr}, batch_size_{}, elements_per_scenario_{} {}
-
-    // single batch dataset
-    DataPointer(ptr_t<void> ptr, Idx single_length)
-        : ptr_{ptr}, indptr_{nullptr}, batch_size_{1}, elements_per_scenario_{single_length} {}
-
-    // fix batch length
-    DataPointer(ptr_t<void> ptr, Idx batch_size, Idx elements_per_scenario)
-        : ptr_{ptr}, indptr_{nullptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {}
-
-    // variable batches
-    DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size)
-        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{-1} {}
-
-    // copy to const constructor
-    DataPointer(ptr_t<void> ptr, Idx const* indptr, Idx batch_size, Idx elements_per_scenario)
-        : ptr_{ptr}, indptr_{indptr}, batch_size_{batch_size}, elements_per_scenario_{elements_per_scenario} {}
-
     template <class T> std::pair<ptr_t<T>, ptr_t<T>> get_iterators(Idx pos) const {
         assert(pos < batch_size_);
         auto* const ptr = reinterpret_cast<ptr_t<T>>(ptr_);
@@ -75,7 +53,6 @@ template <dataset_type_tag dataset_type_> class DataPointer {
         return std::make_pair(ptr + elements_per_scenario_ * pos, ptr + elements_per_scenario_ * (pos + 1));
     }
 
-    Idx batch_size() const { return batch_size_; }
 
     Idx elements_per_scenario(Idx pos) const {
         assert(pos >= 0);
@@ -97,13 +74,6 @@ template <dataset_type_tag dataset_type_> class DataPointer {
         return batch_size_ == 0 || elements_per_scenario_ == 0;
     }
 
-    // conversion to const iterator
-    explicit operator DataPointer<const_dataset_t>() const
-        requires(!is_const_dataset_v<dataset_type>)
-    {
-        return DataPointer<const_dataset_t>{ptr_, indptr_, batch_size_, elements_per_scenario_};
-    }
-
   private:
     ptr_t<void> ptr_;
     Idx const* indptr_;
@@ -111,10 +81,5 @@ template <dataset_type_tag dataset_type_> class DataPointer {
     Idx elements_per_scenario_; // number of data points per batch, -1 for variable batches
 };
 
-using MutableDataPointer = DataPointer<mutable_dataset_t>;
-using ConstDataPointer = DataPointer<const_dataset_t>;
-
-using Dataset = std::map<std::string, MutableDataPointer>;
-using ConstDataset = std::map<std::string, ConstDataPointer>;
-
 } // namespace power_grid_model
+*/

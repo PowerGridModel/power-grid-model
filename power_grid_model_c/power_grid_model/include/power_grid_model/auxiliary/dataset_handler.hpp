@@ -15,15 +15,17 @@
 #include <span>
 #include <string_view>
 
-namespace power_grid_model::meta_data {
+namespace power_grid_model {
 
-template <dataset_handler_tag T>
+namespace meta_data {
+
+template <dataset_type_tag T>
 constexpr bool is_data_mutable_v = std::same_as<T, mutable_dataset_t> || std::same_as<T, writable_dataset_t>;
-template <dataset_handler_tag T> constexpr bool is_indptr_mutable_v = std::same_as<T, writable_dataset_t>;
+template <dataset_type_tag T> constexpr bool is_indptr_mutable_v = std::same_as<T, writable_dataset_t>;
 
-static_assert(dataset_handler_tag<const_dataset_t>);
-static_assert(dataset_handler_tag<mutable_dataset_t>);
-static_assert(dataset_handler_tag<writable_dataset_t>);
+static_assert(dataset_type_tag<const_dataset_t>);
+static_assert(dataset_type_tag<mutable_dataset_t>);
+static_assert(dataset_type_tag<writable_dataset_t>);
 static_assert(!is_data_mutable_v<const_dataset_t>);
 static_assert(is_data_mutable_v<mutable_dataset_t>);
 static_assert(is_data_mutable_v<writable_dataset_t>);
@@ -45,15 +47,17 @@ struct DatasetInfo {
     std::vector<ComponentInfo> component_info;
 };
 
-template <dataset_handler_tag dataset_handler_type_> class DatasetHandler {
+template <dataset_type_tag dataset_type_> class Dataset {
     struct immutable_t {};
     struct mutable_t {};
 
   public:
-    using dataset_handler_type = dataset_handler_type_;
+    using dataset_type = dataset_type_;
+    using Data = std::conditional_t<is_data_mutable_v<dataset_type>, void, void const>;
+    using Indptr = std::conditional_t<is_indptr_mutable_v<dataset_type>, Idx, Idx const>;
 
-    using Data = std::conditional_t<is_data_mutable_v<dataset_handler_type>, void, void const>;
-    using Indptr = std::conditional_t<is_indptr_mutable_v<dataset_handler_type>, Idx, Idx const>;
+    template <class StructType>
+    using DataStruct = std::conditional_t<is_data_mutable_v<dataset_type>, StructType, StructType const>;
 
     struct Buffer {
         Data* data;
@@ -61,7 +65,7 @@ template <dataset_handler_tag dataset_handler_type_> class DatasetHandler {
         std::span<Indptr> indptr;
     };
 
-    DatasetHandler(bool is_batch, Idx batch_size, std::string_view dataset)
+    Dataset(bool is_batch, Idx batch_size, std::string_view dataset)
         : dataset_info_{.is_batch = is_batch,
                         .batch_size = batch_size,
                         .dataset = &meta_data.get_dataset(dataset),
@@ -72,41 +76,13 @@ template <dataset_handler_tag dataset_handler_type_> class DatasetHandler {
     }
 
     // implicit conversion constructor to const
-    template <dataset_handler_tag other_dataset_handler_type>
-        requires(is_data_mutable_v<other_dataset_handler_type> && !is_data_mutable_v<dataset_handler_type>)
-    DatasetHandler(DatasetHandler<other_dataset_handler_type> const& other) : dataset_info_{other.get_description()} {
+    template <dataset_type_tag other_dataset_type>
+        requires(is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_handler_type>)
+    Dataset(Dataset<other_dataset_type> const& other) : dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
             buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
         }
-    }
-
-    template <dataset_type_tag dataset_type>
-        requires(is_const_dataset_v<dataset_type> || is_data_mutable_v<dataset_handler_type>)
-    std::map<std::string, DataPointer<dataset_type>> export_dataset(Idx scenario = -1) const {
-        if (!is_batch() && scenario > 0) {
-            throw DatasetError{"Cannot export a single dataset with multiple scenarios!\n"};
-        }
-        std::map<std::string, DataPointer<dataset_type>> dataset;
-        for (Idx i{}; i != n_components(); ++i) {
-            ComponentInfo const& component = get_component_info(i);
-            Buffer const& buffer = get_buffer(i);
-            if (scenario < 0) {
-                dataset[component.component->name] = DataPointer<dataset_type>{
-                    buffer.data, buffer.indptr.data(), batch_size(), component.elements_per_scenario};
-            } else {
-                if (component.elements_per_scenario < 0) {
-                    dataset[component.component->name] = DataPointer<dataset_type>{
-                        component.component->advance_ptr(buffer.data, buffer.indptr[scenario]),
-                        buffer.indptr[scenario + 1] - buffer.indptr[scenario]};
-                } else {
-                    dataset[component.component->name] = DataPointer<dataset_type>{
-                        component.component->advance_ptr(buffer.data, component.elements_per_scenario * scenario),
-                        component.elements_per_scenario};
-                }
-            }
-        }
-        return dataset;
     }
 
     bool is_batch() const { return dataset_info_.is_batch; }
@@ -212,8 +188,10 @@ template <dataset_handler_tag dataset_handler_type_> class DatasetHandler {
     }
 };
 
-using ConstDatasetHandler = DatasetHandler<const_dataset_t>;
-using MutableDatasetHandler = DatasetHandler<mutable_dataset_t>;
-using WritableDatasetHandler = DatasetHandler<writable_dataset_t>;
+} // namespace meta_data
 
-} // namespace power_grid_model::meta_data
+using ConstDataset = meta_data::Dataset<const_dataset_t>;
+using MutableDataset = meta_data::Dataset<mutable_dataset_t>;
+using WritableDataset = meta_data::Dataset<writable_dataset_t>;
+
+} // namespace power_grid_model

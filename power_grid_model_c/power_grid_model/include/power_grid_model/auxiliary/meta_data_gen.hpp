@@ -22,8 +22,6 @@
 // generate of meta data
 namespace power_grid_model::meta_data {
 
-namespace meta_data_gen {
-
 // list of all dataset names
 template <class T> struct input_getter_s {
     using type = typename T::InputType;
@@ -40,6 +38,8 @@ template <class T> struct asym_output_getter_s {
 template <class T> struct sc_output_getter_s {
     using type = typename T::ShortCircuitOutputType;
 };
+
+namespace meta_data_gen {
 
 // generate meta data
 constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
