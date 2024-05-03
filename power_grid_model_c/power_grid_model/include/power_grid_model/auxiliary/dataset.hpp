@@ -216,8 +216,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
 } // namespace meta_data
 
-using ConstDataset = meta_data::Dataset<const_dataset_t>;
-using MutableDataset = meta_data::Dataset<mutable_dataset_t>;
-using WritableDataset = meta_data::Dataset<writable_dataset_t>;
+template <dataset_type_tag dataset_type> using Dataset = meta_data::Dataset<dataset_type>;
+using ConstDataset = Dataset<const_dataset_t>;
+using MutableDataset = Dataset<mutable_dataset_t>;
+using WritableDataset = Dataset<writable_dataset_t>;
 
 } // namespace power_grid_model
