@@ -151,7 +151,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
               class StructType = DataStruct<typename type_getter<ComponentType>::type>>
     std::span<StructType> get_buffer_span(Idx scenario = -1) const {
         if (!is_batch() && scenario > 0) {
-            throw DatasetError{"Cannot export a single dataset for scenario > 1\n"};
+            throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
         }
         Idx const idx = find_component(ComponentType::name, false);
         // return empty span if the component does not exist
