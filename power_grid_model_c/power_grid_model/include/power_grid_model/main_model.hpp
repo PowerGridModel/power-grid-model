@@ -43,6 +43,27 @@
 
 namespace power_grid_model {
 
+// solver output type to output type getter meta function
+
+template<solver_output_type SolverOutputType>
+class output_type_getter;
+template<short_circuit_solver_output_type SolverOutputType>
+class output_type_getter<SolverOutputType> {
+    template<class T>
+    using type = meta_data::sc_output_getter_s<T>;
+};
+template<>
+class output_type_getter<SolverOutput<symmetric_t>> {
+    template<class T>
+    using type = meta_data::sym_output_getter_s<T>;
+};
+template<>
+class output_type_getter<SolverOutput<asymmetric_t>> {
+    template<class T>
+    using type = meta_data::asym_output_getter_s<T>;
+};
+
+
 // main model implementation template
 template <class T, class U> class MainModelImpl;
 
@@ -56,7 +77,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using MathState = main_core::MathState;
 
     template <class CT>
-    static constexpr size_t component_position_v = container_impl::get_cls_pos_v<CT, ComponentType...>;
+    static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CT, ComponentType...>;
 
     // trait on type list
     // struct of entry
@@ -138,7 +159,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
-        constexpr auto comp_index = component_position_v<CompType>;
+        constexpr auto comp_index = index_of_component<CompType>;
 
         assert(construction_complete_);
         assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
@@ -174,7 +195,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(update_data.get_description().dataset->name == std::string_view("update"));
         auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
             update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
-                                            sequence_idx_map[component_position_v<CT>]);
+                                            sequence_idx_map[index_of_component<CT>]);
         };
         run_functor_with_all_types_return_void(update_func);
     }
@@ -185,7 +206,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
-        constexpr auto component_index = component_position_v<CompType>;
+        constexpr auto component_index = index_of_component<CompType>;
 
         auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
         auto const& component_sequence = std::get<component_index>(sequence_idx);
@@ -626,7 +647,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // Single load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
     void calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                              Dataset const& result_data, Idx pos = 0) {
+                              MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const solver_output = calculate_power_flow<sym>(err_tol, max_iter, calculation_method);
         if (pos != ignore_output) {
@@ -637,10 +658,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // Batch load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
     BatchParameter calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                        Dataset const& result_data, ConstDataset const& update_data,
+                                        MutableDataset const& result_data, ConstDataset const& update_data,
                                         Idx threading = -1) {
         return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [err_tol, max_iter, calculation_method](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
                 auto const max_iter_ = pos != ignore_output ? max_iter : 1;
 
@@ -659,7 +680,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // Single state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
     void calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                    Dataset const& result_data, Idx pos = 0) {
+                                    MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const solver_output = calculate_state_estimation<sym>(err_tol, max_iter, calculation_method);
         output_result(solver_output, result_data, pos);
@@ -668,10 +689,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // Batch state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
     BatchParameter calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                              Dataset const& result_data, ConstDataset const& update_data,
+                                              MutableDataset const& result_data, ConstDataset const& update_data,
                                               Idx threading = -1) {
         return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [err_tol, max_iter, calculation_method](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
                 auto const max_iter_ = pos != ignore_output ? max_iter : 1;
 
@@ -689,7 +710,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single short circuit calculation, propagating the results to result_data
     void calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method,
-                                 Dataset const& result_data, Idx pos = 0) {
+                                 MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         if (std::all_of(state_.components.template citer<Fault>().begin(),
                         state_.components.template citer<Fault>().end(),
@@ -704,10 +725,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Batch short circuit calculation, propagating the results to result_data
     BatchParameter calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
-                                           CalculationMethod calculation_method, Dataset const& result_data,
+                                           CalculationMethod calculation_method, MutableDataset const& result_data,
                                            ConstDataset const& update_data, Idx threading = -1) {
         return batch_calculation_(
-            [voltage_scaling, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [voltage_scaling, calculation_method](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 if (pos != ignore_output) {
                     model.calculate_short_circuit(voltage_scaling, calculation_method, target_data, pos);
                 }
@@ -722,32 +743,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <solver_output_type SolverOutputType>
-    void output_result(std::vector<SolverOutputType> const& solver_output, Dataset const& result_data, Idx pos = 0) {
-        using OutputFunc = void (*)(MainModelImpl& x, std::vector<SolverOutputType> const& solver_output,
-                                    MutableDataPointer const& data_ptr, Idx position);
-
-        static constexpr std::array<OutputFunc, n_types> get_result{
-            [](MainModelImpl& model, std::vector<SolverOutputType> const& solver_output_,
-               MutableDataPointer const& data_ptr, Idx position) {
-                auto const begin = data_ptr
-                                       .get_iterators<std::conditional_t<
-                                           steady_state_solver_output_type<SolverOutputType>,
-                                           typename ComponentType::template OutputType<typename SolverOutputType::sym>,
-                                           typename ComponentType::ShortCircuitOutputType>>(position)
-                                       .first;
-                model.output_result<ComponentType>(solver_output_, begin);
-            }...};
-
+    void output_result(std::vector<SolverOutputType> const& solver_output, MutableDataset const& result_data,
+                       Idx pos = 0) {
+        auto const output_func = [this, &solver_output, &result_data, pos]<typename CT>() {
+            // output
+            auto const begin = result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos).begin();
+            output_result<CT>(solver_output, begin);
+        };
         Timer const t_output(calculation_info_, 3000, "Produce output");
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            auto const found = result_data.find(entry.name);
-            // skip if component does not exist
-            if (found == result_data.cend()) {
-                continue;
-            }
-            // update
-            get_result[entry.index](*this, solver_output, found->second, pos);
-        }
+        run_functor_with_all_types_return_void(output_func);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
@@ -1206,9 +1210,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             // Check the branch and shunt indices
             constexpr auto branch_param_in_seq_map =
-                std::array{AllComponents::template index_of<Line>(), AllComponents::template index_of<Link>(),
-                           AllComponents::template index_of<Transformer>()};
-            constexpr auto shunt_param_in_seq_map = std::array{AllComponents::template index_of<Shunt>()};
+                std::array{index_of_component<Line>, index_of_component<Link>, index_of_component<Transformer>};
+            constexpr auto shunt_param_in_seq_map = std::array{index_of_component<Shunt>};
 
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 // construct from existing Y_bus structure if possible

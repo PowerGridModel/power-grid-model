@@ -30,7 +30,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     return call_with_catch(
         handle,
         [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, &input_dataset, 0};
+            return new PGM_PowerGridModel{system_frequency, *input_dataset, 0};
         },
         PGM_regular_error);
 }
@@ -38,10 +38,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) {
     call_with_catch(
-        handle,
-        [model, update_dataset] {
-            model->update_component<MainModel::permanent_update_t>(&update_dataset);
-        },
+        handle, [model, update_dataset] { model->update_component<MainModel::permanent_update_t>(*update_dataset); },
         PGM_regular_error);
 }
 
@@ -70,9 +67,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         return;
     }
 
-    Dataset const exported_output_dataset = output_dataset->export_dataset<mutable_dataset_t>();
-    auto const exported_update_dataset =
-        batch_dataset != nullptr ? batch_dataset->export_dataset<const_dataset_t>() : ConstDataset{};
+    ConstDataset const& exported_update_dataset =
+        batch_dataset != nullptr ? *batch_dataset : PGM_ConstDataset{true, "update", 0};
 
     // call calculation
     try {
@@ -80,23 +76,23 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         switch (opt->calculation_type) {
         case PGM_power_flow:
             if (opt->symmetric != 0) {
-                handle->batch_parameter = model->calculate_power_flow<symmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
-                    opt->threading);
+                handle->batch_parameter =
+                    model->calculate_power_flow<symmetric_t>(opt->err_tol, opt->max_iter, calculation_method,
+                                                             *output_dataset, exported_update_dataset, opt->threading);
             } else {
-                handle->batch_parameter = model->calculate_power_flow<asymmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
-                    opt->threading);
+                handle->batch_parameter =
+                    model->calculate_power_flow<asymmetric_t>(opt->err_tol, opt->max_iter, calculation_method,
+                                                              *output_dataset, exported_update_dataset, opt->threading);
             }
             break;
         case PGM_state_estimation:
             if (opt->symmetric != 0) {
                 handle->batch_parameter = model->calculate_state_estimation<symmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
+                    opt->err_tol, opt->max_iter, calculation_method, *output_dataset, exported_update_dataset,
                     opt->threading);
             } else {
                 handle->batch_parameter = model->calculate_state_estimation<asymmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
+                    opt->err_tol, opt->max_iter, calculation_method, *output_dataset, exported_update_dataset,
                     opt->threading);
             }
             break;
@@ -104,8 +100,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             auto const short_circuit_voltage_scaling =
                 static_cast<ShortCircuitVoltageScaling>(opt->short_circuit_voltage_scaling);
             handle->batch_parameter =
-                model->calculate_short_circuit(short_circuit_voltage_scaling, calculation_method,
-                                               exported_output_dataset, exported_update_dataset, opt->threading);
+                model->calculate_short_circuit(short_circuit_voltage_scaling, calculation_method, *output_dataset,
+                                               exported_update_dataset, opt->threading);
             break;
         }
         default:
