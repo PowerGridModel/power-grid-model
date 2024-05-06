@@ -407,7 +407,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            calculation_fn(*this, {}, ignore_output);
+            calculation_fn(*this, {false, 1, "sym_output"}, ignore_output);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         } catch (const NotObservableError&) {
@@ -590,7 +590,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return true;
         }
 
-        auto const is_component_update_independent = []<typename CT>(ConstDataset const& update_data) {
+        auto const is_component_update_independent = []<typename CT>(ConstDataset const& update_data) -> bool {
             // get span of all the update data
             auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
@@ -622,8 +622,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         // check all components
-        return std::ranges::all_of(
-            run_functor_with_all_types_return_array(is_component_update_independent, update_data));
+        auto const update_independent =
+            run_functor_with_all_types_return_array(is_component_update_independent, update_data);
+        return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
     template <symmetry_tag sym>
@@ -740,7 +741,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const output_func = [this, &solver_output, &result_data, pos]<typename CT>() {
             // output
             auto const begin =
-                result_data.get_buffer_span<template output_type_getter<SolverOutputType>::type, CT>(pos).begin();
+                result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos).begin();
             this->output_result<CT>(solver_output, begin);
         };
         Timer const t_output(calculation_info_, 3000, "Produce output");

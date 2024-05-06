@@ -703,10 +703,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         static_assert(sizeof...(TransformerTypes) == std::tuple_size_v<UpdateBuffer>);
 
         ConstDataset update_dataset{false, 1, "update"};
-        auto const update_component = [this, &update_data, &update_dataset]<transformer_c TransformerType>() {
+        auto const update_component = [&update_data, &update_dataset]<transformer_c TransformerType>() {
             auto const& component_update = get<TransformerType>(update_data);
             if (!component_update.empty()) {
-                add_buffer_to_update_dataset<TransformerType>(component_update, TransformerType::name, update_dataset);
+                add_buffer_to_update_dataset<TransformerType>(update_data, TransformerType::name, update_dataset);
             }
         };
         (update_component.template operator()<TransformerTypes>(), ...);
