@@ -68,7 +68,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     }
 
     ConstDataset const& exported_update_dataset =
-        batch_dataset != nullptr ? *batch_dataset : PGM_ConstDataset{true, "update", 0};
+        batch_dataset != nullptr ? *batch_dataset : PGM_ConstDataset{true, 0, "update"};
 
     // call calculation
     try {

@@ -45,24 +45,16 @@ namespace power_grid_model {
 
 // solver output type to output type getter meta function
 
-template<solver_output_type SolverOutputType>
-class output_type_getter;
-template<short_circuit_solver_output_type SolverOutputType>
-class output_type_getter<SolverOutputType> {
-    template<class T>
-    using type = meta_data::sc_output_getter_s<T>;
+template <solver_output_type SolverOutputType> struct output_type_getter;
+template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
+    template <class T> using type = meta_data::sc_output_getter_s<T>;
 };
-template<>
-class output_type_getter<SolverOutput<symmetric_t>> {
-    template<class T>
-    using type = meta_data::sym_output_getter_s<T>;
+template <> struct output_type_getter<SolverOutput<symmetric_t>> {
+    template <class T> using type = meta_data::sym_output_getter_s<T>;
 };
-template<>
-class output_type_getter<SolverOutput<asymmetric_t>> {
-    template<class T>
-    using type = meta_data::asym_output_getter_s<T>;
+template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
+    template <class T> using type = meta_data::asym_output_getter_s<T>;
 };
-
 
 // main model implementation template
 template <class T, class U> class MainModelImpl;
@@ -115,7 +107,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         : system_frequency_{system_frequency} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         auto const add_func = [this, pos, &input_data]<typename CT>() {
-            add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
         };
         run_functor_with_all_types_return_void(add_func);
         set_construction_complete();
@@ -141,7 +133,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // helper function to add vectors of components
     template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
-        add_component<CompType>(components.cbegin(), components.cend());
+        add_component<CompType>(components.begin(), components.end());
     }
 
     // template to construct components
@@ -184,7 +176,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void update_component(std::span<typename CompType::UpdateType const> components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
-            update_component<CompType, CacheType>(components.cbegin(), components.cend(), sequence_idx);
+            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
 
@@ -194,8 +186,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
         auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
-                                            sequence_idx_map[index_of_component<CT>]);
+            this->update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
+                                                  sequence_idx_map[index_of_component<CT>]);
         };
         run_functor_with_all_types_return_void(update_func);
     }
@@ -283,8 +275,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const get_seq_idx_func = [&state = this->state_, &update_data,
                                        scenario_idx]<typename CT>() -> std::vector<Idx2D> {
             auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
-            auto const it_begin = buffer_span.cbegin();
-            auto const it_end = buffer_span.cend();
+            auto const it_begin = buffer_span.begin();
+            auto const it_end = buffer_span.end();
             return main_core::get_component_sequence<CT>(state, it_begin, it_end);
         };
         return run_functor_with_all_types_return_array(get_seq_idx_func);
@@ -615,13 +607,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
-            auto const it_first_begin = all_spans[0].cbegin();
+            auto const it_first_begin = all_spans[0].begin();
             // check the subsequent scenarios
             // only return true if all scenarios match the ids of the first batch
             return std::all_of(IdxCount{1}, IdxCount{update_data.batch_size()},
                                [it_first_begin, &all_spans](Idx scenario) {
-                                   auto const it_begin = all_spans[scenario].cbegin();
-                                   auto const it_end = all_spans[scenario].cend();
+                                   auto const it_begin = all_spans[scenario].begin();
+                                   auto const it_end = all_spans[scenario].end();
                                    return std::equal(it_begin, it_end, it_first_begin,
                                                      [](UpdateType<CT> const& obj, UpdateType<CT> const& first) {
                                                          return obj.id == first.id;
@@ -747,8 +739,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) {
         auto const output_func = [this, &solver_output, &result_data, pos]<typename CT>() {
             // output
-            auto const begin = result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos).begin();
-            output_result<CT>(solver_output, begin);
+            auto const begin =
+                result_data.get_buffer_span<template output_type_getter<SolverOutputType>::type, CT>(pos).begin();
+            this->output_result<CT>(solver_output, begin);
         };
         Timer const t_output(calculation_info_, 3000, "Produce output");
         run_functor_with_all_types_return_void(output_func);
