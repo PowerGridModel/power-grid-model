@@ -22,23 +22,6 @@
 // generate of meta data
 namespace power_grid_model::meta_data {
 
-// list of all dataset names
-template <class T> struct input_getter_s {
-    using type = typename T::InputType;
-};
-template <class T> struct update_getter_s {
-    using type = typename T::UpdateType;
-};
-template <class T> struct sym_output_getter_s {
-    using type = typename T::template OutputType<symmetric_t>;
-};
-template <class T> struct asym_output_getter_s {
-    using type = typename T::template OutputType<asymmetric_t>;
-};
-template <class T> struct sc_output_getter_s {
-    using type = typename T::ShortCircuitOutputType;
-};
-
 namespace meta_data_gen {
 
 // generate meta data
