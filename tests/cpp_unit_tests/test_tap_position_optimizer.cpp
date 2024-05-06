@@ -758,7 +758,7 @@ TEST_CASE("Test Tap position optimizer") {
                 auto const tap_max = static_cast<double>(state_b.tap_max);
                 auto const tap_min = static_cast<double>(state_b.tap_min);
                 auto const tap_pos = static_cast<double>(state_b.tap_pos);
-                return static_cast<DoubleComplex>((state_b.tap_max - tap_pos) / (tap_max - tap_min));
+                return static_cast<DoubleComplex>((tap_max - tap_pos) / (tap_max - tap_min));
             };
 
             double u_set = 0.5;
