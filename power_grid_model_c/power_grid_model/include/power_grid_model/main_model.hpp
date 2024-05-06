@@ -418,8 +418,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-    auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data, ConstDataset const& update_data,
-                                std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
+    auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
+                                ConstDataset const& update_data, std::vector<std::string>& exceptions,
+                                std::vector<CalculationInfo>& infos) {
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
@@ -577,45 +578,34 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         // check all components
-        return std::ranges::all_of(AllComponents::component_index_map, [&update_data](ComponentEntry const& entry) {
-            static constexpr std::array check_component_update_independent{
-                &is_component_update_independent<ComponentType>...};
-            auto const found = update_data.find(entry.name);
-            // return true if this component update does not exist
-            if (found == update_data.cend()) {
-                return true;
-            }
-            // check for this component update
-            return check_component_update_independent[entry.index](found->second);
-        });
+        return std::ranges::all_of();
     }
 
     template <class CT> static bool is_component_update_independent(ConstDataset const& update_data) {
         // get span of all the update data
-        auto const update_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>();
-        // get raw buffer
-        ConstDataset::Buffer const raw_buffer = update_data.get_buffer(CT::namme);
+        auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
         // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const elements_per_scenario = static_cast<Idx>(update_span_0.size());
-        for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
-            if (elements_per_scenario != component_update.elements_per_scenario(batch)) {
+        Idx const elements_per_scenario = static_cast<Idx>(all_spans[0].size());
+        for (Idx scenario = 1; scenario != update_data.batch_size(); ++scenario) {
+            if (elements_per_scenario != static_cast<Idx>(all_spans[scenario].size())) {
                 return false;
             }
         }
-
-        // Remember the begin iterator of the first batch, then loop over the remaining batches and check the ids
-        UpdateType<Component> const* it_first_begin =
-            component_update.template get_iterators<UpdateType<Component>>(0).first;
-        // check the subsequent batches
-        // only return true if all batches match the ids of the first batch
-        return std::all_of(
-            IdxCount{1}, IdxCount{component_update.batch_size()}, [it_first_begin, &component_update](Idx batch) {
-                auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType<Component>>(batch);
-                return std::equal(it_begin, it_end, it_first_begin,
-                                  [](UpdateType<Component> const& obj, UpdateType<Component> const& first) {
-                                      return obj.id == first.id;
-                                  });
-            });
+        // return true if all scenarios have length zero
+        if (elements_per_scenario == 0) {
+            return true;
+        }
+        // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the ids
+        auto const it_first_begin = all_spans[0].cbegin();
+        // check the subsequent scenarios
+        // only return true if all scenarios match the ids of the first batch
+        return std::all_of(IdxCount{1}, IdxCount{update_data.batch_size()}, [it_first_begin, &all_spans](Idx scenario) {
+            auto const it_begin = all_spans[scenario].cbegin();
+            auto const it_end = all_spans[scenario].cend();
+            return std::equal(
+                it_begin, it_end, it_first_begin,
+                [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
+        });
     }
 
     template <symmetry_tag sym>
