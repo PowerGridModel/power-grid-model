@@ -814,6 +814,64 @@ TEST_CASE("Test Tap position optimizer") {
             regulator_b.update({.id = 4, .u_set = u_set, .u_band = u_band});
         }
 
+        SUBCASE("line drop compensation") {
+            auto const i_pu_func = [&state_b](IntS tap_pos) {
+                REQUIRE(state_b.tap_min != state_b.tap_max);
+                const auto value = (static_cast<double>(tap_pos) - static_cast<double>(state_b.tap_min)) /
+                                   (static_cast<double>(state_b.tap_max) - static_cast<double>(state_b.tap_min));
+                return DoubleComplex{value, value};
+            };
+
+            double u_set = 0.5;
+            double u_band = 0.76;
+
+            state_b.rank = 0;
+            state_b.i_pu = [&state_b, &regulator_b, &i_pu_func](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+                return i_pu_func(state_b.tap_pos);
+            };
+
+            state_b.tap_min = 1;
+            state_b.tap_max = 5;
+            state_b.tap_pos = 3;
+
+            double line_drop_compensation_r = 0.0;
+            double line_drop_compensation_x = 0.0;
+
+            SUBCASE("no line drop compensation") { check_b = check_exact_per_strategy(3, 1, 5); }
+            SUBCASE("resistance only") {
+                line_drop_compensation_r = 1.0;
+                check_b = check_exact_per_strategy(3, 2, 4);
+            }
+            SUBCASE("positive reactance only") {
+                line_drop_compensation_x = 1.0;
+                check_b = check_exact_per_strategy(3, 4, 2);
+            }
+            SUBCASE("negative reactance only") {
+                line_drop_compensation_x = -1.0;
+                check_b = check_exact_per_strategy(3, 2, 4);
+            }
+            SUBCASE("resistance + positive reactance") {
+                line_drop_compensation_r = 1.0;
+                line_drop_compensation_x = 1.0;
+                check_b = check_exact_per_strategy(3, 1, 5);
+            }
+            SUBCASE("resistance + negative reactance") {
+                line_drop_compensation_r = 1.0;
+                line_drop_compensation_x = -1.0;
+                check_b = check_exact(3);
+            }
+
+            REQUIRE(cabs(i_pu_func(state_b.tap_min)) == doctest::Approx(0.0));
+            REQUIRE(i_pu_func(state_b.tap_max).real() == doctest::Approx(1.0));
+            REQUIRE(i_pu_func(state_b.tap_max).imag() == doctest::Approx(1.0));
+            regulator_b.update({.id = 4,
+                                .u_set = u_set,
+                                .u_band = u_band,
+                                .line_drop_compensation_r = line_drop_compensation_r,
+                                .line_drop_compensation_x = line_drop_compensation_x});
+        }
+
         auto const initial_a{transformer_a.tap_pos()};
         auto const initial_b{transformer_b.tap_pos()};
 
