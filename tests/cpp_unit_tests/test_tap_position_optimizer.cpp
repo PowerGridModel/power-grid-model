@@ -530,6 +530,33 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
         return Impl<typename State::ComponentContainer::gettable_types>{}(state);
     }
 };
+
+using TapPositionCheckFunc = std::function<void(IntS, OptimizerStrategy)>;
+
+auto check_exact(IntS tap_pos) -> TapPositionCheckFunc {
+    return [tap_pos](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == tap_pos); };
+};
+auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_min, IntS tap_pos_max) -> TapPositionCheckFunc {
+    return [tap_pos_any, tap_pos_min, tap_pos_max](IntS value, OptimizerStrategy strategy) {
+        using enum OptimizerStrategy;
+
+        switch (strategy) {
+        case any:
+            CHECK(value == tap_pos_any);
+            break;
+        case local_maximum:
+        case global_maximum:
+            CHECK(value == tap_pos_max);
+            break;
+        case local_minimum:
+        case global_minimum:
+            CHECK(value == tap_pos_min);
+            break;
+        default:
+            FAIL("Unreachable");
+        }
+    };
+}
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
 
@@ -590,32 +617,6 @@ TEST_CASE("Test Tap position optimizer") {
     }
 
     SUBCASE("tap position in range") {
-        auto const check_exact = [](IntS tap_pos) -> std::function<void(IntS, OptimizerStrategy)> {
-            return [=](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == tap_pos); };
-        };
-        auto const check_exact_per_strategy = [](IntS tap_pos_any, IntS tap_pos_min,
-                                                 IntS tap_pos_max) -> std::function<void(IntS, OptimizerStrategy)> {
-            return [=](IntS value, OptimizerStrategy strategy) {
-                using enum OptimizerStrategy;
-
-                switch (strategy) {
-                case any:
-                    CHECK(value == tap_pos_any);
-                    break;
-                case local_maximum:
-                case global_maximum:
-                    CHECK(value == tap_pos_max);
-                    break;
-                case local_minimum:
-                case global_minimum:
-                    CHECK(value == tap_pos_min);
-                    break;
-                default:
-                    FAIL("Unreachable");
-                }
-            };
-        };
-
         main_core::emplace_component<test::MockTransformer>(
             state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
         main_core::emplace_component<test::MockTransformer>(

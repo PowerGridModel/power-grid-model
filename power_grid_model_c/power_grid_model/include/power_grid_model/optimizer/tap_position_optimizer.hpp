@@ -532,10 +532,9 @@ struct VoltageBand {
 
         auto const lower = band.u_set - 0.5 * band.u_band;
         auto const upper = band.u_set + 0.5 * band.u_band;
-        auto const lower_cmp = voltage <=> lower;
-        auto const upper_cmp = voltage <=> upper;
 
-        if (lower_cmp == upper_cmp) {
+        auto const lower_cmp = voltage <=> lower;
+        if (auto const upper_cmp = voltage <=> upper; lower_cmp == upper_cmp) {
             return lower_cmp;
         }
         return std::partial_ordering::equivalent;
