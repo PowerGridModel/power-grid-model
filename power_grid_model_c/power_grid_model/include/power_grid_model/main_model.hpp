@@ -376,20 +376,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = -1) {
-        // if the update batch is one empty map without any component
+        // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
-        // NOTE: if the map is not empty but the datasets inside are empty
-        //     that will be considered as a zero batch_size
         if (update_data.empty()) {
             calculation_fn(*this, result_data, 0);
             return BatchParameter{};
         }
 
-        // get batch size (can't be empty; see previous check)
-        Idx const n_scenarios = update_data.cbegin()->second.batch_size();
-        // assert if all component types have the same number of batches
-        assert(std::all_of(update_data.cbegin(), update_data.cend(),
-                           [n_scenarios](auto const& x) { return x.second.batch_size() == n_scenarios; }));
+        // get batch size
+        Idx const n_scenarios = update_data.batch_size();
 
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent and but not topology cachable
@@ -422,8 +417,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
-    auto sub_batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data,
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+    auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data, ConstDataset const& update_data,
                                 std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
         // const ref of current instance
         MainModelImpl const& base_model = *this;
@@ -576,6 +571,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class Component> using UpdateType = typename Component::UpdateType;
 
     static bool is_update_independent(ConstDataset const& update_data) {
+        // If the batch size is (0 or) 1, then the update data for this component is 'independent'
+        if (update_data.batch_size() <= 1) {
+            return true;
+        }
+
         // check all components
         return std::ranges::all_of(AllComponents::component_index_map, [&update_data](ComponentEntry const& entry) {
             static constexpr std::array check_component_update_independent{
@@ -590,14 +590,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         });
     }
 
-    template <class Component> static bool is_component_update_independent(ConstDataPointer const& component_update) {
-        // If the batch size is (0 or) 1, then the update data for this component is 'independent'
-        if (component_update.batch_size() <= 1) {
-            return true;
-        }
-
+    template <class CT> static bool is_component_update_independent(ConstDataset const& update_data) {
+        // get span 0 of the update data
+        auto const update_span_0 = update_data.get_buffer_span<meta_data::update_getter_s, CT>(0);
         // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const elements_per_scenario = component_update.elements_per_scenario(0);
+        Idx const elements_per_scenario = static_cast<Idx>(update_span_0.size());
         for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
             if (elements_per_scenario != component_update.elements_per_scenario(batch)) {
                 return false;

@@ -85,6 +85,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
     }
 
+    bool empty() const { return dataset_info_.component_info.empty(); }
     bool is_batch() const { return dataset_info_.is_batch; }
     Idx batch_size() const { return dataset_info_.batch_size; }
     MetaDataset const& dataset() const { return *dataset_info_.dataset; }
