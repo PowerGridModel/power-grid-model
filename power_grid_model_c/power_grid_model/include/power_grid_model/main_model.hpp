@@ -55,7 +55,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using MainModelState = main_core::MainModelState<ComponentContainer>;
     using MathState = main_core::MathState;
 
-    template<class CT>
+    template <class CT>
     static constexpr size_t component_position_v = container_impl::get_cls_pos_v<CT, ComponentType...>;
 
     // trait on type list
@@ -164,8 +164,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // helper function to update vectors of components
     template <class CompType, class CacheType>
-    void update_component(std::span<CompType::UpdateType const> components,
-                          std::vector<Idx2D> const& sequence_idx) {
+    void update_component(std::span<CompType::UpdateType const> components, std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
             update_component<CompType, CacheType>(components.cbegin(), components.cend(), sequence_idx);
         }
@@ -249,21 +248,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
-    void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        using GetIndexerFunc = void (*)(MainModelState const& state, ID const* id_begin, Idx size, Idx* indexer_begin);
-
-        // static function array
-        static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
-            [](MainModelState const& state, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
-                std::transform(id_begin_, id_begin_ + size_, indexer_begin_,
-                               [&state](ID id) { return get_component_idx_by_id<ComponentType>(state, id).pos; });
-            }...};
-        // search component type name
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            if (entry.name == component_type) {
-                return get_indexer_func[entry.index](state_, id_begin, size, indexer_begin);
+    void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
+        auto const get_index_func = [&state = this->state_, component_type, id_begin, size,
+                                     indexer_begin]<typename CT>() {
+            if (component_type == CT::name) {
+                std::transform(id_begin, id_begin + size, indexer_begin,
+                               [&state](ID id) { return get_component_idx_by_id<CT>(state, id).pos; });
             }
-        }
+        };
+        run_functor_with_all_types_return_void(get_index_func);
     }
 
     // get sequence idx map of a certain batch scenario
