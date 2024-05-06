@@ -52,7 +52,7 @@ struct TrafoGraphEdge {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
 
-    auto operator<=>(const TrafoGraphEdge& other) const {
+    auto constexpr operator<=>(const TrafoGraphEdge& other) const {
         if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
@@ -313,16 +313,16 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
         return tap_min;
     }
 
-    assert((tap_min <=> tap_min) == (tap_pos <=> tap_min));
+    assert((tap_max <=> tap_min) == (tap_pos <=> tap_min));
 
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
-constexpr IntS one_step_voltage_up(transformer_c auto const& transformer) {
-    // higher voltage at control side => lower tap pos
+// higher voltage at control side => lower voltage at tap side => lower tap pos
+constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer) {
     return one_step_tap_down(transformer);
 }
-constexpr IntS one_step_voltage_down(transformer_c auto const& transformer) {
-    // lower voltage at control side => higher tap pos
+// lower voltage at control side => higher voltage at tap side => higher tap pos
+constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer) {
     return one_step_tap_up(transformer);
 }
 
@@ -527,14 +527,17 @@ struct VoltageBand {
     double u_set{};
     double u_band{};
 
-    friend auto operator<=>(double voltage, VoltageBand const& band) {
-        if (voltage > band.u_set + 0.5 * band.u_band) {
-            return std::weak_ordering::greater;
+    friend constexpr auto operator<=>(double voltage, VoltageBand const& band) {
+        assert(band.u_band >= 0.0);
+
+        auto const lower = band.u_set - 0.5 * band.u_band;
+        auto const upper = band.u_set + 0.5 * band.u_band;
+
+        auto const lower_cmp = voltage <=> lower;
+        if (auto const upper_cmp = voltage <=> upper; lower_cmp == upper_cmp) {
+            return lower_cmp;
         }
-        if (voltage < band.u_set - 0.5 * band.u_band) {
-            return std::weak_ordering::less;
-        }
-        return std::weak_ordering::equivalent;
+        return std::partial_ordering::equivalent;
     }
 };
 
@@ -682,10 +685,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp] {
                 if (cmp > 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_voltage_down(transformer);
+                    return one_step_control_voltage_down(transformer);
                 }
                 if (cmp < 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_voltage_up(transformer);
+                    return one_step_control_voltage_up(transformer);
                 }
                 return transformer.tap_pos();
             }();
@@ -720,11 +723,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // max voltage at control side => min tap pos
+            // max voltage at control side => min voltage at tap side => min tap pos
             return transformer.tap_min();
         };
         constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
-            // min voltage at control side => max tap pos
+            // min voltage at control side => max voltage at tap side => max tap pos
             return transformer.tap_max();
         };
 
@@ -750,10 +753,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         using namespace std::string_literals;
 
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_voltage_up(transformer);
+            return one_step_control_voltage_up(transformer);
         };
         constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_voltage_down(transformer);
+            return one_step_control_voltage_down(transformer);
         };
 
         switch (strategy_) {
