@@ -39,6 +39,9 @@
 // threading
 #include <thread>
 
+// forward
+#include <memory>
+
 namespace power_grid_model {
 
 // main model implementation template
@@ -61,30 +64,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         size_t index;
     };
 
-    template <class T, class U> struct component_list_generator_impl;
-    template <class... C, size_t... index>
-    struct component_list_generator_impl<ComponentList<C...>, std::index_sequence<index...>> {
-        using AllTypes = ComponentList<C...>;
-        static constexpr std::array component_index_map{ComponentEntry{C::name, index}...};
-        static constexpr size_t n_types = sizeof...(C);
-
-        static size_t find_index(std::string const& name) {
-            auto const found = std::ranges::find_if(component_index_map, [&name](auto x) { return x == name; });
-            assert(found != component_index_map.cend());
-            return found->index;
-        }
-
-        template <class Comp> static constexpr size_t index_of() { return container_impl::get_cls_pos_v<Comp, C...>; }
-    };
-    using AllComponents = component_list_generator_impl<ComponentList<ComponentType...>,
-                                                        std::make_index_sequence<sizeof...(ComponentType)>>;
-    static constexpr size_t n_types = AllComponents::n_types;
+    static constexpr size_t n_types = sizeof...(ComponentType);
 
     using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
     static constexpr Idx ignore_output{-1};
+
+    // run functors with all component types
+    template <class Functor, class... Args>
+    static void run_functor_with_all_types_return_void(Functor functor, Args&&... args) {
+        (functor.template operator()<ComponentType>(std::forward<Args>(args)...), ...);
+    }
+    template <class Functor, class... Args>
+    static auto run_functor_with_all_types_return_array(Functor functor, Args&&... args) {
+        return std::array{functor.template operator()<ComponentType>(std::forward<Args>(args)...)...};
+    }
 
   public:
     struct cached_update_t : std::true_type {};
@@ -94,7 +90,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
-        using InputFunc = void (*)(MainModelImpl & x, ConstDataPointer const& data_ptr, Idx position);
+        using InputFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position);
 
         static constexpr std::array<InputFunc, n_types> add{
             [](MainModelImpl& model, ConstDataPointer const& data_ptr, Idx position) {
@@ -187,7 +183,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // update all components
     template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
-        using UpdateFunc = void (*)(MainModelImpl & x, ConstDataPointer const& data_ptr, Idx position,
+        using UpdateFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position,
                                     std::vector<Idx2D> const& sequence_idx);
 
         static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
@@ -773,7 +769,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <solver_output_type SolverOutputType>
     void output_result(std::vector<SolverOutputType> const& solver_output, Dataset const& result_data, Idx pos = 0) {
-        using OutputFunc = void (*)(MainModelImpl & x, std::vector<SolverOutputType> const& solver_output,
+        using OutputFunc = void (*)(MainModelImpl& x, std::vector<SolverOutputType> const& solver_output,
                                     MutableDataPointer const& data_ptr, Idx position);
 
         static constexpr std::array<OutputFunc, n_types> get_result{
@@ -1087,8 +1083,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <calculation_input_type CalcInputType>
     static auto calculate_param(auto const& c, auto const&... extra_args)
         requires requires {
-                     { c.calc_param(extra_args...) };
-                 }
+            { c.calc_param(extra_args...) };
+        }
     {
         return c.calc_param(extra_args...);
     }
@@ -1096,8 +1092,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <calculation_input_type CalcInputType>
     static auto calculate_param(auto const& c, auto const&... extra_args)
         requires requires {
-                     { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
-                 }
+            { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
+        }
     {
         return c.template calc_param<typename CalcInputType::sym>(extra_args...);
     }
