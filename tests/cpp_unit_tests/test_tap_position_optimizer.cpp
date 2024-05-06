@@ -568,6 +568,9 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
+    using optimizer::tap_position_optimizer::test::check_exact;
+    using optimizer::tap_position_optimizer::test::check_exact_per_strategy;
+
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
 
     MockState state;
