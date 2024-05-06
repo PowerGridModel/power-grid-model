@@ -253,7 +253,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                      indexer_begin]<typename CT>() {
             if (component_type == CT::name) {
                 std::transform(id_begin, id_begin + size, indexer_begin,
-                               [&state](ID id) { return get_component_idx_by_id<CT>(state, id).pos; });
+                               [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
             }
         };
         run_functor_with_all_types_return_void(get_index_func);
