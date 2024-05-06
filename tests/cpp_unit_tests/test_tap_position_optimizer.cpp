@@ -647,7 +647,6 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
-        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
         auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
 
         state.components.set_construction_complete();
