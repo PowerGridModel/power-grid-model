@@ -155,22 +155,19 @@ template <dataset_type_tag dataset_type_> class Dataset {
             throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
         }
         Idx const idx = find_component(ComponentType::name, false);
-        // return empty span if the component does not exist
-        if (idx < 0) {
-            return {};
+        return get_buffer_span_impl<StructType>(scenario, idx);
+    }
+
+    // get buffer by component type for all scenarios in vector span
+    template <template <class> class type_getter, class ComponentType,
+              class StructType = DataStruct<typename type_getter<ComponentType>::type>>
+    std::vector<std::span<StructType>> get_buffer_span_all_scenarios() const {
+        Idx const idx = find_component(ComponentType::name, false);
+        std::vector<std::span<StructType>> result(batch_size());
+        for (Idx i{}; i != batch_size(); ++i) {
+            result[i] = get_buffer_span_impl<StructType>(i, idx);
         }
-        // return span based on uniform or non-uniform buffer
-        ComponentInfo const& info = dataset_info_.component_info[idx];
-        Buffer const& buffer = buffers_[idx];
-        StructType* ptr = reinterpret_cast<StructType*>(buffer.data);
-        if (scenario < 0) {
-            return std::span<StructType>{ptr, ptr + info.total_elements};
-        }
-        if (info.elements_per_scenario < 0) {
-            return std::span<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
-        }
-        return std::span<StructType>{ptr + info.elements_per_scenario * scenario,
-                                     ptr + info.elements_per_scenario * (scenario + 1)};
+        return result;
     }
 
   private:
@@ -212,6 +209,25 @@ template <dataset_type_tag dataset_type_> class Dataset {
         dataset_info_.component_info.push_back(
             {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers_.push_back(Buffer{});
+    }
+
+    template <class StructType> std::span<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
+        // return empty span if the component does not exist
+        if (component_idx < 0) {
+            return {};
+        }
+        // return span based on uniform or non-uniform buffer
+        ComponentInfo const& info = dataset_info_.component_info[component_idx];
+        Buffer const& buffer = buffers_[component_idx];
+        StructType* ptr = reinterpret_cast<StructType*>(buffer.data);
+        if (scenario < 0) {
+            return std::span<StructType>{ptr, ptr + info.total_elements};
+        }
+        if (info.elements_per_scenario < 0) {
+            return std::span<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
+        }
+        return std::span<StructType>{ptr + info.elements_per_scenario * scenario,
+                                     ptr + info.elements_per_scenario * (scenario + 1)};
     }
 };
 

@@ -591,8 +591,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <class CT> static bool is_component_update_independent(ConstDataset const& update_data) {
-        // get span 0 of the update data
-        auto const update_span_0 = update_data.get_buffer_span<meta_data::update_getter_s, CT>(0);
+        // get span of all the update data
+        auto const update_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>();
+        // get raw buffer
+        ConstDataset::Buffer const raw_buffer = update_data.get_buffer(CT::namme);
         // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
         Idx const elements_per_scenario = static_cast<Idx>(update_span_0.size());
         for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
