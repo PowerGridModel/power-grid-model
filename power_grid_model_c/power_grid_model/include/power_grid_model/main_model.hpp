@@ -640,7 +640,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    OptimizerType::no_optimization, OptimizerStrategy::any,
                    calculate_power_flow_<sym>(err_tol, max_iter),
-                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
+                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); }, *meta_data_)
             ->optimize(state_, calculation_method);
     }
 

@@ -609,8 +609,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
   public:
-    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
-        : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
+    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy,
+                             meta_data::MetaData const& meta_data)
+        : meta_data_{&meta_data}, calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state, CalculationMethod method) -> ResultType final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
@@ -702,7 +703,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void update_state(UpdateBuffer const& update_data) const {
         static_assert(sizeof...(TransformerTypes) == std::tuple_size_v<UpdateBuffer>);
 
-        ConstDataset update_dataset{false, 1, "update"};
+        ConstDataset update_dataset{false, 1, "update", *meta_data_};
         auto const update_component = [&update_data, &update_dataset]<transformer_c TransformerType>() {
             auto const& component_update = get<TransformerType>(update_data);
             if (!component_update.empty()) {
@@ -853,6 +854,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return UpdateType{};
     }
 
+    meta_data::MetaData const* meta_data_;
     Calculator calculate_;
     StateUpdater update_;
     OptimizerStrategy strategy_;
