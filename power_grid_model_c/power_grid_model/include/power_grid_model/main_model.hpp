@@ -407,7 +407,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            calculation_fn(*this, {false, 1, "sym_output"}, ignore_output);
+            calculation_fn(*this, {false, 1, "sym_output", }, ignore_output);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         } catch (const NotObservableError&) {
@@ -757,6 +757,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     CalculationInfo calculation_info_; // needs to be first due to padding override
 
     double system_frequency_;
+    meta_data::MetaData const* meta_data_;
 
     MainModelState state_;
     // math model

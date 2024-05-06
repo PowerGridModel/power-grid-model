@@ -10,7 +10,6 @@
 #include "../common/exception.hpp"
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
-#include "meta_data_gen.hpp"
 
 #include <span>
 #include <string_view>
@@ -65,8 +64,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
         std::span<Indptr> indptr;
     };
 
-    Dataset(bool is_batch, Idx batch_size, std::string_view dataset)
-        : dataset_info_{.is_batch = is_batch,
+    Dataset(bool is_batch, Idx batch_size, std::string_view dataset, MetaData const& meta_data)
+        : meta_data_{&meta_data},
+          dataset_info_{.is_batch = is_batch,
                         .batch_size = batch_size,
                         .dataset = &meta_data.get_dataset(dataset),
                         .component_info = {}} {
@@ -78,13 +78,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // implicit conversion constructor to const
     template <dataset_type_tag other_dataset_type>
         requires(is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_type>)
-    Dataset(Dataset<other_dataset_type> const& other) : dataset_info_{other.get_description()} {
+    Dataset(Dataset<other_dataset_type> const& other)
+        : meta_data_{other.meta_data}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
             buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
         }
     }
 
+    MetaData const& meta_data() const { return meta_data_; }
     bool empty() const { return dataset_info_.component_info.empty(); }
     bool is_batch() const { return dataset_info_.is_batch; }
     Idx batch_size() const { return dataset_info_.batch_size; }
@@ -171,6 +173,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
   private:
+    MetaData const& meta_data_;
     DatasetInfo dataset_info_;
     std::vector<Buffer> buffers_;
 

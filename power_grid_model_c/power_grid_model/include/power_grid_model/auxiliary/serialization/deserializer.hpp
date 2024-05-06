@@ -8,7 +8,6 @@
 #include "../../common/exception.hpp"
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
-#include "../meta_data_gen.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -369,27 +368,33 @@ class Deserializer {
     // not copyable
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
-    // movable
+    // note movable
     Deserializer(Deserializer&&) = default;
     Deserializer& operator=(Deserializer&&) = default;
 
     // destructor
     ~Deserializer() = default;
 
-    Deserializer(from_string_t /* tag */, std::string_view data_string, SerializationFormat serialization_format)
-        : Deserializer{create_from_format(data_string, serialization_format)} {}
+    Deserializer(from_string_t /* tag */, std::string_view data_string, SerializationFormat serialization_format,
+                 MetaData const& meta_data)
+        : Deserializer{create_from_format(data_string, serialization_format, meta_data)} {}
 
-    Deserializer(from_buffer_t /* tag */, std::span<char const> data_buffer, SerializationFormat serialization_format)
-        : Deserializer{create_from_format(data_buffer, serialization_format)} {}
+    Deserializer(from_buffer_t /* tag */, std::span<char const> data_buffer, SerializationFormat serialization_format,
+                 MetaData const& meta_data)
+        : Deserializer{create_from_format(data_buffer, serialization_format, meta_data)} {}
 
-    Deserializer(from_json_t /* tag */, std::string_view json_string)
-        : buffer_from_json_{json_to_msgpack(json_string)},
+    Deserializer(from_json_t /* tag */, std::string_view json_string, MetaData const& meta_data)
+        : meta_data_{&meta_data},
+          buffer_from_json_{json_to_msgpack(json_string)},
           data_{buffer_from_json_.data()},
           size_{buffer_from_json_.size()},
           dataset_handler_{pre_parse()} {}
 
-    Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data)
-        : data_{msgpack_data.data()}, size_{msgpack_data.size()}, dataset_handler_{pre_parse()} {}
+    Deserializer(from_msgpack_t /* tag */, std::span<char const> msgpack_data, MetaData const& meta_data)
+        : meta_data_{&meta_data},
+          data_{msgpack_data.data()},
+          size_{msgpack_data.size()},
+          dataset_handler_{pre_parse()} {}
 
     WritableDataset& get_dataset_info() { return dataset_handler_; }
 
@@ -408,6 +413,7 @@ class Deserializer {
   private:
     // data members are order dependent
     // DO NOT modify the order!
+    MetaData const* meta_data_;
     // own buffer if from json
     msgpack::sbuffer buffer_from_json_;
     // pointer to buffers
@@ -539,7 +545,7 @@ class Deserializer {
             throw SerializationError{"Key data not found!\n"};
         }
 
-        WritableDataset handler{is_batch_, batch_size, dataset};
+        WritableDataset handler{is_batch_, batch_size, dataset, *meta_data_};
         count_data(handler, data_counts);
         parse_predefined_attributes(handler.dataset(), attributes);
         return handler;
@@ -634,8 +640,7 @@ class Deserializer {
         root_key_ = {};
     }
 
-    void count_component(WritableDataset& handler, DataByteMeta const& data_counts,
-                         MetaComponent const& component) {
+    void count_component(WritableDataset& handler, DataByteMeta const& data_counts, MetaComponent const& component) {
         component_key_ = component.name;
         Idx const batch_size = handler.batch_size();
         // count number of element of all scenarios
@@ -781,10 +786,11 @@ class Deserializer {
         });
     }
 
-    static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format) {
+    static Deserializer create_from_format(std::string_view data_string, SerializationFormat serialization_format,
+                                           MetaData const& meta_data) {
         switch (serialization_format) {
         case SerializationFormat::json:
-            return {from_json, data_string};
+            return {from_json, data_string, meta_data};
         case SerializationFormat::msgpack:
             [[fallthrough]];
         default: {
@@ -795,12 +801,13 @@ class Deserializer {
         }
     }
 
-    static Deserializer create_from_format(std::span<char const> buffer, SerializationFormat serialization_format) {
+    static Deserializer create_from_format(std::span<char const> buffer, SerializationFormat serialization_format,
+                                           MetaData const& meta_data) {
         switch (serialization_format) {
         case SerializationFormat::json:
-            return {from_json, std::string_view{buffer.data(), buffer.size()}};
+            return {from_json, std::string_view{buffer.data(), buffer.size()}, meta_data};
         case SerializationFormat::msgpack:
-            return {from_msgpack, buffer};
+            return {from_msgpack, buffer, meta_data};
         default: {
             using namespace std::string_literals;
             throw SerializationError("Buffer data input not supported for serialization format "s +

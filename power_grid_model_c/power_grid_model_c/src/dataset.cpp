@@ -6,6 +6,7 @@
 #include "forward_declarations.hpp"
 
 #include "handle.hpp"
+#include "get_meta_data.hpp"
 #include "power_grid_model_c/dataset.h"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
@@ -49,7 +50,7 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
     return call_with_catch(
         handle,
         [dataset, is_batch, batch_size]() {
-            return new ConstDataset{static_cast<bool>(is_batch), batch_size, dataset};
+            return new ConstDataset{static_cast<bool>(is_batch), batch_size, dataset, get_meta_data()};
         },
         PGM_regular_error);
 }
@@ -102,7 +103,7 @@ PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* d
     return call_with_catch(
         handle,
         [dataset, is_batch, batch_size]() {
-            return new MutableDataset{static_cast<bool>(is_batch), batch_size, dataset};
+            return new MutableDataset{static_cast<bool>(is_batch), batch_size, dataset, get_meta_data()};
         },
         PGM_regular_error);
 }
