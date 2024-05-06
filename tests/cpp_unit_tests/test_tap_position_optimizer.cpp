@@ -745,21 +745,20 @@ TEST_CASE("Test Tap position optimizer") {
         }
 
         SUBCASE("voltage band") {
-            auto const u_pu_func = [&state_b](IntS tap_pos) {
+            state_b.rank = 0;
+            state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+
                 // higher voltage at tap side <=> lower voltage at control side
                 REQUIRE(state_b.tap_min != state_b.tap_max);
-                return (static_cast<DoubleComplex>(state_b.tap_max) - static_cast<DoubleComplex>(tap_pos)) /
-                       (static_cast<DoubleComplex>(state_b.tap_max) - static_cast<DoubleComplex>(state_b.tap_min));
+                auto const tap_max = static_cast<double>(state_b.tap_max);
+                auto const tap_min = static_cast<double>(state_b.tap_min);
+                auto const tap_pos = static_cast<double>(state_b.tap_pos);
+                return static_cast<DoubleComplex>((state_b.tap_max - tap_pos) / (tap_max - tap_min));
             };
 
             double u_set = 0.5;
             double u_band = 0.0;
-
-            state_b.rank = 0;
-            state_b.u_pu = [&state_b, &regulator_b, &u_pu_func](ControlSide side) {
-                CHECK(side == regulator_b.control_side());
-                return u_pu_func(state_b.tap_pos);
-            };
 
             SUBCASE("normal tap range") {
                 state_b.tap_min = 1;
@@ -808,8 +807,6 @@ TEST_CASE("Test Tap position optimizer") {
             //     check_b = check_exact_per_strategy(3, 4, 3);
             // }
 
-            REQUIRE(cabs(u_pu_func(state_b.tap_min)) == doctest::Approx(1.0));
-            REQUIRE(cabs(u_pu_func(state_b.tap_max)) == doctest::Approx(0.0));
             regulator_b.update({.id = 4, .u_set = u_set, .u_band = u_band});
         }
 
