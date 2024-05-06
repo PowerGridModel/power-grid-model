@@ -8,7 +8,7 @@
 
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
-#include "dataset.hpp"
+#include "dataset_fwd.hpp"
 #include "meta_data.hpp"
 #include "meta_data_gen.hpp"
 

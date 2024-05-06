@@ -181,7 +181,7 @@ TEST_CASE("Serializer") {
     // nan for asym_load_gen[2].p_specified
 
     SUBCASE("Single dataset") {
-        ConstDatasetHandler handler{false, 1, "update"};
+        ConstDataset handler{false, 1, "update"};
         handler.add_buffer("sym_load", 4, 4, nullptr, sym_load_gen.data());
         handler.add_buffer("asym_load", 5, 5, nullptr, asym_load_gen.data());
         Serializer serializer{handler, SerializationFormat::json};
@@ -193,7 +193,7 @@ TEST_CASE("Serializer") {
     }
 
     SUBCASE("Batch dataset") {
-        ConstDatasetHandler handler{true, 2, "update"};
+        ConstDataset handler{true, 2, "update"};
         std::array<Idx, 3> const indptr_gen{0, 0, 1};
         handler.add_buffer("sym_load", 2, 4, nullptr, sym_load_gen.data());
         handler.add_buffer("asym_load", 2, 4, nullptr, asym_load_gen.data());
