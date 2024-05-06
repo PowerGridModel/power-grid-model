@@ -261,28 +261,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // get sequence idx map of a certain batch scenario
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
-        using GetSeqIdxFunc =
-            std::vector<Idx2D> (*)(MainModelState const& state, ConstDataPointer const& component_update, Idx pos);
 
-        // function pointer array to get cached idx
-        static constexpr std::array<GetSeqIdxFunc, n_types> get_seq_idx{
-            [](MainModelState const& state, ConstDataPointer const& component_update, Idx pos) -> std::vector<Idx2D> {
-                using UpdateType = typename ComponentType::UpdateType;
-
-                auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType>(pos);
-                return main_core::get_component_sequence<ComponentType>(state, it_begin, it_end);
-            }...};
-
-        // fill in the map per component type
-        SequenceIdx sequence_idx_map;
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            // skip if component does not exist
-            if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
-                // add
-                sequence_idx_map[entry.index] = get_seq_idx[entry.index](state_, found->second, scenario_idx);
-            }
-        }
-        return sequence_idx_map;
+        auto const get_seq_idx_func = [&state = this->state_, &update_data,
+                                       scenario_idx]<typename CT>() -> std::vector<Idex2D> {
+            auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+            auto const it_begin = buffer_span.cbegin();
+            auto const it_end = buffer_span.cend();
+            return main_core::get_component_sequence<ComponentType>(state, it_begin, it_end);
+        };
+        return run_functor_with_all_types_return_array(get_seq_idx_func);
     }
 
     // get sequence idx map of an entire batch for fast caching of component sequences
