@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <map>
 
 TEST_SUITE_BEGIN("Automatic Tap Changer");
 

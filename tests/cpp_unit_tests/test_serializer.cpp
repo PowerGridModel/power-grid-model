@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 
 #include <doctest/doctest.h>
 
@@ -157,7 +158,7 @@ constexpr std::string_view batch_dataset_dict_indent =
 
 TEST_CASE("Serializer") {
     std::vector<SymLoadGenUpdate> sym_load_gen(4);
-    meta_data.get_dataset("update").get_component("sym_load").set_nan(sym_load_gen.data(), 0, 4);
+    meta_data_gen::meta_data.get_dataset("update").get_component("sym_load").set_nan(sym_load_gen.data(), 0, 4);
     sym_load_gen[0].id = 9;
     sym_load_gen[1].id = 10;
     sym_load_gen[2].id = 11;
@@ -168,7 +169,7 @@ TEST_CASE("Serializer") {
     sym_load_gen[3].p_specified = -std::numeric_limits<double>::infinity();
 
     std::vector<AsymLoadGenUpdate> asym_load_gen(5);
-    meta_data.get_dataset("update").get_component("asym_load").set_nan(asym_load_gen.data(), 0, 5);
+    meta_data_gen::meta_data.get_dataset("update").get_component("asym_load").set_nan(asym_load_gen.data(), 0, 5);
     asym_load_gen[0].id = 5;
     asym_load_gen[1].id = 6;
     asym_load_gen[2].id = 13;
@@ -181,7 +182,7 @@ TEST_CASE("Serializer") {
     // nan for asym_load_gen[2].p_specified
 
     SUBCASE("Single dataset") {
-        ConstDataset handler{false, 1, "update"};
+        ConstDataset handler{false, 1, "update", meta_data_gen::meta_data};
         handler.add_buffer("sym_load", 4, 4, nullptr, sym_load_gen.data());
         handler.add_buffer("asym_load", 5, 5, nullptr, asym_load_gen.data());
         Serializer serializer{handler, SerializationFormat::json};
@@ -193,7 +194,7 @@ TEST_CASE("Serializer") {
     }
 
     SUBCASE("Batch dataset") {
-        ConstDataset handler{true, 2, "update"};
+        ConstDataset handler{true, 2, "update", meta_data_gen::meta_data};
         std::array<Idx, 3> const indptr_gen{0, 0, 1};
         handler.add_buffer("sym_load", 2, 4, nullptr, sym_load_gen.data());
         handler.add_buffer("asym_load", 2, 4, nullptr, asym_load_gen.data());

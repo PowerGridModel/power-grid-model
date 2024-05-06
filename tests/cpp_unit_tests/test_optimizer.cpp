@@ -4,6 +4,8 @@
 
 #include "test_optimizer.hpp"
 
+#include <power_grid_model/auxiliary/meta_data.hpp>
+
 namespace power_grid_model::optimizer::test {
 TEST_CASE("Test construct no-op optimizer") {
     for (auto method : calculation_methods) {
@@ -15,6 +17,7 @@ TEST_CASE("Test construct no-op optimizer") {
 }
 
 TEST_CASE("Test construct tap position optimizer") {
+    meta_data::MetaData meta_data{};
     StubState empty_state{};
     empty_state.components.set_construction_complete();
 
@@ -23,7 +26,8 @@ TEST_CASE("Test construct tap position optimizer") {
             CAPTURE(strategy_method.strategy);
             CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy};
+                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy,
+                meta_data};
             CHECK(optimizer.optimize(empty_state, strategy_method.method).empty());
         }
     }
@@ -32,7 +36,8 @@ TEST_CASE("Test construct tap position optimizer") {
             CAPTURE(strategy_method.strategy);
             CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy_method.strategy};
+                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy_method.strategy,
+                meta_data};
             CHECK(optimizer.optimize(empty_state, strategy_method.method).empty());
         }
     }
@@ -41,6 +46,7 @@ TEST_CASE("Test construct tap position optimizer") {
 TEST_CASE("Test get optimizer") {
     using enum OptimizerType;
 
+    meta_data::MetaData meta_data{};
     StubState empty_state;
     empty_state.components.set_construction_complete();
 
@@ -50,7 +56,7 @@ TEST_CASE("Test get optimizer") {
                 CAPTURE(strategy_method.strategy);
                 CAPTURE(strategy_method.method);
                 auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy_method.strategy,
-                                                                          mock_state_calculator, stub_update);
+                                                                          mock_state_calculator, stub_update, meta_data);
                 CHECK(optimizer->optimize(empty_state, strategy_method.method).x == 1);
             }
         }
@@ -59,16 +65,16 @@ TEST_CASE("Test get optimizer") {
             for (auto strategy : strategies) {
                 CAPTURE(strategy);
                 CHECK_THROWS_AS((get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, strategy,
-                                                                          mock_state_calculator, stub_update)),
+                                                                          mock_state_calculator, stub_update, meta_data)),
                                 MissingCaseForEnumError<OptimizerType>);
             }
         }
     }
 
     SUBCASE("Symmetric state calculator") {
-        auto const get_instance = [](OptimizerType optimizer_type, OptimizerStrategy strategy) {
+        auto const get_instance = [meta_data](OptimizerType optimizer_type, OptimizerStrategy strategy) {
             return get_optimizer<StubState, ConstDataset>(
-                optimizer_type, strategy, stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update);
+                optimizer_type, strategy, stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, meta_data);
         };
 
         SUBCASE("Noop") {
