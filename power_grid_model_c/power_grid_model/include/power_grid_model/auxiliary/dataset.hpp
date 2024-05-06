@@ -79,14 +79,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <dataset_type_tag other_dataset_type>
         requires(is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_type>)
     Dataset(Dataset<other_dataset_type> const& other)
-        : meta_data_{other.meta_data}, dataset_info_{other.get_description()} {
+        : meta_data_{&other.meta_data()}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
             buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
         }
     }
 
-    MetaData const& meta_data() const { return meta_data_; }
+    MetaData const& meta_data() const { return *meta_data_; }
     bool empty() const { return dataset_info_.component_info.empty(); }
     bool is_batch() const { return dataset_info_.is_batch; }
     Idx batch_size() const { return dataset_info_.batch_size; }
@@ -173,7 +173,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
   private:
-    MetaData const& meta_data_;
+    MetaData const* meta_data_;
     DatasetInfo dataset_info_;
     std::vector<Buffer> buffers_;
 

@@ -11,7 +11,6 @@
 #include "options.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_model.hpp>
 
@@ -68,7 +67,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     }
 
     ConstDataset const& exported_update_dataset =
-        batch_dataset != nullptr ? *batch_dataset : PGM_ConstDataset{false, 1, "update"};
+        batch_dataset != nullptr ? *batch_dataset : PGM_ConstDataset{false, 1, "update", output_dataset->meta_data()};
 
     // call calculation
     try {

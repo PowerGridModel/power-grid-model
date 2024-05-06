@@ -104,7 +104,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
-        : system_frequency_{system_frequency} {
+        : system_frequency_{system_frequency}, meta_data_{&input_data.meta_data()} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         auto const add_func = [this, pos, &input_data]<typename CT>() {
             this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
@@ -114,7 +114,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // constructor with only frequency
-    explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency} {}
+    explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency}, meta_data_{} {}
 
     // get number
     template <class CompType> Idx component_count() const {
@@ -407,7 +407,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            calculation_fn(*this, {false, 1, "sym_output", }, ignore_output);
+            calculation_fn(*this,
+                           {
+                               false,
+                               1,
+                               "sym_output",
+                               *meta_data_,
+                           },
+                           ignore_output);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         } catch (const NotObservableError&) {
@@ -740,8 +747,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) {
         auto const output_func = [this, &solver_output, &result_data, pos]<typename CT>() {
             // output
-            auto const span =
-                result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
+            auto const span = result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
             if (span.empty()) {
                 return;
             }

@@ -4,11 +4,11 @@
 
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
-#include "get_meta_data.hpp"
 
 #include "power_grid_model_c/meta_data.h"
 
 #include "handle.hpp"
+#include "get_meta_data.hpp"
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/static_asserts/input.hpp>
@@ -31,7 +31,9 @@ auto const meta_catch = [](PGM_Handle* handle, auto func) -> decltype(auto) {
 } // namespace
 
 // retrieve meta data
-power_grid_model::meta_data::MetaData const& get_meta_data() { return power_grid_model::meta_data::get_meta_data(); }
+power_grid_model::meta_data::MetaData const& get_meta_data() {
+    return power_grid_model::meta_data::meta_data_gen::meta_data;
+}
 
 // dataset
 PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return get_meta_data().n_datasets(); }
