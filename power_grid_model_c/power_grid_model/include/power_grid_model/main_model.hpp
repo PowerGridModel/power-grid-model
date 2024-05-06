@@ -740,9 +740,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) {
         auto const output_func = [this, &solver_output, &result_data, pos]<typename CT>() {
             // output
-            auto const begin =
-                result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos).begin();
-            this->output_result<CT>(solver_output, begin);
+            auto const span =
+                result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
+            if (span.empty()) {
+                return;
+            }
+            this->output_result<CT>(solver_output, span.begin());
         };
         Timer const t_output(calculation_info_, 3000, "Produce output");
         run_functor_with_all_types_return_void(output_func);
