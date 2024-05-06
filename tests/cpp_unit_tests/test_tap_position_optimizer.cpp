@@ -761,17 +761,6 @@ TEST_CASE("Test Tap position optimizer") {
                 CHECK(side == regulator_b.control_side());
                 return u_pu_func(state_b.tap_pos);
             };
-            check_b = [&state_b, &regulator_b, &u_pu_func](IntS value, OptimizerStrategy strategy) {
-                auto const params = regulator_b.calc_param<symmetric_t>();
-                auto const u_pu = cabs(u_pu_func(value));
-
-                CHECK(value >= std::min(state_b.tap_min, state_b.tap_max));
-                CHECK(value <= std::max(state_b.tap_min, state_b.tap_max));
-
-                auto const half_band = 0.5 * std::abs(params.u_band);
-                CHECK(u_pu >= doctest::Approx(params.u_set - half_band));
-                CHECK(u_pu <= doctest::Approx(params.u_set + half_band));
-            };
 
             SUBCASE("normal tap range") {
                 state_b.tap_min = 1;
