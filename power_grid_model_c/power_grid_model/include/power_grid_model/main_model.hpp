@@ -92,7 +92,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
-        assert(input_data.get_description().dataset.name == "input");
+        assert(input_data.get_description().dataset->name == std::string_view("input"));
         auto const add_func = [this, pos, &input_data]<typename CT>() {
             add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
         };
@@ -111,15 +111,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // all component count
     std::map<std::string, Idx> all_component_count() const {
-        std::map<std::string, Idx> map;
-        static constexpr std::array counter{&MainModelImpl::component_count<ComponentType>...};
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            Idx const size = std::invoke(counter[entry.index], this);
-            if (size > 0) {
-                map[entry.name] = size;
-            }
-        }
-        return map;
+        auto const get_comp_count = [this]<typename CT>() -> std::pair<std::string, Idx> {
+            return make_pair(std::string{CT::name}, component_count<CT>());
+        };
+        auto const all_count = run_functor_with_all_types_return_array(get_comp_count);
+        return std::map<std::string, Idx>{all_count.cbegin(), all_count.cend()};
     }
 
     // helper function to add vectors of components
@@ -142,7 +138,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
-        constexpr auto comp_index = AllComponents::template index_of<CompType>();
+        constexpr auto comp_index = component_position_v<CompType>;
 
         assert(construction_complete_);
         assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
@@ -164,7 +160,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // helper function to update vectors of components
     template <class CompType, class CacheType>
-    void update_component(std::span<CompType::UpdateType const> components, std::vector<Idx2D> const& sequence_idx) {
+    void update_component(std::span<typename CompType::UpdateType const> components,
+                          std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
             update_component<CompType, CacheType>(components.cbegin(), components.cend(), sequence_idx);
         }
@@ -174,7 +171,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
         assert(construction_complete_);
-        assert(update_data.get_description().dataset.name == "update");
+        assert(update_data.get_description().dataset->name == std::string_view("update"));
         auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
             update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
                                             sequence_idx_map[component_position_v<CT>]);
@@ -188,7 +185,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
-        constexpr auto component_index = AllComponents::template index_of<CompType>();
+        constexpr auto component_index = component_position_v<CompType>;
 
         auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
         auto const& component_sequence = std::get<component_index>(sequence_idx);
@@ -263,11 +260,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
 
         auto const get_seq_idx_func = [&state = this->state_, &update_data,
-                                       scenario_idx]<typename CT>() -> std::vector<Idex2D> {
+                                       scenario_idx]<typename CT>() -> std::vector<Idx2D> {
             auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
             auto const it_begin = buffer_span.cbegin();
             auto const it_end = buffer_span.cend();
-            return main_core::get_component_sequence<ComponentType>(state, it_begin, it_end);
+            return main_core::get_component_sequence<CT>(state, it_begin, it_end);
         };
         return run_functor_with_all_types_return_array(get_seq_idx_func);
     }
@@ -376,8 +373,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
     template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data,
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+    BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = -1) {
         // if the update batch is one empty map without any component
         // execute one power flow in the current instance, no batch calculation is needed
