@@ -577,35 +577,40 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return true;
         }
 
-        // check all components
-        return std::ranges::all_of();
-    }
-
-    template <class CT> static bool is_component_update_independent(ConstDataset const& update_data) {
-        // get span of all the update data
-        auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
-        // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const elements_per_scenario = static_cast<Idx>(all_spans[0].size());
-        for (Idx scenario = 1; scenario != update_data.batch_size(); ++scenario) {
-            if (elements_per_scenario != static_cast<Idx>(all_spans[scenario].size())) {
-                return false;
+        auto const is_component_update_independent = []<typename CT>(ConstDataset const& update_data) {
+            // get span of all the update data
+            auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
+            // Remember the first batch size, then loop over the remaining batches and check if they are of the same
+            // length
+            Idx const elements_per_scenario = static_cast<Idx>(all_spans[0].size());
+            for (Idx scenario = 1; scenario != update_data.batch_size(); ++scenario) {
+                if (elements_per_scenario != static_cast<Idx>(all_spans[scenario].size())) {
+                    return false;
+                }
             }
-        }
-        // return true if all scenarios have length zero
-        if (elements_per_scenario == 0) {
-            return true;
-        }
-        // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the ids
-        auto const it_first_begin = all_spans[0].cbegin();
-        // check the subsequent scenarios
-        // only return true if all scenarios match the ids of the first batch
-        return std::all_of(IdxCount{1}, IdxCount{update_data.batch_size()}, [it_first_begin, &all_spans](Idx scenario) {
-            auto const it_begin = all_spans[scenario].cbegin();
-            auto const it_end = all_spans[scenario].cend();
-            return std::equal(
-                it_begin, it_end, it_first_begin,
-                [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
-        });
+            // return true if all scenarios have length zero
+            if (elements_per_scenario == 0) {
+                return true;
+            }
+            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
+            // ids
+            auto const it_first_begin = all_spans[0].cbegin();
+            // check the subsequent scenarios
+            // only return true if all scenarios match the ids of the first batch
+            return std::all_of(IdxCount{1}, IdxCount{update_data.batch_size()},
+                               [it_first_begin, &all_spans](Idx scenario) {
+                                   auto const it_begin = all_spans[scenario].cbegin();
+                                   auto const it_end = all_spans[scenario].cend();
+                                   return std::equal(it_begin, it_end, it_first_begin,
+                                                     [](UpdateType<CT> const& obj, UpdateType<CT> const& first) {
+                                                         return obj.id == first.id;
+                                                     });
+                               });
+        };
+
+        // check all components
+        return std::ranges::all_of(
+            run_functor_with_all_types_return_array(is_component_update_independent, update_data));
     }
 
     template <symmetry_tag sym>
