@@ -36,11 +36,10 @@
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
-// threading
-#include <thread>
-
-// forward
+// stl library
 #include <memory>
+#include <span>
+#include <thread>
 
 namespace power_grid_model {
 
@@ -55,6 +54,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
     using MathState = main_core::MathState;
+
+    template<class CT>
+    static constexpr size_t component_position_v = container_impl::get_cls_pos_v<CT, ComponentType...>;
 
     // trait on type list
     // struct of entry
@@ -90,22 +92,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
-        using InputFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position);
-
-        static constexpr std::array<InputFunc, n_types> add{
-            [](MainModelImpl& model, ConstDataPointer const& data_ptr, Idx position) {
-                auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::InputType>(position);
-                model.add_component<ComponentType>(begin, end);
-            }...};
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            auto const found = input_data.find(entry.name);
-            // skip if component does not exist
-            if (found == input_data.cend()) {
-                continue;
-            }
-            // add
-            add[entry.index](*this, found->second, pos);
-        }
+        assert(input_data.get_description().dataset.name == "input");
+        auto const add_func = [this, pos, &input_data]<typename CT>() {
+            add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+        };
+        run_functor_with_all_types_return_void(add_func);
         set_construction_complete();
     }
 
@@ -132,7 +123,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to add vectors of components
-    template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
+    template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
         add_component<CompType>(components.cbegin(), components.cend());
     }
 
@@ -173,7 +164,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // helper function to update vectors of components
     template <class CompType, class CacheType>
-    void update_component(std::vector<typename CompType::UpdateType> const& components,
+    void update_component(std::span<CompType::UpdateType const> components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
             update_component<CompType, CacheType>(components.cbegin(), components.cend(), sequence_idx);
@@ -183,21 +174,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // update all components
     template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
-        using UpdateFunc = void (*)(MainModelImpl& x, ConstDataPointer const& data_ptr, Idx position,
-                                    std::vector<Idx2D> const& sequence_idx);
-
-        static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
-                                                                   ConstDataPointer const& data_ptr, Idx position,
-                                                                   std::vector<Idx2D> const& sequence_idx) {
-            auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::UpdateType>(position);
-            model.update_component<ComponentType, CacheType>(begin, end, sequence_idx);
-        }...};
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            // skip if component does not exist
-            if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
-                update[entry.index](*this, found->second, pos, sequence_idx_map[entry.index]);
-            }
-        }
+        assert(construction_complete_);
+        assert(update_data.get_description().dataset.name == "update");
+        auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
+            update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
+                                            sequence_idx_map[component_position_v<CT>]);
+        };
+        run_functor_with_all_types_return_void(update_func);
     }
 
     // update all components
