@@ -52,7 +52,7 @@ struct TrafoGraphEdge {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
 
-    auto operator<=>(const TrafoGraphEdge& other) const {
+    auto constexpr operator<=>(const TrafoGraphEdge& other) const {
         if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
@@ -313,7 +313,7 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
         return tap_min;
     }
 
-    assert((tap_min <=> tap_min) == (tap_pos <=> tap_min));
+    assert((tap_max <=> tap_min) == (tap_pos <=> tap_min));
 
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
@@ -527,14 +527,18 @@ struct VoltageBand {
     double u_set{};
     double u_band{};
 
-    friend auto operator<=>(double voltage, VoltageBand const& band) {
-        if (voltage > band.u_set + 0.5 * band.u_band) {
-            return std::weak_ordering::greater;
+    friend constexpr auto operator<=>(double voltage, VoltageBand const& band) {
+        assert(band.u_band >= 0.0);
+
+        auto const lower = band.u_set - 0.5 * band.u_band;
+        auto const upper = band.u_set + 0.5 * band.u_band;
+        auto const lower_cmp = voltage <=> lower;
+        auto const upper_cmp = voltage <=> upper;
+
+        if (lower_cmp == upper_cmp) {
+            return lower_cmp;
         }
-        if (voltage < band.u_set - 0.5 * band.u_band) {
-            return std::weak_ordering::less;
-        }
-        return std::weak_ordering::equivalent;
+        return std::partial_ordering::equivalent;
     }
 };
 
