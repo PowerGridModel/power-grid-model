@@ -557,6 +557,11 @@ auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_min, IntS tap_pos_m
         }
     };
 }
+auto normalized_lerp(IntS value, IntS start, IntS stop) {
+    REQUIRE(start != stop);
+    return (static_cast<double>(value) - static_cast<double>(start)) /
+           (static_cast<double>(stop) - static_cast<double>(start));
+}
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
 
@@ -567,9 +572,6 @@ TEST_CASE("Test Tap position optimizer") {
     using MockState = main_core::MainModelState<MockContainer>;
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
-
-    using optimizer::tap_position_optimizer::test::check_exact;
-    using optimizer::tap_position_optimizer::test::check_exact_per_strategy;
 
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
 
@@ -657,8 +659,8 @@ TEST_CASE("Test Tap position optimizer") {
 
         auto& state_a = transformer_a.state;
         auto& state_b = transformer_b.state;
-        auto check_a = check_exact(0);
-        auto check_b = check_exact(0);
+        auto check_a = test::check_exact(0);
+        auto check_b = test::check_exact(0);
 
         SUBCASE("not regulatable") {
             state_b.tap_pos = 1;
@@ -679,7 +681,7 @@ TEST_CASE("Test Tap position optimizer") {
             }
 
             SUBCASE("not connected at third side doesn't matter") {
-                auto check_b = check_exact(1);
+                auto check_b = test::check_exact(1);
                 state_b.rank = 0;
                 state_b.status = [control_side, &state_b](ControlSide side) {
                     return side == control_side || side == state_b.tap_side;
@@ -692,7 +694,7 @@ TEST_CASE("Test Tap position optimizer") {
             state_b.tap_min = state_b.tap_pos;
             state_b.tap_max = state_b.tap_pos;
             state_b.rank = 0;
-            check_b = check_exact(state_b.tap_pos);
+            check_b = test::check_exact(state_b.tap_pos);
         }
 
         SUBCASE("multipe valid values") {
@@ -753,12 +755,9 @@ TEST_CASE("Test Tap position optimizer") {
             state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_b.control_side());
 
-                // higher voltage at tap side <=> lower voltage at control side
-                REQUIRE(state_b.tap_min != state_b.tap_max);
-                auto const tap_max = static_cast<double>(state_b.tap_max);
-                auto const tap_min = static_cast<double>(state_b.tap_min);
-                auto const tap_pos = static_cast<double>(state_b.tap_pos);
-                return static_cast<DoubleComplex>((state_b.tap_max - tap_pos) / (tap_max - tap_min));
+                // tap pos closer to tap_max at tap side <=> lower voltage at control side
+                return static_cast<DoubleComplex>(
+                    test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
             };
 
             double u_set = 0.5;
@@ -771,15 +770,15 @@ TEST_CASE("Test Tap position optimizer") {
 
                 SUBCASE("unique value in band") {
                     u_band = 0.01;
-                    check_b = check_exact(3);
+                    check_b = test::check_exact(3);
                 }
                 SUBCASE("large compact band") {
                     u_band = 1.01;
-                    check_b = check_exact_per_strategy(3, 5, 1);
+                    check_b = test::check_exact_per_strategy(3, 5, 1);
                 }
                 SUBCASE("small open band") {
                     u_band = 0.76;
-                    check_b = check_exact_per_strategy(3, 4, 2);
+                    check_b = test::check_exact_per_strategy(3, 4, 2);
                 }
             }
             SUBCASE("inverted tap range") {
@@ -789,15 +788,15 @@ TEST_CASE("Test Tap position optimizer") {
 
                 SUBCASE("unique value in band") {
                     u_band = 0.01;
-                    check_b = check_exact(3);
+                    check_b = test::check_exact(3);
                 }
                 SUBCASE("large compact band") {
                     u_band = 1.01;
-                    check_b = check_exact_per_strategy(3, 1, 5);
+                    check_b = test::check_exact_per_strategy(3, 1, 5);
                 }
                 SUBCASE("small open band") {
                     u_band = 0.76;
-                    check_b = check_exact_per_strategy(3, 2, 4);
+                    check_b = test::check_exact_per_strategy(3, 2, 4);
                 }
             }
             // SUBCASE("no valid value in band") {
@@ -808,68 +807,55 @@ TEST_CASE("Test Tap position optimizer") {
 
             //     u_set = 0.4;
             //     u_set = 0.01;
-            //     check_b = check_exact_per_strategy(3, 4, 3);
+            //     check_b = test::check_exact_per_strategy(3, 4, 3);
             // }
 
             regulator_b.update({.id = 4, .u_set = u_set, .u_band = u_band});
         }
 
         SUBCASE("line drop compensation") {
-            auto const i_pu_func = [&state_b](IntS tap_pos) {
-                REQUIRE(state_b.tap_min != state_b.tap_max);
-                const auto value = (static_cast<double>(tap_pos) - static_cast<double>(state_b.tap_min)) /
-                                   (static_cast<double>(state_b.tap_max) - static_cast<double>(state_b.tap_min));
+            state_b.rank = 0;
+            state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+
+                // tap pos closer to tap_max at tap side <=> lower voltage at control side
+                return static_cast<DoubleComplex>(
+                    test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+            };
+            state_b.i_pu = [&state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+                auto const value = test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max);
                 return DoubleComplex{value, value};
             };
 
-            double u_set = 0.5;
-            double u_band = 0.76;
-
-            state_b.rank = 0;
-            state_b.i_pu = [&state_b, &regulator_b, &i_pu_func](ControlSide side) {
-                CHECK(side == regulator_b.control_side());
-                return i_pu_func(state_b.tap_pos);
-            };
+            double const u_set = 0.5;
+            double const u_band = 0.76;
 
             state_b.tap_min = 1;
             state_b.tap_max = 5;
             state_b.tap_pos = 3;
-
             double line_drop_compensation_r = 0.0;
             double line_drop_compensation_x = 0.0;
 
-            SUBCASE("no line drop compensation") { check_b = check_exact_per_strategy(3, 1, 5); }
-            SUBCASE("resistance only") {
-                line_drop_compensation_r = 1.0;
-                check_b = check_exact_per_strategy(3, 2, 4);
+            SUBCASE("no line drop compensation") { check_b = test::check_exact_per_strategy(3, 4, 2); }
+            SUBCASE("resistance") {
+                line_drop_compensation_r = 0.5;
+                check_b = test::check_exact_per_strategy(3, 5, 3);
             }
-            SUBCASE("positive reactance only") {
-                line_drop_compensation_x = 1.0;
-                check_b = check_exact_per_strategy(3, 4, 2);
+            SUBCASE("positive reactance") {
+                line_drop_compensation_x = 0.125;
+                check_b = test::check_exact_per_strategy(3, 5, 2);
             }
-            SUBCASE("negative reactance only") {
-                line_drop_compensation_x = -1.0;
-                check_b = check_exact_per_strategy(3, 2, 4);
-            }
-            SUBCASE("resistance + positive reactance") {
-                line_drop_compensation_r = 1.0;
-                line_drop_compensation_x = 1.0;
-                check_b = check_exact_per_strategy(3, 1, 5);
-            }
-            SUBCASE("resistance + negative reactance") {
-                line_drop_compensation_r = 1.0;
-                line_drop_compensation_x = -1.0;
-                check_b = check_exact(3);
+            SUBCASE("negative reactance") {
+                line_drop_compensation_x = -0.5;
+                check_b = test::check_exact_per_strategy(3, 5, 3);
             }
 
-            REQUIRE(cabs(i_pu_func(state_b.tap_min)) == doctest::Approx(0.0));
-            REQUIRE(i_pu_func(state_b.tap_max).real() == doctest::Approx(1.0));
-            REQUIRE(i_pu_func(state_b.tap_max).imag() == doctest::Approx(1.0));
             regulator_b.update({.id = 4,
                                 .u_set = u_set,
                                 .u_band = u_band,
-                                .line_drop_compensation_r = line_drop_compensation_r,
-                                .line_drop_compensation_x = line_drop_compensation_x});
+                                .line_drop_compensation_r = line_drop_compensation_r / base_power_3p,
+                                .line_drop_compensation_x = line_drop_compensation_x / base_power_3p});
         }
 
         auto const initial_a{transformer_a.tap_pos()};
