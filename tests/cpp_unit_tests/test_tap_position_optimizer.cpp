@@ -651,6 +651,7 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
+        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
         auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
 
         state.components.set_construction_complete();
@@ -814,6 +815,59 @@ TEST_CASE("Test Tap position optimizer") {
             regulator_b.update({.id = 4, .u_set = u_set, .u_band = u_band});
         }
 
+        SUBCASE("multiple transformers") {
+            state_a.tap_pos = 0;
+            state_a.tap_min = -10;
+            state_a.tap_max = 10;
+            state_b.tap_pos = 0;
+            state_b.tap_min = -10;
+            state_b.tap_max = 10;
+            regulator_a.update({.id = 3,
+                                /*.control_side = ControlSide::side_2,*/ .u_set = 1.25,
+                                .u_band = 0.02}); // TODO (nbharambe): Check for control side
+            regulator_b.update({.id = 4, /*.control_side = ControlSide::side_2,*/ .u_set = 1.13636, .u_band = 0.02});
+
+            state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
+                CHECK(side == regulator_a.control_side());
+
+                // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
+                // consider u_1a = n_1 = 1.0
+                // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
+                auto const relative_tap_a = static_cast<double>(state_a.tap_pos) * 0.1;
+                return static_cast<DoubleComplex>((1.0) / (1.0 + relative_tap_a));
+            };
+
+            state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+
+                // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
+                // consider n_2 = 1. Also u_1a == u_2b
+                // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
+                auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
+                return static_cast<DoubleComplex>((1.0) / (1.0 + relative_tap_b)) *
+                       state_a.u_pu(regulator_a.control_side());
+            };
+
+            SUBCASE("Rank a < Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 1;
+                check_a = check_exact(-2);
+                check_b = check_exact(1);
+            }
+            // SUBCASE("Rank a > Rank b")  {
+            //     state_a.rank = 1;
+            //     state_b.rank = 0;
+            //     check_a = check_exact(0);
+            //     check_b = check_exact(0);
+            // }
+            // SUBCASE("Rank a == Rank b")  {
+            //     state_a.rank = 0;
+            //     state_b.rank = 0;
+            //     check_a = check_exact(0);
+            //     check_b = check_exact(0);
+            // }
+        }
+
         auto const initial_a{transformer_a.tap_pos()};
         auto const initial_b{transformer_b.tap_pos()};
 
@@ -832,7 +886,9 @@ TEST_CASE("Test Tap position optimizer") {
                 // correctness
                 CHECK(result.size() == 1);
                 check_a(get_state_tap_pos(result, state_a.id), strategy);
+                INFO("tap_pos_a: ", get_state_tap_pos(result, state_a.id));
                 check_b(get_state_tap_pos(result, state_b.id), strategy);
+                INFO("tap_pos_b: ", get_state_tap_pos(result, state_b.id));
 
                 // reset
                 CHECK(transformer_a.tap_pos() == initial_a);
