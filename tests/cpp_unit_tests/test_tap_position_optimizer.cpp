@@ -681,7 +681,7 @@ TEST_CASE("Test Tap position optimizer") {
             }
 
             SUBCASE("not connected at third side doesn't matter") {
-                auto check_b = test::check_exact(1);
+                check_b = test::check_exact(1);
                 state_b.rank = 0;
                 state_b.status = [control_side, &state_b](ControlSide side) {
                     return side == control_side || side == state_b.tap_side;
