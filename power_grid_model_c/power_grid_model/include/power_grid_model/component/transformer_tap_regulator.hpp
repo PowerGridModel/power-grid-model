@@ -35,10 +35,10 @@ class TransformerTapRegulator : public Regulator {
     UpdateChange update(TransformerTapRegulatorUpdate const& update_data) {
         assert(update_data.id == id());
         set_status(update_data.status);
-        u_set_ = update_data.u_set;
-        u_band_ = update_data.u_band;
-        line_drop_compensation_r_ = update_data.line_drop_compensation_r;
-        line_drop_compensation_x_ = update_data.line_drop_compensation_x;
+        update_real_value<symmetric_t>(update_data.u_set, u_set_, 1.0);
+        update_real_value<symmetric_t>(update_data.u_band, u_band_, 1.0);
+        update_real_value<symmetric_t>(update_data.line_drop_compensation_r, line_drop_compensation_r_, 1.0);
+        update_real_value<symmetric_t>(update_data.line_drop_compensation_x, line_drop_compensation_x_, 1.0);
         return {false, false};
     }
 
