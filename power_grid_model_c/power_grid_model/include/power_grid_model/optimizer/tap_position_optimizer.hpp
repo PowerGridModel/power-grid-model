@@ -644,16 +644,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto iterate_with_fallback(State const& state,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                                CalculationMethod method) const -> ResultType {
+        constexpr auto fallback = [&] {
+            std::ignore = iterate(state, regulator_order, CalculationMethod::linear);
+            return iterate(state, regulator_order, method);
+        };
+
         try {
             return iterate(state, regulator_order, method);
         } catch (IterationDiverge const& /* ex */) {
-            // fallback
+            return fallback();
         } catch (SparseMatrixError const& /* ex */) {
-            // fallback
+            return fallback();
         }
-
-        std::ignore = iterate(state, regulator_order, CalculationMethod::linear);
-        return iterate(state, regulator_order, method);
     }
 
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
