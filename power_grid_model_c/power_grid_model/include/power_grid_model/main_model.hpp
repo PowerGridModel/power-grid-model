@@ -673,7 +673,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if constexpr (std::is_same<decltype(result_pf), OptimizerOutput>::value) {
             return MathOutput<SolverOutput<sym>>{.solver_output = {}, .optimizer_output = result_pf};
         }
-        return MathOutput<SolverOutput<sym>>{.solver_output = std::move(result_pf), .optimizer_output = {}};
+        return MathOutput<SolverOutput<sym>>{.solver_output = result_pf, .optimizer_output = {}};
     }
 
     // Single load flow calculation, propagating the results to result_data
