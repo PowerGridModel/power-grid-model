@@ -117,10 +117,19 @@ Contrary to the [`HomogeneousComponentData`](#json-schema-homogeneous-component-
 
 #### JSON schema attribute value
 
-The [`AttributeValue`](#json-schema-attribute-value) contains the actual value of an attribute. The value can be any of `null` if it is not provided, or any of [`int32_t`](#json-schema-int32_t), [`int8_t`](#json-schema-int8_t), [`double`](#json-schema-double), [`RealValueInput`](#json-schema-realvalueinput) or [`RealValueOutput`](#json-schema-realvalueoutput).
+The [`AttributeValue`](#json-schema-attribute-value) contains the actual value of an attribute. The value can be any of [`null`](#json-schema-null-absence-of-value) if it is not provided, or any of [`int32_t`](#json-schema-int32_t), [`int8_t`](#json-schema-int8_t), [`double`](#json-schema-double), [`RealValueInput`](#json-schema-realvalueinput) or [`RealValueOutput`](#json-schema-realvalueoutput).
 The type is listed for each attribute in [Components](components.md).
 
-- [`AttributeValue`](#json-schema-attribute-value): `null` | [`int32_t`](#json-schema-int32_t) | [`int8_t`](#json-schema-int8_t) | [`double`](#json-schema-double) | [`RealValueInput`](#json-schema-realvalueinput) | [`RealValueOutput`](#json-schema-realvalueoutput)
+- [`AttributeValue`](#json-schema-attribute-value): [`null`](#json-schema-null-absence-of-value) | [`int32_t`](#json-schema-int32_t) | [`int8_t`](#json-schema-int8_t) | [`double`](#json-schema-double) | [`RealValueInput`](#json-schema-realvalueinput) | [`RealValueOutput`](#json-schema-realvalueoutput)
+
+#### JSON schema null (absence of value)
+
+**NOTE:** This is the [JSON](#json-serialization-format-specification)-specific version of [absence of a value](#json-schema-null-absence-of-value).
+For [`msgpack`](#msgpack-serialization-format-specification), refer to [absence of a value for `msgpack`](#msgpack-schema-nil-absence-of-value).
+
+Absence of a value is represented by `null`.
+
+- [absence of a value](#json-schema-null-absence-of-value): `null`
 
 #### JSON schema int32_t
 
@@ -138,41 +147,43 @@ The type is listed for each attribute in [Components](components.md).
 
 #### JSON schema double
 
-**NOTE:** This is the JSON-specific version of [`double`](#json-schema-double).
-For [`mspgack`](#msgpack-serialization-format-specification), refer to [`double` for `msgpack`](#msgpack-schema-double).
+**NOTE:** This is the [JSON](#json-serialization-format-specification)-specific version of [`double`](#json-schema-double).
+For [`msgpack`](#msgpack-serialization-format-specification), refer to [`double` for `msgpack`](#msgpack-schema-double).
 
-A [`double`](#json-schema-double) floating point `number` or `string` value usually representing a real.
+A [`double`](#json-schema-double) floating point `number` or `string` value, usually representing a real.
 If it is a `string`, it shall be either `"inf"` or `"+inf"` for positive infinity, or `"-inf"` for negative infinity.
 Any other values are unsupported.
 The type is listed for each attribute in [Components](components.md).
 
 - [`double`](#json-schema-double): `number`|`string`
 
+**NOTE:** `nan` values are represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+
 #### JSON schema RealValueInput
 
 A [`RealValueInput`](#json-schema-realvalueinput) of which the data format depends on the type of calculation.
 For symmetric components, it is a [`double`](#json-schema-double).
-For asymmetric components, it is an Array of size 3 containing [`double`](#json-schema-double) or `null` values.
+For asymmetric components, it is an Array of size 3 containing [`double`](#json-schema-double) values.
 The type is listed for each attribute in [Components](components.md).
 
 - [`RealValueInput`](#json-schema-realvalueinput): [`double`](#json-schema-double) for symmetric calculations.
 - [`RealValueInput`](#json-schema-realvalueinput): `Array` of size 3 for asymmetric calculations, one for each phase.
-  - [`double`](#json-schema-double) | `null`: the value for the `_a` phase, if specified.
-  - [`double`](#json-schema-double) | `null`: the value for the `_b` phase, if specified.
-  - [`double`](#json-schema-double) | `null`: the value for the `_c` phase, if specified.
+  - [`double`](#json-schema-double): the value for the `_a` phase, if specified.
+  - [`double`](#json-schema-double): the value for the `_b` phase, if specified.
+  - [`double`](#json-schema-double): the value for the `_c` phase, if specified.
 
 #### JSON schema RealValueOutput
 
 A [`RealValueOutput`](#json-schema-realvalueoutput) of which the data format depends on the type of calculation.
 For symmetric calculations, it is a [`double`](#json-schema-double).
-For asymmetric calculations, it is an Array of size 3 containing [`double`](#json-schema-double) or `null` values.
+For asymmetric calculations, it is an Array of size 3 containing [`double`](#json-schema-double) or [`null`](#json-schema-null-absence-of-value) values.
 The type is listed for each attribute in [Components](components.md).
 
 - [`RealValueOutput`](#json-schema-realvalueoutput): [`double`](#json-schema-double) for symmetric calculations.
 - [`RealValueOutput`](#json-schema-realvalueoutput): `Array` of size 3 for asymmetric calculations, one for each phase.
-  - [`double`](#json-schema-double) | `null`: the value for the `_a` phase, if specified.
-  - [`double`](#json-schema-double) | `null`: the value for the `_b` phase, if specified.
-  - [`double`](#json-schema-double) | `null`: the value for the `_c` phase, if specified.
+  - [`double`](#json-schema-double) | [`null`](#json-schema-null-absence-of-value): the value for the `_a` phase, if specified.
+  - [`double`](#json-schema-double) | [`null`](#json-schema-null-absence-of-value): the value for the `_b` phase, if specified.
+  - [`double`](#json-schema-double) | [`null`](#json-schema-null-absence-of-value): the value for the `_c` phase, if specified.
 
 #### JSON schema single dataset example
 
@@ -309,3 +320,14 @@ Any other values are unsupported.
 The type is listed for each attribute in [Components](components.md).
 
 - [`double`](#msgpack-schema-double): `number`
+
+**NOTE:** `nan` values are represented by absence of a value, which is `nil`.
+
+#### msgpack schema nil (absence of value)
+
+**NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [absence of a value](#msgpack-schema-absence-of-value).
+For [JSON](#json-serialization-format-specification), refer to [absence of a value for JSON](#json-schema-null-absence-of-value).
+
+Absence of a value is represented by `nil` (the byte `\xc0`).
+
+- [absence of a value](#msgpack-schema-nil-absence-of-value): `nil`
