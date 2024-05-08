@@ -174,9 +174,9 @@ The type is listed for each attribute in [Components](components.md).
 
 - [`RealValueInput`](#json-schema-realvalueinput): [`double`](#json-schema-double) for symmetric calculations.
 - [`RealValueInput`](#json-schema-realvalueinput): `Array` of size 3 for asymmetric calculations, one for each phase.
-  - [`double`](#json-schema-double): the value for the `_a` phase, if specified.
-  - [`double`](#json-schema-double): the value for the `_b` phase, if specified.
-  - [`double`](#json-schema-double): the value for the `_c` phase, if specified.
+  - [`double`](#json-schema-double) | [`null`](#json-schema-null-absence-of-value): the value for the `_a` phase, if specified.
+  - [`double`](#json-schema-double) | [`null`](#json-schema-null-absence-of-value): the value for the `_b` phase, if specified.
+  - [`double`](#json-schema-double) | [`null`](#json-schema-null-absence-of-value): the value for the `_c` phase, if specified.
 
 #### JSON schema RealValueOutput
 
