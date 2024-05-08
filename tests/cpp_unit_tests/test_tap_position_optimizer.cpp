@@ -816,14 +816,12 @@ TEST_CASE("Test Tap position optimizer") {
         }
 
         SUBCASE("multiple transformers with based on ranking") {
-            state_a.tap_pos = 0;
+            state_a.rank = 0;
+            state_b.rank = 1;
             state_a.tap_min = -5;
             state_a.tap_max = 5;
-            state_b.tap_pos = 0;
             state_b.tap_min = -5;
             state_b.tap_max = 5;
-            regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.05});
-            regulator_b.update({.id = 4, .u_set = 1.13636, .u_band = 0.05});
 
             state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
                 CHECK(side == regulator_a.control_side());
@@ -847,11 +845,23 @@ TEST_CASE("Test Tap position optimizer") {
                 return static_cast<DoubleComplex>(state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b));
             };
 
-            SUBCASE("Rank a < Rank b") {
-                state_a.rank = 0;
-                state_b.rank = 1;
+            SUBCASE("Situation 1") {
+                regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
+                regulator_b.update({.id = 4, .u_set = 1.13636, .u_band = 0.01});
                 check_a = check_exact(-2);
                 check_b = check_exact(1);
+            }
+            SUBCASE("Situation 2") {
+                regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
+                regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
+                check_a = check_exact(-1);
+                check_b = check_exact(-3);
+            }
+            SUBCASE("Situation 3") {
+                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
+                regulator_b.update({.id = 4, .u_set = 0.7142, .u_band = 0.01});
+                check_a = check_exact(0);
+                check_b = check_exact(4);
             }
         }
 
