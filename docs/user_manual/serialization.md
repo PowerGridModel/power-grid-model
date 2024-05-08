@@ -131,6 +131,8 @@ Absence of a value is represented by `null`.
 
 - [absence of a value](#json-schema-null-absence-of-value): `null`
 
+**NOTE:** the special value `-2147483648` for `nan` values may also be represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+
 #### JSON schema int32_t
 
 An [`int32_t`](#json-schema-int32_t) is an integer `number` value usually representing an ID. It may be in the inclusive range $\left[-2^{31},+2^{31} - 1\right]$.
@@ -138,12 +140,16 @@ The type is listed for each attribute in [Components](components.md).
 
 - [`int32_t`](#json-schema-int32_t): `number`
 
+**NOTE:** the special value `-2147483648` for `nan` values may also be represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+
 #### JSON schema int8_t
 
 An [`int8_t`](#json-schema-int8_t) integer `number` value usually representing an enumeration value or a discrete setting. It may be in the inclusive range $\left[-2^{7},+2^{7} - 1\right]$.
 The type is listed for each attribute in [Components](components.md).
 
 - [`int8_t`](#json-schema-int8_t): `number`
+
+**NOTE:** the special value `-128` for `nan` values may also be represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
 
 #### JSON schema double
 
