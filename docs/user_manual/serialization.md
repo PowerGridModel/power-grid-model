@@ -169,7 +169,7 @@ The type is listed for each attribute in [Components](components.md).
 
 A [`RealValueInput`](#json-schema-realvalueinput) of which the data format depends on the type of calculation.
 For symmetric components, it is a [`double`](#json-schema-double).
-For asymmetric components, it is an Array of size 3 containing [`double`](#json-schema-double) values.
+For asymmetric components, it is an Array of size 3 containing [`double`](#json-schema-double) or [`null`](#json-schema-null-absence-of-value) values.
 The type is listed for each attribute in [Components](components.md).
 
 - [`RealValueInput`](#json-schema-realvalueinput): [`double`](#json-schema-double) for symmetric calculations.
