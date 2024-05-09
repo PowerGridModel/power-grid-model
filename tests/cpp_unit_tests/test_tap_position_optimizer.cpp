@@ -839,7 +839,7 @@ TEST_CASE("Test Tap position optimizer") {
 
                 // u_2b = f(tap_pos_a, tap_pos_b) for rank 1
                 // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
-                // consider n_2 = 1. Also u_1a == u_2b
+                // consider n_2 = 1. Also u_1a = u_2b
                 // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
                 auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
                 return state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
