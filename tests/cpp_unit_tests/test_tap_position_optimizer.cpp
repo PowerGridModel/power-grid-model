@@ -826,7 +826,7 @@ TEST_CASE("Test Tap position optimizer") {
             state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
                 CHECK(side == regulator_a.control_side());
 
-                // u_2a = f(ta) for rank 0
+                // u_2a = f(tap_pos_a) for rank 0
                 // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
                 // consider u_1a = n_1 = 1.0
                 // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
@@ -837,7 +837,7 @@ TEST_CASE("Test Tap position optimizer") {
             state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_b.control_side());
 
-                // u_2b = f(ta, tb) for rank 1
+                // u_2b = f(tap_pos_a, tap_pos_b) for rank 1
                 // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
                 // consider n_2 = 1. Also u_1a == u_2b
                 // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
