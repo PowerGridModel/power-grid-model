@@ -970,12 +970,11 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
 }
 
 TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update, cached_update) {
-    constexpr auto check_sym = [](MainModel const& model_,
-                                  std::vector<SolverOutput<symmetric_t>> const& solver_output_) {
+    constexpr auto check_sym = [](MainModel const& model_, auto const& math_output_) {
         State state_;
-        model_.output_result<Node>(solver_output_, state_.sym_node.begin());
-        model_.output_result<Branch>(solver_output_, state_.sym_branch.begin());
-        model_.output_result<Appliance>(solver_output_, state_.sym_appliance.begin());
+        model_.output_result<Node>(math_output_, state_.sym_node.begin());
+        model_.output_result<Branch>(math_output_, state_.sym_branch.begin());
+        model_.output_result<Appliance>(math_output_, state_.sym_appliance.begin());
 
         CHECK(state_.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state_.sym_node[1].u_pu == doctest::Approx(test::u1));
@@ -987,12 +986,11 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
         CHECK(state_.sym_appliance[3].i == doctest::Approx(0.0));
         CHECK(state_.sym_appliance[4].i == doctest::Approx(0.0));
     };
-    constexpr auto check_asym = [](MainModel const& model_,
-                                   std::vector<SolverOutput<asymmetric_t>> const& solver_output_) {
+    constexpr auto check_asym = [](MainModel const& model_, auto const& math_output_) {
         State state_;
-        model_.output_result<Node>(solver_output_, state_.asym_node.begin());
-        model_.output_result<Branch>(solver_output_, state_.asym_branch.begin());
-        model_.output_result<Appliance>(solver_output_, state_.asym_appliance.begin());
+        model_.output_result<Node>(math_output_, state_.asym_node.begin());
+        model_.output_result<Branch>(math_output_, state_.asym_branch.begin());
+        model_.output_result<Appliance>(math_output_, state_.asym_appliance.begin());
         CHECK(state_.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state_.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
         CHECK(state_.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
@@ -1017,12 +1015,11 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
     // This will lead to no topo change but param change
     main_model.update_component<typename settings::update_type>(update_data);
 
-    auto const solver_output_sym_1 = main_model.calculate_power_flow<symmetric_t>(1e-8, 20, CalculationMethod::linear);
-    check_sym(main_model, solver_output_sym_1);
+    auto const math_output_sym_1 = main_model.calculate_power_flow<symmetric_t>(1e-8, 20, CalculationMethod::linear);
+    check_sym(main_model, math_output_sym_1);
 
-    auto const solver_output_asym_1 =
-        main_model.calculate_power_flow<asymmetric_t>(1e-8, 20, CalculationMethod::linear);
-    check_asym(main_model, solver_output_asym_1);
+    auto const math_output_asym_1 = main_model.calculate_power_flow<asymmetric_t>(1e-8, 20, CalculationMethod::linear);
+    check_asym(main_model, math_output_asym_1);
 
     SUBCASE("No new update") {
         // Math state may be fully cached
@@ -1039,12 +1036,11 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
         main_model.update_component<typename settings::update_type>(update_data);
     }
 
-    auto const solver_output_asym_2 =
-        main_model.calculate_power_flow<asymmetric_t>(1e-8, 20, CalculationMethod::linear);
-    check_asym(main_model, solver_output_asym_2);
+    auto const math_output_asym_2 = main_model.calculate_power_flow<asymmetric_t>(1e-8, 20, CalculationMethod::linear);
+    check_asym(main_model, math_output_asym_2);
 
-    auto const solver_output_sym_2 = main_model.calculate_power_flow<symmetric_t>(1e-8, 20, CalculationMethod::linear);
-    check_sym(main_model, solver_output_sym_2);
+    auto const math_output_sym_2 = main_model.calculate_power_flow<symmetric_t>(1e-8, 20, CalculationMethod::linear);
+    check_sym(main_model, math_output_sym_2);
 
     main_model.restore_components(main_model.get_sequence_idx_map(update_data));
 }
