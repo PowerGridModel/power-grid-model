@@ -881,13 +881,13 @@ TEST_CASE("Test Tap position optimizer") {
             // 2         | 1.0  | 0.75 | 0.5  | 0.25
             // 3         | 0.75 | 0.5  | 0.25 | 0.0
 
-            state_a.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+            state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
                 CHECK(side == regulator_a.control_side());
                 auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
                 return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
             };
 
-            state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+            state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_b.control_side());
                 auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
                 return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
