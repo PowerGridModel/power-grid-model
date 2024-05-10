@@ -865,7 +865,7 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
-        SUBCASE("Different rankings for same control function") {
+        SUBCASE("multiple transformers with generic control function") {
             state_a.tap_min = 0;
             state_a.tap_max = 2;
             state_b.tap_min = 0;
@@ -883,14 +883,12 @@ TEST_CASE("Test Tap position optimizer") {
 
             state_a.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_a.control_side());
-
                 auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
                 return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
             };
 
             state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_b.control_side());
-
                 auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
                 return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
             };
@@ -910,8 +908,8 @@ TEST_CASE("Test Tap position optimizer") {
             SUBCASE("Rank a == Rank b") {
                 state_a.rank = 0;
                 state_b.rank = 0;
-                check_a = check_exact_per_strategy(2, 0, 2);
-                check_b = check_exact_per_strategy(0, 2, 0);
+                check_a = check_exact(1);
+                check_b = check_exact(1);
             }
         }
 
