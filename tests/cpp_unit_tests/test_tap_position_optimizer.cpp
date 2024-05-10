@@ -815,7 +815,7 @@ TEST_CASE("Test Tap position optimizer") {
             regulator_b.update({.id = 4, .u_set = u_set, .u_band = u_band});
         }
 
-        SUBCASE("multiple transformers with based on ranking") {
+        SUBCASE("multiple transformers with control function based on ranking") {
             state_a.rank = 0;
             state_b.rank = 1;
             state_a.tap_min = -5;
@@ -862,6 +862,56 @@ TEST_CASE("Test Tap position optimizer") {
                 regulator_b.update({.id = 4, .u_set = 0.7142, .u_band = 0.01});
                 check_a = check_exact(0);
                 check_b = check_exact(4);
+            }
+        }
+
+        SUBCASE("Different rankings for same control function") {
+            state_a.tap_min = 0;
+            state_a.tap_max = 2;
+            state_b.tap_min = 0;
+            state_b.tap_max = 2;
+            regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.2});
+            regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.2});
+
+            // Both control side voltages have a function which follows this table
+            // t_a \ t_b |  0   |  1   |  2   |  3
+            // --------- | ---- | ---- | ---- | ----
+            // 0         | 1.5  | 1.25 | 1.0  | 0.75
+            // 1         | 1.25 | 1.0  | 0.75 | 0.5
+            // 2         | 1.0  | 0.75 | 0.5  | 0.25
+            // 3         | 0.75 | 0.5  | 0.25 | 0.0
+
+            state_a.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_a.control_side());
+
+                auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
+                return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+            };
+
+            state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+
+                auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
+                return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+            };
+
+            SUBCASE("Rank a < Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 1;
+                check_a = check_exact_per_strategy(2, 0, 2);
+                check_b = check_exact_per_strategy(0, 2, 0);
+            }
+            SUBCASE("Rank a > Rank b") {
+                state_a.rank = 1;
+                state_b.rank = 0;
+                check_a = check_exact_per_strategy(0, 2, 0);
+                check_b = check_exact_per_strategy(2, 0, 2);
+            }
+            SUBCASE("Rank a == Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 0;
+                check_a = check_exact_per_strategy(2, 0, 2);
+                check_b = check_exact_per_strategy(0, 2, 0);
             }
         }
 
