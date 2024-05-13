@@ -632,13 +632,30 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                   CalculationMethod method) const -> ResultType {
         initialize(regulator_order);
 
-        if (auto result = iterate(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
+        if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
             return result;
         }
 
         // refine solution
         exploit_neighborhood(regulator_order);
-        return iterate(state, regulator_order, method);
+        return iterate_with_fallback(state, regulator_order, method);
+    }
+
+    auto iterate_with_fallback(State const& state,
+                               std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                               CalculationMethod method) const -> ResultType {
+        auto fallback = [this, &state, &regulator_order, &method] {
+            std::ignore = iterate(state, regulator_order, CalculationMethod::linear);
+            return iterate(state, regulator_order, method);
+        };
+
+        try {
+            return iterate(state, regulator_order, method);
+        } catch (IterationDiverge const& /* ex */) {
+            return fallback();
+        } catch (SparseMatrixError const& /* ex */) {
+            return fallback();
+        }
     }
 
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
