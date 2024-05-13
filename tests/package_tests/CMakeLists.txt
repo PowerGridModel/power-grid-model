@@ -18,7 +18,7 @@ set(PROJECT_SOURCES
 )
 
 # Link against shared power_grid_model object installed by main project
-add_executable(power_grid_model_package_test EXCLUDE_FROM_ALL ${PROJECT_SOURCES})
+add_executable(power_grid_model_package_test ${PROJECT_SOURCES})
 target_link_libraries(power_grid_model_package_test PRIVATE power_grid_model::power_grid_model_c)
 set_target_properties(power_grid_model_package_test PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 

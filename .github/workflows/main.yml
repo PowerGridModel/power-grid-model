@@ -133,7 +133,7 @@ jobs:
           # build
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           # test
-          ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
+          ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
           # install
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
 

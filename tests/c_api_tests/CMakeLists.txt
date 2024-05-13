@@ -9,7 +9,7 @@ set(PROJECT_SOURCES
     "test_serialization.cpp"
 )
 
-add_executable(power_grid_model_c_api_tests EXCLUDE_FROM_ALL ${PROJECT_SOURCES})
+add_executable(power_grid_model_c_api_tests ${PROJECT_SOURCES})
 
 target_link_libraries(power_grid_model_c_api_tests
     PRIVATE

@@ -11,7 +11,7 @@ set(PROJECT_SOURCES
     "test_math_solver.cpp"
 )
 
-add_executable(power_grid_model_integration_tests EXCLUDE_FROM_ALL ${PROJECT_SOURCES})
+add_executable(power_grid_model_integration_tests ${PROJECT_SOURCES})
 
 target_link_libraries(power_grid_model_integration_tests
     PRIVATE

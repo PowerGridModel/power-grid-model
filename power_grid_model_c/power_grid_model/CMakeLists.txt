@@ -16,3 +16,8 @@ target_include_directories(power_grid_model INTERFACE "${CMAKE_CURRENT_SOURCE_DI
 
 # only use MPL version of eigen
 target_compile_definitions(power_grid_model INTERFACE "EIGEN_MPL2_ONLY=1")
+
+target_compile_options(power_grid_model BEFORE INTERFACE
+  $<$<CXX_COMPILER_ID:CLANG>:"-Wno-unknown-attribute">
+  $<$<CXX_COMPILER_ID:MSVC>:"/bigobj">
+)
