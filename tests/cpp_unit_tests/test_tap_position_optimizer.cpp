@@ -653,6 +653,7 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
+        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
         auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
 
         state.components.set_construction_complete();
@@ -856,6 +857,104 @@ TEST_CASE("Test Tap position optimizer") {
                                 .u_band = u_band,
                                 .line_drop_compensation_r = line_drop_compensation_r / base_power_3p,
                                 .line_drop_compensation_x = line_drop_compensation_x / base_power_3p});
+        }
+      
+        SUBCASE("multiple transformers with control function based on ranking") {
+            state_a.rank = 0;
+            state_b.rank = 1;
+            state_a.tap_min = -5;
+            state_a.tap_max = 5;
+            state_b.tap_min = -5;
+            state_b.tap_max = 5;
+
+            state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
+                CHECK(side == regulator_a.control_side());
+
+                // u_2a = f(tap_pos_a) when rank is 0
+                // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
+                // consider u_1a = n_1 = 1.0
+                // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
+                auto const relative_tap_a = static_cast<double>(state_a.tap_pos) * 0.1;
+                return static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
+            };
+
+            state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+
+                // u_2b = f(tap_pos_a, tap_pos_b) when rank is 1
+                // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
+                // consider n_2 = 1. Also u_1a = u_2b
+                // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
+                auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
+                return state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
+            };
+
+            SUBCASE("Situation 1") {
+                regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
+                regulator_b.update({.id = 4, .u_set = 1.13636, .u_band = 0.01});
+                check_a = check_exact(-2);
+                check_b = check_exact(1);
+            }
+            SUBCASE("Situation 2") {
+                regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
+                regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
+                check_a = check_exact(-1);
+                check_b = check_exact(-3);
+            }
+            SUBCASE("Situation 3") {
+                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
+                regulator_b.update({.id = 4, .u_set = 0.7142, .u_band = 0.01});
+                check_a = check_exact(0);
+                check_b = check_exact(4);
+            }
+        }
+
+        SUBCASE("multiple transformers with generic control function") {
+            state_a.tap_min = 0;
+            state_a.tap_max = 2;
+            state_b.tap_min = 0;
+            state_b.tap_max = 2;
+            regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.2});
+            regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.2});
+
+            // Both control side voltages have a function which follows this table
+            // t_a \ t_b |  0   |  1   |  2   |  3
+            // --------- | ---- | ---- | ---- | ----
+            // 0         | 1.5  | 1.25 | 1.0  | 0.75
+            // 1         | 1.25 | 1.0  | 0.75 | 0.5
+            // 2         | 1.0  | 0.75 | 0.5  | 0.25
+            // 3         | 0.75 | 0.5  | 0.25 | 0.0
+
+            state_a.u_pu = [&state_a, &state_b, &regulator_a](ControlSide side) {
+                CHECK(side == regulator_a.control_side());
+                auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
+                return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+            };
+
+            state_b.u_pu = [&state_a, &state_b, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+                auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
+                return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+            };
+
+            SUBCASE("Rank a < Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 1;
+                check_a = check_exact_per_strategy(2, 0, 2);
+                check_b = check_exact_per_strategy(0, 2, 0);
+            }
+            SUBCASE("Rank a > Rank b") {
+                state_a.rank = 1;
+                state_b.rank = 0;
+                check_a = check_exact_per_strategy(0, 2, 0);
+                check_b = check_exact_per_strategy(2, 0, 2);
+            }
+            SUBCASE("Rank a == Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 0;
+                check_a = check_exact(1);
+                check_b = check_exact(1);
+            }
         }
 
         auto const initial_a{transformer_a.tap_pos()};
