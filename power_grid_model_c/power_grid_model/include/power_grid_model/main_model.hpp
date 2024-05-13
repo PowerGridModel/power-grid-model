@@ -88,13 +88,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     static constexpr Idx ignore_output{-1};
 
     // run functors with all component types
-    template <class Functor, class... Args>
-    static void run_functor_with_all_types_return_void(Functor functor, Args&&... args) {
-        (functor.template operator()<ComponentType>(std::forward<Args>(args)...), ...);
+    template <class Functor>
+    static void run_functor_with_all_types_return_void(Functor functor) {
+        (functor.template operator()<ComponentType>(), ...);
     }
-    template <class Functor, class... Args>
-    static auto run_functor_with_all_types_return_array(Functor functor, Args&&... args) {
-        return std::array{functor.template operator()<ComponentType>(std::forward<Args>(args)...)...};
+    template <class Functor>
+    static auto run_functor_with_all_types_return_array(Functor functor) {
+        return std::array{functor.template operator()<ComponentType>()...};
     }
 
   public:
@@ -597,7 +597,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return true;
         }
 
-        auto const is_component_update_independent = []<typename CT>(ConstDataset const& update_data) -> bool {
+        auto const is_component_update_independent = [&update_data]<typename CT>() -> bool {
             // get span of all the update data
             auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
@@ -629,7 +629,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // check all components
         auto const update_independent =
-            run_functor_with_all_types_return_array(is_component_update_independent, update_data);
+            run_functor_with_all_types_return_array(is_component_update_independent);
         return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
