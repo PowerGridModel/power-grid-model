@@ -608,7 +608,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     return false;
                 }
             }
-            // return true if all scenarios have length zero
             if (elements_per_scenario == 0) {
                 return true;
             }
