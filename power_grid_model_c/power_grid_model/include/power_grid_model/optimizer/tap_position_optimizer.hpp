@@ -652,7 +652,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             for (auto const& same_rank_regulators : regulator_order) {
                 for (auto const& regulator : same_rank_regulators) {
-                    tap_changed = tap_changed || adjust_transformer(regulator, state, result, update_data);
+                    tap_changed = adjust_transformer(regulator, state, result, update_data) || tap_changed;
                 }
                 if (tap_changed) {
                     break;
