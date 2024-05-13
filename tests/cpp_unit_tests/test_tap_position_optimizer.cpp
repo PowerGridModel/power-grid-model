@@ -761,8 +761,7 @@ TEST_CASE("Test Tap position optimizer") {
                     test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
             };
 
-            double u_set = 0.5;
-            double u_band = 0.0;
+            auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
             SUBCASE("normal tap range") {
                 state_b.tap_min = 1;
@@ -770,15 +769,15 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_pos = 3;
 
                 SUBCASE("unique value in band") {
-                    u_band = 0.01;
+                    update_data.u_band = 0.01;
                     check_b = test::check_exact(3);
                 }
                 SUBCASE("large compact band") {
-                    u_band = 1.01;
+                    update_data.u_band = 1.01;
                     check_b = test::check_exact_per_strategy(3, 5, 1);
                 }
                 SUBCASE("small open band") {
-                    u_band = 0.76;
+                    update_data.u_band = 0.76;
                     check_b = test::check_exact_per_strategy(3, 4, 2);
                 }
             }
@@ -788,15 +787,15 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_pos = 3;
 
                 SUBCASE("unique value in band") {
-                    u_band = 0.01;
+                    update_data.u_band = 0.01;
                     check_b = test::check_exact(3);
                 }
                 SUBCASE("large compact band") {
-                    u_band = 1.01;
+                    update_data.u_band = 1.01;
                     check_b = test::check_exact_per_strategy(3, 1, 5);
                 }
                 SUBCASE("small open band") {
-                    u_band = 0.76;
+                    update_data.u_band = 0.76;
                     check_b = test::check_exact_per_strategy(3, 2, 4);
                 }
             }
@@ -806,12 +805,12 @@ TEST_CASE("Test Tap position optimizer") {
             //     state_b.tap_max = 5;
             //     state_b.tap_pos = 3;
 
-            //     u_set = 0.4;
-            //     u_set = 0.01;
+            //     update_data.u_set = 0.4;
+            //     update_data.u_set = 0.01;
             //     check_b = test::check_exact_per_strategy(3, 4, 3);
             // }
 
-            regulator_b.update({.id = 4, .u_set = u_set, .u_band = u_band});
+            regulator_b.update(update_data);
         }
 
         SUBCASE("line drop compensation") {
@@ -829,34 +828,27 @@ TEST_CASE("Test Tap position optimizer") {
                 return DoubleComplex{value, value};
             };
 
-            double const u_set = 0.5;
-            double const u_band = 0.76;
+            auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.76};
 
             state_b.tap_min = 1;
             state_b.tap_max = 5;
             state_b.tap_pos = 3;
-            double line_drop_compensation_r = 0.0;
-            double line_drop_compensation_x = 0.0;
 
             SUBCASE("no line drop compensation") { check_b = test::check_exact_per_strategy(3, 4, 2); }
             SUBCASE("resistance") {
-                line_drop_compensation_r = 0.5;
+                update_data.line_drop_compensation_r = 0.5 / base_power_3p;
                 check_b = test::check_exact_per_strategy(3, 5, 3);
             }
             SUBCASE("positive reactance") {
-                line_drop_compensation_x = 0.125;
+                update_data.line_drop_compensation_x = 0.125 / base_power_3p;
                 check_b = test::check_exact_per_strategy(3, 5, 2);
             }
             SUBCASE("negative reactance") {
-                line_drop_compensation_x = -0.5;
+                update_data.line_drop_compensation_x = -0.5 / base_power_3p;
                 check_b = test::check_exact_per_strategy(3, 5, 3);
             }
 
-            regulator_b.update({.id = 4,
-                                .u_set = u_set,
-                                .u_band = u_band,
-                                .line_drop_compensation_r = line_drop_compensation_r / base_power_3p,
-                                .line_drop_compensation_x = line_drop_compensation_x / base_power_3p});
+            regulator_b.update(update_data);
         }
 
         SUBCASE("multiple transformers with control function based on ranking") {
