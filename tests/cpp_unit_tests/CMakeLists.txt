@@ -38,7 +38,7 @@ set(PROJECT_SOURCES
     "test_tap_position_optimizer.cpp"
 )
 
-add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
+add_executable(power_grid_model_unit_tests EXCLUDE_FROM_ALL ${PROJECT_SOURCES})
 
 target_link_libraries(power_grid_model_unit_tests
     PRIVATE
