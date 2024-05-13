@@ -124,14 +124,12 @@ The type is listed for each attribute in [Components](components.md).
 
 #### JSON schema null (absence of value)
 
-**NOTE:** This is the [JSON](#json-serialization-format-specification)-specific version of [absence of a value](#json-schema-null-absence-of-value).
-For [`msgpack`](#msgpack-serialization-format-specification), refer to [absence of a value for `msgpack`](#msgpack-schema-nil-absence-of-value).
+**NOTE:** This is the [JSON](#json-serialization-format-specification)-specific version of [absence of value](#json-schema-null-absence-of-value).
+For [`msgpack`](#msgpack-serialization-format-specification), refer to [absence of value for `msgpack`](#msgpack-schema-nil-absence-of-value).
 
-Absence of a value is represented by `null`.
+- [absence of value](#json-schema-null-absence-of-value): `null`
 
-- [absence of a value](#json-schema-null-absence-of-value): `null`
-
-**NOTE:** the special value `-2147483648` for `nan` values may also be represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+**NOTE:** any `nan` values for concrete `number` types represent absence of value and are represented by [`null`](#json-schema-null-absence-of-value) in the [JSON schema](#json-serialization-format-specification).
 
 #### JSON schema int32_t
 
@@ -140,7 +138,7 @@ The type is listed for each attribute in [Components](components.md).
 
 - [`int32_t`](#json-schema-int32_t): `number`
 
-**NOTE:** the special value `-2147483648` for `nan` values may also be represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+**NOTE:** the special value `-2147483648` represents absence of value and may also be represented by [`null`](#json-schema-null-absence-of-value) in the [JSON schema](#json-serialization-format-specification).
 
 #### JSON schema int8_t
 
@@ -149,7 +147,7 @@ The type is listed for each attribute in [Components](components.md).
 
 - [`int8_t`](#json-schema-int8_t): `number`
 
-**NOTE:** the special value `-128` for `nan` values may also be represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+**NOTE:** the special value `-128` represents absence of value and may also be represented by [`null`](#json-schema-null-absence-of-value) in the [JSON schema](#json-serialization-format-specification).
 
 #### JSON schema double
 
@@ -163,7 +161,7 @@ The type is listed for each attribute in [Components](components.md).
 
 - [`double`](#json-schema-double): `number`|`string`
 
-**NOTE:** `nan` values are represented by absence of a value, which is [`null`](#json-schema-null-absence-of-value).
+**NOTE:** the special value `nan` represents absence of value and is represented by [`null`](#json-schema-null-absence-of-value) in the [JSON schema](#json-serialization-format-specification).
 
 #### JSON schema RealValueInput
 
@@ -315,6 +313,15 @@ Not every scenario updates all components and attributes, reducing the total amo
 
 The msgpack serialization format is a compressed version of the [JSON serialization format](#json-serialization-format-specification) and all features supported for JSON are also supported for msgpack.
 
+#### msgpack schema nil (absence of value)
+
+**NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [absence of value](#msgpack-schema-absence-of-value).
+For [JSON](#json-serialization-format-specification), refer to [absence of value for JSON](#json-schema-null-absence-of-value).
+
+- [absence of value](#msgpack-schema-nil-absence-of-value): `nil` (the byte `\xc0`)
+
+**NOTE:** any `nan` values for concrete `number` types represent absence of value are represented by [`nil`](#msgpack-schema-nil-absence-of-value) in the [msgpack schema](#msgpack-serialization-format-specification).
+
 #### msgpack schema double
 
 **NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [`double`](#msgpack-schema-double).
@@ -327,13 +334,4 @@ The type is listed for each attribute in [Components](components.md).
 
 - [`double`](#msgpack-schema-double): `number`
 
-**NOTE:** `nan` values are represented by absence of a value, which is `nil`.
-
-#### msgpack schema nil (absence of value)
-
-**NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [absence of a value](#msgpack-schema-absence-of-value).
-For [JSON](#json-serialization-format-specification), refer to [absence of a value for JSON](#json-schema-null-absence-of-value).
-
-Absence of a value is represented by `nil` (the byte `\xc0`).
-
-- [absence of a value](#msgpack-schema-nil-absence-of-value): `nil`
+**NOTE:** the special value `nan` represents absence of value and may also be represented by [`nil`](#msgpack-schema-nil-absence-of-value) in the [msgpack schema](#msgpack-serialization-format-specification).
