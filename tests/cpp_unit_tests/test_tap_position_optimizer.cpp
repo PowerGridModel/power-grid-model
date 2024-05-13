@@ -858,7 +858,7 @@ TEST_CASE("Test Tap position optimizer") {
                                 .line_drop_compensation_r = line_drop_compensation_r / base_power_3p,
                                 .line_drop_compensation_x = line_drop_compensation_x / base_power_3p});
         }
-      
+
         SUBCASE("multiple transformers with control function based on ranking") {
             state_a.rank = 0;
             state_b.rank = 1;
@@ -892,20 +892,20 @@ TEST_CASE("Test Tap position optimizer") {
             SUBCASE("Situation 1") {
                 regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
                 regulator_b.update({.id = 4, .u_set = 1.13636, .u_band = 0.01});
-                check_a = check_exact(-2);
-                check_b = check_exact(1);
+                check_a = test::check_exact(-2);
+                check_b = test::check_exact(1);
             }
             SUBCASE("Situation 2") {
                 regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
                 regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
-                check_a = check_exact(-1);
-                check_b = check_exact(-3);
+                check_a = test::check_exact(-1);
+                check_b = test::check_exact(-3);
             }
             SUBCASE("Situation 3") {
                 regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
                 regulator_b.update({.id = 4, .u_set = 0.7142, .u_band = 0.01});
-                check_a = check_exact(0);
-                check_b = check_exact(4);
+                check_a = test::check_exact(0);
+                check_b = test::check_exact(4);
             }
         }
 
@@ -940,20 +940,20 @@ TEST_CASE("Test Tap position optimizer") {
             SUBCASE("Rank a < Rank b") {
                 state_a.rank = 0;
                 state_b.rank = 1;
-                check_a = check_exact_per_strategy(2, 0, 2);
-                check_b = check_exact_per_strategy(0, 2, 0);
+                check_a = test::check_exact_per_strategy(2, 0, 2);
+                check_b = test::check_exact_per_strategy(0, 2, 0);
             }
             SUBCASE("Rank a > Rank b") {
                 state_a.rank = 1;
                 state_b.rank = 0;
-                check_a = check_exact_per_strategy(0, 2, 0);
-                check_b = check_exact_per_strategy(2, 0, 2);
+                check_a = test::check_exact_per_strategy(0, 2, 0);
+                check_b = test::check_exact_per_strategy(2, 0, 2);
             }
             SUBCASE("Rank a == Rank b") {
                 state_a.rank = 0;
                 state_b.rank = 0;
-                check_a = check_exact(1);
-                check_b = check_exact(1);
+                check_a = test::check_exact(1);
+                check_b = test::check_exact(1);
             }
         }
 
