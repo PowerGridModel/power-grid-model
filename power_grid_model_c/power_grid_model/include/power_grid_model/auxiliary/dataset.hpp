@@ -189,17 +189,17 @@ template <dataset_type_tag dataset_type_> class Dataset {
     void check_non_uniform_integrity(Idx elements_per_scenario, Idx total_elements, Indptr* indptr) {
         if (elements_per_scenario < 0) {
             if (!indptr) {
-                throw DatasetError{"For a non-uniform buffer, indptr should be supplied !\n"};
+                throw DatasetError{"For a non-uniform buffer, indptr should be supplied!\n"};
             }
             if constexpr (std::same_as<check_indptr_content, immutable_t>) {
                 if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
                     throw DatasetError{
-                        "For a non-uniform buffer, indptr should begin with 0 and end with total_elements !\n"};
+                        "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n"};
                 }
             }
         } else {
             if (indptr) {
-                throw DatasetError{"For a uniform buffer, indptr should be nullptr !\n"};
+                throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
             }
         }
     }
