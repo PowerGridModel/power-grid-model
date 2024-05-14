@@ -8,6 +8,7 @@
 
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
+#include "../common/counting_iterator.hpp"
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
 
@@ -166,9 +167,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     std::vector<std::span<StructType>> get_buffer_span_all_scenarios() const {
         Idx const idx = find_component(ComponentType::name, false);
         std::vector<std::span<StructType>> result(batch_size());
-        for (Idx i{}; i != batch_size(); ++i) {
-            result[i] = get_buffer_span_impl<StructType>(i, idx);
-        }
+        std::transform(IdxCount{}, IdxCount{batch_size()}, result.begin(),
+                       [this, idx](Idx i) { return get_buffer_span_impl<StructType>(i, idx); });
         return result;
     }
 

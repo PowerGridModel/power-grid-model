@@ -88,13 +88,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     static constexpr Idx ignore_output{-1};
 
     // run functors with all component types
-    template <class Functor>
-    static constexpr void run_functor_with_all_types_return_void(Functor functor) {
+    template <class Functor> static constexpr void run_functor_with_all_types_return_void(Functor functor) {
         (functor.template operator()<ComponentType>(), ...);
     }
-    template <class Functor>
-    static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
-        return std::array{functor.template operator()<ComponentType>()...};
+    template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
+        return std::array { functor.template operator()<ComponentType>()... };
     }
 
   public:
@@ -602,11 +600,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            Idx const elements_per_scenario = static_cast<Idx>(all_spans[0].size());
-            for (Idx scenario = 1; scenario != update_data.batch_size(); ++scenario) {
-                if (elements_per_scenario != static_cast<Idx>(all_spans[scenario].size())) {
-                    return false;
-                }
+            Idx const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
+            bool const uniform_batch = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
+                return static_cast<Idx>(span.size()) == elements_per_scenario;
+            });
+            if (!uniform_batch) {
+                return false;
             }
             if (elements_per_scenario == 0) {
                 return true;
@@ -628,8 +627,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         // check all components
-        auto const update_independent =
-            run_functor_with_all_types_return_array(is_component_update_independent);
+        auto const update_independent = run_functor_with_all_types_return_array(is_component_update_independent);
         return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
