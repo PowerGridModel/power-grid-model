@@ -11,6 +11,8 @@ include("cmake/pgm_version.cmake")
 
 project (power_grid_model VERSION ${PGM_VERSION})
 
+option(PGM_ENABLE_TESTS "Enable tests" OFF)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -24,9 +26,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # cmake output folder
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-include(CTest)
-enable_testing()
 
 include(GNUInstallDirs)
 
@@ -44,7 +43,12 @@ endif()
 add_subdirectory("power_grid_model_c")
 
 # get tests
-add_subdirectory("tests")
+if(${PGM_ENABLE_TESTING})
+  include(CTest)
+  enable_testing()
+
+  add_subdirectory("tests")
+endif()
 
 # get c api example
 add_subdirectory("power_grid_model_c_example")
