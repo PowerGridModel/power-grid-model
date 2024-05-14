@@ -129,7 +129,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         add_component_info_impl(component, elements_per_scenario, total_elements);
         buffers_.back().data = data;
         if (indptr) {
-            buffers_.back().indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
+            buffers_.back().indptr = std::span{indptr, static_cast<size_t>(batch_size() + 1)};
         } else {
             buffers_.back().indptr = {};
         }
@@ -143,7 +143,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         check_non_uniform_integrity<mutable_t>(info.elements_per_scenario, info.total_elements, indptr);
         buffers_[idx].data = data;
         if (indptr) {
-            buffers_[idx].indptr = {indptr, static_cast<size_t>(batch_size() + 1)};
+            buffers_[idx].indptr = std::span{indptr, static_cast<size_t>(batch_size() + 1)};
         } else {
             buffers_[idx].indptr = {};
         }
