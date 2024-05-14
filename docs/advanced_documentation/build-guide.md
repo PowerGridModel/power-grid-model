@@ -232,7 +232,7 @@ To list the available presets, run `./build.sh -h`.
 One can run the unit tests and C API example by:
 
 ```shell
-ctest --test-dir cpp_build/<preset>
+ctest --preset <preset>
 ```
 
 or
@@ -396,7 +396,7 @@ To list the available presets, run `./build.sh -h`.
 One can run the unit tests and C API example by:
 
 ```shell
-ctest --test-dir cpp_build/<preset>
+ctest --preset <preset>
 ```
 
 or
