@@ -11,8 +11,8 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
-#include <ranges>
 #include <map>
+#include <ranges>
 
 TEST_SUITE_BEGIN("Automatic Tap Changer");
 
@@ -566,6 +566,10 @@ auto normalized_lerp(IntS value, IntS start, IntS stop) {
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
 
+namespace {
+namespace meta_gen = meta_data::meta_data_gen;
+}
+
 TEST_CASE("Test Tap position optimizer") {
     using MockTransformerState = test::MockTransformerState;
     using MockTransformer = test::MockTransformer;
@@ -575,24 +579,26 @@ TEST_CASE("Test Tap position optimizer") {
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
+    auto const& meta_data =
+        meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>, // all components list
+                                meta_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
 
     MockState state;
 
     auto const updater = [&state](ConstDataset const& update_dataset) {
         REQUIRE(!update_dataset.empty());
-        REQUIRE(update_dataset.size() == 1);
-        REQUIRE(update_dataset.contains(MockTransformer::name));
-        auto const& transformers_dataset = update_dataset.at(MockTransformer::name);
-        auto const [transformers_update_begin, transformers_update_end] =
-            transformers_dataset.get_iterators<typename MockTransformer::UpdateType>(-1);
+        REQUIRE(update_dataset.n_components() == 1);
+        REQUIRE(update_dataset.contains_component(MockTransformer::name));
+        auto const& transformers_dataset =
+            update_dataset.get_buffer_span<meta_data::update_getter_s, MockTransformer>();
         auto changed_components = std::vector<Idx2D>{};
-        main_core::update_component<MockTransformer>(state, transformers_update_begin, transformers_update_end,
+        main_core::update_component<MockTransformer>(state, transformers_dataset.begin(), transformers_dataset.end(),
                                                      std::back_inserter(changed_components));
     };
 
     auto const get_optimizer = [&](OptimizerStrategy strategy) {
         return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
-            test::mock_state_calculator, updater, strategy};
+            test::mock_state_calculator, updater, strategy, meta_data};
     };
 
     SUBCASE("empty state") {

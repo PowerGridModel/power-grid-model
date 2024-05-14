@@ -64,6 +64,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
         std::span<Indptr> indptr;
     };
 
+    static constexpr Idx invalid_index{-1};
+
     Dataset(bool is_batch, Idx batch_size, std::string_view dataset, MetaData const& meta_data)
         : meta_data_{&meta_data},
           dataset_info_{.is_batch = is_batch,
@@ -106,10 +108,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
                 using namespace std::string_literals;
                 throw DatasetError{"Cannot find component '"s + std::string{component} + "'!\n"s};
             }
-            return -1;
+            return invalid_index;
         }
         return std::distance(dataset_info_.component_info.cbegin(), found);
     }
+    bool contains_component(std::string_view component) const { return find_component(component) >= 0; }
 
     ComponentInfo const& get_component_info(std::string_view component) const {
         return dataset_info_.component_info[find_component(component, true)];
@@ -152,7 +155,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // get buffer by component type
     template <template <class> class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter<ComponentType>::type>>
-    std::span<StructType> get_buffer_span(Idx scenario = -1) const {
+    std::span<StructType> get_buffer_span(Idx scenario = invalid_index) const {
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
         }
