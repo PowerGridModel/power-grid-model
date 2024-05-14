@@ -580,7 +580,7 @@ TEST_CASE("Test Tap position optimizer") {
 
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
     auto const& meta_data =
-        meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>, // all components list
+        meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
                                 meta_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
 
     MockState state;
