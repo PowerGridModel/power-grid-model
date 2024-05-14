@@ -113,6 +113,15 @@ PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Optio
                                                    PGM_Idx short_circuit_voltage_scaling);
 
 /**
+ * @brief Specify the tap changing strategy for power flow calculations
+ *
+ * @param handle
+ * @param opt pointer to option instance
+ * @param tap_changing_strategy See #PGM_TapChangingStrategy
+ */
+PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy);
+
+/**
  * @brief Enable/disable experimental features.
  *
  * [Danger mode]
