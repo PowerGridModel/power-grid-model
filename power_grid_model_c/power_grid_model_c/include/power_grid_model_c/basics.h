@@ -207,7 +207,7 @@ enum PGM_ShortCircuitVoltageScaling {
 };
 
 /**
- * @brief Enumeration of automatic tap changing strategies.
+ * @brief Enumeration of tap changing strategies.
  *
  */
 enum PGM_TapChangingStrategy {
