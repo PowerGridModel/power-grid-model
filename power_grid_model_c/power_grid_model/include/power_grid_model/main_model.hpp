@@ -92,11 +92,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     struct permanent_update_t : std::false_type {};
 
     struct Options {
+        static constexpr Idx sequential = -1;
+
         CalculationMethod calculation_method{CalculationMethod::default_method};
         double err_tol{1e-8};
         Idx max_iter{20};
-        Idx threading{-1};
+        Idx threading{sequential};
         ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
+
+        auto drop_threading() const {
+            auto result = *this; // deliberately copy
+            result.threading = sequential;
+            return result;
+        }
     };
 
     // constructor with data
@@ -733,27 +741,33 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         output_result(solver_output, result_data, pos);
     }
 
+    // Batch load flow calculation, propagating the results to result_data
+    template <symmetry_tag sym>
+    BatchParameter calculate_state_estimation(Options options, Dataset const& result_data,
+                                              ConstDataset const& update_data) {
+        return batch_calculation_(
+            [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+                Options const sub_options{.calculation_method = options.calculation_method,
+                                          .err_tol = pos != ignore_output ? options.err_tol
+                                                                          : std::numeric_limits<double>::max(),
+                                          .max_iter = pos != ignore_output ? options.max_iter : 1};
+
+                model.calculate_state_estimation<sym>(sub_options.err_tol, sub_options.max_iter,
+                                                      sub_options.calculation_method, target_data, pos);
+            },
+            result_data, update_data, options.threading);
+    }
+
     // Batch state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
     BatchParameter calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
                                               Dataset const& result_data, ConstDataset const& update_data,
                                               Idx threading = -1) {
-        return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
-                auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
-                auto const max_iter_ = pos != ignore_output ? max_iter : 1;
-
-                model.calculate_state_estimation<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
-            },
-            result_data, update_data, threading);
-    }
-
-    // Batch load flow calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(Options const& options, Dataset const& result_data,
-                                              ConstDataset const& update_data) {
-        return calculate_state_estimation<sym>(options.err_tol, options.max_iter, options.calculation_method,
-                                               result_data, update_data, options.threading);
+        return calculate_state_estimation<sym>(Options{.calculation_method = calculation_method,
+                                                       .err_tol = err_tol,
+                                                       .max_iter = max_iter,
+                                                       .threading = threading},
+                                               result_data, update_data);
     }
 
     // Single short circuit calculation, returning short circuit math output results
