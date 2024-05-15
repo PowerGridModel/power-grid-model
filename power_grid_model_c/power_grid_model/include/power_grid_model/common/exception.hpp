@@ -193,6 +193,22 @@ class DatasetError : public PowerGridError {
     explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
 };
 
+class ExperimentalFeature : public PowerGridError {
+  public:
+    struct TypeValuePair {
+        std::string_view name;
+        std::string_view value;
+    };
+
+    template <std::same_as<TypeValuePair>... Options> ExperimentalFeature(Options... options) {
+        append_msg("The following combination of options is experimental.");
+
+        (append_msg("\n " + options.name + ": " + options.value), ...);
+
+        append_msg("\n Please enable experimental features if you wish to use them.\n");
+    }
+};
+
 class UnreachableHit : public PowerGridError {
   public:
     UnreachableHit(std::string const& method, std::string const& reason_for_assumption) {

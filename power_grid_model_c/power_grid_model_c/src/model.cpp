@@ -59,6 +59,40 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
         PGM_regular_error);
 }
 
+namespace {
+void check_experimental_features(PGM_Options const& opt) {
+    using namespace std::string_literals;
+
+    if (opt.calculation_type == PGM_power_flow) {
+        switch (opt.tap_changing_strategy) {
+        case PGM_tap_changing_strategy_any_valid_tap:
+        case PGM_tap_changing_strategy_max_voltage_tap:
+        case PGM_tap_changing_strategy_min_voltage_tap: {
+            // this option is experimental and should not be exposed to the user
+            throw ExperimentalFeature{
+                ExperimentalFeature::TypeValuePair{.name = "PGM_CalculationType",
+                                                   .value = std::to_string(opt.calculation_type)},
+                ExperimentalFeature::TypeValuePair{.name = "PGM_TapChangingStrategy",
+                                                   .value = std::to_string(opt.tap_changing_strategy)}};
+        }
+        default:
+            break;
+        }
+    }
+}
+
+void check_valid_options(PGM_Options const& opt) {
+    if (opt.tap_changing_strategy != PGM_tap_changing_strategy_disabled && opt.calculation_type != PGM_power_flow) {
+        // illegal combination of options
+        throw MissingCaseForEnumError{"PGM_TapChangingStrategy", opt.tap_changing_strategy};
+    }
+
+    if (opt.experimental_features == PGM_experimental_features_disabled) {
+        check_experimental_features(opt);
+    }
+}
+} // namespace
+
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
@@ -74,14 +108,11 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     auto const exported_update_dataset =
         batch_dataset != nullptr ? batch_dataset->export_dataset<const_dataset_t>() : ConstDataset{};
 
-    if (opt->tap_changing_strategy != PGM_tap_changing_strategy_disabled &&
-        (opt->experimental_features == PGM_experimental_features_disabled || opt->calculation_type != PGM_power_flow)) {
-        // this option is experimental and should not be exposed to the user
-        throw MissingCaseForEnumError{"PGM_TapChangingStrategy", opt->tap_changing_strategy};
-    }
-
     // call calculation
     try {
+        check_valid_options(*opt);
+
+        // TODO(mgovers): changing this to narrow_cast is a breaking change
         auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
         switch (opt->calculation_type) {
         case PGM_power_flow:

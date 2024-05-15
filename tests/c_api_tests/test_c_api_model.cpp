@@ -236,6 +236,14 @@ TEST_CASE("C API Model") {
         CHECK(node_result_0.u_pu == doctest::Approx(0.4));
         CHECK(node_result_0.u_angle == doctest::Approx(0.0));
     }
+
+    SUBCASE("Invalid calculation type error") {
+        PGM_set_calculation_type(hl, opt, -128);
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+        CHECK(PGM_error_code(hl) == PGM_regular_error);
+        std::string err_msg{PGM_error_message(hl)};
+        CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
+    }
 }
 
 } // namespace power_grid_model
