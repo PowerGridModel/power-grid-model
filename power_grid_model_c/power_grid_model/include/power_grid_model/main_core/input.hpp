@@ -9,6 +9,8 @@
 
 #include "../all_components.hpp"
 
+#include <unordered_set>
+
 namespace power_grid_model::main_core {
 
 constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1, Branch3Side::side_2,
@@ -22,6 +24,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, std::forw
 inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
                           double system_frequency) {
     reserve_component<Component>(state, std::distance(begin, end));
+    // do sanity check on the transformer tap regulator
+    std::vector<Idx2D> regulated_objects;
     // loop to add component
     for (auto it = begin; it != end; ++it) {
         auto const& input = *it;
@@ -96,6 +100,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
             emplace_component<Component>(state, id, input);
         } else if constexpr (std::derived_from<Component, TransformerTapRegulator>) {
             Idx2D const regulated_object_idx = get_component_idx_by_id(state, input.regulated_object);
+            regulated_objects.push_back(regulated_object_idx);
 
             ID const regulated_terminal = [&input, &state, &regulated_object_idx] {
                 using enum ControlSide;
@@ -157,6 +162,12 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
 
             emplace_component<Component>(state, id, input, regulated_object_type, u_rated);
         }
+    }
+    // Make sure that each regulated object has at most one regulator
+    std::unordered_set<Idx2D, Idx2DHash> unique_regulated_objects(regulated_objects.begin(), regulated_objects.end());
+    if (unique_regulated_objects.size() != regulated_objects.size()) {
+        // There are duplicates
+        throw DuplicatedRegulatedObject();
     }
 }
 

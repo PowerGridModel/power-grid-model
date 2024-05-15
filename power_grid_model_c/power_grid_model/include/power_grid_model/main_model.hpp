@@ -670,6 +670,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 OptimizerType::no_optimization, OptimizerStrategy::any, calculate_power_flow_<sym>(err_tol, max_iter),
                 [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
                 ->optimize(state_, calculation_method);
+        // if (opt )
         return MathOutput<SolverOutput<sym>>{.solver_output = std::move(result_pf), .optimizer_output = {}};
     }
 

@@ -118,6 +118,13 @@ class InvalidRegulatedObject : public PowerGridError {
     }
 };
 
+class DuplicatedRegulatedObject : public PowerGridError {
+  public:
+    DuplicatedRegulatedObject() {
+        append_msg("There are objects regulated by more than one regulator. Maximum one regulator is allowed.");
+    }
+};
+
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id) {
