@@ -325,37 +325,42 @@ CalculationFunc calculation_func(CaseParam const& param) {
     using namespace std::string_literals;
     std::string const calculation_type = param.calculation_type;
     bool const sym = param.sym;
-    constexpr auto err_tol{1e-8};
-    constexpr auto max_iter{20};
     std::string const voltage_scaling = param.short_circuit_voltage_scaling;
 
+    auto const get_default_options = [](CalculationMethod calculation_method, Idx threading) {
+        return MainModel::Options{
+            .calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20, .threading = threading};
+    };
+
     if (calculation_type == "power_flow"s) {
-        return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                     ConstDataset const& update_dataset, Idx threading) {
+        return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
+                                          Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
             if (sym) {
-                return model.calculate_power_flow<symmetric_t>(err_tol, max_iter, calculation_method, dataset,
-                                                               update_dataset, threading);
+                return model.calculate_power_flow<symmetric_t>(get_default_options(calculation_method, threading),
+                                                               dataset, update_dataset);
             }
-            return model.calculate_power_flow<asymmetric_t>(err_tol, max_iter, calculation_method, dataset,
-                                                            update_dataset, threading);
+            return model.calculate_power_flow<asymmetric_t>(get_default_options(calculation_method, threading), dataset,
+                                                            update_dataset);
         };
     }
     if (calculation_type == "state_estimation"s) {
-        return [sym](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                     ConstDataset const& update_dataset, Idx threading) {
+        return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
+                                          Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
             if (sym) {
-                return model.calculate_state_estimation<symmetric_t>(err_tol, max_iter, calculation_method, dataset,
-                                                                     update_dataset, threading);
+                return model.calculate_state_estimation<symmetric_t>(get_default_options(calculation_method, threading),
+                                                                     dataset, update_dataset);
             }
-            return model.calculate_state_estimation<asymmetric_t>(err_tol, max_iter, calculation_method, dataset,
-                                                                  update_dataset, threading);
+            return model.calculate_state_estimation<asymmetric_t>(get_default_options(calculation_method, threading),
+                                                                  dataset, update_dataset);
         };
     }
     if (calculation_type == "short_circuit"s) {
-        return [voltage_scaling](MainModel& model, CalculationMethod calculation_method, Dataset const& dataset,
-                                 ConstDataset const& update_dataset, Idx threading) {
-            return model.calculate_short_circuit(sc_voltage_scaling_mapping.at(voltage_scaling), calculation_method,
-                                                 dataset, update_dataset, threading);
+        return [voltage_scaling, get_default_options](MainModel& model, CalculationMethod calculation_method,
+                                                      Dataset const& dataset, ConstDataset const& update_dataset,
+                                                      Idx threading) {
+            auto options = get_default_options(calculation_method, threading);
+            options.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(voltage_scaling);
+            return model.calculate_short_circuit(options, dataset, update_dataset);
         };
     }
     throw UnsupportedValidationCase{calculation_type, sym};
