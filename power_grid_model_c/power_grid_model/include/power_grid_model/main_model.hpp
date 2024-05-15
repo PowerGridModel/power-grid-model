@@ -762,9 +762,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (std::all_of(state_.components.template citer<Fault>().begin(),
                         state_.components.template citer<Fault>().end(),
                         [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
-            output_result(calculate_short_circuit<symmetric_t>(options), result_data, pos);
+            auto const solver_output = calculate_short_circuit<symmetric_t>(options);
+            output_result(solver_output, result_data, pos);
         } else {
-            output_result(calculate_short_circuit<asymmetric_t>(options), result_data, pos);
+            auto const solver_output = calculate_short_circuit<asymmetric_t>(options);
+            output_result(solver_output, result_data, pos);
         }
     }
 
