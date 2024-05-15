@@ -99,12 +99,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         Idx max_iter{20};
         Idx threading{sequential};
         ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
-
-        auto drop_threading() const {
-            auto result = *this; // deliberately copy
-            result.threading = sequential;
-            return result;
-        }
     };
 
     // constructor with data
@@ -731,28 +725,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                              .optimizer_output = {}};
     }
 
-    // Single state estimation calculation, returning math output results
-    template <symmetry_tag sym>
-    auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return calculate_state_estimation<sym>(
-            Options{.calculation_method = calculation_method, .err_tol = err_tol, .max_iter = max_iter});
-    }
-
     // Single state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
     void calculate_state_estimation(Options const& options, Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const solver_output = calculate_state_estimation<sym>(options);
         output_result(solver_output, result_data, pos);
-    }
-
-    // Single state estimation calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    void calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                    Dataset const& result_data, Idx pos = 0) {
-        return calculate_state_estimation<sym>(
-            Options{.calculation_method = calculation_method, .err_tol = err_tol, .max_iter = max_iter}, result_data,
-            pos);
     }
 
     // Batch load flow calculation, propagating the results to result_data
@@ -770,59 +748,36 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, options.threading);
     }
 
-    // Batch state estimation calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                              Dataset const& result_data, ConstDataset const& update_data,
-                                              Idx threading = -1) {
-        return calculate_state_estimation<sym>(Options{.calculation_method = calculation_method,
-                                                       .err_tol = err_tol,
-                                                       .max_iter = max_iter,
-                                                       .threading = threading},
-                                               result_data, update_data);
-    }
-
     // Single short circuit calculation, returning short circuit math output results
-    template <symmetry_tag sym>
-    auto calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
+    template <symmetry_tag sym> auto calculate_short_circuit(Options const& options) {
         return MathOutput<ShortCircuitSolverOutput<sym>>{
-            .solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method),
+            .solver_output = calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling)(
+                state_, options.calculation_method),
             .optimizer_output = {}};
     }
 
     // Single short circuit calculation, propagating the results to result_data
-    void calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method,
-                                 Dataset const& result_data, Idx pos = 0) {
+    void calculate_short_circuit(Options const& options, Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         if (std::all_of(state_.components.template citer<Fault>().begin(),
                         state_.components.template citer<Fault>().end(),
                         [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
-            auto const solver_output = calculate_short_circuit<symmetric_t>(voltage_scaling, calculation_method);
-            output_result(solver_output, result_data, pos);
+            output_result(calculate_short_circuit<symmetric_t>(options), result_data, pos);
         } else {
-            auto const solver_output = calculate_short_circuit<asymmetric_t>(voltage_scaling, calculation_method);
-            output_result(solver_output, result_data, pos);
+            output_result(calculate_short_circuit<asymmetric_t>(options), result_data, pos);
         }
-    }
-
-    // Batch short circuit calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
-                                           CalculationMethod calculation_method, Dataset const& result_data,
-                                           ConstDataset const& update_data, Idx threading = -1) {
-        return batch_calculation_(
-            [voltage_scaling, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
-                if (pos != ignore_output) {
-                    model.calculate_short_circuit(voltage_scaling, calculation_method, target_data, pos);
-                }
-            },
-            result_data, update_data, threading);
     }
 
     // Batch load flow calculation, propagating the results to result_data
     BatchParameter calculate_short_circuit(Options const& options, Dataset const& result_data,
                                            ConstDataset const& update_data) {
-        return calculate_short_circuit(options.short_circuit_voltage_scaling, options.calculation_method, result_data,
-                                       update_data, options.threading);
+        return batch_calculation_(
+            [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+                if (pos != ignore_output) {
+                    model.calculate_short_circuit(options, target_data, pos);
+                }
+            },
+            result_data, update_data, options.threading);
     }
 
     template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
