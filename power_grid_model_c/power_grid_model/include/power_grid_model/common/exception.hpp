@@ -196,12 +196,12 @@ class DatasetError : public PowerGridError {
 class ExperimentalFeature : public PowerGridError {
   public:
     struct TypeValuePair {
-        std::string_view name;
-        std::string_view value;
+        std::string name;
+        std::string value;
     };
 
     template <std::same_as<TypeValuePair>... Options> ExperimentalFeature(Options... options) {
-        append_msg("The following combination of options is experimental.");
+        append_msg("The following combination of options is experimental:");
 
         (append_msg("\n " + options.name + ": " + options.value), ...);
 
