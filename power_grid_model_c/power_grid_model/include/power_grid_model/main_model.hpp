@@ -91,6 +91,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     struct permanent_update_t : std::false_type {};
 
+    struct Options {
+        CalculationMethod calculation_method{CalculationMethod::default_method};
+        double err_tol{1e-8};
+        Idx max_iter{20};
+        Idx threading{-1};
+        ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
+    };
+
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
@@ -700,6 +708,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, threading);
     }
 
+    // Batch load flow calculation, propagating the results to result_data
+    template <symmetry_tag sym>
+    BatchParameter calculate_power_flow(Options const& options, Dataset const& result_data,
+                                        ConstDataset const& update_data) {
+        return calculate_power_flow<sym>(options.err_tol, options.max_iter, options.calculation_method, result_data,
+                                         update_data, options.threading);
+    }
+
     // Single state estimation calculation, returning math output results
     template <symmetry_tag sym>
     auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
@@ -730,6 +746,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 model.calculate_state_estimation<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
             },
             result_data, update_data, threading);
+    }
+
+    // Batch load flow calculation, propagating the results to result_data
+    template <symmetry_tag sym>
+    BatchParameter calculate_state_estimation(Options const& options, Dataset const& result_data,
+                                              ConstDataset const& update_data) {
+        return calculate_state_estimation<sym>(options.err_tol, options.max_iter, options.calculation_method,
+                                               result_data, update_data, options.threading);
     }
 
     // Single short circuit calculation, returning short circuit math output results
@@ -766,6 +790,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }
             },
             result_data, update_data, threading);
+    }
+
+    // Batch load flow calculation, propagating the results to result_data
+    BatchParameter calculate_short_circuit(Options const& options, Dataset const& result_data,
+                                           ConstDataset const& update_data) {
+        return calculate_short_circuit(options.short_circuit_voltage_scaling, options.calculation_method, result_data,
+                                       update_data, options.threading);
     }
 
     template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
