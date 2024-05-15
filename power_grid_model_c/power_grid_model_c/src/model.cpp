@@ -74,16 +74,17 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     auto const exported_update_dataset =
         batch_dataset != nullptr ? batch_dataset->export_dataset<const_dataset_t>() : ConstDataset{};
 
+    if (opt->tap_changing_strategy != PGM_tap_changing_strategy_disabled &&
+        (opt->experimental_features == PGM_experimental_features_disabled || opt->calculation_type != PGM_power_flow)) {
+        // this option is experimental and should not be exposed to the user
+        throw MissingCaseForEnumError{"PGM_TapChangingStrategy", opt->tap_changing_strategy};
+    }
+
     // call calculation
     try {
         auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
         switch (opt->calculation_type) {
         case PGM_power_flow:
-            if (opt->tap_changing_strategy != PGM_tap_changing_strategy_disabled &&
-                opt->experimental_features == PGM_experimental_features_disabled) {
-                // this option is experimental and should not be exposed to the user
-                throw MissingCaseForEnumError{"PGM_TapChangingStrategy", opt->tap_changing_strategy};
-            }
             if (opt->symmetric != 0) {
                 handle->batch_parameter = model->calculate_power_flow<symmetric_t>(
                     opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
