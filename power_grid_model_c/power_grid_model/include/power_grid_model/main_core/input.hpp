@@ -164,7 +164,8 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
         }
     }
     // Make sure that each regulated object has at most one regulator
-    const std::unordered_set<Idx2D, Idx2DHash> unique_regulated_objects(regulated_objects.begin(), regulated_objects.end());
+    const std::unordered_set<Idx2D, Idx2DHash> unique_regulated_objects(regulated_objects.begin(),
+                                                                        regulated_objects.end());
     if (unique_regulated_objects.size() != regulated_objects.size()) {
         // There are duplicates
         throw DuplicatedRegulatedObject();
