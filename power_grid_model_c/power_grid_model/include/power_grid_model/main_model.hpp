@@ -725,35 +725,47 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single state estimation calculation, returning math output results
+    template <symmetry_tag sym> auto calculate_state_estimation(Options const& options) {
+        return MathOutput<SolverOutput<sym>>{.solver_output = calculate_state_estimation_<sym>(
+                                                 options.err_tol, options.max_iter)(state_, options.calculation_method),
+                                             .optimizer_output = {}};
+    }
+
+    // Single state estimation calculation, returning math output results
     template <symmetry_tag sym>
     auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return MathOutput<SolverOutput<sym>>{
-            .solver_output = calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method),
-            .optimizer_output = {}};
+        return calculate_state_estimation<sym>(
+            Options{.calculation_method = calculation_method, .err_tol = err_tol, .max_iter = max_iter});
+    }
+
+    // Single state estimation calculation, propagating the results to result_data
+    template <symmetry_tag sym>
+    void calculate_state_estimation(Options const& options, Dataset const& result_data, Idx pos = 0) {
+        assert(construction_complete_);
+        auto const solver_output = calculate_state_estimation<sym>(options);
+        output_result(solver_output, result_data, pos);
     }
 
     // Single state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
     void calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
                                     Dataset const& result_data, Idx pos = 0) {
-        assert(construction_complete_);
-        auto const solver_output = calculate_state_estimation<sym>(err_tol, max_iter, calculation_method);
-        output_result(solver_output, result_data, pos);
+        return calculate_state_estimation<sym>(
+            Options{.calculation_method = calculation_method, .err_tol = err_tol, .max_iter = max_iter}, result_data,
+            pos);
     }
 
     // Batch load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(Options options, Dataset const& result_data,
+    BatchParameter calculate_state_estimation(Options const& options, Dataset const& result_data,
                                               ConstDataset const& update_data) {
         return batch_calculation_(
             [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
-                Options const sub_options{.calculation_method = options.calculation_method,
-                                          .err_tol = pos != ignore_output ? options.err_tol
-                                                                          : std::numeric_limits<double>::max(),
-                                          .max_iter = pos != ignore_output ? options.max_iter : 1};
-
-                model.calculate_state_estimation<sym>(sub_options.err_tol, sub_options.max_iter,
-                                                      sub_options.calculation_method, target_data, pos);
+                model.calculate_state_estimation<sym>(
+                    Options{.calculation_method = options.calculation_method,
+                            .err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max(),
+                            .max_iter = pos != ignore_output ? options.max_iter : 1},
+                    target_data, pos);
             },
             result_data, update_data, options.threading);
     }
