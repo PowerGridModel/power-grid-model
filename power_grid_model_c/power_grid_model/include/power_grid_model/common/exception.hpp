@@ -21,11 +21,30 @@ class PowerGridError : public std::exception {
     std::string msg_;
 };
 
-template <typename T> class MissingCaseForEnumError : public PowerGridError {
+class InvalidArguments : public PowerGridError {
   public:
-    MissingCaseForEnumError(std::string const& method, const T& value) {
-        append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
+    struct TypeValuePair {
+        std::string name;
+        std::string value;
+    };
+
+    template <std::same_as<TypeValuePair>... Options>
+    InvalidArguments(std::string const& method, std::string const& arguments) {
+        append_msg(method + " is not implemented for " + arguments + "!\n");
     }
+
+    template <std::same_as<TypeValuePair>... Options>
+    InvalidArguments(std::string const& method, Options... options)
+        : InvalidArguments{method, "the following combination of options"} {
+        (append_msg(" " + options.name + ": " + options.value + "\n"), ...);
+    }
+};
+
+class MissingCaseForEnumError : public InvalidArguments {
+  public:
+    template <typename T>
+    MissingCaseForEnumError(std::string const& method, const T& value)
+        : InvalidArguments{method, std::string{typeid(T).name()} + " #" + std::to_string(static_cast<IntS>(value))} {}
 };
 
 class ConflictVoltage : public PowerGridError {
@@ -193,20 +212,9 @@ class DatasetError : public PowerGridError {
     explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
 };
 
-class ExperimentalFeature : public PowerGridError {
+class ExperimentalFeature : public InvalidArguments {
   public:
-    struct TypeValuePair {
-        std::string name;
-        std::string value;
-    };
-
-    template <std::same_as<TypeValuePair>... Options> ExperimentalFeature(Options... options) {
-        append_msg("The following combination of options is experimental:");
-
-        (append_msg("\n " + options.name + ": " + options.value), ...);
-
-        append_msg("\n Please enable experimental features if you wish to use them.\n");
-    }
+    using InvalidArguments::InvalidArguments;
 };
 
 class UnreachableHit : public PowerGridError {

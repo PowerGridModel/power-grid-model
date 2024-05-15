@@ -60,7 +60,7 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 }
 
 namespace {
-void check_experimental_features(PGM_Options const& opt) {
+void check_calculate_experimental_features(PGM_Options const& opt) {
     using namespace std::string_literals;
 
     if (opt.calculation_type == PGM_power_flow) {
@@ -70,6 +70,7 @@ void check_experimental_features(PGM_Options const& opt) {
         case PGM_tap_changing_strategy_min_voltage_tap: {
             // this option is experimental and should not be exposed to the user
             throw ExperimentalFeature{
+                "PGM_calculate",
                 ExperimentalFeature::TypeValuePair{.name = "PGM_CalculationType",
                                                    .value = std::to_string(opt.calculation_type)},
                 ExperimentalFeature::TypeValuePair{.name = "PGM_TapChangingStrategy",
@@ -81,14 +82,16 @@ void check_experimental_features(PGM_Options const& opt) {
     }
 }
 
-void check_valid_options(PGM_Options const& opt) {
+void check_calculate_valid_options(PGM_Options const& opt) {
     if (opt.tap_changing_strategy != PGM_tap_changing_strategy_disabled && opt.calculation_type != PGM_power_flow) {
         // illegal combination of options
-        throw MissingCaseForEnumError{"PGM_TapChangingStrategy", opt.tap_changing_strategy};
+        throw InvalidArguments{"PGM_calculate",
+                               InvalidArguments::TypeValuePair{.name = "PGM_TapChangingStrategy",
+                                                               .value = std::to_string(opt.tap_changing_strategy)}};
     }
 
     if (opt.experimental_features == PGM_experimental_features_disabled) {
-        check_experimental_features(opt);
+        check_calculate_experimental_features(opt);
     }
 }
 } // namespace
@@ -110,7 +113,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 
     // call calculation
     try {
-        check_valid_options(*opt);
+        check_calculate_valid_options(*opt);
 
         // TODO(mgovers): changing this to narrow_cast is a breaking change
         auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
