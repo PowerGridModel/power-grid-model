@@ -673,22 +673,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
-    template <symmetry_tag sym>
-    auto calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
+    template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
         auto result_pf =
             optimizer::get_optimizer<MainModelState, ConstDataset>(
-                OptimizerType::no_optimization, OptimizerStrategy::any, calculate_power_flow_<sym>(err_tol, max_iter),
+                OptimizerType::no_optimization, OptimizerStrategy::any,
+                calculate_power_flow_<sym>(options.err_tol, options.max_iter),
                 [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
-                ->optimize(state_, calculation_method);
+                ->optimize(state_, options.calculation_method);
         return MathOutput<SolverOutput<sym>>{.solver_output = std::move(result_pf), .optimizer_output = {}};
     }
 
     // Single load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    void calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                              Dataset const& result_data, Idx pos = 0) {
+    void calculate_power_flow(Options const& options, Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
-        auto const math_output = calculate_power_flow<sym>(err_tol, max_iter, calculation_method);
+        auto const math_output = calculate_power_flow<sym>(options);
 
         if (pos != ignore_output) {
             output_result(math_output, result_data, pos);
@@ -697,25 +696,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Batch load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    BatchParameter calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                        Dataset const& result_data, ConstDataset const& update_data,
-                                        Idx threading = -1) {
-        return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model, Dataset const& target_data, Idx pos) {
-                auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
-                auto const max_iter_ = pos != ignore_output ? max_iter : 1;
-
-                model.calculate_power_flow<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
-            },
-            result_data, update_data, threading);
-    }
-
-    // Batch load flow calculation, propagating the results to result_data
-    template <symmetry_tag sym>
     BatchParameter calculate_power_flow(Options const& options, Dataset const& result_data,
                                         ConstDataset const& update_data) {
-        return calculate_power_flow<sym>(options.err_tol, options.max_iter, options.calculation_method, result_data,
-                                         update_data, options.threading);
+        return batch_calculation_(
+            [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+                model.calculate_power_flow<sym>(
+                    Options{.calculation_method = options.calculation_method,
+                            .err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max(),
+                            .max_iter = pos != ignore_output ? options.max_iter : 1},
+                    target_data, pos);
+            },
+            result_data, update_data, options.threading);
     }
 
     // Single state estimation calculation, returning math output results
@@ -730,7 +721,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void calculate_state_estimation(Options const& options, Dataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const solver_output = calculate_state_estimation<sym>(options);
-        output_result(solver_output, result_data, pos);
+
+        if (pos != ignore_output) {
+            output_result(solver_output, result_data, pos);
+        }
     }
 
     // Batch load flow calculation, propagating the results to result_data
