@@ -84,6 +84,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install packages
         run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get update
           sudo apt-get install -y ninja-build gcc-13 clang-15
       - name: Enable brew
