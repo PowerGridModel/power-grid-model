@@ -91,6 +91,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     struct permanent_update_t : std::false_type {};
 
+    struct OptmizationOptions {
+        OptimizerType optimizer_type{OptimizerType::no_optimization};
+        OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
+    };
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency} {
@@ -665,12 +669,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <symmetry_tag sym>
     auto calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
+        const OptmizationOptions default_opt_options;
+        return calculate_power_flow<sym>(err_tol, max_iter, calculation_method, default_opt_options);
+    }
+
+    template <symmetry_tag sym>
+    auto calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
+                              OptmizationOptions const& opt_options) {
         auto result_pf =
             optimizer::get_optimizer<MainModelState, ConstDataset>(
-                OptimizerType::no_optimization, OptimizerStrategy::any, calculate_power_flow_<sym>(err_tol, max_iter),
+                opt_options.optimizer_type, opt_options.optimizer_strategy,
+                calculate_power_flow_<sym>(err_tol, max_iter),
                 [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
                 ->optimize(state_, calculation_method);
-        // if (opt )
         return MathOutput<SolverOutput<sym>>{.solver_output = std::move(result_pf), .optimizer_output = {}};
     }
 
