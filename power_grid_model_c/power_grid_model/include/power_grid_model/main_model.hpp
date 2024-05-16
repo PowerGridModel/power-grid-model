@@ -727,7 +727,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // Batch load flow calculation, propagating the results to result_data
+    // Batch state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
     BatchParameter calculate_state_estimation(Options const& options, Dataset const& result_data,
                                               ConstDataset const& update_data) {
