@@ -651,11 +651,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         TransformerTapPositionResult transformer_tap_positions;
         get_transformer_tap_positions<Transformer, ThreeWindingTransformer>(state, transformer_tap_positions);
 
-        //using SolverOutputType = decltype(solver_output)::value_type;
-        //return MathOutput<SolverOutputType>{
-        //    .solver_output = std::move(solver_output), 
-        //    .optimizer_output = std::move(transformer_tap_positions)
-        //};
+        // using SolverOutputType = decltype(solver_output)::value_type;
+        // return MathOutput<SolverOutputType>{
+        //     .solver_output = std::move(solver_output),
+        //     .optimizer_output = std::move(transformer_tap_positions)
+        // };
         return solver_output;
     }
 
