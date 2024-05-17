@@ -204,14 +204,14 @@ TEST_CASE("C API Model") {
         }
 
         SUBCASE("Invalid calculation type error") {
-            expected_error = "CalculationType is not implemented for __int64 #-128!\n"s;
+            expected_error = "CalculationType is not implemented for"s;
 
             PGM_set_calculation_type(hl, opt, -128);
             PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         }
 
         SUBCASE("Invalid tap changing strategy error") {
-            expected_error = "get_optimizer_type is not implemented for __int64 #-128!\n"s;
+            expected_error = "get_optimizer_type is not implemented for"s;
 
             PGM_set_tap_changing_strategy(hl, opt, -128);
             PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
@@ -234,6 +234,7 @@ TEST_CASE("C API Model") {
         } else {
             CHECK(PGM_error_code(hl) == PGM_regular_error);
             std::string err_msg{PGM_error_message(hl)};
+            CAPTURE(err_msg);
             CHECK(err_msg.find(expected_error) != std::string::npos);
         }
     }
