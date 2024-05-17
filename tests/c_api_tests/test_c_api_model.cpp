@@ -242,7 +242,7 @@ TEST_CASE("C API Model") {
         PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         CHECK(PGM_error_code(hl) == PGM_regular_error);
         std::string err_msg{PGM_error_message(hl)};
-        CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
+        CHECK(err_msg.find("CalculationType is not implemented for __int64 #-128!\n") != std::string::npos);
     }
 }
 

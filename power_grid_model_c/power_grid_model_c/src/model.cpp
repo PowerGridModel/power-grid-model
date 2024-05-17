@@ -94,6 +94,55 @@ void check_calculate_valid_options(PGM_Options const& opt) {
         check_calculate_experimental_features(opt);
     }
 }
+
+constexpr auto get_calculation_method(PGM_Options const& opt) {
+    return static_cast<CalculationMethod>(opt.calculation_method);
+}
+
+constexpr auto get_optimizer_type(PGM_Options const& opt) {
+    using enum OptimizerType;
+
+    switch (opt.tap_changing_strategy) {
+    case PGM_tap_changing_strategy_disabled:
+        return no_optimization;
+    case PGM_tap_changing_strategy_any_valid_tap:
+    case PGM_tap_changing_strategy_max_voltage_tap:
+    case PGM_tap_changing_strategy_min_voltage_tap:
+        return automatic_tap_adjustment;
+    default:
+        throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
+    }
+}
+
+constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
+    using enum OptimizerStrategy;
+
+    switch (opt.tap_changing_strategy) {
+    case PGM_tap_changing_strategy_disabled:
+    case PGM_tap_changing_strategy_any_valid_tap:
+        return any;
+    case PGM_tap_changing_strategy_max_voltage_tap:
+        return global_maximum;
+    case PGM_tap_changing_strategy_min_voltage_tap:
+        return global_minimum;
+    default:
+        throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
+    }
+}
+
+constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
+    return static_cast<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
+}
+
+constexpr auto parse_options(PGM_Options const& opt) {
+    return MainModel::Options{.calculation_method = get_calculation_method(opt),
+                              .optimizer_type = get_optimizer_type(opt),
+                              .optimizer_strategy = get_optimizer_strategy(opt),
+                              .err_tol = opt.err_tol,
+                              .max_iter = opt.max_iter,
+                              .threading = opt.threading,
+                              .short_circuit_voltage_scaling = get_short_circuit_voltage_scaling(opt)};
+}
 } // namespace
 
 // run calculation
@@ -115,13 +164,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     try {
         check_calculate_valid_options(*opt);
 
-        auto const options =
-            MainModel::Options{.calculation_method = static_cast<CalculationMethod>(opt->calculation_method),
-                               .err_tol = opt->err_tol,
-                               .max_iter = opt->max_iter,
-                               .threading = opt->threading,
-                               .short_circuit_voltage_scaling =
-                                   static_cast<ShortCircuitVoltageScaling>(opt->short_circuit_voltage_scaling)};
+        auto const options = parse_options(*opt);
 
         switch (opt->calculation_type) {
         case PGM_power_flow:

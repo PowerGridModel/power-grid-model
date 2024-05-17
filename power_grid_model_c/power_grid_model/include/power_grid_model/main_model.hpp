@@ -95,9 +95,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         static constexpr Idx sequential = -1;
 
         CalculationMethod calculation_method{CalculationMethod::default_method};
+        OptimizerType optimizer_type{OptimizerType::no_optimization};
+        OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
+
         double err_tol{1e-8};
         Idx max_iter{20};
         Idx threading{sequential};
+
         ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
     };
 
