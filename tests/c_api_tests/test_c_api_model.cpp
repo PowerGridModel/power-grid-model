@@ -244,6 +244,23 @@ TEST_CASE("C API Model") {
         std::string err_msg{PGM_error_message(hl)};
         CHECK(err_msg.find("CalculationType is not implemented for __int64 #-128!\n") != std::string::npos);
     }
+
+    SUBCASE("Invalid tap changing strategy error") {
+        PGM_set_tap_changing_strategy(hl, opt, -128);
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+        CHECK(PGM_error_code(hl) == PGM_regular_error);
+        std::string err_msg{PGM_error_message(hl)};
+        CHECK(err_msg.find("get_optimizer_type is not implemented for __int64 #-128!\n") != std::string::npos);
+    }
+
+    SUBCASE("Tap changing strategy is experimental") {
+        PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_any_valid_tap);
+        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+        CHECK(PGM_error_code(hl) == PGM_regular_error);
+        std::string err_msg{PGM_error_message(hl)};
+        CHECK(err_msg.find("PGM_calculate is not implemented for the following combination of options!\n") !=
+              std::string::npos);
+    }
 }
 
 } // namespace power_grid_model
