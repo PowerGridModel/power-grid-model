@@ -41,7 +41,8 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Symmetric Calculation") {
                 auto const solver_output =
-                    main_model.calculate_short_circuit<symmetric_t>(voltage_scaling, CalculationMethod::iec60909);
+                    main_model.calculate_short_circuit<symmetric_t>({.calculation_method = CalculationMethod::iec60909,
+                                                                     .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(solver_output, fault_output.begin());
@@ -54,8 +55,9 @@ TEST_CASE("Test main model - short circuit") {
             }
 
             SUBCASE("Asymmetric Calculation") {
-                auto const solver_output =
-                    main_model.calculate_short_circuit<asymmetric_t>(voltage_scaling, CalculationMethod::iec60909);
+                auto const solver_output = main_model.calculate_short_circuit<asymmetric_t>(
+                    {.calculation_method = CalculationMethod::iec60909,
+                     .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(solver_output, fault_output.begin());
@@ -81,7 +83,8 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Symmetric Calculation") {
                 auto const solver_output =
-                    main_model.calculate_short_circuit<symmetric_t>(voltage_scaling, CalculationMethod::iec60909);
+                    main_model.calculate_short_circuit<symmetric_t>({.calculation_method = CalculationMethod::iec60909,
+                                                                     .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(solver_output, fault_output.begin());
@@ -94,8 +97,9 @@ TEST_CASE("Test main model - short circuit") {
             }
 
             SUBCASE("Asymmetric Calculation") {
-                auto const solver_output =
-                    main_model.calculate_short_circuit<asymmetric_t>(voltage_scaling, CalculationMethod::iec60909);
+                auto const solver_output = main_model.calculate_short_circuit<asymmetric_t>(
+                    {.calculation_method = CalculationMethod::iec60909,
+                     .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
                 main_model.output_result<Fault>(solver_output, fault_output.begin());
@@ -121,8 +125,8 @@ TEST_CASE("Test main model - short circuit") {
                 {{5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}});
             main_model.set_construction_complete();
 
-            auto const solver_output =
-                main_model.calculate_short_circuit<asymmetric_t>(voltage_scaling, CalculationMethod::iec60909);
+            auto const solver_output = main_model.calculate_short_circuit<asymmetric_t>(
+                {.calculation_method = CalculationMethod::iec60909, .short_circuit_voltage_scaling = voltage_scaling});
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
             main_model.output_result<Fault>(solver_output, fault_output.begin());
@@ -162,7 +166,9 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
         Dataset result_data;
         result_data["node"] = MutableDataPointer{node_output.data(), static_cast<Idx>(node_output.size())};
 
-        model.calculate_short_circuit(ShortCircuitVoltageScaling::maximum, CalculationMethod::iec60909, result_data);
+        model.calculate_short_circuit({.calculation_method = CalculationMethod::iec60909,
+                                       .short_circuit_voltage_scaling = ShortCircuitVoltageScaling::maximum},
+                                      result_data);
 
         CHECK(node_output[0].u_pu(0) != doctest::Approx(1.0)); // influenced by fault
         CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0)); // fault location
