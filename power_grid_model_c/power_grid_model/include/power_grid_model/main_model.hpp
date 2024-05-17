@@ -683,6 +683,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
                 ->optimize(state_, calculation_method);
         return MathOutput<SolverOutput<sym>>{.solver_output = std::move(result_pf), .optimizer_output = {}};
+        // return result_pf;
     }
 
     // Single load flow calculation, propagating the results to result_data

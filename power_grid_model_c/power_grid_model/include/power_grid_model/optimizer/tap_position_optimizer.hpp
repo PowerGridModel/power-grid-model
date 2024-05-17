@@ -36,6 +36,7 @@ using main_core::get_component;
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
+using TransformerTapPositionResult = std::vector<std::pair<Idx2D, IntS>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr Idx2D unregulated_idx = {-1, -1};
@@ -583,6 +584,31 @@ void add_tap_regulator_output(State const& state,
     }
 }
 
+template <typename... TransformerTypes, main_core::main_model_state_c State>
+inline void get_transformer_tap_positions(State const& state, TransformerTapPositionResult& transformer_tap_positions) {
+    (get_transformer_tap_positions<TransformerTypes>(state, transformer_tap_positions), ...);
+}
+
+template <std::derived_from<Transformer> Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
+                                             TransformerTapPositionResult& transformer_tap_positions) {
+    for (auto const& transformer : state.components.template citer<Component>()) {
+        transformer_tap_positions.push_back(
+            std::pair<Idx2D, IntS>{static_cast<Idx2D>(transformer.id()), static_cast<IntS>(transformer.tap_pos())});
+    }
+}
+
+template <std::derived_from<ThreeWindingTransformer> Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
+                                             TransformerTapPositionResult& transformer_tap_positions) {
+    for (auto const& transformer : state.components.template citer<Component>()) {
+        transformer_tap_positions.push_back(
+            std::pair<Idx2D, IntS>{static_cast<Idx2D>(transformer.id()), static_cast<IntS>(transformer.tap_pos())});
+    }
+}
+
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
           typename TransformerRanker_>
@@ -619,10 +645,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
 
         auto const cache = this->cache_states(order);
-        auto optimal_output = optimize(state, order, method);
+        auto solver_output = optimize(state, order, method);
         update_state(cache);
 
-        return optimal_output;
+        TransformerTapPositionResult transformer_tap_positions;
+        get_transformer_tap_positions<Transformer, ThreeWindingTransformer>(state, transformer_tap_positions);
+
+        //using SolverOutputType = decltype(solver_output)::value_type;
+        //return MathOutput<SolverOutputType>{
+        //    .solver_output = std::move(solver_output), 
+        //    .optimizer_output = std::move(transformer_tap_positions)
+        //};
+        return solver_output;
     }
 
     constexpr auto get_strategy() const { return strategy_; }
