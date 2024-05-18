@@ -584,11 +584,6 @@ void add_tap_regulator_output(State const& state,
     }
 }
 
-template <typename... TransformerTypes, main_core::main_model_state_c State>
-inline void get_transformer_tap_positions(State const& state, TransformerTapPositionResult& transformer_tap_positions) {
-    (get_transformer_tap_positions<TransformerTypes>(state, transformer_tap_positions), ...);
-}
-
 template <std::derived_from<Transformer> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
 constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
@@ -608,6 +603,28 @@ constexpr void get_transformer_tap_positions(main_core::MainModelState<Component
             std::pair<Idx2D, IntS>{static_cast<Idx2D>(transformer.id()), static_cast<IntS>(transformer.tap_pos())});
     }
 }
+
+#ifdef _MSC_VER
+// MSVC compiler
+#pragma warning(push)
+#pragma warning(disable : 4717)
+#elif defined(__GNUC__) || defined(__clang__)
+// GCC or Clang compilers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wrecursive"
+#endif
+template <typename... ComponentTypes, main_core::main_model_state_c State>
+inline void get_transformer_tap_positions(State const& state, TransformerTapPositionResult& transformer_tap_positions) {
+    using ComponentContainerType = typename State::ComponentContainer;
+    (get_transformer_tap_positions<ComponentTypes, ComponentContainerType>(state, transformer_tap_positions), ...);
+}
+#ifdef _MSC_VER
+// MSVC compiler
+#pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+// GCC or Clang compilers
+#pragma GCC diagnostic pop
+#endif
 
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
@@ -649,7 +666,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         update_state(cache);
 
         TransformerTapPositionResult transformer_tap_positions;
-        get_transformer_tap_positions<Transformer, ThreeWindingTransformer>(state, transformer_tap_positions);
+        get_transformer_tap_positions<Transformer, ThreeWindingTransformer, State>(state, transformer_tap_positions);
 
         // using SolverOutputType = decltype(solver_output)::value_type;
         // return MathOutput<SolverOutputType>{

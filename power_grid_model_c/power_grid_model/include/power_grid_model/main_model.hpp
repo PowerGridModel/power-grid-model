@@ -684,8 +684,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym>
-    auto calculate_power_flow(Options const& options,
-                              OptmizationOptions const& opt_options) {
+    auto calculate_power_flow(Options const& options, OptmizationOptions const& opt_options) {
         auto result_pf =
             optimizer::get_optimizer<MainModelState, ConstDataset>(
                 opt_options.optimizer_type, opt_options.optimizer_strategy,
