@@ -590,7 +590,7 @@ template <class Component, class ComponentContainer>
                                 std::is_base_of<ThreeWindingTransformer, Component>>
 constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
                                              TransformerTapPositionResult& transformer_tap_positions) {
-    constexpr auto group_index = state.components.template get_type_idx<Component>();
+    constexpr auto group_index = ComponentContainer::template get_type_idx<Component>();
     for (auto const& transformer : state.components.template citer<Component>()) {
         transformer_tap_positions.push_back(
             std::pair<Idx2D, IntS>{Idx2D{group_index, transformer.id()}, static_cast<IntS>(transformer.tap_pos())});
