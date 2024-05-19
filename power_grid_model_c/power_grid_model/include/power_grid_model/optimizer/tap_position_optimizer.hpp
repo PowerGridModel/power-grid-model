@@ -604,7 +604,7 @@ constexpr void get_transformer_tap_positions(main_core::MainModelState<Component
 #elif defined(__GNUC__) || defined(__clang__)
 // GCC or Clang compilers
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wrecursive"
+#pragma GCC diagnostic ignored "-Winfinite-recursion"
 #endif
 template <typename... ComponentTypes, main_core::main_model_state_c State>
 inline void get_transformer_tap_positions(State const& state, TransformerTapPositionResult& transformer_tap_positions) {
