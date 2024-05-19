@@ -584,23 +584,16 @@ void add_tap_regulator_output(State const& state,
     }
 }
 
-template <std::derived_from<Transformer> Component, class ComponentContainer>
-    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
+template <class Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
+             std::disjunction_v<std::is_base_of<Transformer, Component>,
+                                std::is_base_of<ThreeWindingTransformer, Component>>
 constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
                                              TransformerTapPositionResult& transformer_tap_positions) {
+    constexpr auto group_index = state.components.template get_type_idx<Component>();
     for (auto const& transformer : state.components.template citer<Component>()) {
         transformer_tap_positions.push_back(
-            std::pair<Idx2D, IntS>{static_cast<Idx2D>(transformer.id()), static_cast<IntS>(transformer.tap_pos())});
-    }
-}
-
-template <std::derived_from<ThreeWindingTransformer> Component, class ComponentContainer>
-    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
-constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
-                                             TransformerTapPositionResult& transformer_tap_positions) {
-    for (auto const& transformer : state.components.template citer<Component>()) {
-        transformer_tap_positions.push_back(
-            std::pair<Idx2D, IntS>{static_cast<Idx2D>(transformer.id()), static_cast<IntS>(transformer.tap_pos())});
+            std::pair<Idx2D, IntS>{Idx2D{group_index, transformer.id()}, static_cast<IntS>(transformer.tap_pos())});
     }
 }
 
