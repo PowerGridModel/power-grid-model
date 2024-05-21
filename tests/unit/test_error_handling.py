@@ -8,12 +8,19 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model.core.power_grid_meta import initialize_array
-from power_grid_model.enum import CalculationMethod, LoadGenType, MeasuredTerminalType
+from power_grid_model.enum import (
+    CalculationMethod,
+    LoadGenType,
+    MeasuredTerminalType,
+    TapChangingStrategy,
+    _ExperimentalFeatures,
+)
 from power_grid_model.errors import (
     AutomaticTapCalculationError,
     ConflictID,
     ConflictVoltage,
     IDWrongType,
+    InvalidArguments,
     InvalidBranch,
     InvalidBranch3,
     InvalidCalculationMethod,
@@ -21,6 +28,8 @@ from power_grid_model.errors import (
     InvalidTransformerClock,
     NotObservableError,
 )
+
+from .utils import PowerGridModelWithExt
 
 
 def test_empty_model():
@@ -254,6 +263,17 @@ def test_transformer_tap_regulator_at_lv_tap_side():
                 "transformer_tap_regulator": transformer_tap_regulator_input,
             }
         )
+
+
+def test_automatic_tap_changing_is_experimental():
+    model = PowerGridModelWithExt(input_data={})
+
+    with pytest.raises(InvalidArguments):
+        model.calculate_power_flow_with_ext(tap_changing_strategy=TapChangingStrategy.any_valid_tap)
+
+    model.calculate_power_flow_with_ext(
+        tap_changing_strategy=TapChangingStrategy.any_valid_tap, experimental_features=_ExperimentalFeatures.enabled
+    )
 
 
 @pytest.mark.skip(reason="TODO")
