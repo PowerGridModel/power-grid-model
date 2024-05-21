@@ -206,7 +206,6 @@ def test_handle_invalid_calculation_method_error():
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
 
-@pytest.mark.xfail(reason="TODO: Automatic tap changer")
 def test_transformer_tap_regulator_at_lv_tap_side():
     node_input = initialize_array("input", "node", 2)
     node_input["id"] = [0, 1]
@@ -240,9 +239,21 @@ def test_transformer_tap_regulator_at_lv_tap_side():
     transformer_input["tap_max"] = [9]
     transformer_input["tap_size"] = [100]
 
-    model = PowerGridModel(input_data={"node": node_input, "transformer": transformer_input, "source": source_input})
+    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
+    transformer_tap_regulator_input["id"] = [4]
+    transformer_tap_regulator_input["regulated_object"] = [3]
+    transformer_tap_regulator_input["status"] = [1]
+    transformer_tap_regulator_input["control_side"] = [0]
+
     with pytest.raises(AutomaticTapCalculationError):
-        model.calculate_power_flow()
+        PowerGridModel(
+            input_data={
+                "node": node_input,
+                "transformer": transformer_input,
+                "source": source_input,
+                "transformer_tap_regulator": transformer_tap_regulator_input,
+            }
+        )
 
 
 @pytest.mark.skip(reason="TODO")
