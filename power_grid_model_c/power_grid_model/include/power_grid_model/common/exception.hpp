@@ -33,10 +33,12 @@ class InvalidArguments : public PowerGridError {
         append_msg(method + " is not implemented for " + arguments + "!\n");
     }
 
-    template <std::same_as<TypeValuePair>... Options>
-    InvalidArguments(std::string const& method, Options const&... options)
+    template <class... Options>
+        requires(std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...)
+    InvalidArguments(std::string const& method, Options... options)
         : InvalidArguments{method, "the following combination of options"} {
-        (append_msg(" " + options.name + ": " + options.value + "\n"), ...);
+        (append_msg(" " + std::forward<Options>(options).name + ": " + std::forward<Options>(options).value + "\n"),
+         ...);
     }
 };
 
