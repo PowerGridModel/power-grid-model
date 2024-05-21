@@ -134,7 +134,7 @@ constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
     return static_cast<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
 }
 
-constexpr auto parse_options(PGM_Options const& opt) {
+constexpr auto extract_calculation_options(PGM_Options const& opt) {
     return MainModel::Options{.calculation_method = get_calculation_method(opt),
                               .optimizer_type = get_optimizer_type(opt),
                               .optimizer_strategy = get_optimizer_strategy(opt),
@@ -164,7 +164,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     try {
         check_calculate_valid_options(*opt);
 
-        auto const options = parse_options(*opt);
+        auto const options = extract_calculation_options(*opt);
 
         switch (opt->calculation_type) {
         case PGM_power_flow:
