@@ -168,7 +168,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                                                                         regulated_objects.end());
     if (unique_regulated_objects.size() != regulated_objects.size()) {
         // There are duplicates
-        throw DuplicativelyRegulatedObject();
+        throw DuplicativelyRegulatedObject{};
     }
 }
 
