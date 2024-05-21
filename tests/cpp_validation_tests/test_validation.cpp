@@ -300,6 +300,12 @@ std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mappi
 using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, Dataset const&, ConstDataset const&, Idx)>;
 
+std::map<std::string, OptimizerStrategy> const optimizer_strategy_mapping = {
+    {"disabled", OptimizerStrategy::any},
+    {"any_valid_tap", OptimizerStrategy::any},
+    {"min_voltage_tap", OptimizerStrategy::global_minimum},
+    {"max_voltage_tap", OptimizerStrategy::global_maximum}};
+
 // case parameters
 struct CaseParam {
     std::filesystem::path case_dir;
@@ -307,6 +313,8 @@ struct CaseParam {
     std::string calculation_type;
     std::string calculation_method;
     std::string short_circuit_voltage_scaling;
+    std::string optimizer_strategy;
+    std::string optimizer_type;
     bool sym{};
     bool is_batch{};
     double rtol{};
@@ -333,14 +341,16 @@ CalculationFunc calculation_func(CaseParam const& param) {
     };
 
     if (calculation_type == "power_flow"s) {
-        return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                          Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
-            if (sym) {
-                return model.calculate_power_flow<symmetric_t>(get_default_options(calculation_method, threading),
-                                                               dataset, update_dataset);
+        return [param, get_default_options](MainModel& model, CalculationMethod calculation_method,
+                                            Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
+            auto options = get_default_options(calculation_method, threading);
+            options.optimizer_type = param.optimizer_type == "disabled" ? OptimizerType::no_optimization
+                                                                        : OptimizerType::automatic_tap_adjustment;
+            options.optimizer_strategy = optimizer_strategy_mapping.at(param.optimizer_strategy);
+            if (param.sym) {
+                return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
             }
-            return model.calculate_power_flow<asymmetric_t>(get_default_options(calculation_method, threading), dataset,
-                                                            update_dataset);
+            return model.calculate_power_flow<asymmetric_t>(options, dataset, update_dataset);
         };
     }
     if (calculation_type == "state_estimation"s) {
@@ -422,6 +432,9 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     if (calculation_type == "short_circuit") {
         calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
+
+    param.optimizer_type = calculation_method_params.value("optimizer_type", "disabled");
+    param.optimizer_strategy = calculation_method_params.value("optimizer_strategy", "any_valid_tap");
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
     param.case_name += is_batch ? "_batch"s : ""s;
