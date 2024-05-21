@@ -350,6 +350,13 @@ inline auto output_result(Component const& transformer_tap_regulator,
                           std::vector<SolverOutputType> const& /* solver_output */, Idx const /* obj_seq */) {
     return transformer_tap_regulator.get_null_sc_output();
 }
+//
+//// entry point for output_result
+// template <std::derived_from<Base> Component, typename SolverOutputType>
+// constexpr auto output_result(Component const& component, MathOutput<SolverOutputType> const& math_output,
+//                              Idx2D math_id) {
+//     return output_result<Component, SolverOutputType>(component, math_output.solver_output, math_id);
+// }
 
 // output base component
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
@@ -361,10 +368,10 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                      } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<SolverOutputType> const& solver_output, ResIt res_it) {
+                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
-        state, res_it, [&solver_output](Component const& component, Idx2D math_id) {
-            return output_result<Component>(component, solver_output, math_id);
+        state, res_it, [&math_output](Component const& component, Idx2D math_id) {
+            return output_result<Component>(component, math_output.solver_output, math_id);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
@@ -377,10 +384,10 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                      } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<SolverOutputType> const& solver_output, ResIt res_it) {
+                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
-        state, res_it, [&state, &solver_output](Component const& component, Idx2D const math_id) {
-            return output_result<Component>(component, state, solver_output, math_id);
+        state, res_it, [&state, &math_output](Component const& component, Idx2D const math_id) {
+            return output_result<Component>(component, state, math_output.solver_output, math_id);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
@@ -393,10 +400,10 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                      } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<SolverOutputType> const& solver_output, ResIt res_it) {
+                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
-        state, res_it, [&state, &solver_output](Component const& component, Idx const obj_seq) {
-            return output_result<Component, ComponentContainer>(component, state, solver_output, obj_seq);
+        state, res_it, [&state, &math_output](Component const& component, Idx const obj_seq) {
+            return output_result<Component, ComponentContainer>(component, state, math_output.solver_output, obj_seq);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
@@ -409,10 +416,10 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                      } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<SolverOutputType> const& solver_output, ResIt res_it) {
+                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2DBranch3>(
-        state, res_it, [&solver_output](Component const& component, Idx2DBranch3 const& math_id) {
-            return output_result<Component>(component, solver_output, math_id);
+        state, res_it, [&math_output](Component const& component, Idx2DBranch3 const& math_id) {
+            return output_result<Component>(component, math_output.solver_output, math_id);
         });
 }
 
@@ -421,10 +428,10 @@ template <std::same_as<Appliance> Component, class ComponentContainer, solver_ou
           std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              std::vector<SolverOutputType> const& solver_output, ResIt res_it) {
-    res_it = output_result<Source>(state, solver_output, res_it);
-    res_it = output_result<GenericLoadGen>(state, solver_output, res_it);
-    res_it = output_result<Shunt>(state, solver_output, res_it);
+                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
+    res_it = output_result<Source>(state, math_output, res_it);
+    res_it = output_result<GenericLoadGen>(state, math_output, res_it);
+    res_it = output_result<Shunt>(state, math_output, res_it);
     return res_it;
 }
 

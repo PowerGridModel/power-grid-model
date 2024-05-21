@@ -9,8 +9,8 @@ TEST_CASE("Test construct no-op optimizer") {
     for (auto method : calculation_methods) {
         CAPTURE(method);
         auto optimizer = NoOptimizer<StubStateCalculator, StubState>{mock_state_calculator};
-        CHECK(optimizer.optimize({}, method).x == 1);
-        CHECK(optimizer.optimize({}, method).x == 1);
+        CHECK(optimizer.optimize({}, method).solver_output.x == 1);
+        CHECK(optimizer.optimize({}, method).solver_output.x == 1);
     }
 }
 
@@ -24,7 +24,7 @@ TEST_CASE("Test construct tap position optimizer") {
             CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy};
-            CHECK(optimizer.optimize(empty_state, strategy_method.method).empty());
+            CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
         }
     }
     SUBCASE("asymmetric") {
@@ -33,7 +33,7 @@ TEST_CASE("Test construct tap position optimizer") {
             CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy_method.strategy};
-            CHECK(optimizer.optimize(empty_state, strategy_method.method).empty());
+            CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
         }
     }
 }
@@ -51,7 +51,7 @@ TEST_CASE("Test get optimizer") {
                 CAPTURE(strategy_method.method);
                 auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy_method.strategy,
                                                                           mock_state_calculator, stub_update);
-                CHECK(optimizer->optimize(empty_state, strategy_method.method).x == 1);
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.x == 1);
             }
         }
 
@@ -76,7 +76,7 @@ TEST_CASE("Test get optimizer") {
                 CAPTURE(strategy_method.strategy);
                 CAPTURE(strategy_method.method);
                 auto optimizer = get_instance(no_optimization, strategy_method.strategy);
-                CHECK(optimizer->optimize(empty_state, strategy_method.method).empty());
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
             }
         }
         SUBCASE("Automatic tap adjustment") {
@@ -92,7 +92,7 @@ TEST_CASE("Test get optimizer") {
 
                 StubState empty_state{};
                 empty_state.components.set_construction_complete();
-                CHECK(optimizer->optimize(empty_state, strategy_method.method).empty());
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
             }
         }
     }

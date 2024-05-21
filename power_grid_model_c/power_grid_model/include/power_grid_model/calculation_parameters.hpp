@@ -130,6 +130,8 @@ struct TransformerTapRegulatorOptimizerOutput {
     IntS tap_pos{na_IntS};
 };
 
+using TransformerTapPositionResult = std::vector<std::pair<Idx2D, IntS>>;
+
 // from side, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
 using BranchIdx = std::array<Idx, 2>;
@@ -269,7 +271,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
-    std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
+    // std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
@@ -325,13 +327,15 @@ static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<symmetri
 static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
 
 struct OptimizerOutput {
-    std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
+    // std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
+    TransformerTapPositionResult transformer_tap_positions;
 };
 
-template <solver_output_type T> struct MathOutput {
+template <typename T> struct MathOutput {
     using SolverOutputType = T;
 
-    std::vector<SolverOutputType> solver_output;
+    SolverOutputType solver_output;
+    // std::vector<SolverOutputType> solver_output;
     OptimizerOutput optimizer_output;
 };
 

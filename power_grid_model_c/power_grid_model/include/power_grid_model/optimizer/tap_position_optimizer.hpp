@@ -36,7 +36,7 @@ using main_core::get_component;
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
-using TransformerTapPositionResult = std::vector<std::pair<Idx2D, IntS>>;
+// using TransformerTapPositionResult = std::vector<std::pair<Idx2D, IntS>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr Idx2D unregulated_idx = {-1, -1};
@@ -561,29 +561,6 @@ inline void create_tap_regulator_output(State const& state, std::vector<SolverOu
     }
 }
 
-template <main_core::main_model_state_c State, steady_state_solver_output_type SolverOutputType>
-inline void add_tap_regulator_output(State const& state, TransformerTapRegulator const& regulator, IntS tap_pos,
-                                     std::vector<SolverOutputType>& solver_output) {
-    Idx2D const& math_id =
-        get_math_id<TransformerTapRegulator>(state, get_topology_index<TransformerTapRegulator>(state, regulator.id()));
-    solver_output[math_id.group].transformer_tap_regulator[math_id.pos] = {tap_pos};
-}
-
-template <typename... RegulatedTypes, main_core::main_model_state_c State,
-          steady_state_solver_output_type SolverOutputType>
-    requires(main_core::component_container_c<typename State::ComponentContainer, RegulatedTypes> && ...)
-void add_tap_regulator_output(State const& state,
-                              std::vector<std::vector<TapRegulatorRef<RegulatedTypes...>>> const& regulator_order,
-                              std::vector<SolverOutputType>& solver_output) {
-    create_tap_regulator_output(state, solver_output);
-
-    for (auto const& same_rank_regulators : regulator_order) {
-        for (auto const& regulator : same_rank_regulators) {
-            add_tap_regulator_output(state, regulator.regulator.get(), regulator.transformer.tap_pos(), solver_output);
-        }
-    }
-}
-
 template <class Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
              std::disjunction_v<std::is_base_of<Transformer, Component>,
@@ -651,22 +628,22 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
         : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
-    auto optimize(State const& state, CalculationMethod method) -> ResultType final {
+    auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
+
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
 
         auto const cache = this->cache_states(order);
         auto solver_output = optimize(state, order, method);
         update_state(cache);
 
+        using SolverOutputType = decltype(solver_output)::value_type;
+
         TransformerTapPositionResult transformer_tap_positions;
         get_transformer_tap_positions<Transformer, ThreeWindingTransformer, State>(state, transformer_tap_positions);
 
-        // using SolverOutputType = decltype(solver_output)::value_type;
-        // return MathOutput<SolverOutputType>{
-        //     .solver_output = std::move(solver_output),
-        //     .optimizer_output = std::move(transformer_tap_positions)
-        // };
-        return solver_output;
+        return {.solver_output = {std::move(solver_output)},
+                .optimizer_output = {std::move(transformer_tap_positions)}};
+        // return math_res;
     }
 
     constexpr auto get_strategy() const { return strategy_; }
@@ -724,8 +701,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 result = calculate_(state, method);
             }
         }
-
-        add_tap_regulator_output(state, regulator_order, result);
 
         return result;
     }
