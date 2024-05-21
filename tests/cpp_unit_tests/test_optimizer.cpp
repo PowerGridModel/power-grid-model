@@ -60,7 +60,7 @@ TEST_CASE("Test get optimizer") {
                 CAPTURE(strategy);
                 CHECK_THROWS_AS((get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, strategy,
                                                                           mock_state_calculator, stub_update)),
-                                MissingCaseForEnumError<OptimizerType>);
+                                MissingCaseForEnumError);
             }
         }
     }

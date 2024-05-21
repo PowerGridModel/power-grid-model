@@ -207,6 +207,20 @@ enum PGM_ShortCircuitVoltageScaling {
 };
 
 /**
+ * @brief Enumeration of tap changing strategies.
+ *
+ */
+enum PGM_TapChangingStrategy {
+    PGM_tap_changing_strategy_disabled = 0, /**< disable automatic tap adjustment */
+    PGM_tap_changing_strategy_any_valid_tap =
+        1, /**< adjust tap position automatically; optimize for any value in the voltage band */
+    PGM_tap_changing_strategy_min_voltage_tap =
+        2, /**< adjust tap position automatically; optimize for the lower end of the voltage band */
+    PGM_tap_changing_strategy_max_voltage_tap =
+        3, /**< adjust tap position automatically; optimize for the higher end of the voltage band */
+};
+
+/**
  * @brief Enumeration of experimental features.
  *
  * [Danger mode]
