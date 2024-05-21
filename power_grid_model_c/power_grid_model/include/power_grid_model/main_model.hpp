@@ -95,9 +95,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         static constexpr Idx sequential = -1;
 
         CalculationMethod calculation_method{CalculationMethod::default_method};
+        OptimizerType optimizer_type{OptimizerType::no_optimization};
+        OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
+
         double err_tol{1e-8};
         Idx max_iter{20};
         Idx threading{sequential};
+
         ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
     };
 
@@ -676,7 +680,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
         auto result_pf =
             optimizer::get_optimizer<MainModelState, ConstDataset>(
-                OptimizerType::no_optimization, OptimizerStrategy::any,
+                options.optimizer_type, options.optimizer_strategy,
                 calculate_power_flow_<sym>(options.err_tol, options.max_iter),
                 [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
                 ->optimize(state_, options.calculation_method);
@@ -700,11 +704,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                         ConstDataset const& update_data) {
         return batch_calculation_(
             [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
-                model.calculate_power_flow<sym>(
-                    Options{.calculation_method = options.calculation_method,
-                            .err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max(),
-                            .max_iter = pos != ignore_output ? options.max_iter : 1},
-                    target_data, pos);
+                auto sub_opt = options; // copy
+
+                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+
+                model.calculate_power_flow<sym>(sub_opt, target_data, pos);
             },
             result_data, update_data, options.threading);
     }
@@ -733,11 +738,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                               ConstDataset const& update_data) {
         return batch_calculation_(
             [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
-                model.calculate_state_estimation<sym>(
-                    Options{.calculation_method = options.calculation_method,
-                            .err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max(),
-                            .max_iter = pos != ignore_output ? options.max_iter : 1},
-                    target_data, pos);
+                auto sub_opt = options; // copy
+
+                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+
+                model.calculate_state_estimation<sym>(sub_opt, target_data, pos);
             },
             result_data, update_data, options.threading);
     }

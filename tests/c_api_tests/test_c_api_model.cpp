@@ -183,58 +183,99 @@ TEST_CASE("C API Model") {
         CHECK(u[2] == doctest::Approx(70.0));
     }
 
-    SUBCASE("Construction error") {
-        load_input.id = 0;
-        ModelPtr const wrong_model{PGM_create_model(hl, 50.0, input_dataset)};
-        CHECK(wrong_model.get() == nullptr);
-        CHECK(PGM_error_code(hl) == PGM_regular_error);
-        std::string const err_msg{PGM_error_message(hl)};
-        CHECK(err_msg.find("Conflicting id detected:") != std::string::npos);
+    SUBCASE("Input error handling") {
+        using namespace std::string_literals;
+
+        std::string expected_error;
+
+        SUBCASE("Construction error") {
+            expected_error = "Conflicting id detected:"s;
+
+            load_input.id = 0;
+            ModelPtr const wrong_model{PGM_create_model(hl, 50.0, input_dataset)};
+            CHECK(wrong_model.get() == nullptr);
+        }
+
+        SUBCASE("Update error") {
+            expected_error = "The id cannot be found:"s;
+
+            source_update.id = 5;
+            PGM_update_model(hl, model, single_update_dataset);
+        }
+
+        SUBCASE("Invalid calculation type error") {
+            expected_error = "CalculationType is not implemented for"s;
+
+            PGM_set_calculation_type(hl, opt, -128);
+            PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+        }
+
+        SUBCASE("Invalid tap changing strategy error") {
+            expected_error = "get_optimizer_type is not implemented for"s;
+
+            PGM_set_tap_changing_strategy(hl, opt, -128);
+            PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+        }
+
+        SUBCASE("Tap changing strategy is experimental") {
+            SUBCASE("experimental features disabled") {
+                expected_error = "PGM_calculate is not implemented for the following combination of options!\n"s;
+            }
+            SUBCASE("experimental features enabled") {
+                // normal calculation
+                PGM_set_experimental_features(hl, opt, PGM_experimental_features_enabled);
+            }
+            PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_any_valid_tap);
+            PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+        }
+
+        if (expected_error.empty()) {
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+        } else {
+            CHECK(PGM_error_code(hl) == PGM_regular_error);
+            std::string err_msg{PGM_error_message(hl)};
+            CAPTURE(err_msg);
+            CHECK(err_msg.find(expected_error) != std::string::npos);
+        }
     }
 
-    SUBCASE("Update error") {
-        source_update.id = 5;
-        PGM_update_model(hl, model, single_update_dataset);
-        CHECK(PGM_error_code(hl) == PGM_regular_error);
-        std::string const err_msg{PGM_error_message(hl)};
-        CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
-    }
+    SUBCASE("Calculation error") {
+        SUBCASE("Single calculation error") {
+            // not converging
+            PGM_set_max_iter(hl, opt, 1);
+            PGM_set_err_tol(hl, opt, 1e-100);
+            PGM_set_symmetric(hl, opt, 0);
+            PGM_set_threading(hl, opt, 1);
+            PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+            CHECK(PGM_error_code(hl) == PGM_regular_error);
+            std::string err_msg{PGM_error_message(hl)};
+            CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
+            // wrong method
+            PGM_set_calculation_type(hl, opt, PGM_state_estimation);
+            PGM_set_calculation_method(hl, opt, PGM_iterative_current);
+            PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+            CHECK(PGM_error_code(hl) == PGM_regular_error);
+            err_msg = PGM_error_message(hl);
+            CHECK(err_msg.find("The calculation method is invalid for this calculation!") != std::string::npos);
+        }
 
-    SUBCASE("Single calculation error") {
-        // not converging
-        PGM_set_max_iter(hl, opt, 1);
-        PGM_set_err_tol(hl, opt, 1e-100);
-        PGM_set_symmetric(hl, opt, 0);
-        PGM_set_threading(hl, opt, 1);
-        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
-        CHECK(PGM_error_code(hl) == PGM_regular_error);
-        std::string err_msg{PGM_error_message(hl)};
-        CHECK(err_msg.find("Iteration failed to converge after") != std::string::npos);
-        // wrong method
-        PGM_set_calculation_type(hl, opt, PGM_state_estimation);
-        PGM_set_calculation_method(hl, opt, PGM_iterative_current);
-        PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
-        CHECK(PGM_error_code(hl) == PGM_regular_error);
-        err_msg = PGM_error_message(hl);
-        CHECK(err_msg.find("The calculation method is invalid for this calculation!") != std::string::npos);
-    }
-
-    SUBCASE("Batch calculation error") {
-        // wrong id
-        load_updates[1].id = 5;
-        PGM_calculate(hl, model, opt, batch_output_dataset, batch_update_dataset);
-        // failed in batch 1
-        CHECK(PGM_error_code(hl) == PGM_batch_error);
-        CHECK(PGM_n_failed_scenarios(hl) == 1);
-        CHECK(PGM_failed_scenarios(hl)[0] == 1);
-        std::string const err_msg{PGM_batch_errors(hl)[0]};
-        CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
-        // valid results for batch 0
-        CHECK(node_result_0.id == 0);
-        CHECK(node_result_0.energized == 1);
-        CHECK(node_result_0.u == doctest::Approx(40.0));
-        CHECK(node_result_0.u_pu == doctest::Approx(0.4));
-        CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+        SUBCASE("Batch calculation error") {
+            // wrong id
+            load_updates[1].id = 5;
+            PGM_calculate(hl, model, opt, batch_output_dataset, batch_update_dataset);
+            // failed in batch 1
+            CHECK(PGM_error_code(hl) == PGM_batch_error);
+            CHECK(PGM_n_failed_scenarios(hl) == 1);
+            CHECK(PGM_failed_scenarios(hl)[0] == 1);
+            std::string const err_msg{PGM_batch_errors(hl)[0]};
+            CHECK(err_msg.find("The id cannot be found:") != std::string::npos);
+            // valid results for batch 0
+            CHECK(node_result_0.id == 0);
+            CHECK(node_result_0.energized == 1);
+            CHECK(node_result_0.u == doctest::Approx(40.0));
+            CHECK(node_result_0.u_pu == doctest::Approx(0.4));
+            CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+        }
     }
 }
 
