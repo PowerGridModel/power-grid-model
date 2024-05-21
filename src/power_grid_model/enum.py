@@ -67,6 +67,27 @@ class CalculationMethod(IntEnum):
     iec60909 = 5
 
 
+class TapChangingStrategy(IntEnum):
+    """Tap Changing Strategies"""
+
+    disabled = 0
+    """
+    Disable automatic tap adjustment
+    """
+    any_valid_tap = 1
+    """
+    Adjust tap position automatically; optimize for any value in the voltage band
+    """
+    min_voltage_tap = 2
+    """
+    Adjust tap position automatically; optimize for the lower end of the voltage band
+    """
+    max_voltage_tap = 3
+    """
+    Adjust tap position automatically; optimize for the higher end of the voltage band
+    """
+
+
 class MeasuredTerminalType(IntEnum):
     """The type of asset measured by a (power) sensor"""
 
