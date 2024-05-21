@@ -25,22 +25,27 @@ template <class CompContainer> struct MainModelState {
     ComponentToMathCoupling comp_coup;
 };
 
+template <class StateType>
+concept main_model_state_c = std::same_as<StateType, MainModelState<typename StateType::ComponentContainer>>;
+
 template <typename ContainerType, typename ComponentType>
-concept component_container = requires(ContainerType const& c, ID id) {
-                                  { c.template citer<ComponentType>().begin() } -> std::forward_iterator;
-                                  { c.template citer<ComponentType>().end() } -> std::forward_iterator;
-                                  {
-                                      *(c.template citer<ComponentType>().begin())
-                                      } -> std::same_as<ComponentType const&>;
-                                  { *(c.template citer<ComponentType>().end()) } -> std::same_as<ComponentType const&>;
-                                  {
-                                      c.template get_item<ComponentType>(id)
-                                      } -> std::convertible_to<ComponentType const&>;
-                              };
+concept component_container_c = requires(ContainerType const& c, ID id) {
+                                    { c.template citer<ComponentType>().begin() } -> std::forward_iterator;
+                                    { c.template citer<ComponentType>().end() } -> std::forward_iterator;
+                                    {
+                                        *(c.template citer<ComponentType>().begin())
+                                        } -> std::same_as<ComponentType const&>;
+                                    {
+                                        *(c.template citer<ComponentType>().end())
+                                        } -> std::same_as<ComponentType const&>;
+                                    {
+                                        c.template get_item<ComponentType>(id)
+                                        } -> std::convertible_to<ComponentType const&>;
+                                };
 
 template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
-concept model_component_state =
-    component_container<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
+concept model_component_state_c =
+    component_container_c<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
     std::same_as<StateType<ContainerType>, MainModelState<ContainerType>>;
 
 } // namespace power_grid_model::main_core

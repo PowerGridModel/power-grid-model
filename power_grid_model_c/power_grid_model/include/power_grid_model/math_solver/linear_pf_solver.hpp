@@ -45,6 +45,10 @@ namespace linear_pf {
 template <symmetry_tag sym> class LinearPFSolver {
 
   public:
+    using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
+    using BlockPermArray =
+        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
@@ -53,10 +57,10 @@ template <symmetry_tag sym> class LinearPFSolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(n_bus_) {}
 
-    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                   CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                     CalculationInfo& calculation_info) {
         // output
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
 
         Timer const main_timer(calculation_info, 2220, "Math solver");
@@ -87,32 +91,14 @@ template <symmetry_tag sym> class LinearPFSolver {
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
-    SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>> sparse_solver_;
-    typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray perm_;
+    SparseSolverType sparse_solver_;
+    BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
-        using detail::add_sources;
-
-        IdxVector const& bus_entry = y_bus.lu_diag();
-        for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*load_gens_per_bus_, *sources_per_bus_)) {
-            Idx const diagonal_position = bus_entry[bus_number];
-            auto& diagonal_element = mat_data_[diagonal_position];
-            auto& u_bus = output.u[bus_number];
-            add_loads(load_gens, bus_number, input, diagonal_element);
-            add_sources(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
-        }
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, *load_gens_per_bus_, *sources_per_bus_, output, mat_data_);
     }
 
-    static void add_loads(boost::iterator_range<IdxCount> const& load_gens_per_bus, Idx /* bus_number */,
-                          PowerFlowInput<sym> const& input, ComplexTensor<sym>& diagonal_element) {
-        for (auto load_number : load_gens_per_bus) {
-            // YBus_diag += -conj(S_base)
-            add_diag(diagonal_element, -conj(input.s_injection[load_number]));
-        }
-    }
-
-    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
         detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
                                     [](Idx /*i*/) { return LoadGenType::const_y; });
     }

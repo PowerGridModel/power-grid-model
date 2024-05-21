@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "node": [
+        {
+          "id": 1,
+          "u": 10.570170726436285,
+          "u_angle": -0.0661620368126038
+        }
+      ],
+      "sym_voltage_sensor": [
+        {
+          "id": 3,
+          "u_residual": 0.4298292735637155,
+          "u_angle_residual": -0.03383796318739621
+        },
+        {
+          "id": 4,
+          "u_residual": -1.5701707264362845,
+          "u_angle_residual": 0.1661620368126038
+        }
+      ]
+    },
+    {
+      "node": [
+        {
+          "id": 1,
+          "u": 10.570170726436285,
+          "u_angle": -0.0661620368126038
+        }
+      ],
+      "sym_voltage_sensor": [
+        {
+          "id": 3,
+          "u_residual": 0.4298292735637155,
+          "u_angle_residual": -0.03383796318739621
+        },
+        {
+          "id": 4,
+          "u_residual": -1.5701707264362845,
+          "u_angle_residual": 0.1661620368126038
+        }
+      ]
+    }
+  ]
+}

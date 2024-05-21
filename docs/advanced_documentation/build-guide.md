@@ -118,8 +118,9 @@ library `power_grid_model`. There are four sub-projects defined in the root cmak
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
 * `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
-* `tests/c_api_tests`: the C API test target using the `doctest` framework
+* `tests/cpp_integration_tests`: the integration test target for the C++ core using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
+* `tests/c_api_tests`: the C API test target using the `doctest` framework
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
@@ -231,7 +232,7 @@ To list the available presets, run `./build.sh -h`.
 One can run the unit tests and C API example by:
 
 ```shell
-ctest --test-dir cpp_build/<preset>
+ctest --preset <preset>
 ```
 
 or
@@ -269,8 +270,17 @@ You need to install the MSVC compiler. You can either install the whole Visual S
 
 Other toolchains:
 
-* [Miniconda](https://docs.conda.io/en/latest/miniconda.html), install Python 3 64-bit under user wide.
+* [Miniforge](https://github.com/conda-forge/miniforge), install Python 3 64-bit under user wide.
 * [Git](https://git-scm.com/downloads)
+
+```{note}
+It is also possible to use any other `conda` provider like [Miniconda](https://docs.conda.io/en/latest/miniconda.html). However, we recommend using [Miniforge](https://github.com/conda-forge/miniforge), because it is published under BSD License and by default does not have any references to commercially licensed software.
+```
+
+```{note}
+Long paths for (dependencies in) the installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
+```
 
 ### C++ packages
 
@@ -290,7 +300,7 @@ Go to a root folder you prefer to save the repositories, open a Git Bash Console
 git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
-Then open a Miniconda PowerShell Prompt, go to the repository folder.
+Then open a Miniforge PowerShell Prompt (or equivalent if you use a different `conda` provider), go to the repository folder.
 
 ```shell
 conda create -n power-grid-env python=3.10
@@ -303,8 +313,9 @@ Install from source in develop mode, and run `pytest`.
 pip install -e .[dev]
 pytest
 ```
+
 ```{note}
-Long paths for (dependencies in) the miniconda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+Long paths for (dependencies in) the conda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
 It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
@@ -385,7 +396,7 @@ To list the available presets, run `./build.sh -h`.
 One can run the unit tests and C API example by:
 
 ```shell
-ctest --test-dir cpp_build/<preset>
+ctest --preset <preset>
 ```
 
 or

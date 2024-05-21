@@ -37,6 +37,7 @@ template <typename T>
 concept symmetry_tag = std::derived_from<T, symmetric_t> || std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> constexpr bool is_symmetric_v = std::derived_from<T, symmetric_t>;
+template <symmetry_tag T> constexpr bool is_asymmetric_v = std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric_v<T>, asymmetric_t, symmetric_t>;
 

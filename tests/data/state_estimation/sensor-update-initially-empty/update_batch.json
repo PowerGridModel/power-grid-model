@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_voltage_sensor": [
+        {"id": 3, "u_measured": 11.0, "u_angle_measured": -0.1, "u_sigma": 1.0},
+        {"id": 4, "measured_object": 1, "u_measured": 9.0, "u_angle_measured": 0.1, "u_sigma": 2.0}
+      ]
+    },
+    {
+      "sym_voltage_sensor": [
+        {"id": 3, "u_measured": 11.0, "u_angle_measured": -0.1, "u_sigma": 1.0},
+        {"id": 4, "measured_object": 1, "u_measured": 9.0, "u_angle_measured": 0.1, "u_sigma": 2.0}
+      ]
+    }
+  ]
+}

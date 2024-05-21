@@ -76,36 +76,36 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 
     // call calculation
     try {
-        auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
+        auto const options =
+            MainModel::Options{.calculation_method = static_cast<CalculationMethod>(opt->calculation_method),
+                               .err_tol = opt->err_tol,
+                               .max_iter = opt->max_iter,
+                               .threading = opt->threading,
+                               .short_circuit_voltage_scaling =
+                                   static_cast<ShortCircuitVoltageScaling>(opt->short_circuit_voltage_scaling)};
+
         switch (opt->calculation_type) {
         case PGM_power_flow:
             if (opt->symmetric != 0) {
-                handle->batch_parameter = model->calculate_power_flow<symmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
-                    opt->threading);
+                handle->batch_parameter =
+                    model->calculate_power_flow<symmetric_t>(options, exported_output_dataset, exported_update_dataset);
             } else {
-                handle->batch_parameter = model->calculate_power_flow<asymmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
-                    opt->threading);
+                handle->batch_parameter = model->calculate_power_flow<asymmetric_t>(options, exported_output_dataset,
+                                                                                    exported_update_dataset);
             }
             break;
         case PGM_state_estimation:
             if (opt->symmetric != 0) {
                 handle->batch_parameter = model->calculate_state_estimation<symmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
-                    opt->threading);
+                    options, exported_output_dataset, exported_update_dataset);
             } else {
                 handle->batch_parameter = model->calculate_state_estimation<asymmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, exported_output_dataset, exported_update_dataset,
-                    opt->threading);
+                    options, exported_output_dataset, exported_update_dataset);
             }
             break;
         case PGM_short_circuit: {
-            auto const short_circuit_voltage_scaling =
-                static_cast<ShortCircuitVoltageScaling>(opt->short_circuit_voltage_scaling);
             handle->batch_parameter =
-                model->calculate_short_circuit(short_circuit_voltage_scaling, calculation_method,
-                                               exported_output_dataset, exported_update_dataset, opt->threading);
+                model->calculate_short_circuit(options, exported_output_dataset, exported_update_dataset);
             break;
         }
         default:

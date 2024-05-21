@@ -11,6 +11,12 @@ on:
       - main
     paths:
       - CITATION.cff
+      - .github/workflows/citations.yml
+
+  pull_request:
+    paths:
+      - CITATION.cff
+      - .github/workflows/citations.yml
 
   workflow_dispatch:
 
@@ -25,4 +31,4 @@ jobs:
     - name: checkout
       uses: actions/checkout@v4
     - name: Validate CITATION.cff
-      uses: dieghernan/cff-validator@v2.3
+      uses: dieghernan/cff-validator@v3

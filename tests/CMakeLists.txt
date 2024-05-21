@@ -8,5 +8,6 @@ include("${doctest_DIR}/doctest.cmake")
 
 add_subdirectory("c_api_tests")
 add_subdirectory("cpp_unit_tests")
+add_subdirectory("cpp_integration_tests")
 add_subdirectory("cpp_validation_tests")
 add_subdirectory("benchmark_cpp")

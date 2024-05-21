@@ -56,13 +56,21 @@ class Fault final : public Base {
         return param;
     }
 
-    FaultOutput get_null_output() const { return get_null_output_impl<FaultOutput>(); }
+    FaultOutput get_null_output() const {
+        FaultOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
     FaultOutput get_output() const {
         // During power flow and state estimation the fault object will have an empty output
         return get_null_output();
     }
 
-    FaultShortCircuitOutput get_null_sc_output() const { return get_null_output_impl<FaultShortCircuitOutput>(); }
+    FaultShortCircuitOutput get_null_sc_output() const {
+        FaultShortCircuitOutput output{.i_f = {}, .i_f_angle = {}};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
     FaultShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
@@ -81,9 +89,9 @@ class Fault final : public Base {
     }
 
     template <symmetry_tag sym>
-    FaultShortCircuitOutput get_sc_output(FaultShortCircuitMathOutput<sym> const& math_output,
+    FaultShortCircuitOutput get_sc_output(FaultShortCircuitSolverOutput<sym> const& solver_output,
                                           double const u_rated) const {
-        return get_sc_output(math_output.i_fault, u_rated);
+        return get_sc_output(solver_output.i_fault, u_rated);
     }
 
     // update faulted object
@@ -184,12 +192,6 @@ class Fault final : public Base {
     ID fault_object_;
     double r_f_;
     double x_f_;
-
-    template <std::convertible_to<BaseOutput> T> T get_null_output_impl() const {
-        T output{};
-        static_cast<BaseOutput&>(output) = base_output(false);
-        return output;
-    }
 
     void check_sanity() {
         using enum FaultPhase;

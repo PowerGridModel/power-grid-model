@@ -8,6 +8,9 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
+      "cacheVariables": {
+        "PGM_ENABLE_TESTING": "ON"
+      },
       "environment": {
         "PLATFORM_C_FLAGS": "",
         "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",

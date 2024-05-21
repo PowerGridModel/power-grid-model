@@ -5,6 +5,7 @@
 #pragma once
 
 #include "state.hpp"
+#include "state_queries.hpp"
 
 #include "../all_components.hpp"
 
@@ -13,119 +14,117 @@ namespace power_grid_model::main_core {
 namespace detail {
 
 template <typename Component, class ComponentContainer, typename ResType, typename ResFunc>
-    requires model_component_state<MainModelState, ComponentContainer, Component> &&
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&> &&
              std::convertible_to<std::invoke_result_t<ResFunc, Component const&>, ResType>
 constexpr void register_topo_components(MainModelState<ComponentContainer> const& state, std::vector<ResType>& target,
                                         ResFunc&& func) {
-    auto const begin = state.components.template citer<Component>().begin();
-    auto const end = state.components.template citer<Component>().end();
+    auto const begin = get_component_citer<Component>(state).begin();
+    auto const end = get_component_citer<Component>(state).end();
 
     target.resize(std::distance(begin, end));
     std::transform(begin, end, target.begin(), func);
 }
 
-template <typename Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
-constexpr auto get_seq(MainModelState<ComponentContainer> const& state, ID id) {
-    return state.components.template get_seq<Component>(id);
-}
-
 } // namespace detail
 
 template <std::same_as<Node> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
-    comp_topo.n_node = state.components.template size<Node>();
+    comp_topo.n_node = get_component_size<Node>(state);
 }
 
 template <std::same_as<Branch> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.branch_node_idx, [&state](Branch const& branch) {
-        return BranchIdx{detail::get_seq<Node>(state, branch.from_node()),
-                         detail::get_seq<Node>(state, branch.to_node())};
+        return BranchIdx{get_component_sequence<Node>(state, branch.from_node()),
+                         get_component_sequence<Node>(state, branch.to_node())};
     });
 }
 
 template <std::same_as<Branch3> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.branch3_node_idx, [&state](Branch3 const& branch3) {
-        return Branch3Idx{detail::get_seq<Node>(state, branch3.node_1()),
-                          detail::get_seq<Node>(state, branch3.node_2()),
-                          detail::get_seq<Node>(state, branch3.node_3())};
+        return Branch3Idx{get_component_sequence<Node>(state, branch3.node_1()),
+                          get_component_sequence<Node>(state, branch3.node_2()),
+                          get_component_sequence<Node>(state, branch3.node_3())};
     });
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.source_node_idx, [&state](Source const& source) {
-        return detail::get_seq<Node>(state, source.node());
+        return get_component_sequence<Node>(state, source.node());
     });
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(state, comp_topo.shunt_node_idx, [&state](Shunt const& shunt) {
-        return detail::get_seq<Node>(state, shunt.node());
+        return get_component_sequence<Node>(state, shunt.node());
     });
 }
 
 template <std::same_as<GenericLoadGen> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(
         state, comp_topo.load_gen_node_idx,
-        [&state](GenericLoadGen const& load_gen) { return detail::get_seq<Node>(state, load_gen.node()); });
+        [&state](GenericLoadGen const& load_gen) { return get_component_sequence<Node>(state, load_gen.node()); });
 
     detail::register_topo_components<Component>(state, comp_topo.load_gen_type,
                                                 [](GenericLoadGen const& load_gen) { return load_gen.type(); });
 }
 
 template <std::same_as<GenericVoltageSensor> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(
         state, comp_topo.voltage_sensor_node_idx, [&state](GenericVoltageSensor const& voltage_sensor) {
-            return detail::get_seq<Node>(state, voltage_sensor.measured_object());
+            return get_component_sequence<Node>(state, voltage_sensor.measured_object());
         });
 }
 
 template <std::same_as<GenericPowerSensor> Component, class ComponentContainer>
-    requires model_component_state<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
                                             ComponentTopology& comp_topo) {
     detail::register_topo_components<Component>(
         state, comp_topo.power_sensor_object_idx, [&state](GenericPowerSensor const& power_sensor) {
-            switch (power_sensor.get_terminal_type()) {
-                using enum MeasuredTerminalType;
+            using enum MeasuredTerminalType;
 
+            auto const measured_object = power_sensor.measured_object();
+
+            switch (power_sensor.get_terminal_type()) {
             case branch_from:
+                [[fallthrough]];
             case branch_to:
-                return detail::get_seq<Branch>(state, power_sensor.measured_object());
+                return get_component_sequence<Branch>(state, measured_object);
             case source:
-                return detail::get_seq<Source>(state, power_sensor.measured_object());
+                return get_component_sequence<Source>(state, measured_object);
             case shunt:
-                return detail::get_seq<Shunt>(state, power_sensor.measured_object());
+                return get_component_sequence<Shunt>(state, measured_object);
             case load:
+                [[fallthrough]];
             case generator:
-                return detail::get_seq<GenericLoadGen>(state, power_sensor.measured_object());
+                return get_component_sequence<GenericLoadGen>(state, measured_object);
             case branch3_1:
             case branch3_2:
             case branch3_3:
-                return detail::get_seq<Branch3>(state, power_sensor.measured_object());
+                return get_component_sequence<Branch3>(state, measured_object);
             case node:
-                return detail::get_seq<Node>(state, power_sensor.measured_object());
+                return get_component_sequence<Node>(state, measured_object);
             default:
                 throw MissingCaseForEnumError("Power sensor idx to seq transformation",
                                               power_sensor.get_terminal_type());
@@ -135,6 +134,27 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
     detail::register_topo_components<Component>(
         state, comp_topo.power_sensor_terminal_type,
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
+}
+
+template <std::derived_from<Regulator> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
+                                            ComponentTopology& comp_topo) {
+    detail::register_topo_components<Component>(
+        state, comp_topo.regulated_object_idx, [&state](Regulator const& regulator) {
+            switch (regulator.regulated_object_type()) {
+            case ComponentType::branch:
+                return get_component_sequence<Branch>(state, regulator.regulated_object());
+            case ComponentType::branch3:
+                return get_component_sequence<Branch3>(state, regulator.regulated_object());
+            default:
+                throw MissingCaseForEnumError("Regulator idx to seq transformation", regulator.regulated_object_type());
+            }
+        });
+
+    detail::register_topo_components<Component>(state, comp_topo.regulated_object_type, [](Regulator const& regulator) {
+        return regulator.regulated_object_type();
+    });
 }
 
 } // namespace power_grid_model::main_core

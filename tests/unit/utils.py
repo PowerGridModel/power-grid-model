@@ -13,7 +13,22 @@ import pytest
 
 from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
-from power_grid_model.errors import PowerGridBatchError, PowerGridError, PowerGridSerializationError
+from power_grid_model.errors import (
+    AutomaticTapCalculationError,
+    ConflictID,
+    ConflictVoltage,
+    IDWrongType,
+    InvalidBranch,
+    InvalidBranch3,
+    InvalidCalculationMethod,
+    InvalidMeasuredObject,
+    InvalidRegulatedObject,
+    InvalidTransformerClock,
+    NotObservableError,
+    PowerGridBatchError,
+    PowerGridError,
+    PowerGridSerializationError,
+)
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
 BASE_PATH = Path(__file__).parent.parent
@@ -25,7 +40,24 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 
 KNOWN_EXCEPTIONS = {
     ex.__name__: ex
-    for ex in (PowerGridBatchError, PowerGridError, PowerGridSerializationError, AssertionError, OSError)
+    for ex in (
+        PowerGridBatchError,
+        PowerGridError,
+        ConflictID,
+        ConflictVoltage,
+        IDWrongType,
+        InvalidBranch,
+        InvalidBranch3,
+        InvalidCalculationMethod,
+        InvalidMeasuredObject,
+        InvalidRegulatedObject,
+        AutomaticTapCalculationError,
+        InvalidTransformerClock,
+        NotObservableError,
+        PowerGridSerializationError,
+        AssertionError,
+        OSError,
+    )
 }
 
 

@@ -200,8 +200,10 @@ class PowerGridModel:
             setattr(opt, key, value.value if isinstance(value, IntEnum) else value)
         return opt
 
-    def _handle_errors(self, continue_on_batch_error: bool, batch_size: int):
-        self._batch_error = handle_errors(continue_on_batch_error=continue_on_batch_error, batch_size=batch_size)
+    def _handle_errors(self, continue_on_batch_error: bool, batch_size: int, decode_error: bool):
+        self._batch_error = handle_errors(
+            continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
+        )
 
     # pylint: disable=too-many-arguments
     def _calculate_impl(
@@ -212,6 +214,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]],
         options: Options,
         continue_on_batch_error: bool,
+        decode_error: bool,
     ):
         """
         Core calculation routine
@@ -223,6 +226,7 @@ class PowerGridModel:
             output_component_types:
             options:
             continue_on_batch_error:
+            decode_error:
 
         Returns:
         """
@@ -258,7 +262,9 @@ class PowerGridModel:
             update_data=update_ptr,
         )
 
-        self._handle_errors(continue_on_batch_error=continue_on_batch_error, batch_size=batch_size)
+        self._handle_errors(
+            continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
+        )
 
         return output_data
 
@@ -273,6 +279,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        decode_error: bool = True,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
     ):
         calculation_type = CalculationType.power_flow
@@ -292,6 +299,7 @@ class PowerGridModel:
             output_component_types=output_component_types,
             options=options,
             continue_on_batch_error=continue_on_batch_error,
+            decode_error=decode_error,
         )
 
     def _calculate_state_estimation(
@@ -305,6 +313,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        decode_error: bool = True,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
     ) -> Dict[str, np.ndarray]:
         calculation_type = CalculationType.state_estimation
@@ -324,6 +333,7 @@ class PowerGridModel:
             output_component_types=output_component_types,
             options=options,
             continue_on_batch_error=continue_on_batch_error,
+            decode_error=decode_error,
         )
 
     def _calculate_short_circuit(
@@ -334,6 +344,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        decode_error: bool = True,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
     ) -> Dict[str, np.ndarray]:
@@ -355,6 +366,7 @@ class PowerGridModel:
             output_component_types=output_component_types,
             options=options,
             continue_on_batch_error=continue_on_batch_error,
+            decode_error=decode_error,
         )
 
     def calculate_power_flow(
@@ -368,6 +380,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        decode_error: bool = True,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -411,8 +424,10 @@ class PowerGridModel:
                 - > 0: Specify number of parallel threads
             output_component_types ({set, list}, optional): List or set of component types you want to be present in
                 the output dict. By default, all component types will be in the output.
-            continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some
+            continue_on_batch_error (bool, optional): Continue the program (instead of throwing error) if some
                 scenarios fail.
+            decode_error (bool, optional):
+                Decode error messages to their derived types if possible.
 
         Returns:
             Dictionary of results of all components.
@@ -438,6 +453,7 @@ class PowerGridModel:
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
+            decode_error=decode_error,
         )
 
     def calculate_state_estimation(
@@ -451,6 +467,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        decode_error: bool = True,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
@@ -491,8 +508,10 @@ class PowerGridModel:
                 - > 0: Specify number of parallel threads
             output_component_types ({set, list}, optional): List or set of component types you want to be present in
                 the output dict. By default, all component types will be in the output.
-            continue_on_batch_error (bool, optional): If the program continues (instead of throwing error) if some
+            continue_on_batch_error (bool, optional): Continue the program (instead of throwing error) if some
                 scenarios fail.
+            decode_error (bool, optional):
+                Decode error messages to their derived types if possible.
 
         Returns:
             Dictionary of results of all components.
@@ -518,6 +537,7 @@ class PowerGridModel:
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
+            decode_error=decode_error,
         )
 
     def calculate_short_circuit(
@@ -528,6 +548,7 @@ class PowerGridModel:
         threading: int = -1,
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
+        decode_error: bool = True,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
     ) -> Dict[str, np.ndarray]:
         """
@@ -563,7 +584,9 @@ class PowerGridModel:
                 List or set of component types you want to be present in the output dict.
                 By default, all component types will be in the output.
             continue_on_batch_error (bool, optional):
-                If the program continues (instead of throwing error) if some scenarios fail.
+                Continue the program (instead of throwing error) if some scenarios fail.
+            decode_error (bool, optional):
+                Decode error messages to their derived types if possible.
             short_circuit_voltage_scaling ({ShortCircuitVoltageSaling, str}, optional):
                 Whether to use the maximum or minimum voltage scaling.
                 By default, the maximum voltage scaling is used to calculate the short circuit.
@@ -588,6 +611,7 @@ class PowerGridModel:
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
+            decode_error=decode_error,
             short_circuit_voltage_scaling=short_circuit_voltage_scaling,
         )
 

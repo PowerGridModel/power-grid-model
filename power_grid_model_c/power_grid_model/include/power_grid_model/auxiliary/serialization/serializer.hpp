@@ -360,6 +360,7 @@ class Serializer {
     static void json_convert_inf(nlohmann::json& json_document) {
         switch (json_document.type()) {
         case nlohmann::json::value_t::object:
+            [[fallthrough]];
         case nlohmann::json::value_t::array:
             for (auto& value : json_document) {
                 json_convert_inf(value);

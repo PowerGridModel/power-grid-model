@@ -23,7 +23,7 @@ class PowerGridError : public std::exception {
 
 template <typename T> class MissingCaseForEnumError : public PowerGridError {
   public:
-    MissingCaseForEnumError(const std::string& method, const T& value) {
+    MissingCaseForEnumError(std::string const& method, const T& value) {
         append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
     }
 };
@@ -57,7 +57,7 @@ class InvalidBranch3 : public PowerGridError {
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock) {
-        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock  " + std::to_string(clock) + '\n');
+        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock " + std::to_string(clock) + '\n');
     }
 };
 
@@ -103,8 +103,26 @@ class IDNotFound : public PowerGridError {
 
 class InvalidMeasuredObject : public PowerGridError {
   public:
-    InvalidMeasuredObject(const std::string& object, const std::string& sensor) {
-        append_msg(sensor + " is not supported for " + object);
+    InvalidMeasuredObject(std::string const& object, std::string const& sensor) {
+        append_msg(sensor + " measurement is not supported for object of type " + object);
+    }
+};
+
+class InvalidRegulatedObject : public PowerGridError {
+  public:
+    InvalidRegulatedObject(std::string const& object, std::string const& regulator) {
+        append_msg(regulator + " regulator is not supported for object of type " + object);
+    }
+    InvalidRegulatedObject(ID id, std::string const& regulator) {
+        append_msg(regulator + " regulator is not supported for object with ID " + std::to_string(id));
+    }
+};
+
+class AutomaticTapCalculationError : public PowerGridError {
+  public:
+    AutomaticTapCalculationError(ID id) {
+        append_msg("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id" +
+                   std::to_string(id)); // NOSONAR
     }
 };
 
@@ -137,13 +155,6 @@ class InvalidCalculationMethod : public CalculationError {
     InvalidCalculationMethod() : CalculationError("The calculation method is invalid for this calculation!") {}
 };
 
-class UnknownAttributeName : public PowerGridError {
-  public:
-    explicit UnknownAttributeName(std::string const& attr_name) {
-        append_msg("Unknown attribute name!" + attr_name + "\n");
-    }
-};
-
 class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
@@ -168,7 +179,7 @@ class InvalidShortCircuitPhases : public PowerGridError {
 class InvalidShortCircuitPhaseOrType : public PowerGridError {
   public:
     InvalidShortCircuitPhaseOrType() {
-        append_msg("During one calculation the short circuit types phases should be similar for all faults \n");
+        append_msg("During one calculation the short circuit types phases should be similar for all faults\n");
     }
 };
 
@@ -179,7 +190,16 @@ class SerializationError : public PowerGridError {
 
 class DatasetError : public PowerGridError {
   public:
-    explicit DatasetError(std::string const& msg) { append_msg(msg); }
+    explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
+};
+
+class UnreachableHit : public PowerGridError {
+  public:
+    UnreachableHit(std::string const& method, std::string const& reason_for_assumption) {
+        append_msg("Unreachable code hit when executing " + method +
+                   ".\n The following assumption for unreachability was not met: " + reason_for_assumption +
+                   ".\n This may be a bug in the library\n");
+    }
 };
 
 } // namespace power_grid_model

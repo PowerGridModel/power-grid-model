@@ -443,7 +443,7 @@ template <symmetry_tag sym> class YBus {
 
     // calculate branch flow based on voltage
     template <typename T>
-        requires std::same_as<T, BranchMathOutput<sym>> || std::same_as<T, BranchShortCircuitMathOutput<sym>>
+        requires std::same_as<T, BranchSolverOutput<sym>> || std::same_as<T, BranchShortCircuitSolverOutput<sym>>
     std::vector<T> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
         std::vector<T> branch_flow(math_topology_->branch_bus_idx.size());
         std::transform(math_topology_->branch_bus_idx.cbegin(), math_topology_->branch_bus_idx.cend(),
@@ -459,7 +459,7 @@ template <symmetry_tag sym> class YBus {
                            output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                            output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
-                           if constexpr (std::same_as<T, BranchMathOutput<sym>>) {
+                           if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
                                // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
                                output.s_f = uf * conj(output.i_f);
                                output.s_t = ut * conj(output.i_t);
@@ -471,18 +471,18 @@ template <symmetry_tag sym> class YBus {
     }
 
     // calculate shunt flow based on voltage, injection direction
-    template <typename MathOutputType>
-        requires std::same_as<MathOutputType, ApplianceMathOutput<sym>> ||
-                 std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
-    std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
+    template <typename SolverOutputType>
+        requires std::same_as<SolverOutputType, ApplianceSolverOutput<sym>> ||
+                 std::same_as<SolverOutputType, ApplianceShortCircuitSolverOutput<sym>>
+    std::vector<SolverOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
+        std::vector<SolverOutputType> shunt_flow(math_topology_->n_shunt());
         for (auto const [bus, shunts] : enumerated_zip_sequence(math_topology_->shunts_per_bus)) {
             for (Idx const shunt : shunts) {
                 // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);
 
-                if constexpr (std::same_as<MathOutputType, ApplianceMathOutput<sym>>) {
+                if constexpr (std::same_as<SolverOutputType, ApplianceSolverOutput<sym>>) {
                     // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                     shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
                 }

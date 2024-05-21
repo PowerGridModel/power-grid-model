@@ -275,6 +275,24 @@
             "base": "BaseOutput",
             "is_template": false,
             "attributes": []
+        },
+        {
+            "name": "TransformerTapRegulatorOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "IntS",
+                    "names": "tap_pos",
+                    "description": "result of regulated tap position"
+                }
+            ]
+        },
+        {
+            "name": "RegulatorShortCircuitOutput",
+            "base": "BaseOutput",
+            "is_template": false,
+            "attributes": []
         }
     ]
 }

@@ -58,19 +58,19 @@ TEST_CASE("Test load generator") {
     double const i_i = s_i / (1.1 * 10e3) / sqrt3;
     double const p_pu = 3e6 / base_power_3p;
 
-    ApplianceMathOutput<symmetric_t> appliance_math_output_sym;
-    appliance_math_output_sym.i = 1.0 + 2.0i;
-    appliance_math_output_sym.s = 3.0 + 4.0i;
+    ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
+    appliance_solver_output_sym.i = 1.0 + 2.0i;
+    appliance_solver_output_sym.s = 3.0 + 4.0i;
 
-    ApplianceMathOutput<symmetric_t> appliance_math_output_sym_reverse;
-    appliance_math_output_sym_reverse.i = -1.0 - 2.0i;
-    appliance_math_output_sym_reverse.s = -3.0 - 4.0i;
+    ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym_reverse;
+    appliance_solver_output_sym_reverse.i = -1.0 - 2.0i;
+    appliance_solver_output_sym_reverse.s = -3.0 - 4.0i;
 
-    ApplianceMathOutput<asymmetric_t> appliance_math_output_asym;
+    ApplianceSolverOutput<asymmetric_t> appliance_solver_output_asym;
     ComplexValue<asymmetric_t> const i_a{1.0 + 2.0i};
     ComplexValue<asymmetric_t> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
-    appliance_math_output_asym.i = i_a;
-    appliance_math_output_asym.s = s_a;
+    appliance_solver_output_asym.i = i_a;
+    appliance_solver_output_asym.s = s_a;
 
     CHECK(sym_gen_pq.math_model_type() == ComponentType::generic_load_gen);
 
@@ -114,7 +114,7 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test symmetric generator with constant power; s,i as input") {
         GenericLoadGen const& load_gen = sym_gen_pq;
         // sym result
-        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(3.0 * base_power<symmetric_t>));
@@ -123,7 +123,8 @@ TEST_CASE("Test load generator") {
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
         // asym result
-        ApplianceOutput<asymmetric_t> const asym_result = load_gen.get_output<asymmetric_t>(appliance_math_output_asym);
+        ApplianceOutput<asymmetric_t> const asym_result =
+            load_gen.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.p(0) == doctest::Approx(3.0 * base_power<asymmetric_t>));
         CHECK(asym_result.q(1) == doctest::Approx(4.0 * base_power<asymmetric_t>));
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<asymmetric_t>));
@@ -131,7 +132,7 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.pf(1) == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
         // reverse result
         ApplianceOutput<symmetric_t> const reverse_result =
-            load_gen.get_output<symmetric_t>(appliance_math_output_sym_reverse);
+            load_gen.get_output<symmetric_t>(appliance_solver_output_sym_reverse);
         CHECK(reverse_result.id == 1);
         CHECK(reverse_result.energized);
         CHECK(reverse_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));
@@ -171,7 +172,7 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test asymmetric load with constant power; s, i as input") {
         GenericLoadGen const& load_gen = asym_load_pq;
         // sym result
-        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));
@@ -180,7 +181,8 @@ TEST_CASE("Test load generator") {
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
         // asym result
-        ApplianceOutput<asymmetric_t> const asym_result = load_gen.get_output<asymmetric_t>(appliance_math_output_asym);
+        ApplianceOutput<asymmetric_t> const asym_result =
+            load_gen.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.p(0) == doctest::Approx(-3.0 * base_power<asymmetric_t>));
         CHECK(asym_result.q(1) == doctest::Approx(-4.0 * base_power<asymmetric_t>));
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<asymmetric_t>));
@@ -211,7 +213,7 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test symmetric load with constant current; s, i as input") {
         GenericLoadGen const& load_gen = sym_load_i;
         // sym result
-        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));
@@ -220,7 +222,8 @@ TEST_CASE("Test load generator") {
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
         // asym result
-        ApplianceOutput<asymmetric_t> const asym_result = load_gen.get_output<asymmetric_t>(appliance_math_output_asym);
+        ApplianceOutput<asymmetric_t> const asym_result =
+            load_gen.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.p(0) == doctest::Approx(-3.0 * base_power<asymmetric_t>));
         CHECK(asym_result.q(1) == doctest::Approx(-4.0 * base_power<asymmetric_t>));
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<asymmetric_t>));
@@ -228,7 +231,7 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.pf(1) == doctest::Approx(-3.0 / cabs(3.0 + 4.0i)));
         // reverse direction
         ApplianceOutput<symmetric_t> const reverse_result =
-            load_gen.get_output<symmetric_t>(appliance_math_output_sym_reverse);
+            load_gen.get_output<symmetric_t>(appliance_solver_output_sym_reverse);
         CHECK(reverse_result.id == 1);
         CHECK(reverse_result.energized);
         CHECK(reverse_result.p == doctest::Approx(3.0 * base_power<symmetric_t>));
@@ -261,7 +264,7 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test asymmetric generator with constant addmittance; s, i as input") {
         GenericLoadGen const& load_gen = asym_gen_y;
         // sym result
-        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(3.0 * base_power<symmetric_t>));
@@ -270,7 +273,8 @@ TEST_CASE("Test load generator") {
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
         // asym result
-        ApplianceOutput<asymmetric_t> const asym_result = load_gen.get_output<asymmetric_t>(appliance_math_output_asym);
+        ApplianceOutput<asymmetric_t> const asym_result =
+            load_gen.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.p(0) == doctest::Approx(3.0 * base_power<asymmetric_t>));
         CHECK(asym_result.q(1) == doctest::Approx(4.0 * base_power<asymmetric_t>));
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<asymmetric_t>));

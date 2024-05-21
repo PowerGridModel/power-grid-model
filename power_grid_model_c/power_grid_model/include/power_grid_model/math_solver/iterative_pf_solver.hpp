@@ -24,14 +24,13 @@ namespace power_grid_model::math_solver {
 template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
-    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                   Idx max_iter, CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
+                                     Idx max_iter, CalculationInfo& calculation_info) {
         // get derived reference for derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
-        std::vector<double> const& phase_shift = *phase_shift_;
 
         // prepare
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::infinity();
 
@@ -40,25 +39,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         // initialize
         {
             Timer const sub_timer{calculation_info, 2221, "Initialize calculation"};
-            // average u_ref of all sources
-            DoubleComplex const u_ref = [&]() {
-                DoubleComplex sum_u_ref = 0.0;
-                for (auto const& [bus, sources] : enumerated_zip_sequence(*sources_per_bus_)) {
-                    for (Idx const source : sources) {
-                        sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
-                    }
-                }
-                return sum_u_ref / (double)input.source.size();
-            }();
-
-            // assign u_ref as flat start
-            for (Idx i = 0; i != n_bus_; ++i) {
-                // consider phase shift
-                output.u[i] = ComplexValue<sym>{u_ref * std::exp(1.0i * phase_shift[i])};
-            }
-
             // Further initialization specific to the derived solver
-            derived_solver.initialize_derived_solver(y_bus, output);
+            derived_solver.initialize_derived_solver(y_bus, input, output);
         }
 
         // start calculation
@@ -94,12 +76,12 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         main_timer.stop();
 
         auto const key = Timer::make_key(2226, "Max number of iterations");
-        calculation_info[key] = std::max(calculation_info[key], (double)num_iter);
+        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
 
         return output;
     }
 
-    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
         detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
                                     [this](Idx i) { return (*load_gen_type_)[i]; });
     }

@@ -420,6 +420,53 @@
                     "description": "short circuit impedance"
                 }
             ]
+        },
+        {
+            "name": "RegulatorInput",
+            "base": "BaseInput",
+            "attributes": [
+                {
+                    "data_type": "ID",
+                    "names": "regulated_object",
+                    "description": "ID of the regulated object"
+                },
+                {
+                    "data_type": "IntS",
+                    "names": "status",
+                    "description": "regulator enabled"
+                }
+            ]
+        },
+        {
+            "name": "TransformerTapRegulatorInput",
+            "base": "RegulatorInput",
+            "attributes": [
+                {
+                    "data_type": "ControlSide",
+                    "names": "control_side",
+                    "description": "control side of the (three winding) transformer"
+                },
+                {
+                    "data_type": "double",
+                    "names": "u_set",
+                    "description": "voltage setpoint"
+                },
+                {
+                    "data_type": "double",
+                    "names": "u_band",
+                    "description": "voltage bandwidth"
+                },
+                {
+                    "data_type": "double",
+                    "names": "line_drop_compensation_r",
+                    "description": "line drop compensation resistance"
+                },
+                {
+                    "data_type": "double",
+                    "names": "line_drop_compensation_x",
+                    "description": "line drop compensation reactance"
+                }
+            ]
         }
     ]
 }

@@ -319,9 +319,9 @@ TEST_CASE("Test three winding transformer") {
     SUBCASE("Check output of branch 3") {
         // TODO asym output check
         // Branch initialization: s_f, s_t, i_f, i_t
-        BranchMathOutput<symmetric_t> const b1_output{(1.0 - 2.0i), (2.0 - 3.0i), (1.5 - 2.5i), (2.5 - 3.5i)};
-        BranchMathOutput<symmetric_t> const b2_output{(2.0 - 3.0i), (-3.0 + 2.0i), (1.5 - 2.5i), (-4.0 + 1.5i)};
-        BranchMathOutput<symmetric_t> const b3_output{(3.0 + 1.0i), (1.0 + 1.0i), (1.5 - 2.5i), (1.5 + 2.0i)};
+        BranchSolverOutput<symmetric_t> const b1_output{(1.0 - 2.0i), (2.0 - 3.0i), (1.5 - 2.5i), (2.5 - 3.5i)};
+        BranchSolverOutput<symmetric_t> const b2_output{(2.0 - 3.0i), (-3.0 + 2.0i), (1.5 - 2.5i), (-4.0 + 1.5i)};
+        BranchSolverOutput<symmetric_t> const b3_output{(3.0 + 1.0i), (1.0 + 1.0i), (1.5 - 2.5i), (1.5 + 2.0i)};
 
         Branch3Output<symmetric_t> sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
 
@@ -358,18 +358,18 @@ TEST_CASE("Test three winding transformer") {
         CHECK(sym_output.s_3 == doctest::Approx(out_s_3));
         CHECK(sym_output.loading == doctest::Approx(out_loading));
 
-        BranchMathOutput<asymmetric_t> const asym_b1_output{{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
-                                                            {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
-                                                            {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                                                            {(2.5 - 3.5i), (2.5 - 3.5i), (2.5 - 3.5i)}};
-        BranchMathOutput<asymmetric_t> const asym_b2_output{{(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
-                                                            {(-3.0 + 2.0i), (-3.0 + 2.0i), (-3.0 + 2.0i)},
-                                                            {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                                                            {(-4.0 + 1.5i), (-4.0 + 1.5i), (-4.0 + 1.5i)}};
-        BranchMathOutput<asymmetric_t> const asym_b3_output{{(3.0 + 1.0i), (3.0 + 1.0i), (3.0 + 1.0i)},
-                                                            {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
-                                                            {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
-                                                            {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
+        BranchSolverOutput<asymmetric_t> const asym_b1_output{{(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
+                                                              {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
+                                                              {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                              {(2.5 - 3.5i), (2.5 - 3.5i), (2.5 - 3.5i)}};
+        BranchSolverOutput<asymmetric_t> const asym_b2_output{{(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
+                                                              {(-3.0 + 2.0i), (-3.0 + 2.0i), (-3.0 + 2.0i)},
+                                                              {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                              {(-4.0 + 1.5i), (-4.0 + 1.5i), (-4.0 + 1.5i)}};
+        BranchSolverOutput<asymmetric_t> const asym_b3_output{{(3.0 + 1.0i), (3.0 + 1.0i), (3.0 + 1.0i)},
+                                                              {(1.0 + 1.0i), (1.0 + 1.0i), (1.0 + 1.0i)},
+                                                              {(1.5 - 2.5i), (1.5 - 2.5i), (1.5 - 2.5i)},
+                                                              {(1.5 + 2.0i), (1.5 + 2.0i), (1.5 + 2.0i)}};
 
         Branch3Output<asymmetric_t> asym_output = vec[0].get_output(asym_b1_output, asym_b2_output, asym_b3_output);
 
@@ -415,9 +415,9 @@ TEST_CASE("Test three winding transformer") {
         ComplexValue<symmetric_t> const i_2{1.0 - 2.2i};
         ComplexValue<symmetric_t> const i_3{1.3 - 2.1i};
 
-        BranchShortCircuitMathOutput<symmetric_t> const sym_b1_output{i_1, ComplexValue<symmetric_t>{}};
-        BranchShortCircuitMathOutput<symmetric_t> const sym_b2_output{i_2, ComplexValue<symmetric_t>{}};
-        BranchShortCircuitMathOutput<symmetric_t> const sym_b3_output{i_3, ComplexValue<symmetric_t>{}};
+        BranchShortCircuitSolverOutput<symmetric_t> const sym_b1_output{i_1, ComplexValue<symmetric_t>{}};
+        BranchShortCircuitSolverOutput<symmetric_t> const sym_b2_output{i_2, ComplexValue<symmetric_t>{}};
+        BranchShortCircuitSolverOutput<symmetric_t> const sym_b3_output{i_3, ComplexValue<symmetric_t>{}};
 
         Branch3ShortCircuitOutput sym_sc_output = vec[0].get_sc_output(sym_b1_output, sym_b2_output, sym_b3_output);
 
@@ -425,9 +425,9 @@ TEST_CASE("Test three winding transformer") {
         ComplexValue<asymmetric_t> const i_2_asym{1.0 - 2.2i};
         ComplexValue<asymmetric_t> const i_3_asym{1.3 - 2.1i};
 
-        BranchShortCircuitMathOutput<asymmetric_t> const asym_b1_output{i_1_asym, ComplexValue<asymmetric_t>{}};
-        BranchShortCircuitMathOutput<asymmetric_t> const asym_b2_output{i_2_asym, ComplexValue<asymmetric_t>{}};
-        BranchShortCircuitMathOutput<asymmetric_t> const asym_b3_output{i_3_asym, ComplexValue<asymmetric_t>{}};
+        BranchShortCircuitSolverOutput<asymmetric_t> const asym_b1_output{i_1_asym, ComplexValue<asymmetric_t>{}};
+        BranchShortCircuitSolverOutput<asymmetric_t> const asym_b2_output{i_2_asym, ComplexValue<asymmetric_t>{}};
+        BranchShortCircuitSolverOutput<asymmetric_t> const asym_b3_output{i_3_asym, ComplexValue<asymmetric_t>{}};
 
         Branch3ShortCircuitOutput asym_sc_output = vec[0].get_sc_output(asym_b1_output, asym_b2_output, asym_b3_output);
 

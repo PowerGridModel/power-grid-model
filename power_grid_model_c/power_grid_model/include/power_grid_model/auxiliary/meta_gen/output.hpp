@@ -226,242 +226,27 @@ struct get_attributes_list<SensorShortCircuitOutput> {
     };
 };
 
-
-
-// template specialization functors to get nan
-
 template<>
-struct get_component_nan<BaseOutput> {
-    BaseOutput operator() () const {
-        BaseOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<NodeOutput<sym_type>> {
-    using sym = sym_type;
-
-    NodeOutput<sym> operator() () const {
-        NodeOutput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.u_pu);
-        set_nan(comp.u);
-        set_nan(comp.u_angle);
-        set_nan(comp.p);
-        set_nan(comp.q);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<BranchOutput<sym_type>> {
-    using sym = sym_type;
-
-    BranchOutput<sym> operator() () const {
-        BranchOutput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.loading);
-        set_nan(comp.p_from);
-        set_nan(comp.q_from);
-        set_nan(comp.i_from);
-        set_nan(comp.s_from);
-        set_nan(comp.p_to);
-        set_nan(comp.q_to);
-        set_nan(comp.i_to);
-        set_nan(comp.s_to);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<Branch3Output<sym_type>> {
-    using sym = sym_type;
-
-    Branch3Output<sym> operator() () const {
-        Branch3Output<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.loading);
-        set_nan(comp.p_1);
-        set_nan(comp.q_1);
-        set_nan(comp.i_1);
-        set_nan(comp.s_1);
-        set_nan(comp.p_2);
-        set_nan(comp.q_2);
-        set_nan(comp.i_2);
-        set_nan(comp.s_2);
-        set_nan(comp.p_3);
-        set_nan(comp.q_3);
-        set_nan(comp.i_3);
-        set_nan(comp.s_3);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<ApplianceOutput<sym_type>> {
-    using sym = sym_type;
-
-    ApplianceOutput<sym> operator() () const {
-        ApplianceOutput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.p);
-        set_nan(comp.q);
-        set_nan(comp.i);
-        set_nan(comp.s);
-        set_nan(comp.pf);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<VoltageSensorOutput<sym_type>> {
-    using sym = sym_type;
-
-    VoltageSensorOutput<sym> operator() () const {
-        VoltageSensorOutput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.u_residual);
-        set_nan(comp.u_angle_residual);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<PowerSensorOutput<sym_type>> {
-    using sym = sym_type;
-
-    PowerSensorOutput<sym> operator() () const {
-        PowerSensorOutput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.p_residual);
-        set_nan(comp.q_residual);
-        return comp;
-    }
+struct get_attributes_list<TransformerTapRegulatorOutput> {
+    static constexpr std::array<MetaAttribute, 3> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::id, offsetof(TransformerTapRegulatorOutput, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::energized, offsetof(TransformerTapRegulatorOutput, energized), []{ return "energized"; }>::value,
+            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::tap_pos, offsetof(TransformerTapRegulatorOutput, tap_pos), []{ return "tap_pos"; }>::value,
+    };
 };
 
 template<>
-struct get_component_nan<FaultOutput> {
-    FaultOutput operator() () const {
-        FaultOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        return comp;
-    }
+struct get_attributes_list<RegulatorShortCircuitOutput> {
+    static constexpr std::array<MetaAttribute, 2> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<RegulatorShortCircuitOutput, &RegulatorShortCircuitOutput::id, offsetof(RegulatorShortCircuitOutput, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<RegulatorShortCircuitOutput, &RegulatorShortCircuitOutput::energized, offsetof(RegulatorShortCircuitOutput, energized), []{ return "energized"; }>::value,
+    };
 };
 
-template<>
-struct get_component_nan<FaultShortCircuitOutput> {
-    FaultShortCircuitOutput operator() () const {
-        FaultShortCircuitOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.i_f);
-        set_nan(comp.i_f_angle);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<NodeShortCircuitOutput> {
-    NodeShortCircuitOutput operator() () const {
-        NodeShortCircuitOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.u_pu);
-        set_nan(comp.u);
-        set_nan(comp.u_angle);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<BranchShortCircuitOutput> {
-    BranchShortCircuitOutput operator() () const {
-        BranchShortCircuitOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.i_from);
-        set_nan(comp.i_from_angle);
-        set_nan(comp.i_to);
-        set_nan(comp.i_to_angle);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<Branch3ShortCircuitOutput> {
-    Branch3ShortCircuitOutput operator() () const {
-        Branch3ShortCircuitOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.i_1);
-        set_nan(comp.i_1_angle);
-        set_nan(comp.i_2);
-        set_nan(comp.i_2_angle);
-        set_nan(comp.i_3);
-        set_nan(comp.i_3_angle);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<ApplianceShortCircuitOutput> {
-    ApplianceShortCircuitOutput operator() () const {
-        ApplianceShortCircuitOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        set_nan(comp.i);
-        set_nan(comp.i_angle);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<SensorShortCircuitOutput> {
-    SensorShortCircuitOutput operator() () const {
-        SensorShortCircuitOutput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.energized);
-        return comp;
-    }
-};
 
 
 
