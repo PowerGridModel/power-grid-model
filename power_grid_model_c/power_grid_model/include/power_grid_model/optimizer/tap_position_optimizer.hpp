@@ -636,7 +636,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto solver_output = optimize(state, order, method);
         update_state(cache);
 
-        using SolverOutputType = decltype(solver_output)::value_type;
+        using SolverOutputType = typename decltype(solver_output)::value_type;
 
         TransformerTapPositionResult transformer_tap_positions;
         get_transformer_tap_positions<Transformer, ThreeWindingTransformer, State>(state, transformer_tap_positions);
