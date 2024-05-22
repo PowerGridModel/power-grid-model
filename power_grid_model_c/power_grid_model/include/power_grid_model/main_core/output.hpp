@@ -350,13 +350,6 @@ inline auto output_result(Component const& transformer_tap_regulator,
                           std::vector<SolverOutputType> const& /* solver_output */, Idx const /* obj_seq */) {
     return transformer_tap_regulator.get_null_sc_output();
 }
-//
-//// entry point for output_result
-// template <std::derived_from<Base> Component, typename SolverOutputType>
-// constexpr auto output_result(Component const& component, MathOutput<SolverOutputType> const& math_output,
-//                              Idx2D math_id) {
-//     return output_result<Component, SolverOutputType>(component, math_output.solver_output, math_id);
-// }
 
 // output base component
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
