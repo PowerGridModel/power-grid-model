@@ -23,7 +23,7 @@ using TestComponentContainer =
               ThreeWindingTransformer, TransformerTapRegulator, Source>;
 using TestState = main_core::MainModelState<TestComponentContainer>;
 
-TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side) {
+TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side, IntS tap_pos = na_IntS) {
     return TransformerInput{.id = id,
                             .from_node = from,
                             .to_node = to,
@@ -40,7 +40,7 @@ TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side) {
                             .winding_to = WindingType::wye_n,
                             .clock = 0,
                             .tap_side = tap_side,
-                            .tap_pos = na_IntS,
+                            .tap_pos = tap_pos,
                             .tap_min = na_IntS,
                             .tap_max = na_IntS,
                             .tap_nom = na_IntS,
@@ -55,7 +55,7 @@ TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side) {
                             .x_grounding_to = nan};
 }
 
-ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3) {
+ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3, IntS tap_pos = 0) {
     return ThreeWindingTransformerInput{
         .id = id,
         .node_1 = node_1,
@@ -84,7 +84,7 @@ ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID n
         .clock_12 = 0,
         .clock_13 = 0,
         .tap_side = Branch3Side::side_1,
-        .tap_pos = 0,
+        .tap_pos = tap_pos,
         .tap_min = 0,
         .tap_max = 0,
         .tap_nom = 0,
@@ -977,6 +977,60 @@ TEST_CASE("Test Tap position optimizer") {
                 CHECK(transformer_b.tap_pos() == initial_b);
             }
         }
+    }
+
+    SUBCASE("transformer tap position retrieval") {
+        std::vector<TransformerInput> transformers{
+            test::get_transformer(11, 0, 1, BranchSide::from, 0), test::get_transformer(12, 0, 1, BranchSide::from, -1),
+            test::get_transformer(13, 5, 7, BranchSide::from, 1), test::get_transformer(14, 2, 3, BranchSide::from, -2),
+            test::get_transformer(15, 8, 9, BranchSide::from, 2)};
+        main_core::add_component<test::MockTransformer>(state, transformers.begin(), transformers.end(), 50.0);
+
+        std::vector<ThreeWindingTransformerInput> transformers3w{test::get_transformer3w(16, 0, 4, 5, 3)};
+        main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+
+        TransformerTapPositionResult transformer_tap_positions;
+        power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
+            Transformer, ThreeWindingTransformer, MockState>(state, transformer_tap_positions);
+        // CHECK();
+    }
+
+    SUBCASE("transformer duplicatively regulated") {
+        main_core::emplace_component<test::MockTransformer>(
+            state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
+        main_core::emplace_component<test::MockTransformer>(
+            state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
+
+        std::vector<TransformerTapRegulatorInput> bad_regulators{
+            TransformerTapRegulatorInput{.id = 3,
+                                         .regulated_object = 1,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_1,
+                                         .u_set = 0.0,
+                                         .u_band = 0.0,
+                                         .line_drop_compensation_r = 0.0,
+                                         .line_drop_compensation_x = 0.0},
+            TransformerTapRegulatorInput{.id = 4,
+                                         .regulated_object = 2,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_2,
+                                         .u_set = 0.0,
+                                         .u_band = 0.0,
+                                         .line_drop_compensation_r = 0.0,
+                                         .line_drop_compensation_x = 0.0},
+            TransformerTapRegulatorInput{.id = 5,
+                                         .regulated_object = 2,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_2,
+                                         .u_set = 0.0,
+                                         .u_band = 0.0,
+                                         .line_drop_compensation_r = 0.0,
+                                         .line_drop_compensation_x = 0.0},
+        };
+
+        CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(state, bad_regulators.begin(),
+                                                                          bad_regulators.end(), 50.0),
+                        DuplicativelyRegulatedObject);
     }
 }
 
