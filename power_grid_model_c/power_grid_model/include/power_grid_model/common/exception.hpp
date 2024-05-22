@@ -149,7 +149,7 @@ class DuplicativelyRegulatedObject : public PowerGridError {
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id) {
-        append_msg("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id" +
+        append_msg("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id " +
                    std::to_string(id)); // NOSONAR
     }
 };
