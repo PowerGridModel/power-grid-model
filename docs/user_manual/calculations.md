@@ -31,6 +31,15 @@ Output:
 - Node voltage magnitude and angle
 - Power flow through branches
 
+See [Power flow algorithms](#power-flow-algorithms) for detailed documentation on the calculation methods.
+
+##### Regulated power flow
+
+For most power flow calculations, the grid is fixed as the user dictates. However, in practice, the grid often contains regulators for certain components.
+When including those regulators in the calculations, the grid may be optimized according to the power flow results and the behaviour of the regulators.
+
+See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed documentation on regulated power flow calculations.
+
 #### State estimation
 
 State estimation is a statistical calculation method that determines the most probable state of the grid, based on
@@ -560,6 +569,36 @@ There are 4 types of fault situations that can occur in the grid, along with the
 - Single phase to ground: a, b, c
 - Two phase: ab, bc, ac
 - Two phase to ground: ab, bc, ac
+
+### Regulated power flow calculations
+
+```warning
+At the time of writing, this feature is still experimental and is not yet publicly available.
+```
+
+Regulated power flow calculations are disabled by default.
+
+At the time of writing, the following regulated power flow calculation types are implemented.
+Please refer to their respective sections for detailed documentation.
+
+| Regulation type                                                   | Setting                                                                                 | Enum values                                                                 |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Automatic tap changing](#power-flow-with-automatic-tap-changing) | {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` | {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` |
+
+#### Power flow with automatic tap changing
+
+```warning
+At the time of writing, this feature is still experimental and is not yet publicly available.
+```
+
+Some of the most important regulators in the grid affect the tap position of transformers. These {hoverxreftooltip}`user_manual/components:transformer-tap-regulator`s are
+
+| Algorithm                                                    | Default  | Speed    | Algorithm call                                                                                              |
+| ------------------------------------------------------------ | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| No automatic tap changing (regular power flow)               | &#10004; | &#10004; | {py:class}`TapChangingStrategy.newton_raphson <power_grid_model.enum.TapChangingStrategy.disabled>`         |
+| Optimize tap position for any value in the voltage band      |          | &#10004; | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
+| Optimize tap position for lower voltage in the voltage band  |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
+| Optimize tap position for higher voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
 
 ## Batch Calculations
 

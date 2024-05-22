@@ -470,7 +470,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const
     case to:
         return branch_output.i_t;
     default:
-        throw MissingCaseForEnumError("adjust_transformer<Branch>", control_side);
+        throw MissingCaseForEnumError{"adjust_transformer<Branch>", control_side};
     }
 }
 
@@ -489,7 +489,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2DBranch
     case side_3:
         return branch_outputs[math_id.pos[2]].i_f;
     default:
-        throw MissingCaseForEnumError("adjust_transformer<Branch3>", control_side);
+        throw MissingCaseForEnumError{"adjust_transformer<Branch3>", control_side};
     }
 }
 
