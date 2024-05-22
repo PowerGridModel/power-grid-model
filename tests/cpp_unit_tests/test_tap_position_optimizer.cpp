@@ -540,7 +540,7 @@ TEST_CASE("Test Tap position optimizer") {
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
-    
+
     MockState state;
 
     auto const updater = [&state](ConstDataset const& update_dataset) {
