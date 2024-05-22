@@ -24,6 +24,7 @@ TEST_CASE("Test construct tap position optimizer") {
             CAPTURE(strategy_method.method);
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
                 stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy};
+            auto res = optimizer.optimize(empty_state, strategy_method.method);
             CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
         }
     }

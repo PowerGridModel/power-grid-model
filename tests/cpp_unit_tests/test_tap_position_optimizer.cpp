@@ -329,20 +329,6 @@ class MockSolverOutput : public SolverOutput<symmetric_t> {
 };
 
 template <typename ContainerType>
-    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
-inline IntS get_state_tap_pos(MathOutput<MockSolverOutput<ContainerType>> const& math_output, ID id) {
-    REQUIRE(math_output.solver_output.size() > 0);
-    return math_output.solver_output.front().state_tap_positions.at(id);
-}
-
-template <typename ContainerType>
-    requires main_core::main_model_state_c<main_core::MainModelState<ContainerType>>
-inline IntS get_output_tap_pos(MathOutput<MockSolverOutput<ContainerType>> const& math_output, ID id) {
-    REQUIRE(math_output.solver_output.size() > 0);
-    return math_output.solver_output.front().output_tap_positions.at(id);
-}
-
-template <typename ContainerType>
 using MockStateCalculator = std::vector<MockSolverOutput<ContainerType>> (*)(
     main_core::MainModelState<ContainerType> const& state, CalculationMethod method);
 
@@ -554,6 +540,7 @@ TEST_CASE("Test Tap position optimizer") {
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
     constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
+    constexpr auto transformer_group_index = MockContainer::template get_type_idx<MockTransformer>();
 
     MockState state;
 
@@ -946,9 +933,10 @@ TEST_CASE("Test Tap position optimizer") {
 
                 // correctness
                 CHECK(result.solver_output.size() == 1);
-                // need rewriting
-                // check_a(get_state_tap_pos(result, state_a.id), strategy);
-                // check_b(get_state_tap_pos(result, state_b.id), strategy);
+                // need rewriting: add function to extract tap pos from result for states_.id
+                Idx2D const math_id_a{4, 0};
+                // check_a((result, state_a.id), strategy);
+                // check_b((result, state_b.id), strategy);
 
                 // reset
                 CHECK(transformer_a.tap_pos() == initial_a);
@@ -1020,9 +1008,11 @@ TEST_CASE("Test tap position optmizer I/O") {
         state_.components.set_construction_complete();
 
         TransformerTapPositionResult transformer_tap_positions;
-        power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<Transformer,
-                                                                                           ThreeWindingTransformer>(
-            state_, transformer_tap_positions);
+        // using power_grid_model::optimizer::tap_position_optimizer;
+        power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
+            Transformer, test::TestState::ComponentContainer>(state_, transformer_tap_positions);
+        power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
+            ThreeWindingTransformer, test::TestState::ComponentContainer>(state_, transformer_tap_positions);
         std::vector<TransformerTapPosition> expected_tap_positions{
             {{3, 11}, 0}, {{3, 12}, -1}, {{3, 13}, 1}, {{3, 14}, -2}, {{3, 15}, 2}, {{4, 16}, 3},
         };

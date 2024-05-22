@@ -560,10 +560,8 @@ inline void create_tap_regulator_output(State const& state, std::vector<SolverOu
     }
 }
 
-template <class Component, class ComponentContainer>
-    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
-             std::disjunction_v<std::is_base_of<Transformer, Component>,
-                                std::is_base_of<ThreeWindingTransformer, Component>>
+template <transformer_c Component, class ComponentContainer>
+    requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component>
 constexpr void get_transformer_tap_positions(main_core::MainModelState<ComponentContainer> const& state,
                                              TransformerTapPositionResult& transformer_tap_positions) {
     constexpr auto group_index = ComponentContainer::template get_type_idx<Component>();
@@ -572,28 +570,6 @@ constexpr void get_transformer_tap_positions(main_core::MainModelState<Component
             TransformerTapPosition{Idx2D{group_index, transformer.id()}, static_cast<IntS>(transformer.tap_pos())});
     }
 }
-
-#ifdef _MSC_VER
-// MSVC compiler
-#pragma warning(push)
-#pragma warning(disable : 4717)
-#elif defined(__GNUC__) || defined(__clang__)
-// GCC or Clang compilers
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winfinite-recursion"
-#endif
-template <typename... ComponentTypes, main_core::main_model_state_c State>
-inline void get_transformer_tap_positions(State const& state, TransformerTapPositionResult& transformer_tap_positions) {
-    using ComponentContainerType = typename State::ComponentContainer;
-    (get_transformer_tap_positions<ComponentTypes, ComponentContainerType>(state, transformer_tap_positions), ...);
-}
-#ifdef _MSC_VER
-// MSVC compiler
-#pragma warning(pop)
-#elif defined(__GNUC__) || defined(__clang__)
-// GCC or Clang compilers
-#pragma GCC diagnostic pop
-#endif
 
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
@@ -636,11 +612,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         update_state(cache);
 
         TransformerTapPositionResult transformer_tap_positions;
-        get_transformer_tap_positions<Transformer, ThreeWindingTransformer, State>(state, transformer_tap_positions);
+        (get_transformer_tap_positions<TransformerTypes, typename State::ComponentContainer>(state,
+                                                                                             transformer_tap_positions),
+         ...);
 
         return {.solver_output = {std::move(solver_output)},
                 .optimizer_output = {std::move(transformer_tap_positions)}};
-        // return math_res;
     }
 
     constexpr auto get_strategy() const { return strategy_; }
