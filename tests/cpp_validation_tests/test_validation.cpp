@@ -148,6 +148,8 @@ std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute con
     sstr << std::setprecision(16);
     if constexpr (std::same_as<T, RealValue<asymmetric_t>>) {
         sstr << "(" << value(0) << ", " << value(1) << ", " << value(2) << ")";
+    } else if constexpr (std::same_as<T, int8_t>) {
+        sstr << std::to_string(value);
     } else {
         sstr << value;
     }
@@ -313,8 +315,7 @@ struct CaseParam {
     std::string calculation_type;
     std::string calculation_method;
     std::string short_circuit_voltage_scaling;
-    std::string optimizer_strategy;
-    std::string optimizer_type;
+    std::string tap_changing_strategy;
     bool sym{};
     bool is_batch{};
     double rtol{};
@@ -344,9 +345,10 @@ CalculationFunc calculation_func(CaseParam const& param) {
         return [param, get_default_options](MainModel& model, CalculationMethod calculation_method,
                                             Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
             auto options = get_default_options(calculation_method, threading);
-            options.optimizer_type = param.optimizer_type == "disabled" ? OptimizerType::no_optimization
-                                                                        : OptimizerType::automatic_tap_adjustment;
-            options.optimizer_strategy = optimizer_strategy_mapping.at(param.optimizer_strategy);
+            options.optimizer_type = param.tap_changing_strategy == "disabled"
+                                         ? OptimizerType::no_optimization
+                                         : OptimizerType::automatic_tap_adjustment;
+            options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
             if (param.sym) {
                 return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
             }
@@ -433,8 +435,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
         calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
 
-    param.optimizer_type = calculation_method_params.value("optimizer_type", "disabled");
-    param.optimizer_strategy = calculation_method_params.value("optimizer_strategy", "any_valid_tap");
+    param.tap_changing_strategy = calculation_method_params.value("tap_changing_strategy", "disabled");
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
     param.case_name += is_batch ? "_batch"s : ""s;
