@@ -1010,7 +1010,6 @@ TEST_CASE("Test tap position optmizer I/O") {
         state_.components.set_construction_complete();
 
         TransformerTapPositionResult transformer_tap_positions;
-        // using power_grid_model::optimizer::tap_position_optimizer;
         power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
             Transformer, test::TestState::ComponentContainer>(state_, transformer_tap_positions);
         power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
