@@ -8,7 +8,7 @@
       "experimental_features": "enabled",
       "fail": {
         "reason": "Experimental feature under development",
-        "run": false
+        "raises": "OSError" 
       }
     }
   }
