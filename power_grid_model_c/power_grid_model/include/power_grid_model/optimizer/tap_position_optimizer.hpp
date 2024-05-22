@@ -36,7 +36,6 @@ using main_core::get_component;
 using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
-// using TransformerTapPositionResult = std::vector<std::pair<Idx2D, IntS>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr Idx2D unregulated_idx = {-1, -1};
@@ -570,7 +569,7 @@ constexpr void get_transformer_tap_positions(main_core::MainModelState<Component
     constexpr auto group_index = ComponentContainer::template get_type_idx<Component>();
     for (auto const& transformer : state.components.template citer<Component>()) {
         transformer_tap_positions.push_back(
-            std::pair<Idx2D, IntS>{Idx2D{group_index, transformer.id()}, static_cast<IntS>(transformer.tap_pos())});
+            TransformerTapPosition{Idx2D{group_index, transformer.id()}, static_cast<IntS>(transformer.tap_pos())});
     }
 }
 
@@ -635,8 +634,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto const cache = this->cache_states(order);
         auto solver_output = optimize(state, order, method);
         update_state(cache);
-
-        using SolverOutputType = typename decltype(solver_output)::value_type;
 
         TransformerTapPositionResult transformer_tap_positions;
         get_transformer_tap_positions<Transformer, ThreeWindingTransformer, State>(state, transformer_tap_positions);
