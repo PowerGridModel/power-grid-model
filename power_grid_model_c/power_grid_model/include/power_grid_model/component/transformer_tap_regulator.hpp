@@ -19,6 +19,8 @@ class TransformerTapRegulator : public Regulator {
   public:
     using InputType = TransformerTapRegulatorInput;
     using UpdateType = TransformerTapRegulatorUpdate;
+    template <symmetry_tag sym> using OutputType = TransformerTapRegulatorOutput;
+
     static constexpr char const* name = "transformer_tap_regulator";
 
     explicit TransformerTapRegulator(TransformerTapRegulatorInput const& transformer_tap_regulator_input,
