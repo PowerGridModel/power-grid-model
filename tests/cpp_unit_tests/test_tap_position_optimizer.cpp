@@ -931,12 +931,20 @@ TEST_CASE("Test Tap position optimizer") {
                 auto optimizer = get_optimizer(strategy);
                 auto const result = optimizer.optimize(state, CalculationMethod::default_method);
 
+                auto get_tap_position = [&](const Idx2D& idx) {
+                    for (const auto& tap_position : result.optimizer_output.transformer_tap_positions) {
+                        if (tap_position.index == idx) {
+                            return tap_position.tap_position;
+                        }
+                    }
+                    return std::numeric_limits<IntS>::quiet_NaN();
+                };
+
                 // correctness
                 CHECK(result.solver_output.size() == 1);
-                // need rewriting: add function to extract tap pos from result for states_.id
                 Idx2D const math_id_a{4, 0};
-                // check_a((result, state_a.id), strategy);
-                // check_b((result, state_b.id), strategy);
+                check_a(get_tap_position(Idx2D{transformer_group_index, state_a.id}), strategy);
+                check_b(get_tap_position(Idx2D{transformer_group_index, state_b.id}), strategy);
 
                 // reset
                 CHECK(transformer_a.tap_pos() == initial_a);

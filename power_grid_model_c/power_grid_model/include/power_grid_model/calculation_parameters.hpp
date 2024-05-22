@@ -334,7 +334,6 @@ template <typename T> struct MathOutput {
     using SolverOutputType = T;
 
     SolverOutputType solver_output;
-    // std::vector<SolverOutputType> solver_output;
     OptimizerOutput optimizer_output;
 };
 

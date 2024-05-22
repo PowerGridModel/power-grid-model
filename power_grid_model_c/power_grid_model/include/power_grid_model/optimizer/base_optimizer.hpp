@@ -79,7 +79,7 @@ class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
     NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
-        return {.solver_output = func_(state, method)};
+        return {.solver_output = func_(state, method), .optimizer_output = {}};
     }
 
   private:
