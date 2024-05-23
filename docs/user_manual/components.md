@@ -727,12 +727,12 @@ the `regulator` and the `regulated_object`. Which object types are supported as 
 * base: {hoverxreftooltip}`user_manual/components:regulator`
 
 `transformer_tap_regulator` defines a regulator for transformers in the grid.
-At the time of writing, a transformer tap regulator regulates a component that is either a {hoverxreftooltip}`user_manual/components:transformer` or a {hoverxreftooltip}`user_manual/components:three_winding_transformer`.
+At the time of writing, a transformer tap regulator regulates a component that is either a {hoverxreftooltip}`user_manual/components:transformer` or a {hoverxreftooltip}`user_manual/components:three winding transformer`.
 
 The transformer tap regulator overloads the `tap_pos` of the transformer it regulates in the range set by the user via `tap_min` and `tap_max` (i.e., `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)`).
 It regulates the tap position so that the voltage on the control side is in the chosen voltage band.
 Other points further into the grid on the control side, away from the transformer, can also be regulated by providing the cumulative impedance across branches to that point as an additional line drop compensation.
-This line drop compensation only affects the controlled voltage and does not have any impact on the actual grid. It may therefore be treated as a virtual component in the grid.
+This line drop compensation only affects the controlled voltage and does not have any impact on the actual grid. It may therefore be treated as a virtual impedance in the grid.
 
 #### Input
 
@@ -771,20 +771,29 @@ The
 
 ##### Line drop compensation
 
-The transformer tap regulator tries to optimize the voltage in a specified virtual location in the grid, according to the folowing model.
+The transformer tap regulator tries to regulate the voltage in a specified virtual location in the grid, according to the folowing model.
 
-```
-tap_side   control_side                        part of grid where regulated voltage is desired
-------^\oo -*------------------virtual_line------*
+```txt
+tap_side   control_side                        part of grid where voltage is to be regulated
+------^\oo -*---------------virtual_impedance----*
       |    U_node, I_node         Z_comp         U_control
       |                                          |
      regulator <=================================/
 ```
 
-absolute value of the voltage at the node, compensated with the specified line drop compensation impedance.
+The control voltage is the voltage at the node, compensated with the voltage drop corresponding to the specified line drop compensation.
 
 $$
-U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{node}} Z_{\text{compensation}}\right|
+U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{node}} \underline{Z}_{\text{compensation}}\right|
 $$
 
-where $\underline{U}_{\text{node}}$  and $\underline{I}_{\text{node}}$ are the "measured" voltage and current phasors at the control side and may be obtained from a regular power flow calculation.
+where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{node}}$ are the calculated voltage and current phasors at the control side and may be obtained from a regular power flow calculation.
+
+For example, if we want to regulate the voltage at `load_7` in the following grid, the line drop compensation impedance is the approximate impedance of `line_5`.
+
+```txt
+node_1 --- transformer_4 --- node_2 --- line_5 --- node_3
+  |          |                                       |
+source_6     |                                    load_7
+      transformer_tap_regulator_8
+```
