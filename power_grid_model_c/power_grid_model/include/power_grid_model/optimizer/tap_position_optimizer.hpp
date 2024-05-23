@@ -608,16 +608,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
 
         auto const cache = this->cache_states(order);
-        auto solver_output = optimize(state, order, method);
+        auto result = optimize(state, order, method);
         update_state(cache);
 
-        TransformerTapPositionResult transformer_tap_positions;
-        (get_transformer_tap_positions<TransformerTypes, typename State::ComponentContainer>(state,
-                                                                                             transformer_tap_positions),
-         ...);
-
-        return {.solver_output = {std::move(solver_output)},
-                .optimizer_output = {std::move(transformer_tap_positions)}};
+        return result;
     }
 
     constexpr auto get_strategy() const { return strategy_; }
@@ -628,12 +622,24 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         initialize(regulator_order);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
-            return result;
+            return produce_output(state, std::move(result));
         }
 
         // refine solution
         exploit_neighborhood(regulator_order);
-        return iterate_with_fallback(state, regulator_order, method);
+        return produce_output(state, iterate_with_fallback(state, regulator_order, method));
+    }
+
+    auto produce_output(State const& state, ResultType solver_output) {
+        TransformerTapPositionResult transformer_tap_positions;
+
+        // TODO(mgovers): only output the transformers that are regulated
+        (get_transformer_tap_positions<TransformerTypes, typename State::ComponentContainer>(state,
+                                                                                             transformer_tap_positions),
+         ...);
+
+        return {.solver_output = {std::move(solver_output)},
+                .optimizer_output = {std::move(transformer_tap_positions)}};
     }
 
     auto iterate_with_fallback(State const& state,
