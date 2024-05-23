@@ -566,8 +566,8 @@ constexpr void get_transformer_tap_positions(main_core::MainModelState<Component
                                              TransformerTapPositionResult& transformer_tap_positions) {
     constexpr auto group_index = ComponentContainer::template get_type_idx<Component>();
     for (auto const& transformer : state.components.template citer<Component>()) {
-        transformer_tap_positions.emplace_back(
-            TransformerTapPosition{Idx2D{group_index, transformer.id()}, static_cast<IntS>(transformer.tap_pos())});
+        transformer_tap_positions.emplace_back(Idx2D{group_index, transformer.id()},
+                                               narrow_cast<IntS>(transformer.tap_pos()));
     }
 }
 
@@ -618,7 +618,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
   private:
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                  CalculationMethod method) const -> ResultType {
+                  CalculationMethod method) const -> MathOutput<ResultType> {
         initialize(regulator_order);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
@@ -630,7 +630,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return produce_output(state, iterate_with_fallback(state, regulator_order, method));
     }
 
-    auto produce_output(State const& state, ResultType solver_output) {
+    auto produce_output(State const& state, ResultType solver_output) const -> MathOutput<ResultType> {
         TransformerTapPositionResult transformer_tap_positions;
 
         // TODO(mgovers): only output the transformers that are regulated
