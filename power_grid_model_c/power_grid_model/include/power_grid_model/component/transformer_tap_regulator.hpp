@@ -59,7 +59,7 @@ class TransformerTapRegulator : public Regulator {
     constexpr TransformerTapRegulatorOutput get_null_output() const {
         return {.id = id(), .energized = 0, .tap_pos = na_IntS};
     }
-    constexpr TransformerTapRegulatorOutput get_output(IntS const& tap_pos) const {
+    TransformerTapRegulatorOutput get_output(IntS const& tap_pos) const {
         TransformerTapRegulatorOutput output{};
         output.id = id();
         output.energized = static_cast<IntS>(energized(true));
