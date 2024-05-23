@@ -127,9 +127,8 @@ struct TransformerTapRegulatorCalcParam {
 };
 
 struct TransformerTapPosition {
-    Idx2D index;
-    IntS tap_position;
-    TransformerTapPosition(Idx2D _index, IntS _tap_position) : index(_index), tap_position(_tap_position) {}
+    Idx2D index{};
+    IntS tap_position{};
 };
 using TransformerTapPositionResult = std::vector<TransformerTapPosition>;
 
