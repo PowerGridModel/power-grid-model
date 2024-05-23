@@ -566,8 +566,7 @@ constexpr void get_transformer_tap_positions(main_core::MainModelState<Component
                                              TransformerTapPositionResult& transformer_tap_positions) {
     constexpr auto group_index = ComponentContainer::template get_type_idx<Component>();
     for (auto const& transformer : state.components.template citer<Component>()) {
-        transformer_tap_positions.emplace_back(Idx2D{group_index, transformer.id()},
-                                               narrow_cast<IntS>(transformer.tap_pos()));
+        transformer_tap_positions.push_back({Idx2D{group_index, transformer.id()}, transformer.tap_pos()});
     }
 }
 

@@ -336,7 +336,7 @@ template <std::derived_from<TransformerTapRegulator> Component, class ComponentC
           steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& transformer_tap_regulator,
-                             MainModelState<ComponentContainer> const& state,
+                             MainModelState<ComponentContainer> const& /* state */,
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const /* obj_seq */) {
     if (!transformer_tap_regulator.status()) {
         return transformer_tap_regulator.get_null_output();
