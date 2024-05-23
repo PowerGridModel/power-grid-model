@@ -342,7 +342,7 @@ constexpr auto output_result(Component const& transformer_tap_regulator,
         return transformer_tap_regulator.get_null_output();
     }
     for (const auto& [index, tap_pos] : math_output.optimizer_output.transformer_tap_positions) {
-        if (transformer_tap_regulator.regulated_object() == state.components.template get_item<Base>(index).id()) {
+        if (transformer_tap_regulator.regulated_object() == index.pos) { // TODO(mgovers): pos should not act as an ID
             return transformer_tap_regulator.get_output(tap_pos);
         }
     }
