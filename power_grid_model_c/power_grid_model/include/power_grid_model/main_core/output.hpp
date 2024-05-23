@@ -425,9 +425,9 @@ template <std::derived_from<Base> Component, class ComponentContainer, typename 
           std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
-                      MathOutput<SolverOutputType> const& math_output) {
+                      MathOutput<SolverOutputType> const& math_output, Idx const obj_seq) {
                  {
-                     output_result<Component>(component, state, math_output)
+                     output_result<Component>(component, state, math_output, obj_seq)
                      } -> std::convertible_to<std::iter_value_t<ResIt>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
@@ -439,7 +439,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 }
 
 // output source, load_gen, shunt individually
-template <std::same_as<Regulator> Component, class ComponentContainer, solver_output_type SolverOutputType,
+template <std::same_as<Appliance> Component, class ComponentContainer, solver_output_type SolverOutputType,
           std::forward_iterator ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
