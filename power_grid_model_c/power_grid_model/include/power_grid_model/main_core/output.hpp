@@ -338,13 +338,13 @@ template <std::derived_from<TransformerTapRegulator> Component, class ComponentC
 constexpr auto output_result(Component const& transformer_tap_regulator,
                              MainModelState<ComponentContainer> const& /* state */,
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const /* obj_seq */) {
-    if (!transformer_tap_regulator.status()) {
-        return transformer_tap_regulator.get_null_output();
-    }
-    for (const auto& [index, tap_pos] : math_output.optimizer_output.transformer_tap_positions) {
-        if (transformer_tap_regulator.regulated_object() == index.pos) { // TODO(mgovers): pos should not act as an ID
-            return transformer_tap_regulator.get_output(tap_pos);
-        }
+    if (auto const it = std::ranges::find_if(
+            math_output.optimizer_output.transformer_tap_positions,
+            [regulated_object = transformer_tap_regulator.regulated_object()](auto const& transformer_tap_pos) {
+                return transformer_tap_pos.transformer == regulated_object;
+            });
+        it != std::end(math_output.optimizer_output.transformer_tap_positions)) {
+        return transformer_tap_regulator.get_output(it->tap_position);
     }
     return transformer_tap_regulator.get_null_output();
 }
