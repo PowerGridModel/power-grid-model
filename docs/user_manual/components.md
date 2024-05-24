@@ -737,13 +737,13 @@ This line drop compensation only affects the controlled voltage and does not hav
 
 #### Input
 
-| name                       | data type                                                                                                                            | unit     | description                                                                                             |                         required                         |  update  |   valid values    |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------- | :------------------------------------------------------: | :------: | :---------------: |
-| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` or {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` (see below) | -        | the type of the transformer_tap_regulator                                                               | &#10024; only for power flow with automatic tap changing | &#10004; |                   |
-| `u_set`                    | `double`                                                                                                                             | volt (V) | the voltage setpoint (at the center of the band)                                                        |                         &#10004;                         | &#10004; |      `>= 0`       |
-| `u_band`                   | `double`                                                                                                                             | volt (V) | the width of the voltage band                                                                           |                         &#10004;                         | &#10004; | `> 0` (see below) |
-| `line_drop_compensation_r` | `double`                                                                                                                             | ohm (Ω)  | compensation for voltage drop resistance during transport (see [below](#line-drop-compensation))        |                  &#10060; default `0.0`                  | &#10004; |      `>= 0`       |
-| `line_drop_compensation_x` | `double`                                                                                                                             | ohm (Ω)  | compensation for voltage drop due to  reactance during transport (see [below](#line-drop-compensation)) |                  &#10060; default `0.0`                  | &#10004; |      `>= 0`       |
+| name                       | data type                                                                                                                                                                                                                                                                                                          | unit     | description                                                                                             |                         required                         |  update  |   valid values    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------- | :------------------------------------------------------: | :------: | :---------------: |
+| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer` | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow with automatic tap changing | &#10004; |                   |
+| `u_set`                    | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the voltage setpoint (at the center of the band)                                                        |                         &#10004;                         | &#10004; |      `>= 0`       |
+| `u_band`                   | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the width of the voltage band                                                                           |                         &#10004;                         | &#10004; | `> 0` (see below) |
+| `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop resistance during transport (see [below](#line-drop-compensation))        |                  &#10060; default `0.0`                  | &#10004; |      `>= 0`       |
+| `line_drop_compensation_x` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to  reactance during transport (see [below](#line-drop-compensation)) |                  &#10060; default `0.0`                  | &#10004; |      `>= 0`       |
 
 The following additional requirements exist on the input parameters.
 
@@ -768,7 +768,14 @@ A `transformer_tap_regulator` has no short circuit output.
 
 #### Electric Model
 
-The 
+The transformer tap regulator itself does not have a direct contribution to the grid state.
+Instead, it regulates the tap position of the regulated object until the voltage at the control side is in the specified voltage band:
+
+$$
+   \begin{eqnarray}
+      U_{\text{control}}$ is in the range $\left[U_{\text{set}} - \frac{U_{\text{band}}}{2}, U_{\text{set}} + \frac{U_{\text{band}}}{2}\right]
+   \end{eqnarray}
+$$
 
 ##### Line drop compensation
 
@@ -785,7 +792,10 @@ tap_side   control_side                        part of grid where voltage is to 
 The control voltage is the voltage at the node, compensated with the voltage drop corresponding to the specified line drop compensation.
 
 $$
-U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{node}} \underline{Z}_{\text{compensation}}\right|
+   \begin{eqnarray}
+      & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
+      & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{node}} \cdot \underline{Z}_{\text{compensation}}\right|
+   \end{eqnarray}
 $$
 
 where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{node}}$ are the calculated voltage and current phasors at the control side and may be obtained from a regular power flow calculation.
