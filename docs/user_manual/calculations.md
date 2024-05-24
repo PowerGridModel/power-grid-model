@@ -547,7 +547,7 @@ Algorithm call: {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.Cal
 
 The assumptions used for calculations in power-grid-model are aligned to the ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
 
-- The state of grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
+- The state of the grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
 - The pre-fault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
 - The calculations are assumed to be time-independent. (Voltages are sine throughout with the fault occurring at a zero crossing of the voltage, the complexity of rotating machines and harmonics are neglected, etc.)
 - To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. 
@@ -563,12 +563,12 @@ The assumptions used for calculations in power-grid-model are aligned to the one
 In the IEC 609090 standard, there is a difference in `c` (for `U_nom` <= 1kV) for systems with a voltage tolerance of 6% and 10%. In power-grid-model we only use the value for a 10% voltage tolerance.
 ```
 
-There are 4 types of fault situations that can occur in the grid, along with the following possible combinations of the associated phases:
+There are {py:class}`4 types <power_grid_model.enum.FaultType>` of fault situations that can occur in the grid, along with the following possible combinations of the {py:class}`associated phases <power_grid_model.enum.FaultType>`:
 
-- Three-phase to ground: abc
-- Single phase to ground: a, b, c
-- Two phase: ab, bc, ac
-- Two phase to ground: ab, bc, ac
+- Three-phase to ground: `abc`
+- Single phase to ground: `a`, `b`, `c`
+- Two phase: `ab`, `bc`, `ac`
+- Two phase to ground: `ab`, `bc`, `ac`
 
 ### Regulated power flow calculations
 
@@ -591,14 +591,72 @@ Please refer to their respective sections for detailed documentation.
 At the time of writing, this feature is still experimental and is not yet publicly available.
 ```
 
-Some of the most important regulators in the grid affect the tap position of transformers. These {hoverxreftooltip}`user_manual/components:transformer-tap-regulator`s are
+Some of the most important regulators in the grid affect the tap position of transformers.
+These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try to regulate a control voltage $U_{\text{control}}$ such that it is within a specified voltage band.
+The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
+Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` option.
 
 | Algorithm                                                    | Default  | Speed    | Algorithm call                                                                                              |
 | ------------------------------------------------------------ | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| No automatic tap changing (regular power flow)               | &#10004; | &#10004; | {py:class}`TapChangingStrategy.newton_raphson <power_grid_model.enum.TapChangingStrategy.disabled>`         |
+| No automatic tap changing (regular power flow)               | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
 | Optimize tap position for any value in the voltage band      |          | &#10004; | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
 | Optimize tap position for lower voltage in the voltage band  |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
 | Optimize tap position for higher voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+
+The following control logic is used.
+
+- Regulated transformers are ranked according to the amount of transformers between itself and the nearest source {hoverxreftooltip}`user_manual/components:source`.
+  - Transformers that are closer to a {hoverxreftooltip}`user_manual/components:source` are regulated first.
+- Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+- Find the optimal state using the following procedure
+  - While not all transformers are regulated, iterate as follows:
+    - Run a power flow calculation with the current tap positions with the specified [calculation method](#power-flow-algorithms).
+    - Start with the lowest rank (with the transformers closest to a {hoverxreftooltip}`user_manual/components:source`, because the source provides a relatively stable voltage level).
+    - Loop over all ranks:
+      - Loop over all transformers within this rank; transformers with the same rank are independently regulated:
+        - If the $U_{\text{control}} < U_{\text{set}} - \frac{U_{\text{band}}}{2}$:
+          - The ratio between the voltage on the tap side and the voltage on the control side is too high.
+          - To decrease this ratio, the tap ratio must be decreased.
+          - Therefore, the tap position of the regulated transformer is decreased if it satisfies the bounds set by `tap_min` and `tap_max`.
+        - If, however, the $U_{\text{control}} > U_{\text{set}} + \frac{U_{\text{band}}}{2}$:
+          - The ratio between the voltage on the tap side and the voltage on the control side is too low.
+          - To increase this ratio, the tap ratio must be increase.
+          - Therefore, the tap position of the regulated transformer is increased if it satisfies the bounds set by `tap_min` and `tap_max`.
+        - If the tap position of this transformer did not change, the transformer is considered regulated.
+      - If not all transformers within this rank are regulated, step out of the loop and go to the next iteration step.
+  - Exploit the neighbourhood of all transformers (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+    - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
+
+The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback mechanisms in the grid.
+
+```note
+For iterative [power flow calculation methods](#power-flow-algorithms), the initial state may not converge.
+If the iterative process failed to converge, the optimization procedure is executed twice.
+First, the {py:class}`linear <power_grid_model.enum.CalculationMethod.linear>` calculation method is used to find an approximate solution.
+The optimization procedure is then run a second time to find the actual optimum with the user-specified calculation method.
+```
+
+```note
+The control logic assumes that the change in voltage level caused by changing a transformer is larger than the change caused by adjacent transformers.
+This is assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
+```
+
+```note
+The control logic assumes that the (compensated) control voltage decreases when the tap position increases.
+If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption does not hold, and the calculation may diverge.
+Hence, this is assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
+```
+
+##### Initialization and exploitation of regulated transformers
+
+Regulated transformers are initialized and exploited depending on the optimization strategy.
+
+| strategy                                                                                                    | initial tap position | exploitation direction | description                                                                           |
+| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- |
+| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        |                                                                                       |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Highest tap side voltage means lowest control voltage (closest to lower voltage band) |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Lowest tap side voltage means highest control voltage (closest to upper voltage band) |
+
 
 ## Batch Calculations
 
