@@ -9,10 +9,6 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model::main_core {
-namespace test {
-namespace {} // namespace
-} // namespace test
-
 TEST_CASE("Test main core output") {
     SUBCASE("TransformerTapRegulator") {
         using ComponentContainer = Container<ExtraRetrievableTypes<Base, Regulator>, TransformerTapRegulator>;
@@ -48,16 +44,15 @@ TEST_CASE("Test main core output") {
             CHECK(output[1].tap_pos == na_IntS);
         }
         SUBCASE("One regulated") {
-            OptimizerOutput optimizer_output{.transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1}}};
+            OptimizerOutput const optimizer_output{
+                .transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
-                    std::begin(output));
+                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, std::begin(output));
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
-                    std::begin(output));
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, std::begin(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 0);
@@ -67,18 +62,17 @@ TEST_CASE("Test main core output") {
             CHECK(output[1].tap_pos == 1);
         }
         SUBCASE("Two regulated") {
-            OptimizerOutput optimizer_output{.transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1},
-                                                                           {.transformer_id = 4, .tap_position = 2},
-                                                                           {.transformer_id = 2, .tap_position = 3}}};
+            OptimizerOutput const optimizer_output{
+                .transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1},
+                                              {.transformer_id = 4, .tap_position = 2},
+                                              {.transformer_id = 2, .tap_position = 3}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
-                    std::begin(output));
+                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, std::begin(output));
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
-                    std::begin(output));
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, std::begin(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 1);

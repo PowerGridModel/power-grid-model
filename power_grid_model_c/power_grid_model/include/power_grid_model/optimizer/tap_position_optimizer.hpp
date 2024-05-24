@@ -336,7 +336,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     constexpr auto index() const { return index_; }
     constexpr auto topology_index() const { return topology_index_; }
 
-    IntS id() const {
+    ID id() const {
         return apply([](auto const& t) { return t.id(); });
     }
     IntS tap_pos() const {
