@@ -930,15 +930,31 @@ TEST_CASE("Test Tap position optimizer") {
                 auto optimizer = get_optimizer(strategy);
                 auto const result = optimizer.optimize(state, CalculationMethod::default_method);
 
-                auto get_state_tap_pos = [&](const ID id) {
-                    REQUIRE(result.solver_output.size() > 0);
+                auto const get_state_tap_pos = [&](const ID id) {
+                    REQUIRE(!result.solver_output.empty());
                     return result.solver_output.front().state_tap_positions.at(id);
                 };
+                auto const get_output_tap_pos = [&](const ID id) {
+                    REQUIRE(!result.optimizer_output.transformer_tap_positions.empty());
+                    auto const it = std::ranges::find_if(result.optimizer_output.transformer_tap_positions,
+                                                         [id](auto const& x) { return x.transformer == id; });
+                    REQUIRE(it != std::end(result.optimizer_output.transformer_tap_positions));
+                    CHECK(it->transformer == id);
+                    return it->tap_position;
+                };
 
-                // correctness
+                // check optimal state
                 CHECK(result.solver_output.size() == 1);
                 check_a(get_state_tap_pos(state_a.id), strategy);
                 check_b(get_state_tap_pos(state_b.id), strategy);
+
+                // check optimal output
+                if (state_a.rank != MockTransformerState::unregulated) {
+                    check_a(get_output_tap_pos(state_a.id), strategy);
+                }
+                if (state_b.rank != MockTransformerState::unregulated) {
+                    check_b(get_output_tap_pos(state_b.id), strategy);
+                }
 
                 // reset
                 CHECK(transformer_a.tap_pos() == initial_a);

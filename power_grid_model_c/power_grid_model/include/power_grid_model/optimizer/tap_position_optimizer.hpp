@@ -552,14 +552,6 @@ template <symmetry_tag sym> struct NodeState {
     }
 };
 
-template <main_core::main_model_state_c State, steady_state_solver_output_type SolverOutputType>
-inline void create_tap_regulator_output(State const& state, std::vector<SolverOutputType>& solver_output) {
-    for (Idx const group : boost::counting_range(Idx{0}, static_cast<Idx>(solver_output.size()))) {
-        solver_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
-                                                              {.tap_pos = na_IntS});
-    }
-}
-
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
           typename TransformerRanker_>
