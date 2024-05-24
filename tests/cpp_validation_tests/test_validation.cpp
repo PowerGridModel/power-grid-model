@@ -302,7 +302,7 @@ std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mappi
 using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, Dataset const&, ConstDataset const&, Idx)>;
 
-std::map<std::string, OptimizerStrategy> const optimizer_strategy_mapping = {
+std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_mapping = {
     {"disabled", OptimizerStrategy::any},
     {"any_valid_tap", OptimizerStrategy::any},
     {"min_voltage_tap", OptimizerStrategy::global_minimum},
