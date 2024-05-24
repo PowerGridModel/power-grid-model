@@ -612,7 +612,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto produce_output(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                         ResultType solver_output) const -> MathOutput<ResultType> {
-        TransformerTapPositionResult transformer_tap_positions;
+        TransformerTapPositionOutput transformer_tap_positions;
 
         for (auto const& sub_order : regulator_order) {
             for (auto const& regulator : sub_order) {

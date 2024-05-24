@@ -130,7 +130,7 @@ struct TransformerTapPosition {
     ID transformer_id{};
     IntS tap_position{};
 };
-using TransformerTapPositionResult = std::vector<TransformerTapPosition>;
+using TransformerTapPositionOutput = std::vector<TransformerTapPosition>;
 
 // from side, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
@@ -326,7 +326,7 @@ static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<symmetri
 static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
 
 struct OptimizerOutput {
-    TransformerTapPositionResult transformer_tap_positions;
+    TransformerTapPositionOutput transformer_tap_positions;
 };
 
 template <typename T> struct MathOutput {
