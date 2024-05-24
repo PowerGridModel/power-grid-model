@@ -56,6 +56,9 @@ class TransformerTapRegulator : public Regulator {
         return update_data;
     }
 
+    constexpr TransformerTapRegulatorOutput get_null_output() const {
+        return {.id = id(), .energized = 0, .tap_pos = na_IntS};
+    }
     TransformerTapRegulatorOutput get_output(IntS const& tap_pos) const {
         TransformerTapRegulatorOutput output{};
         output.id = id();
@@ -63,6 +66,7 @@ class TransformerTapRegulator : public Regulator {
         output.tap_pos = tap_pos;
         return output;
     }
+    constexpr RegulatorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
     template <symmetry_tag sym> TransformerTapRegulatorCalcParam calc_param() const {
         TransformerTapRegulatorCalcParam param{};
@@ -77,7 +81,6 @@ class TransformerTapRegulator : public Regulator {
 
     // getter
     ControlSide control_side() const { return control_side_; }
-    RegulatorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
   private:
     // transformer tap regulator parameters

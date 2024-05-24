@@ -335,19 +335,25 @@ inline auto output_result(Component const& fault, MainModelState<ComponentContai
 template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
           steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& /* transformer_tap_regulator */,
+constexpr auto output_result(Component const& transformer_tap_regulator,
                              MainModelState<ComponentContainer> const& /* state */,
-                             std::vector<SolverOutputType> const& /* solver_output */, Idx const /* obj_seq */) {
-    // TODO: this function is not implemented
-    using sym = typename SolverOutputType::sym;
-    return typename TransformerTapRegulator::OutputType<sym>{};
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const /* obj_seq */) {
+    if (auto const it = std::ranges::find_if(
+            math_output.optimizer_output.transformer_tap_positions,
+            [regulated_object = transformer_tap_regulator.regulated_object()](auto const& transformer_tap_pos) {
+                return transformer_tap_pos.transformer_id == regulated_object;
+            });
+        it != std::end(math_output.optimizer_output.transformer_tap_positions)) {
+        return transformer_tap_regulator.get_output(it->tap_position);
+    }
+    return transformer_tap_regulator.get_null_output();
 }
 template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
           short_circuit_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline auto output_result(Component const& transformer_tap_regulator,
-                          MainModelState<ComponentContainer> const& /* state */,
-                          std::vector<SolverOutputType> const& /* solver_output */, Idx const /* obj_seq */) {
+constexpr auto
+output_result(Component const& transformer_tap_regulator, MainModelState<ComponentContainer> const& /* state */,
+              MathOutput<std::vector<SolverOutputType>> const& /* math_output */, Idx const /* obj_seq */) {
     return transformer_tap_regulator.get_null_sc_output();
 }
 
@@ -413,6 +419,22 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
     return detail::produce_output<Component, Idx2DBranch3>(
         state, res_it, [&math_output](Component const& component, Idx2DBranch3 const& math_id) {
             return output_result<Component>(component, math_output.solver_output, math_id);
+        });
+}
+template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType,
+          std::forward_iterator ResIt>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
+             requires(Component const& component, MainModelState<ComponentContainer> const& state,
+                      MathOutput<SolverOutputType> const& math_output, Idx const obj_seq) {
+                 {
+                     output_result<Component>(component, state, math_output, obj_seq)
+                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+             }
+constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
+                              MathOutput<SolverOutputType> const& math_output, ResIt res_it) {
+    return detail::produce_output<Component, Idx>(
+        state, res_it, [&state, &math_output](Component const& component, Idx const obj_seq) {
+            return output_result<Component, ComponentContainer>(component, state, math_output, obj_seq);
         });
 }
 
