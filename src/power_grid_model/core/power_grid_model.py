@@ -21,7 +21,13 @@ from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model.enum import CalculationMethod, CalculationType, ShortCircuitVoltageScaling, _ExperimentalFeatures
+from power_grid_model.enum import (
+    CalculationMethod,
+    CalculationType,
+    ShortCircuitVoltageScaling,
+    TapChangingStrategy,
+    _ExperimentalFeatures,
+)
 
 
 class PowerGridModel:
@@ -192,6 +198,7 @@ class PowerGridModel:
                     kwargs[key_enum] = type_[value_enum]
 
         as_enum_value("calculation_method", CalculationMethod)
+        as_enum_value("tap_changing_strategy", TapChangingStrategy)
         as_enum_value("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
         as_enum_value("experimental_features", _ExperimentalFeatures)
 
@@ -280,6 +287,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
+        tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
     ):
         calculation_type = CalculationType.power_flow
@@ -289,6 +297,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
+            tap_changing_strategy=tap_changing_strategy,
             threading=threading,
             experimental_features=experimental_features,
         )
