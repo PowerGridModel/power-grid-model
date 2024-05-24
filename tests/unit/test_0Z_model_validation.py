@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
+from power_grid_model.enum import TapChangingStrategy
 
 from .utils import EXPORT_OUTPUT, PowerGridModelWithExt, compare_result, import_case_data, pytest_cases, save_json_data
 
@@ -25,6 +26,7 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
             "threading",
             "output_component_types",
             "continue_on_batch_error",
+            "tap_changing_strategy",
             "experimental_features",
         ],
     ),
@@ -61,7 +63,7 @@ def supported_kwargs(kwargs, supported: List[str]):
     return {key: value for key, value in kwargs.items() if key in supported}
 
 
-def get_kwargs(sym: bool, calculation_method: str, params: Dict, **extra_kwargs) -> Dict:
+def get_kwargs(sym: bool, calculation_type: str, calculation_method: str, params: Dict, **extra_kwargs) -> Dict:
     base_kwargs = {"symmetric": sym, "calculation_method": calculation_method}
     for key, value in params.items():
         if key not in base_kwargs:
@@ -75,6 +77,10 @@ def get_kwargs(sym: bool, calculation_method: str, params: Dict, **extra_kwargs)
 
     if calculation_method == "iec60909":
         base_kwargs["short_circuit_voltage_scaling"] = params["short_circuit_voltage_scaling"]
+
+    if calculation_type == "power_flow":
+        strategy_name = params.get("tap_changing_strategy", "disabled")
+        base_kwargs["tap_changing_strategy"] = TapChangingStrategy[strategy_name].value
 
     return base_kwargs
 
@@ -100,7 +106,9 @@ def test_single_validation(
     # Normal calculation
     calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
 
-    base_kwargs = get_kwargs(sym=sym, calculation_method=calculation_method, params=params)
+    base_kwargs = get_kwargs(
+        sym=sym, calculation_type=calculation_type, calculation_method=calculation_method, params=params
+    )
     result = calculation_function(model, **supported_kwargs(kwargs=base_kwargs, supported=calculation_args))
 
     # export data if needed
@@ -150,7 +158,9 @@ def test_batch_validation(
     reference_output_batch = case_data["output_batch"]
     reference_output_list = convert_batch_dataset_to_batch_list(reference_output_batch)
 
-    base_kwargs = get_kwargs(sym=sym, calculation_method=calculation_method, params=params)
+    base_kwargs = get_kwargs(
+        sym=sym, calculation_type=calculation_type, calculation_method=calculation_method, params=params
+    )
 
     calculation_function, calculation_args = calculation_function_arguments_map[calculation_type]
 
