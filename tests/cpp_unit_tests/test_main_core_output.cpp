@@ -51,11 +51,13 @@ TEST_CASE("Test main core output") {
             OptimizerOutput optimizer_output{.transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.optimizer_output = std::move(optimizer_output)}, std::begin(output));
+                    state, SymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
+                    std::begin(output));
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.optimizer_output = std::move(optimizer_output)}, std::begin(output));
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
+                    std::begin(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 0);
@@ -70,11 +72,13 @@ TEST_CASE("Test main core output") {
                                                                            {.transformer_id = 2, .tap_position = 3}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.optimizer_output = std::move(optimizer_output)}, std::begin(output));
+                    state, SymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
+                    std::begin(output));
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.optimizer_output = std::move(optimizer_output)}, std::begin(output));
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = std::move(optimizer_output)},
+                    std::begin(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 1);
