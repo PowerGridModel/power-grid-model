@@ -126,9 +126,11 @@ struct TransformerTapRegulatorCalcParam {
     IntS status{};
 };
 
-struct TransformerTapRegulatorOptimizerOutput {
-    IntS tap_pos{na_IntS};
+struct TransformerTapPosition {
+    ID transformer_id{};
+    IntS tap_position{};
 };
+using TransformerTapPositionOutput = std::vector<TransformerTapPosition>;
 
 // from side, to side
 // in case of indices for math model, -1 means the branch is not connected to that side
@@ -269,7 +271,6 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
-    std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
@@ -325,13 +326,13 @@ static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<symmetri
 static_assert(short_circuit_solver_output_type<ShortCircuitSolverOutput<asymmetric_t>>);
 
 struct OptimizerOutput {
-    std::vector<TransformerTapRegulatorOptimizerOutput> transformer_tap_regulator;
+    TransformerTapPositionOutput transformer_tap_positions;
 };
 
-template <solver_output_type T> struct MathOutput {
+template <typename T> struct MathOutput {
     using SolverOutputType = T;
 
-    std::vector<SolverOutputType> solver_output;
+    SolverOutputType solver_output;
     OptimizerOutput optimizer_output;
 };
 

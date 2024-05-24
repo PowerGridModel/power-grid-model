@@ -30,6 +30,14 @@ struct Idx2D {
     friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
 };
 
+struct Idx2DHash {
+    std::size_t operator()(const Idx2D& idx) const {
+        size_t const h1 = std::hash<Idx>{}(idx.group);
+        size_t const h2 = std::hash<Idx>{}(idx.pos);
+        return h1 ^ (h2 << 1);
+    }
+};
+
 struct symmetric_t {};
 struct asymmetric_t {};
 
