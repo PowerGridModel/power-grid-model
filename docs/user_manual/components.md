@@ -644,6 +644,7 @@ See the documentation on [state estimation calculation methods](calculations.md#
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power |
 
 #### Electric Model
+
 `Generic Power Sensor` is modeled by following equations:
 
 $$
@@ -727,7 +728,7 @@ the `regulator` and the `regulated_object`. Which object types are supported as 
 * base: {hoverxreftooltip}`user_manual/components:regulator`
 
 `transformer_tap_regulator` defines a regulator for transformers in the grid.
-At the time of writing, a transformer tap regulator regulates a component that is either a {hoverxreftooltip}`user_manual/components:transformer` or a {hoverxreftooltip}`user_manual/components:three winding transformer`.
+At the time of writing, a transformer tap regulator regulates a component that is either a {hoverxreftooltip}`user_manual/components:transformer` or a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer`.
 
 The transformer tap regulator overloads the `tap_pos` of the transformer it regulates in the range set by the user via `tap_min` and `tap_max` (i.e., `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)`).
 It regulates the tap position so that the voltage on the control side is in the chosen voltage band.
@@ -746,7 +747,7 @@ This line drop compensation only affects the controlled voltage and does not hav
 
 The following additional requirements exist on the input parameters.
 
-- The `control_side` supports {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if it regulates a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it regulates a {hoverxreftooltip}`user_manual/components:three_winding_transformer`.
+- The `control_side` supports {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if it regulates a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it regulates a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer`.
 - The rated voltage at the `tap_side` must be greater than or equal to the rated voltage at the `control_side`.
 - The voltage band must be sufficiently large, i.e., it must be greater than the largest change in voltage due to a change in tap position. This means, that
   $U_{\text{band}} \geq \frac{\text{tap_size}/u_\text{tap_side}}{\left(1 + \left(\left|\text{tap_min}\right| - \left|\text{tap_nom}\right|\right)\frac{\text{tap_size}}{\text{u_tap_side}}\right)^2}u_{\text{control_side}}$
