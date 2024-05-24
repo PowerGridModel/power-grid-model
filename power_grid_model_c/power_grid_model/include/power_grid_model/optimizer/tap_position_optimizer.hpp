@@ -617,7 +617,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         for (auto const& sub_order : regulator_order) {
             for (auto const& regulator : sub_order) {
                 auto const& transformer = regulator.transformer;
-                transformer_tap_positions.push_back({transformer.id(), transformer.tap_pos()});
+                transformer_tap_positions.push_back(
+                    {.transformer_id = transformer.id(), .tap_position = transformer.tap_pos()});
             }
         }
 

@@ -127,7 +127,7 @@ struct TransformerTapRegulatorCalcParam {
 };
 
 struct TransformerTapPosition {
-    ID transformer{};
+    ID transformer_id{};
     IntS tap_position{};
 };
 using TransformerTapPositionResult = std::vector<TransformerTapPosition>;

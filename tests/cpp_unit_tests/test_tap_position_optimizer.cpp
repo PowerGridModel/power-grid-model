@@ -937,9 +937,9 @@ TEST_CASE("Test Tap position optimizer") {
                 auto const get_output_tap_pos = [&](const ID id) {
                     REQUIRE(!result.optimizer_output.transformer_tap_positions.empty());
                     auto const it = std::ranges::find_if(result.optimizer_output.transformer_tap_positions,
-                                                         [id](auto const& x) { return x.transformer == id; });
+                                                         [id](auto const& x) { return x.transformer_id == id; });
                     REQUIRE(it != std::end(result.optimizer_output.transformer_tap_positions));
-                    CHECK(it->transformer == id);
+                    CHECK(it->transformer_id == id);
                     return it->tap_position;
                 };
 
