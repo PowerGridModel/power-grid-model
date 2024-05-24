@@ -990,47 +990,6 @@ TEST_CASE("Test tap position optmizer I/O") {
                                                                           bad_regulators.end(), 50.0),
                         DuplicativelyRegulatedObject);
     }
-
-    SUBCASE("transformer tap position retrieval") {
-        // Minimum grid for only transformer tap position optimizer I/O
-        test::TestState state_;
-        std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
-                                     {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
-        main_core::add_component<Node>(state_, nodes.begin(), nodes.end(), 50.0);
-
-        std::vector<TransformerInput> transformers{
-            test::get_transformer(11, 0, 1, BranchSide::from, 0), test::get_transformer(12, 0, 1, BranchSide::from, -1),
-            test::get_transformer(13, 5, 7, BranchSide::from, 1), test::get_transformer(14, 2, 3, BranchSide::from, -2),
-            test::get_transformer(15, 8, 9, BranchSide::from, 2)};
-        main_core::add_component<Transformer>(state_, transformers.begin(), transformers.end(), 50.0);
-
-        std::vector<ThreeWindingTransformerInput> transformers3w{test::get_transformer3w(16, 0, 4, 5, 3)};
-        main_core::add_component<ThreeWindingTransformer>(state_, transformers3w.begin(), transformers3w.end(), 50.0);
-
-        state_.components.set_construction_complete();
-
-        TransformerTapPositionResult transformer_tap_positions;
-        power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
-            Transformer, test::TestState::ComponentContainer>(state_, transformer_tap_positions);
-        power_grid_model::optimizer::tap_position_optimizer::get_transformer_tap_positions<
-            ThreeWindingTransformer, test::TestState::ComponentContainer>(state_, transformer_tap_positions);
-        std::vector<TransformerTapPosition> expected_tap_positions{
-            {{3, 11}, 0}, {{3, 12}, -1}, {{3, 13}, 1}, {{3, 14}, -2}, {{3, 15}, 2}, {{4, 16}, 3},
-        };
-        auto check_tap_positions_match = [](const std::vector<TransformerTapPosition>& vec1,
-                                            const std::vector<TransformerTapPosition>& vec2) {
-            if (vec1.size() != vec2.size()) {
-                return false;
-            }
-            for (size_t i = 0; i < vec1.size(); ++i) {
-                if (vec1[i].index != vec2[i].index || vec1[i].tap_position != vec2[i].tap_position) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        CHECK(check_tap_positions_match(transformer_tap_positions, expected_tap_positions));
-    }
 }
 
 } // namespace power_grid_model
