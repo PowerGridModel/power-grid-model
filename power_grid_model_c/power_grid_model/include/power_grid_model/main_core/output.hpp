@@ -341,7 +341,7 @@ constexpr auto output_result(Component const& transformer_tap_regulator,
     if (auto const it = std::ranges::find_if(
             math_output.optimizer_output.transformer_tap_positions,
             [regulated_object = transformer_tap_regulator.regulated_object()](auto const& transformer_tap_pos) {
-                return transformer_tap_pos.transformer == regulated_object;
+                return transformer_tap_pos.transformer_id == regulated_object;
             });
         it != std::end(math_output.optimizer_output.transformer_tap_positions)) {
         return transformer_tap_regulator.get_output(it->tap_position);
