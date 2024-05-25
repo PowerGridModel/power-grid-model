@@ -100,6 +100,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     struct permanent_update_t : std::false_type {};
 
+    struct Options {
+        static constexpr Idx sequential = -1;
+
+        CalculationMethod calculation_method{CalculationMethod::default_method};
+        OptimizerType optimizer_type{OptimizerType::no_optimization};
+        OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
+
+        double err_tol{1e-8};
+        Idx max_iter{20};
+        Idx threading{sequential};
+
+        ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
+    };
+
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency}, meta_data_{&input_data.meta_data()} {
@@ -631,23 +645,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
-    template <symmetry_tag sym>
-    auto calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        auto result_pf =
-            optimizer::get_optimizer<MainModelState, ConstDataset>(
-                OptimizerType::no_optimization, OptimizerStrategy::any, calculate_power_flow_<sym>(err_tol, max_iter),
-                [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
-                *meta_data_)
-                ->optimize(state_, calculation_method);
-        return MathOutput<SolverOutput<sym>>{.solver_output = std::move(result_pf), .optimizer_output = {}};
+    template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
+        return optimizer::get_optimizer<MainModelState, ConstDataset>(
+                   options.optimizer_type, options.optimizer_strategy,
+                   calculate_power_flow_<sym>(options.err_tol, options.max_iter),
+                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
+                   *meta_data_)
+            ->optimize(state_, options.calculation_method);
     }
 
     // Single load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    void calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                              MutableDataset const& result_data, Idx pos = 0) {
+    void calculate_power_flow(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
-        auto const math_output = calculate_power_flow<sym>(err_tol, max_iter, calculation_method);
+        auto const math_output = calculate_power_flow<sym>(options);
 
         if (pos != ignore_output) {
             output_result(math_output, result_data, pos);
@@ -656,96 +667,97 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Batch load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    BatchParameter calculate_power_flow(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                        MutableDataset const& result_data, ConstDataset const& update_data,
-                                        Idx threading = -1) {
+    BatchParameter calculate_power_flow(Options const& options, MutableDataset const& result_data,
+                                        ConstDataset const& update_data) {
         return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
-                auto const max_iter_ = pos != ignore_output ? max_iter : 1;
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+                auto sub_opt = options; // copy
+                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
 
-                model.calculate_power_flow<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
+                model.calculate_power_flow<sym>(sub_opt, target_data, pos);
             },
-            result_data, update_data, threading);
+            result_data, update_data, options.threading);
     }
 
     // Single state estimation calculation, returning math output results
-    template <symmetry_tag sym>
-    auto calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method) {
-        return MathOutput<SolverOutput<sym>>{
-            .solver_output = calculate_state_estimation_<sym>(err_tol, max_iter)(state_, calculation_method),
+    template <symmetry_tag sym> auto calculate_state_estimation(Options const& options) {
+        return MathOutput<std::vector<SolverOutput<sym>>>{
+            .solver_output =
+                calculate_state_estimation_<sym>(options.err_tol, options.max_iter)(state_, options.calculation_method),
             .optimizer_output = {}};
     }
 
     // Single state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    void calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                    MutableDataset const& result_data, Idx pos = 0) {
+    void calculate_state_estimation(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
-        auto const solver_output = calculate_state_estimation<sym>(err_tol, max_iter, calculation_method);
-        output_result(solver_output, result_data, pos);
-    }
+        auto const solver_output = calculate_state_estimation<sym>(options);
 
-    // Batch state estimation calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(double err_tol, Idx max_iter, CalculationMethod calculation_method,
-                                              MutableDataset const& result_data, ConstDataset const& update_data,
-                                              Idx threading = -1) {
-        return batch_calculation_(
-            [err_tol, max_iter, calculation_method](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                auto const err_tol_ = pos != ignore_output ? err_tol : std::numeric_limits<double>::max();
-                auto const max_iter_ = pos != ignore_output ? max_iter : 1;
-
-                model.calculate_state_estimation<sym>(err_tol_, max_iter_, calculation_method, target_data, pos);
-            },
-            result_data, update_data, threading);
-    }
-
-    // Single short circuit calculation, returning short circuit math output results
-    template <symmetry_tag sym>
-    auto calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method) {
-        return MathOutput<ShortCircuitSolverOutput<sym>>{
-            .solver_output = calculate_short_circuit_<sym>(voltage_scaling)(state_, calculation_method),
-            .optimizer_output = {}};
-    }
-
-    // Single short circuit calculation, propagating the results to result_data
-    void calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling, CalculationMethod calculation_method,
-                                 MutableDataset const& result_data, Idx pos = 0) {
-        assert(construction_complete_);
-        if (std::all_of(state_.components.template citer<Fault>().begin(),
-                        state_.components.template citer<Fault>().end(),
-                        [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
-            auto const solver_output = calculate_short_circuit<symmetric_t>(voltage_scaling, calculation_method);
-            output_result(solver_output, result_data, pos);
-        } else {
-            auto const solver_output = calculate_short_circuit<asymmetric_t>(voltage_scaling, calculation_method);
+        if (pos != ignore_output) {
             output_result(solver_output, result_data, pos);
         }
     }
 
-    // Batch short circuit calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(ShortCircuitVoltageScaling voltage_scaling,
-                                           CalculationMethod calculation_method, MutableDataset const& result_data,
-                                           ConstDataset const& update_data, Idx threading = -1) {
+    // Batch state estimation calculation, propagating the results to result_data
+    template <symmetry_tag sym>
+    BatchParameter calculate_state_estimation(Options const& options, MutableDataset const& result_data,
+                                              ConstDataset const& update_data) {
         return batch_calculation_(
-            [voltage_scaling, calculation_method](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+                auto sub_opt = options; // copy
+
+                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+
+                model.calculate_state_estimation<sym>(sub_opt, target_data, pos);
+            },
+            result_data, update_data, options.threading);
+    }
+
+    // Single short circuit calculation, returning short circuit math output results
+    template <symmetry_tag sym> auto calculate_short_circuit(Options const& options) {
+        return MathOutput<std::vector<ShortCircuitSolverOutput<sym>>>{
+            .solver_output = calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling)(
+                state_, options.calculation_method),
+            .optimizer_output = {}};
+    }
+
+    // Single short circuit calculation, propagating the results to result_data
+    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
+        assert(construction_complete_);
+        if (std::all_of(state_.components.template citer<Fault>().begin(),
+                        state_.components.template citer<Fault>().end(),
+                        [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
+            auto const solver_output = calculate_short_circuit<symmetric_t>(options);
+            output_result(solver_output, result_data, pos);
+        } else {
+            auto const solver_output = calculate_short_circuit<asymmetric_t>(options);
+            output_result(solver_output, result_data, pos);
+        }
+    }
+
+    // Batch load flow calculation, propagating the results to result_data
+    BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
+                                           ConstDataset const& update_data) {
+        return batch_calculation_(
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 if (pos != ignore_output) {
-                    model.calculate_short_circuit(voltage_scaling, calculation_method, target_data, pos);
+                    model.calculate_short_circuit(options, target_data, pos);
                 }
             },
-            result_data, update_data, threading);
+            result_data, update_data, options.threading);
     }
 
     template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
-        requires solver_output_type<typename MathOutputType::SolverOutputType>
+        requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
         assert(construction_complete_);
-        return main_core::output_result<Component, ComponentContainer>(state_, math_output.solver_output, res_it);
+        return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
     }
 
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<SolverOutputType> const& math_output, MutableDataset const& result_data,
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
                        Idx pos = 0) {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
             // output
@@ -956,18 +968,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr auto include_all = [](Idx) { return true; };
 
-    /** This is a heavily templated member function because it operates on many different variables of many different
-     * types, but the essence is ever the same: filling one member (vector) of the calculation calc_input struct
-     * (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as the
-     * corresponding component are stored in the component topology. There is one such struct for each sub graph / math
-     * model and all of them are filled within the same function call (i.e. Notice that calc_input is a vector).
+    /** This is a heavily templated member function because it operates on many different variables of many
+     *different types, but the essence is ever the same: filling one member (vector) of the calculation calc_input
+     *struct (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as
+     *the corresponding component are stored in the component topology. There is one such struct for each sub graph
+     * / math model and all of them are filled within the same function call (i.e. Notice that calc_input is a
+     *vector).
      *
      *  1. For each component, check if it should be included.
      *     By default, all component are included, except for some cases, like power sensors. For power sensors, the
-     *     list of component contains all power sensors, but the preparation should only be done for one type of power
-     *     sensors at a time. Therefore, `included` will be a lambda function, such as:
+     *     list of component contains all power sensors, but the preparation should only be done for one type of
+     *power sensors at a time. Therefore, `included` will be a lambda function, such as:
      *
-     *       [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; }
+     *       [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source;
+     *}
      *
      *  2. Find the original component in the topology and retrieve its calculation parameters.
      *
@@ -989,16 +1003,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The component type for which we are collecting calculation parameters
      *
      * @tparam PredicateIn
-     * 	    The lambda function type. The actual type depends on the captured variables, and will be automatically
-     * 	    deduced.
+     * 	    The lambda function type. The actual type depends on the captured variables, and will be
+     *automatically deduced.
      *
      * @param component[in]
      *      The vector of component math indices to consider (e.g. state_.topo_comp_coup->source).
      *      When idx.group = -1, the original component is not assigned to a math model, so we can skip it.
      *
      * @param calc_input[out]
-     *		Although this variable is called `input`, it is actually the output of this function, it stored the
-     *		calculation parameters for each math model, for each component of type ComponentIn.
+     *		Although this variable is called `input`, it is actually the output of this function, it stored
+     *the calculation parameters for each math model, for each component of type ComponentIn.
      *
      * @param include
      *      A lambda function (Idx i -> bool) which returns true if the component at Idx i should be included.

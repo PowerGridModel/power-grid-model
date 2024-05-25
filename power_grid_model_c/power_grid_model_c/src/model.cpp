@@ -28,9 +28,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
                                      PGM_ConstDataset const* input_dataset) {
     return call_with_catch(
         handle,
-        [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, *input_dataset, 0};
-        },
+        [system_frequency, input_dataset] { return new PGM_PowerGridModel{system_frequency, *input_dataset, 0}; },
         PGM_regular_error);
 }
 
@@ -43,8 +41,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
-    return call_with_catch(
-        handle, [model] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
+    return call_with_catch(handle, [model] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
 }
 
 // get indexer
@@ -54,6 +51,92 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
         handle, [model, component, size, ids, indexer] { model->get_indexer(component, ids, size, indexer); },
         PGM_regular_error);
 }
+
+namespace {
+void check_calculate_experimental_features(PGM_Options const& opt) {
+    using namespace std::string_literals;
+
+    if (opt.calculation_type == PGM_power_flow) {
+        switch (opt.tap_changing_strategy) {
+        case PGM_tap_changing_strategy_any_valid_tap:
+        case PGM_tap_changing_strategy_max_voltage_tap:
+        case PGM_tap_changing_strategy_min_voltage_tap: {
+            // this option is experimental and should not be exposed to the user
+            throw ExperimentalFeature{
+                "PGM_calculate",
+                ExperimentalFeature::TypeValuePair{.name = "PGM_CalculationType",
+                                                   .value = std::to_string(opt.calculation_type)},
+                ExperimentalFeature::TypeValuePair{.name = "PGM_TapChangingStrategy",
+                                                   .value = std::to_string(opt.tap_changing_strategy)}};
+        }
+        default:
+            break;
+        }
+    }
+}
+
+void check_calculate_valid_options(PGM_Options const& opt) {
+    if (opt.tap_changing_strategy != PGM_tap_changing_strategy_disabled && opt.calculation_type != PGM_power_flow) {
+        // illegal combination of options
+        throw InvalidArguments{"PGM_calculate",
+                               InvalidArguments::TypeValuePair{.name = "PGM_TapChangingStrategy",
+                                                               .value = std::to_string(opt.tap_changing_strategy)}};
+    }
+
+    if (opt.experimental_features == PGM_experimental_features_disabled) {
+        check_calculate_experimental_features(opt);
+    }
+}
+
+constexpr auto get_calculation_method(PGM_Options const& opt) {
+    return static_cast<CalculationMethod>(opt.calculation_method);
+}
+
+constexpr auto get_optimizer_type(PGM_Options const& opt) {
+    using enum OptimizerType;
+
+    switch (opt.tap_changing_strategy) {
+    case PGM_tap_changing_strategy_disabled:
+        return no_optimization;
+    case PGM_tap_changing_strategy_any_valid_tap:
+    case PGM_tap_changing_strategy_max_voltage_tap:
+    case PGM_tap_changing_strategy_min_voltage_tap:
+        return automatic_tap_adjustment;
+    default:
+        throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
+    }
+}
+
+constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
+    using enum OptimizerStrategy;
+
+    switch (opt.tap_changing_strategy) {
+    case PGM_tap_changing_strategy_disabled:
+    case PGM_tap_changing_strategy_any_valid_tap:
+        return any;
+    case PGM_tap_changing_strategy_max_voltage_tap:
+        return global_maximum;
+    case PGM_tap_changing_strategy_min_voltage_tap:
+        return global_minimum;
+    default:
+        throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
+    }
+}
+
+constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
+    return static_cast<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
+}
+
+constexpr auto extract_calculation_options(PGM_Options const& opt) {
+    return MainModel::Options{.calculation_method = get_calculation_method(opt),
+                              .optimizer_type = get_optimizer_type(opt),
+                              .optimizer_strategy = get_optimizer_strategy(opt),
+                              .err_tol = opt.err_tol,
+                              .max_iter = opt.max_iter,
+                              .threading = opt.threading,
+                              .short_circuit_voltage_scaling = get_short_circuit_voltage_scaling(opt)};
+}
+} // namespace
 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
@@ -71,36 +154,31 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 
     // call calculation
     try {
-        auto const calculation_method = static_cast<CalculationMethod>(opt->calculation_method);
+        check_calculate_valid_options(*opt);
+
+        auto const options = extract_calculation_options(*opt);
+
         switch (opt->calculation_type) {
         case PGM_power_flow:
             if (opt->symmetric != 0) {
                 handle->batch_parameter =
-                    model->calculate_power_flow<symmetric_t>(opt->err_tol, opt->max_iter, calculation_method,
-                                                             *output_dataset, exported_update_dataset, opt->threading);
+                    model->calculate_power_flow<symmetric_t>(options, *output_dataset, exported_update_dataset);
             } else {
                 handle->batch_parameter =
-                    model->calculate_power_flow<asymmetric_t>(opt->err_tol, opt->max_iter, calculation_method,
-                                                              *output_dataset, exported_update_dataset, opt->threading);
+                    model->calculate_power_flow<asymmetric_t>(options, *output_dataset, exported_update_dataset);
             }
             break;
         case PGM_state_estimation:
             if (opt->symmetric != 0) {
-                handle->batch_parameter = model->calculate_state_estimation<symmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, *output_dataset, exported_update_dataset,
-                    opt->threading);
+                handle->batch_parameter =
+                    model->calculate_state_estimation<symmetric_t>(options, *output_dataset, exported_update_dataset);
             } else {
-                handle->batch_parameter = model->calculate_state_estimation<asymmetric_t>(
-                    opt->err_tol, opt->max_iter, calculation_method, *output_dataset, exported_update_dataset,
-                    opt->threading);
+                handle->batch_parameter =
+                    model->calculate_state_estimation<asymmetric_t>(options, *output_dataset, exported_update_dataset);
             }
             break;
         case PGM_short_circuit: {
-            auto const short_circuit_voltage_scaling =
-                static_cast<ShortCircuitVoltageScaling>(opt->short_circuit_voltage_scaling);
-            handle->batch_parameter =
-                model->calculate_short_circuit(short_circuit_voltage_scaling, calculation_method, *output_dataset,
-                                               exported_update_dataset, opt->threading);
+            handle->batch_parameter = model->calculate_short_circuit(options, *output_dataset, exported_update_dataset);
             break;
         }
         default:

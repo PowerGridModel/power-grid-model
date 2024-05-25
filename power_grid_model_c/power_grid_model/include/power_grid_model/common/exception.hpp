@@ -21,11 +21,32 @@ class PowerGridError : public std::exception {
     std::string msg_;
 };
 
-template <typename T> class MissingCaseForEnumError : public PowerGridError {
+class InvalidArguments : public PowerGridError {
   public:
-    MissingCaseForEnumError(std::string const& method, const T& value) {
-        append_msg(method + " is not implemented for " + typeid(T).name() + " #" + std::to_string(IntS(value)) + "!\n");
+    struct TypeValuePair {
+        std::string name;
+        std::string value;
+    };
+
+    template <std::same_as<TypeValuePair>... Options>
+    InvalidArguments(std::string const& method, std::string const& arguments) {
+        append_msg(method + " is not implemented for " + arguments + "!\n");
     }
+
+    template <class... Options>
+        requires(std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...)
+    InvalidArguments(std::string const& method, Options&&... options)
+        : InvalidArguments{method, "the following combination of options"} {
+        (append_msg(" " + std::forward<Options>(options).name + ": " + std::forward<Options>(options).value + "\n"),
+         ...);
+    }
+};
+
+class MissingCaseForEnumError : public InvalidArguments {
+  public:
+    template <typename T>
+    MissingCaseForEnumError(std::string const& method, const T& value)
+        : InvalidArguments{method, std::string{typeid(T).name()} + " #" + std::to_string(static_cast<IntS>(value))} {}
 };
 
 class ConflictVoltage : public PowerGridError {
@@ -118,10 +139,17 @@ class InvalidRegulatedObject : public PowerGridError {
     }
 };
 
+class DuplicativelyRegulatedObject : public PowerGridError {
+  public:
+    DuplicativelyRegulatedObject() {
+        append_msg("There are objects regulated by more than one regulator. Maximum one regulator is allowed.");
+    }
+};
+
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id) {
-        append_msg("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id" +
+        append_msg("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id " +
                    std::to_string(id)); // NOSONAR
     }
 };
@@ -191,6 +219,10 @@ class SerializationError : public PowerGridError {
 class DatasetError : public PowerGridError {
   public:
     explicit DatasetError(std::string const& msg) { append_msg("Dataset error: " + msg); }
+};
+
+class ExperimentalFeature : public InvalidArguments {
+    using InvalidArguments::InvalidArguments;
 };
 
 class UnreachableHit : public PowerGridError {

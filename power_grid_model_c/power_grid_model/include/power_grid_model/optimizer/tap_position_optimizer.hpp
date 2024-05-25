@@ -336,7 +336,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     constexpr auto index() const { return index_; }
     constexpr auto topology_index() const { return topology_index_; }
 
-    IntS id() const {
+    ID id() const {
         return apply([](auto const& t) { return t.id(); });
     }
     IntS tap_pos() const {
@@ -552,37 +552,6 @@ template <symmetry_tag sym> struct NodeState {
     }
 };
 
-template <main_core::main_model_state_c State, steady_state_solver_output_type SolverOutputType>
-inline void create_tap_regulator_output(State const& state, std::vector<SolverOutputType>& solver_output) {
-    for (Idx const group : boost::counting_range(Idx{0}, static_cast<Idx>(solver_output.size()))) {
-        solver_output[group].transformer_tap_regulator.resize(state.math_topology[group]->n_transformer_tap_regulator(),
-                                                              {.tap_pos = na_IntS});
-    }
-}
-
-template <main_core::main_model_state_c State, steady_state_solver_output_type SolverOutputType>
-inline void add_tap_regulator_output(State const& state, TransformerTapRegulator const& regulator, IntS tap_pos,
-                                     std::vector<SolverOutputType>& solver_output) {
-    Idx2D const& math_id =
-        get_math_id<TransformerTapRegulator>(state, get_topology_index<TransformerTapRegulator>(state, regulator.id()));
-    solver_output[math_id.group].transformer_tap_regulator[math_id.pos] = {tap_pos};
-}
-
-template <typename... RegulatedTypes, main_core::main_model_state_c State,
-          steady_state_solver_output_type SolverOutputType>
-    requires(main_core::component_container_c<typename State::ComponentContainer, RegulatedTypes> && ...)
-void add_tap_regulator_output(State const& state,
-                              std::vector<std::vector<TapRegulatorRef<RegulatedTypes...>>> const& regulator_order,
-                              std::vector<SolverOutputType>& solver_output) {
-    create_tap_regulator_output(state, solver_output);
-
-    for (auto const& same_rank_regulators : regulator_order) {
-        for (auto const& regulator : same_rank_regulators) {
-            add_tap_regulator_output(state, regulator.regulator.get(), regulator.transformer.tap_pos(), solver_output);
-        }
-    }
-}
-
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
           typename TransformerRanker_>
@@ -616,30 +585,46 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                              meta_data::MetaData const& meta_data)
         : meta_data_{&meta_data}, calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
-    auto optimize(State const& state, CalculationMethod method) -> ResultType final {
+    auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
 
         auto const cache = this->cache_states(order);
-        auto optimal_output = optimize(state, order, method);
+        auto result = optimize(state, order, method);
         update_state(cache);
 
-        return optimal_output;
+        return result;
     }
 
     constexpr auto get_strategy() const { return strategy_; }
 
   private:
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                  CalculationMethod method) const -> ResultType {
+                  CalculationMethod method) const -> MathOutput<ResultType> {
         initialize(regulator_order);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
-            return result;
+            return produce_output(regulator_order, std::move(result));
         }
 
         // refine solution
         exploit_neighborhood(regulator_order);
-        return iterate_with_fallback(state, regulator_order, method);
+        return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method));
+    }
+
+    auto produce_output(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                        ResultType solver_output) const -> MathOutput<ResultType> {
+        TransformerTapPositionOutput transformer_tap_positions;
+
+        for (auto const& sub_order : regulator_order) {
+            for (auto const& regulator : sub_order) {
+                auto const& transformer = regulator.transformer;
+                transformer_tap_positions.push_back(
+                    {.transformer_id = transformer.id(), .tap_position = transformer.tap_pos()});
+            }
+        }
+
+        return {.solver_output = {std::move(solver_output)},
+                .optimizer_output = {std::move(transformer_tap_positions)}};
     }
 
     auto iterate_with_fallback(State const& state,
@@ -681,8 +666,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 result = calculate_(state, method);
             }
         }
-
-        add_tap_regulator_output(state, regulator_order, result);
 
         return result;
     }

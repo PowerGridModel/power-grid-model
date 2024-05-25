@@ -19,6 +19,7 @@ from power_grid_model.errors import (
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
+    InvalidArguments,
     InvalidBranch,
     InvalidBranch3,
     InvalidCalculationMethod,
@@ -44,7 +45,8 @@ PGM_REGULAR_ERROR = 1
 PGM_BATCH_ERROR = 2
 PGM_SERIALIZATION_ERROR = 3
 
-_MISSING_CASE_FOR_ENUM_RE = re.compile(r"(\w+) is not implemented for (\w+) #(-?\d+)!\n")
+_MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")
+_INVALID_ARGUMENTS_RE = re.compile(r" is not implemented for ")  # multiple different flavors
 _CONFLICT_VOLTAGE_RE = re.compile(
     r"Conflicting voltage for line (-?\d+)\n voltage at from node (-?\d+) is (.*)\n"
     r" voltage at to node (-?\d+) is (.*)\n"
@@ -75,6 +77,7 @@ _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executin
 
 _ERROR_MESSAGE_PATTERNS = {
     _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
+    _INVALID_ARGUMENTS_RE: InvalidArguments,
     _CONFLICT_VOLTAGE_RE: ConflictVoltage,
     _INVALID_BRANCH_RE: InvalidBranch,
     _INVALID_BRANCH3_RE: InvalidBranch3,

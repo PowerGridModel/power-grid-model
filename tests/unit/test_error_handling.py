@@ -8,19 +8,30 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model.core.power_grid_meta import initialize_array
-from power_grid_model.enum import CalculationMethod, LoadGenType, MeasuredTerminalType
+from power_grid_model.enum import (
+    CalculationMethod,
+    LoadGenType,
+    MeasuredTerminalType,
+    TapChangingStrategy,
+    _ExperimentalFeatures,
+)
 from power_grid_model.errors import (
     AutomaticTapCalculationError,
     ConflictID,
     ConflictVoltage,
     IDWrongType,
+    InvalidArguments,
     InvalidBranch,
     InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
+    InvalidRegulatedObject,
     InvalidTransformerClock,
+    MissingCaseForEnumError,
     NotObservableError,
 )
+
+from .utils import PowerGridModelWithExt
 
 
 def test_empty_model():
@@ -55,9 +66,43 @@ def test_handle_conflict_voltage_error():
         PowerGridModel(input_data={"node": node_input, "line": line_input})
 
 
-@pytest.mark.skip(reason="TODO")
 def test_handle_missing_case_for_enum_error():
-    pass
+    node_input = initialize_array("input", "node", 2)
+    node_input["id"] = [0, 1]
+    node_input["u_rated"] = [1e4, 4e2]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [2]
+    source_input["node"] = [0]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [10.0e3]
+
+    transformer_input = initialize_array("input", "transformer", 1)
+    transformer_input["id"] = [3]
+    transformer_input["from_node"] = [0]
+    transformer_input["to_node"] = [1]
+    transformer_input["from_status"] = [1]
+    transformer_input["to_status"] = [1]
+    transformer_input["winding_from"] = [2]
+    transformer_input["winding_to"] = [1]
+    transformer_input["clock"] = [5]
+    transformer_input["tap_side"] = [0]
+
+    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
+    transformer_tap_regulator_input["id"] = [4]
+    transformer_tap_regulator_input["regulated_object"] = [3]
+    transformer_tap_regulator_input["status"] = [1]
+    transformer_tap_regulator_input["control_side"] = [127]
+
+    with pytest.raises(MissingCaseForEnumError):
+        PowerGridModelWithExt(
+            input_data={
+                "node": node_input,
+                "transformer": transformer_input,
+                "source": source_input,
+                "transformer_tap_regulator": transformer_tap_regulator_input,
+            }
+        )
 
 
 def test_handle_invalid_branch_error():
@@ -163,9 +208,29 @@ def test_handle_invalid_measured_object_error():
         PowerGridModel(input_data={"node": node_input, "link": link_input, "sym_power_sensor": sym_power_sensor_input})
 
 
-@pytest.mark.skip(reason="TODO")
 def test_handle_invalid_regulated_object_error():
-    pass
+    node_input = initialize_array("input", "node", 2)
+    node_input["id"] = [0, 1]
+    node_input["u_rated"] = [1e4, 4e2]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [2]
+    source_input["node"] = [0]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [10.0e3]
+
+    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
+    transformer_tap_regulator_input["id"] = [3]
+    transformer_tap_regulator_input["regulated_object"] = [2]
+
+    with pytest.raises(InvalidRegulatedObject):
+        PowerGridModel(
+            input_data={
+                "node": node_input,
+                "source": source_input,
+                "transformer_tap_regulator": transformer_tap_regulator_input,
+            }
+        )
 
 
 def test_handle_id_wrong_type_error():
@@ -206,7 +271,6 @@ def test_handle_invalid_calculation_method_error():
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
 
-@pytest.mark.xfail(reason="TODO: Automatic tap changer")
 def test_transformer_tap_regulator_at_lv_tap_side():
     node_input = initialize_array("input", "node", 2)
     node_input["id"] = [0, 1]
@@ -224,25 +288,37 @@ def test_transformer_tap_regulator_at_lv_tap_side():
     transformer_input["to_node"] = [1]
     transformer_input["from_status"] = [1]
     transformer_input["to_status"] = [1]
-    transformer_input["u1"] = [1e4]
-    transformer_input["u2"] = [4e2]
-    transformer_input["sn"] = [1e5]
-    transformer_input["uk"] = [0.1]
-    transformer_input["pk"] = [1e3]
-    transformer_input["i0"] = [1.0e-6]
-    transformer_input["p0"] = [0.1]
     transformer_input["winding_from"] = [2]
     transformer_input["winding_to"] = [1]
     transformer_input["clock"] = [5]
     transformer_input["tap_side"] = [1]
-    transformer_input["tap_pos"] = [3]
-    transformer_input["tap_min"] = [-11]
-    transformer_input["tap_max"] = [9]
-    transformer_input["tap_size"] = [100]
 
-    model = PowerGridModel(input_data={"node": node_input, "transformer": transformer_input, "source": source_input})
+    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
+    transformer_tap_regulator_input["id"] = [4]
+    transformer_tap_regulator_input["regulated_object"] = [3]
+    transformer_tap_regulator_input["status"] = [1]
+    transformer_tap_regulator_input["control_side"] = [0]
+
     with pytest.raises(AutomaticTapCalculationError):
-        model.calculate_power_flow()
+        PowerGridModel(
+            input_data={
+                "node": node_input,
+                "transformer": transformer_input,
+                "source": source_input,
+                "transformer_tap_regulator": transformer_tap_regulator_input,
+            }
+        )
+
+
+def test_automatic_tap_changing_is_experimental():
+    model = PowerGridModelWithExt(input_data={})
+
+    with pytest.raises(InvalidArguments):
+        model.calculate_power_flow_with_ext(tap_changing_strategy=TapChangingStrategy.any_valid_tap)
+
+    model.calculate_power_flow_with_ext(
+        tap_changing_strategy=TapChangingStrategy.any_valid_tap, experimental_features=_ExperimentalFeatures.enabled
+    )
 
 
 @pytest.mark.skip(reason="TODO")
