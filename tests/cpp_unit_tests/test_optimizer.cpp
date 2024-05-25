@@ -9,10 +9,9 @@
 namespace power_grid_model::optimizer::test {
 namespace {
 namespace meta_gen = meta_data::meta_data_gen;
-constexpr auto datasets = meta_data::meta_data_gen::get_meta_data<
+constexpr auto meta_data = meta_data::meta_data_gen::get_meta_data<
     ComponentList<Line, Link, Node, Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>,
-    meta_data::meta_data_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::datasets;
-constexpr meta_data::MetaData meta_data{.datasets = datasets};
+    meta_data::meta_data_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
 } // namespace
 
 TEST_CASE("Test construct no-op optimizer") {
