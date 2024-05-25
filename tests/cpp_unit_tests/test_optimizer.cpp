@@ -9,7 +9,11 @@
 namespace power_grid_model::optimizer::test {
 namespace {
 namespace meta_gen = meta_data::meta_data_gen;
-}
+constexpr auto datasets = meta_data::meta_data_gen::get_meta_data<
+    ComponentList<Line, Link, Node, Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>,
+    meta_data::meta_data_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::datasets;
+constexpr meta_data::MetaData meta_data{.datasets = datasets};
+} // namespace
 
 TEST_CASE("Test construct no-op optimizer") {
     for (auto method : calculation_methods) {
@@ -21,10 +25,6 @@ TEST_CASE("Test construct no-op optimizer") {
 }
 
 TEST_CASE("Test construct tap position optimizer") {
-    static constexpr auto meta_data = meta_data::meta_data_gen::get_meta_data<
-        ComponentList<Line, Link, Node, Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>,
-        meta_data::meta_data_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
-
     StubState empty_state{};
     empty_state.components.set_construction_complete();
 
@@ -53,10 +53,6 @@ TEST_CASE("Test construct tap position optimizer") {
 
 TEST_CASE("Test get optimizer") {
     using enum OptimizerType;
-
-    const auto& meta_data = meta_data::meta_data_gen::get_meta_data<
-        ComponentList<Line, Link, Node, Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>,
-        meta_data::meta_data_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
 
     StubState empty_state;
     empty_state.components.set_construction_complete();
@@ -111,7 +107,7 @@ TEST_CASE("Test get optimizer") {
                 StubState empty_state{};
                 empty_state.components.set_construction_complete();
                 // TODO fix this issue with stack-use-after-return
-                // CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
+                CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
             }
         }
     }
