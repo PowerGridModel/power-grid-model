@@ -105,7 +105,6 @@ TEST_CASE("Test get optimizer") {
 
                 StubState empty_state{};
                 empty_state.components.set_construction_complete();
-                // TODO fix this issue with stack-use-after-return
                 CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
             }
         }
