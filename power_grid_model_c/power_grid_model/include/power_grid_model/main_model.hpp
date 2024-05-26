@@ -126,7 +126,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // constructor with only frequency
-    explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency}, meta_data_{} {}
+    explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data) : system_frequency_{system_frequency}, meta_data_{&meta_data} {}
 
     // get number
     template <class CompType> Idx component_count() const {
