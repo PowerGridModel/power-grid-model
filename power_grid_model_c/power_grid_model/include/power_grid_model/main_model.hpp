@@ -126,7 +126,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // constructor with only frequency
-    explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data) : system_frequency_{system_frequency}, meta_data_{&meta_data} {}
+    explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data)
+        : system_frequency_{system_frequency}, meta_data_{&meta_data} {}
 
     // get number
     template <class CompType> Idx component_count() const {
@@ -144,6 +145,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to add vectors of components
+    template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
+        add_component<CompType>(components.begin(), components.end());
+    }
     template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
         add_component<CompType>(components.begin(), components.end());
     }
@@ -184,6 +188,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to update vectors of components
+    template <class CompType, class CacheType>
+    void update_component(std::vector<typename CompType::UpdateType> const& components,
+                          std::vector<Idx2D> const& sequence_idx) {
+        if (!components.empty()) {
+            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
+        }
+    }
     template <class CompType, class CacheType>
     void update_component(std::span<typename CompType::UpdateType const> components,
                           std::vector<Idx2D> const& sequence_idx) {
