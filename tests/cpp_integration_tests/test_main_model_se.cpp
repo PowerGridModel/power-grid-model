@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/main_model.hpp>
 
 #include <doctest/doctest.h>
@@ -23,7 +24,7 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                    NewtonRaphsonCalculationMethod) {
     constexpr auto calculation_method = CalculationMethod::calculation_method;
 
-    MainModel main_model{50.0};
+    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
 
     auto const options = MainModel::Options{.calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20};
 
@@ -293,22 +294,28 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
         std::vector<AsymVoltageSensorUpdate> complete_asym_sensor_update{
             {4, 1.0, RealValue<asymmetric_t>{12.345e3}, RealValue<asymmetric_t>{0.1}}};
 
-        ConstDataset input_data;
-        input_data["node"] = ConstDataPointer{node_input.data(), static_cast<Idx>(node_input.size())};
-        input_data["source"] =
-            ConstDataPointer{incomplete_source_input.data(), static_cast<Idx>(incomplete_source_input.size())};
-        input_data["sym_voltage_sensor"] =
-            ConstDataPointer{incomplete_sym_sensor_input.data(), static_cast<Idx>(incomplete_sym_sensor_input.size())};
-        input_data["asym_voltage_sensor"] = ConstDataPointer{incomplete_asym_sensor_input.data(),
-                                                             static_cast<Idx>(incomplete_asym_sensor_input.size())};
+        ConstDataset input_data{false, 1, "input", meta_data::meta_data_gen::meta_data};
+        input_data.add_buffer("node", static_cast<Idx>(node_input.size()), static_cast<Idx>(node_input.size()), nullptr,
+                              node_input.data());
+        input_data.add_buffer("source", static_cast<Idx>(incomplete_source_input.size()),
+                              static_cast<Idx>(incomplete_source_input.size()), nullptr,
+                              incomplete_source_input.data());
+        input_data.add_buffer("sym_voltage_sensor", static_cast<Idx>(incomplete_sym_sensor_input.size()),
+                              static_cast<Idx>(incomplete_sym_sensor_input.size()), nullptr,
+                              incomplete_sym_sensor_input.data());
+        input_data.add_buffer("asym_voltage_sensor", static_cast<Idx>(incomplete_asym_sensor_input.size()),
+                              static_cast<Idx>(incomplete_asym_sensor_input.size()), nullptr,
+                              incomplete_asym_sensor_input.data());
 
-        ConstDataset update_data;
-        update_data["source"] =
-            ConstDataPointer{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
-        update_data["sym_voltage_sensor"] =
-            ConstDataPointer{complete_sym_sensor_update.data(), static_cast<Idx>(complete_sym_sensor_update.size())};
-        update_data["asym_voltage_sensor"] =
-            ConstDataPointer{complete_asym_sensor_update.data(), static_cast<Idx>(complete_asym_sensor_update.size())};
+        ConstDataset update_data{true, 1, "update", meta_data::meta_data_gen::meta_data};
+        update_data.add_buffer("source", static_cast<Idx>(complete_source_update.size()),
+                               static_cast<Idx>(complete_source_update.size()), nullptr, complete_source_update.data());
+        update_data.add_buffer("sym_voltage_sensor", static_cast<Idx>(complete_sym_sensor_update.size()),
+                               static_cast<Idx>(complete_sym_sensor_update.size()), nullptr,
+                               complete_sym_sensor_update.data());
+        update_data.add_buffer("asym_voltage_sensor", static_cast<Idx>(complete_asym_sensor_update.size()),
+                               static_cast<Idx>(complete_asym_sensor_update.size()), nullptr,
+                               complete_asym_sensor_update.data());
 
         SUBCASE("State Estimation") {
             MainModel test_model{50.0, input_data};
@@ -319,12 +326,13 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 std::vector<NodeOutput<symmetric_t>> test_node_output(1);
                 std::vector<NodeOutput<symmetric_t>> ref_node_output(1);
 
-                Dataset test_result_data;
-                Dataset ref_result_data;
-                test_result_data["node"] =
-                    MutableDataPointer{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
-                ref_result_data["node"] =
-                    MutableDataPointer{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+                MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+                MutableDataset ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+                test_result_data.add_buffer("node", static_cast<Idx>(test_node_output.size()),
+                                            static_cast<Idx>(test_node_output.size()), nullptr,
+                                            test_node_output.data());
+                ref_result_data.add_buffer("node", static_cast<Idx>(ref_node_output.size()),
+                                           static_cast<Idx>(ref_node_output.size()), nullptr, ref_node_output.data());
 
                 test_model.calculate_state_estimation<symmetric_t>(options, test_result_data, update_data);
                 ref_model.calculate_state_estimation<symmetric_t>(options, ref_result_data, update_data);
@@ -335,12 +343,14 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 std::vector<NodeOutput<asymmetric_t>> test_node_output(1);
                 std::vector<NodeOutput<asymmetric_t>> ref_node_output(1);
 
-                Dataset test_result_data;
-                Dataset ref_result_data;
-                test_result_data["node"] =
-                    MutableDataPointer{test_node_output.data(), static_cast<Idx>(test_node_output.size())};
-                ref_result_data["node"] =
-                    MutableDataPointer{ref_node_output.data(), static_cast<Idx>(ref_node_output.size())};
+                MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+                MutableDataset ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+
+                test_result_data.add_buffer("node", static_cast<Idx>(test_node_output.size()),
+                                            static_cast<Idx>(test_node_output.size()), nullptr,
+                                            test_node_output.data());
+                ref_result_data.add_buffer("node", static_cast<Idx>(ref_node_output.size()),
+                                           static_cast<Idx>(ref_node_output.size()), nullptr, ref_node_output.data());
 
                 test_model.calculate_state_estimation<asymmetric_t>(options, test_result_data, update_data);
                 ref_model.calculate_state_estimation<asymmetric_t>(options, ref_result_data, update_data);
