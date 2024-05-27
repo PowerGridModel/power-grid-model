@@ -21,7 +21,7 @@ TEST_CASE("Test main model static") {
     std::array<Idx, 4> const source_indptr = {0, 1, 2, 3};
     // dependent dataset
     ConstDataset update_data_dependent{true, batches, "update", meta_data::meta_data_gen::meta_data};
-    update_data_dependent.add_buffer("link", -1, link_indptr.back(), link_indptr.data(), source.data());
+    update_data_dependent.add_buffer("link", -1, link_indptr.back(), link_indptr.data(), link.data());
     update_data_dependent.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), source.data());
 
     // independent dataset
