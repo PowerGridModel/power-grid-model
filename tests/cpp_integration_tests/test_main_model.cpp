@@ -1202,14 +1202,18 @@ TEST_CASE("Test main model - runtime dispatch") {
 
     SUBCASE("no dependent updates within batches") {
         MainModel model{50.0, input_data};
-        ConstDataset dependent_update_data{true, 1, "update", meta_data::meta_data_gen::meta_data};
-        MutableDataset dependent_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-
         std::vector<SymLoadGenUpdate> sym_load_update_2{{7, 1, nan, 1.0e7}, {7, 1, 1.0e3, nan}, {7, 1, 1.0e3, 1.0e7}};
-        dependent_update_data.add_buffer("sym_load", static_cast<Idx>(sym_load_update_2.size()),
-                                         static_cast<Idx>(sym_load_update_2.size()), nullptr, sym_load_update_2.data());
+
+        ConstDataset dependent_update_data{true, static_cast<Idx>(sym_load_update_2.size()), "update",
+                                           meta_data::meta_data_gen::meta_data};
+        MutableDataset dependent_result_data{true, static_cast<Idx>(sym_load_update_2.size()), "sym_output",
+                                             meta_data::meta_data_gen::meta_data};
+
+        dependent_update_data.add_buffer("sym_load", 1, static_cast<Idx>(sym_load_update_2.size()), nullptr,
+                                         sym_load_update_2.data());
+
         std::vector<NodeOutput<symmetric_t>> sym_node_2(sym_load_update_2.size() * state.sym_node.size());
-        dependent_result_data.add_buffer("node", static_cast<Idx>(sym_node_2.size()),
+        dependent_result_data.add_buffer("node", static_cast<Idx>(state.sym_node.size()),
                                          static_cast<Idx>(sym_node_2.size()), nullptr, sym_node_2.data());
 
         model.calculate_power_flow<symmetric_t>(get_default_options(newton_raphson), dependent_result_data,
