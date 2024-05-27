@@ -54,28 +54,19 @@ using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)
 struct Buffer {
     BufferPtr ptr{nullptr, [](void const*) {}};
     IdxVector indptr;
-    MutableDataPointer data_ptr;
 };
 
 struct OwningDataset {
-    Dataset dataset;
+    MutableDataset dataset;
     ConstDataset const_dataset;
-    std::map<std::string, Buffer> buffer_map;
+    std::vector<Buffer> buffers;
     std::vector<ConstDataset> batch_scenarios;
 };
 
-template <dataset_type_tag dataset_type>
-std::map<std::string, DataPointer<dataset_type>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
-    std::map<std::string, DataPointer<dataset_type>> dataset;
-    for (auto const& [name, buffer] : buffer_map) {
-        dataset[name] = static_cast<DataPointer<dataset_type>>(buffer.data_ptr);
-    }
-    return dataset;
-}
-
-auto create_owning_dataset(WritableDatasetHandler& info) {
+auto create_owning_dataset(WritableDataset& info) {
     Idx const batch_size = info.batch_size();
-    OwningDataset dataset;
+    std::string_view const name = info.dataset().name;
+    std::vector<Buffer> buffers;
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_info = info.get_component_info(component_idx);
@@ -85,17 +76,15 @@ auto create_owning_dataset(WritableDatasetHandler& info) {
         buffer.ptr =
             BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
         buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
-        buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
-                                             component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr,
-                                             batch_size, component_info.elements_per_scenario};
 
         info.set_buffer(component_info.component->name, buffer.indptr.data(), buffer.ptr.get());
-        dataset.buffer_map[component_meta->name] = std::move(buffer);
+        buffers.push_back(std::move(buffer));
     }
-    dataset.const_dataset = info.export_dataset<const_dataset_t>();
-    dataset.dataset = info.export_dataset<mutable_dataset_t>();
-
-    return dataset;
+    return OwningDataset{
+        .dataset = info,
+        .const_dataset = info,
+        .buffers = std::move(buffers),
+    };
 }
 
 auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
