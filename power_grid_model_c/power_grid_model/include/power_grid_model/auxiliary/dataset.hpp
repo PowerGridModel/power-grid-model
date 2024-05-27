@@ -176,6 +176,23 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
+    // get individual dataset from batch
+    Dataset get_individual_scenario(Idx scenario) {
+        Dataset result{false, 1, dataset().name, meta_data()};
+        for (Idx i{}; i != n_components(); ++i) {
+            auto const& buffer = get_buffer(i);
+            auto const& component_info = get_component_info(i);
+            Idx size = component_info.elements_per_scenario >= 0
+                           ? component_info.elements_per_scenario
+                           : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
+            Data* data = component_info.elements_per_scenario >= 0
+                             ? component_info.component->advance_ptr(buffer.data, size * scenario)
+                             : component_info.component->advance_ptr(buffer.data, buffer.indptr[scenario]);
+            result.add_buffer(component_info.component->name, size, size, nullptr, data);
+        }
+        return result;
+    }
+
   private:
     MetaData const* meta_data_;
     DatasetInfo dataset_info_;

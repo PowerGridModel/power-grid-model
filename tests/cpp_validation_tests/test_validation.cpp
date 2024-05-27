@@ -86,9 +86,9 @@ auto create_owning_dataset(WritableDataset& info) {
     };
 }
 
-auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
-    for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
-        dataset.batch_scenarios.push_back(info.export_dataset<const_dataset_t>(scenario_idx));
+auto construct_individual_scenarios(OwningDataset& owning_dataset) {
+    for (Idx scenario_idx{}; scenario_idx < owning_dataset.dataset.batch_size(); ++scenario_idx) {
+        owning_dataset.batch_scenarios.push_back(owning_dataset.const_dataset.get_individual_scenario(scenario_idx));
     }
 }
 
@@ -96,11 +96,11 @@ auto load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path)};
+    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path), meta_data_gen::meta_data};
     auto& info = deserializer.get_dataset_info();
     auto dataset = create_owning_dataset(info);
     deserializer.parse();
-    construct_individual_scenarios(dataset, info);
+    construct_individual_scenarios(dataset);
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
