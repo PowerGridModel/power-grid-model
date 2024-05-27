@@ -63,17 +63,17 @@ singular. In short, meeting the requirement of observability indicates that the 
 unknowns) or a balanced system (when the number of measurements is equal to the number of unknowns). For each node, there are two unknowns, `u` and `u_angle`, so the following conditions should be met:
 
 $$
-   \begin{eqnarray}
-      n_{measurements}    & >= & n_{unknowns}
-   \end{eqnarray}
+    \begin{eqnarray}
+        n_{measurements}    & >= & n_{unknowns}
+    \end{eqnarray}
 $$
 
 Where
 
 $$
-   \begin{eqnarray}
-      n_{unknowns}    & = & 2 & \cdot & n_{nodes}
-   \end{eqnarray}
+    \begin{eqnarray}
+        n_{unknowns}    & = & 2 & \cdot & n_{nodes}
+    \end{eqnarray}
 $$
 
 The number of measurements can be found by taking the sum of the following:
@@ -153,18 +153,18 @@ Therefore power-grid-model will use this method regardless of the input provided
 The nodal equations of a power system network can be written as:
 
 $$
-   \begin{eqnarray}
-      I_N    & = Y_{bus}U_N
-   \end{eqnarray}
+    \begin{eqnarray}
+        I_N    & = Y_{bus}U_N
+    \end{eqnarray}
 $$
 
 Where $I_N$ is the $N$ vector of source currents injected into each bus and $U_N$ is the $N$ vector of bus voltages. The complex power
 delivered to bus $k$ is:
 
 $$
-   \begin{eqnarray}
-      S_{k}    & =  P_k + jQ_k & = U_{k} I_{k}^{*}
-   \end{eqnarray}
+    \begin{eqnarray}
+        S_{k}    & =  P_k + jQ_k & = U_{k} I_{k}^{*}
+    \end{eqnarray}
 $$
 
 Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at each node
@@ -182,73 +182,73 @@ This is the traditional method for power flow calculations. This method uses a T
 terms, to solve the nonlinear set of equations iteratively:
 
 $$
-   \begin{eqnarray}
-      f(x)    & =  y
-   \end{eqnarray}
+    \begin{eqnarray}
+        f(x)    & =  y
+    \end{eqnarray}
 $$
 
 Where:
 
 $$
-   \begin{eqnarray}
-      x     =  \begin{bmatrix}
-               \delta \\
-               U
-               \end{bmatrix} = 
-               \begin{bmatrix}
-               \delta_2 \\
-               \vdots \\
-               \delta_N \\
-               U_2 \\
-               \vdots \\
-               U_N
-               \end{bmatrix}
-      \quad\text{and}\quad
-      y     =  \begin{bmatrix}
-               P \\
-               Q
-               \end{bmatrix} = 
-               \begin{bmatrix}
-               P_2 \\
-               \vdots \\
-               P_N \\
-               Q_2 \\
-               \vdots \\
-               Q_N
-               \end{bmatrix}
-      \quad\text{and}\quad
-      f(x)  =  \begin{bmatrix}
-               P(x) \\
-               Q(x)
-               \end{bmatrix} = 
-               \begin{bmatrix}
-               P_{2}(x) \\
-               \vdots \\
-               P_{N}(x) \\
-               Q_{2}(x) \\
-               \vdots \\
-               Q_{N}(x)
-               \end{bmatrix}
-   \end{eqnarray}
+    \begin{eqnarray}
+        x    =  \begin{bmatrix}
+                \delta \\
+                U
+                \end{bmatrix} = 
+                \begin{bmatrix}
+                \delta_2 \\
+                \vdots \\
+                \delta_N \\
+                U_2 \\
+                \vdots \\
+                U_N
+                \end{bmatrix}
+        \quad\text{and}\quad
+        y    =  \begin{bmatrix}
+                P \\
+                Q
+                \end{bmatrix} = 
+                \begin{bmatrix}
+                P_2 \\
+                \vdots \\
+                P_N \\
+                Q_2 \\
+                \vdots \\
+                Q_N
+                \end{bmatrix}
+        \quad\text{and}\quad
+        f(x) =  \begin{bmatrix}
+                P(x) \\
+                Q(x)
+                \end{bmatrix} = 
+                \begin{bmatrix}
+                P_{2}(x) \\
+                \vdots \\
+                P_{N}(x) \\
+                Q_{2}(x) \\
+                \vdots \\
+                Q_{N}(x)
+                \end{bmatrix}
+    \end{eqnarray}
 $$
 
 As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
 In each iteration $i$ the following equation is solved:
 
 $$
-   \begin{eqnarray}
-      J(i) \Delta x(i)    & =  \Delta y(i)
-   \end{eqnarray}
+    \begin{eqnarray}
+        J(i) \Delta x(i)    & =  \Delta y(i)
+    \end{eqnarray}
 $$
 
 Where
 
 $$
-   \begin{eqnarray}
-      \Delta x(i)    & =  x(i+1) - x(i)
-      \quad\text{and}\quad
-      \Delta y(i)    & =  y - f(x(i))
-   \end{eqnarray}
+    \begin{eqnarray}
+        \Delta x(i)    & =  x(i+1) - x(i)
+        \quad\text{and}\quad
+        \Delta y(i)    & =  y - f(x(i))
+    \end{eqnarray}
 $$
 
 $J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
@@ -275,9 +275,9 @@ The algorithm is as follows:
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
    $
-      \begin{eqnarray}
-         I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
-      \end{eqnarray}
+       \begin{eqnarray}
+           I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
+       \end{eqnarray}
    $
 4. Solve linear equation: $YU_N^i = I_N^i$ 
 5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
@@ -326,14 +326,14 @@ Weighted least squares (WLS) state estimation can be performed with power-grid-m
 Given a grid with $N_b$ buses the state variable column vector is defined as below.
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{U}     =     \begin{bmatrix}
                             \underline{U}_1 \\
                             \underline{U}_2 \\ 
                             \vdots \\
                             \underline{U}_{N_{b}}
                         \end{bmatrix} 
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus. 
@@ -350,35 +350,35 @@ $$
 Where:
 
 $$
-   \begin{eqnarray}
-      \underline{x}     =  \begin{bmatrix}
-               \underline{x}_1 \\
-               \underline{x}_2 \\
-               \vdots \\
-               \underline{x}_{N_{m}}
-               \end{bmatrix} = 
-               f(\underline{U})
-      \quad\text{and}\quad
-      \underline{z}     =  \begin{bmatrix}
-               \underline{z}_1 \\
-               \underline{z}_2 \\
-               \vdots \\
-               \underline{z}_{N_{m}}
-               \end{bmatrix} 
-      \quad\text{and}\quad
-      W  = \Sigma^{-1} =  \begin{bmatrix}
-               \sigma_1^2 & 0 & \cdots & 0 \\
-               0 & \sigma_2^2 & \cdots & 0 \\
-               \vdots & \vdots & \ddots & \vdots \\
-               0 & 0 & \cdots & \sigma_{N_{m}}^2
-               \end{bmatrix} ^{-1} = 
-               \begin{bmatrix}
-               w_1 & 0 & \cdots & 0 \\
-               0 & w_2 & \cdots & 0 \\
-               \vdots & \vdots & \ddots & \vdots \\
-               0 & 0 & \cdots & w_{N_{m}}
-               \end{bmatrix}
-   \end{eqnarray}
+    \begin{eqnarray}
+        \underline{x}     =  \begin{bmatrix}
+                \underline{x}_1 \\
+                \underline{x}_2 \\
+                \vdots \\
+                \underline{x}_{N_{m}}
+                \end{bmatrix} = 
+                f(\underline{U})
+        \quad\text{and}\quad
+        \underline{z}     =  \begin{bmatrix}
+                \underline{z}_1 \\
+                \underline{z}_2 \\
+                \vdots \\
+                \underline{z}_{N_{m}}
+                \end{bmatrix} 
+        \quad\text{and}\quad
+        W  = \Sigma^{-1} =  \begin{bmatrix}
+                \sigma_1^2 & 0 & \cdots & 0 \\
+                0 & \sigma_2^2 & \cdots & 0 \\
+                \vdots & \vdots & \ddots & \vdots \\
+                0 & 0 & \cdots & \sigma_{N_{m}}^2
+                \end{bmatrix} ^{-1} = 
+                \begin{bmatrix}
+                w_1 & 0 & \cdots & 0 \\
+                0 & w_2 & \cdots & 0 \\
+                \vdots & \vdots & \ddots & \vdots \\
+                0 & 0 & \cdots & w_{N_{m}}
+                \end{bmatrix}
+    \end{eqnarray}
 $$
 
 Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th measured value in complex form,
@@ -400,9 +400,9 @@ There can be multiple sensors measuring the same physical quantity. For example,
 voltage sensors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}} 
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of individual measurements.
@@ -410,13 +410,13 @@ Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of indi
 Multiple appliance measurements (power measurements) on one bus are aggregated as the total injection at the bus:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k
             \quad\text{and}\quad
             \sigma_P^2 = \sum_{k=1}^{N_{appliance}} \sigma_{P,k}^2
             \quad\text{and}\quad
             \sigma_Q^2 = \sum_{k=1}^{N_{appliance}} \sigma_{Q,k}^2
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual appliances.
@@ -433,9 +433,9 @@ which is not realistic in distribution grids. Therefore, traditional measurement
   magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{U}_i = U_i \cdot e^{j \theta_i}
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 - Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
@@ -443,18 +443,18 @@ also be measured, otherwise the nominal voltage with zero angle is used as an es
 phasor, the current phasor is calculated as follows:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{I} = (\underline{S}/\underline{U})^*
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 - Bus power injection: Linear WLS requires a complex current phasor. Similar as above, if the bus voltage is not measured,
 the nominal voltage with zero angle will be used as an estimation. The current phasor is calculated as follows:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{I} = (\underline{S}/\underline{U})^*
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 The aggregated apparent power flow is considered as a single measurement, with variance $\sigma_S^2 = \sigma_P^2 + \sigma_Q^2$.
@@ -572,7 +572,7 @@ There are {py:class}`4 types <power_grid_model.enum.FaultType>` of fault situati
 
 ### Regulated power flow calculations
 
-```warning
+```{warning}
 At the time of writing, this feature is still experimental and is not yet publicly available.
 ```
 
@@ -587,7 +587,7 @@ Please refer to their respective sections for detailed documentation.
 
 #### Power flow with automatic tap changing
 
-```warning
+```{warning}
 At the time of writing, this feature is still experimental and is not yet publicly available.
 ```
 
@@ -629,19 +629,19 @@ The following control logic is used.
 
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback mechanisms in the grid.
 
-```note
+```{note}
 For iterative [power flow calculation methods](#power-flow-algorithms), the initial state may not converge.
 If the iterative process failed to converge, the optimization procedure is executed twice.
 First, the {py:class}`linear <power_grid_model.enum.CalculationMethod.linear>` calculation method is used to find an approximate solution.
 The optimization procedure is then run a second time to find the actual optimum with the user-specified calculation method.
 ```
 
-```note
+```{note}
 The control logic assumes that the change in voltage level caused by changing a transformer is larger than the change caused by adjacent transformers.
 This is assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
 ```
 
-```note
+```{note}
 The control logic assumes that the (compensated) control voltage decreases when the tap position increases.
 If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption does not hold, and the calculation may diverge.
 Hence, this is assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
