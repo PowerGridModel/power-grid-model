@@ -7,8 +7,8 @@
 // handle dataset and buffer related stuff
 
 #include "../common/common.hpp"
-#include "../common/exception.hpp"
 #include "../common/counting_iterator.hpp"
+#include "../common/exception.hpp"
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
 
@@ -78,9 +78,10 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
     }
 
-    // implicit conversion constructor to const
+    // implicit conversion constructor from writable to mutable, from writable and mutable to const
     template <dataset_type_tag other_dataset_type>
-        requires(is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_type>)
+        requires((is_data_mutable_v<other_dataset_type> && !is_data_mutable_v<dataset_type>) ||
+                 (is_indptr_mutable_v<other_dataset_type> && !is_indptr_mutable_v<dataset_type>))
     Dataset(Dataset<other_dataset_type> const& other)
         : meta_data_{&other.meta_data()}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {

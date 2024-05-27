@@ -65,7 +65,6 @@ struct OwningDataset {
 
 auto create_owning_dataset(WritableDataset& info) {
     Idx const batch_size = info.batch_size();
-    std::string_view const name = info.dataset().name;
     std::vector<Buffer> buffers;
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
