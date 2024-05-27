@@ -652,7 +652,7 @@ Hence, this is assumption is reflected in the requirements mentioned in {hoverxr
 Regulated transformers are initialized and exploited depending on the optimization strategy.
 
 | strategy                                                                                                    | initial tap position | exploitation direction | description                                                                           |
-| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- |
+| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
 | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        |                                                                                       |
 | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Highest tap side voltage means lowest control voltage (closest to lower voltage band) |
 | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Lowest tap side voltage means highest control voltage (closest to upper voltage band) |
