@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/main_model.hpp>
 
 #include <doctest/doctest.h>
@@ -166,7 +167,7 @@ struct State {
 };
 
 auto default_model(State const& state) -> MainModel {
-    MainModel main_model{50.0};
+    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
     main_model.add_component<Node>(state.node_input);
     main_model.add_component<Line>(state.line_input);
     main_model.add_component<Link>(state.link_input);
@@ -197,20 +198,20 @@ TEST_CASE("Test main model - power flow") {
     }
 
     SUBCASE("Test duplicated id") {
-        MainModel main_model2{50.0};
+        MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
         state.node_input[1].id = 1;
         CHECK_THROWS_AS(main_model2.add_component<Node>(state.node_input), ConflictID);
     }
 
     SUBCASE("Test no existing id") {
-        MainModel main_model2{50.0};
+        MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
         state.line_input[0].from_node = 100;
         main_model2.add_component<Node>(state.node_input);
         CHECK_THROWS_AS(main_model2.add_component<Line>(state.line_input), IDNotFound);
     }
 
     SUBCASE("Test id for wrong type") {
-        MainModel main_model2{50.0};
+        MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
 
         state.link_input[0].from_node = 4;
         main_model2.add_component<Node>(state.node_input); // 1 2 3
@@ -787,8 +788,9 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cac
     auto main_model = default_model(state);
 
     std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
-    ConstDataset const update_data{
-        {"source", ConstDataPointer{source_update2.data(), static_cast<Idx>(source_update2.size())}}};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("source", static_cast<Idx>(source_update2.size()), static_cast<Idx>(source_update2.size()),
+                           nullptr, source_update2.data());
     CHECK_THROWS_AS((main_model.update_component<typename settings::update_type>(update_data)), IDNotFound);
 }
 
@@ -796,10 +798,11 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
     State state;
     auto main_model = default_model(state);
 
-    ConstDataset const update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load",
-         ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_update.size()),
+                           static_cast<Idx>(state.sym_load_update.size()), nullptr, state.sym_load_update.data());
+    update_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_update.size()),
+                           static_cast<Idx>(state.asym_load_update.size()), nullptr, state.asym_load_update.data());
     main_model.update_component<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
@@ -841,11 +844,13 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
     auto main_model = default_model(state);
 
     state.sym_load_update[0].p_specified = 2.5e6;
-
-    ConstDataset const update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
-        {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_update.size()),
+                           static_cast<Idx>(state.sym_load_update.size()), nullptr, state.sym_load_update.data());
+    update_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_update.size()),
+                           static_cast<Idx>(state.asym_load_update.size()), nullptr, state.asym_load_update.data());
+    update_data.add_buffer("shunt", static_cast<Idx>(state.shunt_update.size()),
+                           static_cast<Idx>(state.shunt_update.size()), nullptr, state.shunt_update.data());
     main_model.update_component<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
@@ -887,14 +892,19 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     auto main_model = default_model(state);
 
     state.sym_load_update[0].p_specified = 2.5e6;
-
-    ConstDataset const update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
-        {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}},
-        {"source", ConstDataPointer{state.source_update.data(), static_cast<Idx>(state.source_update.size())}},
-        {"link", ConstDataPointer{state.link_update.data(), static_cast<Idx>(state.link_update.size())}},
-        {"fault", ConstDataPointer{state.fault_update.data(), static_cast<Idx>(state.fault_update.size())}}};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_update.size()),
+                           static_cast<Idx>(state.sym_load_update.size()), nullptr, state.sym_load_update.data());
+    update_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_update.size()),
+                           static_cast<Idx>(state.asym_load_update.size()), nullptr, state.asym_load_update.data());
+    update_data.add_buffer("shunt", static_cast<Idx>(state.shunt_update.size()),
+                           static_cast<Idx>(state.shunt_update.size()), nullptr, state.shunt_update.data());
+    update_data.add_buffer("source", static_cast<Idx>(state.source_update.size()),
+                           static_cast<Idx>(state.source_update.size()), nullptr, state.source_update.data());
+    update_data.add_buffer("link", static_cast<Idx>(state.link_update.size()),
+                           static_cast<Idx>(state.link_update.size()), nullptr, state.link_update.data());
+    update_data.add_buffer("fault", static_cast<Idx>(state.fault_update.size()),
+                           static_cast<Idx>(state.fault_update.size()), nullptr, state.fault_update.data());
 
     main_model.update_component<typename settings::update_type>(update_data);
 
@@ -939,10 +949,11 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     auto const solver_output_orig =
         main_model.calculate_power_flow<symmetric_t>(get_default_options(CalculationMethod::linear));
 
-    ConstDataset const update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load",
-         ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}}};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_update.size()),
+                           static_cast<Idx>(state.sym_load_update.size()), nullptr, state.sym_load_update.data());
+    update_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_update.size()),
+                           static_cast<Idx>(state.asym_load_update.size()), nullptr, state.asym_load_update.data());
 
     main_model.update_component<typename settings::update_type>(update_data);
     main_model.restore_components(main_model.get_sequence_idx_map(update_data));
@@ -1031,10 +1042,13 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
 
     state.sym_load_update[0].p_specified = 2.5e6;
 
-    ConstDataset const update_data{
-        {"sym_load", ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())}},
-        {"asym_load", ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())}},
-        {"shunt", ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())}}};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_update.size()),
+                           static_cast<Idx>(state.sym_load_update.size()), nullptr, state.sym_load_update.data());
+    update_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_update.size()),
+                           static_cast<Idx>(state.asym_load_update.size()), nullptr, state.asym_load_update.data());
+    update_data.add_buffer("shunt", static_cast<Idx>(state.shunt_update.size()),
+                           static_cast<Idx>(state.shunt_update.size()), nullptr, state.shunt_update.data());
 
     // This will lead to no topo change but param change
     main_model.update_component<typename settings::update_type>(update_data);
@@ -1079,42 +1093,54 @@ TEST_CASE("Test main model - runtime dispatch") {
     State state;
     auto main_model = default_model(state);
 
-    ConstDataset input_data;
-    input_data["node"] = ConstDataPointer{state.node_input.data(), static_cast<Idx>(state.node_input.size())};
-    input_data["line"] = ConstDataPointer{state.line_input.data(), static_cast<Idx>(state.line_input.size())};
-    input_data["link"] = ConstDataPointer{state.link_input.data(), static_cast<Idx>(state.link_input.size())};
-    input_data["source"] = ConstDataPointer{state.source_input.data(), static_cast<Idx>(state.source_input.size())};
-    input_data["sym_load"] =
-        ConstDataPointer{state.sym_load_input.data(), static_cast<Idx>(state.sym_load_input.size())};
-    input_data["asym_load"] =
-        ConstDataPointer{state.asym_load_input.data(), static_cast<Idx>(state.asym_load_input.size())};
-    input_data["shunt"] = ConstDataPointer{state.shunt_input.data(), static_cast<Idx>(state.shunt_input.size())};
+    ConstDataset input_data{false, 1, "input", meta_data::meta_data_gen::meta_data};
+    input_data.add_buffer("node", static_cast<Idx>(state.node_input.size()), static_cast<Idx>(state.node_input.size()),
+                          nullptr, state.node_input.data());
+    input_data.add_buffer("line", static_cast<Idx>(state.line_input.size()), static_cast<Idx>(state.line_input.size()),
+                          nullptr, state.line_input.data());
+    input_data.add_buffer("link", static_cast<Idx>(state.link_input.size()), static_cast<Idx>(state.link_input.size()),
+                          nullptr, state.link_input.data());
+    input_data.add_buffer("source", static_cast<Idx>(state.source_input.size()),
+                          static_cast<Idx>(state.source_input.size()), nullptr, state.source_input.data());
+    input_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_input.size()),
+                          static_cast<Idx>(state.sym_load_input.size()), nullptr, state.sym_load_input.data());
+    input_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_input.size()),
+                          static_cast<Idx>(state.asym_load_input.size()), nullptr, state.asym_load_input.data());
+    input_data.add_buffer("shunt", static_cast<Idx>(state.shunt_input.size()),
+                          static_cast<Idx>(state.shunt_input.size()), nullptr, state.shunt_input.data());
 
     SUBCASE("Single-size batches") {
-        ConstDataset update_data;
-        update_data["sym_load"] =
-            ConstDataPointer{state.sym_load_update.data(), static_cast<Idx>(state.sym_load_update.size())};
-        update_data["asym_load"] =
-            ConstDataPointer{state.asym_load_update.data(), static_cast<Idx>(state.asym_load_update.size())};
-        update_data["shunt"] = ConstDataPointer{state.shunt_update.data(), static_cast<Idx>(state.shunt_update.size())};
-        update_data["source"] =
-            ConstDataPointer{state.source_update.data(), static_cast<Idx>(state.source_update.size())};
-        update_data["link"] = ConstDataPointer{state.link_update.data(), static_cast<Idx>(state.link_update.size())};
+        ConstDataset update_data{true, 1, "update", meta_data::meta_data_gen::meta_data};
+        update_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_update.size()),
+                               static_cast<Idx>(state.sym_load_update.size()), nullptr, state.sym_load_update.data());
+        update_data.add_buffer("asym_load", static_cast<Idx>(state.asym_load_update.size()),
+                               static_cast<Idx>(state.asym_load_update.size()), nullptr, state.asym_load_update.data());
+        update_data.add_buffer("shunt", static_cast<Idx>(state.shunt_update.size()),
+                               static_cast<Idx>(state.shunt_update.size()), nullptr, state.shunt_update.data());
+        update_data.add_buffer("source", static_cast<Idx>(state.source_update.size()),
+                               static_cast<Idx>(state.source_update.size()), nullptr, state.source_update.data());
+        update_data.add_buffer("link", static_cast<Idx>(state.link_update.size()),
+                               static_cast<Idx>(state.link_update.size()), nullptr, state.link_update.data());
 
-        Dataset sym_result_data;
-        sym_result_data["node"] = MutableDataPointer{state.sym_node.data(), static_cast<Idx>(state.sym_node.size())};
-        sym_result_data["line"] = MutableDataPointer{state.sym_line.data(), static_cast<Idx>(state.sym_line.size())};
-        sym_result_data["link"] = MutableDataPointer{state.sym_link.data(), static_cast<Idx>(state.sym_link.size())};
-        sym_result_data["source"] =
-            MutableDataPointer{state.sym_source.data(), static_cast<Idx>(state.sym_source.size())};
-        sym_result_data["sym_load"] =
-            MutableDataPointer{state.sym_load_sym.data(), static_cast<Idx>(state.sym_load_sym.size())};
-        sym_result_data["asym_load"] =
-            MutableDataPointer{state.sym_load_asym.data(), static_cast<Idx>(state.sym_load_asym.size())};
-        sym_result_data["shunt"] = MutableDataPointer{state.sym_shunt.data(), static_cast<Idx>(state.sym_shunt.size())};
+        MutableDataset sym_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+        sym_result_data.add_buffer("node", static_cast<Idx>(state.sym_node.size()),
+                                   static_cast<Idx>(state.sym_node.size()), nullptr, state.sym_node.data());
+        sym_result_data.add_buffer("line", static_cast<Idx>(state.sym_line.size()),
+                                   static_cast<Idx>(state.sym_line.size()), nullptr, state.sym_line.data());
+        sym_result_data.add_buffer("link", static_cast<Idx>(state.sym_link.size()),
+                                   static_cast<Idx>(state.sym_link.size()), nullptr, state.sym_link.data());
+        sym_result_data.add_buffer("source", static_cast<Idx>(state.sym_source.size()),
+                                   static_cast<Idx>(state.sym_source.size()), nullptr, state.sym_source.data());
+        sym_result_data.add_buffer("sym_load", static_cast<Idx>(state.sym_load_sym.size()),
+                                   static_cast<Idx>(state.sym_load_sym.size()), nullptr, state.sym_load_sym.data());
+        sym_result_data.add_buffer("asym_load", static_cast<Idx>(state.sym_load_asym.size()),
+                                   static_cast<Idx>(state.sym_load_asym.size()), nullptr, state.sym_load_asym.data());
+        sym_result_data.add_buffer("shunt", static_cast<Idx>(state.sym_shunt.size()),
+                                   static_cast<Idx>(state.sym_shunt.size()), nullptr, state.sym_shunt.data());
 
-        Dataset asym_result_data;
-        asym_result_data["node"] = MutableDataPointer{state.asym_node.data(), static_cast<Idx>(state.asym_node.size())};
+        MutableDataset asym_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+        asym_result_data.add_buffer("node", static_cast<Idx>(state.asym_node.size()),
+                                    static_cast<Idx>(state.asym_node.size()), nullptr, state.asym_node.data());
 
         MainModel model{50.0, input_data};
         auto const count = model.all_component_count();
@@ -1176,16 +1202,15 @@ TEST_CASE("Test main model - runtime dispatch") {
 
     SUBCASE("no dependent updates within batches") {
         MainModel model{50.0, input_data};
-        ConstDataset dependent_update_data;
-        Dataset dependent_result_data;
+        ConstDataset dependent_update_data{true, 1, "update", meta_data::meta_data_gen::meta_data};
+        MutableDataset dependent_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
 
         std::vector<SymLoadGenUpdate> sym_load_update_2{{7, 1, nan, 1.0e7}, {7, 1, 1.0e3, nan}, {7, 1, 1.0e3, 1.0e7}};
-        dependent_update_data["sym_load"] =
-            ConstDataPointer{sym_load_update_2.data(), static_cast<Idx>(sym_load_update_2.size()), 1};
-
+        dependent_update_data.add_buffer("sym_load", static_cast<Idx>(sym_load_update_2.size()),
+                                         static_cast<Idx>(sym_load_update_2.size()), nullptr, sym_load_update_2.data());
         std::vector<NodeOutput<symmetric_t>> sym_node_2(sym_load_update_2.size() * state.sym_node.size());
-        dependent_result_data["node"] = MutableDataPointer{
-            sym_node_2.data(), static_cast<Idx>(sym_load_update_2.size()), static_cast<Idx>(state.sym_node.size())};
+        dependent_result_data.add_buffer("node", static_cast<Idx>(sym_node_2.size()),
+                                         static_cast<Idx>(sym_node_2.size()), nullptr, sym_node_2.data());
 
         model.calculate_power_flow<symmetric_t>(get_default_options(newton_raphson), dependent_result_data,
                                                 dependent_update_data);
@@ -1203,7 +1228,7 @@ TEST_CASE("Test main model - runtime dispatch") {
 
 namespace {
 auto incomplete_input_model(State const& state) -> MainModel {
-    MainModel main_model{50.0};
+    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
 
     std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
                                                            {10, 3, 1, nan, nan, 1e12, nan, nan}};
@@ -1239,37 +1264,43 @@ TEST_CASE("Test main model - incomplete input") {
     std::vector<AsymLoadGenUpdate> complete_asym_load_update{
         {8, 1, RealValue<asymmetric_t>{0.5e6 / 3.0}, RealValue<asymmetric_t>{nan}}};
 
-    ConstDataset update_data;
-    update_data["source"] =
-        ConstDataPointer{complete_source_update.data(), static_cast<Idx>(complete_source_update.size())};
-    update_data["sym_load"] =
-        ConstDataPointer{complete_sym_load_update.data(), static_cast<Idx>(complete_sym_load_update.size())};
-    update_data["asym_load"] =
-        ConstDataPointer{complete_asym_load_update.data(), static_cast<Idx>(complete_asym_load_update.size())};
+    ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("source", static_cast<Idx>(complete_source_update.size()),
+                           static_cast<Idx>(complete_source_update.size()), nullptr, complete_source_update.data());
+    update_data.add_buffer("sym_load", static_cast<Idx>(complete_sym_load_update.size()),
+                           static_cast<Idx>(complete_sym_load_update.size()), nullptr, complete_sym_load_update.data());
+    update_data.add_buffer("asym_load", static_cast<Idx>(complete_asym_load_update.size()),
+                           static_cast<Idx>(complete_asym_load_update.size()), nullptr,
+                           complete_asym_load_update.data());
 
     std::vector<SourceUpdate> incomplete_source_update{{6, na_IntS, nan, nan}, {10, na_IntS, nan, nan}};
     std::vector<SymLoadGenUpdate> incomplete_sym_load_update{{7, na_IntS, nan, nan}};
     std::vector<AsymLoadGenUpdate> incomplete_asym_load_update{
         {8, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}}};
 
-    ConstDataset incomplete_update_data;
-    incomplete_update_data["source"] =
-        ConstDataPointer{incomplete_source_update.data(), static_cast<Idx>(incomplete_source_update.size())};
-    incomplete_update_data["sym_load"] =
-        ConstDataPointer{incomplete_sym_load_update.data(), static_cast<Idx>(incomplete_sym_load_update.size())};
-    incomplete_update_data["asym_load"] =
-        ConstDataPointer{incomplete_asym_load_update.data(), static_cast<Idx>(incomplete_asym_load_update.size())};
+    ConstDataset incomplete_update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    incomplete_update_data.add_buffer("source", static_cast<Idx>(incomplete_source_update.size()),
+                                      static_cast<Idx>(incomplete_source_update.size()), nullptr,
+                                      incomplete_source_update.data());
+    incomplete_update_data.add_buffer("sym_load", static_cast<Idx>(incomplete_sym_load_update.size()),
+                                      static_cast<Idx>(incomplete_sym_load_update.size()), nullptr,
+                                      incomplete_sym_load_update.data());
+    incomplete_update_data.add_buffer("asym_load", static_cast<Idx>(incomplete_asym_load_update.size()),
+                                      static_cast<Idx>(incomplete_asym_load_update.size()), nullptr,
+                                      incomplete_asym_load_update.data());
 
     MainModel const ref_model{main_model};
 
-    Dataset test_result_data;
-    Dataset ref_result_data;
-
     SUBCASE("Symmetrical - Complete") {
+        MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+
         std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
         std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size());
-        test_result_data["node"] = MutableDataPointer{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
-        ref_result_data["node"] = MutableDataPointer{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
+        test_result_data.add_buffer("node", static_cast<Idx>(test_sym_node.size()),
+                                    static_cast<Idx>(test_sym_node.size()), nullptr, test_sym_node.data());
+        ref_result_data.add_buffer("node", static_cast<Idx>(ref_sym_node.size()), static_cast<Idx>(ref_sym_node.size()),
+                                   nullptr, ref_sym_node.data());
 
         SUBCASE("Test linear calculation") {
             test_model.calculate_power_flow<symmetric_t>(get_default_options(linear), test_result_data, update_data);
@@ -1303,10 +1334,15 @@ TEST_CASE("Test main model - incomplete input") {
     }
 
     SUBCASE("Asymmetrical - Complete") {
+        MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+
         std::vector<NodeOutput<asymmetric_t>> test_asym_node(state.asym_node.size());
         std::vector<NodeOutput<asymmetric_t>> ref_asym_node(state.asym_node.size());
-        test_result_data["node"] = MutableDataPointer{test_asym_node.data(), static_cast<Idx>(test_asym_node.size())};
-        ref_result_data["node"] = MutableDataPointer{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+        test_result_data.add_buffer("node", static_cast<Idx>(test_asym_node.size()),
+                                    static_cast<Idx>(test_asym_node.size()), nullptr, test_asym_node.data());
+        ref_result_data.add_buffer("node", static_cast<Idx>(ref_asym_node.size()),
+                                   static_cast<Idx>(ref_asym_node.size()), nullptr, ref_asym_node.data());
 
         SUBCASE("Test linear calculation") {
             test_model.calculate_power_flow<asymmetric_t>(get_default_options(linear), test_result_data, update_data);
@@ -1347,8 +1383,12 @@ TEST_CASE("Test main model - incomplete input") {
     }
 
     SUBCASE("Symmetrical - Incomplete") {
+        MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+
         std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
-        test_result_data["node"] = MutableDataPointer{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+        test_result_data.add_buffer("node", static_cast<Idx>(test_sym_node.size()),
+                                    static_cast<Idx>(test_sym_node.size()), nullptr, test_sym_node.data());
 
         SUBCASE("Direct call") {
             CHECK_THROWS_AS(test_model.calculate_power_flow<symmetric_t>(
@@ -1361,7 +1401,7 @@ TEST_CASE("Test main model - incomplete input") {
                             SparseMatrixError);
         }
         SUBCASE("Empty update dataset") {
-            update_data = {};
+            ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
 
             CHECK_THROWS_AS(
                 test_model.calculate_power_flow<symmetric_t>(
@@ -1377,8 +1417,12 @@ TEST_CASE("Test main model - incomplete input") {
     }
 
     SUBCASE("Asymmetrical - Incomplete") {
+        MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+
         std::vector<NodeOutput<asymmetric_t>> test_sym_node(state.sym_node.size());
-        test_result_data["node"] = MutableDataPointer{test_sym_node.data(), static_cast<Idx>(test_sym_node.size())};
+        test_result_data.add_buffer("node", static_cast<Idx>(test_sym_node.size()),
+                                    static_cast<Idx>(test_sym_node.size()), nullptr, test_sym_node.data());
 
         SUBCASE("Direct call") {
             CHECK_THROWS_AS(test_model.calculate_power_flow<asymmetric_t>(
@@ -1391,7 +1435,7 @@ TEST_CASE("Test main model - incomplete input") {
                             SparseMatrixError);
         }
         SUBCASE("Empty update dataset") {
-            update_data = {};
+            ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
 
             CHECK_THROWS_AS(
                 test_model.calculate_power_flow<asymmetric_t>(
@@ -1427,27 +1471,28 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
 
     REQUIRE(source_indptr.size() == batch_size + 1);
 
-    ConstDataset mixed_update_data;
-    mixed_update_data["source"] = ConstDataPointer{mixed_source_update.data(), batch_size, 2};
-    mixed_update_data["sym_load"] = ConstDataPointer{mixed_sym_load_update.data(), batch_size, 1};
-    mixed_update_data["asym_load"] = ConstDataPointer{mixed_asym_load_update.data(), batch_size, 1};
+    ConstDataset mixed_update_data{true, batch_size, "update", meta_data::meta_data_gen::meta_data};
+    mixed_update_data.add_buffer("source", 2, 4, nullptr, mixed_source_update.data());
+    mixed_update_data.add_buffer("sym_load", 1, 2, nullptr, mixed_sym_load_update.data());
+    mixed_update_data.add_buffer("asym_load", 1, 2, nullptr, mixed_asym_load_update.data());
 
-    ConstDataset second_scenario_update_data;
-    second_scenario_update_data["source"] = ConstDataPointer{mixed_source_update.data() + 2, 2};
-    second_scenario_update_data["sym_load"] = ConstDataPointer{mixed_sym_load_update.data() + 1, 1};
-    second_scenario_update_data["asym_load"] = ConstDataPointer{mixed_asym_load_update.data() + 1, 1};
-
-    Dataset test_result_data;
-    Dataset ref_result_data;
+    ConstDataset second_scenario_update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+    second_scenario_update_data.add_buffer("source", 2, 2, nullptr, mixed_source_update.data() + 2);
+    second_scenario_update_data.add_buffer("sym_load", 1, 1, nullptr, mixed_sym_load_update.data() + 1);
+    second_scenario_update_data.add_buffer("asym_load", 1, 1, nullptr, mixed_asym_load_update.data() + 1);
 
     SUBCASE("Symmetrical") {
+        MutableDataset test_result_data{true, batch_size, "sym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset ref_result_data{false, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+
         std::vector<NodeOutput<symmetric_t>> test_sym_node(batch_size * state.sym_node.size(),
                                                            {na_IntID, na_IntS, nan, nan, nan, nan, nan});
         std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size(),
                                                           {na_IntID, na_IntS, nan, nan, nan, nan, nan});
-        test_result_data["node"] =
-            MutableDataPointer{test_sym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
-        ref_result_data["node"] = MutableDataPointer{ref_sym_node.data(), static_cast<Idx>(ref_sym_node.size())};
+        test_result_data.add_buffer("node", static_cast<Idx>(state.sym_node.size()),
+                                    static_cast<Idx>(test_sym_node.size()), nullptr, test_sym_node.data());
+        ref_result_data.add_buffer("node", static_cast<Idx>(ref_sym_node.size()), static_cast<Idx>(ref_sym_node.size()),
+                                   nullptr, ref_sym_node.data());
 
         CHECK_THROWS_AS(
             test_model.calculate_power_flow<symmetric_t>({.calculation_method = linear, .err_tol = 1e-8, .max_iter = 1},
@@ -1465,6 +1510,9 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
     }
 
     SUBCASE("Asymmetrical") {
+        MutableDataset test_result_data{true, batch_size, "asym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset ref_result_data{false, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+
         std::vector<NodeOutput<asymmetric_t>> test_asym_node(
             batch_size * state.sym_node.size(),
             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
@@ -1473,9 +1521,10 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
             state.sym_node.size(),
             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
              RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}});
-        test_result_data["node"] =
-            MutableDataPointer{test_asym_node.data(), batch_size, static_cast<Idx>(state.sym_node.size())};
-        ref_result_data["node"] = MutableDataPointer{ref_asym_node.data(), static_cast<Idx>(ref_asym_node.size())};
+        test_result_data.add_buffer("node", static_cast<Idx>(state.sym_node.size()),
+                                    static_cast<Idx>(test_asym_node.size()), nullptr, test_asym_node.data());
+        ref_result_data.add_buffer("node", static_cast<Idx>(ref_asym_node.size()),
+                                   static_cast<Idx>(ref_asym_node.size()), nullptr, ref_asym_node.data());
 
         CHECK_THROWS_AS(
             test_model.calculate_power_flow<asymmetric_t>(
