@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/main_model.hpp>
 
 #include <algorithm>
@@ -34,14 +35,19 @@ struct InputData {
     std::vector<ShuntInput> shunt;
 
     ConstDataset get_dataset() const {
-        ConstDataset dataset;
-        dataset.try_emplace("node", node.data(), static_cast<Idx>(node.size()));
-        dataset.try_emplace("transformer", transformer.data(), static_cast<Idx>(transformer.size()));
-        dataset.try_emplace("line", line.data(), static_cast<Idx>(line.size()));
-        dataset.try_emplace("source", source.data(), static_cast<Idx>(source.size()));
-        dataset.try_emplace("sym_load", sym_load.data(), static_cast<Idx>(sym_load.size()));
-        dataset.try_emplace("asym_load", asym_load.data(), static_cast<Idx>(asym_load.size()));
-        dataset.try_emplace("shunt", shunt.data(), static_cast<Idx>(shunt.size()));
+        ConstDataset dataset{false, 1, "input", meta_data::meta_data_gen::meta_data};
+        dataset.add_buffer("node", static_cast<Idx>(node.size()), static_cast<Idx>(node.size()), nullptr, node.data());
+        dataset.add_buffer("transformer", static_cast<Idx>(transformer.size()), static_cast<Idx>(transformer.size()),
+                           nullptr, transformer.data());
+        dataset.add_buffer("line", static_cast<Idx>(line.size()), static_cast<Idx>(line.size()), nullptr, line.data());
+        dataset.add_buffer("source", static_cast<Idx>(source.size()), static_cast<Idx>(source.size()), nullptr,
+                           source.data());
+        dataset.add_buffer("sym_load", static_cast<Idx>(sym_load.size()), static_cast<Idx>(sym_load.size()), nullptr,
+                           sym_load.data());
+        dataset.add_buffer("asym_load", static_cast<Idx>(asym_load.size()), static_cast<Idx>(asym_load.size()), nullptr,
+                           asym_load.data());
+        dataset.add_buffer("shunt", static_cast<Idx>(shunt.size()), static_cast<Idx>(shunt.size()), nullptr,
+                           shunt.data());
         return dataset;
     }
 };
@@ -56,16 +62,24 @@ template <symmetry_tag sym> struct OutputData {
     std::vector<ApplianceOutput<sym>> shunt;
     Idx batch_size{1};
 
-    Dataset get_dataset() {
-        Dataset dataset;
-        dataset.try_emplace("node", node.data(), batch_size, static_cast<Idx>(node.size()) / batch_size);
-        dataset.try_emplace("transformer", transformer.data(), batch_size,
-                            static_cast<Idx>(transformer.size()) / batch_size);
-        dataset.try_emplace("line", line.data(), batch_size, static_cast<Idx>(line.size()) / batch_size);
-        dataset.try_emplace("source", source.data(), batch_size, static_cast<Idx>(source.size()) / batch_size);
-        dataset.try_emplace("sym_load", sym_load.data(), batch_size, static_cast<Idx>(sym_load.size()) / batch_size);
-        dataset.try_emplace("asym_load", asym_load.data(), batch_size, static_cast<Idx>(asym_load.size()) / batch_size);
-        dataset.try_emplace("shunt", shunt.data(), batch_size, static_cast<Idx>(shunt.size()) / batch_size);
+    MutableDataset get_dataset() {
+        std::string const dataset_name = is_symmetric_v<sym> ? "sym_output" : "asym_output";
+        MutableDataset dataset{true, batch_size, dataset_name, meta_data::meta_data_gen::meta_data};
+
+        dataset.add_buffer("node", static_cast<Idx>(node.size()) / batch_size, static_cast<Idx>(node.size()), nullptr,
+                           node.data());
+        dataset.add_buffer("transformer", static_cast<Idx>(transformer.size()) / batch_size,
+                           static_cast<Idx>(transformer.size()), nullptr, transformer.data());
+        dataset.add_buffer("line", static_cast<Idx>(line.size()) / batch_size, static_cast<Idx>(line.size()), nullptr,
+                           line.data());
+        dataset.add_buffer("source", static_cast<Idx>(source.size()) / batch_size, static_cast<Idx>(source.size()),
+                           nullptr, source.data());
+        dataset.add_buffer("sym_load", static_cast<Idx>(sym_load.size()) / batch_size,
+                           static_cast<Idx>(sym_load.size()), nullptr, sym_load.data());
+        dataset.add_buffer("asym_load", static_cast<Idx>(asym_load.size()) / batch_size,
+                           static_cast<Idx>(asym_load.size()), nullptr, asym_load.data());
+        dataset.add_buffer("shunt", static_cast<Idx>(shunt.size()) / batch_size, static_cast<Idx>(shunt.size()),
+                           nullptr, shunt.data());
         return dataset;
     }
 };
@@ -76,12 +90,14 @@ struct BatchData {
     Idx batch_size{0};
 
     ConstDataset get_dataset() const {
-        ConstDataset dataset;
+        ConstDataset dataset{true, batch_size, "update", meta_data::meta_data_gen::meta_data};
         if (batch_size == 0) {
             return dataset;
         }
-        dataset.try_emplace("sym_load", sym_load.data(), batch_size, static_cast<Idx>(sym_load.size()) / batch_size);
-        dataset.try_emplace("asym_load", asym_load.data(), batch_size, static_cast<Idx>(asym_load.size()) / batch_size);
+        dataset.add_buffer("sym_load", static_cast<Idx>(sym_load.size()) / batch_size,
+                           static_cast<Idx>(sym_load.size()), nullptr, sym_load.data());
+        dataset.add_buffer("asym_load", static_cast<Idx>(asym_load.size()) / batch_size,
+                           static_cast<Idx>(asym_load.size()), nullptr, asym_load.data());
         return dataset;
     }
 };
