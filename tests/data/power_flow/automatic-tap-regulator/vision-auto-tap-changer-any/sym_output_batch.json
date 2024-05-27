@@ -1,0 +1,737 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": 0},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": 0},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -4},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -4},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -4},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -4},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -4},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -4},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 9}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 10}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 19, "tap_pos": 0},
+        {"id": 20, "tap_pos": 0},
+        {"id": 21, "tap_pos": 0},
+        {"id": 22, "tap_pos": -5},
+        {"id": 23, "tap_pos": 7}
+      ]
+    }
+  ]
+}

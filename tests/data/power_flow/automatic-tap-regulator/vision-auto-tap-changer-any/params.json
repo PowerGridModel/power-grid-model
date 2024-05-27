@@ -1,0 +1,15 @@
+{
+  "calculation_method": "newton_raphson",
+  "tap_changing_strategy": "any_valid_tap",
+  "rtol": 0.0001,
+  "atol": 0.0001,
+  "extra_params": {
+    "newton_raphson": {
+      "experimental_features": "enabled",
+      "fail": {
+        "reason": "Experimental feature under development",
+        "raises": "OSError"
+      }
+    }
+  }
+}
