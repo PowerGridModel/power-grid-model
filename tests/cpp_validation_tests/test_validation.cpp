@@ -121,7 +121,9 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         handler.add_component_info(component_info.component->name, component_info.elements_per_scenario,
                                    component_info.elements_per_scenario * batch_size);
     }
-    return create_owning_dataset(handler);
+    auto owning_dataset = create_owning_dataset(handler);
+    construct_individual_scenarios(owning_dataset);
+    return owning_dataset;
 }
 
 template <typename T>
