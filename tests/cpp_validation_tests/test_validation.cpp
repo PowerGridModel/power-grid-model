@@ -60,8 +60,8 @@ struct Buffer {
 struct OwningDataset {
     MutableDataset dataset;
     ConstDataset const_dataset;
-    std::vector<Buffer> buffers;
-    std::vector<ConstDataset> batch_scenarios;
+    std::vector<Buffer> buffers{};
+    std::vector<ConstDataset> batch_scenarios{};
 };
 
 auto create_owning_dataset(WritableDataset& info) {
@@ -474,9 +474,9 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
 struct ValidationCase {
     CaseParam param;
     OwningDataset input;
-    std::optional<OwningDataset> output;
-    std::optional<OwningDataset> update_batch;
-    std::optional<OwningDataset> output_batch;
+    std::optional<OwningDataset> output{};
+    std::optional<OwningDataset> update_batch{};
+    std::optional<OwningDataset> output_batch{};
 };
 
 ValidationCase create_validation_case(CaseParam const& param) {
