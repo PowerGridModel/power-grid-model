@@ -20,9 +20,7 @@
 #include <string>
 
 // generate of meta data
-namespace power_grid_model::meta_data {
-
-namespace meta_data_gen {
+namespace power_grid_model::meta_data::meta_data_gen {
 
 // generate meta data
 constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
@@ -34,6 +32,4 @@ constexpr MetaData meta_data = get_meta_data<AllComponents, // all components li
                                              // end list of all marks
                                              >::value;
 
-} // namespace meta_data_gen
-
-} // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data::meta_data_gen

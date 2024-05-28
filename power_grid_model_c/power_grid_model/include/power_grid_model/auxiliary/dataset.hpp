@@ -243,7 +243,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
-        StructType* ptr = reinterpret_cast<StructType*>(buffer.data);
+        auto const ptr = reinterpret_cast<StructType*>(buffer.data);
         if (scenario < 0) {
             return std::span<StructType>{ptr, ptr + info.total_elements};
         }
