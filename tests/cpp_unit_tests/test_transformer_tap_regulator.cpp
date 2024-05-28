@@ -197,6 +197,22 @@ TEST_CASE("Test transformer tap regulator") {
         CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
         CHECK(param.status);
     }
+
+    SUBCASE("Test default line drop compensation") {
+        TransformerTapRegulator regulator{{.id = 1,
+                                           .regulated_object = 2,
+                                           .status = true,
+                                           .control_side = ControlSide::from,
+                                           .u_set = 10.0e3,
+                                           .u_band = 1.0e3},
+                                          ComponentType::branch,
+                                          u_rated};
+
+        TransformerTapRegulatorCalcParam const param = regulator.calc_param<symmetric_t>();
+        CHECK(!is_nan(param.z_compensation));
+        CHECK(param.z_compensation.real() == doctest::Approx(0.0));
+        CHECK(param.z_compensation.imag() == doctest::Approx(0.0));
+    }
 }
 
 } // namespace power_grid_model
