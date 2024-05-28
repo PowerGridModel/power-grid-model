@@ -76,8 +76,9 @@ auto create_owning_dataset(WritableDataset& info) {
         buffer.ptr =
             BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
         buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
+        Idx* indptr_data = buffer.indptr.empty() ? nullptr : buffer.indptr.data();
 
-        info.set_buffer(component_info.component->name, buffer.indptr.data(), buffer.ptr.get());
+        info.set_buffer(component_info.component->name, indptr_data, buffer.ptr.get());
         buffers.push_back(std::move(buffer));
     }
     return OwningDataset{
