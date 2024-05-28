@@ -5,8 +5,8 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
-#include "handle.hpp"
 #include "get_meta_data.hpp"
+#include "handle.hpp"
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/handle.h"
 #include "power_grid_model_c/serialization.h"
@@ -23,7 +23,8 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
         [data, size, serialization_format] {
             return new PGM_Deserializer{from_buffer,
                                         {data, static_cast<size_t>(size)},
-                                        static_cast<power_grid_model::SerializationFormat>(serialization_format), get_meta_data()};
+                                        static_cast<power_grid_model::SerializationFormat>(serialization_format),
+                                        get_meta_data()};
         },
         PGM_serialization_error);
 }
@@ -34,7 +35,8 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
         handle,
         [data_string, serialization_format] {
             return new PGM_Deserializer{from_string, data_string,
-                                        static_cast<power_grid_model::SerializationFormat>(serialization_format), get_meta_data()};
+                                        static_cast<power_grid_model::SerializationFormat>(serialization_format),
+                                        get_meta_data()};
         },
         PGM_serialization_error);
 }

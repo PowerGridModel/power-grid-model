@@ -601,11 +601,11 @@ class Topology {
     void couple_all_appliance() {
         // shunt
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.shunts_per_bus; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.shunts_per_bus; },
             {comp_topo_.shunt_node_idx, comp_coup_.node}, comp_coup_.shunt);
         // load_gen
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.load_gens_per_bus; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.load_gens_per_bus; },
             {comp_topo_.load_gen_node_idx, comp_coup_.node}, comp_coup_.load_gen);
 
         // set load gen type
@@ -623,7 +623,7 @@ class Topology {
 
         // source
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.sources_per_bus; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.sources_per_bus; },
             {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source,
             [this](Idx i) { return comp_conn_.source_connected[i]; });
     }
@@ -631,24 +631,24 @@ class Topology {
     void couple_sensors() {
         // voltage sensors
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.voltage_sensors_per_bus; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.voltage_sensors_per_bus; },
             {comp_topo_.voltage_sensor_node_idx, comp_coup_.node}, comp_coup_.voltage_sensor);
 
         // source power sensors
         couple_object_components<&MathModelTopology::n_source>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_source; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_source; },
             {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
 
         // shunt power sensors
         couple_object_components<&MathModelTopology::n_shunt>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_shunt; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_shunt; },
             {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
 
         // load + generator power sensors
         couple_object_components<&MathModelTopology::n_load_gen>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_load_gen; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_load_gen; },
             {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor,
             [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
@@ -672,18 +672,18 @@ class Topology {
 
         // branch 'from' power sensors
         couple_object_components<&MathModelTopology::n_branch>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_branch_from; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_branch_from; },
             object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
 
         // branch 'to' power sensors
         couple_object_components<&MathModelTopology::n_branch>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_branch_to; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_branch_to; },
             {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
 
         // node injection power sensors
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_bus; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_bus; },
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }

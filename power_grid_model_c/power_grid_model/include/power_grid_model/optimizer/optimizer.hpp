@@ -7,8 +7,8 @@
 #include "base_optimizer.hpp"
 #include "tap_position_optimizer.hpp"
 
-#include "../common/enum.hpp"
 #include "../auxiliary/meta_data.hpp"
+#include "../common/enum.hpp"
 
 #include <memory>
 

@@ -5,8 +5,8 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
-#include "handle.hpp"
 #include "get_meta_data.hpp"
+#include "handle.hpp"
 #include "power_grid_model_c/dataset.h"
 
 #include <power_grid_model/auxiliary/dataset.hpp>

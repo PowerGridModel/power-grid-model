@@ -7,8 +7,8 @@
 
 #include "power_grid_model_c/meta_data.h"
 
-#include "handle.hpp"
 #include "get_meta_data.hpp"
+#include "handle.hpp"
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/static_asserts/input.hpp>

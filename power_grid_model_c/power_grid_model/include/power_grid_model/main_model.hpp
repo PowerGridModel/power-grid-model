@@ -92,7 +92,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         (functor.template operator()<ComponentType>(), ...);
     }
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
-        return std::array { functor.template operator()<ComponentType>()... };
+        return std::array{functor.template operator()<ComponentType>()...};
     }
 
   public:
