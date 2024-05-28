@@ -24,16 +24,16 @@ struct UpdateChange {
 
 template <typename T>
 concept component_c = requires(T t, T const& ct, typename T::UpdateType u, typename T::UpdateType const& cu) {
-    typename T::InputType;
-    typename T::UpdateType;
+                          typename T::InputType;
+                          typename T::UpdateType;
 
-    { T::name } -> std::convertible_to<std::string_view>;
-    { ct.math_model_type() } -> std::convertible_to<ComponentType>;
+                          { T::name } -> std::convertible_to<std::string_view>;
+                          { ct.math_model_type() } -> std::convertible_to<ComponentType>;
 
-    { ct.id() } -> std::same_as<ID>;
+                          { ct.id() } -> std::same_as<ID>;
 
-    { t.update(cu) } -> std::same_as<UpdateChange>;
-    { ct.inverse(u) } -> std::same_as<typename T::UpdateType>;
-};
+                          { t.update(cu) } -> std::same_as<UpdateChange>;
+                          { ct.inverse(u) } -> std::same_as<typename T::UpdateType>;
+                      };
 
 } // namespace power_grid_model

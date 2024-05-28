@@ -848,9 +848,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     template <transformer_c T>
         requires requires(UpdateBuffer const& u) {
-            { get<T>(u).data() } -> std::convertible_to<void const*>;
-            { get<T>(u).size() } -> std::convertible_to<Idx>;
-        }
+                     { get<T>(u).data() } -> std::convertible_to<void const*>;
+                     { get<T>(u).size() } -> std::convertible_to<Idx>;
+                 }
     static auto add_buffer_to_update_dataset(UpdateBuffer const& update_buffer, std::string_view component_name,
                                              ConstDataset& update_data) {
         auto const& data = get<T>(update_buffer);
