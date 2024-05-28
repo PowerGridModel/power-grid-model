@@ -261,8 +261,8 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     } else {
                         std::stringstream case_sstr;
-                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << type_name << " #" << obj
-                                  << ", attribute: " << attr.name
+                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << component_meta.name << " #"
+                                  << obj << ", attribute: " << attr.name
                                   << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
                                   << get_as_string(reference_result_ptr, attr, obj);
                         CHECK_MESSAGE(match, case_sstr.str());
@@ -481,7 +481,7 @@ ValidationCase create_validation_case(CaseParam const& param) {
     auto const output_type = get_output_type(param.calculation_type, param.sym);
 
     // input
-    ValidationCase validation_case{.param = param, .input =load_dataset(param.case_dir / "input.json")};
+    ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json")};
 
     // output and update
     if (!param.is_batch) {
