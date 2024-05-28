@@ -214,7 +214,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
             auto const& component_info = reference_result.get_component_info(i);
             MetaComponent const& component_meta = *component_info.component;
             auto const& ref_buffer = reference_result.get_buffer(i);
-            auto const& buffer = result.get_buffer(i);
+            auto const& buffer = result.get_buffer(component_meta.name);
             Idx const elements_per_scenario = component_info.elements_per_scenario;
             assert(elements_per_scenario >= 0);
             // offset scenario
