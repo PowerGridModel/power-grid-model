@@ -152,129 +152,164 @@ TEST_CASE("Test Transformer ranking") {
     using test::get_transformer3w;
     using test::TestState;
 
-    // Minimum test grid
-    TestState state;
-    std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
-                                 {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
-    main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+    SUBCASE("Single transformer") {
+        auto const get_state = [](ID source, ID node_a, ID node_b, ID trafo, ID regulator) {
+            TestState state;
 
-    std::vector<TransformerInput> transformers{
-        get_transformer(11, 0, 1, BranchSide::from), get_transformer(12, 0, 1, BranchSide::from),
-        get_transformer(13, 5, 7, BranchSide::from), get_transformer(14, 2, 3, BranchSide::from),
-        get_transformer(15, 8, 9, BranchSide::from)};
-    main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+            std::vector<NodeInput> nodes{{node_a, 10e3}, {node_b, 400}};
+            main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
-    std::vector<ThreeWindingTransformerInput> transformers3w{get_transformer3w(16, 0, 4, 5)};
-    main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+            std::vector const sources{SourceInput{.id = source, .node = node_a, .status = IntS{1}, .u_ref = 1.0}};
+            main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
-    std::vector<LineInput> lines{get_line_input(17, 3, 6), get_line_input(18, 3, 9)};
-    main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+            std::vector const transformers{get_transformer(trafo, node_a, node_b, BranchSide::from)};
+            main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
-    std::vector<LinkInput> links{{19, 2, 1, 1, 1}, {20, 6, 4, 1, 1}, {21, 8, 7, 1, 1}};
-    main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
+            std::vector const regulators{get_regulator(regulator, trafo, ControlSide::to)};
+            main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
 
-    std::vector<SourceInput> sources{{22, 0, 1, 1.0, 0, nan, nan, nan}};
-    main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+            state.components.set_construction_complete();
 
-    std::vector<TransformerTapRegulatorInput> regulators{
-        get_regulator(23, 11, ControlSide::from), get_regulator(24, 12, ControlSide::from),
-        get_regulator(25, 13, ControlSide::from), get_regulator(26, 14, ControlSide::from),
-        get_regulator(27, 15, ControlSide::from), get_regulator(28, 16, ControlSide::side_1)};
-    main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+            return state;
+        };
 
-    state.components.set_construction_complete();
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 1, 2, 3, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(4, 1, 3, 2, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(1, 2, 3, 4, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(1, 3, 2, 4, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 3, 2, 4, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 2, 3, 4, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 1, 2, 4, 5)));
+        CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 2, 1, 4, 5)));
+    }
 
-    // Subcases
-    SUBCASE("Building the graph") {
-        using pgm_tap::unregulated_idx;
+    SUBCASE("Full grid") {
+        TestState state;
+        std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
+                                     {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
+        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
-        // reference graph creation
-        // Inserted in order of transformer, transformer3w, line and link
-        std::vector<std::pair<Idx, Idx>> expected_edges;
-        expected_edges.insert(expected_edges.end(), {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9}});
-        expected_edges.insert(expected_edges.end(), {{0, 4}, {4, 5}, {5, 4}, {0, 5}});
-        expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
-        expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
+        std::vector<TransformerInput> transformers{
+            get_transformer(11, 0, 1, BranchSide::from), get_transformer(12, 0, 1, BranchSide::from),
+            get_transformer(13, 5, 7, BranchSide::from), get_transformer(14, 2, 3, BranchSide::from),
+            get_transformer(15, 8, 9, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
-        pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
-        expected_edges_prop.insert(expected_edges_prop.end(),
-                                   {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(),
-                                   {{{4, 0}, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}});
-        expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0});
+        std::vector<ThreeWindingTransformerInput> transformers3w{get_transformer3w(16, 0, 4, 5)};
+        main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
 
-        std::vector<pgm_tap::TrafoGraphVertex> const expected_vertex_props{{true},  {false}, {false}, {false}, {false},
-                                                                           {false}, {false}, {false}, {false}, {false}};
+        std::vector<LineInput> lines{get_line_input(17, 3, 6), get_line_input(18, 3, 9)};
+        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
 
-        pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
-        pgm_tap::TrafoGraphEdgeProperties actual_edges_prop;
+        std::vector<LinkInput> links{{19, 2, 1, 1, 1}, {20, 6, 4, 1, 1}, {21, 8, 7, 1, 1}};
+        main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
 
-        boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
-        for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
-            CHECK(actual_graph[*vi].is_source == expected_vertex_props[*vi].is_source);
+        std::vector<SourceInput> sources{{22, 0, 1, 1.0, 0, nan, nan, nan}};
+        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> regulators{
+            get_regulator(23, 11, ControlSide::from), get_regulator(24, 12, ControlSide::from),
+            get_regulator(25, 13, ControlSide::from), get_regulator(26, 14, ControlSide::from),
+            get_regulator(27, 15, ControlSide::from), get_regulator(28, 16, ControlSide::side_1)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
+        state.components.set_construction_complete();
+
+        // Subcases
+        SUBCASE("Building the graph") {
+            using pgm_tap::unregulated_idx;
+
+            // reference graph creation
+            // Inserted in order of transformer, transformer3w, line and link
+            std::vector<std::pair<Idx, Idx>> expected_edges;
+            expected_edges.insert(expected_edges.end(), {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9}});
+            expected_edges.insert(expected_edges.end(), {{0, 4}, {4, 5}, {5, 4}, {0, 5}});
+            expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
+            expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
+
+            pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
+            expected_edges_prop.insert(expected_edges_prop.end(),
+                                       {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
+            expected_edges_prop.insert(expected_edges_prop.end(),
+                                       {{{4, 0}, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}});
+            expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0});
+
+            std::vector<pgm_tap::TrafoGraphVertex> const expected_vertex_props{
+                {true}, {false}, {false}, {false}, {false}, {false}, {false}, {false}, {false}, {false}};
+
+            pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
+            pgm_tap::TrafoGraphEdgeProperties actual_edges_prop;
+
+            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+            for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
+                CHECK(actual_graph[*vi].is_source == expected_vertex_props[*vi].is_source);
+            }
+
+            BGL_FORALL_EDGES(e, actual_graph, pgm_tap::TransformerGraph) {
+                actual_edges_prop.push_back(actual_graph[e]);
+            }
+
+            std::sort(actual_edges_prop.begin(), actual_edges_prop.end());
+            std::sort(expected_edges_prop.begin(), expected_edges_prop.end());
+            CHECK(actual_edges_prop == expected_edges_prop);
         }
 
-        BGL_FORALL_EDGES(e, actual_graph, pgm_tap::TransformerGraph) { actual_edges_prop.push_back(actual_graph[e]); }
+        SUBCASE("Automatic tap unsupported tap side at LV") {
+            TestState bad_state;
+            std::vector<NodeInput> bad_nodes{{0, 50e3}, {1, 10e3}};
+            main_core::add_component<Node>(bad_state, bad_nodes.begin(), bad_nodes.end(), 50.0);
 
-        std::sort(actual_edges_prop.begin(), actual_edges_prop.end());
-        std::sort(expected_edges_prop.begin(), expected_edges_prop.end());
-        CHECK(actual_edges_prop == expected_edges_prop);
-    }
+            std::vector<TransformerInput> bad_trafo{get_transformer(2, 0, 1, BranchSide::to)};
+            main_core::add_component<Transformer>(bad_state, bad_trafo.begin(), bad_trafo.end(), 50.0);
 
-    SUBCASE("Automatic tap unsupported tap side at LV") {
-        TestState bad_state;
-        std::vector<NodeInput> bad_nodes{{0, 50e3}, {1, 10e3}};
-        main_core::add_component<Node>(bad_state, bad_nodes.begin(), bad_nodes.end(), 50.0);
+            std::vector<TransformerTapRegulatorInput> bad_regulators{get_regulator(3, 2, ControlSide::from)};
 
-        std::vector<TransformerInput> bad_trafo{get_transformer(2, 0, 1, BranchSide::to)};
-        main_core::add_component<Transformer>(bad_state, bad_trafo.begin(), bad_trafo.end(), 50.0);
-
-        std::vector<TransformerTapRegulatorInput> bad_regulators{get_regulator(3, 2, ControlSide::from)};
-
-        CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(),
-                                                                          bad_regulators.end(), 50.0),
-                        AutomaticTapCalculationError);
-    }
-
-    SUBCASE("Process edge weights") {
-        // Dummy graph
-        pgm_tap::TrafoGraphEdges edge_array = {{0, 1}, {0, 2}, {2, 3}};
-        pgm_tap::TrafoGraphEdgeProperties edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
-        std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
-
-        pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
-                                    edge_prop.cbegin(), 4};
-
-        // Vertex properties can not be set during graph creation
-        boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
-        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
-            g[*vi].is_source = vertex_props[*vi].is_source;
+            CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(),
+                                                                              bad_regulators.end(), 50.0),
+                            AutomaticTapCalculationError);
         }
 
-        pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 0}, {{2, 3}, 2}};
-        CHECK(regulated_edge_weights == ref_regulated_edge_weights);
-    }
+        SUBCASE("Process edge weights") {
+            // Dummy graph
+            pgm_tap::TrafoGraphEdges edge_array = {{0, 1}, {0, 2}, {2, 3}};
+            pgm_tap::TrafoGraphEdgeProperties edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
+            std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
-    SUBCASE("Sorting transformer edges") {
-        pgm_tap::TrafoGraphEdgeProperties const trafoList{
-            {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
+            pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
+                                        edge_prop.cbegin(), 4};
 
-        pgm_tap::RankedTransformerGroups const referenceList{{Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
+            // Vertex properties can not be set during graph creation
+            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+            for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+                g[*vi].is_source = vertex_props[*vi].is_source;
+            }
 
-        pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
-        REQUIRE(sortedTrafoList.size() == referenceList.size());
-        for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
-            CAPTURE(idx);
-            CHECK(sortedTrafoList[idx] == referenceList[idx]);
+            pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 0}, {{2, 3}, 2}};
+            CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
-    }
 
-    SUBCASE("Ranking complete the graph") {
-        pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-        pgm_tap::RankedTransformerGroups const ref_order{
-            {Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}}, {Idx2D{3, 4}}};
-        CHECK(order == ref_order);
+        SUBCASE("Sorting transformer edges") {
+            pgm_tap::TrafoGraphEdgeProperties const trafoList{
+                {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
+
+            pgm_tap::RankedTransformerGroups const referenceList{
+                {Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
+
+            pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
+            REQUIRE(sortedTrafoList.size() == referenceList.size());
+            for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
+                CAPTURE(idx);
+                CHECK(sortedTrafoList[idx] == referenceList[idx]);
+            }
+        }
+
+        SUBCASE("Ranking complete the graph") {
+            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+            pgm_tap::RankedTransformerGroups const ref_order{
+                {Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}}, {Idx2D{3, 4}}};
+            CHECK(order == ref_order);
+        }
     }
 }
 
