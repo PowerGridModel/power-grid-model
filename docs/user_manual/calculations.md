@@ -623,7 +623,9 @@ The following control logic is used.
           - To increase this ratio, the tap ratio must be increase.
           - Therefore, the tap position of the regulated transformer is increased if it satisfies the bounds set by `tap_min` and `tap_max`.
         - If the tap position of this transformer did not change, the transformer is considered regulated.
-      - If not all transformers within this rank are regulated, step out of the loop and go to the next iteration step.
+      - If not all transformers within this rank are regulated:
+        - A better combination of tap positions may have been found.
+        - Step out of the loop and go to the next iteration step.
   - Exploit the neighbourhood of all transformers (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
@@ -644,7 +646,7 @@ This is assumption is reflected in the requirements mentioned in {hoverxreftoolt
 ```{note}
 The control logic assumes that the (compensated) control voltage decreases when the tap position increases.
 If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption does not hold, and the calculation may diverge.
-Hence, this is assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
+Hence, this assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
 ```
 
 ##### Initialization and exploitation of regulated transformers
