@@ -287,6 +287,9 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
+template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
+    return is_nan(x.real()) || is_nan(x.imag());
+}
 inline bool is_nan(ID x) { return x == na_IntID; }
 inline bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>

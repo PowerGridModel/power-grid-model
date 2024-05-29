@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {},
+    {
+      "transformer": [
+        {"id": 3, "tap_pos": 0}
+      ]
+    }
+  ]
+}
