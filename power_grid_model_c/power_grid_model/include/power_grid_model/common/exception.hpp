@@ -112,6 +112,11 @@ class IterationDiverge : public PowerGridError {
     }
 };
 
+class MaxIterationReached : public PowerGridError {
+  public:
+    MaxIterationReached(std::string const& msg = "") { append_msg(msg + "\n"); }
+};
+
 class ConflictID : public PowerGridError {
   public:
     explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + std::to_string(id) + '\n'); }
