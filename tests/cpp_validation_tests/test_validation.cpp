@@ -574,7 +574,7 @@ void validate_batch_case(CaseParam const& param) {
         // TODO (mgovers): fix false positive of misc-const-correctness
         // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
-        Idx const n_scenario = static_cast<Idx>(validation_case.update_batch.value().batch_scenarios.size());
+        auto const n_scenario = static_cast<Idx>(validation_case.update_batch.value().batch_scenarios.size());
         CalculationFunc const func = calculation_func(param);
 
         // run in loops

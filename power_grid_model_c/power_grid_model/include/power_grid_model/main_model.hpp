@@ -632,7 +632,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            Idx const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
+            auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
             bool const uniform_batch = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
                 return static_cast<Idx>(span.size()) == elements_per_scenario;
             });
