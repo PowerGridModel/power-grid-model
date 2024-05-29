@@ -15,30 +15,46 @@
 
 namespace power_grid_model {
 
-class PowerGridRegularError : public std::exception {};
+class PowerGridError : public std::exception {
+  public:
+    PowerGridError(const std::string& message) : message_(message) {}
+    const char* what() const noexcept override { return message_.c_str(); }
 
-class PowerGridBatchError : public std::exception {};
+  private:
+    std::string message_;
+};
 
-class PowerGridSerializationError : public std::exception {};
+class PowerGridRegularError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+};
+
+class PowerGridBatchError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+};
+
+class PowerGridSerializationError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+};
 
 class Handle {
   public:
-    Handle() : handle_(PGM_create_handle()) {}
+    Handle() : handle_{PGM_create_handle()} {}
 
     void check_error() const {
         Idx error_code = PGM_error_code(handle_.get());
+        std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_.get());
         switch (error_code) {
         case 0:
             break;
         case PGM_regular_error:
-            throw PowerGridRegularError();
+            throw PowerGridRegularError{error_message};
         case PGM_batch_error:
-            throw PowerGridBatchError();
+            throw PowerGridBatchError{error_message};
         case PGM_serialization_error:
-            throw PowerGridSerializationError();
-        }
-        if (PGM_error_code(handle_.get()) != 0) {
-            throw PowerGridRegularError();
+            throw PowerGridSerializationError{error_message};
         }
     }
 
