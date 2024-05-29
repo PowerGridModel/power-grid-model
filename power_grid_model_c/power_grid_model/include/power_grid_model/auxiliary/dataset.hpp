@@ -171,8 +171,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
     std::vector<std::span<StructType>> get_buffer_span_all_scenarios() const {
         Idx const idx = find_component(ComponentType::name, false);
         std::vector<std::span<StructType>> result(batch_size());
-        std::transform(IdxCount{}, IdxCount{batch_size()}, result.begin(),
-                       [this, idx](Idx i) { return get_buffer_span_impl<StructType>(i, idx); });
+        for (Idx scenario{}; scenario != batch_size(); scenario++) {
+            result[scenario] = get_buffer_span_impl<StructType>(scenario, idx);
+        }
         return result;
     }
 
