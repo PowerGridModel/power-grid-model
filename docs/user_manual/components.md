@@ -798,11 +798,11 @@ The control voltage is the voltage at the node, compensated with the voltage dro
 $$
    \begin{eqnarray}
       & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
-      & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer}} \cdot \underline{Z}_{\text{compensation}}\right|
+      & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}} \cdot \underline{Z}_{\text{compensation}}\right| = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}} \cdot \underline{Z}_{\text{compensation}}\right|
    \end{eqnarray}
 $$
 
-where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{transformer}}$ are the calculated voltage and current phasors at the control side and may be obtained from a regular power flow calculation. The minus sign follows from the current direction convention.
+where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{transformer}}$ are the calculated voltage and current phasors at the control side and may be obtained from a regular power flow calculation. The plus sign in the last equality follows from canceling minus signs from the current direction convention and the compensation direction.
 
 For example, if we want to regulate the voltage at `load_7` in the following grid, the line drop compensation impedance is the approximate impedance of `line_5`.
 
