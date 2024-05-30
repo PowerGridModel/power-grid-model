@@ -10,7 +10,6 @@
 #include "../power_grid_model_c/handle.h"
 #include "basics.hpp"
 
-#include <algorithm>
 #include <exception>
 #include <string>
 #include <vector>
@@ -68,14 +67,14 @@ class Handle {
         case PGM_regular_error:
             throw PowerGridRegularError{error_message};
         case PGM_batch_error: {
-            Idx n_failed_scenarios = PGM_n_failed_scenarios(handle_.get());
+            Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_.get());
             std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
             auto const failed_scenario_seqs = PGM_failed_scenarios(handle_.get());
             auto const failed_scenario_messages = PGM_batch_errors(handle_.get());
-            std::transform(failed_scenario_seqs, failed_scenario_seqs + n_failed_scenarios, failed_scenario_messages,
-                           failed_scenarios.begin(), [](Idx scenario, char const* message) {
-                               return PowerGridBatchError::FailedScenario{scenario, message};
-                           });
+            for (Idx i = 0; i < n_failed_scenarios; ++i) {
+                failed_scenarios[i] =
+                    PowerGridBatchError::FailedScenario{failed_scenario_seqs[i], failed_scenario_messages[i]};
+            }
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
         }
         case PGM_serialization_error:
