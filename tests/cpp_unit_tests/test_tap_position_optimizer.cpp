@@ -800,6 +800,7 @@ TEST_CASE("Test Tap position optimizer") {
                     check_b = test::check_exact_per_strategy(3, 2, 4);
                 }
             }
+            // TODO(jguo): final sub test fail -> move to stand alone test to catch error
             // SUBCASE("no valid value in band") {
             //     // TODO(mgovers): this causes an infinite loop
             //     state_b.tap_min = 1;
@@ -852,6 +853,7 @@ TEST_CASE("Test Tap position optimizer") {
             regulator_b.update(update_data);
         }
 
+        // all 3 sub cases fail
         SUBCASE("multiple transformers with control function based on ranking") {
             state_a.rank = 0;
             state_b.rank = 1;

@@ -106,13 +106,14 @@ class NotObservableError : public PowerGridError {
 
 class IterationDiverge : public PowerGridError {
   public:
+    IterationDiverge() {}
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
         append_msg("Iteration failed to converge after " + std::to_string(num_iter) + " iterations! Max deviation: " +
                    std::to_string(max_dev) + ", error tolerance: " + std::to_string(err_tol) + ".\n");
     }
 };
 
-class MaxIterationReached : public PowerGridError {
+class MaxIterationReached : public IterationDiverge {
   public:
     MaxIterationReached(std::string const& msg = "") { append_msg(msg + "\n"); }
 };
