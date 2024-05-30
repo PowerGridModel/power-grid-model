@@ -603,6 +603,8 @@ Power flow calculations that take the behavior of these regulators into account 
 | Optimize tap position for lower voltage in the voltage band  |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
 | Optimize tap position for higher voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
 
+##### Control logic for power flow with automatic tap changing
+
 The following control logic is used.
 
 - Regulated transformers are ranked according to the amount of transformers between itself and the nearest source {hoverxreftooltip}`user_manual/components:source`.
@@ -639,8 +641,8 @@ The optimization procedure is then run a second time to find the actual optimum 
 ```
 
 ```{note}
-The control logic assumes that the change in voltage level caused by changing a transformer is larger than the change caused by adjacent transformers.
-This is assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
+The control logic assumes that changes in the voltage level at a transformer are dominated by changes in the tap position of the transformer itself, rather than by adjacent transformers.
+This assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
 ```
 
 ```{note}
@@ -651,13 +653,13 @@ Hence, this assumption is reflected in the requirements mentioned in {hoverxreft
 
 ##### Initialization and exploitation of regulated transformers
 
-Regulated transformers are initialized and exploited depending on the optimization strategy.
+Internally, to achieve an optimal regulated tap position, the control algorithm sets initial tap positions and exploits neighborhoods around local optima, depending on the strategy as follows.
 
 | strategy                                                                                                    | initial tap position | exploitation direction | description                                                                           |
 | ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
 | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        |                                                                                       |
-| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Highest tap side voltage means lowest control voltage (closest to lower voltage band) |
-| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Lowest tap side voltage means highest control voltage (closest to upper voltage band) |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Find the tap position that gives lowest control side voltage within the `u_band` |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Find the tap position that gives highest control side voltage within the `u_band` |
 
 
 ## Batch Calculations
