@@ -753,10 +753,8 @@ The actual grid state is not changed after calculations are done.
 The following additional requirements exist on the input parameters.
 
 - The automatic tap changer algorithm currently only supports tap changers connected at HV side of the transformer. Hence, the rated voltage of the node at the `tap_side` must be greater than or equal to the rated voltage of the node at the other side of transformer.
-- The voltage band must be sufficiently large, i.e., it must be greater than the largest change in voltage due to a change in tap position. This means, thatf
-  $U_{\text{band}} \geq \frac{\text{tap_size}/u_\text{tap_side}}{\left(1 + \left(\left|\text{tap_min}\right| - \left|\text{tap_nom}\right|\right)\frac{\text{tap_size}}{\text{u_tap_side}}\right)^2}u_{\text{control_side}}$
-- The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position. This means, that
-  $\left|z_{\text{compensation}}\right|\left|I_{\text{node}}\right| \ll \frac{\text{tap_size}/u_\text{tap_side}}{\left(1 + \left(\left|\text{tap_max}\right| - \left|\text{tap_nom}\right|\right)\frac{\text{tap_size}}{\text{u_tap_side}}\right)^2}u_{\text{control_side}}$
+- The voltage band must be sufficiently large
+- The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
 
 These requirements make sure no edge cases with undefined behavior are encountered. Typical real-world power grids already satisfy these requirements and they should therefore not cause any problems.
 
