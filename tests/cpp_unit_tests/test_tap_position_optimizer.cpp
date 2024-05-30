@@ -800,17 +800,6 @@ TEST_CASE("Test Tap position optimizer") {
                     check_b = test::check_exact_per_strategy(3, 2, 4);
                 }
             }
-            // TODO(jguo): final sub test fail -> move to stand alone test to catch error
-            // SUBCASE("no valid value in band") {
-            //     // TODO(mgovers): this causes an infinite loop
-            //     state_b.tap_min = 1;
-            //     state_b.tap_max = 5;
-            //     state_b.tap_pos = 3;
-
-            //     update_data.u_set = 0.4;
-            //     update_data.u_set = 0.01;
-            //     check_b = test::check_exact_per_strategy(3, 4, 3);
-            // }
 
             regulator_b.update(update_data);
         }
@@ -853,7 +842,6 @@ TEST_CASE("Test Tap position optimizer") {
             regulator_b.update(update_data);
         }
 
-        // all 3 sub cases fail
         SUBCASE("multiple transformers with control function based on ranking") {
             state_a.rank = 0;
             state_b.rank = 1;
@@ -996,6 +984,85 @@ TEST_CASE("Test Tap position optimizer") {
                 // reset
                 CHECK(transformer_a.tap_pos() == initial_a);
                 CHECK(transformer_b.tap_pos() == initial_b);
+            }
+        }
+    }
+
+    SUBCASE("Check throw as MaxIterationReached") {
+        main_core::emplace_component<test::MockTransformer>(
+            state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
+        main_core::emplace_component<test::MockTransformer>(
+            state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
+
+        auto& transformer_a = main_core::get_component<MockTransformer>(state, 1);
+        auto& transformer_b = main_core::get_component<MockTransformer>(state, 2);
+
+        main_core::emplace_component<TransformerTapRegulator>(
+            state, 3,
+            TransformerTapRegulatorInput{.id = 3,
+                                         .regulated_object = 1,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_1,
+                                         .u_set = 0.0,
+                                         .u_band = 0.0,
+                                         .line_drop_compensation_r = 0.0,
+                                         .line_drop_compensation_x = 0.0},
+            transformer_a.math_model_type(), 1.0);
+        main_core::emplace_component<TransformerTapRegulator>(
+            state, 4,
+            TransformerTapRegulatorInput{.id = 4,
+                                         .regulated_object = 2,
+                                         .status = 1,
+                                         .control_side = ControlSide::side_2,
+                                         .u_set = 0.0,
+                                         .u_band = 0.0,
+                                         .line_drop_compensation_r = 0.0,
+                                         .line_drop_compensation_x = 0.0},
+            transformer_b.math_model_type(), 1.0);
+
+        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
+        auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
+
+        state.components.set_construction_complete();
+
+        auto& state_a = transformer_a.state;
+        auto& state_b = transformer_b.state;
+        auto check_a = test::check_exact(0);
+        auto check_b = test::check_exact(0);
+        state_b.rank = 0;
+        state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+            CHECK(side == regulator_b.control_side());
+
+            // tap pos closer to tap_max at tap side <=> lower voltage at control side
+            return static_cast<DoubleComplex>(test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+        };
+
+        auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
+
+        // TODO(jguo): final sub test fail -> move to stand alone test to catch error
+        SUBCASE("no valid value in band") {
+            state_b.tap_min = 1;
+            state_b.tap_max = 5;
+            state_b.tap_pos = 3;
+
+            update_data.u_set = 0.4;
+            update_data.u_set = 0.01;
+            check_b = test::check_exact_per_strategy(3, 4, 3);
+        }
+
+        regulator_b.update(update_data);
+
+        for (auto strategy : test::strategies) {
+            CAPTURE(strategy);
+
+            for (auto tap_side : tap_sides) {
+                CAPTURE(tap_side);
+
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
+
+                auto optimizer = get_optimizer(strategy);
+                CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
             }
         }
     }
