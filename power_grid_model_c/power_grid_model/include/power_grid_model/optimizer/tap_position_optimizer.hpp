@@ -676,7 +676,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 iterations_per_rank[++rank_index] = 0;
             }
             if (tap_changed) {
-                if (++iterations_per_rank[rank_index] > 2 * max_tap_ranges_per_rank[rank_index]) {
+                if (static_cast<unsigned long>(++iterations_per_rank[rank_index]) >
+                    2 * max_tap_ranges_per_rank[rank_index]) {
                     throw MaxIterationReached{
                         "TapPositionOptimizer::iterate, maximum iterations reached, no solution."};
                 }
