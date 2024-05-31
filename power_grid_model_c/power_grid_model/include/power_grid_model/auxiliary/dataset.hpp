@@ -221,10 +221,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
                         "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n"};
                 }
             }
-        } else {
-            if (indptr) {
-                throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
-            }
+        } else if (indptr) {
+            throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
         }
     }
 

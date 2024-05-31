@@ -92,7 +92,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         (functor.template operator()<ComponentType>(), ...);
     }
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
-        return std::array{functor.template operator()<ComponentType>()...};
+        return std::array { functor.template operator()<ComponentType>()... };
     }
 
   public:
@@ -644,18 +644,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
-            auto const it_first_begin = all_spans[0].begin();
+            auto const first_span = all_spans[0];
             // check the subsequent scenarios
             // only return true if all scenarios match the ids of the first batch
-            return std::all_of(IdxCount{1}, IdxCount{update_data.batch_size()},
-                               [it_first_begin, &all_spans](Idx scenario) {
-                                   auto const it_begin = all_spans[scenario].begin();
-                                   auto const it_end = all_spans[scenario].end();
-                                   return std::equal(it_begin, it_end, it_first_begin,
-                                                     [](UpdateType<CT> const& obj, UpdateType<CT> const& first) {
-                                                         return obj.id == first.id;
-                                                     });
-                               });
+            return std::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+                return std::ranges::equal(
+                    current_span, first_span,
+                    [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
+            });
         };
 
         // check all components
@@ -1079,8 +1075,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <calculation_input_type CalcInputType>
     static auto calculate_param(auto const& c, auto const&... extra_args)
         requires requires {
-                     { c.calc_param(extra_args...) };
-                 }
+            { c.calc_param(extra_args...) };
+        }
     {
         return c.calc_param(extra_args...);
     }
@@ -1088,8 +1084,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <calculation_input_type CalcInputType>
     static auto calculate_param(auto const& c, auto const&... extra_args)
         requires requires {
-                     { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
-                 }
+            { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
+        }
     {
         return c.template calc_param<typename CalcInputType::sym>(extra_args...);
     }
