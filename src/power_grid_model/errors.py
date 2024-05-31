@@ -62,6 +62,10 @@ class IterationDiverge(PowerGridError):
     """Unable to iteratively converge to an optimum within the set number of iterations and precision."""
 
 
+class MaxIterationReached(IterationDiverge):
+    """Maximum number of iterations reached."""
+
+
 class InvalidID(PowerGridError):
     """An ID is invalid."""
 

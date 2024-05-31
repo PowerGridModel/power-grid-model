@@ -1020,7 +1020,6 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
-        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
         auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
 
         state.components.set_construction_complete();
@@ -1039,7 +1038,6 @@ TEST_CASE("Test Tap position optimizer") {
 
         auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
-        // TODO(jguo): final sub test fail -> move to stand alone test to catch error
         SUBCASE("no valid value in band") {
             state_b.tap_min = 1;
             state_b.tap_max = 5;

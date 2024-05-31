@@ -354,8 +354,10 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
     }
-    IntS tap_range() const {
-        return apply([](auto const& t) { return std::abs(t.tap_max() - t.tap_min()); });
+    int64_t tap_range() const {
+        return apply([](auto const& t) {
+            return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
+        });
     }
 
     template <typename Func>
@@ -581,7 +583,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
-    mutable std::vector<size_t> max_tap_ranges_per_rank{};
+    mutable std::vector<uint64_t> max_tap_ranges_per_rank{};
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
@@ -676,10 +678,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 iterations_per_rank[++rank_index] = 0;
             }
             if (tap_changed) {
-                if (static_cast<unsigned long>(++iterations_per_rank[rank_index]) >
+                if (static_cast<uint64_t>(++iterations_per_rank[rank_index]) >
                     2 * max_tap_ranges_per_rank[rank_index]) {
-                    throw MaxIterationReached{
-                        "TapPositionOptimizer::iterate, maximum iterations reached, no solution."};
+                    throw MaxIterationReached{"TapPositionOptimizer::iterate"};
                 }
                 update_state(update_data);
                 result = calculate_(state, method);
