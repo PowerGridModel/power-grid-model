@@ -1043,15 +1043,13 @@ TEST_CASE("Test Tap position optimizer") {
             return static_cast<DoubleComplex>(test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
         };
 
-        auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
+        auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
 
         SUBCASE("no valid value in band") {
             state_b.tap_min = 1;
             state_b.tap_max = 5;
             state_b.tap_pos = 3;
 
-            update_data.u_set = 0.4;
-            update_data.u_set = 0.01;
             check_b = test::check_exact_per_strategy(3, 4, 3);
         }
 
