@@ -596,19 +596,19 @@ These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try 
 The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
 Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` option.
 
-| Algorithm                                                    | Default  | Speed    | Algorithm call                                                                                              |
-| ------------------------------------------------------------ | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| No automatic tap changing (regular power flow)               | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
-| Optimize tap position for any value in the voltage band      |          | &#10004; | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
-| Optimize tap position for lower voltage in the voltage band  |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
-| Optimize tap position for higher voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Algorithm                                                              | Default  | Speed    | Algorithm call                                                                                              |
+| ---------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| No automatic tap changing (regular power flow)                         | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
+| Optimize tap positions for any value in the voltage band               |          | &#10004; | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
+| Optimize tap positions for lowest possible voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
+| Optimize tap positions for lowest possible voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
 
 ##### Control logic for power flow with automatic tap changing
 
-The following control logic is used.
+The following control logic is used:
 
-- Regulated transformers are ranked according to the amount of transformers between itself and the nearest source {hoverxreftooltip}`user_manual/components:source`.
-  - Transformers that are closer to a {hoverxreftooltip}`user_manual/components:source` are regulated first.
+- Regulated transformers are prioritized according to the amount of transformers to a {hoverxreftooltip}`user_manual/components:source` in a transformer-source topological graph.
+  - Transformers that are directly connected to a {hoverxreftooltip}`user_manual/components:source` are prioritized for regulation.
 - Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
 - Find the optimal state using the following procedure
   - While not all transformers are regulated, iterate as follows:
