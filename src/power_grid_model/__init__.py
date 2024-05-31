@@ -16,5 +16,6 @@ from power_grid_model.enum import (
     LoadGenType,
     MeasuredTerminalType,
     ShortCircuitVoltageScaling,
+    TapChangingStrategy,
     WindingType,
 )
