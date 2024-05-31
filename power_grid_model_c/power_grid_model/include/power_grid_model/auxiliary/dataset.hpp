@@ -67,11 +67,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
     static constexpr Idx invalid_index{-1};
 
-    Dataset(bool is_batch, Idx batch_size, std::string_view dataset, MetaData const& meta_data)
+    Dataset(bool is_batch, Idx batch_size, std::string_view dataset_name, MetaData const& meta_data)
         : meta_data_{&meta_data},
           dataset_info_{.is_batch = is_batch,
                         .batch_size = batch_size,
-                        .dataset = &meta_data.get_dataset(dataset),
+                        .dataset = &meta_data.get_dataset(dataset_name),
                         .component_info = {}} {
         if (!dataset_info_.is_batch && (dataset_info_.batch_size != 1)) {
             throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
