@@ -613,7 +613,7 @@ The following control logic is used:
 - Find the optimal state using the following procedure
   - While some transformers can still be further regulated, iterate as follows:
     - Run a power flow calculation with the current tap positions with the specified [calculation method](#power-flow-algorithms).
-    - Start with the transformers ranked closest to a {hoverxreftooltip}`user_manual/components:source` (because the source provides a relatively stable voltage level).
+    - Start with the transformers ranked closest to a {hoverxreftooltip}`user_manual/components:source` (because the source provides a relatively stable voltage level and these transformers will have a high impact on the rest of the grid).
     - Loop over all ranks:
       - Loop over all transformers within this rank; transformers with the same rank are independently regulated:
         - If the $U_{\text{control}} < U_{\text{set}} - \frac{U_{\text{band}}}{2}$:
