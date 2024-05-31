@@ -607,8 +607,8 @@ Power flow calculations that take the behavior of these regulators into account 
 
 The following control logic is used:
 
-- Regulated transformers are prioritized according to the amount of transformers to a {hoverxreftooltip}`user_manual/components:source` in a transformer-source topological graph.
-  - Transformers that are directly connected to a {hoverxreftooltip}`user_manual/components:source` are prioritized for regulation.
+- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of transformers inbetween.
+  - Transformers that are closer to a {hoverxreftooltip}`user_manual/components:source` are prioritized for regulation over those that are more distant.
 - Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
 - Find the optimal state using the following procedure
   - While not all transformers are regulated, iterate as follows:
