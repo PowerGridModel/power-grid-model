@@ -611,9 +611,9 @@ The following control logic is used:
   - Transformers are regulated in order according to their ranks.
 - Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
 - Find the optimal state using the following procedure
-  - While not all transformers are regulated, iterate as follows:
+  - While some transformers can still be further regulated, iterate as follows:
     - Run a power flow calculation with the current tap positions with the specified [calculation method](#power-flow-algorithms).
-    - Start with the lowest rank (with the transformers closest to a {hoverxreftooltip}`user_manual/components:source`, because the source provides a relatively stable voltage level).
+    - Start with the transformers ranked closest to a {hoverxreftooltip}`user_manual/components:source` (because the source provides a relatively stable voltage level).
     - Loop over all ranks:
       - Loop over all transformers within this rank; transformers with the same rank are independently regulated:
         - If the $U_{\text{control}} < U_{\text{set}} - \frac{U_{\text{band}}}{2}$:
