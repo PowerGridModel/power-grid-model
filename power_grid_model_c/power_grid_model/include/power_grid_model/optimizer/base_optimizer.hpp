@@ -52,8 +52,8 @@ class BaseOptimizer {
 
     template <std::derived_from<BaseOptimizer> Optimizer, typename... Args>
         requires std::constructible_from<Optimizer, Args...>
-    static auto make_shared(Args... args) -> std::shared_ptr<BaseOptimizer> {
-        return std::static_pointer_cast<BaseOptimizer>(std::make_shared<Optimizer>(std::move(args)...));
+    static auto make_shared(Args&&... args) -> std::shared_ptr<BaseOptimizer> {
+        return std::static_pointer_cast<BaseOptimizer>(std::make_shared<Optimizer>(std::forward<Args>(args)...));
     }
 };
 } // namespace detail

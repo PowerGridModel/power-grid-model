@@ -5,12 +5,14 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
+#include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "power_grid_model_c/dataset.h"
 
-#include <power_grid_model/auxiliary/dataset_handler.hpp>
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 
+using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 
 // dataset info
@@ -48,7 +50,7 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
     return call_with_catch(
         handle,
         [dataset, is_batch, batch_size]() {
-            return new ConstDatasetHandler{static_cast<bool>(is_batch), batch_size, dataset};
+            return new ConstDataset{static_cast<bool>(is_batch), batch_size, dataset, get_meta_data()};
         },
         PGM_regular_error);
 }
@@ -56,12 +58,12 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
                                                          PGM_WritableDataset const* writable_dataset) {
     return call_with_catch(
-        handle, [writable_dataset]() { return new ConstDatasetHandler{*writable_dataset}; }, PGM_regular_error);
+        handle, [writable_dataset]() { return new ConstDataset{*writable_dataset}; }, PGM_regular_error);
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) {
     return call_with_catch(
-        handle, [mutable_dataset]() { return new ConstDatasetHandler{*mutable_dataset}; }, PGM_regular_error);
+        handle, [mutable_dataset]() { return new ConstDataset{*mutable_dataset}; }, PGM_regular_error);
 }
 
 void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) { delete dataset; }
@@ -101,7 +103,7 @@ PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* d
     return call_with_catch(
         handle,
         [dataset, is_batch, batch_size]() {
-            return new MutableDatasetHandler{static_cast<bool>(is_batch), batch_size, dataset};
+            return new MutableDataset{static_cast<bool>(is_batch), batch_size, dataset, get_meta_data()};
         },
         PGM_regular_error);
 }
