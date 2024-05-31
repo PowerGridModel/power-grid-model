@@ -593,8 +593,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
   public:
-    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
-        : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
+    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy,
+                             meta_data::MetaData const& meta_data)
+        : meta_data_{&meta_data}, calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
@@ -726,11 +727,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void update_state(UpdateBuffer const& update_data) const {
         static_assert(sizeof...(TransformerTypes) == std::tuple_size_v<UpdateBuffer>);
 
-        ConstDataset update_dataset;
-        auto const update_component = [this, &update_data, &update_dataset]<transformer_c TransformerType>() {
+        ConstDataset update_dataset{false, 1, "update", *meta_data_};
+        auto const update_component = [&update_data, &update_dataset]<transformer_c TransformerType>() {
             auto const& component_update = get<TransformerType>(update_data);
             if (!component_update.empty()) {
-                update_dataset.emplace(TransformerType::name, this->get_data_ptr<TransformerType>(update_data));
+                add_buffer_to_update_dataset<TransformerType>(update_data, TransformerType::name, update_dataset);
             }
         };
         (update_component.template operator()<TransformerTypes>(), ...);
@@ -878,9 +879,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                      { get<T>(u).data() } -> std::convertible_to<void const*>;
                      { get<T>(u).size() } -> std::convertible_to<Idx>;
                  }
-    static auto get_data_ptr(UpdateBuffer const& update_buffer) {
+    static auto add_buffer_to_update_dataset(UpdateBuffer const& update_buffer, std::string_view component_name,
+                                             ConstDataset& update_data) {
         auto const& data = get<T>(update_buffer);
-        return ConstDataPointer{data.data(), static_cast<Idx>(data.size())};
+        update_data.add_buffer(component_name, static_cast<Idx>(data.size()), static_cast<Idx>(data.size()), nullptr,
+                               data.data());
     }
 
     static constexpr auto get_nan_update(auto const& component) {
@@ -888,6 +891,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return UpdateType{};
     }
 
+    meta_data::MetaData const* meta_data_;
     Calculator calculate_;
     StateUpdater update_;
     OptimizerStrategy strategy_;

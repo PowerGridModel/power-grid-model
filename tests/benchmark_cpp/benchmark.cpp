@@ -4,6 +4,7 @@
 
 #include "fictional_grid_generator.hpp"
 
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
@@ -15,7 +16,7 @@ namespace power_grid_model::benchmark {
 namespace {
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{std::make_unique<MainModel>(50.0)} {}
+    PowerGridBenchmark() : main_model{std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data)} {}
 
     template <symmetry_tag sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {

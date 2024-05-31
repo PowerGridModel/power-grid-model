@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <regex>
 
 namespace power_grid_model::meta_data {
@@ -54,28 +55,18 @@ using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)
 struct Buffer {
     BufferPtr ptr{nullptr, [](void const*) {}};
     IdxVector indptr;
-    MutableDataPointer data_ptr;
 };
 
 struct OwningDataset {
-    Dataset dataset;
+    MutableDataset dataset;
     ConstDataset const_dataset;
-    std::map<std::string, Buffer> buffer_map;
-    std::vector<ConstDataset> batch_scenarios;
+    std::vector<Buffer> buffers{};
+    std::vector<ConstDataset> batch_scenarios{};
 };
 
-template <dataset_type_tag dataset_type>
-std::map<std::string, DataPointer<dataset_type>> generate_dataset(std::map<std::string, Buffer> const& buffer_map) {
-    std::map<std::string, DataPointer<dataset_type>> dataset;
-    for (auto const& [name, buffer] : buffer_map) {
-        dataset[name] = static_cast<DataPointer<dataset_type>>(buffer.data_ptr);
-    }
-    return dataset;
-}
-
-auto create_owning_dataset(WritableDatasetHandler& info) {
+auto create_owning_dataset(WritableDataset& info) {
     Idx const batch_size = info.batch_size();
-    OwningDataset dataset;
+    std::vector<Buffer> buffers;
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_info = info.get_component_info(component_idx);
@@ -85,22 +76,21 @@ auto create_owning_dataset(WritableDatasetHandler& info) {
         buffer.ptr =
             BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
         buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
-        buffer.data_ptr = MutableDataPointer{buffer.ptr.get(),
-                                             component_info.elements_per_scenario < 0 ? buffer.indptr.data() : nullptr,
-                                             batch_size, component_info.elements_per_scenario};
+        Idx* indptr_data = buffer.indptr.empty() ? nullptr : buffer.indptr.data();
 
-        info.set_buffer(component_info.component->name, buffer.indptr.data(), buffer.ptr.get());
-        dataset.buffer_map[component_meta->name] = std::move(buffer);
+        info.set_buffer(component_info.component->name, indptr_data, buffer.ptr.get());
+        buffers.push_back(std::move(buffer));
     }
-    dataset.const_dataset = info.export_dataset<const_dataset_t>();
-    dataset.dataset = info.export_dataset<mutable_dataset_t>();
-
-    return dataset;
+    return OwningDataset{
+        .dataset = info,
+        .const_dataset = info,
+        .buffers = std::move(buffers),
+    };
 }
 
-auto construct_individual_scenarios(OwningDataset& dataset, WritableDatasetHandler const& info) {
-    for (Idx scenario_idx{}; scenario_idx < info.batch_size(); ++scenario_idx) {
-        dataset.batch_scenarios.push_back(info.export_dataset<const_dataset_t>(scenario_idx));
+auto construct_individual_scenarios(OwningDataset& owning_dataset) {
+    for (Idx scenario_idx{}; scenario_idx < owning_dataset.dataset.batch_size(); ++scenario_idx) {
+        owning_dataset.batch_scenarios.push_back(owning_dataset.const_dataset.get_individual_scenario(scenario_idx));
     }
 }
 
@@ -108,11 +98,11 @@ auto load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path)};
+    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path), meta_data_gen::meta_data};
     auto& info = deserializer.get_dataset_info();
     auto dataset = create_owning_dataset(info);
     deserializer.parse();
-    construct_individual_scenarios(dataset, info);
+    construct_individual_scenarios(dataset);
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
@@ -123,16 +113,18 @@ auto load_dataset(std::filesystem::path const& path) {
 // create single result set
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
                                     Idx batch_size = 1) {
-    MetaDataset const& meta = meta_data.get_dataset(data_type);
-    WritableDatasetHandler handler{is_batch, batch_size, meta.name};
+    MetaDataset const& meta = meta_data_gen::meta_data.get_dataset(data_type);
+    WritableDataset handler{is_batch, batch_size, meta.name, meta_data_gen::meta_data};
+    assert(input.const_dataset.batch_size() == 1);
 
-    for (auto const& [name, data_ptr] : input.const_dataset) {
-        assert(data_ptr.batch_size() == 1);
-        Buffer const result_buffer;
-        Idx const elements_per_scenario = data_ptr.elements_per_scenario(0);
-        handler.add_component_info(name, elements_per_scenario, elements_per_scenario * batch_size);
+    for (Idx i{}; i != input.const_dataset.n_components(); ++i) {
+        auto const& component_info = input.const_dataset.get_component_info(i);
+        handler.add_component_info(component_info.component->name, component_info.elements_per_scenario,
+                                   component_info.elements_per_scenario * batch_size);
     }
-    return create_owning_dataset(handler);
+    auto owning_dataset = create_owning_dataset(handler);
+    construct_individual_scenarios(owning_dataset);
+    return owning_dataset;
 }
 
 template <typename T>
@@ -210,22 +202,27 @@ bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCons
 }
 
 // assert single result
-void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::string const& data_type,
-                   std::map<std::string, double> atol, double rtol) {
+void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::map<std::string, double> atol,
+                   double rtol) {
     using namespace std::string_literals;
-    MetaDataset const& meta = meta_data.get_dataset(data_type);
-    Idx const batch_size = result.cbegin()->second.batch_size();
+    MetaDataset const& meta = result.dataset();
+    Idx const batch_size = result.batch_size();
+    std::string const type_name = meta.name;
     // loop all scenario
     for (Idx scenario = 0; scenario != batch_size; ++scenario) {
         // loop all component type name
-        for (auto const& [type_name, reference_dataset] : reference_result) {
-            MetaComponent const& component_meta = meta.get_component(type_name);
-            Idx const length = reference_dataset.elements_per_scenario(scenario);
+        for (Idx i{}; i != reference_result.n_components(); ++i) {
+            auto const& component_info = reference_result.get_component_info(i);
+            MetaComponent const& component_meta = *component_info.component;
+            auto const& ref_buffer = reference_result.get_buffer(i);
+            auto const& buffer = result.get_buffer(component_meta.name);
+            Idx const elements_per_scenario = component_info.elements_per_scenario;
+            assert(elements_per_scenario >= 0);
             // offset scenario
             RawDataConstPtr const result_ptr =
-                reinterpret_cast<char const*>(result.at(type_name).raw_ptr()) + length * scenario * component_meta.size;
+                reinterpret_cast<char const*>(buffer.data) + elements_per_scenario * scenario * component_meta.size;
             RawDataConstPtr const reference_result_ptr =
-                reinterpret_cast<char const*>(reference_dataset.raw_ptr()) + length * scenario * component_meta.size;
+                reinterpret_cast<char const*>(ref_buffer.data) + elements_per_scenario * scenario * component_meta.size;
             // loop all attribute
             for (MetaAttribute const& attr : component_meta.attributes) {
                 // TODO skip u angle, need a way for common angle
@@ -250,7 +247,7 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                     is_angle ? component_meta.get_attribute(magnitude_name) : attr;
 
                 // loop all object
-                for (Idx obj = 0; obj != length; ++obj) {
+                for (Idx obj = 0; obj != elements_per_scenario; ++obj) {
                     // only check if reference result is not nan
                     if (attr.check_nan(reference_result_ptr, obj)) {
                         continue;
@@ -267,8 +264,8 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                         CHECK(match);
                     } else {
                         std::stringstream case_sstr;
-                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << type_name << " #" << obj
-                                  << ", attribute: " << attr.name
+                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << component_meta.name << " #"
+                                  << obj << ", attribute: " << attr.name
                                   << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
                                   << get_as_string(reference_result_ptr, attr, obj);
                         CHECK_MESSAGE(match, case_sstr.str());
@@ -300,7 +297,7 @@ std::map<std::string, CalculationMethod> const calculation_method_mapping = {
 std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
     {"minimum", ShortCircuitVoltageScaling::minimum}, {"maximum", ShortCircuitVoltageScaling::maximum}};
 using CalculationFunc =
-    std::function<BatchParameter(MainModel&, CalculationMethod, Dataset const&, ConstDataset const&, Idx)>;
+    std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
 
 std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_mapping = {
     {"disabled", OptimizerStrategy::any},
@@ -343,7 +340,8 @@ CalculationFunc calculation_func(CaseParam const& param) {
 
     if (calculation_type == "power_flow"s) {
         return [param, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                            Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
+                                            MutableDataset const& dataset, ConstDataset const& update_dataset,
+                                            Idx threading) {
             auto options = get_default_options(calculation_method, threading);
             options.optimizer_type = param.tap_changing_strategy == "disabled"
                                          ? OptimizerType::no_optimization
@@ -357,7 +355,8 @@ CalculationFunc calculation_func(CaseParam const& param) {
     }
     if (calculation_type == "state_estimation"s) {
         return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                          Dataset const& dataset, ConstDataset const& update_dataset, Idx threading) {
+                                          MutableDataset const& dataset, ConstDataset const& update_dataset,
+                                          Idx threading) {
             if (sym) {
                 return model.calculate_state_estimation<symmetric_t>(get_default_options(calculation_method, threading),
                                                                      dataset, update_dataset);
@@ -368,7 +367,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
     }
     if (calculation_type == "short_circuit"s) {
         return [voltage_scaling, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                                      Dataset const& dataset, ConstDataset const& update_dataset,
+                                                      MutableDataset const& dataset, ConstDataset const& update_dataset,
                                                       Idx threading) {
             auto options = get_default_options(calculation_method, threading);
             options.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(voltage_scaling);
@@ -476,18 +475,16 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
 struct ValidationCase {
     CaseParam param;
     OwningDataset input;
-    OwningDataset output;
-    OwningDataset update_batch;
-    OwningDataset output_batch;
+    std::optional<OwningDataset> output{};
+    std::optional<OwningDataset> update_batch{};
+    std::optional<OwningDataset> output_batch{};
 };
 
 ValidationCase create_validation_case(CaseParam const& param) {
-    ValidationCase validation_case;
-    validation_case.param = param;
     auto const output_type = get_output_type(param.calculation_type, param.sym);
 
     // input
-    validation_case.input = load_dataset(param.case_dir / "input.json");
+    ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json")};
 
     // output and update
     if (!param.is_batch) {
@@ -561,9 +558,9 @@ void validate_single_case(CaseParam const& param) {
         MainModel model{50.0, validation_case.input.const_dataset, 0};
         CalculationFunc const func = calculation_func(param);
 
-        func(model, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
-        assert_result(result.const_dataset, validation_case.output.const_dataset, output_prefix, param.atol,
-                      param.rtol);
+        ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
+        func(model, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
+        assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
     });
 }
 
@@ -577,7 +574,7 @@ void validate_batch_case(CaseParam const& param) {
         // TODO (mgovers): fix false positive of misc-const-correctness
         // NOLINTNEXTLINE(misc-const-correctness)
         MainModel model{50.0, validation_case.input.const_dataset, 0};
-        Idx const n_scenario = static_cast<Idx>(validation_case.update_batch.batch_scenarios.size());
+        auto const n_scenario = static_cast<Idx>(validation_case.update_batch.value().batch_scenarios.size());
         CalculationFunc const func = calculation_func(param);
 
         // run in loops
@@ -588,11 +585,12 @@ void validate_batch_case(CaseParam const& param) {
 
             // update and run
             model_copy.update_component<MainModel::permanent_update_t>(
-                validation_case.update_batch.batch_scenarios[scenario]);
-            func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, {}, -1);
+                validation_case.update_batch.value().batch_scenarios[scenario]);
+            ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
+            func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
 
             // check
-            assert_result(result.const_dataset, validation_case.output_batch.batch_scenarios[scenario], output_prefix,
+            assert_result(result.const_dataset, validation_case.output_batch.value().batch_scenarios[scenario],
                           param.atol, param.rtol);
         }
 
@@ -602,10 +600,10 @@ void validate_batch_case(CaseParam const& param) {
             CAPTURE(threading);
 
             func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
-                 validation_case.update_batch.const_dataset, threading);
+                 validation_case.update_batch.value().const_dataset, threading);
 
-            assert_result(batch_result.const_dataset, validation_case.output_batch.const_dataset, output_prefix,
-                          param.atol, param.rtol);
+            assert_result(batch_result.const_dataset, validation_case.output_batch.value().const_dataset, param.atol,
+                          param.rtol);
         }
     });
 }
