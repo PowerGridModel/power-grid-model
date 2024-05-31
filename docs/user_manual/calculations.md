@@ -657,9 +657,9 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 
 | strategy                                                                                                    | initial tap position | exploitation direction | description                                                                           |
 | ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
-| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        |                                                                                       |
-| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Find the tap position that gives lowest control side voltage within the `u_band` |
-| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Find the tap position that gives highest control side voltage within the `u_band` |
+| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | Find any tap position that gives a control side voltage within the `u_band`           |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Find the tap position that gives the lowest control side voltage within the `u_band`  |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Find the tap position that gives the highest control side voltage within the `u_band` |
 
 
 ## Batch Calculations
