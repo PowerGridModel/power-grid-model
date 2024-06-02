@@ -599,12 +599,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
-
         auto const cache = this->cache_states(order);
-        auto result = optimize(state, order, method);
-        update_state(cache);
-
-        return result;
+        try {
+            auto result = optimize(state, order, method);
+            update_state(cache);
+            return result;
+        } catch (...) {
+            update_state(cache);
+            throw;
+        }
     }
 
     constexpr auto get_strategy() const { return strategy_; }

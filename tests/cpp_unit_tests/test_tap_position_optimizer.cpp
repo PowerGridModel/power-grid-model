@@ -564,6 +564,45 @@ auto normalized_lerp(IntS value, IntS start, IntS stop) {
     return (static_cast<double>(value) - static_cast<double>(start)) /
            (static_cast<double>(stop) - static_cast<double>(start));
 }
+void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulator& regulator_b,
+                         TransformerTapRegulatorUpdate& update_data, auto& check_b) {
+    state_b.tap_min = 1;
+    state_b.tap_max = 5;
+    state_b.tap_pos = 3;
+
+    SUBCASE("unique value in band") {
+        update_data.u_band = 0.01;
+        check_b = test::check_exact(3);
+    }
+    SUBCASE("large compact band") {
+        update_data.u_band = 1.01;
+        check_b = test::check_exact_per_strategy(3, 5, 1);
+    }
+    SUBCASE("small open band") {
+        update_data.u_band = 0.76;
+        check_b = test::check_exact_per_strategy(3, 4, 2);
+    }
+}
+
+void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulator& regulator_b,
+                           TransformerTapRegulatorUpdate& update_data, auto& check_b) {
+    state_b.tap_min = 5;
+    state_b.tap_max = 1;
+    state_b.tap_pos = 3;
+
+    SUBCASE("unique value in band") {
+        update_data.u_band = 0.01;
+        check_b = test::check_exact(3);
+    }
+    SUBCASE("large compact band") {
+        update_data.u_band = 1.01;
+        check_b = test::check_exact_per_strategy(3, 1, 5);
+    }
+    SUBCASE("small open band") {
+        update_data.u_band = 0.76;
+        check_b = test::check_exact_per_strategy(3, 2, 4);
+    }
+}
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
 
@@ -595,6 +634,25 @@ TEST_CASE("Test Tap position optimizer") {
         auto changed_components = std::vector<Idx2D>{};
         main_core::update_component<MockTransformer>(state, transformers_dataset.begin(), transformers_dataset.end(),
                                                      std::back_inserter(changed_components));
+    };
+
+    auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
+        if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>()) {
+            return false;
+        }
+        std::vector<std::pair<IntS, IntS>> trafo_state_1, trafo_state_2;
+        for (auto const transformer : state1.components.template citer<MockTransformer>()) {
+            trafo_state_1.push_back({transformer.id(), transformer.tap_pos()});
+        }
+        for (auto const transformer : state2.components.template citer<MockTransformer>()) {
+            trafo_state_2.push_back({transformer.id(), transformer.tap_pos()});
+        }
+
+        if (trafo_state_1 != trafo_state_2) {
+            return false;
+        }
+
+        return true;
     };
 
     auto const get_optimizer = [&](OptimizerStrategy strategy) {
@@ -773,42 +831,8 @@ TEST_CASE("Test Tap position optimizer") {
 
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
-                SUBCASE("normal tap range") {
-                    state_b.tap_min = 1;
-                    state_b.tap_max = 5;
-                    state_b.tap_pos = 3;
-
-                    SUBCASE("unique value in band") {
-                        update_data.u_band = 0.01;
-                        check_b = test::check_exact(3);
-                    }
-                    SUBCASE("large compact band") {
-                        update_data.u_band = 1.01;
-                        check_b = test::check_exact_per_strategy(3, 5, 1);
-                    }
-                    SUBCASE("small open band") {
-                        update_data.u_band = 0.76;
-                        check_b = test::check_exact_per_strategy(3, 4, 2);
-                    }
-                }
-                SUBCASE("inverted tap range") {
-                    state_b.tap_min = 5;
-                    state_b.tap_max = 1;
-                    state_b.tap_pos = 3;
-
-                    SUBCASE("unique value in band") {
-                        update_data.u_band = 0.01;
-                        check_b = test::check_exact(3);
-                    }
-                    SUBCASE("large compact band") {
-                        update_data.u_band = 1.01;
-                        check_b = test::check_exact_per_strategy(3, 1, 5);
-                    }
-                    SUBCASE("small open band") {
-                        update_data.u_band = 0.76;
-                        check_b = test::check_exact_per_strategy(3, 2, 4);
-                    }
-                }
+                SUBCASE("normal tap range") { checkNormalTapRange(state_b, regulator_b, update_data, check_b); }
+                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, regulator_b, update_data, check_b); }
 
                 regulator_b.update(update_data);
             }
@@ -1025,7 +1049,9 @@ TEST_CASE("Test Tap position optimizer") {
                     state_a.tap_side = tap_side;
 
                     auto optimizer = get_optimizer(strategy);
+                    auto const cached_state = state;
                     CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                    CHECK(twoStatesEqual(cached_state, state));
                 }
             }
         }
