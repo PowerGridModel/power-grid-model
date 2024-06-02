@@ -564,8 +564,7 @@ auto normalized_lerp(IntS value, IntS start, IntS stop) {
     return (static_cast<double>(value) - static_cast<double>(start)) /
            (static_cast<double>(stop) - static_cast<double>(start));
 }
-void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulator& regulator_b,
-                         TransformerTapRegulatorUpdate& update_data, auto& check_b) {
+void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulatorUpdate& update_data, auto& check_b) {
     state_b.tap_min = 1;
     state_b.tap_max = 5;
     state_b.tap_pos = 3;
@@ -584,8 +583,7 @@ void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulator&
     }
 }
 
-void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulator& regulator_b,
-                           TransformerTapRegulatorUpdate& update_data, auto& check_b) {
+void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulatorUpdate& update_data, auto& check_b) {
     state_b.tap_min = 5;
     state_b.tap_max = 1;
     state_b.tap_pos = 3;
@@ -641,10 +639,10 @@ TEST_CASE("Test Tap position optimizer") {
             return false;
         }
         std::vector<std::pair<IntS, IntS>> trafo_state_1, trafo_state_2;
-        for (auto const transformer : state1.components.template citer<MockTransformer>()) {
+        for (auto const& transformer : state1.components.template citer<MockTransformer>()) {
             trafo_state_1.push_back({transformer.id(), transformer.tap_pos()});
         }
-        for (auto const transformer : state2.components.template citer<MockTransformer>()) {
+        for (auto const& transformer : state2.components.template citer<MockTransformer>()) {
             trafo_state_2.push_back({transformer.id(), transformer.tap_pos()});
         }
 
@@ -831,8 +829,8 @@ TEST_CASE("Test Tap position optimizer") {
 
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
-                SUBCASE("normal tap range") { checkNormalTapRange(state_b, regulator_b, update_data, check_b); }
-                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, regulator_b, update_data, check_b); }
+                SUBCASE("normal tap range") { checkNormalTapRange(state_b, update_data, check_b); }
+                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, update_data, check_b); }
 
                 regulator_b.update(update_data);
             }
