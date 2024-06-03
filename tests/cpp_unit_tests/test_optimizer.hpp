@@ -2,12 +2,15 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/optimizer/optimizer.hpp>
 
 #include <doctest/doctest.h>
 
-namespace power_grid_model::optimizer::test {
+namespace power_grid_model {
+namespace optimizer::test {
 struct StubComponent {};
 
 struct StubTransformerInput {};
@@ -162,4 +165,11 @@ constexpr auto strategies_and_methods = [] {
     }
     return result;
 }();
-} // namespace power_grid_model::optimizer::test
+} // namespace optimizer::test
+
+namespace meta_data {
+template <> struct get_attributes_list<optimizer::test::StubTransformerUpdate> {
+    static constexpr std::array<MetaAttribute, 0> value{};
+};
+} // namespace meta_data
+} // namespace power_grid_model

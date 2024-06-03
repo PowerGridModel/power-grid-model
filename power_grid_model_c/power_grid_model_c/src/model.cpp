@@ -10,8 +10,7 @@
 #include "handle.hpp"
 #include "options.hpp"
 
-#include <power_grid_model/auxiliary/dataset_handler.hpp>
-#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_model.hpp>
 
@@ -30,7 +29,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     return call_with_catch(
         handle,
         [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, input_dataset->export_dataset<const_dataset_t>(), 0};
+            return new PGM_PowerGridModel{system_frequency, *input_dataset, 0};
         },
         PGM_regular_error);
 }
@@ -38,10 +37,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) {
     call_with_catch(
-        handle,
-        [model, update_dataset] {
-            model->update_component<MainModel::permanent_update_t>(update_dataset->export_dataset<const_dataset_t>());
-        },
+        handle, [model, update_dataset] { model->update_component<MainModel::permanent_update_t>(*update_dataset); },
         PGM_regular_error);
 }
 
@@ -156,9 +152,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         return;
     }
 
-    Dataset const exported_output_dataset = output_dataset->export_dataset<mutable_dataset_t>();
-    auto const exported_update_dataset =
-        batch_dataset != nullptr ? batch_dataset->export_dataset<const_dataset_t>() : ConstDataset{};
+    ConstDataset const& exported_update_dataset =
+        batch_dataset != nullptr ? *batch_dataset : PGM_ConstDataset{false, 1, "update", output_dataset->meta_data()};
 
     // call calculation
     try {
@@ -170,24 +165,23 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         case PGM_power_flow:
             if (opt->symmetric != 0) {
                 handle->batch_parameter =
-                    model->calculate_power_flow<symmetric_t>(options, exported_output_dataset, exported_update_dataset);
+                    model->calculate_power_flow<symmetric_t>(options, *output_dataset, exported_update_dataset);
             } else {
-                handle->batch_parameter = model->calculate_power_flow<asymmetric_t>(options, exported_output_dataset,
-                                                                                    exported_update_dataset);
+                handle->batch_parameter =
+                    model->calculate_power_flow<asymmetric_t>(options, *output_dataset, exported_update_dataset);
             }
             break;
         case PGM_state_estimation:
             if (opt->symmetric != 0) {
-                handle->batch_parameter = model->calculate_state_estimation<symmetric_t>(
-                    options, exported_output_dataset, exported_update_dataset);
+                handle->batch_parameter =
+                    model->calculate_state_estimation<symmetric_t>(options, *output_dataset, exported_update_dataset);
             } else {
-                handle->batch_parameter = model->calculate_state_estimation<asymmetric_t>(
-                    options, exported_output_dataset, exported_update_dataset);
+                handle->batch_parameter =
+                    model->calculate_state_estimation<asymmetric_t>(options, *output_dataset, exported_update_dataset);
             }
             break;
         case PGM_short_circuit: {
-            handle->batch_parameter =
-                model->calculate_short_circuit(options, exported_output_dataset, exported_update_dataset);
+            handle->batch_parameter = model->calculate_short_circuit(options, *output_dataset, exported_update_dataset);
             break;
         }
         default:

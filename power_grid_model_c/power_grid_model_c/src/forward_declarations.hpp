@@ -21,7 +21,7 @@ struct MetaDataset;
 class Serializer;
 class Deserializer;
 
-template <dataset_handler_tag dataset_handler_type> class DatasetHandler;
+template <dataset_type_tag dataset_type> class Dataset;
 
 struct DatasetInfo;
 
@@ -32,7 +32,7 @@ using PGM_MetaComponent = power_grid_model::meta_data::MetaComponent;
 using PGM_MetaDataset = power_grid_model::meta_data::MetaDataset;
 using PGM_Serializer = power_grid_model::meta_data::Serializer;
 using PGM_Deserializer = power_grid_model::meta_data::Deserializer;
-using PGM_ConstDataset = power_grid_model::meta_data::DatasetHandler<power_grid_model::const_dataset_t>;
-using PGM_MutableDataset = power_grid_model::meta_data::DatasetHandler<power_grid_model::mutable_dataset_t>;
-using PGM_WritableDataset = power_grid_model::meta_data::DatasetHandler<power_grid_model::writable_dataset_t>;
+using PGM_ConstDataset = power_grid_model::meta_data::Dataset<power_grid_model::const_dataset_t>;
+using PGM_MutableDataset = power_grid_model::meta_data::Dataset<power_grid_model::mutable_dataset_t>;
+using PGM_WritableDataset = power_grid_model::meta_data::Dataset<power_grid_model::writable_dataset_t>;
 using PGM_DatasetInfo = power_grid_model::meta_data::DatasetInfo;

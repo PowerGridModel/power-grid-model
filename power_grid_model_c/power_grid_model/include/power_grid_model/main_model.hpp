@@ -36,10 +36,25 @@
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
-// threading
+// stl library
+#include <memory>
+#include <span>
 #include <thread>
 
 namespace power_grid_model {
+
+// solver output type to output type getter meta function
+
+template <solver_output_type SolverOutputType> struct output_type_getter;
+template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
+    template <class T> using type = meta_data::sc_output_getter_s<T>;
+};
+template <> struct output_type_getter<SolverOutput<symmetric_t>> {
+    template <class T> using type = meta_data::sym_output_getter_s<T>;
+};
+template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
+    template <class T> using type = meta_data::asym_output_getter_s<T>;
+};
 
 // main model implementation template
 template <class T, class U> class MainModelImpl;
@@ -53,6 +68,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using MainModelState = main_core::MainModelState<ComponentContainer>;
     using MathState = main_core::MathState;
 
+    template <class CT>
+    static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CT, ComponentType...>;
+
     // trait on type list
     // struct of entry
     // name of the component, and the index in the list
@@ -61,30 +79,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         size_t index;
     };
 
-    template <class T, class U> struct component_list_generator_impl;
-    template <class... C, size_t... index>
-    struct component_list_generator_impl<ComponentList<C...>, std::index_sequence<index...>> {
-        using AllTypes = ComponentList<C...>;
-        static constexpr std::array component_index_map{ComponentEntry{C::name, index}...};
-        static constexpr size_t n_types = sizeof...(C);
-
-        static size_t find_index(std::string const& name) {
-            auto const found = std::ranges::find_if(component_index_map, [&name](auto x) { return x == name; });
-            assert(found != component_index_map.cend());
-            return found->index;
-        }
-
-        template <class Comp> static constexpr size_t index_of() { return container_impl::get_cls_pos_v<Comp, C...>; }
-    };
-    using AllComponents = component_list_generator_impl<ComponentList<ComponentType...>,
-                                                        std::make_index_sequence<sizeof...(ComponentType)>>;
-    static constexpr size_t n_types = AllComponents::n_types;
+    static constexpr size_t n_types = sizeof...(ComponentType);
 
     using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
     static constexpr Idx ignore_output{-1};
+
+    // run functors with all component types
+    template <class Functor> static constexpr void run_functor_with_all_types_return_void(Functor functor) {
+        (functor.template operator()<ComponentType>(), ...);
+    }
+    template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
+        return std::array{functor.template operator()<ComponentType>()...};
+    }
 
   public:
     struct cached_update_t : std::true_type {};
@@ -107,28 +116,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
-        : system_frequency_{system_frequency} {
-        using InputFunc = void (*)(MainModelImpl & x, ConstDataPointer const& data_ptr, Idx position);
-
-        static constexpr std::array<InputFunc, n_types> add{
-            [](MainModelImpl& model, ConstDataPointer const& data_ptr, Idx position) {
-                auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::InputType>(position);
-                model.add_component<ComponentType>(begin, end);
-            }...};
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            auto const found = input_data.find(entry.name);
-            // skip if component does not exist
-            if (found == input_data.cend()) {
-                continue;
-            }
-            // add
-            add[entry.index](*this, found->second, pos);
-        }
+        : system_frequency_{system_frequency}, meta_data_{&input_data.meta_data()} {
+        assert(input_data.get_description().dataset->name == std::string_view("input"));
+        auto const add_func = [this, pos, &input_data]<typename CT>() {
+            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+        };
+        run_functor_with_all_types_return_void(add_func);
         set_construction_complete();
     }
 
     // constructor with only frequency
-    explicit MainModelImpl(double system_frequency) : system_frequency_{system_frequency} {}
+    explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data)
+        : system_frequency_{system_frequency}, meta_data_{&meta_data} {}
 
     // get number
     template <class CompType> Idx component_count() const {
@@ -138,20 +137,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // all component count
     std::map<std::string, Idx> all_component_count() const {
-        std::map<std::string, Idx> map;
-        static constexpr std::array counter{&MainModelImpl::component_count<ComponentType>...};
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            Idx const size = std::invoke(counter[entry.index], this);
-            if (size > 0) {
-                map[entry.name] = size;
+        auto const get_comp_count = [this]<typename CT>() -> std::pair<std::string, Idx> {
+            return make_pair(std::string{CT::name}, this->component_count<CT>());
+        };
+        auto const all_count = run_functor_with_all_types_return_array(get_comp_count);
+        std::map<std::string, Idx> result;
+        for (auto const& [name, count] : all_count) {
+            if (count > 0) {
+                // only add if count is greater than 0
+                result[name] = count;
             }
         }
-        return map;
+        return result;
     }
 
     // helper function to add vectors of components
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
-        add_component<CompType>(components.cbegin(), components.cend());
+        add_component<CompType>(components.begin(), components.end());
+    }
+    template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
+        add_component<CompType>(components.begin(), components.end());
     }
 
     // template to construct components
@@ -169,7 +174,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
-        constexpr auto comp_index = AllComponents::template index_of<CompType>();
+        constexpr auto comp_index = index_of_component<CompType>;
 
         assert(construction_complete_);
         assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
@@ -194,28 +199,27 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void update_component(std::vector<typename CompType::UpdateType> const& components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
-            update_component<CompType, CacheType>(components.cbegin(), components.cend(), sequence_idx);
+            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
+        }
+    }
+    template <class CompType, class CacheType>
+    void update_component(std::span<typename CompType::UpdateType const> components,
+                          std::vector<Idx2D> const& sequence_idx) {
+        if (!components.empty()) {
+            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
 
     // update all components
     template <class CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
-        using UpdateFunc = void (*)(MainModelImpl & x, ConstDataPointer const& data_ptr, Idx position,
-                                    std::vector<Idx2D> const& sequence_idx);
-
-        static constexpr std::array<UpdateFunc, n_types> update{[](MainModelImpl& model,
-                                                                   ConstDataPointer const& data_ptr, Idx position,
-                                                                   std::vector<Idx2D> const& sequence_idx) {
-            auto const [begin, end] = data_ptr.get_iterators<typename ComponentType::UpdateType>(position);
-            model.update_component<ComponentType, CacheType>(begin, end, sequence_idx);
-        }...};
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            // skip if component does not exist
-            if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
-                update[entry.index](*this, found->second, pos, sequence_idx_map[entry.index]);
-            }
-        }
+        assert(construction_complete_);
+        assert(update_data.get_description().dataset->name == std::string_view("update"));
+        auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
+            this->update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
+                                                  sequence_idx_map[index_of_component<CT>]);
+        };
+        run_functor_with_all_types_return_void(update_func);
     }
 
     // update all components
@@ -224,7 +228,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
-        constexpr auto component_index = AllComponents::template index_of<CompType>();
+        constexpr auto component_index = index_of_component<CompType>;
 
         auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
         auto const& component_sequence = std::get<component_index>(sequence_idx);
@@ -284,47 +288,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
-    void get_indexer(std::string const& component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        using GetIndexerFunc = void (*)(MainModelState const& state, ID const* id_begin, Idx size, Idx* indexer_begin);
-
-        // static function array
-        static constexpr std::array<GetIndexerFunc, n_types> get_indexer_func{
-            [](MainModelState const& state, ID const* id_begin_, Idx size_, Idx* indexer_begin_) {
-                std::transform(id_begin_, id_begin_ + size_, indexer_begin_,
-                               [&state](ID id) { return get_component_idx_by_id<ComponentType>(state, id).pos; });
-            }...};
-        // search component type name
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            if (entry.name == component_type) {
-                return get_indexer_func[entry.index](state_, id_begin, size, indexer_begin);
+    void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
+        auto const get_index_func = [&state = this->state_, component_type, id_begin, size,
+                                     indexer_begin]<typename CT>() {
+            if (component_type == CT::name) {
+                std::transform(id_begin, id_begin + size, indexer_begin,
+                               [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
             }
-        }
+        };
+        run_functor_with_all_types_return_void(get_index_func);
     }
 
     // get sequence idx map of a certain batch scenario
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
-        using GetSeqIdxFunc =
-            std::vector<Idx2D> (*)(MainModelState const& state, ConstDataPointer const& component_update, Idx pos);
 
-        // function pointer array to get cached idx
-        static constexpr std::array<GetSeqIdxFunc, n_types> get_seq_idx{
-            [](MainModelState const& state, ConstDataPointer const& component_update, Idx pos) -> std::vector<Idx2D> {
-                using UpdateType = typename ComponentType::UpdateType;
-
-                auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType>(pos);
-                return main_core::get_component_sequence<ComponentType>(state, it_begin, it_end);
-            }...};
-
-        // fill in the map per component type
-        SequenceIdx sequence_idx_map;
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            // skip if component does not exist
-            if (auto const found = update_data.find(entry.name); found != update_data.cend()) {
-                // add
-                sequence_idx_map[entry.index] = get_seq_idx[entry.index](state_, found->second, scenario_idx);
-            }
-        }
-        return sequence_idx_map;
+        auto const get_seq_idx_func = [&state = this->state_, &update_data,
+                                       scenario_idx]<typename CT>() -> std::vector<Idx2D> {
+            auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+            auto const it_begin = buffer_span.begin();
+            auto const it_end = buffer_span.end();
+            return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+        };
+        return run_functor_with_all_types_return_array(get_seq_idx_func);
     }
 
     // get sequence idx map of an entire batch for fast caching of component sequences
@@ -431,23 +416,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
     template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data,
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+    BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = -1) {
-        // if the update batch is one empty map without any component
+        // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
-        // NOTE: if the map is not empty but the datasets inside are empty
-        //     that will be considered as a zero batch_size
         if (update_data.empty()) {
             calculation_fn(*this, result_data, 0);
             return BatchParameter{};
         }
 
-        // get batch size (can't be empty; see previous check)
-        Idx const n_scenarios = update_data.cbegin()->second.batch_size();
-        // assert if all component types have the same number of batches
-        assert(std::all_of(update_data.cbegin(), update_data.cend(),
-                           [n_scenarios](auto const& x) { return x.second.batch_size() == n_scenarios; }));
+        // get batch size
+        Idx const n_scenarios = update_data.batch_size();
 
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent and but not topology cachable
@@ -457,7 +437,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            calculation_fn(*this, {}, ignore_output);
+            calculation_fn(*this,
+                           {
+                               false,
+                               1,
+                               "sym_output",
+                               *meta_data_,
+                           },
+                           ignore_output);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         } catch (const NotObservableError&) {
@@ -480,9 +467,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, Dataset const&, Idx>
-    auto sub_batch_calculation_(Calculate&& calculation_fn, Dataset const& result_data, ConstDataset const& update_data,
-                                std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+    auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
+                                ConstDataset const& update_data, std::vector<std::string>& exceptions,
+                                std::vector<CalculationInfo>& infos) {
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
@@ -634,60 +622,55 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class Component> using UpdateType = typename Component::UpdateType;
 
     static bool is_update_independent(ConstDataset const& update_data) {
-        // check all components
-        return std::ranges::all_of(AllComponents::component_index_map, [&update_data](ComponentEntry const& entry) {
-            static constexpr std::array check_component_update_independent{
-                &is_component_update_independent<ComponentType>...};
-            auto const found = update_data.find(entry.name);
-            // return true if this component update does not exist
-            if (found == update_data.cend()) {
-                return true;
-            }
-            // check for this component update
-            return check_component_update_independent[entry.index](found->second);
-        });
-    }
-
-    template <class Component> static bool is_component_update_independent(ConstDataPointer const& component_update) {
         // If the batch size is (0 or) 1, then the update data for this component is 'independent'
-        if (component_update.batch_size() <= 1) {
+        if (update_data.batch_size() <= 1) {
             return true;
         }
 
-        // Remember the first batch size, then loop over the remaining batches and check if they are of the same length
-        Idx const elements_per_scenario = component_update.elements_per_scenario(0);
-        for (Idx batch = 1; batch != component_update.batch_size(); ++batch) {
-            if (elements_per_scenario != component_update.elements_per_scenario(batch)) {
+        auto const is_component_update_independent = [&update_data]<typename CT>() -> bool {
+            // get span of all the update data
+            auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
+            // Remember the first batch size, then loop over the remaining batches and check if they are of the same
+            // length
+            auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
+            bool const uniform_batch = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
+                return static_cast<Idx>(span.size()) == elements_per_scenario;
+            });
+            if (!uniform_batch) {
                 return false;
             }
-        }
-
-        // Remember the begin iterator of the first batch, then loop over the remaining batches and check the ids
-        UpdateType<Component> const* it_first_begin =
-            component_update.template get_iterators<UpdateType<Component>>(0).first;
-        // check the subsequent batches
-        // only return true if all batches match the ids of the first batch
-        return std::all_of(
-            IdxCount{1}, IdxCount{component_update.batch_size()}, [it_first_begin, &component_update](Idx batch) {
-                auto const [it_begin, it_end] = component_update.template get_iterators<UpdateType<Component>>(batch);
-                return std::equal(it_begin, it_end, it_first_begin,
-                                  [](UpdateType<Component> const& obj, UpdateType<Component> const& first) {
-                                      return obj.id == first.id;
-                                  });
+            if (elements_per_scenario == 0) {
+                return true;
+            }
+            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
+            // ids
+            auto const first_span = all_spans[0];
+            // check the subsequent scenarios
+            // only return true if all scenarios match the ids of the first batch
+            return std::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+                return std::ranges::equal(
+                    current_span, first_span,
+                    [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
             });
+        };
+
+        // check all components
+        auto const update_independent = run_functor_with_all_types_return_array(is_component_update_independent);
+        return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
     template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy,
                    calculate_power_flow_<sym>(options.err_tol, options.max_iter),
-                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); })
+                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
+                   *meta_data_)
             ->optimize(state_, options.calculation_method);
     }
 
     // Single load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    void calculate_power_flow(Options const& options, Dataset const& result_data, Idx pos = 0) {
+    void calculate_power_flow(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const math_output = calculate_power_flow<sym>(options);
 
@@ -698,12 +681,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Batch load flow calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    BatchParameter calculate_power_flow(Options const& options, Dataset const& result_data,
+    BatchParameter calculate_power_flow(Options const& options, MutableDataset const& result_data,
                                         ConstDataset const& update_data) {
         return batch_calculation_(
-            [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
-
                 sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
                 sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
 
@@ -722,7 +704,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Single state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    void calculate_state_estimation(Options const& options, Dataset const& result_data, Idx pos = 0) {
+    void calculate_state_estimation(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         auto const solver_output = calculate_state_estimation<sym>(options);
 
@@ -733,10 +715,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Batch state estimation calculation, propagating the results to result_data
     template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(Options const& options, Dataset const& result_data,
+    BatchParameter calculate_state_estimation(Options const& options, MutableDataset const& result_data,
                                               ConstDataset const& update_data) {
         return batch_calculation_(
-            [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
 
                 sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
@@ -756,7 +738,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single short circuit calculation, propagating the results to result_data
-    void calculate_short_circuit(Options const& options, Dataset const& result_data, Idx pos = 0) {
+    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
         if (std::all_of(state_.components.template citer<Fault>().begin(),
                         state_.components.template citer<Fault>().end(),
@@ -770,10 +752,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Batch load flow calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(Options const& options, Dataset const& result_data,
+    BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
                                            ConstDataset const& update_data) {
         return batch_calculation_(
-            [&options](MainModelImpl& model, Dataset const& target_data, Idx pos) {
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 if (pos != ignore_output) {
                     model.calculate_short_circuit(options, target_data, pos);
                 }
@@ -789,33 +771,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, Dataset const& result_data,
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
                        Idx pos = 0) {
-        using OutputFunc = void (*)(MainModelImpl & x, MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    MutableDataPointer const& data_ptr, Idx position);
-
-        static constexpr std::array<OutputFunc, n_types> get_result{
-            [](MainModelImpl& model, MathOutput<std::vector<SolverOutputType>> const& math_output_,
-               MutableDataPointer const& data_ptr, Idx position) {
-                auto const begin = data_ptr
-                                       .get_iterators<std::conditional_t<
-                                           steady_state_solver_output_type<SolverOutputType>,
-                                           typename ComponentType::template OutputType<typename SolverOutputType::sym>,
-                                           typename ComponentType::ShortCircuitOutputType>>(position)
-                                       .first;
-                model.output_result<ComponentType>(math_output_, begin);
-            }...};
-
-        Timer const t_output(calculation_info_, 3000, "Produce output");
-        for (ComponentEntry const& entry : AllComponents::component_index_map) {
-            auto const found = result_data.find(entry.name);
-            // skip if component does not exist
-            if (found == result_data.cend()) {
-                continue;
+        auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
+            // output
+            auto const span = result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
+            if (span.empty()) {
+                return;
             }
-            // update
-            get_result[entry.index](*this, math_output, found->second, pos);
-        }
+            this->output_result<CT>(math_output, span.begin());
+        };
+        Timer const t_output(calculation_info_, 3000, "Produce output");
+        run_functor_with_all_types_return_void(output_func);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
@@ -824,6 +791,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     CalculationInfo calculation_info_; // needs to be first due to padding override
 
     double system_frequency_;
+    meta_data::MetaData const* meta_data_;
 
     MainModelState state_;
     // math model
@@ -1014,18 +982,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr auto include_all = [](Idx) { return true; };
 
-    /** This is a heavily templated member function because it operates on many different variables of many different
-     * types, but the essence is ever the same: filling one member (vector) of the calculation calc_input struct
-     * (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as the
-     * corresponding component are stored in the component topology. There is one such struct for each sub graph / math
-     * model and all of them are filled within the same function call (i.e. Notice that calc_input is a vector).
+    /** This is a heavily templated member function because it operates on many different variables of many
+     *different types, but the essence is ever the same: filling one member (vector) of the calculation calc_input
+     *struct (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as
+     *the corresponding component are stored in the component topology. There is one such struct for each sub graph
+     * / math model and all of them are filled within the same function call (i.e. Notice that calc_input is a
+     *vector).
      *
      *  1. For each component, check if it should be included.
      *     By default, all component are included, except for some cases, like power sensors. For power sensors, the
-     *     list of component contains all power sensors, but the preparation should only be done for one type of power
-     *     sensors at a time. Therefore, `included` will be a lambda function, such as:
+     *     list of component contains all power sensors, but the preparation should only be done for one type of
+     *power sensors at a time. Therefore, `included` will be a lambda function, such as:
      *
-     *       [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; }
+     *       [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source;
+     *}
      *
      *  2. Find the original component in the topology and retrieve its calculation parameters.
      *
@@ -1047,16 +1017,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The component type for which we are collecting calculation parameters
      *
      * @tparam PredicateIn
-     * 	    The lambda function type. The actual type depends on the captured variables, and will be automatically
-     * 	    deduced.
+     * 	    The lambda function type. The actual type depends on the captured variables, and will be
+     *automatically deduced.
      *
      * @param component[in]
      *      The vector of component math indices to consider (e.g. state_.topo_comp_coup->source).
      *      When idx.group = -1, the original component is not assigned to a math model, so we can skip it.
      *
      * @param calc_input[out]
-     *		Although this variable is called `input`, it is actually the output of this function, it stored the
-     *		calculation parameters for each math model, for each component of type ComponentIn.
+     *		Although this variable is called `input`, it is actually the output of this function, it stored
+     *the calculation parameters for each math model, for each component of type ComponentIn.
      *
      * @param include
      *      A lambda function (Idx i -> bool) which returns true if the component at Idx i should be included.
@@ -1274,9 +1244,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             // Check the branch and shunt indices
             constexpr auto branch_param_in_seq_map =
-                std::array{AllComponents::template index_of<Line>(), AllComponents::template index_of<Link>(),
-                           AllComponents::template index_of<Transformer>()};
-            constexpr auto shunt_param_in_seq_map = std::array{AllComponents::template index_of<Shunt>()};
+                std::array{index_of_component<Line>, index_of_component<Link>, index_of_component<Transformer>};
+            constexpr auto shunt_param_in_seq_map = std::array{index_of_component<Shunt>};
 
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 // construct from existing Y_bus structure if possible
