@@ -187,7 +187,7 @@ sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g
 
 The recommended way to get C++ package is via [Homebrew](https://brew.sh/).
 
-```note
+```{note}
 Go to its website to follow the installation instruction.
 ```
 
