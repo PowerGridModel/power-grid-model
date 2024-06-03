@@ -354,6 +354,11 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
     }
+    int64_t tap_range() const {
+        return apply([](auto const& t) {
+            return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
+        });
+    }
 
     template <typename Func>
         requires(std::invocable<Func, TransformerTypes const&> && ...)
@@ -578,6 +583,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
+    mutable std::vector<uint64_t> max_tap_ranges_per_rank{};
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
@@ -654,10 +660,14 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                  CalculationMethod method) const -> ResultType {
         auto result = calculate_(state, method);
 
+        std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size() + 1),
+                                              static_cast<IntS>(0));
+
         bool tap_changed = true;
         while (tap_changed) {
             tap_changed = false;
             UpdateBuffer update_data;
+            size_t rank_index = 0;
 
             for (auto const& same_rank_regulators : regulator_order) {
                 for (auto const& regulator : same_rank_regulators) {
@@ -666,8 +676,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 if (tap_changed) {
                     break;
                 }
+                iterations_per_rank[++rank_index] = 0; // NOSONAR
             }
             if (tap_changed) {
+                if (static_cast<uint64_t>(++iterations_per_rank[rank_index]) >
+                    2 * max_tap_ranges_per_rank[rank_index]) {
+                    throw MaxIterationReached{"TapPositionOptimizer::iterate"};
+                }
                 update_state(update_data);
                 result = calculate_(state, method);
             }
@@ -737,6 +752,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // min voltage at control side => max voltage at tap side => max tap pos
             return transformer.tap_max();
         };
+        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& a, RegulatedTransformer const& b) {
+            return a.transformer.tap_range() < b.transformer.tap_range();
+        };
 
         switch (strategy_) {
         case OptimizerStrategy::any:
@@ -753,6 +771,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
+        }
+
+        if (max_tap_ranges_per_rank.empty()) {
+            max_tap_ranges_per_rank.reserve(regulator_order.size());
+            for (auto const& same_rank_regulators : regulator_order) {
+                max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
+                                                                           same_rank_regulators.end(),
+                                                                           tap_pos_range_cmp)
+                                                      ->transformer.tap_range());
+            }
         }
     }
 

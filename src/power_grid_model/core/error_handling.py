@@ -28,6 +28,7 @@ from power_grid_model.errors import (
     InvalidShortCircuitPhaseOrType,
     InvalidTransformerClock,
     IterationDiverge,
+    MaxIterationReached,
     MissingCaseForEnumError,
     NotObservableError,
     PowerGridBatchError,
@@ -60,6 +61,7 @@ _INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (-?\d
 _SPARSE_MATRIX_ERROR_RE = re.compile(r"Sparse matrix error")  # multiple different flavors
 _NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for state estimation.\n")
 _ITERATION_DIVERGE_RE = re.compile(r"Iteration failed to converge")  # potentially multiple different flavors
+_MAX_ITERATION_REACHED_RE = re.compile(r"Maximum number of iterations reached")
 _CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (-?\d+)\n")
 _ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (-?\d+)\n")
 _INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) measurement is not supported for object of type (\w+)")
@@ -85,6 +87,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _SPARSE_MATRIX_ERROR_RE: SparseMatrixError,
     _NOT_OBSERVABLE_ERROR_RE: NotObservableError,
     _ITERATION_DIVERGE_RE: IterationDiverge,
+    _MAX_ITERATION_REACHED_RE: MaxIterationReached,
     _CONFLICT_ID_RE: ConflictID,
     _ID_NOT_FOUND_RE: IDNotFound,
     _INVALID_MEASURED_OBJECT_RE: InvalidMeasuredObject,

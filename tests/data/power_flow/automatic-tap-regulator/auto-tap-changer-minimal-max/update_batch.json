@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "transformer": [
+        {
+          "id": 12,
+          "to_status": 1,
+          "tap_pos": -5
+        }
+      ]
+    },
+    {
+      "transformer": [
+        {
+          "id": 14,
+          "to_status": 1,
+          "tap_pos": 5
+        }
+      ]
+    },
+    {
+      "transformer": [
+        {
+          "id": 11,
+          "from_status": 0
+        },
+        {
+          "id": 12,
+          "to_status": 1
+        }
+      ]
+    },
+    {
+      "transformer": [
+        {
+          "id": 13,
+          "from_status": 0
+        },
+        {
+          "id": 14,
+          "to_status": 1
+        }
+      ]
+    }
+  ]
+}

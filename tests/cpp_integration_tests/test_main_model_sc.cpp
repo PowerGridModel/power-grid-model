@@ -155,22 +155,17 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
             {5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}};
 
         ConstDataset input_data{false, 1, "input", meta_data::meta_data_gen::meta_data};
-        input_data.add_buffer("node", static_cast<Idx>(node_input.size()), static_cast<Idx>(node_input.size()), nullptr,
-                              node_input.data());
-        input_data.add_buffer("line", static_cast<Idx>(line_input.size()), static_cast<Idx>(line_input.size()), nullptr,
-                              line_input.data());
-        input_data.add_buffer("source", static_cast<Idx>(source_input.size()), static_cast<Idx>(source_input.size()),
-                              nullptr, source_input.data());
-        input_data.add_buffer("fault", static_cast<Idx>(fault_input.size()), static_cast<Idx>(fault_input.size()),
-                              nullptr, fault_input.data());
+        input_data.add_buffer("node", node_input.size(), node_input.size(), nullptr, node_input.data());
+        input_data.add_buffer("line", line_input.size(), line_input.size(), nullptr, line_input.data());
+        input_data.add_buffer("source", source_input.size(), source_input.size(), nullptr, source_input.data());
+        input_data.add_buffer("fault", fault_input.size(), fault_input.size(), nullptr, fault_input.data());
 
         MainModel model{50.0, input_data};
 
         std::vector<NodeShortCircuitOutput> node_output(2);
 
         MutableDataset result_data{false, 1, "sc_output", meta_data::meta_data_gen::meta_data};
-        result_data.add_buffer("node", static_cast<Idx>(node_output.size()), static_cast<Idx>(node_output.size()),
-                               nullptr, node_output.data());
+        result_data.add_buffer("node", node_output.size(), node_output.size(), nullptr, node_output.data());
 
         model.calculate_short_circuit({.calculation_method = CalculationMethod::iec60909,
                                        .short_circuit_voltage_scaling = ShortCircuitVoltageScaling::maximum},

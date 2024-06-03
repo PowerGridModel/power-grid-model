@@ -67,11 +67,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
     static constexpr Idx invalid_index{-1};
 
-    Dataset(bool is_batch, Idx batch_size, std::string_view dataset, MetaData const& meta_data)
+    Dataset(bool is_batch, Idx batch_size, std::string_view dataset_name, MetaData const& meta_data)
         : meta_data_{&meta_data},
           dataset_info_{.is_batch = is_batch,
                         .batch_size = batch_size,
-                        .dataset = &meta_data.get_dataset(dataset),
+                        .dataset = &meta_data.get_dataset(dataset_name),
                         .component_info = {}} {
         if (!dataset_info_.is_batch && (dataset_info_.batch_size != 1)) {
             throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
@@ -126,10 +126,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
-    void add_buffer(std::string_view component, Idx elements_per_scenario, Idx total_elements, Indptr* indptr,
-                    Data* data)
+    void add_buffer(std::string_view component, std::integral auto elements_per_scenario_,
+                    std::integral auto total_elements_, Indptr* indptr, Data* data)
         requires(!is_indptr_mutable_v<dataset_type>)
     {
+        auto const elements_per_scenario = static_cast<Idx>(elements_per_scenario_);
+        auto const total_elements = static_cast<Idx>(total_elements_);
         check_non_uniform_integrity<immutable_t>(elements_per_scenario, total_elements, indptr);
         add_component_info_impl(component, elements_per_scenario, total_elements);
         buffers_.back().data = data;
@@ -219,10 +221,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
                         "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n"};
                 }
             }
-        } else {
-            if (indptr) {
-                throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
-            }
+        } else if (indptr) {
+            throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
         }
     }
 

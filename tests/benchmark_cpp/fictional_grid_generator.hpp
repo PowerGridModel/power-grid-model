@@ -36,18 +36,13 @@ struct InputData {
 
     ConstDataset get_dataset() const {
         ConstDataset dataset{false, 1, "input", meta_data::meta_data_gen::meta_data};
-        dataset.add_buffer("node", static_cast<Idx>(node.size()), static_cast<Idx>(node.size()), nullptr, node.data());
-        dataset.add_buffer("transformer", static_cast<Idx>(transformer.size()), static_cast<Idx>(transformer.size()),
-                           nullptr, transformer.data());
-        dataset.add_buffer("line", static_cast<Idx>(line.size()), static_cast<Idx>(line.size()), nullptr, line.data());
-        dataset.add_buffer("source", static_cast<Idx>(source.size()), static_cast<Idx>(source.size()), nullptr,
-                           source.data());
-        dataset.add_buffer("sym_load", static_cast<Idx>(sym_load.size()), static_cast<Idx>(sym_load.size()), nullptr,
-                           sym_load.data());
-        dataset.add_buffer("asym_load", static_cast<Idx>(asym_load.size()), static_cast<Idx>(asym_load.size()), nullptr,
-                           asym_load.data());
-        dataset.add_buffer("shunt", static_cast<Idx>(shunt.size()), static_cast<Idx>(shunt.size()), nullptr,
-                           shunt.data());
+        dataset.add_buffer("node", node.size(), node.size(), nullptr, node.data());
+        dataset.add_buffer("transformer", transformer.size(), transformer.size(), nullptr, transformer.data());
+        dataset.add_buffer("line", line.size(), line.size(), nullptr, line.data());
+        dataset.add_buffer("source", source.size(), source.size(), nullptr, source.data());
+        dataset.add_buffer("sym_load", sym_load.size(), sym_load.size(), nullptr, sym_load.data());
+        dataset.add_buffer("asym_load", asym_load.size(), asym_load.size(), nullptr, asym_load.data());
+        dataset.add_buffer("shunt", shunt.size(), shunt.size(), nullptr, shunt.data());
         return dataset;
     }
 };
@@ -65,21 +60,14 @@ template <symmetry_tag sym> struct OutputData {
     MutableDataset get_dataset() {
         std::string const dataset_name = is_symmetric_v<sym> ? "sym_output" : "asym_output";
         MutableDataset dataset{true, batch_size, dataset_name, meta_data::meta_data_gen::meta_data};
-
-        dataset.add_buffer("node", static_cast<Idx>(node.size()) / batch_size, static_cast<Idx>(node.size()), nullptr,
-                           node.data());
-        dataset.add_buffer("transformer", static_cast<Idx>(transformer.size()) / batch_size,
-                           static_cast<Idx>(transformer.size()), nullptr, transformer.data());
-        dataset.add_buffer("line", static_cast<Idx>(line.size()) / batch_size, static_cast<Idx>(line.size()), nullptr,
-                           line.data());
-        dataset.add_buffer("source", static_cast<Idx>(source.size()) / batch_size, static_cast<Idx>(source.size()),
-                           nullptr, source.data());
-        dataset.add_buffer("sym_load", static_cast<Idx>(sym_load.size()) / batch_size,
-                           static_cast<Idx>(sym_load.size()), nullptr, sym_load.data());
-        dataset.add_buffer("asym_load", static_cast<Idx>(asym_load.size()) / batch_size,
-                           static_cast<Idx>(asym_load.size()), nullptr, asym_load.data());
-        dataset.add_buffer("shunt", static_cast<Idx>(shunt.size()) / batch_size, static_cast<Idx>(shunt.size()),
-                           nullptr, shunt.data());
+        dataset.add_buffer("node", node.size() / batch_size, node.size(), nullptr, node.data());
+        dataset.add_buffer("transformer", transformer.size() / batch_size, transformer.size(), nullptr,
+                           transformer.data());
+        dataset.add_buffer("line", line.size() / batch_size, line.size(), nullptr, line.data());
+        dataset.add_buffer("source", source.size() / batch_size, source.size(), nullptr, source.data());
+        dataset.add_buffer("sym_load", sym_load.size() / batch_size, sym_load.size(), nullptr, sym_load.data());
+        dataset.add_buffer("asym_load", asym_load.size() / batch_size, asym_load.size(), nullptr, asym_load.data());
+        dataset.add_buffer("shunt", shunt.size() / batch_size, shunt.size(), nullptr, shunt.data());
         return dataset;
     }
 };
@@ -94,10 +82,8 @@ struct BatchData {
         if (batch_size == 0) {
             return dataset;
         }
-        dataset.add_buffer("sym_load", static_cast<Idx>(sym_load.size()) / batch_size,
-                           static_cast<Idx>(sym_load.size()), nullptr, sym_load.data());
-        dataset.add_buffer("asym_load", static_cast<Idx>(asym_load.size()) / batch_size,
-                           static_cast<Idx>(asym_load.size()), nullptr, asym_load.data());
+        dataset.add_buffer("sym_load", sym_load.size() / batch_size, sym_load.size(), nullptr, sym_load.data());
+        dataset.add_buffer("asym_load", asym_load.size() / batch_size, asym_load.size(), nullptr, asym_load.data());
         return dataset;
     }
 };
