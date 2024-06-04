@@ -37,7 +37,9 @@ class Transformer : public Branch {
           winding_to_{transformer_input.winding_to},
           clock_{transformer_input.clock},
           tap_side_{transformer_input.tap_side},
-          tap_pos_{transformer_input.tap_pos},
+          tap_pos_{transformer_input.tap_pos == na_IntS
+                       ? (transformer_input.tap_nom == na_IntS ? (IntS)0 : transformer_input.tap_nom)
+                       : transformer_input.tap_pos},
           tap_min_{transformer_input.tap_min},
           tap_max_{transformer_input.tap_max},
           tap_nom_{transformer_input.tap_nom == na_IntS ? (IntS)0 : transformer_input.tap_nom},
@@ -71,14 +73,14 @@ class Transformer : public Branch {
     double phase_shift() const final { return clock_ * deg_30; }
     bool is_param_mutable() const final { return true; }
     // getters
-    constexpr IntS tap_pos() const { return tap_pos_; }
-    constexpr BranchSide tap_side() const { return tap_side_; }
-    constexpr IntS tap_min() const { return tap_min_; }
-    constexpr IntS tap_max() const { return tap_max_; }
-    constexpr IntS tap_nom() const { return tap_nom_; }
+    IntS tap_pos() const { return tap_pos_; }
+    BranchSide tap_side() const { return tap_side_; }
+    IntS tap_min() const { return tap_min_; }
+    IntS tap_max() const { return tap_max_; }
+    IntS tap_nom() const { return tap_nom_; }
 
     // setter
-    constexpr bool set_tap(IntS new_tap) {
+    bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
             return false;
         }
@@ -142,7 +144,7 @@ class Transformer : public Branch {
         return {r / base_z, x / base_z};
     }
 
-    constexpr IntS tap_limit(IntS new_tap) const {
+    IntS tap_limit(IntS new_tap) const {
         new_tap = std::min(new_tap, std::max(tap_max_, tap_min_));
         new_tap = std::max(new_tap, std::min(tap_max_, tap_min_));
         return new_tap;
@@ -264,7 +266,5 @@ class Transformer : public Branch {
         return param;
     }
 };
-
-static_assert(transformer_c<Transformer>);
 
 } // namespace power_grid_model

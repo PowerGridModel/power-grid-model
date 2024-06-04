@@ -58,6 +58,18 @@ TEST_CASE("Test transformer") {
                            .r_grounding_to = nan,
                            .x_grounding_to = nan};
 
+    SUBCASE("Test optional inputs") {
+        input.tap_nom = 1;
+        input.tap_pos = na_IntS;
+        std::vector<Transformer> vec;
+        vec.emplace_back(input, 150e3, 10e3);
+        input.tap_nom = na_IntS;
+        vec.emplace_back(input, 150e3, 10e3);
+        CHECK(vec[0].tap_pos() == 1);
+        CHECK(vec[1].tap_pos() == 0);
+        CHECK(vec[1].tap_nom() == 0);
+    }
+
     std::vector<Transformer> vec;
     // 0 YNyn12
     vec.emplace_back(input, 150e3, 10e3);
