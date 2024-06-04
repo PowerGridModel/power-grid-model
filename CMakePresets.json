@@ -165,31 +165,40 @@
       ]
     },
     {
+      "name": "clang-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "inherits": "unix-sanitizer",
+      "hidden": true
+    },
+    {
       "name": "clang-debug",
       "inherits": [
         "debug",
-        "unix-sanitizer"
+        "clang-base"
       ]
     },
     {
       "name": "clang-release",
       "inherits": [
         "release",
-        "unix-sanitizer"
+        "clang-base"
       ]
     },
     {
       "name": "clang-tidy-debug",
       "inherits": [
         "debug",
-        "clang-tidy-unix-base"
+        "clang-base"
       ]
     },
     {
       "name": "clang-tidy-release",
       "inherits": [
         "release",
-        "clang-tidy-unix-base"
+        "clang-base"
       ]
     },
     {
@@ -265,7 +274,7 @@
     {
       "name": "ci-sonar",
       "inherits": [
-        "unix-coverage",
+        "clang-base",
         "debug"
       ]
     },
