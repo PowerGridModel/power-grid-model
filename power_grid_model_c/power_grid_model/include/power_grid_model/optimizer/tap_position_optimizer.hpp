@@ -583,7 +583,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
-    mutable std::vector<uint64_t> max_tap_ranges_per_rank{};
+    std::vector<uint64_t> max_tap_ranges_per_rank{};
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
@@ -601,6 +601,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
         auto const cache = this->cache_states(order);
         try {
+            opt_prep(order);
             auto result = optimize(state, order, method);
             update_state(cache);
             return result;
@@ -613,9 +614,25 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     constexpr auto get_strategy() const { return strategy_; }
 
   private:
+    void opt_prep(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
+        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& a, RegulatedTransformer const& b) {
+            return a.transformer.tap_range() < b.transformer.tap_range();
+        };
+
+        if (max_tap_ranges_per_rank.empty()) {
+            max_tap_ranges_per_rank.reserve(regulator_order.size());
+            for (auto const& same_rank_regulators : regulator_order) {
+                max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
+                                                                           same_rank_regulators.end(),
+                                                                           tap_pos_range_cmp)
+                                                      ->transformer.tap_range());
+            }
+        }
+    }
+
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                   CalculationMethod method) const -> MathOutput<ResultType> {
-        initialize(regulator_order);
+        pilot_run(regulator_order);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
             return produce_output(regulator_order, std::move(result));
@@ -744,7 +761,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto initialize(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
@@ -754,9 +771,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
             // min voltage at control side => max voltage at tap side => max tap pos
             return transformer.tap_max();
-        };
-        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& a, RegulatedTransformer const& b) {
-            return a.transformer.tap_range() < b.transformer.tap_range();
         };
 
         switch (strategy_) {
@@ -773,17 +787,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(min_voltage_pos, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
-        }
-
-        if (max_tap_ranges_per_rank.empty()) {
-            max_tap_ranges_per_rank.reserve(regulator_order.size());
-            for (auto const& same_rank_regulators : regulator_order) {
-                max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
-                                                                           same_rank_regulators.end(),
-                                                                           tap_pos_range_cmp)
-                                                      ->transformer.tap_range());
-            }
+            throw MissingCaseForEnumError{"TapPositionOptimizer::pilot_run"s, strategy_};
         }
     }
 

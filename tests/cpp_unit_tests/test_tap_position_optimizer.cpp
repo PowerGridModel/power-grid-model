@@ -638,7 +638,8 @@ TEST_CASE("Test Tap position optimizer") {
         if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>()) {
             return false;
         }
-        std::vector<std::pair<IntS, IntS>> trafo_state_1, trafo_state_2;
+        std::vector<std::pair<IntS, IntS>> trafo_state_1;
+        std::vector<std::pair<IntS, IntS>> trafo_state_2;
         for (auto const& transformer : state1.components.template citer<MockTransformer>()) {
             trafo_state_1.push_back({transformer.id(), transformer.tap_pos()});
         }
@@ -1031,9 +1032,10 @@ TEST_CASE("Test Tap position optimizer") {
 
             auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
 
+            // tap pos will jump between 3 and 4
             state_b.tap_min = 1;
             state_b.tap_max = 5;
-            state_b.tap_pos = 3;
+            state_b.tap_pos = 5;
 
             regulator_b.update(update_data);
 
@@ -1047,7 +1049,7 @@ TEST_CASE("Test Tap position optimizer") {
                     state_a.tap_side = tap_side;
 
                     auto optimizer = get_optimizer(strategy);
-                    auto const cached_state = state;
+                    auto const cached_state = state; // NOSONAR
                     CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
                     CHECK(twoStatesEqual(cached_state, state));
                 }
