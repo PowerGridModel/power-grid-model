@@ -127,7 +127,9 @@
       "name": "clang-tidy-unix-base",
       "cacheVariables": {
         "CMAKE_C_CLANG_TIDY": "$env{CLANG_TIDY}",
-        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}"
+        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
       },
       "inherits": "unix-base",
       "hidden": true
@@ -191,14 +193,14 @@
       "name": "clang-tidy-debug",
       "inherits": [
         "debug",
-        "clang-base"
+        "clang-tidy-unix-base"
       ]
     },
     {
       "name": "clang-tidy-release",
       "inherits": [
         "release",
-        "clang-base"
+        "clang-tidy-unix-base"
       ]
     },
     {
