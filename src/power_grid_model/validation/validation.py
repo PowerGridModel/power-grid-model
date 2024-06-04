@@ -476,6 +476,9 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
     if calculation_type in (None, CalculationType.short_circuit) and "fault" in data:
         errors += validate_fault(data)
 
+    if calculation_type in (None, CalculationType.power_flow) and "transformer_tap_regulator" in data:
+        errors += validate_transformer_tap_regulator(data)
+
     return errors
 
 
@@ -805,4 +808,26 @@ def validate_fault(data: SingleDataset) -> List[ValidationError]:
     errors += all_greater_than_or_equal_to_zero(data, "fault", "r_f")
     errors += all_enabled_identical(data, "fault", "fault_type", "status")
     errors += all_enabled_identical(data, "fault", "fault_phase", "status")
+    return errors
+
+
+def validate_regulator(data: SingleDataset, component: str) -> List[ValidationError]:
+    errors = validate_base(data, component)
+    errors += all_valid_ids(
+        data,
+        component,
+        field="regulated_object",
+        ref_components=["transformer", "three_winding_transformer"],
+    )
+    return errors
+
+
+def validate_transformer_tap_regulator(data: SingleDataset) -> List[ValidationError]:
+    errors = validate_regulator(data, "transformer_tap_regulator")
+    errors += all_boolean(data, "transformer_tap_regulator", "status")
+    errors += all_valid_enum_values(data, "transformer_tap_regulator", "control_side", [BranchSide, Branch3Side])
+    errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "u_set")
+    errors += all_greater_than_zero(data, "transformer_tap_regulator", "u_band")
+    errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "line_drop_compensation_r", 0.0)
+    errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "line_drop_compensation_x", 0.0)
     return errors

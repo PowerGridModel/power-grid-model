@@ -160,7 +160,7 @@ class MultiFieldValidationError(ValidationError):
 
 class MultiComponentValidationError(ValidationError):
     """
-    Base class for an error that applies to multiple component, and as a consequence also to multiple fields.
+    Base class for an error that applies to multiple components, and as a consequence also to multiple fields.
     Even if both fields have the same name, they are considered to be different fields and notated as such.
     E.g. the two fields `id` fields of the `node` and `line` component: [('node', 'id'), ('line', 'id')].
     """
@@ -237,9 +237,9 @@ class InvalidEnumValueError(SingleFieldValidationError):
     """
 
     _message = "Field {field} contains invalid {enum} values for {n} {objects}."
-    enum: Type[Enum]
+    enum: Union[Type[Enum], List[Type[Enum]]]
 
-    def __init__(self, component: str, field: str, ids: List[int], enum: Type[Enum]):
+    def __init__(self, component: str, field: str, ids: List[int], enum: Union[Type[Enum], List[Type[Enum]]]):
         super().__init__(component, field, ids)
         self.enum = enum
 
@@ -248,6 +248,9 @@ class InvalidEnumValueError(SingleFieldValidationError):
         """
         A string representation of the field to which this error applies.
         """
+        if isinstance(self.enum, list):
+            return ",".join(e.__name__ for e in self.enum)
+
         return self.enum.__name__
 
     def __eq__(self, other):
