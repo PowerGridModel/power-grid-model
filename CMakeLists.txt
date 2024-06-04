@@ -42,16 +42,17 @@ endif()
 # add C library
 add_subdirectory("power_grid_model_c")
 
-# get tests
-if(${PGM_ENABLE_TESTING})
+# dev build
+if(${PGM_ENABLE_DEV_BUILD})
   include(CTest)
   enable_testing()
-
+# get tests
   add_subdirectory("tests")
+  # get c api example
+add_subdirectory("power_grid_model_c_example")
 endif()
 
-# get c api example
-add_subdirectory("power_grid_model_c_example")
+
 
 # export the power grid model
 include("cmake/export_power_grid_model.cmake")

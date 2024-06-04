@@ -9,7 +9,7 @@
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
-        "PGM_ENABLE_TESTING": "ON"
+        "PGM_ENABLE_DEV_BUILD": "ON"
       },
       "environment": {
         "PLATFORM_C_FLAGS": "",
