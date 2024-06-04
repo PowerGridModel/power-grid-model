@@ -467,3 +467,55 @@ class FaultPhaseError(MultiFieldValidationError):
     """
 
     _message = "The fault phase is not applicable to the corresponding fault type for {n} {objects}."
+
+
+class InvalidAssociatedEnumValueError(MultiFieldValidationError):
+    """
+    The value is not a valid value in combination with the other specified attributes.
+    E.g. When a transformer tap regulator has a branch3 control side but regulates a transformer.
+    """
+
+    _message = "Field {field} contains invalid {enum} values for {n} {objects}. "
+    enum: Union[Type[Enum], List[Type[Enum]]]
+
+    def __init__(
+        self,
+        component: str,
+        fields: List[str],
+        ids: List[int],
+        enum: Union[Type[Enum], List[Type[Enum]]],
+    ):
+        """
+        Args:
+            component: Component name
+            fields: List of field names
+            ids: List of component IDs (not row indices)
+            enum: The supported enum values
+        """
+        super().__init__(component, fields, ids)
+        self.enum = enum
+
+    @property
+    def enum_str(self) -> str:
+        """
+        A string representation of the field to which this error applies.
+        """
+        if isinstance(self.enum, list):
+            return ",".join(e.__name__ for e in self.enum)
+
+        return self.enum.__name__
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.enum == other.enum
+
+
+class UnsupportedTransformerRegulationError(MultiFieldValidationError):
+    """
+    The control side of a branch regulator is not supported for the regulated object
+    """
+
+    _message = (
+        "Unsupported control side for {n} {objects}. "
+        "The control side cannot be on the same side as the tap side. "
+        "The node at the control side must have the same or lower u_rated as the node at the tap side."
+    )

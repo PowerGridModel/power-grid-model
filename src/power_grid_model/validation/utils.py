@@ -6,7 +6,7 @@
 Utilities used for validation. Only errors_to_string() is intended for end users.
 """
 import re
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -214,3 +214,55 @@ def set_default_value(data: SingleDataset, component: str, field: str, default_v
         data[component][field][mask] = default_value[mask]
     else:
         data[component][field][mask] = default_value
+
+
+def get_valid_ids(data: SingleDataset, ref_components: Union[str, List[str]]) -> List[int]:
+    """
+    This function returns the valid IDs specified by all ref_components
+
+    Args:
+        data: The input/update data set for all components
+        ref_components: The component or components in which we want to look for ids
+
+    Returns:
+        List[int]: the list of valid IDs
+    """
+    # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
+    # single element.
+    if isinstance(ref_components, str):
+        ref_components = [ref_components]
+
+    # Create a set of ids by chaining the ids of all ref_components
+    valid_ids = set()
+    for ref_component in ref_components:
+        if ref_component in data:
+            nan = nan_type(ref_component, "id")
+            if np.isnan(nan):
+                mask = ~np.isnan(data[ref_component]["id"])
+            else:
+                mask = np.not_equal(data[ref_component]["id"], nan)
+            valid_ids.update(data[ref_component]["id"][mask])
+
+    return list(valid_ids)
+
+
+def get_mask(data: SingleDataset, component: str, field: str, **filters: Any) -> np.ndarray:
+    """
+    Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
+
+    Args:
+        data: The input/update data set for all components
+        component: The component of interest
+        field: The field of interest
+        ref_components: The component or components in which we want to look for ids
+        **filters: One or more filters on the dataset. E.
+
+    Returns:
+        np.ndarray: the mask
+    """
+    values = data[component][field]
+    mask = np.ones(shape=values.shape, dtype=bool)
+    for filter_field, filter_value in filters.items():
+        mask = np.logical_and(mask, data[component][filter_field] == filter_value)
+
+    return mask

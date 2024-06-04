@@ -46,6 +46,7 @@ from power_grid_model.validation.errors import (
     FaultPhaseError,
     IdNotInDatasetError,
     InfinityError,
+    InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
@@ -65,7 +66,7 @@ from power_grid_model.validation.errors import (
     TwoValuesZeroError,
     ValidationError,
 )
-from power_grid_model.validation.utils import eval_expression, nan_type, set_default_value
+from power_grid_model.validation.utils import eval_expression, get_mask, get_valid_ids, nan_type, set_default_value
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
@@ -481,7 +482,7 @@ def all_valid_enum_values(
         data (SingleDataset): The input/update data set for all components
         component (str): The component of interest
         field (str): The field of interest
-        enum (Type[Enum]): The enum type to validate against, or a list of such enum types
+        enum (Type[Enum] | List[Type[Enum]]): The enum type to validate against, or a list of such enum types
 
     Returns:
         A list containing zero or one InvalidEnumValueError, listing all ids where the value in the field of interest
@@ -518,30 +519,11 @@ def all_valid_ids(
         A list containing zero or one InvalidIdError, listing all ids where the value in the field of interest
         was not a valid object identifier.
     """
-    # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
-    # single element.
-    if isinstance(ref_components, str):
-        ref_components = [ref_components]
-
-    # Create a set of ids by chaining the ids of all ref_components
-    valid_ids = set()
-    for ref_component in ref_components:
-        if ref_component in data:
-            nan = nan_type(ref_component, "id")
-            if np.isnan(nan):
-                mask = ~np.isnan(data[ref_component]["id"])
-            else:
-                mask = np.not_equal(data[ref_component]["id"], nan)
-            valid_ids.update(data[ref_component]["id"][mask])
-
-    # Apply the filters (e.g. to select only records with a certain MeasuredTerminalType)
-    values = data[component][field]
-    mask = np.ones(shape=values.shape, dtype=bool)
-    for filter_field, filter_value in filters.items():
-        mask = np.logical_and(mask, data[component][filter_field] == filter_value)
+    valid_ids = get_valid_ids(data=data, ref_components=ref_components)
+    mask = get_mask(data=data, component=component, field=field, **filters)
 
     # Find any values that can't be found in the set of ids
-    invalid = np.logical_and(mask, np.isin(values, list(valid_ids), invert=True))
+    invalid = np.logical_and(mask, np.isin(data[component][field], valid_ids, invert=True))
     if invalid.any():
         ids = data[component]["id"][invalid].flatten().tolist()
         return [InvalidIdError(component, field, ids, ref_components, filters)]
@@ -829,4 +811,45 @@ def all_valid_fault_phases(
                 ids=data[component]["id"][err].flatten().tolist(),
             )
         ]
+    return []
+
+
+def all_valid_associated_enum_values(  # pylint: disable=too-many-arguments
+    data: SingleDataset,
+    component: str,
+    field: str,
+    ref_object_id_field: str,
+    ref_components: List[str],
+    enum: Union[Type[Enum], List[Type[Enum]]],
+    **filters: Any,
+) -> List[InvalidAssociatedEnumValueError]:
+    """
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (str): The component of interest
+        field (str): The field of interest
+        ref_components (List[str]): The component or components in which we want to look for ids
+        enum (Type[Enum] | List[Type[Enum]]): The enum type to validate against, or a list of such enum types
+        **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
+
+    Returns:
+        A list containing zero or more FaultPhaseErrors; listing all the ids of faults where the fault phase was
+        invalid, given the fault phase.
+    """
+    enums: List[Type[Enum]] = enum if isinstance(enum, list) else [enum]
+
+    valid_ids = get_valid_ids(data=data, ref_components=ref_components)
+    mask = np.logical_and(
+        get_mask(data=data, component=component, field=field, **filters),
+        np.isin(data[component][ref_object_id_field], valid_ids),
+    )
+
+    valid = {nan_type(component, field)}
+    for enum_type in enums:
+        valid.update(list(enum_type))
+
+    invalid = np.isin(data[component][field][mask], np.array(list(valid), dtype=np.int8), invert=True)
+    if invalid.any():
+        ids = data[component]["id"][mask][invalid].flatten().tolist()
+        return [InvalidAssociatedEnumValueError(component, [field, ref_object_id_field], ids, enum)]
     return []
