@@ -126,8 +126,8 @@
     {
       "name": "clang-tidy-unix-base",
       "cacheVariables": {
-        "CMAKE_C_CLANG_TIDY": "$env{CLANG_TIDY}",
-        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}",
+        "CMAKE_C_CLANG_TIDY": "clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       },

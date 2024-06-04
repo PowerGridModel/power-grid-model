@@ -46,10 +46,10 @@ add_subdirectory("power_grid_model_c")
 if(${PGM_ENABLE_DEV_BUILD})
   include(CTest)
   enable_testing()
-# get tests
+  # get tests
   add_subdirectory("tests")
   # get c api example
-add_subdirectory("power_grid_model_c_example")
+  add_subdirectory("power_grid_model_c_example")
 endif()
 
 
