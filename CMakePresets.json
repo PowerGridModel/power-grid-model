@@ -79,9 +79,9 @@
       "name": "msvc-base",
       "description": "Target Windows using the MSVC compiler.",
       "hidden": true,
-      "environment": {
-        "CC": "cl.exe",
-        "CXX": "cl.exe"
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "inherits": "windows-base"
     },
@@ -90,9 +90,11 @@
       "description": "Target Windows using Clang with CL-like command line.",
       "hidden": true,
       "environment": {
-        "CC": "clang-cl.exe",
-        "CXX": "clang-cl.exe",
         "CXXFLAGS": "$penv{CXXFLAGS} -Wno-uninitialized-const-reference -Wno-unknown-attributes"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "clang-cl.exe"
       },
       "inherits": "windows-base"
     },
@@ -210,6 +212,10 @@
       "name": "gcc-base",
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
       },
       "inherits": "unix-sanitizer",
       "hidden": true
