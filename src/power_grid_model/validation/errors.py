@@ -160,7 +160,7 @@ class MultiFieldValidationError(ValidationError):
 
 class MultiComponentValidationError(ValidationError):
     """
-    Base class for an error that applies to multiple components, and as a consequence also to multiple fields.
+    Base class for an error that applies to multiple components, and, subsequently, multiple fields.
     Even if both fields have the same name, they are considered to be different fields and notated as such.
     E.g. the two fields `id` fields of the `node` and `line` component: [('node', 'id'), ('line', 'id')].
     """
