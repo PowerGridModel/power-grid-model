@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Check DCO
+# Workaround because DCO plugin is stuck. See https://github.com/dcoapp/app/issues/211
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  dco:
+    name: DCO
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: x64
+
+      - name: Check DCO
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip install dco-check
+          dco-check --verbose
