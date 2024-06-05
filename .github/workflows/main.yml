@@ -99,7 +99,7 @@ jobs:
     strategy:
       matrix:
         build-option: [ debug, release ]
-        compiler: [msvc, clang-cl]
+        compiler: [msvc]  # , clang-cl] TODO(mgovers): reenable Clang CL when https://github.com/actions/runner-images/issues/10001 is fixed
 
     env:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
