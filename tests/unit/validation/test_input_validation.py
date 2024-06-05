@@ -580,8 +580,12 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
     # assert InvalidControlSideError("transformer_tap_regulator", "control_side", [52], BranchSide) in validation_errors
     assert NotGreaterOrEqualError("transformer_tap_regulator", "u_set", [52], 0.0) in validation_errors
     assert NotGreaterThanError("transformer_tap_regulator", "u_band", [52, 1], 0.0) in validation_errors
-    assert NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_r", [52], 0.0) in validation_errors
-    assert NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_x", [1], 0.0) in validation_errors
+    assert (
+        NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_r", [52], 0.0) in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_x", [1], 0.0) in validation_errors
+    )
 
 
 def test_fault(input_data):
