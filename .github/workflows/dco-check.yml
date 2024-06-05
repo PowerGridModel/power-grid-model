@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 name: Check DCO
+# Workaround because DCO plugin is stuck. See https://github.com/dcoapp/app/issues/211
 
 on:
   pull_request:
