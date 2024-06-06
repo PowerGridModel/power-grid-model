@@ -328,6 +328,13 @@ def validate_required_values(
         "tap_max",
         "tap_size",
     ]
+
+    # Regulators
+    required["regulator"] = required["base"] + ["regulated_object", "status"]
+    required["transformer_tap_regulator"] = required["regulator"]
+    if calculation_type is None or calculation_type == CalculationType.power_flow:
+        required["transformer_tap_regulator"] += ["control_side", "u_set", "u_band"]
+
     # Appliances
     required["appliance"] = required["base"] + ["node", "status"]
     required["source"] = required["appliance"].copy()
