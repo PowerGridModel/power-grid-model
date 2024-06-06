@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import LoadGenType, initialize_array
-from power_grid_model.enum import FaultPhase, FaultType
+from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     ComparisonError,
     FaultPhaseError,
@@ -328,6 +328,15 @@ def test_all_valid_enum_values():
     valid["sym_load"]["type"] = 0
     errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
     assert not errors
+
+    valid = {"transformer_tap_regulator": initialize_array("input", "transformer_tap_regulator", 5)}
+    valid["transformer_tap_regulator"]["id"] = np.arange(5)
+    valid["transformer_tap_regulator"]["control_side"] = np.arange(-1, 4)
+    errors = all_valid_enum_values(valid, "transformer_tap_regulator", "control_side", [BranchSide, Branch3Side])
+    assert len(errors) == 1
+    assert (
+        InvalidEnumValueError("transformer_tap_regulator", "control_side", [0, 4], [BranchSide, Branch3Side]) in errors
+    )
 
 
 def test_all_valid_ids():
