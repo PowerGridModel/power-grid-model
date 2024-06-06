@@ -124,6 +124,10 @@ jobs:
 
       - name: Build and test
         run: |
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          # resolve dirty workspace environment
+          choco upgrade llvm
+
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
