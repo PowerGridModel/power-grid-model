@@ -230,6 +230,19 @@ def test_none_match_comparison():
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
 
+    int8_nan = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
+    transformer_array = initialize_array("input", "transformer", 3)
+    transformer_array["id"] = [1, 2, 3]
+    transformer_array["tap_pos"] = [int8_nan, 0, int8_nan]
+    transformer_array["tap_nom"] = [1, 1, int8_nan]
+    valid = {"transformer": transformer_array}
+
+    errors = none_match_comparison(
+        valid, "transformer", "tap_pos", np.equal, 0, ComparisonError, transformer_array["tap_nom"], 0
+    )
+    assert len(errors) == 1
+    assert ComparisonError("transformer", "tap_pos", [2, 3], 0) in errors
+
 
 def test_all_identical():
     dtype = [("id", "i4"), ("foo", "i4")]
