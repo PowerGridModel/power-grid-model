@@ -7,7 +7,7 @@ from enum import IntEnum
 import numpy as np
 import pytest
 
-from power_grid_model import LoadGenType, initialize_array
+from power_grid_model import LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -142,6 +142,19 @@ def test_all_between_or_at():
     errors = all_between_or_at(invalid, "test", "value", 0.2, -0.2)
     assert len(errors) == 1
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
+
+    int8_nan = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
+    transformer_array = initialize_array("input", "transformer", 3)
+    transformer_array["id"] = [1, 2, 3]
+    transformer_array["tap_pos"] = [int8_nan, 1, int8_nan]
+    transformer_array["tap_nom"] = [2, 1, int8_nan]
+    valid = {"transformer": transformer_array}
+    errors = all_between_or_at(valid, "transformer", "tap_pos", 0, 2, transformer_array["tap_nom"], 0)
+    assert not errors
+
+    errors = all_between_or_at(valid, "transformer", "tap_pos", 1, 2, transformer_array["tap_nom"], 0)
+    assert len(errors) == 1
+    assert NotBetweenOrAtError("transformer", "tap_pos", [3], (1, 2)) in errors
 
 
 def test_all_greater_than():
