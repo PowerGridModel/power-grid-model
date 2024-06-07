@@ -278,6 +278,7 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
     default_value: Optional[Union[np.ndarray, int, float]] = None,
+    default_value_2: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
@@ -297,6 +298,8 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
         default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
         input validation, these default values should be included in the validation. It can be a fixed value for the
         entire column (int/float) or be different for each element (np.ndarray).
+        default_value_2: Some values can have a double default: the default will be set to another attribute of the
+        component, but if that attribute is missing, the default will be set to a fixed value.
 
     Returns:
         A list containing zero or one NotBetweenOrAtErrors, listing all ids where the value in the field of interest was
@@ -307,7 +310,7 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
         return np.logical_or(np.less(val, np.minimum(*ref)), np.greater(val, np.maximum(*ref)))
 
     return none_match_comparison(
-        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value
+        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value, default_value_2
     )
 
 
@@ -319,6 +322,7 @@ def none_match_comparison(
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
     default_value: Optional[Union[np.ndarray, int, float]] = None,
+    default_value_2: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[CompError]:
     # pylint: disable=too-many-arguments
     """
@@ -338,6 +342,8 @@ def none_match_comparison(
         default_value: Some values are not required, but will receive a default value in the C++ core. To do a proper
         input validation, these default values should be included in the validation. It can be a fixed value for the
         entire column (int/float) or be different for each element (np.ndarray).
+        default_value_2: Some values can have a double default: the default will be set to another attribute of the
+        component, but if that attribute is missing, the default will be set to a fixed value.
 
     Returns:
         A list containing zero or one comparison errors (should be a subclass of ComparisonError), listing all ids
@@ -345,6 +351,9 @@ def none_match_comparison(
     """
     if default_value is not None:
         set_default_value(data=data, component=component, field=field, default_value=default_value)
+    if default_value_2 is not None:
+        set_default_value(data=data, component=component, field=field, default_value=default_value_2)
+    # if default 2 not None -> set_default_value
     component_data = data[component]
     if isinstance(ref_value, tuple):
         ref = tuple(eval_expression(component_data, v) for v in ref_value)
