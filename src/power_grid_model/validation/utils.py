@@ -168,26 +168,40 @@ def nan_type(component: str, field: str, data_type="input"):
     return power_grid_meta_data[data_type][component].nans[field]
 
 
-def get_indexer(input_ids: np.ndarray, update_ids: np.ndarray) -> np.ndarray:
+def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[int] = None) -> np.ndarray:
     """
-    Given array of ids from input and update dataset.
-    Find the posision of each id in the update dataset in the context of input dataset.
+    Given array of values from a source and a target dataset.
+    Find the position of each value in the target dataset in the context of the source dataset.
     This is needed to update values in the dataset by id lookup.
     Internally this is done by sorting the input ids, then using binary search lookup.
 
+    E.g.: Find the position of each id in an update (target) dataset in the input (source) dataset
+
+    >>> input_ids = [1, 2, 3, 4, 5]
+    >>> update_ids = [3]
+    >>> assert get_indexer(input_ids, update_ids) == np.array([2])
+
     Args:
-        input_ids: array of ids in the input dataset
-        update_ids: array of ids in the update dataset
+        source: array of values in the source dataset
+        target: array of values in the target dataset
+        default_value: Optional. the default index to provide for target values not in source
 
     Returns:
-        np.ndarray: array of positions of the ids from update dataset in the input dataset
-            the following should hold
-            input_ids[result] == update_ids
+        np.ndarray: array of positions of the values from target dataset in the source dataset
+            if default_value is None, (source[result] == target)
+            else, ((source[result] == target) | (source[result] == default_value))
+
+    Raises:
+        IndexError: if default_value is None and there were values in target that were not in source
     """
-    permutation_sort = np.argsort(input_ids)  # complexity O(N_input * logN_input)
-    return permutation_sort[
-        np.searchsorted(input_ids, update_ids, sorter=permutation_sort)
-    ]  # complexity O(N_update * logN_input)
+    permutation_sort = np.argsort(source)  # complexity O(N_input * logN_input)
+    indices = np.searchsorted(source, target, sorter=permutation_sort)  # complexity O(N_update * logN_input)
+
+    if default_value is None:
+        return permutation_sort[indices]
+
+    clipped_indices = np.take(permutation_sort, indices, mode="clip")
+    return np.where(source[clipped_indices] == target, permutation_sort[clipped_indices], default_value)
 
 
 def set_default_value(data: SingleDataset, component: str, field: str, default_value: Union[int, float, np.ndarray]):

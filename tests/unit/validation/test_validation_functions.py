@@ -15,12 +15,14 @@ from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InfinityError,
+    InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotUniqueError,
+    UnsupportedTransformerRegulationError,
 )
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
@@ -760,15 +762,7 @@ def test_validate_values__tap_regulator_control_side():
     assert power_flow_errors == all_errors
     assert not state_estimation_errors
 
-    assert len(all_errors) == 3
-    assert (
-        UnsupportedTransformerRegulationError(
-            "transformer_tap_regulator",
-            ["control_side", "regulated_object"],
-            [8, 12],
-        )
-        in all_errors
-    )
+    assert len(all_errors) == 4
     assert (
         InvalidEnumValueError("transformer_tap_regulator", "control_side", [10, 13], [BranchSide, Branch3Side])
         in all_errors
@@ -777,8 +771,25 @@ def test_validate_values__tap_regulator_control_side():
         InvalidAssociatedEnumValueError(
             "transformer_tap_regulator",
             ["control_side", "regulated_object"],
-            [9],
-            [BranchSide, Branch3Side],
+            [9, 10],
+            [BranchSide],
+        )
+        in all_errors
+    )
+    assert (
+        InvalidAssociatedEnumValueError(
+            "transformer_tap_regulator",
+            ["control_side", "regulated_object"],
+            [13],
+            [Branch3Side],
+        )
+        in all_errors
+    )
+    assert (
+        UnsupportedTransformerRegulationError(
+            "transformer_tap_regulator",
+            ["control_side", "regulated_object"],
+            [8, 12],
         )
         in all_errors
     )
