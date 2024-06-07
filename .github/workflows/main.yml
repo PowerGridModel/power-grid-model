@@ -122,6 +122,11 @@ jobs:
         run: |
           conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 
+      # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+      - name: Resolve dirty PATH environment
+        run: |
+          choco upgrade llvm
+
       - name: Build and test
         run: |
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
