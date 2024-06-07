@@ -471,7 +471,7 @@ def all_cross_unique(
 
 
 def all_valid_enum_values(
-    data: SingleDataset, component: str, field: str, enum: Type[Enum]
+    data: SingleDataset, component: str, field: str, enum: Union[Type[Enum], List[Type[Enum]]]
 ) -> List[InvalidEnumValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
@@ -481,14 +481,19 @@ def all_valid_enum_values(
         data (SingleDataset): The input/update data set for all components
         component (str): The component of interest
         field (str): The field of interest
-        enum (Type[Enum]): The enum type to validate against
+        enum (Type[Enum]): The enum type to validate against, or a list of such enum types
 
     Returns:
         A list containing zero or one InvalidEnumValueError, listing all ids where the value in the field of interest
         was not a valid value in the supplied enum type.
     """
-    valid = [nan_type(component, field)] + list(enum)
-    invalid = np.isin(data[component][field], np.array(valid, dtype=np.int8), invert=True)
+    enums: List[Type[Enum]] = enum if isinstance(enum, list) else [enum]
+
+    valid = {nan_type(component, field)}
+    for enum_type in enums:
+        valid.update(list(enum_type))
+
+    invalid = np.isin(data[component][field], np.array(list(valid), dtype=np.int8), invert=True)
     if invalid.any():
         ids = data[component]["id"][invalid].flatten().tolist()
         return [InvalidEnumValueError(component, field, ids, enum)]
