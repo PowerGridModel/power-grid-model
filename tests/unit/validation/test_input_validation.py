@@ -592,8 +592,9 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
     assert (
         NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_x", [1], 0.0) in validation_errors
     )
-    assert UnsupportedTransformerRegulationError(
-        "transformer_tap_regulator", ["control_side", "regulated_object"], [54]
+    assert (
+        UnsupportedTransformerRegulationError("transformer_tap_regulator", ["control_side", "regulated_object"], [54])
+        in validation_errors
     )
 
 
