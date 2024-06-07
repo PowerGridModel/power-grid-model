@@ -12,6 +12,7 @@ from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     FaultPhaseError,
+    InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
     MultiComponentNotUniqueError,
@@ -24,6 +25,7 @@ from power_grid_model.validation.errors import (
     NotLessThanError,
     NotUniqueError,
     TwoValuesZeroError,
+    UnsupportedTransformerRegulationError,
 )
 from power_grid_model.validation.utils import nan_type
 
@@ -156,15 +158,15 @@ def input_data() -> Dict[str, np.ndarray]:
     three_winding_transformer["pk_13_max"] = [-40, nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
     three_winding_transformer["pk_23_max"] = [-120, nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
 
-    transformer_tap_regulator = initialize_array("input", "transformer_tap_regulator", 4)
-    transformer_tap_regulator["id"] = [51, 52, 53, 1]
-    transformer_tap_regulator["status"] = [0, -1, 2, 5]
-    transformer_tap_regulator["regulated_object"] = [14, 15, 28, 2]
-    transformer_tap_regulator["control_side"] = [1, 2, 0, 60]
-    transformer_tap_regulator["u_set"] = [100, -100, 100, 100]
-    transformer_tap_regulator["u_band"] = [100, -4, 100, 0]
-    transformer_tap_regulator["line_drop_compensation_r"] = [0.0, -1.0, 1.0, 2.0]
-    transformer_tap_regulator["line_drop_compensation_x"] = [0.0, 4.0, 2.0, -4.0]
+    transformer_tap_regulator = initialize_array("input", "transformer_tap_regulator", 5)
+    transformer_tap_regulator["id"] = [51, 52, 53, 54, 1]
+    transformer_tap_regulator["status"] = [0, -1, 2, 1, 5]
+    transformer_tap_regulator["regulated_object"] = [14, 15, 28, 14, 2]
+    transformer_tap_regulator["control_side"] = [1, 2, 0, 0, 60]
+    transformer_tap_regulator["u_set"] = [100, -100, 100, 100, 100]
+    transformer_tap_regulator["u_band"] = [100, -4, 100, 100, 0]
+    transformer_tap_regulator["line_drop_compensation_r"] = [0.0, -1.0, 1.0, 0.0, 2.0]
+    transformer_tap_regulator["line_drop_compensation_x"] = [0.0, 4.0, 2.0, 0.0, -4.0]
 
     source = initialize_array("input", "source", 3)
     source["id"] = [16, 17, 1]
@@ -576,8 +578,12 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
         InvalidEnumValueError("transformer_tap_regulator", "control_side", [1], [BranchSide, Branch3Side])
         in validation_errors
     )
-    # TODO (nbharambe) Add control side error after it is included
-    # assert InvalidControlSideError("transformer_tap_regulator", "control_side", [52], BranchSide) in validation_errors
+    assert (
+        InvalidAssociatedEnumValueError(
+            "transformer_tap_regulator", ["control_side", "regulated_object"], [52], [BranchSide]
+        )
+        in validation_errors
+    )
     assert NotGreaterOrEqualError("transformer_tap_regulator", "u_set", [52], 0.0) in validation_errors
     assert NotGreaterThanError("transformer_tap_regulator", "u_band", [52, 1], 0.0) in validation_errors
     assert (
@@ -585,6 +591,9 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
     )
     assert (
         NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_x", [1], 0.0) in validation_errors
+    )
+    assert UnsupportedTransformerRegulationError(
+        "transformer_tap_regulator", ["control_side", "regulated_object"], [54]
     )
 
 
