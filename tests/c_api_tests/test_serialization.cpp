@@ -79,6 +79,18 @@ TEST_CASE("Serialization") {
             auto const json_result = json_document.dump(-1);
             CHECK(json_result == json_data);
         }
+
+        SUBCASE("Invalid serialization format") {
+            SerializerPtr const unknown_serializer{PGM_create_serializer(hl, dataset, -1)};
+            CHECK(PGM_error_code(hl) == PGM_serialization_error);
+        }
+
+        SUBCASE("Cannot serialize to zero terminated string") {
+            SerializerPtr const msgpack_serializer{
+                PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::msgpack))};
+            char const* result = PGM_serializer_get_to_zero_terminated_string(hl, msgpack_serializer.get(), 0, 0);
+            CHECK(PGM_error_code(hl) == PGM_serialization_error);
+        }
     }
 
     SUBCASE("Deserializer") {
