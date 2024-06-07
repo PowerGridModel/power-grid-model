@@ -99,7 +99,7 @@ jobs:
     strategy:
       matrix:
         build-option: [ debug, release ]
-        compiler: [msvc]  # , clang-cl] TODO(mgovers): reenable Clang CL when https://github.com/actions/runner-images/issues/10001 is fixed
+        compiler: [msvc, clang-cl]
 
     env:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
@@ -126,6 +126,10 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+          # Resolve dirty PATH environment
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
 
           # generate cmake cache
           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
