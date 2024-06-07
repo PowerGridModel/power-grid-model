@@ -84,7 +84,7 @@ TEST_CASE("Serialization") {
             }
 
             SUBCASE("Cannot serialize msgpack to zero terminated string") {
-                char const* result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, 0);
+                PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, 0);
                 CHECK(PGM_error_code(hl) == PGM_serialization_error);
             }
         }
