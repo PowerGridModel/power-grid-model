@@ -45,19 +45,19 @@ TEST_CASE("Serialization") {
                                      source.data());
         CHECK(PGM_error_code(hl) == PGM_no_error);
 
-        SUBCASE("json") {
+        SUBCASE("JSON") {
             SerializerPtr const json_serializer{
                 PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::json))};
             auto* const serializer = json_serializer.get();
             CHECK(PGM_error_code(hl) == PGM_no_error);
 
-            SUBCASE("to zero-terminated string") {
+            SUBCASE("To zero-terminated string") {
                 std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
                 CHECK(PGM_error_code(hl) == PGM_no_error);
                 CHECK(json_result == json_data);
             }
 
-            SUBCASE("to binary buffer") {
+            SUBCASE("To binary buffer") {
                 char const* buffer_data{};
                 Idx buffer_size{};
                 PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &buffer_data, &buffer_size);
@@ -67,7 +67,7 @@ TEST_CASE("Serialization") {
             }
         }
 
-        SUBCASE("msgpack") {
+        SUBCASE("MessagePack") {
             SerializerPtr const msgpack_serializer{
                 PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::msgpack))};
             auto* const serializer = msgpack_serializer.get();
