@@ -122,16 +122,15 @@ jobs:
         run: |
           conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 
-      # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
-      - name: Resolve dirty PATH environment
-        run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
-
       - name: Build and test
         run: |
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+          # Resolve dirty PATH environment
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
 
           # generate cmake cache
           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
