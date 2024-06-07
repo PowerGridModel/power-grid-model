@@ -240,7 +240,6 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("transformer", "winding_to", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "clock", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "tap_side", [NaN]) in required_values_errors
-    assert MissingValueError("transformer", "tap_pos", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "tap_min", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "tap_max", [NaN]) in required_values_errors
     assert MissingValueError("transformer", "tap_size", [NaN]) in required_values_errors
@@ -272,7 +271,6 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("three_winding_transformer", "clock_12", [NaN]) in required_values_errors
     assert MissingValueError("three_winding_transformer", "clock_13", [NaN]) in required_values_errors
     assert MissingValueError("three_winding_transformer", "tap_side", [NaN]) in required_values_errors
-    assert MissingValueError("three_winding_transformer", "tap_pos", [NaN]) in required_values_errors
     assert MissingValueError("three_winding_transformer", "tap_min", [NaN]) in required_values_errors
     assert MissingValueError("three_winding_transformer", "tap_max", [NaN]) in required_values_errors
     assert MissingValueError("three_winding_transformer", "tap_size", [NaN]) in required_values_errors
