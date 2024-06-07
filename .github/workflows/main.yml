@@ -125,7 +125,7 @@ jobs:
       # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
       - name: Resolve dirty PATH environment
         run: |
-          choco upgrade llvm
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
 
       - name: Build and test
         run: |
