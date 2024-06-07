@@ -269,15 +269,15 @@
     {
       "name": "ci-gcc-release",
       "inherits": [
-        "gcc-release",
-        "unix-coverage"
+        "gcc-release"
       ]
     },
     {
       "name": "ci-sonar",
       "inherits": [
         "clang-base",
-        "debug"
+        "debug",
+        "unix-coverage"
       ]
     },
     {
