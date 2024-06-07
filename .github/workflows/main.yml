@@ -68,16 +68,10 @@ jobs:
         compiler: [gcc, clang]
         include:
           - compiler: gcc
-            cc: gcc-12
-            cxx: g++-12
           - compiler: clang
-            cc: clang-15
-            cxx: clang++-15
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
@@ -86,6 +80,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build gcc-12 g++-12 clang-15
+          sudo ln -s /usr/bin/clang-15 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-15 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-12 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-12 /usr/local/bin/g++
+
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
@@ -155,8 +154,6 @@ jobs:
         build-option: [ debug, release ]
     env:
       CMAKE_PREFIX_PATH: /usr/local
-      CC: clang
-      CXX: clang++
       PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:

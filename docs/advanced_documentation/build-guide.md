@@ -128,17 +128,17 @@ In principle, you can use any C++ IDE with cmake and ninja support to develop th
 the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.23+). Supported presets
 for your development platform can be listed using `cmake --list-presets`.
 
+On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc` compiler. It is the developer's reponsiblity to properly define symbolic links (which should be discoverable through `PATH` environment variable) of `clang` or `gcc` compiler in your system. If you want to build with `clang-tidy`, you also need to define symbolic link of `clang-tidy` to point to the actual `clang-tidy` executable of your system.
+
+Similar also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler. Developer needs to make sure the they are discoverable in `PATH`. For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses `vcvarsall.bat` to set up the appropriate build environment.
+
 ## Visual Studio Code Support
 
 You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically. 
 
 ```{note}
 VSCode (as well as some other IDEs) does not set its own build environment itself. For optimal usage, open the folder
-using `cmake <project_dir>` from a terminal that has the environment set up. E.g.:
-
-* For x64 Windows native development using MSVC or Clang CL, use the `x64 Native Command Prompt`, which uses
-  `vcvarsall.bat` to set the appropriate build environment.
-* For Linux/WSL using the LLVM-15 `clang`, `source` or `export` `CC=clang-15`, `CXX=clang++-15` and `LLVM_COV=llvm-cov-15`. Optionally, you can `export` `CLANG_TIDY=clang-tidy-15`.
+using `cmake <project_dir>` from a terminal that has the environment set up. See above section for tips.
 ```
 
 ## Build Script for Linux/macOS
