@@ -56,7 +56,7 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 }
 
 namespace {
-void check_calculate_experimental_features(PGM_Options const& opt) {
+void check_calculate_experimental_features(PGM_Options const& /* opt */) {
     // optionally add experimental feature checks here
 }
 
