@@ -48,7 +48,9 @@ from power_grid_model.validation.rules import (
     all_less_than,
     all_not_two_values_equal,
     all_not_two_values_zero,
+    all_supported_tap_control_side,
     all_unique,
+    all_valid_associated_enum_values,
     all_valid_clocks,
     all_valid_enum_values,
     all_valid_fault_phases,
@@ -833,8 +835,26 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> List[ValidationEr
     errors = validate_regulator(data, "transformer_tap_regulator")
     errors += all_boolean(data, "transformer_tap_regulator", "status")
     errors += all_valid_enum_values(data, "transformer_tap_regulator", "control_side", [BranchSide, Branch3Side])
+    errors += all_valid_associated_enum_values(
+        data, "transformer_tap_regulator", "control_side", "regulated_object", ["transformer"], [BranchSide]
+    )
+    errors += all_valid_associated_enum_values(
+        data,
+        "transformer_tap_regulator",
+        "control_side",
+        "regulated_object",
+        ["three_winding_transformer"],
+        [Branch3Side],
+    )
     errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "u_set")
     errors += all_greater_than_zero(data, "transformer_tap_regulator", "u_band")
     errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "line_drop_compensation_r", 0.0)
     errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "line_drop_compensation_x", 0.0)
+    errors += all_supported_tap_control_side(
+        data,
+        "transformer_tap_regulator",
+        "control_side",
+        "regulated_object",
+        [("transformer", "tap_side"), ("three_winding_transformer", "tap_side")],
+    )
     return errors

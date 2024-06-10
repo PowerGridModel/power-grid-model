@@ -10,16 +10,19 @@ import numpy as np
 import pytest
 
 from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
-from power_grid_model.enum import CalculationType, FaultPhase, FaultType
+from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, FaultType, TapChangingStrategy
 from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InfinityError,
+    InvalidAssociatedEnumValueError,
+    InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotUniqueError,
+    UnsupportedTransformerRegulationError,
 )
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
@@ -717,3 +720,76 @@ def test_power_sigma_or_p_q_sigma():
     }
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
+
+
+@patch("power_grid_model.validation.validation.validate_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation.validation.validate_three_winding_transformer", new=MagicMock(return_value=[]))
+def test_validate_values__tap_regulator_control_side():
+    # Create valid transformer
+    transformer = initialize_array("input", "transformer", 4)
+    transformer["id"] = [0, 1, 2, 3]
+    transformer["tap_side"] = [BranchSide.from_side, BranchSide.from_side, BranchSide.from_side, BranchSide.from_side]
+
+    # Create valid three winding transformer
+    three_winding_transformer = initialize_array("input", "three_winding_transformer", 3)
+    three_winding_transformer["id"] = [4, 5, 6]
+    three_winding_transformer["tap_side"] = [Branch3Side.side_1, Branch3Side.side_1, Branch3Side.side_1]
+
+    # Create invalid regulator
+    transformer_tap_regulator = initialize_array("input", "transformer_tap_regulator", 7)
+    transformer_tap_regulator["id"] = np.arange(7, 14)
+    transformer_tap_regulator["status"] = 1
+    transformer_tap_regulator["regulated_object"] = np.arange(7)
+    transformer_tap_regulator["control_side"] = [
+        BranchSide.to_side,  # OK
+        BranchSide.from_side,  # control side is same as tap side (unsupported)
+        Branch3Side.side_3,  # branch3 provided but it is a 2-winding transformer (invalid)
+        10,  # control side entirely out of range (invalid)
+        Branch3Side.side_3,  # OK
+        Branch3Side.side_1,  # control side is same as tap side (unsupported)
+        10,  # control side entirely out of range (invalid)
+    ]
+
+    input_data = {
+        "transformer": transformer,
+        "three_winding_transformer": three_winding_transformer,
+        "transformer_tap_regulator": transformer_tap_regulator,
+    }
+    all_errors = validate_values(input_data)
+    power_flow_errors = validate_values(input_data, calculation_type=CalculationType.power_flow)
+    state_estimation_errors = validate_values(input_data, calculation_type=CalculationType.state_estimation)
+
+    assert power_flow_errors == all_errors
+    assert not state_estimation_errors
+
+    assert len(all_errors) == 4
+    assert (
+        InvalidEnumValueError("transformer_tap_regulator", "control_side", [10, 13], [BranchSide, Branch3Side])
+        in all_errors
+    )
+    assert (
+        InvalidAssociatedEnumValueError(
+            "transformer_tap_regulator",
+            ["control_side", "regulated_object"],
+            [9, 10],
+            [BranchSide],
+        )
+        in all_errors
+    )
+    assert (
+        InvalidAssociatedEnumValueError(
+            "transformer_tap_regulator",
+            ["control_side", "regulated_object"],
+            [13],
+            [Branch3Side],
+        )
+        in all_errors
+    )
+    assert (
+        UnsupportedTransformerRegulationError(
+            "transformer_tap_regulator",
+            ["control_side", "regulated_object"],
+            [8, 12],
+        )
+        in all_errors
+    )
