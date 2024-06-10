@@ -572,10 +572,6 @@ There are {py:class}`4 types <power_grid_model.enum.FaultType>` of fault situati
 
 ### Regulated power flow calculations
 
-```{warning}
-At the time of writing, this feature is still experimental and is not yet publicly available.
-```
-
 Regulated power flow calculations are disabled by default.
 
 At the time of writing, the following regulated power flow calculation types are implemented.
@@ -586,10 +582,6 @@ Please refer to their respective sections for detailed documentation.
 | [Automatic tap changing](#power-flow-with-automatic-tap-changing) | {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` | {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` |
 
 #### Power flow with automatic tap changing
-
-```{warning}
-At the time of writing, this feature is still experimental and is not yet publicly available.
-```
 
 Some of the most important regulators in the grid affect the tap position of transformers.
 These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try to regulate a control voltage $U_{\text{control}}$ such that it is within a specified voltage band.
