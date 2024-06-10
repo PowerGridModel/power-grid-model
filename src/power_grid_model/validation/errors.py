@@ -475,7 +475,7 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
     E.g. When a transformer tap regulator has a branch3 control side but regulates a transformer.
     """
 
-    _message = "Field {field} contains invalid {enum} values for {n} {objects}. "
+    _message = "The combination of fields {field} results in invalid {enum} values for {n} {objects}"
     enum: Union[Type[Enum], List[Type[Enum]]]
 
     def __init__(
