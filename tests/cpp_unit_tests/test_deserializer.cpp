@@ -7,6 +7,7 @@
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
 
 #include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
 
@@ -250,7 +251,7 @@ void check_error(std::string_view json, char const* err_msg) {
     std::vector<NodeInput> node(1);
 
     auto const run = [&]() {
-        Deserializer deserializer{from_json, json};
+        Deserializer deserializer{from_json, json, meta_data_gen::meta_data};
         deserializer.get_dataset_info().set_buffer("node", nullptr, node.data());
         deserializer.parse();
     };
@@ -262,7 +263,7 @@ void check_error(std::string_view json, char const* err_msg) {
 
 TEST_CASE("Deserializer") {
     SUBCASE("Single dataset") {
-        Deserializer deserializer{from_json, json_single};
+        Deserializer deserializer{from_json, json_single, meta_data_gen::meta_data};
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().dataset().name == "input"s);
@@ -336,7 +337,7 @@ TEST_CASE("Deserializer") {
     }
 
     SUBCASE("Batch dataset") {
-        Deserializer deserializer{from_json, json_batch};
+        Deserializer deserializer{from_json, json_batch, meta_data_gen::meta_data};
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().dataset().name == "update"s);

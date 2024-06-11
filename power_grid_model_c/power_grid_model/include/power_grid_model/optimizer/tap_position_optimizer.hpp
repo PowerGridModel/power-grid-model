@@ -354,6 +354,11 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
     }
+    int64_t tap_range() const {
+        return apply([](auto const& t) {
+            return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
+        });
+    }
 
     template <typename Func>
         requires(std::invocable<Func, TransformerTypes const&> && ...)
@@ -476,7 +481,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const
     case to:
         return branch_output.i_t;
     default:
-        throw MissingCaseForEnumError("adjust_transformer<Branch>", control_side);
+        throw MissingCaseForEnumError{"adjust_transformer<Branch>", control_side};
     }
 }
 
@@ -495,7 +500,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2DBranch
     case side_3:
         return branch_outputs[math_id.pos[2]].i_f;
     default:
-        throw MissingCaseForEnumError("adjust_transformer<Branch3>", control_side);
+        throw MissingCaseForEnumError{"adjust_transformer<Branch3>", control_side};
     }
 }
 
@@ -578,6 +583,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
+    std::vector<uint64_t> max_tap_ranges_per_rank{};
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
@@ -587,25 +593,46 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
   public:
-    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy)
-        : calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
+    TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy,
+                             meta_data::MetaData const& meta_data)
+        : meta_data_{&meta_data}, calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {}
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
-
         auto const cache = this->cache_states(order);
-        auto result = optimize(state, order, method);
-        update_state(cache);
-
-        return result;
+        try {
+            opt_prep(order);
+            auto result = optimize(state, order, method);
+            update_state(cache);
+            return result;
+        } catch (...) {
+            update_state(cache);
+            throw;
+        }
     }
 
     constexpr auto get_strategy() const { return strategy_; }
 
   private:
+    void opt_prep(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
+        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& a, RegulatedTransformer const& b) {
+            return a.transformer.tap_range() < b.transformer.tap_range();
+        };
+
+        if (max_tap_ranges_per_rank.empty()) {
+            max_tap_ranges_per_rank.reserve(regulator_order.size());
+            for (auto const& same_rank_regulators : regulator_order) {
+                max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
+                                                                           same_rank_regulators.end(),
+                                                                           tap_pos_range_cmp)
+                                                      ->transformer.tap_range());
+            }
+        }
+    }
+
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                   CalculationMethod method) const -> MathOutput<ResultType> {
-        initialize(regulator_order);
+        pilot_run(regulator_order);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
             return produce_output(regulator_order, std::move(result));
@@ -653,10 +680,14 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                  CalculationMethod method) const -> ResultType {
         auto result = calculate_(state, method);
 
+        std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size() + 1),
+                                              static_cast<IntS>(0));
+
         bool tap_changed = true;
         while (tap_changed) {
             tap_changed = false;
             UpdateBuffer update_data;
+            size_t rank_index = 0;
 
             for (auto const& same_rank_regulators : regulator_order) {
                 for (auto const& regulator : same_rank_regulators) {
@@ -665,8 +696,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 if (tap_changed) {
                     break;
                 }
+                iterations_per_rank[++rank_index] = 0; // NOSONAR
             }
             if (tap_changed) {
+                if (static_cast<uint64_t>(++iterations_per_rank[rank_index]) >
+                    2 * max_tap_ranges_per_rank[rank_index]) {
+                    throw MaxIterationReached{"TapPositionOptimizer::iterate"};
+                }
                 update_state(update_data);
                 result = calculate_(state, method);
             }
@@ -711,11 +747,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void update_state(UpdateBuffer const& update_data) const {
         static_assert(sizeof...(TransformerTypes) == std::tuple_size_v<UpdateBuffer>);
 
-        ConstDataset update_dataset;
-        auto const update_component = [this, &update_data, &update_dataset]<transformer_c TransformerType>() {
+        ConstDataset update_dataset{false, 1, "update", *meta_data_};
+        auto const update_component = [&update_data, &update_dataset]<transformer_c TransformerType>() {
             auto const& component_update = get<TransformerType>(update_data);
             if (!component_update.empty()) {
-                update_dataset.emplace(TransformerType::name, this->get_data_ptr<TransformerType>(update_data));
+                add_buffer_to_update_dataset<TransformerType>(update_data, TransformerType::name, update_dataset);
             }
         };
         (update_component.template operator()<TransformerTypes>(), ...);
@@ -725,7 +761,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto initialize(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
@@ -751,7 +787,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(min_voltage_pos, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::initialize"s, strategy_};
+            throw MissingCaseForEnumError{"TapPositionOptimizer::pilot_run"s, strategy_};
         }
     }
 
@@ -850,9 +886,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                      { get<T>(u).data() } -> std::convertible_to<void const*>;
                      { get<T>(u).size() } -> std::convertible_to<Idx>;
                  }
-    static auto get_data_ptr(UpdateBuffer const& update_buffer) {
+    static auto add_buffer_to_update_dataset(UpdateBuffer const& update_buffer, std::string_view component_name,
+                                             ConstDataset& update_data) {
         auto const& data = get<T>(update_buffer);
-        return ConstDataPointer{data.data(), static_cast<Idx>(data.size())};
+        update_data.add_buffer(component_name, static_cast<Idx>(data.size()), static_cast<Idx>(data.size()), nullptr,
+                               data.data());
     }
 
     static constexpr auto get_nan_update(auto const& component) {
@@ -860,6 +898,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return UpdateType{};
     }
 
+    meta_data::MetaData const* meta_data_;
     Calculator calculate_;
     StateUpdater update_;
     OptimizerStrategy strategy_;
