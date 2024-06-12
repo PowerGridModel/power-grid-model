@@ -390,6 +390,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[str], List[str]]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
+        tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
     ) -> Dict[str, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
@@ -463,6 +464,7 @@ class PowerGridModel:
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            tap_changing_strategy=tap_changing_strategy,
         )
 
     def calculate_state_estimation(

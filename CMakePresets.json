@@ -9,7 +9,7 @@
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
-        "PGM_ENABLE_TESTING": "ON"
+        "PGM_ENABLE_DEV_BUILD": "ON"
       },
       "environment": {
         "PLATFORM_C_FLAGS": "",
@@ -79,9 +79,9 @@
       "name": "msvc-base",
       "description": "Target Windows using the MSVC compiler.",
       "hidden": true,
-      "environment": {
-        "CC": "cl.exe",
-        "CXX": "cl.exe"
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "inherits": "windows-base"
     },
@@ -90,9 +90,11 @@
       "description": "Target Windows using Clang with CL-like command line.",
       "hidden": true,
       "environment": {
-        "CC": "clang-cl.exe",
-        "CXX": "clang-cl.exe",
         "CXXFLAGS": "$penv{CXXFLAGS} -Wno-uninitialized-const-reference -Wno-unknown-attributes"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "clang-cl.exe"
       },
       "inherits": "windows-base"
     },
@@ -124,8 +126,10 @@
     {
       "name": "clang-tidy-unix-base",
       "cacheVariables": {
-        "CMAKE_C_CLANG_TIDY": "$env{CLANG_TIDY}",
-        "CMAKE_CXX_CLANG_TIDY": "$env{CLANG_TIDY}"
+        "CMAKE_C_CLANG_TIDY": "clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
       },
       "inherits": "unix-base",
       "hidden": true
@@ -163,17 +167,26 @@
       ]
     },
     {
+      "name": "clang-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "inherits": "unix-sanitizer",
+      "hidden": true
+    },
+    {
       "name": "clang-debug",
       "inherits": [
         "debug",
-        "unix-sanitizer"
+        "clang-base"
       ]
     },
     {
       "name": "clang-release",
       "inherits": [
         "release",
-        "unix-sanitizer"
+        "clang-base"
       ]
     },
     {
@@ -210,6 +223,10 @@
       "name": "gcc-base",
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
       },
       "inherits": "unix-sanitizer",
       "hidden": true
@@ -252,15 +269,15 @@
     {
       "name": "ci-gcc-release",
       "inherits": [
-        "gcc-release",
-        "unix-coverage"
+        "gcc-release"
       ]
     },
     {
       "name": "ci-sonar",
       "inherits": [
-        "unix-coverage",
-        "debug"
+        "clang-base",
+        "debug",
+        "unix-coverage"
       ]
     },
     {

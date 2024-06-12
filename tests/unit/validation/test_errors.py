@@ -8,6 +8,7 @@ import pytest
 
 from power_grid_model.validation.errors import (
     ComparisonError,
+    InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
     MultiComponentValidationError,
@@ -111,3 +112,17 @@ def test_error_context_tuple_ids():
     error = MultiComponentValidationError(fields=[("a", "x"), ("b", "y")], ids=[("a", 1), ("b", 2), ("a", 3)])
     context = error.get_context(id_lookup={1: "Victor", 3: "Whiskey"})
     assert context["ids"] == {("a", 1): "Victor", ("b", 2): None, ("a", 3): "Whiskey"}
+
+
+def test_invalid_associated_enum_value_error():
+    class CustomType(IntEnum):
+        pass
+
+    error = InvalidAssociatedEnumValueError(component="foo", fields=["bar", "baz"], ids=[1, 2], enum=[CustomType])
+    assert error.component == "foo"
+    assert error.field == ["bar", "baz"]
+    assert error.ids == [1, 2]
+    assert len(error.enum) == 1
+    for actual, expected in zip(error.enum, [CustomType]):
+        assert actual is expected
+    assert str(error) == "The combination of fields 'bar' and 'baz' results in invalid CustomType values for 2 foos."

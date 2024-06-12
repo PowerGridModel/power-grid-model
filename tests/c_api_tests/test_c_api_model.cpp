@@ -217,16 +217,9 @@ TEST_CASE("C API Model") {
             PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         }
 
-        SUBCASE("Tap changing strategy is experimental") {
-            SUBCASE("experimental features disabled") {
-                expected_error = "PGM_calculate is not implemented for the following combination of options!\n"s;
-            }
-            SUBCASE("experimental features enabled") {
-                // normal calculation
-                PGM_set_experimental_features(hl, opt, PGM_experimental_features_enabled);
-            }
+        SUBCASE("Tap changing strategy") {
             PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_any_valid_tap);
-            PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
+            CHECK_NOTHROW(PGM_calculate(hl, model, opt, single_output_dataset, nullptr));
         }
 
         if (expected_error.empty()) {

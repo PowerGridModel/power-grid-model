@@ -27,8 +27,6 @@ jobs:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       LLVM_COV: llvm-cov-15
-      CC: clang-15
-      CXX: clang++-15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,6 +35,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build clang-15 lcov gcovr
+          sudo ln -s /usr/bin/clang-15 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-15 /usr/local/bin/clang++
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
