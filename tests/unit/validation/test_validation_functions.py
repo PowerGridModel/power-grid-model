@@ -715,3 +715,87 @@ def test_power_sigma_or_p_q_sigma():
     }
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
+
+
+def test_all_default_values():
+    """
+    Initialize all components that have attributes that have default values, without setting values for
+    those attributes.
+    """
+    node = initialize_array("input", "node", 3)
+    node["id"] = [0, 1, 2]
+    node["u_rated"] = [50.0e3, 20.0e3, 10.5e3]
+
+    source = initialize_array("input", "source", 1)
+    source["id"] = [3]
+    source["node"] = [2]
+    source["status"] = [1]
+    source["u_ref"] = [1.0]
+
+    transformer = initialize_array("input", "transformer", 1)
+    transformer["id"] = [4]
+    transformer["from_node"] = [0]
+    transformer["to_node"] = [2]
+    transformer["from_status"] = [1]
+    transformer["to_status"] = [1]
+    transformer["u1"] = [50e3]
+    transformer["u2"] = [10.5e3]
+    transformer["sn"] = [1e5]
+    transformer["uk"] = [0.1]
+    transformer["pk"] = [1e3]
+    transformer["i0"] = [1.0e-6]
+    transformer["p0"] = [0.1]
+    transformer["winding_from"] = [2]
+    transformer["winding_to"] = [1]
+    transformer["clock"] = [5]
+    transformer["tap_side"] = [0]
+    transformer["tap_min"] = [-11]
+    transformer["tap_max"] = [9]
+    transformer["tap_size"] = [100]
+
+    three_winding_transformer = initialize_array("input", "three_winding_transformer", 1)
+    three_winding_transformer["id"] = [6]
+    three_winding_transformer["node_1"] = [0]
+    three_winding_transformer["node_2"] = [1]
+    three_winding_transformer["node_3"] = [2]
+    three_winding_transformer["status_1"] = [1]
+    three_winding_transformer["status_2"] = [1]
+    three_winding_transformer["status_3"] = [1]
+    three_winding_transformer["u1"] = [50.0e3]
+    three_winding_transformer["u2"] = [20.0e3]
+    three_winding_transformer["u3"] = [10.5e3]
+    three_winding_transformer["sn_1"] = [1e5]
+    three_winding_transformer["sn_2"] = [1e5]
+    three_winding_transformer["sn_3"] = [1e5]
+    three_winding_transformer["uk_12"] = [0.09]
+    three_winding_transformer["uk_13"] = [0.06]
+    three_winding_transformer["uk_23"] = [0.06]
+    three_winding_transformer["pk_12"] = [1e3]
+    three_winding_transformer["pk_13"] = [1e3]
+    three_winding_transformer["pk_23"] = [1e3]
+    three_winding_transformer["i0"] = [0]
+    three_winding_transformer["p0"] = [0]
+    three_winding_transformer["winding_1"] = [2]
+    three_winding_transformer["winding_2"] = [1]
+    three_winding_transformer["winding_3"] = [1]
+    three_winding_transformer["clock_12"] = [5]
+    three_winding_transformer["clock_13"] = [5]
+    three_winding_transformer["tap_side"] = [0]
+    three_winding_transformer["tap_min"] = [-10]
+    three_winding_transformer["tap_max"] = [10]
+    three_winding_transformer["tap_size"] = [1380]
+
+    fault = initialize_array("input", "fault", 1)
+    fault["id"] = [5]
+    fault["status"] = [1]
+    fault["fault_object"] = [0]
+
+    input_data = {
+        "node": node,
+        "transformer": transformer,
+        "three_winding_transformer": three_winding_transformer,
+        "source": source,
+        "fault": fault,
+    }
+
+    assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
