@@ -56,26 +56,8 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 }
 
 namespace {
-void check_calculate_experimental_features(PGM_Options const& opt) {
-    using namespace std::string_literals;
-
-    if (opt.calculation_type == PGM_power_flow) {
-        switch (opt.tap_changing_strategy) {
-        case PGM_tap_changing_strategy_any_valid_tap:
-        case PGM_tap_changing_strategy_max_voltage_tap:
-        case PGM_tap_changing_strategy_min_voltage_tap: {
-            // this option is experimental and should not be exposed to the user
-            throw ExperimentalFeature{
-                "PGM_calculate",
-                ExperimentalFeature::TypeValuePair{.name = "PGM_CalculationType",
-                                                   .value = std::to_string(opt.calculation_type)},
-                ExperimentalFeature::TypeValuePair{.name = "PGM_TapChangingStrategy",
-                                                   .value = std::to_string(opt.tap_changing_strategy)}};
-        }
-        default:
-            break;
-        }
-    }
+void check_calculate_experimental_features(PGM_Options const& /* opt */) {
+    // optionally add experimental feature checks here
 }
 
 void check_calculate_valid_options(PGM_Options const& opt) {

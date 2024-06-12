@@ -191,7 +191,7 @@ def make_c_binding(func: Callable):
         res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
         # convert to string for CStr
         if c_restype == CStr:
-            res = res.decode()
+            res = res.decode() if res is not None else ""
         return res
 
     return cbind_func

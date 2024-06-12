@@ -62,7 +62,7 @@
       "inherits": "base"
     },
     {
-      "name": "ci-unix",
+      "name": "unix-sanitizer",
       "environment": {
         "SANITIZER_FLAGS": "-fsanitize=address"
       },
@@ -73,9 +73,9 @@
       "name": "msvc-base",
       "description": "Target Windows using the MSVC compiler.",
       "hidden": true,
-      "environment": {
-        "CC": "cl.exe",
-        "CXX": "cl.exe"
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "inherits": "windows-base"
     },
@@ -83,9 +83,9 @@
       "name": "clang-cl-base",
       "description": "Target Windows using Clang with CL-like command line.",
       "hidden": true,
-      "environment": {
-        "CC": "clang-cl.exe",
-        "CXX": "clang-cl.exe"
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "clang-cl.exe"
       },
       "inherits": "windows-base"
     },
@@ -122,30 +122,50 @@
       ]
     },
     {
+      "name": "clang-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "hidden": true
+    },
+    {
+      "name": "gcc-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "hidden": true
+    },
+    {
       "name": "ci-clang-debug",
       "inherits": [
-        "ci-unix",
+        "unix-sanitizer",
+        "clang-base",
         "debug"
       ]
     },
     {
       "name": "ci-clang-release",
       "inherits": [
-        "ci-unix",
+        "unix-sanitizer",
+        "clang-base",
         "release"
       ]
     },
     {
       "name": "ci-gcc-debug",
       "inherits": [
-        "ci-unix",
+        "unix-sanitizer",
+        "gcc-base",
         "debug"
       ]
     },
     {
       "name": "ci-gcc-release",
       "inherits": [
-        "ci-unix",
+        "unix-sanitizer",
+        "gcc-base",
         "release"
       ]
     },
@@ -153,6 +173,7 @@
       "name": "ci-sonar",
       "inherits": [
         "unix-base",
+        "clang-base",
         "debug"
       ]
     }

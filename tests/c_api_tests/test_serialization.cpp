@@ -45,39 +45,53 @@ TEST_CASE("Serialization") {
                                      source.data());
         CHECK(PGM_error_code(hl) == PGM_no_error);
 
-        SUBCASE("json") {
+        SUBCASE("JSON") {
             SerializerPtr const json_serializer{
                 PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::json))};
             auto* const serializer = json_serializer.get();
             CHECK(PGM_error_code(hl) == PGM_no_error);
 
-            // to string
-            std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
-            CHECK(PGM_error_code(hl) == PGM_no_error);
-            CHECK(json_result == json_data);
+            SUBCASE("To zero-terminated string") {
+                std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
+                CHECK(PGM_error_code(hl) == PGM_no_error);
+                CHECK(json_result == json_data);
+            }
 
-            // to buffer
-            char const* buffer_data{};
-            Idx buffer_size{};
-            PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &buffer_data, &buffer_size);
-            CHECK(PGM_error_code(hl) == PGM_no_error);
-            std::string const json_string{buffer_data, static_cast<size_t>(buffer_size)};
-            CHECK(json_result == json_string);
+            SUBCASE("To binary buffer") {
+                char const* buffer_data{};
+                Idx buffer_size{};
+                PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &buffer_data, &buffer_size);
+                CHECK(PGM_error_code(hl) == PGM_no_error);
+                std::string const json_string{buffer_data, static_cast<size_t>(buffer_size)};
+                CHECK(json_string == json_data);
+            }
         }
 
-        SUBCASE("msgpack") {
+        SUBCASE("MessagePack") {
             SerializerPtr const msgpack_serializer{
                 PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::msgpack))};
             auto* const serializer = msgpack_serializer.get();
 
-            // round trip
-            char const* msgpack_data{};
-            Idx msgpack_size{};
-            PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
-            CHECK(PGM_error_code(hl) == PGM_no_error);
-            auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
-            auto const json_result = json_document.dump(-1);
-            CHECK(json_result == json_data);
+            SUBCASE("Round trip") {
+                char const* msgpack_data{};
+                Idx msgpack_size{};
+                PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
+                CHECK(PGM_error_code(hl) == PGM_no_error);
+                auto const json_document =
+                    nlohmann::ordered_json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
+                auto const json_result = json_document.dump(-1);
+                CHECK(json_result == json_data);
+            }
+
+            SUBCASE("Cannot serialize msgpack to zero terminated string") {
+                PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, 0);
+                CHECK(PGM_error_code(hl) == PGM_serialization_error);
+            }
+        }
+
+        SUBCASE("Invalid serialization format") {
+            SerializerPtr const unknown_serializer{PGM_create_serializer(hl, dataset, -1)};
+            CHECK(PGM_error_code(hl) == PGM_serialization_error);
         }
     }
 
