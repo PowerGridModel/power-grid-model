@@ -38,12 +38,12 @@ class Transformer : public Branch {
           clock_{transformer_input.clock},
           tap_side_{transformer_input.tap_side},
           tap_pos_{transformer_input.tap_pos == na_IntS
-                       ? (transformer_input.tap_nom == na_IntS ? (IntS)0 : transformer_input.tap_nom)
+                       ? (transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom)
                        : transformer_input.tap_pos},
           tap_min_{transformer_input.tap_min},
           tap_max_{transformer_input.tap_max},
-          tap_nom_{transformer_input.tap_nom == na_IntS ? (IntS)0 : transformer_input.tap_nom},
-          tap_direction_{tap_max_ > tap_min_ ? (IntS)1 : (IntS)-1},
+          tap_nom_{transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom},
+          tap_direction_{tap_max_ > tap_min_ ? IntS{1} : IntS{-1}},
           uk_min_{is_nan(transformer_input.uk_min) ? uk_ : transformer_input.uk_min},
           uk_max_{is_nan(transformer_input.uk_max) ? uk_ : transformer_input.uk_max},
           pk_min_{is_nan(transformer_input.pk_min) ? pk_ : transformer_input.pk_min},

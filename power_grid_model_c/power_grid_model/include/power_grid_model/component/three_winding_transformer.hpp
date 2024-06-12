@@ -43,14 +43,14 @@ class ThreeWindingTransformer : public Branch3 {
           clock_13_{three_winding_transformer_input.clock_13},
           tap_side_{three_winding_transformer_input.tap_side},
           tap_pos_{three_winding_transformer_input.tap_pos == na_IntS
-                       ? (three_winding_transformer_input.tap_nom == na_IntS ? (IntS)0
+                       ? (three_winding_transformer_input.tap_nom == na_IntS ? IntS{0}
                                                                              : three_winding_transformer_input.tap_nom)
                        : three_winding_transformer_input.tap_pos},
           tap_min_{three_winding_transformer_input.tap_min},
           tap_max_{three_winding_transformer_input.tap_max},
-          tap_nom_{three_winding_transformer_input.tap_nom == na_IntS ? (IntS)0
+          tap_nom_{three_winding_transformer_input.tap_nom == na_IntS ? IntS{0}
                                                                       : three_winding_transformer_input.tap_nom},
-          tap_direction_{tap_max_ > tap_min_ ? (IntS)1 : (IntS)-1},
+          tap_direction_{tap_max_ > tap_min_ ? IntS{1} : IntS{-1}},
           tap_size_{three_winding_transformer_input.tap_size},
           uk_12_min_{is_nan(three_winding_transformer_input.uk_12_min) ? uk_12_
                                                                        : three_winding_transformer_input.uk_12_min},
