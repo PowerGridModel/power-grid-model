@@ -319,7 +319,7 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
         return np.logical_or(np.less(val, np.minimum(*ref)), np.greater(val, np.maximum(*ref)))
 
     return none_match_comparison(
-        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value, default_value_2
+        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value_1, default_value_2
     )
 
 
