@@ -7,9 +7,12 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file.
 """
 
+from enum import Enum
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+
+from power_grid_model import power_grid_meta_data
 
 # When we're dropping python 3.8, we should introduce proper NumPy type hinting
 
@@ -186,3 +189,30 @@ A general python data set can be a single or a batch python dataset.
     [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
      {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
+
+# comply with mypy
+PowerGridDataTypes = Enum(  # type: ignore
+    "PowerGridDataTypes", {data_type: data_type for data_type in power_grid_meta_data}  # type: ignore
+)  # type: ignore
+"""
+Types of single/batch datasets:
+
+  - input: Dataset with attributes relevant to the grid configuration (e.g. id, from_node, from_status).
+
+  - update: Dataset with attributes relevant to multiple scenarios (e.g. from_status, to_status).
+
+  - sym_output: Dataset with attributes relevant to symmetrical steady state output of power flow or state estimation
+  calculation (e.g. p_from, p_to).
+
+  - asym_output: Dataset with attributes relevant to asymmetrical steady state output of power flow or state estimation
+  calculation (e.g. p_from, p_to).
+
+  - sc_output: Contains attributes relevant to symmetrical short circuit calculation output. Like for the asym_output,
+  detailed data for all 3 phases will be provided where relevant (e.g. i_from, i_from_angle).
+"""
+
+# to comply with mypy
+PowerGridComponents = Enum(  # type: ignore
+    "PowerGridComponents", {component: component for component in power_grid_meta_data["input"]}  # type: ignore
+)  # type: ignore
+"""Grid component types."""
