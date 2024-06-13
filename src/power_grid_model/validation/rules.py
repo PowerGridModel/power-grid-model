@@ -286,7 +286,7 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
-    default_value: Optional[Union[np.ndarray, int, float]] = None,
+    default_value_1: Optional[Union[np.ndarray, int, float]] = None,
     default_value_2: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotBetweenOrAtError]:
     """
@@ -319,7 +319,14 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
         return np.logical_or(np.less(val, np.minimum(*ref)), np.greater(val, np.maximum(*ref)))
 
     return none_match_comparison(
-        data, component, field, outside, (ref_value_1, ref_value_2), NotBetweenOrAtError, default_value_1, default_value_2
+        data,
+        component,
+        field,
+        outside,
+        (ref_value_1, ref_value_2),
+        NotBetweenOrAtError,
+        default_value_1,
+        default_value_2,
     )
 
 
@@ -330,7 +337,7 @@ def none_match_comparison(
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
-    default_value: Optional[Union[np.ndarray, int, float]] = None,
+    default_value_1: Optional[Union[np.ndarray, int, float]] = None,
     default_value_2: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[CompError]:
     # pylint: disable=too-many-arguments
@@ -358,8 +365,8 @@ def none_match_comparison(
         A list containing zero or one comparison errors (should be a subclass of ComparisonError), listing all ids
         where the value in the field of interest matched the comparison.
     """
-    if default_value is not None:
-        set_default_value(data=data, component=component, field=field, default_value=default_value)
+    if default_value_1 is not None:
+        set_default_value(data=data, component=component, field=field, default_value=default_value_1)
     if default_value_2 is not None:
         set_default_value(data=data, component=component, field=field, default_value=default_value_2)
     # if default 2 not None -> set_default_value
