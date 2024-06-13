@@ -143,11 +143,11 @@ def test_all_between_or_at():
     assert len(errors) == 1
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
 
-    int8_nan = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
+    nan_value = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
     transformer_array = initialize_array("input", "transformer", 3)
     transformer_array["id"] = [1, 2, 3]
-    transformer_array["tap_pos"] = [int8_nan, 1, int8_nan]
-    transformer_array["tap_nom"] = [2, 1, int8_nan]
+    transformer_array["tap_pos"] = [nan_value, 1, nan_value]
+    transformer_array["tap_nom"] = [2, 1, nan_value]
     valid = {"transformer": transformer_array}
     errors = all_between_or_at(valid, "transformer", "tap_pos", 0, 2, transformer_array["tap_nom"], 0)
     assert not errors
@@ -230,11 +230,11 @@ def test_none_match_comparison():
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
 
-    int8_nan = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
+    nan_value = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
     transformer_array = initialize_array("input", "transformer", 3)
     transformer_array["id"] = [1, 2, 3]
-    transformer_array["tap_pos"] = [int8_nan, 0, int8_nan]
-    transformer_array["tap_nom"] = [1, 1, int8_nan]
+    transformer_array["tap_pos"] = [nan_value, 0, nan_value]
+    transformer_array["tap_nom"] = [1, 1, nan_value]
     valid = {"transformer": transformer_array}
 
     errors = none_match_comparison(
