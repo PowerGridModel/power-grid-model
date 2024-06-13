@@ -369,7 +369,6 @@ def none_match_comparison(
         set_default_value(data=data, component=component, field=field, default_value=default_value_1)
     if default_value_2 is not None:
         set_default_value(data=data, component=component, field=field, default_value=default_value_2)
-    # if default 2 not None -> set_default_value
     component_data = data[component]
     if isinstance(ref_value, tuple):
         ref = tuple(eval_expression(component_data, v) for v in ref_value)
