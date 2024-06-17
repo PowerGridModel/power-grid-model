@@ -117,10 +117,36 @@ class CodeGenerator:
 
         self.render_template(template_path=template_path, output_path=output_path, all_map=all_map)
 
+    def render_metadata_enums(self, template_path: Path, data_path: Path, output_path: Path):
+        with open(data_path) as data_file:
+            json_data = data_file.read()
+        dataset_meta_data: List[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
+
+        dataset_types = []
+        components = []
+        for dataset in dataset_meta_data:
+            if dataset.is_template:
+                prefixes = ["sym_", "asym_"]
+            else:
+                prefixes = [""]
+            for prefix in prefixes:
+                dataset_types.append(f"{prefix}{dataset.name}")
+
+                if dataset.name == "input":
+                    for component in dataset.components:
+                        components.append(component.names)
+
+        components = [name for sublist in components for name in sublist]
+
+        self.render_template(
+            template_path=template_path, output_path=output_path, dataset_types=dataset_types, components=components
+        )
+
     def code_gen(self):
         render_funcs = {
             "attribute_classes": self.render_attribute_classes,
             "dataset_class_maps": self.render_dataset_class_maps,
+            "metadata_enums": self.render_metadata_enums,
         }
 
         # render attribute classes
@@ -128,6 +154,8 @@ class CodeGenerator:
             for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
                 output_suffix = template_path.with_suffix("").suffix
                 output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
+                if template_name == "metadata_enums":
+                    template_name = "dataset_class_maps"  # To use existing data.
                 for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
                     output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
                     output_path.parent.mkdir(parents=True, exist_ok=True)
