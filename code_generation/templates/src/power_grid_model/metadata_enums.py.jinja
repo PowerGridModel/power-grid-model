@@ -5,11 +5,20 @@
 # This header file is automatically generated. DO NOT modify it manually!
 
 """Enums for PMG dataset and component types."""
+import sys
 
+# pylint: disable=wrong-import-position
+
+sys_path = sys.path.pop(0)
 from enum import Enum
+
+# pylint: enable=wrong-import-position
+
+sys.path.append(sys_path)
 
 # Value names are defined in lower case instead of upper case
 # pylint: disable=invalid-name
+
 
 class PowerGridDataTypes(Enum):
     """
