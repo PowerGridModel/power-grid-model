@@ -141,7 +141,7 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
         }
     }
 
-    dd = make_clique(nbs); // TODO check data type
+    dd = make_clique(nbs);
 
     auto const add_element = [&fills](Idx from, Idx to, IdxVector& from_adjacent) {
         from_adjacent.push_back(to);
