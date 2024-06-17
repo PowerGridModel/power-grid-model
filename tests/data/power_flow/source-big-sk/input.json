@@ -7,11 +7,11 @@
     "node": [
       {
         "id": 1,
-        "u_rated": 10.0
+        "u_rated": 30.0
       },
       {
         "id": 2,
-        "u_rated": 10.0
+        "u_rated": 30.0
       }
     ],
     "line": [
@@ -22,9 +22,13 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.0,
-        "x1": 1.0,
+        "x1": 3.0,
         "c1": 0.0,
         "tan1": 0.0,
+        "r0": 2.0,
+        "x0": 5.0,
+        "c0": 0.0,
+        "tan0": 0.0,
         "i_n": 1e3
       }
     ],
@@ -53,7 +57,7 @@
         "status": 1,
         "type": 0,
         "p_specified": 0.0,
-        "q_specified": 9.0
+        "q_specified": 27.0
       }
     ]
   }

@@ -6,50 +6,50 @@
   "data": [
     {
       "node": [
-        {"id": 1, "energized": 1, "u_pu": 1, "u": 10},
-        {"id": 2, "energized": 1, "u_pu": 0.9, "u": 9}
+        {"id": 1, "energized": 1, "u_pu": 1, "u": 30},
+        {"id": 2, "energized": 1, "u_pu": 0.9, "u": 27}
       ],
       "line": [
-        {"id": 4, "energized": 1, "q_from": 10, "q_to": -9}
+        {"id": 4, "energized": 1, "q_from": 30, "q_to": -27}
       ],
       "source": [
         {"id": 6, "energized": 0, "q": 0},
-        {"id": 7, "energized": 1, "q": 10}
+        {"id": 7, "energized": 1, "q": 30}
       ],
       "sym_load": [
-        {"id": 8, "energized": 1, "q": 9}
+        {"id": 8, "energized": 1, "q": 27}
       ]
     },
     {
       "node": [
-        {"id": 1, "energized": 1, "u_pu": 1, "u": 10},
-        {"id": 2, "energized": 1, "u_pu": 0.9, "u": 9}
+        {"id": 1, "energized": 1, "u_pu": 1, "u": 30},
+        {"id": 2, "energized": 1, "u_pu": 0.9, "u": 27}
       ],
       "line": [
-        {"id": 4, "energized": 1, "q_from": 10, "q_to": -9}
+        {"id": 4, "energized": 1, "q_from": 30, "q_to": -27}
       ],
       "source": [
-        {"id": 6, "energized": 1, "q": 10},
+        {"id": 6, "energized": 1, "q": 30},
         {"id": 7, "energized": 0, "q": 0}
       ],
       "sym_load": [
-        {"id": 8, "energized": 1, "q": 9}
+        {"id": 8, "energized": 1, "q": 27}
       ]
     },
     {
       "node": [
-        {"id": 1, "energized": 1, "u_pu": 1, "u": 10},
-        {"id": 2, "energized": 1, "u_pu": 0.9, "u": 9}
+        {"id": 1, "energized": 1, "u_pu": 1, "u": 30},
+        {"id": 2, "energized": 1, "u_pu": 0.9, "u": 27}
       ],
       "line": [
-        {"id": 4, "energized": 1, "q_from": 10, "q_to": -9}
+        {"id": 4, "energized": 1, "q_from": 30, "q_to": -27}
       ],
       "source": [
-        {"id": 6, "energized": 1, "q": 4},
-        {"id": 7, "energized": 1, "q": 6}
+        {"id": 6, "energized": 1, "q": 12},
+        {"id": 7, "energized": 1, "q": 18}
       ],
       "sym_load": [
-        {"id": 8, "energized": 1, "q": 9}
+        {"id": 8, "energized": 1, "q": 27}
       ]
     }
   ]
