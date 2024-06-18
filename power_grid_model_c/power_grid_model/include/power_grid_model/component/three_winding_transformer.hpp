@@ -42,10 +42,6 @@ class ThreeWindingTransformer : public Branch3 {
           clock_12_{three_winding_transformer_input.clock_12},
           clock_13_{three_winding_transformer_input.clock_13},
           tap_side_{three_winding_transformer_input.tap_side},
-          tap_pos_{three_winding_transformer_input.tap_pos == na_IntS
-                       ? (three_winding_transformer_input.tap_nom == na_IntS ? IntS{0}
-                                                                             : three_winding_transformer_input.tap_nom)
-                       : three_winding_transformer_input.tap_pos},
           tap_min_{three_winding_transformer_input.tap_min},
           tap_max_{three_winding_transformer_input.tap_max},
           tap_nom_{three_winding_transformer_input.tap_nom == na_IntS ? IntS{0}
@@ -82,6 +78,14 @@ class ThreeWindingTransformer : public Branch3 {
           z_grounding_1_{three_winding_transformer_input.r_grounding_1, three_winding_transformer_input.x_grounding_1},
           z_grounding_2_{three_winding_transformer_input.r_grounding_2, three_winding_transformer_input.x_grounding_2},
           z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
+        // init tap_pos_ linter smell
+        if (three_winding_transformer_input.tap_pos == na_IntS) {
+            tap_pos_ =
+                three_winding_transformer_input.tap_nom == na_IntS ? IntS{0} : three_winding_transformer_input.tap_nom;
+        } else {
+            tap_pos_ = three_winding_transformer_input.tap_pos;
+        }
+
         if (!is_valid_clock(clock_12_, winding_1_, winding_2_)) {
             throw InvalidTransformerClock{id(), clock_12_};
         }

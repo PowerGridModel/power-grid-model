@@ -586,13 +586,13 @@ TEST_CASE("Test three winding transformer") {
     SUBCASE("Test optional tap pos/nom") {
         input.tap_nom = 1;
         input.tap_pos = na_IntS;
-        std::vector<ThreeWindingTransformer> vec;
-        vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+        std::vector<ThreeWindingTransformer> trafo_vec;
+        trafo_vec.emplace_back(input, 138e3, 69e3, 13.8e3);
         input.tap_nom = na_IntS;
-        vec.emplace_back(input, 138e3, 69e3, 13.8e3);
-        CHECK(vec[0].tap_pos() == 1);
-        CHECK(vec[1].tap_pos() == 0);
-        CHECK(vec[1].tap_nom() == 0);
+        trafo_vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+        CHECK(trafo_vec[0].tap_pos() == 1);
+        CHECK(trafo_vec[1].tap_pos() == 0);
+        CHECK(trafo_vec[1].tap_nom() == 0);
     }
 }
 

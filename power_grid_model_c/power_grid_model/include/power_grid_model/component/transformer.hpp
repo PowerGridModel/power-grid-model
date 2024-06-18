@@ -37,9 +37,6 @@ class Transformer : public Branch {
           winding_to_{transformer_input.winding_to},
           clock_{transformer_input.clock},
           tap_side_{transformer_input.tap_side},
-          tap_pos_{transformer_input.tap_pos == na_IntS
-                       ? (transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom)
-                       : transformer_input.tap_pos},
           tap_min_{transformer_input.tap_min},
           tap_max_{transformer_input.tap_max},
           tap_nom_{transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom},
@@ -55,6 +52,13 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
+        // init tap_pos_ linter smell
+        if (transformer_input.tap_pos == na_IntS) {
+            tap_pos_ = transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom;
+        } else {
+            tap_pos_ = transformer_input.tap_pos;
+        }
+
         if (!is_valid_clock(clock_, winding_from_, winding_to_)) {
             throw InvalidTransformerClock{id(), clock_};
         }
