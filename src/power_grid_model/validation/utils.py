@@ -12,6 +12,7 @@ import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
+from power_grid_model.dataset_definitions import PowerGridDataTypes
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -161,7 +162,7 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: str, field: str, data_type="input"):
+def nan_type(component: str, field: str, data_type: PowerGridDataTypes = "input"):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """

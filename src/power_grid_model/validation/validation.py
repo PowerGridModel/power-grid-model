@@ -18,6 +18,7 @@ import numpy as np
 from power_grid_model import power_grid_meta_data
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.dataset_definitions import PowerGridDataTypes
 from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
@@ -151,7 +152,7 @@ def validate_batch_data(
     return errors if errors else None
 
 
-def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
+def assert_valid_data_structure(data: Dataset, data_type: PowerGridDataTypes) -> None:
     """
     Checks if all component names are valid and if the data inside the component matches the required Numpy
     structured array as defined in the Power Grid Model meta data.

@@ -13,6 +13,7 @@ import pytest
 
 from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
+from power_grid_model.dataset_definitions import PowerGridDataTypes
 from power_grid_model.errors import (
     AutomaticTapCalculationError,
     ConflictID,
@@ -284,7 +285,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                 )
 
 
-def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
+def convert_python_to_numpy(data: PythonDataset, data_type: PowerGridDataTypes) -> Dataset:
     """
     Convert native python data to internal numpy
 

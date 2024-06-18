@@ -25,6 +25,7 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
+from power_grid_model.dataset_definitions import PowerGridDataTypes
 from power_grid_model.errors import PowerGridSerializationError
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
@@ -190,7 +191,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     if kwargs:
         warnings.warn(f"Provided keyword arguments {list(kwargs.keys())} are deprecated.", DeprecationWarning)
 
-    return _compatibility_deprecated_import_json_data(json_file=json_file, data_type=data_type)
+    return _compatibility_deprecated_import_json_data(json_file=json_file, data_type=data_type)  # type: ignore
 
 
 def export_json_data(
@@ -274,10 +275,13 @@ def import_update_data(json_file: Path) -> BatchDataset:
     """
     warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
-    return cast_type(BatchDataset, _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"))
+    return cast_type(
+        BatchDataset,
+        _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"),
+    )
 
 
-def _compatibility_deprecated_import_json_data(json_file: Path, data_type: str):
+def _compatibility_deprecated_import_json_data(json_file: Path, data_type: PowerGridDataTypes):
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
 
