@@ -172,7 +172,7 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
 }
 } // namespace detail
 
-inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector>& d) {
+inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector> d) {
     auto data = detail::comp_size_degrees_graph(d);
     auto& [n, dgd] = data[0];
 

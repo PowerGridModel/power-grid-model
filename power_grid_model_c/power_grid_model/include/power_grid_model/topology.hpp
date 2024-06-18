@@ -15,7 +15,6 @@
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/iteration_macros.hpp>
-#include <boost/graph/minimum_degree_ordering.hpp>
 
 // build topology of the grid
 // divide grid into several math models
@@ -324,7 +323,7 @@ class Topology {
             }
         }
 
-        auto [reordered, fills] = minimum_degree_ordering(unique_nearest_neighbours);
+        auto [reordered, fills] = minimum_degree_ordering(std::move(unique_nearest_neighbours));
 
         const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
         auto const permuted_node_idx = [n_non_cyclic_nodes, &reordered_ = reordered](Idx node_idx) {

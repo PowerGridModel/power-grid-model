@@ -20,7 +20,7 @@ TEST_CASE("Test sparse ordering") {
                                               {4, {6, 8}}, {6, {7, 8, 9}}, {7, {8, 9}},    {8, {9}}};
 
         auto const start = std::chrono::high_resolution_clock::now();
-        auto const [alpha, fills] = power_grid_model::minimum_degree_ordering(graph);
+        auto const [alpha, fills] = power_grid_model::minimum_degree_ordering(std::move(graph));
         auto const stop = std::chrono::high_resolution_clock::now();
 
         auto const duration = duration_cast<std::chrono::microseconds>(stop - start);
