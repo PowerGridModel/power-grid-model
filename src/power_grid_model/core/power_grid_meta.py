@@ -13,6 +13,7 @@ from typing import Any, Dict, Union
 import numpy as np
 
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
+from power_grid_model.dataset_definitions import PowerGridDataType
 
 
 # constant enum for ctype
@@ -61,7 +62,7 @@ class ComponentMetaData:
 
 
 DatasetMetaData = Dict[str, ComponentMetaData]
-PowerGridMetaData = Dict[str, DatasetMetaData]
+PowerGridMetaData = Dict[PowerGridDataType, DatasetMetaData]
 
 
 def _generate_meta_data() -> PowerGridMetaData:
@@ -156,7 +157,9 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
 power_grid_meta_data = _generate_meta_data()
 
 
-def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False) -> np.ndarray:
+def initialize_array(
+    data_type: PowerGridDataType, component_type: str, shape: Union[tuple, int], empty: bool = False
+) -> np.ndarray:
     """
     Initializes an array for use in Power Grid Model calculations
 
