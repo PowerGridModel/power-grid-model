@@ -117,7 +117,7 @@ class CodeGenerator:
 
         self.render_template(template_path=template_path, output_path=output_path, all_map=all_map)
 
-    def render_metadata_enums(self, template_path: Path, data_path: Path, output_path: Path):
+    def render_metadata_types(self, template_path: Path, data_path: Path, output_path: Path):
         with open(data_path) as data_file:
             json_data = data_file.read()
         dataset_meta_data: List[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
@@ -146,7 +146,7 @@ class CodeGenerator:
         render_funcs = {
             "attribute_classes": self.render_attribute_classes,
             "dataset_class_maps": self.render_dataset_class_maps,
-            "metadata_enums": self.render_metadata_enums,
+            "metadata_enums": self.render_metadata_types,
         }
 
         # render attribute classes
