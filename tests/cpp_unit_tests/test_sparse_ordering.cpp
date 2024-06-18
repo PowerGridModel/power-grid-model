@@ -27,6 +27,6 @@ TEST_CASE("Test sparse ordering") {
         std::cout << "Time taken by function: " << duration.count() << " microseconds\n";
 
         CHECK(alpha == std::vector<Idx>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-        CHECK(fills == std::vector<std::pair<Idx, Idx>>{{3, 5}, {4, 5}, {8, 5}, {6, 5}, {7, 5}});
+        CHECK(fills == std::vector<std::pair<Idx, Idx>>{{3, 5}, {4, 5}, {5, 8}, {5, 6}, {5, 7}});
     }
 }

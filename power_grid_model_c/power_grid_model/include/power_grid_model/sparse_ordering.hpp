@@ -7,6 +7,7 @@
 #include "common/common.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <utility>
 #include <vector>
@@ -14,63 +15,47 @@
 namespace power_grid_model {
 
 namespace detail {
-inline void remove_element_vector_pair(Idx u, std::vector<std::pair<Idx, Idx>>& dgd) {
+inline void remove_element_degree(Idx u, std::vector<std::pair<Idx, Idx>>& dgd) {
     std::erase_if(dgd, [u](auto const& v) { return v.first == u; });
 }
 
-inline void set_element_vector_pair(Idx u, Idx v, std::vector<std::pair<Idx, Idx>>& dgd) {
+inline void set_element_degree(Idx u, Idx degree, std::vector<std::pair<Idx, Idx>>& dgd) {
     if (auto it = std::ranges::find_if(dgd, [u](auto const& value) { return value.first == u; }); it != dgd.end()) {
-        it->second = v;
+        it->second = degree;
     }
 }
 
-inline IdxVector adj(Idx const u, std::map<Idx, IdxVector> const& d) {
-    IdxVector l;
-
-    for (const auto& [k, adjacent] : d) {
-        if (k == u) {
-            l.insert(l.end(), adjacent.cbegin(), adjacent.cend());
-        } else if (std::ranges::find(adjacent, u) != adjacent.cend()) {
-            l.push_back(k);
-        }
+inline Idx num_adjacent(Idx const u, std::map<Idx, IdxVector> const& d) {
+    if (auto it = d.find(u); it != d.end()) {
+        return static_cast<Idx>(it->second.size());
     }
-
-    return l;
+    return 0;
 }
+
+inline IdxVector const& adj(Idx const u, std::map<Idx, IdxVector> const& d) { return d.at(u); }
 
 inline std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>>
 comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
     std::vector<std::pair<Idx, Idx>> dd;
     IdxVector v;
-    Idx n = 0;
 
     for (auto const& [k, adjacent] : d) {
-        if (std::ranges::find(v, k) == v.end()) {
-            ++n;
-            v.push_back(k);
-            dd.emplace_back(k, adj(k, d).size());
-        }
-        for (Idx const e : adjacent) {
-            if (std::ranges::find(v, e) == v.end()) {
-                ++n;
-                v.push_back(e);
-                dd.emplace_back(e, adj(e, d).size());
-            }
-        }
+        v.push_back(k);
+        dd.emplace_back(k, adjacent.size());
     }
 
     std::ranges::sort(dd);
 
-    return {{n, dd}};
+    return {{d.size(), dd}};
 }
 
 inline std::map<Idx, IdxVector> make_clique(IdxVector& l) {
     std::map<Idx, IdxVector> d;
 
-    for (Idx i = 0; i < static_cast<Idx>(l.size()) - 1; i++) {
-        Idx const idx = i + 1;
-        IdxVector sl(l.size() - idx);
-        std::copy(l.begin() + idx, l.end(), sl.begin());
+    for (Idx i = 0; i < static_cast<Idx>(l.size()); i++) {
+        IdxVector sl(l.size() - 1);
+        std::copy(l.begin(), l.begin() + i, sl.begin());
+        std::copy(l.begin() + i + 1, l.end(), sl.begin() + i);
         d[l[i]] = std::move(sl);
     }
 
@@ -103,10 +88,6 @@ inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, IdxVector> cons
         edges_it != d.cend() && std::ranges::find(edges_it->second, e.second) != edges_it->second.cend()) {
         return true;
     }
-    if (auto edges_it = d.find(e.second);
-        edges_it != d.cend() && std::ranges::find(edges_it->second, e.first) != edges_it->second.cend()) {
-        return true;
-    }
     return false;
 }
 
@@ -125,7 +106,7 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
             std::erase(nbs, uu);
         }
 
-        remove_element_vector_pair(uu, dgd);
+        remove_element_degree(uu, dgd);
         IdxVector el;
         for (auto& [e, adjacent] : d) {
             std::erase(adjacent, uu);
@@ -143,36 +124,40 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
 
     dd = make_clique(nbs);
 
-    auto const add_element = [&fills](Idx from, Idx to, IdxVector& from_adjacent) {
-        from_adjacent.push_back(to);
-        fills.emplace_back(from, to);
-    };
-
     for (auto const& [k, adjacent] : dd) {
         auto it = d.find(k);
         for (Idx const e : adjacent) {
             if (!in_graph(std::make_pair(k, e), d)) {
-                if (it != d.end()) {
-                    add_element(k, e, it->second);
-                } else if (auto e_it = d.find(e); e_it != d.end()) {
-                    add_element(e, k, e_it->second);
-                } else {
+                if (it == d.end()) {
                     std::tie(it, std::ignore) = d.try_emplace(k);
-                    add_element(k, e, it->second);
                 }
+                it->second.push_back(e);
+                d[e].push_back(k);
+                fills.emplace_back(k, e);
             }
         }
     }
 
     for (auto const& e : nbs) {
-        set_element_vector_pair(e, static_cast<Idx>(adj(e, d).size()), dgd);
+        set_element_degree(e, num_adjacent(e, d), dgd);
     }
 
     return alpha;
 }
 } // namespace detail
 
-inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector> d) {
+inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector> d_) {
+    // make symmetric
+    auto d = d_;
+    for (auto& [k, adjacent] : d_) {
+        for (auto a : adjacent) {
+            d[a].push_back(k);
+        }
+    }
+    for (auto& [k, adjacent] : d) {
+        std::ranges::sort(adjacent);
+    }
+
     auto data = detail::comp_size_degrees_graph(d);
     auto& [n, dgd] = data[0];
 
@@ -183,7 +168,9 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
         Idx const u =
             get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
         alpha.push_back(u);
-        if ((d.size() == 1) && d.begin()->second.size() == 1) {
+        if (d.size() == 2) {
+            assert(d.begin()->second.size() == 1);
+
             Idx const from = d.begin()->first;
             Idx const to = d.begin()->second[0];
             alpha.push_back(alpha.back() == from ? to : from);
