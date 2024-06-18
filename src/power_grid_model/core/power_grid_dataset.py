@@ -26,6 +26,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
+from power_grid_model.dataset_definitions import PowerGridDataType
 from power_grid_model.errors import PowerGridError
 
 
@@ -119,7 +120,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> str:
+def get_dataset_type(data: Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> PowerGridDataType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -174,7 +175,7 @@ class CMutableDataset:
     The dataset will create mutable buffers that the Power Grid Model can use to load data.
     """
 
-    _dataset_type: str
+    _dataset_type: PowerGridDataType
     _schema: DatasetMetaData
     _is_batch: bool
     _batch_size: int
@@ -184,7 +185,7 @@ class CMutableDataset:
     def __new__(
         cls,
         data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
-        dataset_type: Optional[str] = None,
+        dataset_type: Optional[PowerGridDataType] = None,
     ):
         instance = super().__new__(cls)
         instance._mutable_dataset = MutableDatasetPtr()
@@ -322,7 +323,7 @@ class CConstDataset:
     def __new__(
         cls,
         data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
-        dataset_type: Optional[str] = None,
+        dataset_type: Optional[PowerGridDataType] = None,
     ):
         instance = super().__new__(cls)
         instance._const_dataset = ConstDatasetPtr()

@@ -108,7 +108,7 @@ def json_deserialize_from_file(file_path: Path) -> Dataset:
 def json_serialize_to_file(
     file_path: Path,
     data: Dataset,
-    dataset_type: Optional[str] = None,
+    dataset_type: Optional[PowerGridDataType] = None,
     use_compact_list: bool = False,
     indent: Optional[int] = 2,
 ):
@@ -151,7 +151,7 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
 
 
 def msgpack_serialize_to_file(
-    file_path: Path, data: Dataset, dataset_type: Optional[str] = None, use_compact_list: bool = False
+    file_path: Path, data: Dataset, dataset_type: Optional[PowerGridDataType] = None, use_compact_list: bool = False
 ):
     """
     Export msgpack data in most recent format.
