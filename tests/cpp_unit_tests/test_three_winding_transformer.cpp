@@ -583,6 +583,17 @@ TEST_CASE("Test three winding transformer") {
         CHECK(inv.status_3 == expected.status_3);
         CHECK(inv.tap_pos == expected.tap_pos);
     }
-} // namespace power_grid_model
+    SUBCASE("Test optional tap pos/nom") {
+        input.tap_nom = 1;
+        input.tap_pos = na_IntS;
+        std::vector<ThreeWindingTransformer> trafo_vec;
+        trafo_vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+        input.tap_nom = na_IntS;
+        trafo_vec.emplace_back(input, 138e3, 69e3, 13.8e3);
+        CHECK(trafo_vec[0].tap_pos() == 1);
+        CHECK(trafo_vec[1].tap_pos() == 0);
+        CHECK(trafo_vec[1].tap_nom() == 0);
+    }
+}
 
 } // namespace power_grid_model
