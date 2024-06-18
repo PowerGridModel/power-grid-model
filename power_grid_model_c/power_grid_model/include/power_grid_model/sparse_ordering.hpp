@@ -84,11 +84,11 @@ inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx co
     auto l = adj(u, d);
     auto lu = l;
     lu.push_back(u);
+    std::ranges::sort(lu);
 
     for (auto const& v : l) {
         auto lv = adj(v, d);
         lv.push_back(v);
-        std::ranges::sort(lu);
         std::ranges::sort(lv);
         if (lu == lv) {
             rl.push_back(v);
