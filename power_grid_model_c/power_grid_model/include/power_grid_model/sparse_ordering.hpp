@@ -143,7 +143,7 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
 
         remove_element_degree(uu, dgd);
         IdxVector el;
-        for (auto& e : d[uu]) {
+        for (auto e : d[uu]) {
             auto& adjacents = d[e];
             std::erase(adjacents, uu);
             if (adjacents.empty()) {
@@ -184,9 +184,9 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
 
 inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector> d) {
     // make symmetric
-    for (auto& [k, adjacent] : d) {
-        for (auto a : adjacent) {
-            d[a].push_back(k);
+    for (auto const& [k, adjacent] : d) {
+        for (auto e : adjacent) {
+            d[e].push_back(k);
         }
     }
     for (auto& [k, adjacent] : d) {
