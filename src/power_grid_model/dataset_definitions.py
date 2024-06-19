@@ -68,6 +68,8 @@ class PowerGridComponents(Enum):
 
     transformer = "transformer"
 
+    transformer_tap_regulator = "transformer_tap_regulator"
+
     three_winding_transformer = "three_winding_transformer"
 
     sym_load = "sym_load"
@@ -98,6 +100,7 @@ PowerGridComponentsLiteral = Literal[
     "line",
     "link",
     "transformer",
+    "transformer_tap_regulator",
     "three_winding_transformer",
     "sym_load",
     "sym_gen",
