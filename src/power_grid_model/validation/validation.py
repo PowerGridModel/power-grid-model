@@ -297,7 +297,6 @@ def validate_required_values(
         "winding_to",
         "clock",
         "tap_side",
-        "tap_pos",
         "tap_min",
         "tap_max",
         "tap_size",
@@ -325,7 +324,6 @@ def validate_required_values(
         "clock_12",
         "clock_13",
         "tap_side",
-        "tap_pos",
         "tap_min",
         "tap_max",
         "tap_size",
@@ -539,7 +537,7 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     errors += all_between_or_at(data, "transformer", "clock", 0, 12)
     errors += all_valid_clocks(data, "transformer", "clock", "winding_from", "winding_to")
     errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
-    errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max")
+    errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max", data["transformer"]["tap_nom"], 0)
     errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max", 0)
     errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
     errors += all_greater_or_equal(data, "transformer", "uk_min", "pk_min/sn", data["transformer"]["uk"])
@@ -597,7 +595,15 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     errors += all_valid_clocks(data, "three_winding_transformer", "clock_12", "winding_1", "winding_2")
     errors += all_valid_clocks(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
     errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
-    errors += all_between_or_at(data, "three_winding_transformer", "tap_pos", "tap_min", "tap_max")
+    errors += all_between_or_at(
+        data,
+        "three_winding_transformer",
+        "tap_pos",
+        "tap_min",
+        "tap_max",
+        data["three_winding_transformer"]["tap_nom"],
+        0,
+    )
     errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max", 0)
     errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
     errors += all_greater_or_equal(
