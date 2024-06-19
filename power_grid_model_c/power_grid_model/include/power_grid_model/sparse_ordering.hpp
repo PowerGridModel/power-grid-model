@@ -8,22 +8,58 @@
 
 #include <algorithm>
 #include <cassert>
+#include <compare>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
 namespace power_grid_model {
 
 namespace detail {
-inline void remove_element_degree(Idx u, std::vector<std::pair<Idx, Idx>>& dgd) {
-    std::erase_if(dgd, [u](auto const& v) { return v.first == u; });
+class DegreeLookup {
+  public:
+    void set(Idx u, Idx degree) {
+        if (auto it = vertex_to_degree.find(u); it != vertex_to_degree.end()) {
+            degrees_to_vertex[it->second].erase(u);
+            it->second = degree;
+        } else {
+            vertex_to_degree.try_emplace(u, degree);
+        }
+        degrees_to_vertex[degree].insert(u);
+    }
+
+    void erase(Idx u) {
+        auto vertex_it = vertex_to_degree.find(u);
+        if (vertex_it == vertex_to_degree.end()) {
+            return;
+        }
+        Idx const degree = vertex_it->second;
+        vertex_to_degree.erase(vertex_it);
+
+        if (auto degree_it = degrees_to_vertex.find(degree); degree_it != degrees_to_vertex.end()) {
+            degree_it->second.erase(u);
+            if (degree_it->second.empty()) {
+                degrees_to_vertex.erase(degree_it);
+            }
+        }
+    }
+
+    friend auto min_element(DegreeLookup const& dgd);
+
+  private:
+    std::map<Idx, std::set<Idx>> degrees_to_vertex;
+    std::map<Idx, Idx> vertex_to_degree;
+};
+
+inline auto min_element(DegreeLookup const& dgd) {
+    Idx const vertex = *dgd.degrees_to_vertex.begin()->second.begin();
+    return dgd.vertex_to_degree.find(vertex);
 }
 
-inline void set_element_degree(Idx u, Idx degree, std::vector<std::pair<Idx, Idx>>& dgd) {
-    if (auto it = std::ranges::find_if(dgd, [u](auto const& value) { return value.first == u; }); it != dgd.end()) {
-        it->second = degree;
-    }
-}
+inline void remove_element_degree(Idx u, DegreeLookup& dgd) { dgd.erase(u); }
+
+inline void set_element_degree(Idx u, Idx degree, DegreeLookup& dgd) { dgd.set(u, degree); }
 
 inline Idx num_adjacent(Idx const u, std::map<Idx, IdxVector> const& d) {
     if (auto it = d.find(u); it != d.end()) {
@@ -34,17 +70,14 @@ inline Idx num_adjacent(Idx const u, std::map<Idx, IdxVector> const& d) {
 
 inline IdxVector const& adj(Idx const u, std::map<Idx, IdxVector> const& d) { return d.at(u); }
 
-inline std::vector<std::pair<Idx, std::vector<std::pair<Idx, Idx>>>>
-comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
-    std::vector<std::pair<Idx, Idx>> dd;
+inline std::vector<std::pair<Idx, DegreeLookup>> comp_size_degrees_graph(std::map<Idx, IdxVector> const& d) {
+    DegreeLookup dd;
     IdxVector v;
 
     for (auto const& [k, adjacent] : d) {
         v.push_back(k);
-        dd.emplace_back(k, adjacent.size());
+        set_element_degree(k, adjacent.size(), dd);
     }
-
-    std::ranges::sort(dd);
 
     return {{d.size(), dd}};
 }
@@ -91,8 +124,7 @@ inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, IdxVector> cons
     return false;
 }
 
-inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVector>& d,
-                                                std::vector<std::pair<Idx, Idx>>& dgd,
+inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVector>& d, DegreeLookup& dgd,
                                                 std::vector<std::pair<Idx, Idx>>& fills) {
     std::vector<std::pair<IdxVector, IdxVector>> nbsrl = check_indistguishable(u, d);
     auto& [nbs, rl] = nbsrl[0];
@@ -108,9 +140,10 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
 
         remove_element_degree(uu, dgd);
         IdxVector el;
-        for (auto& [e, adjacent] : d) {
-            std::erase(adjacent, uu);
-            if (adjacent.empty()) {
+        for (auto& e : d[uu]) {
+            auto& adjacents = d[e];
+            std::erase(adjacents, uu);
+            if (adjacents.empty()) {
                 el.push_back(e);
             }
         }
@@ -165,8 +198,7 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
     std::vector<std::pair<Idx, Idx>> fills;
 
     for (Idx k = 0; k < n; ++k) {
-        Idx const u =
-            get<0>(*std::ranges::min_element(dgd, [](auto lhs, auto rhs) { return get<1>(lhs) < get<1>(rhs); }));
+        Idx const u = get<0>(*detail::min_element(dgd));
         alpha.push_back(u);
         if (d.size() == 2) {
             assert(d.begin()->second.size() == 1);
