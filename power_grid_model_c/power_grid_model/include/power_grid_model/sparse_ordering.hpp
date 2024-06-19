@@ -79,7 +79,7 @@ inline std::vector<std::pair<Idx, DegreeLookup>> comp_size_degrees_graph(std::ma
 
     for (auto const& [k, adjacent] : d) {
         v.push_back(k);
-        set_element_degree(k, adjacent.size(), dd);
+        set_element_degree(k, static_cast<Idx>(adjacent.size()), dd);
     }
 
     return {{d.size(), dd}};
@@ -182,16 +182,16 @@ inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVe
 }
 } // namespace detail
 
-inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector> d_) {
+inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ordering(std::map<Idx, IdxVector> d) {
     // make symmetric
-    auto d = d_;
-    for (auto& [k, adjacent] : d_) {
+    for (auto& [k, adjacent] : d) {
         for (auto a : adjacent) {
             d[a].push_back(k);
         }
     }
     for (auto& [k, adjacent] : d) {
-        std::ranges::sort(adjacent);
+        std::set<Idx> const unique_sorted_adjacent{adjacent.begin(), adjacent.end()};
+        adjacent = IdxVector{unique_sorted_adjacent.begin(), unique_sorted_adjacent.end()};
     }
 
     auto data = detail::comp_size_degrees_graph(d);
