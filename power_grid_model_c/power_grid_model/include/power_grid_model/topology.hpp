@@ -326,15 +326,15 @@ class Topology {
         auto [reordered, fills] = minimum_degree_ordering(std::move(unique_nearest_neighbours));
 
         const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
-        auto const permuted_node_idx = [n_non_cyclic_nodes, &reordered_ = reordered](Idx node_idx) {
-            return n_non_cyclic_nodes +
-                   narrow_cast<Idx>(std::distance(reordered_.begin(), std::ranges::find(reordered_, node_idx)));
-        };
+        std::map<Idx, Idx> permuted_node_indices;
+        for (Idx idx = 0; idx < static_cast<Idx>(reordered.size()); ++idx) {
+            permuted_node_indices[reordered[idx]] = n_non_cyclic_nodes + idx;
+        }
 
         std::ranges::copy(reordered, std::back_inserter(dfs_node));
         for (auto [from, to] : fills) {
-            auto from_reordered = permuted_node_idx(from);
-            auto to_reordered = permuted_node_idx(to);
+            auto from_reordered = permuted_node_indices[from];
+            auto to_reordered = permuted_node_indices[to];
             fill_in.push_back({from_reordered, to_reordered});
         }
 

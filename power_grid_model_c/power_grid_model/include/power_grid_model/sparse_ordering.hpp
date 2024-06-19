@@ -20,9 +20,9 @@ namespace detail {
 class DegreeLookup {
   public:
     void set(Idx u, Idx degree) {
-        if (auto it = vertex_to_degree.find(u); it != vertex_to_degree.end()) {
-            degrees_to_vertex[it->second].erase(u);
-            it->second = degree;
+        if (auto degree_it = vertex_to_degree.find(u); degree_it != vertex_to_degree.end()) {
+            remove_degree(u, degree_it->second);
+            degree_it->second = degree;
         } else {
             vertex_to_degree.try_emplace(u, degree);
         }
@@ -36,7 +36,13 @@ class DegreeLookup {
         }
         Idx const degree = vertex_it->second;
         vertex_to_degree.erase(vertex_it);
+        remove_degree(u, degree);
+    }
 
+    friend auto min_element(DegreeLookup const& dgd);
+
+  private:
+    void remove_degree(Idx u, Idx degree) {
         if (auto degree_it = degrees_to_vertex.find(degree); degree_it != degrees_to_vertex.end()) {
             degree_it->second.erase(u);
             if (degree_it->second.empty()) {
@@ -45,11 +51,8 @@ class DegreeLookup {
         }
     }
 
-    friend auto min_element(DegreeLookup const& dgd);
-
-  private:
-    std::map<Idx, std::set<Idx>> degrees_to_vertex;
     std::map<Idx, Idx> vertex_to_degree;
+    std::map<Idx, std::set<Idx>> degrees_to_vertex;
 };
 
 inline auto min_element(DegreeLookup const& dgd) {
