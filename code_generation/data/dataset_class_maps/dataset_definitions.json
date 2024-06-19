@@ -21,6 +21,10 @@
                     "class_name": "TransformerInput"
                 },
                 {
+                    "names": ["transformer_tap_regulator"],
+                    "class_name": "TransformerTapRegulatorInput"
+                },
+                {
                     "names": ["three_winding_transformer"],
                     "class_name": "ThreeWindingTransformerInput"
                 },
@@ -63,6 +67,10 @@
                     "class_name": "BranchOutput"
                 },
                 {
+                    "names": ["transformer_tap_regulator"],
+                    "class_name": "TransformerTapRegulatorOutput"
+                },
+                {
                     "names": ["three_winding_transformer"],
                     "class_name": "Branch3Output"
                 },
@@ -103,6 +111,10 @@
                 {
                     "names": ["transformer"],
                     "class_name": "TransformerUpdate"
+                },
+                {
+                    "names": ["transformer_tap_regulator"],
+                    "class_name": "TransformerTapRegulatorUpdate"
                 },
                 {
                     "names": ["three_winding_transformer"],
