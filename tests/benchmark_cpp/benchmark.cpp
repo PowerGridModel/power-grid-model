@@ -72,21 +72,21 @@ struct PowerGridBenchmark {
             run_pf<sym>(calculation_method, info);
         }
         print(info);
-        // info.clear();
-        // {
-        //     std::cout << "\n*****Run without initialization*****\n";
-        //     Timer const t_total(info, 0000, "Total");
-        //     run_pf<sym>(calculation_method, info);
-        // }
-        // print(info);
+        info.clear();
+        {
+            std::cout << "\n*****Run without initialization*****\n";
+            Timer const t_total(info, 0000, "Total");
+            run_pf<sym>(calculation_method, info);
+        }
+        print(info);
 
-        // if (batch_size > 0) {
-        //     info.clear();
-        //     std::cout << "\n*****Run with batch calculation*****\n";
-        //     Timer const t_total(info, 0000, "Total");
-        //     run_pf<sym>(calculation_method, info, batch_size, threading);
-        // }
-        // print(info);
+        if (batch_size > 0) {
+            info.clear();
+            std::cout << "\n*****Run with batch calculation*****\n";
+            Timer const t_total(info, 0000, "Total");
+            run_pf<sym>(calculation_method, info, batch_size, threading);
+        }
+        print(info);
 
         std::cout << "\n\n";
     }
@@ -114,41 +114,41 @@ int main(int /* argc */, char** /* argv */) {
     power_grid_model::benchmark::PowerGridBenchmark benchmarker{};
     power_grid_model::benchmark::Option option{};
 
-    // #ifndef NDEBUG
-    //     option.n_node_total_specified = 200;
-    //     option.n_mv_feeder = 3;
-    //     option.n_node_per_mv_feeder = 6;
-    //     option.n_lv_feeder = 2;
-    //     option.n_connection_per_lv_feeder = 4;
-    //     power_grid_model::Idx constexpr batch_size = 10;
-    // #else
-    option.n_node_total_specified = 150000;
+#ifndef NDEBUG
+    option.n_node_total_specified = 200;
+    option.n_mv_feeder = 3;
+    option.n_node_per_mv_feeder = 6;
+    option.n_lv_feeder = 2;
+    option.n_connection_per_lv_feeder = 4;
+    power_grid_model::Idx constexpr batch_size = 10;
+#else
+    option.n_node_total_specified = 1500;
     option.n_mv_feeder = 20;
     option.n_node_per_mv_feeder = 10;
     option.n_lv_feeder = 10;
     option.n_connection_per_lv_feeder = 40;
     power_grid_model::Idx constexpr batch_size = 1000;
-    // #endif
+#endif
 
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    // benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size);
-    // benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size, 6);
-    // benchmarker.run_benchmark<symmetric_t>(option, linear);
-    // benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
-    // benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
-    // benchmarker.run_benchmark<asymmetric_t>(option, linear);
+    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size);
+    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size, 6);
+    benchmarker.run_benchmark<symmetric_t>(option, linear);
+    benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
+    benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
+    benchmarker.run_benchmark<asymmetric_t>(option, linear);
     // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
-    // benchmarker.run_benchmark<symmetric_t>(option, newton_raphson);
+    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson);
     benchmarker.run_benchmark<symmetric_t>(option, linear);
-    // benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
-    // benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
-    // benchmarker.run_benchmark<asymmetric_t>(option, linear);
+    benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
+    benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
+    benchmarker.run_benchmark<asymmetric_t>(option, linear);
     // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
     return 0;
 }
