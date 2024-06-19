@@ -76,6 +76,17 @@ PGM_MetaAttribute const* const PGM_def_input_transformer_r_grounding_from = PGM_
 PGM_MetaAttribute const* const PGM_def_input_transformer_x_grounding_from = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer", "x_grounding_from");
 PGM_MetaAttribute const* const PGM_def_input_transformer_r_grounding_to = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer", "r_grounding_to");
 PGM_MetaAttribute const* const PGM_def_input_transformer_x_grounding_to = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer", "x_grounding_to");
+// component transformer_tap_regulator
+PGM_MetaComponent const* const PGM_def_input_transformer_tap_regulator = PGM_meta_get_component_by_name(nullptr, "input", "transformer_tap_regulator");
+// attributes of input transformer_tap_regulator
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_regulated_object = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "regulated_object");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_status = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "status");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_control_side = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "control_side");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_u_set = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "u_set");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_u_band = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "u_band");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_line_drop_compensation_r = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "line_drop_compensation_r");
+PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_line_drop_compensation_x = PGM_meta_get_attribute_by_name(nullptr, "input", "transformer_tap_regulator", "line_drop_compensation_x");
 // component three_winding_transformer
 PGM_MetaComponent const* const PGM_def_input_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "input", "three_winding_transformer");
 // attributes of input three_winding_transformer
@@ -289,6 +300,12 @@ PGM_MetaAttribute const* const PGM_def_sym_output_transformer_p_to = PGM_meta_ge
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_q_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer", "q_to");
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_i_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer", "i_to");
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_s_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer", "s_to");
+// component transformer_tap_regulator
+PGM_MetaComponent const* const PGM_def_sym_output_transformer_tap_regulator = PGM_meta_get_component_by_name(nullptr, "sym_output", "transformer_tap_regulator");
+// attributes of sym_output transformer_tap_regulator
+PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer_tap_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer_tap_regulator", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer_tap_regulator", "tap_pos");
 // component three_winding_transformer
 PGM_MetaComponent const* const PGM_def_sym_output_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "sym_output", "three_winding_transformer");
 // attributes of sym_output three_winding_transformer
@@ -455,6 +472,12 @@ PGM_MetaAttribute const* const PGM_def_asym_output_transformer_p_to = PGM_meta_g
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_q_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer", "q_to");
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_i_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer", "i_to");
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_s_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer", "s_to");
+// component transformer_tap_regulator
+PGM_MetaComponent const* const PGM_def_asym_output_transformer_tap_regulator = PGM_meta_get_component_by_name(nullptr, "asym_output", "transformer_tap_regulator");
+// attributes of asym_output transformer_tap_regulator
+PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer_tap_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer_tap_regulator", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer_tap_regulator", "tap_pos");
 // component three_winding_transformer
 PGM_MetaComponent const* const PGM_def_asym_output_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "asym_output", "three_winding_transformer");
 // attributes of asym_output three_winding_transformer
@@ -592,6 +615,15 @@ PGM_MetaAttribute const* const PGM_def_update_transformer_id = PGM_meta_get_attr
 PGM_MetaAttribute const* const PGM_def_update_transformer_from_status = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "from_status");
 PGM_MetaAttribute const* const PGM_def_update_transformer_to_status = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "to_status");
 PGM_MetaAttribute const* const PGM_def_update_transformer_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer", "tap_pos");
+// component transformer_tap_regulator
+PGM_MetaComponent const* const PGM_def_update_transformer_tap_regulator = PGM_meta_get_component_by_name(nullptr, "update", "transformer_tap_regulator");
+// attributes of update transformer_tap_regulator
+PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer_tap_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_status = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer_tap_regulator", "status");
+PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_u_set = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer_tap_regulator", "u_set");
+PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_u_band = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer_tap_regulator", "u_band");
+PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_line_drop_compensation_r = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer_tap_regulator", "line_drop_compensation_r");
+PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_line_drop_compensation_x = PGM_meta_get_attribute_by_name(nullptr, "update", "transformer_tap_regulator", "line_drop_compensation_x");
 // component three_winding_transformer
 PGM_MetaComponent const* const PGM_def_update_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "update", "three_winding_transformer");
 // attributes of update three_winding_transformer
