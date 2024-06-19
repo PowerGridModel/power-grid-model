@@ -7,7 +7,7 @@ from enum import IntEnum
 import numpy as np
 import pytest
 
-from power_grid_model import LoadGenType, initialize_array
+from power_grid_model import LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -143,6 +143,19 @@ def test_all_between_or_at():
     assert len(errors) == 1
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
 
+    nan_value = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
+    transformer_array = initialize_array("input", "transformer", 3)
+    transformer_array["id"] = [1, 2, 3]
+    transformer_array["tap_pos"] = [nan_value, 1, nan_value]
+    transformer_array["tap_nom"] = [2, 1, nan_value]
+    valid = {"transformer": transformer_array}
+    errors = all_between_or_at(valid, "transformer", "tap_pos", 0, 2, transformer_array["tap_nom"], 0)
+    assert not errors
+
+    errors = all_between_or_at(valid, "transformer", "tap_pos", 1, 2, transformer_array["tap_nom"], 0)
+    assert len(errors) == 1
+    assert NotBetweenOrAtError("transformer", "tap_pos", [3], (1, 2)) in errors
+
 
 def test_all_greater_than():
     valid = {"test": np.array([(1, 0.0), (2, 0.2), (3, 0.5), (4, np.nan)], dtype=[("id", "i4"), ("value", "f8")])}
@@ -216,6 +229,19 @@ def test_none_match_comparison():
     )
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
+
+    nan_value = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
+    transformer_array = initialize_array("input", "transformer", 3)
+    transformer_array["id"] = [1, 2, 3]
+    transformer_array["tap_pos"] = [nan_value, 0, nan_value]
+    transformer_array["tap_nom"] = [1, 1, nan_value]
+    valid = {"transformer": transformer_array}
+
+    errors = none_match_comparison(
+        valid, "transformer", "tap_pos", np.equal, 0, ComparisonError, transformer_array["tap_nom"], 0
+    )
+    assert len(errors) == 1
+    assert ComparisonError("transformer", "tap_pos", [2, 3], 0) in errors
 
 
 def test_all_identical():

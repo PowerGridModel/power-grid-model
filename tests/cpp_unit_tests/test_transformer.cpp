@@ -266,6 +266,17 @@ TEST_CASE("Test transformer") {
         CHECK(inv.to_status == expected.to_status);
         CHECK(inv.tap_pos == expected.tap_pos);
     }
+    SUBCASE("Test optional tap pos/nom") {
+        input.tap_nom = 1;
+        input.tap_pos = na_IntS;
+        std::vector<Transformer> trafo_vec;
+        trafo_vec.emplace_back(input, 150e3, 10e3);
+        input.tap_nom = na_IntS;
+        trafo_vec.emplace_back(input, 150e3, 10e3);
+        CHECK(trafo_vec[0].tap_pos() == 1);
+        CHECK(trafo_vec[1].tap_pos() == 0);
+        CHECK(trafo_vec[1].tap_nom() == 0);
+    }
 }
 
 TEST_CASE("Test Transfomer - Test 0 YNyn12") {
