@@ -24,7 +24,7 @@ sys.path.append(sys_path)
 
 
 class PowerGridDataTypes(Enum):
-    """Single/batch dataset types."""
+    """Dataset types."""
 
     input = "input"
 
@@ -45,7 +45,16 @@ PowerGridDataTypesLiteral = Literal[
     "sc_output",
 ]
 
+
 PowerGridDataType: TypeAlias = Union[PowerGridDataTypes, PowerGridDataTypesLiteral]
+"""
+A PowerGridDataType is the type of a :class:`BatchDataset`.
+
+- Examples: 
+
+    - PowerGridDataType.input = "input"
+    - PowerGridDataType.update = "update"
+"""
 
 
 class PowerGridComponents(Enum):
@@ -103,4 +112,15 @@ PowerGridComponentsLiteral = Literal[
     "fault",
 ]
 
+
 PowerGridComponent: TypeAlias = Union[PowerGridComponents, PowerGridComponentsLiteral]
+"""
+A PowerGridComponent is the type of a grid component.
+
+- Examples: 
+
+    - PowerGridComponent.node = "node"
+    - PowerGridComponent.line = "line"
+"""
+
+# pylint: enable=invalid-name
