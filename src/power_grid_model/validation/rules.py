@@ -23,7 +23,7 @@ Input data:
     data: SingleDataset
         The entire input/update data set
 
-    component: str
+    component: PowerGridComponent
         The name of the component, which should be an existing key in the data
 
     field: str
@@ -40,6 +40,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Un
 import numpy as np
 
 from power_grid_model.data_types import SingleDataset
+from power_grid_model.dataset_definitions import PowerGridComponent
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -80,14 +81,14 @@ Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
 
 
-def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> List[NotGreaterThanError]:
+def all_greater_than_zero(data: SingleDataset, component: PowerGridComponent, field: str) -> List[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
     zero. Returns an empty list on success, or a list containing a single error object on failure.
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (PowerGridComponent): The component of interest
         field (str): The field of interest
 
     Returns:
@@ -99,7 +100,7 @@ def all_greater_than_zero(data: SingleDataset, component: str, field: str) -> Li
 
 def all_greater_than_or_equal_to_zero(
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     field: str,
     default_value: Optional[Union[np.ndarray, int, float]] = None,
 ) -> List[NotGreaterOrEqualError]:
@@ -109,7 +110,7 @@ def all_greater_than_or_equal_to_zero(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str) The component of interest
+        component (PowerGridComponent) The component of interest
         field (str): The field of interest
         default_value (Optional[Union[np.ndarray, int, float]], optional): Some values are not required, but will
             receive a default value in the C++ core. To do a proper input validation, these default values should be
@@ -124,7 +125,7 @@ def all_greater_than_or_equal_to_zero(
 
 
 def all_greater_than(
-    data: SingleDataset, component: str, field: str, ref_value: Union[int, float, str]
+    data: SingleDataset, component: PowerGridComponent, field: str, ref_value: Union[int, float, str]
 ) -> List[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
@@ -151,7 +152,7 @@ def all_greater_than(
 
 def all_greater_or_equal(
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     field: str,
     ref_value: Union[int, float, str],
     default_value: Optional[Union[np.ndarray, int, float]] = None,
@@ -187,7 +188,7 @@ def all_greater_or_equal(
 
 
 def all_less_than(
-    data: SingleDataset, component: str, field: str, ref_value: Union[int, float, str]
+    data: SingleDataset, component: PowerGridComponent, field: str, ref_value: Union[int, float, str]
 ) -> List[NotLessThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than the
@@ -213,7 +214,7 @@ def all_less_than(
 
 
 def all_less_or_equal(
-    data: SingleDataset, component: str, field: str, ref_value: Union[int, float, str]
+    data: SingleDataset, component: PowerGridComponent, field: str, ref_value: Union[int, float, str]
 ) -> List[NotLessOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than,
@@ -242,7 +243,7 @@ def all_less_or_equal(
 
 def all_between(  # pylint: disable=too-many-arguments
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
@@ -282,7 +283,7 @@ def all_between(  # pylint: disable=too-many-arguments
 
 def all_between_or_at(  # pylint: disable=too-many-arguments
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     field: str,
     ref_value_1: Union[int, float, str],
     ref_value_2: Union[int, float, str],
@@ -332,7 +333,7 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
 
 def none_match_comparison(
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     field: str,
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
@@ -383,7 +384,7 @@ def none_match_comparison(
     return []
 
 
-def all_identical(data: SingleDataset, component: str, field: str) -> List[NotIdenticalError]:
+def all_identical(data: SingleDataset, component: PowerGridComponent, field: str) -> List[NotIdenticalError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
 
@@ -407,7 +408,7 @@ def all_identical(data: SingleDataset, component: str, field: str) -> List[NotId
 
 
 def all_enabled_identical(
-    data: SingleDataset, component: str, field: str, status_field: str
+    data: SingleDataset, component: PowerGridComponent, field: str, status_field: str
 ) -> List[NotIdenticalError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
@@ -435,7 +436,7 @@ def all_enabled_identical(
     )
 
 
-def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqueError]:
+def all_unique(data: SingleDataset, component: PowerGridComponent, field: str) -> List[NotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
     the 'field' column of that component.
@@ -459,7 +460,7 @@ def all_unique(data: SingleDataset, component: str, field: str) -> List[NotUniqu
 
 
 def all_cross_unique(
-    data: SingleDataset, fields: List[Tuple[str, str]], cross_only=True
+    data: SingleDataset, fields: List[Tuple[PowerGridComponent, str]], cross_only=True
 ) -> List[MultiComponentNotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
@@ -476,7 +477,7 @@ def all_cross_unique(
         A list containing zero or one MultiComponentNotUniqueError, listing all fields and ids where the value was not
         unique between the fields.
     """
-    all_values: Dict[int, List[Tuple[Tuple[str, str], int]]] = {}
+    all_values: Dict[int, List[Tuple[Tuple[PowerGridComponent, str], int]]] = {}
     duplicate_ids = set()
     for component, field in fields:
         for obj_id, value in zip(data[component]["id"], data[component][field]):
@@ -495,7 +496,7 @@ def all_cross_unique(
 
 
 def all_valid_enum_values(
-    data: SingleDataset, component: str, field: str, enum: Union[Type[Enum], List[Type[Enum]]]
+    data: SingleDataset, component: PowerGridComponent, field: str, enum: Union[Type[Enum], List[Type[Enum]]]
 ) -> List[InvalidEnumValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
@@ -503,7 +504,7 @@ def all_valid_enum_values(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (PowerGridComponent): The component of interest
         field (str): The field of interest
         enum (Type[Enum] | List[Type[Enum]]): The enum type to validate against, or a list of such enum types
 
@@ -526,20 +527,20 @@ def all_valid_enum_values(
 
 def all_valid_associated_enum_values(  # pylint: disable=too-many-arguments
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     field: str,
     ref_object_id_field: str,
-    ref_components: List[str],
+    ref_components: List[PowerGridComponent],
     enum: Union[Type[Enum], List[Type[Enum]]],
     **filters: Any,
 ) -> List[InvalidAssociatedEnumValueError]:
     """
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (PowerGridComponent): The component of interest
         field (str): The field of interest
         ref_object_id_field (str): The field that contains the referenced component ids
-        ref_components (List[str]): The component or components in which we want to look for ids
+        ref_components (List[PowerGridComponent]): The component or components in which we want to look for ids
         enum (Type[Enum] | List[Type[Enum]]): The enum type to validate against, or a list of such enum types
         **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
 
@@ -567,7 +568,11 @@ def all_valid_associated_enum_values(  # pylint: disable=too-many-arguments
 
 
 def all_valid_ids(
-    data: SingleDataset, component: str, field: str, ref_components: Union[str, List[str]], **filters: Any
+    data: SingleDataset,
+    component: PowerGridComponent,
+    field: str,
+    ref_components: Union[PowerGridComponent, List[PowerGridComponent]],
+    **filters: Any,
 ) -> List[InvalidIdError]:
     """
     For a column which should contain object identifiers (ids), check if the id exists in the data, for a specific set
@@ -595,7 +600,7 @@ def all_valid_ids(
     return []
 
 
-def all_boolean(data: SingleDataset, component: str, field: str) -> List[NotBooleanError]:
+def all_boolean(data: SingleDataset, component: PowerGridComponent, field: str) -> List[NotBooleanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid boolean
     values, i.e. 0 or 1. Returns an empty list on success, or a list containing a single error object on failure.
@@ -617,7 +622,7 @@ def all_boolean(data: SingleDataset, component: str, field: str) -> List[NotBool
 
 
 def all_not_two_values_zero(
-    data: SingleDataset, component: str, field_1: str, field_2: str
+    data: SingleDataset, component: PowerGridComponent, field_1: str, field_2: str
 ) -> List[TwoValuesZeroError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
@@ -641,7 +646,9 @@ def all_not_two_values_zero(
     return []
 
 
-def all_not_two_values_equal(data: SingleDataset, component: str, field_1: str, field_2: str) -> List[SameValueError]:
+def all_not_two_values_equal(
+    data: SingleDataset, component: PowerGridComponent, field_1: str, field_2: str
+) -> List[SameValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
     not both the same value. E.g. from_node and to_node of a line. Returns an empty list on success, or a list
@@ -666,7 +673,7 @@ def all_not_two_values_equal(data: SingleDataset, component: str, field_1: str, 
 
 
 def all_ids_exist_in_data_set(
-    data: SingleDataset, ref_data: SingleDataset, component: str, ref_name: str
+    data: SingleDataset, ref_data: SingleDataset, component: PowerGridComponent, ref_name: str
 ) -> List[IdNotInDatasetError]:
     """
     Check that for all records of a particular type of component, the ids exist in the reference data set.
@@ -687,7 +694,9 @@ def all_ids_exist_in_data_set(
     return []
 
 
-def all_finite(data: SingleDataset, exceptions: Optional[Dict[str, List[str]]] = None) -> List[InfinityError]:
+def all_finite(
+    data: SingleDataset, exceptions: Optional[Dict[PowerGridComponent, List[str]]] = None
+) -> List[InfinityError]:
     """
     Check that for all records in all component, the values in all columns are finite value, i.e. float values other
     than inf, or -inf. Nan values are ignored, as in all other comparison functions. You can use non_missing() to
@@ -720,7 +729,10 @@ def all_finite(data: SingleDataset, exceptions: Optional[Dict[str, List[str]]] =
 
 
 def none_missing(
-    data: SingleDataset, component: str, fields: Union[List[Union[str, List[str]]], str, List[str]], index: int = 0
+    data: SingleDataset,
+    component: PowerGridComponent,
+    fields: Union[List[Union[str, List[str]]], str, List[str]],
+    index: int = 0,
 ) -> List[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
@@ -755,7 +767,7 @@ def none_missing(
     return errors
 
 
-def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValidationError]:
+def valid_p_q_sigma(data: SingleDataset, component: PowerGridComponent) -> List[MultiFieldValidationError]:
     """
     Check validity of the pair `(p_sigma, q_sigma)` for 'sym_power_sensor' and 'asym_power_sensor'.
 
@@ -788,7 +800,7 @@ def valid_p_q_sigma(data: SingleDataset, component: str) -> List[MultiFieldValid
 
 
 def all_valid_clocks(
-    data: SingleDataset, component: str, clock_field: str, winding_from_field: str, winding_to_field: str
+    data: SingleDataset, component: PowerGridComponent, clock_field: str, winding_from_field: str, winding_to_field: str
 ) -> List[TransformerClockError]:
     """
     Custom validation rule: Odd clock number is only allowed for Dy(n) or Y(N)d configuration.
@@ -826,7 +838,7 @@ def all_valid_clocks(
 
 
 def all_valid_fault_phases(
-    data: SingleDataset, component: str, fault_type_field: str, fault_phase_field: str
+    data: SingleDataset, component: PowerGridComponent, fault_type_field: str, fault_phase_field: str
 ) -> List[FaultPhaseError]:
     """
     Custom validation rule: Only a subset of fault_phases is supported for each fault type.
@@ -881,19 +893,19 @@ def all_valid_fault_phases(
 
 def all_supported_tap_control_side(  # pylint: disable=too-many-arguments
     data: SingleDataset,
-    component: str,
+    component: PowerGridComponent,
     control_side_field: str,
     regulated_object_field: str,
-    tap_side_fields: List[Tuple[str, str]],
+    tap_side_fields: List[Tuple[PowerGridComponent, str]],
     **filters: Any,
 ) -> List[UnsupportedTransformerRegulationError]:
     """
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (PowerGridComponent): The component of interest
         control_side_field (str): The field of interest
         regulated_object_field (str): The field that contains the regulated component ids
-        tap_side_fields (List[Tuple[str, str]]): The fields of interest per regulated component,
+        tap_side_fields (List[Tuple[PowerGridComponent, str]]): The fields of interest per regulated component,
             formatted as [(component_1, field_1), (component_2, field_2)]
         **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
 

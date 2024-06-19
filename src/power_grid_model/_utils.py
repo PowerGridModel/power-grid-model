@@ -24,6 +24,7 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchArray,
 )
+from power_grid_model.dataset_definitions import PowerGridComponent
 
 
 def is_nan(data) -> bool:
@@ -95,7 +96,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     """
 
     n_batch_size = 0
-    checked_components: List[str] = []
+    checked_components: List[PowerGridComponent] = []
     for component, data in batch_data.items():
         n_component_batch_size = get_batch_size(data)
         if checked_components and n_component_batch_size != n_batch_size:
@@ -143,7 +144,7 @@ def get_batch_size(batch_data: BatchArray) -> int:
     return n_batches
 
 
-def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.ndarray]:
+def split_numpy_array_in_batches(data: np.ndarray, component: PowerGridComponent) -> List[np.ndarray]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -170,7 +171,7 @@ def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.nd
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: str) -> List[np.ndarray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: PowerGridComponent) -> List[np.ndarray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
