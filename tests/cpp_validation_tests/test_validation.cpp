@@ -617,7 +617,9 @@ TEST_CASE("Validation test single") {
             try {
                 validate_single_case(param);
             } catch (std::exception& e) {
-                auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                using namespace std::string_literals;
+
+                auto const msg = "Unexpected exception with message: "s + e.what();
                 FAIL_CHECK(msg);
             }
         }
@@ -631,7 +633,9 @@ TEST_CASE("Validation test batch") {
             try {
                 validate_batch_case(param);
             } catch (std::exception& e) {
-                auto const msg = std::string("Unexpected exception with message: ") + e.what();
+                using namespace std::string_literals;
+
+                auto const msg = "Unexpected exception with message: "s + e.what();
                 FAIL_CHECK(msg);
             }
         }
