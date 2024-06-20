@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from copy import copy
+from typing import Dict
 
 import numpy as np
 import pytest
 
 from power_grid_model import PowerGridModel, initialize_array
+from power_grid_model.dataset_definitions import PowerGridComponent
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
 from power_grid_model.validation import assert_valid_input_data
 
@@ -76,7 +78,7 @@ def test_simple_update(model: PowerGridModel, case_data):
     update_batch = case_data["update_batch"]
     source_indptr = update_batch["source"]["indptr"]
     source_update = update_batch["source"]["data"]
-    update_data = {
+    update_data: Dict[PowerGridComponent, np.ndarray] = {
         "source": source_update[source_indptr[0] : source_indptr[1]],
         "sym_load": update_batch["sym_load"][0, :],
     }
