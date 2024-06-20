@@ -228,7 +228,9 @@ def validate_ids_exist(
 
 
 def _process_power_sigma_and_p_q_sigma(
-    data: SingleDataset, sensor: PowerGridComponent, required_list: Dict[str, List[Union[str, List[str]]]]
+    data: SingleDataset,
+    sensor: PowerGridComponent,
+    required_list: Dict[Union[PowerGridComponent, str], List[Union[str, List[str]]]],
 ) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
@@ -279,7 +281,7 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required: Dict[str, List[Union[str, List[str]]]] = {"base": ["id"]}
+    required: Dict[Union[PowerGridComponent, str], List[Union[str, List[str]]]] = {"base": ["id"]}
 
     # Nodes
     required["node"] = required["base"] + ["u_rated"]

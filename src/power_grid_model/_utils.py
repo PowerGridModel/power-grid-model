@@ -103,7 +103,8 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
             if len(checked_components) == 1:
                 checked_components_str = f"'{checked_components.pop()}'"
             else:
-                checked_components_str = "/".join(sorted(checked_components))
+                str_checked_components = [str(component) for component in checked_components]
+                checked_components_str = "/".join(sorted(str_checked_components))
             raise ValueError(
                 f"Inconsistent number of batches in batch data. "
                 f"Component '{component}' contains {n_component_batch_size} batches, "

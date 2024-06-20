@@ -178,7 +178,7 @@ class MultiComponentValidationError(ValidationError):
             fields: List of field names, formatted as tuples (component, field)
             ids: List of component IDs (not row indices), formatted as tuples (component, id)
         """
-        self.component = sorted(set(component for component, _ in fields))
+        self.component = sorted(set(component for component, _ in fields), key=str)
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
@@ -189,7 +189,8 @@ class MultiComponentValidationError(ValidationError):
 
     @property
     def component_str(self) -> str:
-        return "/".join(self.component)
+        str_components = [str(component) for component in self.component]
+        return "/".join(str_components)
 
     @property
     def field_str(self) -> str:
@@ -333,7 +334,7 @@ class InvalidIdError(SingleFieldValidationError):
     ):
         # pylint: disable=too-many-arguments
         super().__init__(component=component, field=field, ids=ids)
-        self.ref_components = [ref_components] if isinstance(ref_components, str) else ref_components
+        self.ref_components = [ref_components] if isinstance(ref_components, str) else ref_components  # type: ignore
         self.filters = filters if filters else None
 
     @property
