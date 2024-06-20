@@ -23,7 +23,7 @@ sys.path.append(sys_path)
 # pylint: disable=invalid-name
 
 
-class PowerGridDataTypes(Enum):
+class DataTypes(Enum):
     """Dataset types."""
 
     {% for dataset_type in dataset_types %}
@@ -31,25 +31,25 @@ class PowerGridDataTypes(Enum):
     {% endfor %}
 
 
-PowerGridDataTypesLiteral = Literal[
+DataTypesLiteral = Literal[
     {% for dataset_type in dataset_types %}
     "{{ dataset_type }}",
     {% endfor %}
 ]
 
 
-PowerGridDataType = Union[PowerGridDataTypes, PowerGridDataTypesLiteral]
+DataType = Union[DataTypes, DataTypesLiteral]
 """
-A PowerGridDataType is the type of a :class:`BatchDataset`.
+A DataType is the type of a :class:`BatchDataset`.
 
 - Examples: 
 
-    - PowerGridDataType.input = "input"
-    - PowerGridDataType.update = "update"
+    - DataType.input = "input"
+    - DataType.update = "update"
 """
 
 
-class PowerGridComponents(Enum):
+class ComponentTypes(Enum):
     """Grid component types."""
 
     {% for component in components %}
@@ -57,21 +57,21 @@ class PowerGridComponents(Enum):
     {% endfor %}
 
 
-PowerGridComponentsLiteral = Literal[
+ComponentTypesLiteral = Literal[
     {% for component in components %}
     "{{ component }}",
     {% endfor %}
 ]
 
 
-PowerGridComponent = Union[PowerGridComponents, PowerGridComponentsLiteral]
+ComponentType = Union[ComponentTypes, ComponentTypesLiteral]
 """
-A PowerGridComponent is the type of a grid component.
+A ComponentType is the type of a grid component.
 
 - Examples: 
 
-    - PowerGridComponent.node = "node"
-    - PowerGridComponent.line = "line"
+    - ComponentType.node = "node"
+    - ComponentType.line = "line"
 """
 
 # pylint: enable=invalid-name

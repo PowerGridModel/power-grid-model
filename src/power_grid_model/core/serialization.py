@@ -23,7 +23,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
-from power_grid_model.dataset_definitions import PowerGridComponent, PowerGridDataType
+from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.errors import PowerGridSerializationError
 
 
@@ -64,7 +64,7 @@ class Deserializer:
         if hasattr(self, "_deserializer"):
             pgc.destroy_deserializer(self._deserializer)
 
-    def load(self) -> Dict[PowerGridComponent, Union[np.ndarray, Dict[str, np.ndarray]]]:
+    def load(self) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
         """
         Load the deserialized data to a new dataset.
 
@@ -85,8 +85,8 @@ class Serializer(ABC):
     """
 
     _data: Union[
-        Mapping[PowerGridComponent, np.ndarray],
-        Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+        Mapping[ComponentType, np.ndarray],
+        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
     ]
     _dataset: CConstDataset
     _serializer: SerializerPtr
@@ -94,11 +94,11 @@ class Serializer(ABC):
     def __new__(
         cls,
         data: Union[
-            Mapping[PowerGridComponent, np.ndarray],
-            Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
         serialization_type: SerializationType,
-        dataset_type: Optional[PowerGridDataType] = None,
+        dataset_type: Optional[DataType] = None,
     ):
         instance = super().__new__(cls)
 
@@ -205,10 +205,10 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
     def __new__(
         cls,
         data: Union[
-            Mapping[PowerGridComponent, np.ndarray],
-            Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[PowerGridDataType] = None,
+        dataset_type: Optional[DataType] = None,
     ):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
@@ -221,15 +221,15 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
     def __new__(
         cls,
         data: Union[
-            Mapping[PowerGridComponent, np.ndarray],
-            Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[PowerGridDataType] = None,
+        dataset_type: Optional[DataType] = None,
     ):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
-def json_deserialize(data: Union[str, bytes]) -> Dict[PowerGridComponent, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def json_deserialize(data: Union[str, bytes]) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Load serialized JSON data to a new dataset.
 
@@ -250,10 +250,10 @@ def json_deserialize(data: Union[str, bytes]) -> Dict[PowerGridComponent, Union[
 
 def json_serialize(
     data: Union[
-        Mapping[PowerGridComponent, np.ndarray],
-        Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+        Mapping[ComponentType, np.ndarray],
+        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
     ],
-    dataset_type: Optional[PowerGridDataType] = None,
+    dataset_type: Optional[DataType] = None,
     use_compact_list: bool = False,
     indent: int = 2,
 ) -> str:
@@ -282,7 +282,7 @@ def json_serialize(
     return result
 
 
-def msgpack_deserialize(data: bytes) -> Dict[PowerGridComponent, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def msgpack_deserialize(data: bytes) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
     """
     Load serialized msgpack data to a new dataset.
 
@@ -303,10 +303,10 @@ def msgpack_deserialize(data: bytes) -> Dict[PowerGridComponent, Union[np.ndarra
 
 def msgpack_serialize(
     data: Union[
-        Mapping[PowerGridComponent, np.ndarray],
-        Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+        Mapping[ComponentType, np.ndarray],
+        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
     ],
-    dataset_type: Optional[PowerGridDataType] = None,
+    dataset_type: Optional[DataType] = None,
     use_compact_list: bool = False,
 ) -> bytes:
     """

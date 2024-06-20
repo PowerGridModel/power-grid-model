@@ -18,7 +18,7 @@ import numpy as np
 from power_grid_model import power_grid_meta_data
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.dataset_definitions import PowerGridComponent, PowerGridDataType
+from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
@@ -152,7 +152,7 @@ def validate_batch_data(
     return errors if errors else None
 
 
-def assert_valid_data_structure(data: Dataset, data_type: PowerGridDataType) -> None:
+def assert_valid_data_structure(data: Dataset, data_type: DataType) -> None:
     """
     Checks if all component names are valid and if the data inside the component matches the required Numpy
     structured array as defined in the Power Grid Model meta data.
@@ -206,7 +206,7 @@ def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComp
 
 
 def validate_ids_exist(
-    update_data: Dict[PowerGridComponent, np.ndarray], input_data: SingleDataset
+    update_data: Dict[ComponentType, np.ndarray], input_data: SingleDataset
 ) -> List[IdNotInDatasetError]:
     """
     Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
@@ -229,8 +229,8 @@ def validate_ids_exist(
 
 def _process_power_sigma_and_p_q_sigma(
     data: SingleDataset,
-    sensor: PowerGridComponent,
-    required_list: Dict[Union[PowerGridComponent, str], List[Union[str, List[str]]]],
+    sensor: ComponentType,
+    required_list: Dict[Union[ComponentType, str], List[Union[str, List[str]]]],
 ) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
@@ -281,7 +281,7 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required: Dict[Union[PowerGridComponent, str], List[Union[str, List[str]]]] = {"base": ["id"]}
+    required: Dict[Union[ComponentType, str], List[Union[str, List[str]]]] = {"base": ["id"]}
 
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
@@ -497,7 +497,7 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
 # pylint: disable=missing-function-docstring
 
 
-def validate_base(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_base(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors: List[ValidationError] = list(all_unique(data, component, "id"))
     return errors
 
@@ -508,7 +508,7 @@ def validate_node(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_branch(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_branch(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(data, component, "from_node", "node")
     errors += all_valid_ids(data, component, "to_node", "node")
@@ -554,7 +554,7 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_branch3(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_branch3(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(data, component, "node_1", "node")
     errors += all_valid_ids(data, component, "node_2", "node")
@@ -686,7 +686,7 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     return errors
 
 
-def validate_appliance(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_appliance(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_boolean(data, component, "status")
     errors += all_valid_ids(data, component, "node", "node")
@@ -702,7 +702,7 @@ def validate_source(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_generic_load_gen(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_generic_load_gen(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_appliance(data, component)
     errors += all_valid_enum_values(data, component, "type", LoadGenType)
     return errors
@@ -713,7 +713,7 @@ def validate_shunt(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_generic_voltage_sensor(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "u_sigma")
     errors += all_greater_than_zero(data, component, "u_measured")
@@ -721,7 +721,7 @@ def validate_generic_voltage_sensor(data: SingleDataset, component: PowerGridCom
     return errors
 
 
-def validate_generic_power_sensor(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_generic_power_sensor(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "power_sigma")
     errors += all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)
@@ -831,7 +831,7 @@ def validate_fault(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_regulator(data: SingleDataset, component: PowerGridComponent) -> List[ValidationError]:
+def validate_regulator(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(
         data,

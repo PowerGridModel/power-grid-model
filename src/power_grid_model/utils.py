@@ -25,7 +25,7 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
-from power_grid_model.dataset_definitions import PowerGridDataType
+from power_grid_model.dataset_definitions import DataType
 from power_grid_model.errors import PowerGridSerializationError
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
@@ -108,7 +108,7 @@ def json_deserialize_from_file(file_path: Path) -> Dataset:
 def json_serialize_to_file(
     file_path: Path,
     data: Dataset,
-    dataset_type: Optional[PowerGridDataType] = None,
+    dataset_type: Optional[DataType] = None,
     use_compact_list: bool = False,
     indent: Optional[int] = 2,
 ):
@@ -151,7 +151,7 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
 
 
 def msgpack_serialize_to_file(
-    file_path: Path, data: Dataset, dataset_type: Optional[PowerGridDataType] = None, use_compact_list: bool = False
+    file_path: Path, data: Dataset, dataset_type: Optional[DataType] = None, use_compact_list: bool = False
 ):
     """
     Export msgpack data in most recent format.
@@ -281,7 +281,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
     )
 
 
-def _compatibility_deprecated_import_json_data(json_file: Path, data_type: PowerGridDataType):
+def _compatibility_deprecated_import_json_data(json_file: Path, data_type: DataType):
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
 

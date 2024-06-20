@@ -12,7 +12,7 @@ import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.dataset_definitions import PowerGridComponent, PowerGridDataType
+from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -97,7 +97,7 @@ def update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     return merged_data
 
 
-def update_component_data(component: PowerGridComponent, input_data: np.ndarray, update_data: np.ndarray) -> None:
+def update_component_data(component: ComponentType, input_data: np.ndarray, update_data: np.ndarray) -> None:
     """
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
@@ -162,7 +162,7 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: PowerGridComponent, field: str, data_type: PowerGridDataType = "input"):
+def nan_type(component: ComponentType, field: str, data_type: DataType = "input"):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
@@ -206,7 +206,7 @@ def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[
 
 
 def set_default_value(
-    data: SingleDataset, component: PowerGridComponent, field: str, default_value: Union[int, float, np.ndarray]
+    data: SingleDataset, component: ComponentType, field: str, default_value: Union[int, float, np.ndarray]
 ):
     """
     This function sets the default value in the data that is to be validated, so the default values are included in the
@@ -233,9 +233,7 @@ def set_default_value(
         data[component][field][mask] = default_value
 
 
-def get_valid_ids(
-    data: SingleDataset, ref_components: Union[PowerGridComponent, List[PowerGridComponent]]
-) -> List[int]:
+def get_valid_ids(data: SingleDataset, ref_components: Union[ComponentType, List[ComponentType]]) -> List[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -265,7 +263,7 @@ def get_valid_ids(
     return list(valid_ids)
 
 
-def get_mask(data: SingleDataset, component: PowerGridComponent, field: str, **filters: Any) -> np.ndarray:
+def get_mask(data: SingleDataset, component: ComponentType, field: str, **filters: Any) -> np.ndarray:
     """
     Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
 

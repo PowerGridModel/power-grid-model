@@ -26,7 +26,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
-from power_grid_model.dataset_definitions import PowerGridComponent, PowerGridDataType
+from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.errors import PowerGridError
 
 
@@ -83,7 +83,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         """
         return pgc.dataset_info_n_components(self._info)
 
-    def components(self) -> List[PowerGridComponent]:
+    def components(self) -> List[ComponentType]:
         """
         The components in the dataset.
 
@@ -92,7 +92,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         """
         return [pgc.dataset_info_component_name(self._info, idx) for idx in range(self.n_components())]
 
-    def elements_per_scenario(self) -> Mapping[PowerGridComponent, int]:
+    def elements_per_scenario(self) -> Mapping[ComponentType, int]:
         """
         The number of elements per scenario in the dataset.
 
@@ -105,7 +105,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             for idx, component_name in enumerate(self.components())
         }
 
-    def total_elements(self) -> Mapping[PowerGridComponent, int]:
+    def total_elements(self) -> Mapping[ComponentType, int]:
         """
         The total number of elements in the dataset.
 
@@ -120,9 +120,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(
-    data: Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]]
-) -> PowerGridDataType:
+def get_dataset_type(data: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> DataType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -177,7 +175,7 @@ class CMutableDataset:
     The dataset will create mutable buffers that the Power Grid Model can use to load data.
     """
 
-    _dataset_type: PowerGridDataType
+    _dataset_type: DataType
     _schema: DatasetMetaData
     _is_batch: bool
     _batch_size: int
@@ -187,10 +185,10 @@ class CMutableDataset:
     def __new__(
         cls,
         data: Union[
-            Mapping[PowerGridComponent, np.ndarray],
-            Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[PowerGridDataType] = None,
+        dataset_type: Optional[DataType] = None,
     ):
         instance = super().__new__(cls)
         instance._mutable_dataset = MutableDatasetPtr()
@@ -247,8 +245,8 @@ class CMutableDataset:
     def _add_data(
         self,
         data: Union[
-            Mapping[PowerGridComponent, np.ndarray],
-            Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
     ):
         """
@@ -267,7 +265,7 @@ class CMutableDataset:
 
     def _add_component_data(
         self,
-        component: PowerGridComponent,
+        component: ComponentType,
         data: Union[np.ndarray, Mapping[str, np.ndarray]],
         allow_unknown: bool = False,
     ):
@@ -335,10 +333,10 @@ class CConstDataset:
     def __new__(
         cls,
         data: Union[
-            Mapping[PowerGridComponent, np.ndarray],
-            Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]],
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[PowerGridDataType] = None,
+        dataset_type: Optional[DataType] = None,
     ):
         instance = super().__new__(cls)
         instance._const_dataset = ConstDatasetPtr()
@@ -391,7 +389,7 @@ class CWritableDataset:
         self._schema = power_grid_meta_data[self._dataset_type]
 
         self._component_buffer_properties = self._get_buffer_properties(info)
-        self._data: Dict[PowerGridComponent, Union[np.ndarray, Dict[str, np.ndarray]]] = {}
+        self._data: Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]] = {}
         self._buffers: Mapping[str, CBuffer] = {}
 
         self._add_buffers()
@@ -415,7 +413,7 @@ class CWritableDataset:
         """
         return CDatasetInfo(pgc.dataset_writable_get_info(self._writable_dataset))
 
-    def get_data(self) -> Dict[PowerGridComponent, Union[np.ndarray, Dict[str, np.ndarray]]]:
+    def get_data(self) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
         """
         Retrieve data from the Power Grid Model dataset.
 
@@ -426,7 +424,7 @@ class CWritableDataset:
         """
         return self._data
 
-    def get_component_data(self, component: PowerGridComponent) -> Union[np.ndarray, Mapping[str, np.ndarray]]:
+    def get_component_data(self, component: ComponentType) -> Union[np.ndarray, Mapping[str, np.ndarray]]:
         """
         Retrieve Power Grid Model data from the dataset for a specific component.
 
@@ -442,20 +440,20 @@ class CWritableDataset:
         for component, buffer_properties in self._component_buffer_properties.items():
             self._add_buffer(component, buffer_properties)
 
-    def _add_buffer(self, component: PowerGridComponent, buffer_properties: BufferProperties):
+    def _add_buffer(self, component: ComponentType, buffer_properties: BufferProperties):
         schema = self._schema[component]
 
         self._data[component] = create_buffer(buffer_properties, schema)
         self._register_buffer(component, get_buffer_view(self._data[component], schema))
 
-    def _register_buffer(self, component: PowerGridComponent, buffer: CBuffer):
+    def _register_buffer(self, component: ComponentType, buffer: CBuffer):
         pgc.dataset_writable_set_buffer(
             dataset=self._writable_dataset, component=component, indptr=buffer.indptr, data=buffer.data
         )
         assert_no_error()
 
     @staticmethod
-    def _get_buffer_properties(info: CDatasetInfo) -> Mapping[PowerGridComponent, BufferProperties]:
+    def _get_buffer_properties(info: CDatasetInfo) -> Mapping[ComponentType, BufferProperties]:
         is_batch = info.is_batch()
         batch_size = info.batch_size()
         components = info.components()

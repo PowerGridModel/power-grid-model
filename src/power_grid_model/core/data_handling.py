@@ -14,7 +14,7 @@ import numpy as np
 
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.dataset_definitions import PowerGridComponent
+from power_grid_model.dataset_definitions import ComponentType
 from power_grid_model.enum import CalculationType
 
 
@@ -53,7 +53,7 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Ou
     raise NotImplementedError()
 
 
-def prepare_input_view(input_data: Mapping[PowerGridComponent, np.ndarray]) -> CConstDataset:
+def prepare_input_view(input_data: Mapping[ComponentType, np.ndarray]) -> CConstDataset:
     """
     Create a view of the input data in a format compatible with the PGM core libary.
 
@@ -68,7 +68,7 @@ def prepare_input_view(input_data: Mapping[PowerGridComponent, np.ndarray]) -> C
 
 
 def prepare_update_view(
-    update_data: Mapping[PowerGridComponent, Union[np.ndarray, Mapping[str, np.ndarray]]]
+    update_data: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]]
 ) -> CConstDataset:
     """
     Create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary.
@@ -83,9 +83,7 @@ def prepare_update_view(
     return CConstDataset(update_data, dataset_type="update")
 
 
-def prepare_output_view(
-    output_data: Mapping[PowerGridComponent, np.ndarray], output_type: OutputType
-) -> CMutableDataset:
+def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_type: OutputType) -> CMutableDataset:
     """
     create a view of the output data in a format compatible with the PGM core libary.
 
@@ -102,12 +100,12 @@ def prepare_output_view(
 
 
 def create_output_data(
-    output_component_types: Union[Set[PowerGridComponent], List[PowerGridComponent]],
+    output_component_types: Union[Set[ComponentType], List[ComponentType]],
     output_type: OutputType,
-    all_component_count: Dict[PowerGridComponent, int],
+    all_component_count: Dict[ComponentType, int],
     is_batch: bool,
     batch_size: int,
-) -> Dict[PowerGridComponent, np.ndarray]:
+) -> Dict[ComponentType, np.ndarray]:
     """
     Create the output data that the user can use. always returns batch type output data.
         Use reduce_output_data to flatten to single scenario output if applicable.

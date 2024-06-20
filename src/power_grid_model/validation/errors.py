@@ -10,7 +10,7 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
-from power_grid_model.dataset_definitions import PowerGridComponent
+from power_grid_model.dataset_definitions import ComponentType
 
 
 class ValidationError(ABC):
@@ -32,18 +32,18 @@ class ValidationError(ABC):
 
     """
 
-    component: Optional[Union[PowerGridComponent, List[PowerGridComponent]]] = None
+    component: Optional[Union[ComponentType, List[ComponentType]]] = None
     """
     The component, or components, to which the error applies.
     """
 
-    field: Optional[Union[str, List[str], List[Tuple[PowerGridComponent, str]]]] = None
+    field: Optional[Union[str, List[str], List[Tuple[ComponentType, str]]]] = None
     """
     The field, or fields, to which the error applies. A field can also be a tuple (component, field) when multiple
     components are being addressed.
     """
 
-    ids: Optional[Union[List[int], List[Tuple[PowerGridComponent, int]]]] = None
+    ids: Optional[Union[List[int], List[Tuple[ComponentType, int]]]] = None
     """
     The object identifiers to which the error applies. A field object identifier can also be a tuple (component, id)
     when multiple components are being addressed.
@@ -115,11 +115,11 @@ class SingleFieldValidationError(ValidationError):
     """
 
     _message = "Field {field} is not valid for {n} {objects}."
-    component: PowerGridComponent
+    component: ComponentType
     field: str
     ids: List[int]
 
-    def __init__(self, component: PowerGridComponent, field: str, ids: Iterable[int]):
+    def __init__(self, component: ComponentType, field: str, ids: Iterable[int]):
         """
         Args:
             component: Component name
@@ -137,11 +137,11 @@ class MultiFieldValidationError(ValidationError):
     """
 
     _message = "Combination of fields {field} is not valid for {n} {objects}."
-    component: PowerGridComponent
+    component: ComponentType
     field: List[str]
     ids: List[int]
 
-    def __init__(self, component: PowerGridComponent, fields: List[str], ids: List[int]):
+    def __init__(self, component: ComponentType, fields: List[str], ids: List[int]):
         """
         Args:
             component: Component name
@@ -167,12 +167,12 @@ class MultiComponentValidationError(ValidationError):
     E.g. the two fields `id` fields of the `node` and `line` component: [('node', 'id'), ('line', 'id')].
     """
 
-    component: List[PowerGridComponent]
-    field: List[Tuple[PowerGridComponent, str]]
-    ids: List[Tuple[PowerGridComponent, int]]
+    component: List[ComponentType]
+    field: List[Tuple[ComponentType, str]]
+    ids: List[Tuple[ComponentType, int]]
     _message = "Fields {field} are not valid for {n} {objects}."
 
-    def __init__(self, fields: List[Tuple[PowerGridComponent, str]], ids: List[Tuple[PowerGridComponent, int]]):
+    def __init__(self, fields: List[Tuple[ComponentType, str]], ids: List[Tuple[ComponentType, int]]):
         """
         Args:
             fields: List of field names, formatted as tuples (component, field)
@@ -208,7 +208,7 @@ class NotIdenticalError(SingleFieldValidationError):
     unique: Set[Any]
     num_unique: int
 
-    def __init__(self, component: PowerGridComponent, field: str, ids: Iterable[int], values: List[Any]):
+    def __init__(self, component: ComponentType, field: str, ids: Iterable[int], values: List[Any]):
         super().__init__(component, field, ids)
         self.values = values
         self.unique = set(self.values)
@@ -242,9 +242,7 @@ class InvalidEnumValueError(SingleFieldValidationError):
     _message = "Field {field} contains invalid {enum} values for {n} {objects}."
     enum: Union[Type[Enum], List[Type[Enum]]]
 
-    def __init__(
-        self, component: PowerGridComponent, field: str, ids: List[int], enum: Union[Type[Enum], List[Type[Enum]]]
-    ):
+    def __init__(self, component: ComponentType, field: str, ids: List[int], enum: Union[Type[Enum], List[Type[Enum]]]):
         super().__init__(component, field, ids)
         self.enum = enum
 
@@ -297,7 +295,7 @@ class IdNotInDatasetError(SingleFieldValidationError):
     _message = "ID does not exist in {ref_dataset} for {n} {objects}."
     ref_dataset: str
 
-    def __init__(self, component: PowerGridComponent, ids: List[int], ref_dataset: str):
+    def __init__(self, component: ComponentType, ids: List[int], ref_dataset: str):
         super().__init__(component=component, field="id", ids=ids)
         self.ref_dataset = ref_dataset
 
@@ -322,14 +320,14 @@ class InvalidIdError(SingleFieldValidationError):
     """
 
     _message = "Field {field} does not contain a valid {ref_components} id for {n} {objects}. {filters}"
-    ref_components: List[PowerGridComponent]
+    ref_components: List[ComponentType]
 
     def __init__(
         self,
-        component: PowerGridComponent,
+        component: ComponentType,
         field: str,
         ids: List[int],
-        ref_components: Union[PowerGridComponent, List[PowerGridComponent]],
+        ref_components: Union[ComponentType, List[ComponentType]],
         filters: Optional[Dict[str, Any]] = None,
     ):
         # pylint: disable=too-many-arguments
@@ -377,7 +375,7 @@ class ComparisonError(SingleFieldValidationError):
 
     RefType = Union[int, float, str, Tuple[Union[int, float, str], ...]]
 
-    def __init__(self, component: PowerGridComponent, field: str, ids: List[int], ref_value: "ComparisonError.RefType"):
+    def __init__(self, component: ComponentType, field: str, ids: List[int], ref_value: "ComparisonError.RefType"):
         super().__init__(component, field, ids)
         self.ref_value = ref_value
 
@@ -485,7 +483,7 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
 
     def __init__(
         self,
-        component: PowerGridComponent,
+        component: ComponentType,
         fields: List[str],
         ids: List[int],
         enum: Union[Type[Enum], List[Type[Enum]]],
