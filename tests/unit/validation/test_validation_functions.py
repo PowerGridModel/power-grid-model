@@ -611,7 +611,7 @@ def test_validate_generic_power_sensor__all_terminal_types(
     all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
 ):
     # Act
-    validate_generic_power_sensor(data={}, component="")
+    validate_generic_power_sensor(data={}, component="")  # type: ignore
 
     # Assert
     all_valid_ids.assert_any_call(
@@ -642,7 +642,7 @@ def test_validate_generic_power_sensor__terminal_types(
     all_valid_ids: MagicMock, ref_component: Union[str, List[str]], measured_terminal_type: MeasuredTerminalType
 ):
     # Act
-    validate_generic_power_sensor(data={}, component="")
+    validate_generic_power_sensor(data={}, component="")  # type: ignore
 
     # Assert
     all_valid_ids.assert_any_call(
