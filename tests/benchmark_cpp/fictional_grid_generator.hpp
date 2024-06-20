@@ -116,7 +116,9 @@ class FictionalGridGenerator {
             option_.n_mv_feeder = option_.n_lv_grid / option_.n_node_per_mv_feeder + 1;
         }
         total_mv_connection = option_.n_mv_feeder * option_.n_node_per_mv_feeder;
-        option_.ratio_lv_grid = static_cast<double>(option_.n_lv_grid) / static_cast<double>(total_mv_connection);
+        option_.ratio_lv_grid = total_mv_connection > 0
+                                    ? static_cast<double>(option_.n_lv_grid) / static_cast<double>(total_mv_connection)
+                                    : 1.0;
         // each mv feeder 10 MVA, each transformer 60 MVA, scaled up by 10%
         option_.n_parallel_hv_mv_transformer =
             static_cast<Idx>(static_cast<double>(option.n_mv_feeder) * 10.0 * 1.1 / 60.0) + 1;
