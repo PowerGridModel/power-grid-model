@@ -2,9 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from typing import Dict
+
+import numpy as np
 import pandas as pd
 
 from power_grid_model import LoadGenType, PowerGridModel, initialize_array
+from power_grid_model.dataset_definitions import PowerGridComponent
 
 # node
 node = initialize_array("input", "node", 2)
@@ -41,7 +45,12 @@ source["status"] = [1]
 source["u_ref"] = [1.0]
 
 # input_data
-input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source}
+input_data: Dict[PowerGridComponent, np.ndarray] = {
+    "node": node,
+    "line": line,
+    "sym_load": sym_load,
+    "source": source,
+}
 
 # call constructor
 model = PowerGridModel(input_data, system_frequency=50.0)

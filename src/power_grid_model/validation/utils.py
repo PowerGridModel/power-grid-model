@@ -248,7 +248,7 @@ def get_valid_ids(
     """
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.
-    if isinstance(ref_components, str):
+    if not isinstance(ref_components, list):
         ref_components = [ref_components]
 
     # Create a set of ids by chaining the ids of all ref_components
