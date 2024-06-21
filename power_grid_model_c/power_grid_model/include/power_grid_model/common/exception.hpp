@@ -14,7 +14,8 @@
 namespace power_grid_model {
 namespace detail {
 inline auto to_string(std::floating_point auto x) {
-    std::ostringstream sstr{};  // NOLINT(misc-const-correctness) // https://github.com/llvm/llvm-project/issues/57297
+    // https://github.com/llvm/llvm-project/issues/57297
+    std::ostringstream sstr{};  // NOLINT(misc-const-correctness)
     sstr << x;
     return sstr.str();
 }
