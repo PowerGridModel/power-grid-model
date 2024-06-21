@@ -138,6 +138,29 @@ TEST_CASE("Serialization") {
             CHECK(is_nan(node[0].u_rated));
             CHECK(source[0].id == 6);
             CHECK(source[1].id == 7);
+
+            // run power flow on obtained input data
+            // set missing buffer objects
+            node[0].u_rated = 10.5e3;
+            source[0].node = node[0].id;
+            source[0].status = 1;
+            source[0].u_ref = 1.0;
+            source[1].node = node[0].id;
+            source[1].status = 0;
+            source[1].u_ref = 1.0;
+            // create input dataset from deserialized dataset and create model
+            ConstDatasetPtr input_dataset{PGM_create_dataset_const_from_writable(hl, dataset)};
+            ModelPtr model{PGM_create_model(hl, 50.0, input_dataset.get())};
+            // create output dataset
+            std::vector<SymNodeOutput> sym_node_output(1);
+            MutableDatasetPtr output_dataset{PGM_create_dataset_mutable(hl, "sym_output", 0, 1)};
+            PGM_dataset_mutable_add_buffer(hl, output_dataset.get(), "node", 1, 1, nullptr, sym_node_output.data());
+            // run power flow
+            OptionPtr options{PGM_create_options(hl)};
+            PGM_calculate(hl, model.get(), options.get(), output_dataset.get(), nullptr);
+            // compare output
+            CHECK(sym_node_output[0].id == node[0].id);
+            CHECK(sym_node_output[0].u_pu == doctest::Approx{1.0});
         }
     }
 }

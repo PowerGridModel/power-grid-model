@@ -8,9 +8,18 @@
 #include "enum.hpp"
 
 #include <exception>
+#include <sstream>
 #include <string>
 
 namespace power_grid_model {
+namespace detail {
+inline auto to_string(std::floating_point auto x) {
+    std::ostringstream sstr{};
+    sstr << x;
+    return sstr.str();
+}
+inline auto to_string(std::integral auto x) { return std::to_string(x); }
+} // namespace detail
 
 class PowerGridError : public std::exception {
   public:
@@ -46,46 +55,48 @@ class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
     MissingCaseForEnumError(std::string const& method, const T& value)
-        : InvalidArguments{method, std::string{typeid(T).name()} + " #" + std::to_string(static_cast<IntS>(value))} {}
+        : InvalidArguments{method, std::string{typeid(T).name()} + " #" + detail::to_string(static_cast<IntS>(value))} {
+    }
 };
 
 class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
-        append_msg("Conflicting voltage for line " + std::to_string(id) + "\n voltage at from node " +
-                   std::to_string(id1) + " is " + std::to_string(u1) + "\n voltage at to node " + std::to_string(id2) +
-                   " is " + std::to_string(u2) + '\n');
+        append_msg("Conflicting voltage for line " + detail::to_string(id) + "\n voltage at from node " +
+                   detail::to_string(id1) + " is " + detail::to_string(u1) + "\n voltage at to node " +
+                   detail::to_string(id2) + " is " + detail::to_string(u2) + '\n');
     }
 };
 
 class InvalidBranch : public PowerGridError {
   public:
     InvalidBranch(ID branch_id, ID node_id) {
-        append_msg("Branch " + std::to_string(branch_id) + " has the same from- and to-node " +
-                   std::to_string(node_id) + ",\n This is not allowed!\n");
+        append_msg("Branch " + detail::to_string(branch_id) + " has the same from- and to-node " +
+                   detail::to_string(node_id) + ",\n This is not allowed!\n");
     }
 };
 
 class InvalidBranch3 : public PowerGridError {
   public:
     InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id) {
-        append_msg("Branch3 " + std::to_string(branch3_id) +
-                   " is connected to the same node at least twice. Node 1/2/3: " + std::to_string(node_1_id) + "/" +
-                   std::to_string(node_2_id) + "/" + std::to_string(node_3_id) + ",\n This is not allowed!\n");
+        append_msg("Branch3 " + detail::to_string(branch3_id) +
+                   " is connected to the same node at least twice. Node 1/2/3: " + detail::to_string(node_1_id) + "/" +
+                   detail::to_string(node_2_id) + "/" + detail::to_string(node_3_id) + ",\n This is not allowed!\n");
     }
 };
 
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock) {
-        append_msg("Invalid clock for transformer " + std::to_string(id) + ", clock " + std::to_string(clock) + '\n');
+        append_msg("Invalid clock for transformer " + detail::to_string(id) + ", clock " + detail::to_string(clock) +
+                   '\n');
     }
 };
 
 class SparseMatrixError : public PowerGridError {
   public:
     SparseMatrixError(Idx err, std::string const& msg = "") {
-        append_msg("Sparse matrix error with error code #" + std::to_string(err) + " (possibly singular)\n");
+        append_msg("Sparse matrix error with error code #" + detail::to_string(err) + " (possibly singular)\n");
         if (!msg.empty()) {
             append_msg(msg + "\n");
         }
@@ -108,8 +119,9 @@ class IterationDiverge : public PowerGridError {
   public:
     IterationDiverge() = default;
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
-        append_msg("Iteration failed to converge after " + std::to_string(num_iter) + " iterations! Max deviation: " +
-                   std::to_string(max_dev) + ", error tolerance: " + std::to_string(err_tol) + ".\n");
+        append_msg("Iteration failed to converge after " + detail::to_string(num_iter) +
+                   " iterations! Max deviation: " + detail::to_string(max_dev) +
+                   ", error tolerance: " + detail::to_string(err_tol) + ".\n");
     }
 };
 
@@ -122,12 +134,12 @@ class MaxIterationReached : public IterationDiverge {
 
 class ConflictID : public PowerGridError {
   public:
-    explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + std::to_string(id) + '\n'); }
+    explicit ConflictID(ID id) { append_msg("Conflicting id detected: " + detail::to_string(id) + '\n'); }
 };
 
 class IDNotFound : public PowerGridError {
   public:
-    explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + std::to_string(id) + '\n'); }
+    explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + detail::to_string(id) + '\n'); }
 };
 
 class InvalidMeasuredObject : public PowerGridError {
@@ -143,7 +155,7 @@ class InvalidRegulatedObject : public PowerGridError {
         append_msg(regulator + " regulator is not supported for object of type " + object);
     }
     InvalidRegulatedObject(ID id, std::string const& regulator) {
-        append_msg(regulator + " regulator is not supported for object with ID " + std::to_string(id));
+        append_msg(regulator + " regulator is not supported for object with ID " + detail::to_string(id));
     }
 };
 
@@ -158,13 +170,13 @@ class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id) {
         append_msg("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id " +
-                   std::to_string(id)); // NOSONAR
+                   detail::to_string(id)); // NOSONAR
     }
 };
 
 class IDWrongType : public PowerGridError {
   public:
-    explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + std::to_string(id) + '\n'); }
+    explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + detail::to_string(id) + '\n'); }
 };
 
 class CalculationError : public PowerGridError {
@@ -194,21 +206,22 @@ class InvalidCalculationMethod : public CalculationError {
 class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type) {
-        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
+        append_msg("The short circuit type (" + detail::to_string(static_cast<IntS>(short_circuit_type)) +
                    ") is invalid!\n");
     }
     InvalidShortCircuitType(bool sym, FaultType short_circuit_type) {
-        append_msg("The short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
-                   ") does not match the calculation type (symmetric=" + std::to_string(static_cast<int>(sym)) + ")\n");
+        append_msg("The short circuit type (" + detail::to_string(static_cast<IntS>(short_circuit_type)) +
+                   ") does not match the calculation type (symmetric=" + detail::to_string(static_cast<int>(sym)) +
+                   ")\n");
     }
 };
 
 class InvalidShortCircuitPhases : public PowerGridError {
   public:
     InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases) {
-        append_msg("The short circuit phases (" + std::to_string(static_cast<IntS>(short_circuit_phases)) +
-                   ") do not match the short circuit type (" + std::to_string(static_cast<IntS>(short_circuit_type)) +
-                   ")\n");
+        append_msg("The short circuit phases (" + detail::to_string(static_cast<IntS>(short_circuit_phases)) +
+                   ") do not match the short circuit type (" +
+                   detail::to_string(static_cast<IntS>(short_circuit_type)) + ")\n");
     }
 };
 
