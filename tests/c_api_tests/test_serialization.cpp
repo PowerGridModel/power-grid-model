@@ -20,9 +20,11 @@ using namespace std::string_literals;
 
 constexpr char const* json_data =
     R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]}})";
+constexpr char const* complete_json_data =
+    R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5, "u_rated": 10500}],"source":[{"id":6, "node": 5, "status": 1, "u_ref": 1.0}]}})";
 } // namespace
 
-TEST_CASE("Serialization") {
+TEST_CASE("C API Serialization and Deserialization") {
     // get handle
     HandlePtr const unique_handle{PGM_create_handle()};
     PGM_Handle* hl = unique_handle.get();
@@ -138,6 +140,35 @@ TEST_CASE("Serialization") {
             CHECK(is_nan(node[0].u_rated));
             CHECK(source[0].id == 6);
             CHECK(source[1].id == 7);
+        }
+
+        SUBCASE("Use deserialized dataset") {
+            DeserializerPtr const unique_deserializer_json(PGM_create_deserializer_from_null_terminated_string(
+                hl, complete_json_data, static_cast<PGM_Idx>(SerializationFormat::json)));
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+            PGM_Deserializer* const deserializer = unique_deserializer_json.get();
+            // reset data
+            node[0] = {};
+            // get dataset
+            auto* const dataset = PGM_deserializer_get_dataset(hl, deserializer);
+            auto const* const info = PGM_dataset_writable_get_info(hl, dataset);
+            // check meta data
+            CHECK(PGM_dataset_info_name(hl, info) == "input"s);
+            CHECK(PGM_dataset_info_is_batch(hl, info) == is_batch);
+            CHECK(PGM_dataset_info_batch_size(hl, info) == batch_size);
+            CHECK(PGM_dataset_info_n_components(hl, info) == n_components);
+            CHECK(PGM_dataset_info_component_name(hl, info, 0) == "node"s);
+            CHECK(PGM_dataset_info_component_name(hl, info, 1) == "source"s);
+            // set buffer
+            PGM_dataset_writable_set_buffer(hl, dataset, "node", nullptr, node.data());
+            PGM_dataset_writable_set_buffer(hl, dataset, "source", nullptr, source.data());
+            CHECK(PGM_error_code(hl) == PGM_no_error);
+            // parse
+            PGM_deserializer_parse_to_buffer(hl, deserializer);
+            // create model from deserialized dataset
+            ConstDatasetPtr input_dataset{PGM_create_dataset_const_from_writable(hl, dataset)};
+            ModelPtr model{PGM_create_model(hl, 50.0, input_dataset.get())};
+            CHECK(PGM_error_code(hl) == PGM_no_error);
         }
     }
 }
