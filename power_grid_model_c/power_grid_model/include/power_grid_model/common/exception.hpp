@@ -14,7 +14,7 @@
 namespace power_grid_model {
 namespace detail {
 inline auto to_string(std::floating_point auto x) {
-    std::ostringstream sstr{};
+    std::ostringstream const sstr{};
     sstr << x;
     return sstr.str();
 }
