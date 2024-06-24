@@ -9,12 +9,12 @@
 #include "common/enum.hpp"
 #include "common/exception.hpp"
 #include "index_mapping.hpp"
+#include "sparse_ordering.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/iteration_macros.hpp>
-#include <boost/graph/minimum_degree_ordering.hpp>
 
 // build topology of the grid
 // divide grid into several math models
@@ -284,6 +284,7 @@ class Topology {
         // loop all back edges assign all nodes before the back edges as inside cycle
         for (auto const& back_edge : back_edges) {
             GraphIdx node_in_cycle = back_edge.first;
+
             // loop back from source in the predecessor tree
             // stop if it is already marked as in cycle
             while (node_status_[node_in_cycle] != -2) {
@@ -300,105 +301,43 @@ class Topology {
         std::vector<Idx> cyclic_node;
         std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
                      [this](Idx x) { return node_status_[x] == -2; });
-        GraphIdx const n_cycle_node = cyclic_node.size();
+
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
-        if (n_cycle_node < 4) {
+        if (cyclic_node.size() < 4) {
             std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
             return fill_in;
         }
 
-        // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            node_status_[cyclic_node[i]] = static_cast<Idx>(i);
-        }
-        // build graph lambda
-        auto const build_graph = [&](ReorderGraph& g) {
-            // add edges
-            for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-                // loop all edges of vertex i
-                auto const global_i = static_cast<GraphIdx>(cyclic_node[i]);
-                BGL_FORALL_ADJ(global_i, global_j, global_graph_, GlobalGraph) {
-                    // skip if j is not part of cyclic sub graph
-                    if (node_status_[global_j] == -1) {
-                        continue;
-                    }
-                    auto const j = static_cast<GraphIdx>(node_status_[global_j]);
-                    if (!boost::edge(i, j, g).second) {
-                        boost::add_edge(i, j, g);
-                    }
-                }
+        std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
+        for (Idx const node_idx : cyclic_node) {
+            auto predecessor = static_cast<Idx>(predecessors_[node_idx]);
+            if (predecessor != node_idx) {
+                unique_nearest_neighbours[node_idx] = {predecessor};
             }
-        };
-        ReorderGraph meshed_graph{n_cycle_node};
-        build_graph(meshed_graph);
-        // start minimum degree ordering
-        std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node);
-        std::vector<std::make_signed_t<GraphIdx>> inverse_perm(n_cycle_node);
-        std::vector<std::make_signed_t<GraphIdx>> degree(n_cycle_node);
-        std::vector<std::make_signed_t<GraphIdx>> supernode_sizes(n_cycle_node, 1);
-        boost::vec_adj_list_vertex_id_map<boost::no_property, std::make_signed_t<GraphIdx>> const id{};
-        int const delta = 0;
-        boost::minimum_degree_ordering(meshed_graph, boost::make_iterator_property_map(degree.begin(), id),
-                                       boost::make_iterator_property_map(inverse_perm.begin(), id),
-                                       boost::make_iterator_property_map(perm.begin(), id),
-                                       boost::make_iterator_property_map(supernode_sizes.begin(), id), delta, id);
-        // re-order cyclic node
-        std::vector<Idx> const cyclic_node_copy{cyclic_node};
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            cyclic_node[i] = cyclic_node_copy[perm[i]];
         }
-        // copy back to dfs node
-        std::copy(cyclic_node.cbegin(), cyclic_node.cend(), std::back_inserter(dfs_node));
+        for (auto const& [from_node, to_node] : back_edges) {
+            auto const from{static_cast<Idx>(from_node)};
+            auto const to{static_cast<Idx>(to_node)};
+            if (!detail::in_graph(std::pair{from, to}, unique_nearest_neighbours)) {
+                unique_nearest_neighbours[from].push_back(to);
+            }
+        }
 
-        // analyze and record fill-ins
-        // re-assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            node_status_[cyclic_node[i]] = static_cast<Idx>(i);
+        auto [reordered, fills] = minimum_degree_ordering(std::move(unique_nearest_neighbours));
+
+        const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
+        std::map<Idx, Idx> permuted_node_indices;
+        for (Idx idx = 0; idx < static_cast<Idx>(reordered.size()); ++idx) {
+            permuted_node_indices[reordered[idx]] = n_non_cyclic_nodes + idx;
         }
-        // re-build graph with reordered cyclic node
-        meshed_graph.clear();
-        meshed_graph = ReorderGraph{n_cycle_node};
-        build_graph(meshed_graph);
-        // begin to remove vertices from graph, create fill-ins
-        BGL_FORALL_VERTICES(i, meshed_graph, ReorderGraph) {
-            // double loop to loop all pairs of adjacent vertices
-            BGL_FORALL_ADJ(i, j1, meshed_graph, ReorderGraph) {
-                // skip for already removed vertices
-                if (j1 < i) {
-                    continue;
-                }
-                BGL_FORALL_ADJ(i, j2, meshed_graph, ReorderGraph) {
-                    // no self edges
-                    assert(i != j1);
-                    assert(i != j2);
-                    // skip for already removed vertices
-                    if (j2 < i) {
-                        continue;
-                    }
-                    // only keep pair with j1 < j2
-                    if (j1 >= j2) {
-                        continue;
-                    }
-                    // if edge j1 -> j2 does not already exists
-                    // it is a fill-in
-                    if (!boost::edge(j1, j2, meshed_graph).second) {
-                        // anti edge should also not exist
-                        assert(!boost::edge(j2, j1, meshed_graph).second);
-                        // add both edges to the graph
-                        boost::add_edge(j1, j2, meshed_graph);
-                        boost::add_edge(j2, j1, meshed_graph);
-                        // add to fill-in
-                        fill_in.push_back({static_cast<Idx>(j1), static_cast<Idx>(j2)});
-                    }
-                }
-            }
+
+        std::ranges::copy(reordered, std::back_inserter(dfs_node));
+        for (auto [from, to] : fills) {
+            auto from_reordered = permuted_node_indices[from];
+            auto to_reordered = permuted_node_indices[to];
+            fill_in.push_back({from_reordered, to_reordered});
         }
-        // offset fill-in indices by n_node - n_cycle_node
-        auto const offset = static_cast<Idx>(dfs_node.size() - n_cycle_node);
-        std::for_each(fill_in.begin(), fill_in.end(), [offset](BranchIdx& b) {
-            b[0] += offset;
-            b[1] += offset;
-        });
+
         return fill_in;
     }
 
@@ -418,14 +357,13 @@ class Topology {
             Idx2D const i_math = comp_coup_.node[i];
             Idx2D const j_math = comp_coup_.node[j];
             Idx const math_group = [&]() {
-                Idx group = -1;
                 if (i_status != 0 && i_math.group != -1) {
-                    group = i_math.group;
+                    return i_math.group;
                 }
                 if (j_status != 0 && j_math.group != -1) {
-                    group = j_math.group;
+                    return j_math.group;
                 }
-                return group;
+                return Idx{-1};
             }();
             // skip if no math model connected
             if (math_group == -1) {
@@ -687,6 +625,6 @@ class Topology {
             {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }
-}; // namespace power_grid_model
+};
 
 } // namespace power_grid_model
