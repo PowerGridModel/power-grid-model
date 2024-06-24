@@ -150,6 +150,6 @@ def create_output_data(
             shape: Union[Tuple[int], Tuple[int, int]] = (batch_size, count)
         else:
             shape = (count,)
-        result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)  #
+        result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
 
     return result_dict

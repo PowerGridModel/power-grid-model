@@ -27,13 +27,9 @@ class DataTypes(Enum):
     """Dataset types."""
 
     input = "input"
-
     sym_output = "sym_output"
-
     asym_output = "asym_output"
-
     update = "update"
-
     sc_output = "sc_output"
 
 
@@ -61,37 +57,21 @@ class ComponentTypes(Enum):
     """Grid component types."""
 
     node = "node"
-
     line = "line"
-
     link = "link"
-
     transformer = "transformer"
-
     transformer_tap_regulator = "transformer_tap_regulator"
-
     three_winding_transformer = "three_winding_transformer"
-
     sym_load = "sym_load"
-
     sym_gen = "sym_gen"
-
     asym_load = "asym_load"
-
     asym_gen = "asym_gen"
-
     shunt = "shunt"
-
     source = "source"
-
     sym_voltage_sensor = "sym_voltage_sensor"
-
     asym_voltage_sensor = "asym_voltage_sensor"
-
     sym_power_sensor = "sym_power_sensor"
-
     asym_power_sensor = "asym_power_sensor"
-
     fault = "fault"
 
 

@@ -132,9 +132,9 @@ class CodeGenerator:
             for prefix in prefixes:
                 dataset_types.append(f"{prefix}{dataset.name}")
 
-                if dataset.name == "input":
-                    for component in dataset.components:
-                        components.append(component.names)
+            if dataset.name == "input":
+                for component in dataset.components:
+                    components.append(component.names)
 
         components = [name for sublist in components for name in sublist]
 
@@ -154,9 +154,8 @@ class CodeGenerator:
             for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
                 output_suffix = template_path.with_suffix("").suffix
                 output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
-                if template_name == "metadata_enums":
-                    template_name = "dataset_class_maps"  # To use existing data.
-                for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
+                data_name = template_name if template_name != "metadata_enums" else "dataset_class_maps"
+                for data_path in DATA_DIR.glob(f"{data_name}/*.json"):
                     output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     print(f"Generating file: {output_path}")

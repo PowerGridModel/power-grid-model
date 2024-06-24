@@ -26,15 +26,16 @@ sys.path.append(sys_path)
 class DataTypes(Enum):
     """Dataset types."""
 
-    {% for dataset_type in dataset_types %}
+
+    {%- for dataset_type in dataset_types %}
     {{ dataset_type }} = "{{ dataset_type }}"
-    {% endfor %}
+    {%- endfor %}
 
 
 DataTypesLiteral = Literal[
-    {% for dataset_type in dataset_types %}
+    {%- for dataset_type in dataset_types %}
     "{{ dataset_type }}",
-    {% endfor %}
+    {%- endfor %}
 ]
 
 
@@ -52,15 +53,16 @@ A DataType is the type of a :class:`BatchDataset`.
 class ComponentTypes(Enum):
     """Grid component types."""
 
-    {% for component in components %}
+
+    {%- for component in components %}
     {{ component }} = "{{ component }}"
-    {% endfor %}
+    {%- endfor %}
 
 
 ComponentTypesLiteral = Literal[
-    {% for component in components %}
+    {%- for component in components %}
     "{{ component }}",
-    {% endfor %}
+    {%- endfor %}
 ]
 
 
