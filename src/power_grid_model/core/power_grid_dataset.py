@@ -197,7 +197,7 @@ class CMutableDataset:
         instance._mutable_dataset = MutableDatasetPtr()
         instance._buffer_views = []
 
-        instance._dataset_type = dataset_type if dataset_type in DataType else get_dataset_type(data)
+        instance._dataset_type = dataset_type if dataset_type in list(DataType) else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
         if data:

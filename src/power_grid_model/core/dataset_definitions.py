@@ -14,7 +14,7 @@ from typing import Any, Dict
 
 class DataType(str, Enum):
     """
-    A DataType is the type of a :class:`BatchDataset`.
+    A DataType is the type of a :class:`Dataset` in power grid model.
 
     - Examples:
 
