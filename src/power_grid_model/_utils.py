@@ -14,6 +14,7 @@ from typing import List, Optional, cast
 
 import numpy as np
 
+from power_grid_model import ComponentType
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
@@ -24,7 +25,6 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchArray,
 )
-from power_grid_model.dataset_definitions import ComponentType
 
 
 def is_nan(data) -> bool:

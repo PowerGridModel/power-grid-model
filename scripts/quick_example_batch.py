@@ -7,8 +7,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from power_grid_model import LoadGenType, PowerGridModel, initialize_array
-from power_grid_model.dataset_definitions import ComponentType
+from power_grid_model import ComponentType, LoadGenType, PowerGridModel, initialize_array
 
 """
 node_1 ---line_3--- node_2 ---line_6--- node_7
@@ -57,7 +56,7 @@ source["status"] = [1]
 source["u_ref"] = [1.0]
 
 # input_data
-input_data: Dict[ComponentType, np.ndarray] = {
+input_data = {
     "node": node,
     "line": line,
     "asym_load": asym_load,
@@ -81,7 +80,7 @@ batch_p = asym_load["p_specified"].reshape(1, 2, 3) * scaler.reshape(-1, 1, 1)
 batch_load = initialize_array("update", "asym_load", (1000, 2))
 batch_load["id"] = [[4, 8]]
 batch_load["p_specified"] = batch_p
-batch_update: Dict[ComponentType, np.ndarray] = {"asym_load": batch_load}
+batch_update = {"asym_load": batch_load}
 
 result = model.calculate_power_flow(symmetric=False, update_data=batch_update)
 print(result["node"]["u"].shape)  # 1000 (scenarios) *3 (nodes) *3 (phases)

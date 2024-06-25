@@ -8,8 +8,7 @@ from typing import Dict
 import numpy as np
 import pytest
 
-from power_grid_model import PowerGridModel, initialize_array
-from power_grid_model.dataset_definitions import ComponentType
+from power_grid_model import ComponentType, PowerGridModel, initialize_array
 from power_grid_model.errors import PowerGridBatchError, PowerGridError
 from power_grid_model.validation import assert_valid_input_data
 
@@ -78,12 +77,12 @@ def test_simple_update(model: PowerGridModel, case_data):
     update_batch = case_data["update_batch"]
     source_indptr = update_batch["source"]["indptr"]
     source_update = update_batch["source"]["data"]
-    update_data: Dict[ComponentType, np.ndarray] = {
+    update_data = {
         "source": source_update[source_indptr[0] : source_indptr[1]],
         "sym_load": update_batch["sym_load"][0, :],
     }
     model.update(update_data=update_data)
-    expected_result: Dict[ComponentType, np.ndarray] = {"node": case_data["output_batch"]["node"][0, :]}
+    expected_result = {ComponentType.node: case_data["output_batch"]["node"][0, :]}
     result = model.calculate_power_flow()
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
 
@@ -91,7 +90,7 @@ def test_simple_update(model: PowerGridModel, case_data):
 def test_update_error(model: PowerGridModel):
     load_update = initialize_array("update", "sym_load", 1)
     load_update["id"] = 5
-    update_data: Dict[ComponentType, np.ndarray] = {"sym_load": load_update}
+    update_data = {"sym_load": load_update}
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
 
@@ -155,9 +154,7 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     assert "The id cannot be found:" in error.error_messages[0]
     # assert value result for scenario 0
     result = {"node": result["node"][error.succeeded_scenarios, :]}
-    expected_result: Dict[ComponentType, np.ndarray] = {
-        "node": case_data["output_batch"]["node"][error.succeeded_scenarios, :]
-    }
+    expected_result = {ComponentType.node: case_data["output_batch"]["node"][error.succeeded_scenarios, :]}
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
     # general error before the batch
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):

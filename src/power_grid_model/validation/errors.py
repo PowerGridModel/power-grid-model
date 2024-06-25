@@ -10,7 +10,7 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
-from power_grid_model.dataset_definitions import ComponentType
+from power_grid_model import ComponentType
 
 
 class ValidationError(ABC):

@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
+from power_grid_model.core.dataset_definitions import ComponentType, DataType
 from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, FaultType, TapChangingStrategy
 from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation.errors import (
@@ -33,7 +34,7 @@ from power_grid_model.validation.validation import (
     validate_values,
 )
 
-NaN = power_grid_meta_data["input"]["node"].nans["id"]
+NaN = power_grid_meta_data[DataType.input][ComponentType.node].nans["id"]
 
 
 def test_assert_valid_data_structure():

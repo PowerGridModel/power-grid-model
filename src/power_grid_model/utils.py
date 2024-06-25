@@ -13,6 +13,7 @@ from typing import Optional, cast as cast_type
 
 import numpy as np
 
+from power_grid_model import DataType
 from power_grid_model._utils import (
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
@@ -25,7 +26,6 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
-from power_grid_model.dataset_definitions import DataType
 from power_grid_model.errors import PowerGridSerializationError
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
@@ -253,7 +253,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
     """
     warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
-    data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type="input")
+    data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DataType.input)
     assert isinstance(data, dict)
     assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
     return cast_type(SingleDataset, data)
@@ -277,7 +277,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
 
     return cast_type(
         BatchDataset,
-        _compatibility_deprecated_import_json_data(json_file=json_file, data_type="update"),
+        _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DataType.update),
     )
 
 

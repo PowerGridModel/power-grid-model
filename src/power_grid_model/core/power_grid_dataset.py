@@ -6,7 +6,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import numpy as np
 
@@ -17,6 +17,7 @@ from power_grid_model.core.buffer_handling import (
     get_buffer_properties,
     get_buffer_view,
 )
+from power_grid_model.core.dataset_definitions import ComponentType, DataType, _str_to_componenttype
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.power_grid_core import (
     ConstDatasetPtr,
@@ -26,7 +27,6 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
-from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.errors import PowerGridError
 
 
@@ -90,7 +90,10 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         Returns:
             A list of the component names in the dataset
         """
-        return [pgc.dataset_info_component_name(self._info, idx) for idx in range(self.n_components())]
+        return [
+            _str_to_componenttype(pgc.dataset_info_component_name(self._info, idx))
+            for idx in range(self.n_components())
+        ]
 
     def elements_per_scenario(self) -> Mapping[ComponentType, int]:
         """
@@ -188,13 +191,13 @@ class CMutableDataset:
             Mapping[ComponentType, np.ndarray],
             Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[DataType] = None,
+        dataset_type: Any = None,
     ):
         instance = super().__new__(cls)
         instance._mutable_dataset = MutableDatasetPtr()
         instance._buffer_views = []
 
-        instance._dataset_type = dataset_type if isinstance(dataset_type, str) else get_dataset_type(data)
+        instance._dataset_type = dataset_type if dataset_type in DataType else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
         if data:
@@ -206,7 +209,7 @@ class CMutableDataset:
             instance._batch_size = 1
 
         instance._mutable_dataset = pgc.create_dataset_mutable(
-            instance._dataset_type, instance._is_batch, instance._batch_size
+            instance._dataset_type.value, instance._is_batch, instance._batch_size
         )
         assert_no_error()
 
@@ -292,10 +295,10 @@ class CMutableDataset:
         self._buffer_views.append(c_buffer)
         self._register_buffer(component, c_buffer)
 
-    def _register_buffer(self, component, buffer: CBuffer):
+    def _register_buffer(self, component: ComponentType, buffer: CBuffer):
         pgc.dataset_mutable_add_buffer(
             dataset=self._mutable_dataset,
-            component=component,
+            component=component.value,
             elements_per_scenario=buffer.n_elements_per_scenario,
             total_elements=buffer.total_elements,
             indptr=buffer.indptr,

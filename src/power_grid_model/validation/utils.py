@@ -10,9 +10,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
-from power_grid_model import power_grid_meta_data
+from power_grid_model import ComponentType, DataType, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -105,7 +104,7 @@ def update_component_data(component: ComponentType, input_data: np.ndarray, upda
     for field in update_data.dtype.names:
         if field == "id":
             continue
-        nan = nan_type(component, field, "update")
+        nan = nan_type(component, field, DataType.input)
         if np.isnan(nan):
             mask = ~np.isnan(update_data[field])
         else:
@@ -162,7 +161,7 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: ComponentType, field: str, data_type: DataType = "input"):
+def nan_type(component: ComponentType, field: str, data_type: DataType = DataType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """

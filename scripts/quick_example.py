@@ -7,8 +7,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from power_grid_model import LoadGenType, PowerGridModel, initialize_array
-from power_grid_model.dataset_definitions import ComponentType
+from power_grid_model import ComponentType, LoadGenType, PowerGridModel, initialize_array
 
 # node
 node = initialize_array("input", "node", 2)
@@ -45,7 +44,7 @@ source["status"] = [1]
 source["u_ref"] = [1.0]
 
 # input_data
-input_data: Dict[ComponentType, np.ndarray] = {
+input_data = {
     "node": node,
     "line": line,
     "sym_load": sym_load,

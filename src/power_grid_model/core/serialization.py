@@ -13,6 +13,7 @@ from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 
+from power_grid_model import ComponentType, DataType
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import (
@@ -23,7 +24,6 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
-from power_grid_model.dataset_definitions import ComponentType, DataType
 from power_grid_model.errors import PowerGridSerializationError
 
 

@@ -12,11 +12,11 @@ from typing import Dict, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
+from power_grid_model import ComponentType
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
-from power_grid_model.dataset_definitions import ComponentType
 
 
 @dataclass
