@@ -304,10 +304,33 @@ TEST_CASE("Test Transformer ranking") {
             }
         }
 
+        SUBCASE("Multiple source grid") {
+            // Grid with multiple sources and symetric graph
+            pgm_tap::TrafoGraphEdges edge_array = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}};
+            pgm_tap::TrafoGraphEdgeProperties edge_prop{
+                {{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}, {{4, 5}, 1}};
+            std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {false}, {true}};
+
+            pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
+                                        edge_prop.cbegin(), 6};
+
+            // Vertex properties can not be set during graph creation
+            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi;
+            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi_end;
+            for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+                g[*vi].is_source = vertex_props[*vi].is_source;
+            }
+
+            pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{
+                {{0, 1}, 0}, {{1, 2}, 1}, {{2, 3}, 2}, {{3, 4}, 1}, {{4, 5}, 0}};
+            CHECK(regulated_edge_weights == ref_regulated_edge_weights);
+        }
+
         SUBCASE("Ranking complete the graph") {
             pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-            pgm_tap::RankedTransformerGroups const ref_order{
-                {Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}}, {Idx2D{3, 4}}};
+            pgm_tap::RankedTransformerGroups const ref_order{{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}},
+                                                             {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}};
             CHECK(order == ref_order);
         }
     }
