@@ -236,13 +236,18 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             continue;
         }
 
-        BGL_FORALL_OUTEDGES(u, e, graph, TransformerGraph) {
-            auto v = boost::target(e, graph);
+        BGL_FORALL_EDGES(e, graph, TransformerGraph) {
+            auto s = boost::source(e, graph);
+            auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            if (vertex_distances[u] + weight < vertex_distances[v]) {
-                vertex_distances[v] = vertex_distances[u] + weight;
-                pq.push({vertex_distances[v], v});
+            // We can not use BGL_FORALL_OUTEREDGES here because our grid is undirected
+            if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
+                vertex_distances[t] = vertex_distances[s] + weight;
+                pq.push({vertex_distances[t], t});
+            } else if (u == t && vertex_distances[t] + weight < vertex_distances[s]) {
+                vertex_distances[s] = vertex_distances[t] + weight;
+                pq.push({vertex_distances[s], s});
             }
         }
     }
