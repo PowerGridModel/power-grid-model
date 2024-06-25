@@ -241,7 +241,7 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEREDGES here because our grid is undirected
+            // We can not use BGL_FORALL_OUTEDGES here because our grid is undirected
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
                 pq.push({vertex_distances[t], t});

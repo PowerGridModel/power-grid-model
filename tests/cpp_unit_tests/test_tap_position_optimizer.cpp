@@ -315,7 +315,8 @@ TEST_CASE("Test Transformer ranking") {
                                         edge_prop.cbegin(), 6};
 
             // Vertex properties can not be set during graph creation
-            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi;
+            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi_end;
             for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
                 g[*vi].is_source = vertex_props[*vi].is_source;
             }
