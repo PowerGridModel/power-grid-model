@@ -1,0 +1,8 @@
+{
+  "calculation_method": ["newton_raphson", "iterative_current"],
+  "rtol": 1e-6,
+  "atol": 1e-6,
+  "fail": {
+    "reason": "Source injection calculation #458"
+  }
+}

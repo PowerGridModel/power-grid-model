@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "type": "asym_output",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": [1, 1, 1]},
+        {"id": 2, "energized": 1, "u_pu": [0.9, 0.9, 0.9]}
+      ],
+      "line": [
+        {"id": 4, "energized": 1, "q_from": [10, 10, 10], "q_to": [-9, -9, -9]}
+      ],
+      "source": [
+        {"id": 6, "energized": 0, "q": [0, 0, 0]},
+        {"id": 7, "energized": 1, "q": [10, 10, 10]}
+      ],
+      "sym_load": [
+        {"id": 8, "energized": 1, "q": [9, 9, 9]}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": [1, 1, 1]},
+        {"id": 2, "energized": 1, "u_pu": [0.9, 0.9, 0.9]}
+      ],
+      "line": [
+        {"id": 4, "energized": 1, "q_from": [10, 10, 10], "q_to": [-9, -9, -9]}
+      ],
+      "source": [
+        {"id": 6, "energized": 1, "q": [10, 10, 10]},
+        {"id": 7, "energized": 0, "q": [0, 0, 0]}
+      ],
+      "sym_load": [
+        {"id": 8, "energized": 1, "q": [9, 9, 9]}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": [1, 1, 1]},
+        {"id": 2, "energized": 1, "u_pu": [0.9, 0.9, 0.9]}
+      ],
+      "line": [
+        {"id": 4, "energized": 1, "q_from": [10, 10, 10], "q_to": [-9, -9, -9]}
+      ],
+      "source": [
+        {"id": 6, "energized": 1, "q": [4, 4, 4]},
+        {"id": 7, "energized": 1, "q": [6, 6, 6]}
+      ],
+      "sym_load": [
+        {"id": 8, "energized": 1, "q": [9, 9, 9]}
+      ]
+    }
+  ]
+}
