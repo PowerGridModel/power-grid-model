@@ -13,11 +13,11 @@ from typing import Optional, cast as cast_type
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import DataType, _map_to_componenttypes
 from power_grid_model._utils import (
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
 )
+from power_grid_model.core.dataset_definitions import DataType, _map_to_componenttypes
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
@@ -166,6 +166,7 @@ def msgpack_serialize_to_file(
     Returns:
         Save to file.
     """
+    data = _map_to_componenttypes(data)
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
 
     with open(file_path, mode="wb") as file_pointer:

@@ -9,7 +9,7 @@ import msgpack
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType
+from power_grid_model import ComponentType, DataType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
@@ -33,7 +33,7 @@ def from_msgpack(data):
     return msgpack.unpackb(data)
 
 
-def empty_dataset(dataset_type: str = "input"):
+def empty_dataset(dataset_type: str = DataType.input):
     return {"version": "1.0", "type": dataset_type, "is_batch": False, "attributes": {}, "data": {}}
 
 
@@ -369,7 +369,9 @@ def test_msgpack_deserialize_data(serialized_data):
         assert result_type == serialized_data["type"]
 
 
-@pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
+@pytest.mark.parametrize(
+    "dataset_type", (DataType.input, DataType.update, DataType.sym_output, DataType.asym_output, DataType.sc_output)
+)
 @pytest.mark.parametrize("use_compact_list", (True, False))
 def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
     for indent in (-1, 0, 2, 4):
@@ -384,7 +386,9 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
             json_serialize({}, use_compact_list=use_compact_list, indent=indent)
 
 
-@pytest.mark.parametrize("dataset_type", ("input", "update", "sym_output", "asym_output", "sc_output"))
+@pytest.mark.parametrize(
+    "dataset_type", (DataType.input, DataType.update, DataType.sym_output, DataType.asym_output, DataType.sc_output)
+)
 def test_msgpack_serialize_empty_dataset(dataset_type):
     reference = empty_dataset(dataset_type)
     for use_compact_list in (True, False):

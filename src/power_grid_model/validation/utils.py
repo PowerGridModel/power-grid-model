@@ -10,7 +10,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
-from power_grid_model import ComponentType, DataType, power_grid_meta_data
+from power_grid_model import power_grid_meta_data
+from power_grid_model.core.dataset_definitions import ComponentType, DataType, _str_to_componenttype
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
@@ -161,10 +162,11 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: ComponentType, field: str, data_type: DataType = DataType.input):
+def nan_type(component: Union[str, ComponentType], field: str, data_type: DataType = DataType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
+    component = _str_to_componenttype(component)
     return power_grid_meta_data[data_type][component].nans[field]
 
 

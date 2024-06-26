@@ -13,7 +13,7 @@ from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 
-from power_grid_model import ComponentType, DataType
+from power_grid_model.core.dataset_definitions import ComponentType, DataType, _map_to_componenttypes, _str_to_datatype
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import (
@@ -277,6 +277,8 @@ def json_serialize(
     Returns:
         A serialized string containing the dataset.
     """
+    data = _map_to_componenttypes(data)
+    dataset_type = _str_to_datatype(dataset_type)
     result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
     return result
@@ -327,6 +329,8 @@ def msgpack_serialize(
     Returns:
         A serialized string containing the dataset.
     """
+    data = _map_to_componenttypes(data)
+    dataset_type = _str_to_datatype(dataset_type)
     result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()
     return result

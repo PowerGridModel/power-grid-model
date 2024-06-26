@@ -17,7 +17,7 @@ from power_grid_model.core.data_handling import (
     prepare_output_view,
     prepare_update_view,
 )
-from power_grid_model.core.dataset_definitions import ComponentType, _map_to_componenttypes, _str_to_datatype
+from power_grid_model.core.dataset_definitions import ComponentType, _map_to_componenttypes, _str_to_componenttype
 from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
@@ -147,7 +147,7 @@ class PowerGridModel:
         Returns:
             Array of indexers, same shape as input array ids
         """
-        component_type = _str_to_datatype(component_type)
+        component_type = _str_to_componenttype(component_type)
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
         indexer = np.empty_like(ids, dtype=IdxNp, order="C")
         indexer_c = indexer.ctypes.data_as(IdxPtr)
