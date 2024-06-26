@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, PowerGridModel, initialize_array
-from power_grid_model.errors import PowerGridBatchError, PowerGridError
+from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.validation import assert_valid_input_data
 
 from .utils import compare_result, convert_python_to_numpy
@@ -120,13 +120,13 @@ def test_construction_error(case_data):
 
 
 def test_single_calculation_error(model: PowerGridModel):
-    with pytest.raises(PowerGridError, match="Iteration failed to converge after"):
+    with pytest.raises(IterationDiverge, match="Iteration failed to converge after"):
         model.calculate_power_flow(max_iterations=1, error_tolerance=1e-100)
-    with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
+    with pytest.raises(InvalidCalculationMethod, match="The calculation method is invalid for this calculation!"):
         model.calculate_state_estimation(calculation_method="iterative_current")
 
     for calculation_method in ("linear", "newton_raphson", "iterative_current", "linear_current", "iterative_linear"):
-        with pytest.raises(PowerGridError):
+        with pytest.raises(InvalidCalculationMethod):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
