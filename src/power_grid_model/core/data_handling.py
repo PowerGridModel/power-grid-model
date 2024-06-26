@@ -12,7 +12,7 @@ from typing import Dict, List, Mapping, Set, Tuple, Union
 
 import numpy as np
 
-from power_grid_model import ComponentType, DataType
+from power_grid_model.core.dataset_definitions import ComponentType, DataType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType

@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
-from power_grid_model import ComponentType
+from power_grid_model.core.dataset_definitions import ComponentType
 
 # When we're dropping python 3.8, we should introduce proper NumPy type hinting
 
