@@ -2,15 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Dict
-
-import numpy as np
 import pandas as pd
 
-from power_grid_model import DataType, ComponentType, LoadGenType, PowerGridModel, initialize_array
+from power_grid_model import ComponentType, DataType, LoadGenType, PowerGridModel, initialize_array
 
 # node
-node = initialize_array(DataType.input, ComponentType.node, 2) # initialize_array("input", "node", 3) is also OK
+node = initialize_array(DataType.input, ComponentType.node, 2)  # initialize_array("input", "node", 3) is also OK
 node["id"] = [1, 2]
 node["u_rated"] = [10.5e3, 10.5e3]
 
