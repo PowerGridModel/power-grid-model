@@ -27,6 +27,7 @@ from power_grid_model.errors import (
     InvalidMeasuredObject,
     InvalidRegulatedObject,
     InvalidTransformerClock,
+    IterationDiverge,
     MissingCaseForEnumError,
     NotObservableError,
 )
@@ -175,9 +176,30 @@ def test_handle_not_observable_error():
         model.calculate_state_estimation(calculation_method=CalculationMethod.iterative_linear)
 
 
-@pytest.mark.skip(reason="TODO")
 def test_handle_iteration_diverge_error():
-    pass
+    node_input = initialize_array("input", "node", 1)
+    node_input["id"] = [0]
+    node_input["u_rated"] = [100.0]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [1]
+    source_input["node"] = [0]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [1.0]
+    source_input["sk"] = [1000.0]
+    source_input["rx_ratio"] = [0.0]
+
+    sym_load_input = initialize_array("input", "sym_load", 1)
+    sym_load_input["id"] = [2]
+    sym_load_input["node"] = [0]
+    sym_load_input["status"] = [1]
+    sym_load_input["type"] = [LoadGenType.const_current]
+    sym_load_input["p_specified"] = [0.0]
+    sym_load_input["q_specified"] = [500.0]
+
+    model = PowerGridModel(input_data={"node": node_input, "source": source_input, "sym_load": sym_load_input})
+    with pytest.raises(IterationDiverge):
+        model.calculate_power_flow(max_iterations=1, error_tolerance=1.0e-100)
 
 
 def test_handle_conflict_id_error():
