@@ -6,7 +6,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, Union
 
 import numpy as np
 
@@ -27,6 +27,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
+from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridError
 
 
@@ -392,7 +393,7 @@ class CWritableDataset:
         self._schema = power_grid_meta_data[self._dataset_type]
 
         self._component_buffer_properties = self._get_buffer_properties(info)
-        self._data: Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]] = {}
+        self._data: Dataset = {}
         self._buffers: Mapping[str, CBuffer] = {}
 
         self._add_buffers()
@@ -416,7 +417,7 @@ class CWritableDataset:
         """
         return CDatasetInfo(pgc.dataset_writable_get_info(self._writable_dataset))
 
-    def get_data(self) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
+    def get_data(self) -> Dataset:
         """
         Retrieve data from the Power Grid Model dataset.
 

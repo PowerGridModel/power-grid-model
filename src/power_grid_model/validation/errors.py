@@ -332,7 +332,7 @@ class InvalidIdError(SingleFieldValidationError):
     ):
         # pylint: disable=too-many-arguments
         super().__init__(component=component, field=field, ids=ids)
-        self.ref_components = [ref_components] if isinstance(ref_components, str) else ref_components  # type: ignore
+        self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
         self.filters = filters if filters else None
 
     @property

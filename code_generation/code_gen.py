@@ -114,39 +114,13 @@ class CodeGenerator:
                     for component_name in component.names:
                         all_components[component_name] = [x.names for x in class_def.full_attributes]
                 all_map[f"{prefix}{dataset.name}"] = all_components
-
         self.render_template(template_path=template_path, output_path=output_path, all_map=all_map)
-
-    def render_metadata_types(self, template_path: Path, data_path: Path, output_path: Path):
-        with open(data_path) as data_file:
-            json_data = data_file.read()
-        dataset_meta_data: List[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
-
-        dataset_types = []
-        components = []
-        for dataset in dataset_meta_data:
-            if dataset.is_template:
-                prefixes = ["sym_", "asym_"]
-            else:
-                prefixes = [""]
-            for prefix in prefixes:
-                dataset_types.append(f"{prefix}{dataset.name}")
-
-            if dataset.name == "input":
-                for component in dataset.components:
-                    components.append(component.names)
-
-        components = [name for sublist in components for name in sublist]
-
-        self.render_template(
-            template_path=template_path, output_path=output_path, dataset_types=dataset_types, components=components
-        )
 
     def code_gen(self):
         render_funcs = {
             "attribute_classes": self.render_attribute_classes,
             "dataset_class_maps": self.render_dataset_class_maps,
-            "metadata_enums": self.render_metadata_types,
+            "metadata_enums": self.render_dataset_class_maps,
         }
 
         # render attribute classes

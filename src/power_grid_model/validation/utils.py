@@ -247,7 +247,7 @@ def get_valid_ids(data: SingleDataset, ref_components: Union[ComponentType, List
     """
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.
-    if not isinstance(ref_components, list):
+    if isinstance(ref_components, (str, ComponentType)):
         ref_components = [ref_components]
 
     # Create a set of ids by chaining the ids of all ref_components

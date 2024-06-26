@@ -22,6 +22,7 @@ from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
+from power_grid_model.data_types import Dataset
 from power_grid_model.enum import (
     CalculationMethod,
     CalculationType,
@@ -234,7 +235,7 @@ class PowerGridModel:
         self,
         calculation_type: CalculationType,
         symmetric: bool,
-        update_data: Optional[Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]],
+        update_data: Optional[Dataset],
         output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]],
         options: Options,
         continue_on_batch_error: bool,
@@ -299,7 +300,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
-        update_data: Optional[Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        update_data: Optional[Dataset] = None,
         threading: int = -1,
         output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
         continue_on_batch_error: bool = False,
@@ -335,7 +336,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: Union[CalculationMethod, str] = CalculationMethod.iterative_linear,
-        update_data: Optional[Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        update_data: Optional[Dataset] = None,
         threading: int = -1,
         output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
         continue_on_batch_error: bool = False,
@@ -366,7 +367,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: Union[CalculationMethod, str] = CalculationMethod.iec60909,
-        update_data: Optional[Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]] = None,
+        update_data: Optional[Dataset] = None,
         threading: int = -1,
         output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
         continue_on_batch_error: bool = False,
@@ -405,7 +406,7 @@ class PowerGridModel:
         update_data: Optional[
             Union[
                 Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]],
-                Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]],
+                Dataset,
             ]
         ] = None,
         threading: int = -1,
@@ -499,7 +500,7 @@ class PowerGridModel:
         update_data: Optional[
             Union[
                 Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]],
-                Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]],
+                Dataset,
             ]
         ] = None,
         threading: int = -1,
@@ -585,7 +586,7 @@ class PowerGridModel:
         update_data: Optional[
             Union[
                 Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]],
-                Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]],
+                Dataset,
             ]
         ] = None,
         threading: int = -1,

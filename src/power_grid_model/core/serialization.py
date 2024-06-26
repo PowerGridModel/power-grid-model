@@ -9,7 +9,7 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
-from typing import Dict, Mapping, Optional, Union
+from typing import Mapping, Optional, Union
 
 import numpy as np
 
@@ -24,6 +24,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
+from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridSerializationError
 
 
@@ -64,7 +65,7 @@ class Deserializer:
         if hasattr(self, "_deserializer"):
             pgc.destroy_deserializer(self._deserializer)
 
-    def load(self) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
+    def load(self) -> Dataset:
         """
         Load the deserialized data to a new dataset.
 
@@ -229,7 +230,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
-def json_deserialize(data: Union[str, bytes]) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def json_deserialize(data: Union[str, bytes]) -> Dataset:
     """
     Load serialized JSON data to a new dataset.
 
@@ -284,7 +285,7 @@ def json_serialize(
     return result
 
 
-def msgpack_deserialize(data: bytes) -> Dict[ComponentType, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def msgpack_deserialize(data: bytes) -> Dataset:
     """
     Load serialized msgpack data to a new dataset.
 
