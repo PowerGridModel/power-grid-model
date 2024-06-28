@@ -7,7 +7,9 @@ import pandas as pd
 from power_grid_model import ComponentType, DatasetType, LoadGenType, PowerGridModel, initialize_array
 
 # node
-node = initialize_array(DatasetType.input, ComponentType.node, 2)  # initialize_array("input", "node", 3) is also OK
+node = initialize_array(DatasetType.input, ComponentType.node, 2)
+# The following is also supported
+# node = initialize_array("input", "node", 2)
 node["id"] = [1, 2]
 node["u_rated"] = [10.5e3, 10.5e3]
 

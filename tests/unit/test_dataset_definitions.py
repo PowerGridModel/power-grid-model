@@ -7,17 +7,17 @@ import pytest
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
 
+def assert_data_type(pgm_meta_data_types, data_type):
+    pgm_types = [pgm_type for pgm_type in pgm_meta_data_types]
+    pgm_types.sort()
+    generated_types = [member.value for member in data_type]
+    generated_types.sort()
+    assert pgm_types == generated_types
+
+
 def test_power_grid_data_types():
-    power_grid_data_types = [data_type for data_type in power_grid_meta_data]
-    gen_power_grid_data_types = [member.value for member in DatasetType]
-    power_grid_data_types.sort()
-    gen_power_grid_data_types.sort()
-    assert power_grid_data_types == gen_power_grid_data_types
+    assert_data_type(power_grid_meta_data, DatasetType)
 
 
 def test_power_grid_components():
-    power_grid_components = [component for component in power_grid_meta_data[DatasetType.input]]
-    gen_power_grid_components = [member.value for member in ComponentType]
-    power_grid_components.sort()
-    gen_power_grid_components.sort()
-    assert power_grid_components == gen_power_grid_components
+    assert_data_type(power_grid_meta_data[DatasetType.input], ComponentType)

@@ -15,7 +15,9 @@ source_4          asym_load_5          asym_load_8
 """
 
 # node
-node = initialize_array(DatasetType.input, ComponentType.node, 3)  # initialize_array("input", "node", 3) is also OK
+node = initialize_array(DatasetType.input, ComponentType.node, 3)
+# The following is also supported
+# node = initialize_array("input", "node", 3)
 node["id"] = [1, 2, 7]
 node["u_rated"] = [10.5e3, 10.5e3, 10.5e3]
 

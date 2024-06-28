@@ -21,8 +21,9 @@ from power_grid_model.enum import CalculationType
 class OutputType(Enum):
     """
     The different supported output types:
-        - sym_output
-        - asym_output
+        - DatasetType.sym_output
+        - DatasetType.asym_output
+        - DatasetType.sc_output
     """
 
     SYM_OUTPUT = DatasetType.sym_output
