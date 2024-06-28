@@ -98,11 +98,12 @@ For example, the following update dataset will set `from_status` of the line #5 
 and keep the `to_status` as unchanged (change not available).
 
 ```python
-from power_grid_model import ComponentType, DataType, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 import numpy as np
 
-line_update = np.empty(shape=1, dtype=power_grid_meta_data[DataType.update][ComponentType.line]['dtype'])
-# line_update = np.empty(shape=1, dtype=power_grid_meta_data['update']['line']['dtype']) is supported as well.
+line_update = np.empty(shape=1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.line]['dtype'])
+# direct string access is supported as well:
+# line_update = np.empty(shape=1, dtype=power_grid_meta_data['update']['line']['dtype'])
 line_update['id'] = [5]
 line_update['from_status'] = [0]
 line_update['to_status'] = [-128]
@@ -138,10 +139,11 @@ One can import the `power_grid_meta_data` to get all the predefined `numpy.dtype
 The code below creates an array which is compatible with transformer input dataset.
 
 ```python
-from power_grid_model import ComponentType, DataType, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
-transformer = np.empty(shape=5, dtype=power_grid_meta_data[DataType.input][ComponentType.transformer]['dtype'])
-# transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer']['dtype']) is supported as well.
+transformer = np.empty(shape=5, dtype=power_grid_meta_data[DatasetType.input][ComponentType.transformer]['dtype'])
+# direct string access is supported as well:
+# transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer']['dtype'])
 ```
 
 Furthermore, there is an even more convenient function `initialize_array`

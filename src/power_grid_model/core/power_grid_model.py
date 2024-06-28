@@ -17,7 +17,7 @@ from power_grid_model.core.data_handling import (
     prepare_output_view,
     prepare_update_view,
 )
-from power_grid_model.core.dataset_definitions import ComponentType, _map_to_componenttypes, _str_to_componenttype
+from power_grid_model.core.dataset_definitions import ComponentType, _map_to_component_types, _str_to_component_type
 from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
@@ -113,7 +113,7 @@ class PowerGridModel:
         pgc.destroy_model(self._model_ptr)
         self._all_component_count = None
         # create new
-        input_data = _map_to_componenttypes(input_data)
+        input_data = _map_to_component_types(input_data)
         prepared_input = prepare_input_view(input_data)
         self._model_ptr = pgc.create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
         assert_no_error()
@@ -132,12 +132,12 @@ class PowerGridModel:
         Returns:
             None
         """
-        update_data = _map_to_componenttypes(update_data)
+        update_data = _map_to_component_types(update_data)
         prepared_update = prepare_update_view(update_data)
         pgc.update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
-    def get_indexer(self, component_type: Any, ids: np.ndarray):
+    def get_indexer(self, component_type: Union[ComponentType, str], ids: np.ndarray):
         """
         Get array of indexers given array of ids for component type
 
@@ -148,7 +148,7 @@ class PowerGridModel:
         Returns:
             Array of indexers, same shape as input array ids
         """
-        component_type = _str_to_componenttype(component_type)
+        component_type = _str_to_component_type(component_type)
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
         indexer = np.empty_like(ids, dtype=IdxNp, order="C")
         indexer_c = indexer.ctypes.data_as(IdxPtr)
@@ -482,7 +482,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=(_map_to_componenttypes(update_data) if update_data is not None else None),
+            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -572,7 +572,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=(_map_to_componenttypes(update_data) if update_data is not None else None),
+            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -651,7 +651,7 @@ class PowerGridModel:
         """
         return self._calculate_short_circuit(
             calculation_method=calculation_method,
-            update_data=(_map_to_componenttypes(update_data) if update_data is not None else None),
+            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,

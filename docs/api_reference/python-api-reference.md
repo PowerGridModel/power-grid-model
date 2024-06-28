@@ -32,7 +32,7 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.data_types.BatchArray
 .. autoclass:: power_grid_model.data_types.DenseBatchArray
 .. autoclass:: power_grid_model.data_types.SparseBatchArray
-.. autoclass:: power_grid_model.dataset_definitions.DataType
+.. autoclass:: power_grid_model.dataset_definitions.DatasetType
 .. autoclass:: power_grid_model.dataset_definitions.ComponentType
 ```
 

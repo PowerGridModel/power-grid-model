@@ -13,7 +13,12 @@ from typing import Mapping, Optional, Union
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentType, DataType, _map_to_componenttypes, _str_to_datatype
+from power_grid_model.core.dataset_definitions import (
+    ComponentType,
+    DatasetType,
+    _map_to_component_types,
+    _str_to_datatype,
+)
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import (
@@ -99,7 +104,7 @@ class Serializer(ABC):
             Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
         serialization_type: SerializationType,
-        dataset_type: Optional[DataType] = None,
+        dataset_type: Optional[DatasetType] = None,
     ):
         instance = super().__new__(cls)
 
@@ -209,7 +214,7 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
             Mapping[ComponentType, np.ndarray],
             Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[DataType] = None,
+        dataset_type: Optional[DatasetType] = None,
     ):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
@@ -225,7 +230,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
             Mapping[ComponentType, np.ndarray],
             Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[DataType] = None,
+        dataset_type: Optional[DatasetType] = None,
     ):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
@@ -254,7 +259,7 @@ def json_serialize(
         Mapping[ComponentType, np.ndarray],
         Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
     ],
-    dataset_type: Optional[DataType] = None,
+    dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
     indent: int = 2,
 ) -> str:
@@ -278,7 +283,7 @@ def json_serialize(
     Returns:
         A serialized string containing the dataset.
     """
-    data = _map_to_componenttypes(data)
+    data = _map_to_component_types(data)
     dataset_type = _str_to_datatype(dataset_type)
     result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
@@ -309,7 +314,7 @@ def msgpack_serialize(
         Mapping[ComponentType, np.ndarray],
         Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
     ],
-    dataset_type: Optional[DataType] = None,
+    dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
 ) -> bytes:
     """
@@ -330,7 +335,7 @@ def msgpack_serialize(
     Returns:
         A serialized string containing the dataset.
     """
-    data = _map_to_componenttypes(data)
+    data = _map_to_component_types(data)
     dataset_type = _str_to_datatype(dataset_type)
     result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()

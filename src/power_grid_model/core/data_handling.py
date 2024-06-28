@@ -12,7 +12,7 @@ from typing import Dict, List, Mapping, Set, Tuple, Union
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentType, DataType
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
@@ -25,9 +25,9 @@ class OutputType(Enum):
         - asym_output
     """
 
-    SYM_OUTPUT = DataType.sym_output
-    ASYM_OUTPUT = DataType.asym_output
-    SC_OUTPUT = DataType.sc_output
+    SYM_OUTPUT = DatasetType.sym_output
+    ASYM_OUTPUT = DatasetType.asym_output
+    SC_OUTPUT = DatasetType.sc_output
 
 
 def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> OutputType:
@@ -64,7 +64,7 @@ def prepare_input_view(input_data: Mapping[ComponentType, np.ndarray]) -> CConst
     Returns:
         instance of CConstDataset ready to be fed into C API
     """
-    return CConstDataset(input_data, dataset_type=DataType.input)
+    return CConstDataset(input_data, dataset_type=DatasetType.input)
 
 
 def prepare_update_view(
@@ -80,7 +80,7 @@ def prepare_update_view(
     Returns:
         instance of CConstDataset ready to be fed into C API
     """
-    return CConstDataset(update_data, dataset_type=DataType.update)
+    return CConstDataset(update_data, dataset_type=DatasetType.update)
 
 
 def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_type: OutputType) -> CMutableDataset:

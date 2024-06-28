@@ -13,14 +13,14 @@ from typing import Any, Dict, Mapping
 # pylint: disable=invalid-name
 
 
-class DataType(str, Enum):
+class DatasetType(str, Enum):
     """
-    A DataType is the type of a :class:`Dataset` in power grid model.
+    A DatasetType is the type of a :class:`Dataset` in power grid model.
 
     - Examples:
 
-        - DataType.input = "input"
-        - DataType.update = "update"
+        - DatasetType.input = "input"
+        - DatasetType.update = "update"
     """
 
     input = "input"
@@ -28,6 +28,19 @@ class DataType(str, Enum):
     asym_output = "asym_output"
     update = "update"
     sc_output = "sc_output"
+
+    @classmethod
+    def contains(cls, member):
+        """
+        Check if member is part of the Enum.
+
+        Args:
+            member: Member to check.
+
+        Returns:
+            bool: True if the member is part of the Enum, False otherwise.
+        """
+        return member in cls.__members__
 
 
 class ComponentType(str, Enum):
@@ -62,25 +75,25 @@ class ComponentType(str, Enum):
 # pylint: enable=invalid-name
 
 
-def _str_to_datatype(data_type: Any) -> DataType:
-    """Helper function to transform data_type str to DataType."""
+def _str_to_datatype(data_type: Any) -> DatasetType:
+    """Helper function to transform data_type str to DatasetType."""
     if isinstance(data_type, str):
-        return DataType[data_type]
+        return DatasetType[data_type]
     return data_type
 
 
-def _map_to_datatypes(data: Mapping[Any, Any]) -> Dict[DataType, Any]:
-    """Helper function to map datatype str keys to DataType."""
+def _map_to_datatypes(data: Mapping[Any, Any]) -> Dict[DatasetType, Any]:
+    """Helper function to map datatype str keys to DatasetType."""
     return {_str_to_datatype(key): value for key, value in data.items()}
 
 
-def _str_to_componenttype(component: Any) -> ComponentType:
+def _str_to_component_type(component: Any) -> ComponentType:
     """Helper function to transform component str to ComponentType."""
     if isinstance(component, str):
         return ComponentType[component]
     return component
 
 
-def _map_to_componenttypes(data: Mapping[Any, Any]) -> Dict[ComponentType, Any]:
+def _map_to_component_types(data: Mapping[Any, Any]) -> Dict[ComponentType, Any]:
     """Helper function to map componenttype str keys to ComponentType."""
-    return {_str_to_componenttype(key): value for key, value in data.items()}
+    return {_str_to_component_type(key): value for key, value in data.items()}

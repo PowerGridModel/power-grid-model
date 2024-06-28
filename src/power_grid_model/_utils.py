@@ -10,17 +10,19 @@ Disclaimer!
 We do not officially support this functionality and may remove features in this library at any given time!
 """
 
-from typing import List, Optional, cast
+from typing import List, Optional, Union, cast
 
 import numpy as np
 
-from power_grid_model import ComponentType
+from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
     BatchList,
     Dataset,
+    DenseBatchArray,
     PythonDataset,
+    SingleArray,
     SingleDataset,
     SinglePythonDataset,
     SparseBatchArray,
@@ -145,7 +147,9 @@ def get_batch_size(batch_data: BatchArray) -> int:
     return n_batches
 
 
-def split_numpy_array_in_batches(data: np.ndarray, component: ComponentType) -> List[np.ndarray]:
+def split_numpy_array_in_batches(
+    data: Union[DenseBatchArray, SingleArray], component: ComponentType
+) -> List[np.ndarray]:
     """
     Split a single dense numpy array into one or more batches
 

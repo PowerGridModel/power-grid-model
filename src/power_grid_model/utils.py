@@ -17,7 +17,7 @@ from power_grid_model._utils import (
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
 )
-from power_grid_model.core.dataset_definitions import DataType, _map_to_componenttypes
+from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
@@ -108,7 +108,7 @@ def json_deserialize_from_file(file_path: Path) -> Dataset:
 def json_serialize_to_file(
     file_path: Path,
     data: Dataset,
-    dataset_type: Optional[DataType] = None,
+    dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
     indent: Optional[int] = 2,
 ):
@@ -124,7 +124,7 @@ def json_serialize_to_file(
     Returns:
         Save to file.
     """
-    data = _map_to_componenttypes(data)
+    data = _map_to_component_types(data)
     result = json_serialize(
         data=data, dataset_type=dataset_type, use_compact_list=use_compact_list, indent=-1 if indent is None else indent
     )
@@ -152,7 +152,7 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
 
 
 def msgpack_serialize_to_file(
-    file_path: Path, data: Dataset, dataset_type: Optional[DataType] = None, use_compact_list: bool = False
+    file_path: Path, data: Dataset, dataset_type: Optional[DatasetType] = None, use_compact_list: bool = False
 ):
     """
     Export msgpack data in most recent format.
@@ -166,7 +166,7 @@ def msgpack_serialize_to_file(
     Returns:
         Save to file.
     """
-    data = _map_to_componenttypes(data)
+    data = _map_to_component_types(data)
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
 
     with open(file_path, mode="wb") as file_pointer:
@@ -255,7 +255,7 @@ def import_input_data(json_file: Path) -> SingleDataset:
     """
     warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
-    data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DataType.input)
+    data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DatasetType.input)
     assert isinstance(data, dict)
     assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
     return cast_type(SingleDataset, data)
@@ -279,11 +279,11 @@ def import_update_data(json_file: Path) -> BatchDataset:
 
     return cast_type(
         BatchDataset,
-        _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DataType.update),
+        _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DatasetType.update),
     )
 
 
-def _compatibility_deprecated_import_json_data(json_file: Path, data_type: DataType):
+def _compatibility_deprecated_import_json_data(json_file: Path, data_type: DatasetType):
     with open(json_file, mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
 

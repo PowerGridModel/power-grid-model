@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pytest
 
-from power_grid_model.core.dataset_definitions import DataType
+from power_grid_model.core.dataset_definitions import DatasetType
 from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
@@ -285,7 +285,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                 )
 
 
-def convert_python_to_numpy(data: PythonDataset, data_type: DataType) -> Dataset:
+def convert_python_to_numpy(data: PythonDataset, data_type: DatasetType) -> Dataset:
     """
     Convert native python data to internal numpy
 

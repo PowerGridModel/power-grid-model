@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 
-from power_grid_model import ComponentType, DataType, LoadGenType, PowerGridModel, initialize_array
+from power_grid_model import ComponentType, DatasetType, LoadGenType, PowerGridModel, initialize_array
 
 """
 node_1 ---line_3--- node_2 ---line_6--- node_7
@@ -15,12 +15,12 @@ source_4          asym_load_5          asym_load_8
 """
 
 # node
-node = initialize_array(DataType.input, ComponentType.node, 3)  # initialize_array("input", "node", 3) is also OK
+node = initialize_array(DatasetType.input, ComponentType.node, 3)  # initialize_array("input", "node", 3) is also OK
 node["id"] = [1, 2, 7]
 node["u_rated"] = [10.5e3, 10.5e3, 10.5e3]
 
 # line
-line = initialize_array(DataType.input, ComponentType.line, 2)
+line = initialize_array(DatasetType.input, ComponentType.line, 2)
 line["id"] = [3, 6]
 line["from_node"] = [1, 2]
 line["to_node"] = [2, 7]
@@ -36,7 +36,7 @@ line["c0"] = [10e-6, 10e-6]  # zero sequence parameters
 line["tan0"] = [0.0, 0.0]  # zero sequence parameters
 
 # load
-asym_load = initialize_array(DataType.input, ComponentType.asym_load, 2)
+asym_load = initialize_array(DatasetType.input, ComponentType.asym_load, 2)
 asym_load["id"] = [4, 8]
 asym_load["node"] = [2, 7]
 asym_load["status"] = [1, 1]
@@ -47,7 +47,7 @@ asym_load["p_specified"] = [[2e6, 0.0, 0.0], [0.0, 1e6, 0.0]]
 asym_load["q_specified"] = [[0.5e6, 0.0, 0.0], [0.0, 0.2e6, 0.0]]  # input for three phase per entry
 
 # source
-source = initialize_array(DataType.input, ComponentType.source, 1)
+source = initialize_array(DatasetType.input, ComponentType.source, 1)
 source["id"] = [5]
 source["node"] = [1]
 source["status"] = [1]
@@ -75,7 +75,7 @@ print(result[ComponentType.asym_load]["p"])  # N*3 array, in symmetric calculati
 # batch calculation
 scaler = np.linspace(0, 1, 1000)
 batch_p = asym_load["p_specified"].reshape(1, 2, 3) * scaler.reshape(-1, 1, 1)
-batch_load = initialize_array(DataType.update, ComponentType.asym_load, (1000, 2))
+batch_load = initialize_array(DatasetType.update, ComponentType.asym_load, (1000, 2))
 batch_load["id"] = [[4, 8]]
 batch_load["p_specified"] = batch_p
 batch_update = {ComponentType.asym_load: batch_load}

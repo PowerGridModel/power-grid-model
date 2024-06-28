@@ -17,7 +17,7 @@ from power_grid_model.core.buffer_handling import (
     get_buffer_properties,
     get_buffer_view,
 )
-from power_grid_model.core.dataset_definitions import ComponentType, DataType, _str_to_componenttype
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.power_grid_core import (
     ConstDatasetPtr,
@@ -92,7 +92,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             A list of the component names in the dataset
         """
         return [
-            _str_to_componenttype(pgc.dataset_info_component_name(self._info, idx))
+            _str_to_component_type(pgc.dataset_info_component_name(self._info, idx))
             for idx in range(self.n_components())
         ]
 
@@ -124,7 +124,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(data: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> DataType:
+def get_dataset_type(data: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> DatasetType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -179,7 +179,7 @@ class CMutableDataset:
     The dataset will create mutable buffers that the Power Grid Model can use to load data.
     """
 
-    _dataset_type: DataType
+    _dataset_type: DatasetType
     _schema: DatasetMetaData
     _is_batch: bool
     _batch_size: int
@@ -198,7 +198,7 @@ class CMutableDataset:
         instance._mutable_dataset = MutableDatasetPtr()
         instance._buffer_views = []
 
-        instance._dataset_type = dataset_type if dataset_type in list(DataType) else get_dataset_type(data)
+        instance._dataset_type = dataset_type if dataset_type in list(DatasetType) else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
         if data:
@@ -340,7 +340,7 @@ class CConstDataset:
             Mapping[ComponentType, np.ndarray],
             Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
         ],
-        dataset_type: Optional[DataType] = None,
+        dataset_type: Optional[DatasetType] = None,
     ):
         instance = super().__new__(cls)
         instance._const_dataset = ConstDatasetPtr()

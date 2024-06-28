@@ -12,7 +12,12 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentType, DataType, _str_to_componenttype, _str_to_datatype
+from power_grid_model.core.dataset_definitions import (
+    ComponentType,
+    DatasetType,
+    _str_to_component_type,
+    _str_to_datatype,
+)
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
 
 
@@ -62,7 +67,7 @@ class ComponentMetaData:
 
 
 DatasetMetaData = Dict[ComponentType, ComponentMetaData]
-PowerGridMetaData = Dict[DataType, DatasetMetaData]
+PowerGridMetaData = Dict[DatasetType, DatasetMetaData]
 
 
 def _generate_meta_data() -> PowerGridMetaData:
@@ -92,7 +97,9 @@ def _generate_meta_dataset(dataset: DatasetPtr) -> DatasetMetaData:
     n_components = pgc.meta_n_components(dataset)
     for i in range(n_components):
         component = pgc.meta_get_component_by_idx(dataset, i)
-        py_meta_dataset[_str_to_componenttype(pgc.meta_component_name(component))] = _generate_meta_component(component)
+        py_meta_dataset[_str_to_component_type(pgc.meta_component_name(component))] = _generate_meta_component(
+            component
+        )
     return py_meta_dataset
 
 
@@ -158,7 +165,7 @@ power_grid_meta_data = _generate_meta_data()
 
 
 def initialize_array(
-    data_type: Union[str, DataType],
+    data_type: Union[str, DatasetType],
     component_type: Union[str, ComponentType],
     shape: Union[tuple, int],
     empty: bool = False,
@@ -178,7 +185,7 @@ def initialize_array(
         np structured array with all entries as null value
     """
     data_type = _str_to_datatype(data_type)
-    component_type = _str_to_componenttype(component_type)
+    component_type = _str_to_component_type(component_type)
     if not isinstance(shape, tuple):
         shape = (shape,)
     if empty:

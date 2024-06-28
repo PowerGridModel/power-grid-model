@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 
-from power_grid_model import ComponentType, DataType, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
@@ -85,7 +85,7 @@ def validate_input_data(
     """
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(input_data)
-    assert_valid_data_structure(input_data_copy, DataType.input)
+    assert_valid_data_structure(input_data_copy, DatasetType.input)
 
     errors: List[ValidationError] = []
     errors += validate_required_values(input_data_copy, calculation_type, symmetric)
@@ -127,7 +127,7 @@ def validate_batch_data(
     Raises:
         Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
-    assert_valid_data_structure(input_data, DataType.input)
+    assert_valid_data_structure(input_data, DatasetType.input)
 
     input_errors: List[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
@@ -136,7 +136,7 @@ def validate_batch_data(
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
-        assert_valid_data_structure(batch_update_data, DataType.update)
+        assert_valid_data_structure(batch_update_data, DatasetType.update)
         id_errors: List[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
 
         batch_errors = input_errors + id_errors
@@ -151,7 +151,7 @@ def validate_batch_data(
     return errors if errors else None
 
 
-def assert_valid_data_structure(data: Dataset, data_type: DataType) -> None:
+def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
     """
     Checks if all component names are valid and if the data inside the component matches the required Numpy
     structured array as defined in the Power Grid Model meta data.
@@ -164,7 +164,7 @@ def assert_valid_data_structure(data: Dataset, data_type: DataType) -> None:
         Error: KeyError, TypeError
 
     """
-    if data_type not in {DataType.input, DataType.update}:
+    if data_type not in {DatasetType.input, DatasetType.update}:
         raise KeyError(f"Unexpected data type '{data_type}' (should be 'input' or 'update')")
 
     component_dtype = {component: meta.dtype for component, meta in power_grid_meta_data[data_type].items()}

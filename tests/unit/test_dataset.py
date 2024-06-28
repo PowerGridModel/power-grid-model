@@ -7,22 +7,22 @@ import itertools
 import numpy as np
 import pytest
 
-from power_grid_model.core.dataset_definitions import ComponentType, DataType
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, get_dataset_type
 from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
 
 def input_dataset_types():
-    return [DataType.input]
+    return [DatasetType.input]
 
 
 def update_dataset_types():
-    return [DataType.update]
+    return [DatasetType.update]
 
 
 def output_dataset_types():
-    return [DataType.sym_output, DataType.asym_output, DataType.sc_output]
+    return [DatasetType.sym_output, DatasetType.asym_output, DatasetType.sc_output]
 
 
 def all_dataset_types():

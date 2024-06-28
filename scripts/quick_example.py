@@ -4,15 +4,15 @@
 
 import pandas as pd
 
-from power_grid_model import ComponentType, DataType, LoadGenType, PowerGridModel, initialize_array
+from power_grid_model import ComponentType, DatasetType, LoadGenType, PowerGridModel, initialize_array
 
 # node
-node = initialize_array(DataType.input, ComponentType.node, 2)  # initialize_array("input", "node", 3) is also OK
+node = initialize_array(DatasetType.input, ComponentType.node, 2)  # initialize_array("input", "node", 3) is also OK
 node["id"] = [1, 2]
 node["u_rated"] = [10.5e3, 10.5e3]
 
 # line
-line = initialize_array(DataType.input, ComponentType.line, 1)
+line = initialize_array(DatasetType.input, ComponentType.line, 1)
 line["id"] = [3]
 line["from_node"] = [1]
 line["to_node"] = [2]
@@ -25,7 +25,7 @@ line["tan1"] = [0.0]
 line["i_n"] = [1000]
 
 # load
-sym_load = initialize_array(DataType.input, ComponentType.sym_load, 1)
+sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
 sym_load["id"] = [4]
 sym_load["node"] = [2]
 sym_load["status"] = [1]
@@ -34,7 +34,7 @@ sym_load["p_specified"] = [2e6]
 sym_load["q_specified"] = [0.5e6]
 
 # source
-source = initialize_array(DataType.input, ComponentType.source, 1)
+source = initialize_array(DatasetType.input, ComponentType.source, 1)
 source["id"] = [5]
 source["node"] = [1]
 source["status"] = [1]
