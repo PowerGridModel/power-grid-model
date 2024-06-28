@@ -120,7 +120,6 @@ class CodeGenerator:
         render_funcs = {
             "attribute_classes": self.render_attribute_classes,
             "dataset_class_maps": self.render_dataset_class_maps,
-            "metadata_enums": self.render_dataset_class_maps,
         }
 
         # render attribute classes
@@ -128,8 +127,7 @@ class CodeGenerator:
             for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
                 output_suffix = template_path.with_suffix("").suffix
                 output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
-                data_name = template_name if template_name != "metadata_enums" else "dataset_class_maps"
-                for data_path in DATA_DIR.glob(f"{data_name}/*.json"):
+                for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
                     output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     print(f"Generating file: {output_path}")
