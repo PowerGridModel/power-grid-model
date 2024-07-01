@@ -153,8 +153,8 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     np.allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
     # assert value result for scenario 0
-    result = {"node": result["node"][error.succeeded_scenarios, :]}
-    expected_result = {ComponentType.node: case_data["output_batch"]["node"][error.succeeded_scenarios, :]}
+    result = {ComponentType.node: result[ComponentType.node][error.succeeded_scenarios, :]}
+    expected_result = {ComponentType.node: case_data["output_batch"][ComponentType.node][error.succeeded_scenarios, :]}
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
     # general error before the batch
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
