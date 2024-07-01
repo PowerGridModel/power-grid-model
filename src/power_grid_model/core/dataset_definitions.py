@@ -29,7 +29,7 @@ class DatasetType(str, Enum):
     sc_output = "sc_output"
 
     @classmethod
-    def contains(cls, member):
+    def __contains__(cls, member):
         """
         Check if member is part of the Enum.
 

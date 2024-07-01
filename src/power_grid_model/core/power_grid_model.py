@@ -6,7 +6,7 @@
 Main power grid model class
 """
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from typing import Dict, List, Optional, Set, Type, Union
 
 import numpy as np
 
@@ -414,7 +414,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
-    ) -> Dict[Any, np.ndarray]:
+    ) -> Dict[ComponentType, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -507,7 +507,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-    ) -> Dict[Any, np.ndarray]:
+    ) -> Dict[ComponentType, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -594,7 +594,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
-    ) -> Dict[Any, np.ndarray]:
+    ) -> Dict[ComponentType, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
         Or calculate in batch with the given update dataset in batch

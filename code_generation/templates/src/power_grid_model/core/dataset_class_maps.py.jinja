@@ -30,7 +30,7 @@ class DatasetType(str, Enum):
     {%- endfor %}
 
     @classmethod
-    def contains(cls, member):
+    def __contains__(cls, member):
         """
         Check if member is part of the Enum.
 
