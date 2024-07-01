@@ -12,6 +12,12 @@ from typing import Any, Dict, Union
 
 import numpy as np
 
+from power_grid_model.core.dataset_definitions import (
+    ComponentType,
+    DatasetType,
+    _str_to_component_type,
+    _str_to_datatype,
+)
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
 
 
@@ -60,8 +66,8 @@ class ComponentMetaData:
         return getattr(self, item)
 
 
-DatasetMetaData = Dict[str, ComponentMetaData]
-PowerGridMetaData = Dict[str, DatasetMetaData]
+DatasetMetaData = Dict[ComponentType, ComponentMetaData]
+PowerGridMetaData = Dict[DatasetType, DatasetMetaData]
 
 
 def _generate_meta_data() -> PowerGridMetaData:
@@ -74,7 +80,7 @@ def _generate_meta_data() -> PowerGridMetaData:
     n_datasets = pgc.meta_n_datasets()
     for i in range(n_datasets):
         dataset = pgc.meta_get_dataset_by_idx(i)
-        py_meta_data[pgc.meta_dataset_name(dataset)] = _generate_meta_dataset(dataset)
+        py_meta_data[_str_to_datatype(pgc.meta_dataset_name(dataset))] = _generate_meta_dataset(dataset)
     return py_meta_data
 
 
@@ -91,7 +97,9 @@ def _generate_meta_dataset(dataset: DatasetPtr) -> DatasetMetaData:
     n_components = pgc.meta_n_components(dataset)
     for i in range(n_components):
         component = pgc.meta_get_component_by_idx(dataset, i)
-        py_meta_dataset[pgc.meta_component_name(component)] = _generate_meta_component(component)
+        py_meta_dataset[_str_to_component_type(pgc.meta_component_name(component))] = _generate_meta_component(
+            component
+        )
     return py_meta_dataset
 
 
@@ -156,7 +164,12 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
 power_grid_meta_data = _generate_meta_data()
 
 
-def initialize_array(data_type: str, component_type: str, shape: Union[tuple, int], empty: bool = False) -> np.ndarray:
+def initialize_array(
+    data_type: Union[str, DatasetType],
+    component_type: Union[str, ComponentType],
+    shape: Union[tuple, int],
+    empty: bool = False,
+) -> np.ndarray:
     """
     Initializes an array for use in Power Grid Model calculations
 
@@ -171,6 +184,8 @@ def initialize_array(data_type: str, component_type: str, shape: Union[tuple, in
     Returns:
         np structured array with all entries as null value
     """
+    data_type = _str_to_datatype(data_type)
+    component_type = _str_to_component_type(component_type)
     if not isinstance(shape, tuple):
         shape = (shape,)
     if empty:
