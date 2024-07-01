@@ -11,6 +11,7 @@ from typing import Any, Dict, Mapping
 
 # pylint: disable=invalid-name
 
+# fmt: off
 
 class _MetaEnum(EnumMeta):
     def __contains__(cls, member):
@@ -97,3 +98,6 @@ def _str_to_component_type(component: Any) -> ComponentType:
 def _map_to_component_types(data: Mapping[Any, Any]) -> Dict[ComponentType, Any]:
     """Helper function to map componenttype str keys to ComponentType."""
     return {_str_to_component_type(key): value for key, value in data.items()}
+
+
+# fmt: on
