@@ -56,7 +56,7 @@ jobs:
     
       - name: Check generated code
         run: |
-          if [ -n "$git status --porcelain" ]; then
+          if [ -n "$(git status --porcelain)" ]; then
             echo "The following files are outdated or were manually updated:"
             git status --porcelain
             exit 1
