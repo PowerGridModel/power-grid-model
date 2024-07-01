@@ -10,6 +10,7 @@
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
+#include "main_model_fwd.hpp"
 #include "topology.hpp"
 
 // common
@@ -96,23 +97,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    struct cached_update_t : std::true_type {};
-
-    struct permanent_update_t : std::false_type {};
-
-    struct Options {
-        static constexpr Idx sequential = -1;
-
-        CalculationMethod calculation_method{CalculationMethod::default_method};
-        OptimizerType optimizer_type{OptimizerType::no_optimization};
-        OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
-
-        double err_tol{1e-8};
-        Idx max_iter{20};
-        Idx threading{sequential};
-
-        ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
-    };
+    using Options = MainModelOptions;
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
@@ -172,7 +157,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
+    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
         constexpr auto comp_index = index_of_component<CompType>;
 
@@ -195,14 +180,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to update vectors of components
-    template <class CompType, class CacheType>
+    template <class CompType, cache_type_c CacheType>
     void update_component(std::vector<typename CompType::UpdateType> const& components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
             update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
-    template <class CompType, class CacheType>
+    template <class CompType, cache_type_c CacheType>
     void update_component(std::span<typename CompType::UpdateType const> components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
@@ -211,7 +196,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // update all components
-    template <class CacheType>
+    template <cache_type_c CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
@@ -223,7 +208,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // update all components
-    template <class CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
+    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
         update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
     }
 

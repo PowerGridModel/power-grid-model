@@ -15,11 +15,11 @@ constexpr auto get_default_options(CalculationMethod calculation_method, Idx thr
 }
 
 struct regular_update {
-    using update_type = MainModel::permanent_update_t;
+    using update_type = permanent_update_t;
 };
 
 struct cached_update {
-    using update_type = MainModel::cached_update_t;
+    using update_type = cached_update_t;
 };
 
 namespace test {
