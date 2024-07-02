@@ -42,6 +42,9 @@ class MainModelWrapper {
 
     // template forward declarations.
     // If you get linking errors, it is likely a missing template instantiations in main_model_wrapper.cpp
+    template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
+        add_component<CompType>(std::span<typename CompType::InputType const>{components});
+    }
     template <class CompType> void add_component(std::span<typename CompType::InputType const> components);
     template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0);
 
@@ -51,6 +54,8 @@ class MainModelWrapper {
     template <symmetry_tag sym>
     BatchParameter calculate_power_flow(Options const& options, MutableDataset const& result_data,
                                         ConstDataset const& update_data);
+    template <symmetry_tag sym>
+    MathOutput<std::vector<SolverOutput<sym>>> calculate_state_estimation(Options const& options);
     template <symmetry_tag sym>
     BatchParameter calculate_state_estimation(Options const& options, MutableDataset const& result_data,
                                               ConstDataset const& update_data);

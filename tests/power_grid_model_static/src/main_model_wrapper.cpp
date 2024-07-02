@@ -128,6 +128,14 @@ template BatchParameter MainModelWrapper::calculate_power_flow<symmetric_t>(Opti
 template BatchParameter MainModelWrapper::calculate_power_flow<asymmetric_t>(Options const& options,
                                                                              MutableDataset const& result_data,
                                                                              ConstDataset const& update_data);
+
+template <symmetry_tag sym>
+MathOutput<std::vector<SolverOutput<sym>>> MainModelWrapper::calculate_state_estimation(Options const& options) {
+    assert(impl_ != nullptr);
+    return impl_->calculate_state_estimation<sym>(options);
+}
+template SymMathOutput MainModelWrapper::calculate_state_estimation<symmetric_t>(Options const& options);
+template AsymMathOutput MainModelWrapper::calculate_state_estimation<asymmetric_t>(Options const& option);
 template <symmetry_tag sym>
 BatchParameter MainModelWrapper::calculate_state_estimation(Options const& options, MutableDataset const& result_data,
                                                             ConstDataset const& update_data) {
