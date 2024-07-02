@@ -108,10 +108,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency}, meta_data_{&input_data.meta_data()} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
-        auto const add_func = [this, pos, &input_data]<typename CT>() {
-            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
-        };
-        run_functor_with_all_types_return_void(add_func);
+        add_components(input_data, pos);
         set_construction_complete();
     }
 
@@ -156,6 +153,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
+    }
+
+    void add_components(ConstDataset const& input_data, Idx pos = 0) {
+        auto const add_func = [this, pos, &input_data]<typename CT>() {
+            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+        };
+        run_functor_with_all_types_return_void(add_func);
     }
 
     // template to update components

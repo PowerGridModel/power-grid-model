@@ -61,37 +61,10 @@ void MainModelWrapper::restore_components(ConstDataset const& update_data) {
     impl_->restore_components(impl_->get_sequence_idx_map(update_data));
 }
 
-template <class CompType>
-void MainModelWrapper::add_component(std::span<typename CompType::InputType const> components) {
+void MainModelWrapper::add_components(ConstDataset const& input_data, Idx pos) {
     assert(impl_ != nullptr);
-    impl_->add_component<CompType>(components);
+    impl_->add_components(input_data, pos);
 }
-
-template void MainModelWrapper::add_component<Node>(std::span<typename Node::InputType const> components);
-template void MainModelWrapper::add_component<Line>(std::span<typename Line::InputType const> components);
-template void MainModelWrapper::add_component<Link>(std::span<typename Link::InputType const> components);
-template void MainModelWrapper::add_component<Transformer>(std::span<typename Transformer::InputType const> components);
-template void MainModelWrapper::add_component<ThreeWindingTransformer>(
-    std::span<typename ThreeWindingTransformer::InputType const> components);
-template void MainModelWrapper::add_component<Shunt>(std::span<typename Shunt::InputType const> components);
-template void MainModelWrapper::add_component<Source>(std::span<typename Source::InputType const> components);
-template void
-MainModelWrapper::add_component<SymGenerator>(std::span<typename SymGenerator::InputType const> components);
-template void
-MainModelWrapper::add_component<AsymGenerator>(std::span<typename AsymGenerator::InputType const> components);
-template void MainModelWrapper::add_component<SymLoad>(std::span<typename SymLoad::InputType const> components);
-template void MainModelWrapper::add_component<AsymLoad>(std::span<typename AsymLoad::InputType const> components);
-template void
-MainModelWrapper::add_component<SymPowerSensor>(std::span<typename SymPowerSensor::InputType const> components);
-template void
-MainModelWrapper::add_component<AsymPowerSensor>(std::span<typename AsymPowerSensor::InputType const> components);
-template void
-MainModelWrapper::add_component<SymVoltageSensor>(std::span<typename SymVoltageSensor::InputType const> components);
-template void
-MainModelWrapper::add_component<AsymVoltageSensor>(std::span<typename AsymVoltageSensor::InputType const> components);
-template void MainModelWrapper::add_component<Fault>(std::span<typename Fault::InputType const> components);
-template void MainModelWrapper::add_component<TransformerTapRegulator>(
-    std::span<typename TransformerTapRegulator::InputType const> components);
 
 template <cache_type_c CacheType> void MainModelWrapper::update_component(ConstDataset const& update_data, Idx pos) {
     assert(impl_ != nullptr);

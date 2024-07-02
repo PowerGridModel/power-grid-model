@@ -45,7 +45,12 @@ class MainModelWrapper {
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
         add_component<CompType>(std::span<typename CompType::InputType const>{components});
     }
-    template <class CompType> void add_component(std::span<typename CompType::InputType const> components);
+    template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
+        ConstDataset dataset{false, 1, "input", meta_data::meta_data_gen::meta_data};
+        dataset.add_buffer(CompType::name, components.size(), components.size(), nullptr, components.data());
+        add_components(dataset);
+    }
+
     template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0);
 
     template <symmetry_tag sym> MathOutput<std::vector<SolverOutput<sym>>> calculate_power_flow(Options const& options);
@@ -70,6 +75,8 @@ class MainModelWrapper {
 
   private:
     std::unique_ptr<Impl> impl_;
+
+    void add_components(ConstDataset const& input_data, Idx pos = 0);
 };
 
 } // namespace power_grid_model::pgm_static
