@@ -10,6 +10,7 @@
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
+#include "main_model_fwd.hpp"
 #include "topology.hpp"
 
 // common
@@ -87,6 +88,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr Idx ignore_output{-1};
 
+  protected:
     // run functors with all component types
     template <class Functor> static constexpr void run_functor_with_all_types_return_void(Functor functor) {
         (functor.template operator()<ComponentType>(), ...);
@@ -94,34 +96,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
         return std::array{functor.template operator()<ComponentType>()...};
     }
+    template <class Functor> static constexpr void run_functor_with_all_retreivable_types_return_void(Functor functor) {
+        (functor.template operator()<ExtraRetrievableType>(), ...);
+        run_functor_with_all_types_return_void(functor);
+    }
 
   public:
-    struct cached_update_t : std::true_type {};
-
-    struct permanent_update_t : std::false_type {};
-
-    struct Options {
-        static constexpr Idx sequential = -1;
-
-        CalculationMethod calculation_method{CalculationMethod::default_method};
-        OptimizerType optimizer_type{OptimizerType::no_optimization};
-        OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
-
-        double err_tol{1e-8};
-        Idx max_iter{20};
-        Idx threading{sequential};
-
-        ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
-    };
+    using Options = MainModelOptions;
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
         : system_frequency_{system_frequency}, meta_data_{&input_data.meta_data()} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
-        auto const add_func = [this, pos, &input_data]<typename CT>() {
-            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
-        };
-        run_functor_with_all_types_return_void(add_func);
+        add_components(input_data, pos);
         set_construction_complete();
     }
 
@@ -168,11 +155,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
     }
 
+    void add_components(ConstDataset const& input_data, Idx pos = 0) {
+        auto const add_func = [this, pos, &input_data]<typename CT>() {
+            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+        };
+        run_functor_with_all_types_return_void(add_func);
+    }
+
     // template to update components
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, class CacheType, std::forward_iterator ForwardIterator>
+    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
         constexpr auto comp_index = index_of_component<CompType>;
 
@@ -195,14 +189,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to update vectors of components
-    template <class CompType, class CacheType>
+    template <class CompType, cache_type_c CacheType>
     void update_component(std::vector<typename CompType::UpdateType> const& components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
             update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
-    template <class CompType, class CacheType>
+    template <class CompType, cache_type_c CacheType>
     void update_component(std::span<typename CompType::UpdateType const> components,
                           std::vector<Idx2D> const& sequence_idx) {
         if (!components.empty()) {
@@ -211,7 +205,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // update all components
-    template <class CacheType>
+    template <cache_type_c CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
@@ -223,7 +217,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // update all components
-    template <class CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
+    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
         update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
     }
 
@@ -246,6 +240,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
     }
+
+    void restore_components(ConstDataset const& update_data) { restore_components(get_sequence_idx_map(update_data)); }
 
     // set complete construction
     // initialize internal arrays
