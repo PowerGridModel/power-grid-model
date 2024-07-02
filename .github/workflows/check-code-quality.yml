@@ -78,11 +78,13 @@ jobs:
       
       - name: Check generated code
         run: |
+          status_before=$(git status --porcelain)
           pip install -r code_generation/requirements.txt
           python code_generation/code_gen.py
-          if [ -n "$(git status --porcelain)" ]; then
+          status_after=$(git status --porcelain)
+          if [ "$status_before" != "$status_after" ]; then
             echo "The following files are outdated or were manually updated:"
-            git status --porcelain
+            diff <(echo "$status_before") <(echo "$status_after") | grep '^[<>]'
             exit 1
           else
             echo "All the generated files are up to date."
