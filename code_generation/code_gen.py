@@ -104,7 +104,7 @@ class CodeGenerator:
         all_map = {}
         for dataset in dataset_meta_data:
             if dataset.is_template:
-                prefixes = ["sym_", "asym_"]
+                prefixes = ["sym_"]
             else:
                 prefixes = [""]
             for prefix in prefixes:
