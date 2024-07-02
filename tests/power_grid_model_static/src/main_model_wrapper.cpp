@@ -150,8 +150,7 @@ ResIt MainModelWrapper::output_result(MathOutputType const& math_output, ResIt r
 }
 
 void MainModelWrapper::instantiate_templates() {
-    assert(false); // only for template instantiation purposes. This should never be called.
-
+    // only for template instantiation purposes. This should never be called.
     MainModelWrapper wrapper{50.0, meta_data::MetaData{}};
 
     auto const add_component_func = [&wrapper]<typename CT>() {
