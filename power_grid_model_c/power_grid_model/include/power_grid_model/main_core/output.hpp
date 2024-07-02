@@ -331,7 +331,7 @@ inline auto output_result(Component const& fault, MainModelState<ComponentContai
     return fault.get_sc_output(solver_output[math_id.group].fault[math_id.pos], u_rated);
 }
 
-// output transformer tap regulator}
+// output transformer tap regulator
 template <std::derived_from<TransformerTapRegulator> Component, class ComponentContainer,
           steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
