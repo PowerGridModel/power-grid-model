@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 
-from power_grid_model import power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
@@ -85,7 +85,7 @@ def validate_input_data(
     """
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(input_data)
-    assert_valid_data_structure(input_data_copy, "input")
+    assert_valid_data_structure(input_data_copy, DatasetType.input)
 
     errors: List[ValidationError] = []
     errors += validate_required_values(input_data_copy, calculation_type, symmetric)
@@ -127,7 +127,7 @@ def validate_batch_data(
     Raises:
         Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
-    assert_valid_data_structure(input_data, "input")
+    assert_valid_data_structure(input_data, DatasetType.input)
 
     input_errors: List[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
@@ -136,7 +136,7 @@ def validate_batch_data(
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
-        assert_valid_data_structure(batch_update_data, "update")
+        assert_valid_data_structure(batch_update_data, DatasetType.update)
         id_errors: List[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
 
         batch_errors = input_errors + id_errors
@@ -151,7 +151,7 @@ def validate_batch_data(
     return errors if errors else None
 
 
-def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
+def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
     """
     Checks if all component names are valid and if the data inside the component matches the required Numpy
     structured array as defined in the Power Grid Model meta data.
@@ -164,7 +164,7 @@ def assert_valid_data_structure(data: Dataset, data_type: str) -> None:
         Error: KeyError, TypeError
 
     """
-    if data_type not in {"input", "update"}:
+    if data_type not in {DatasetType.input, DatasetType.update}:
         raise KeyError(f"Unexpected data type '{data_type}' (should be 'input' or 'update')")
 
     component_dtype = {component: meta.dtype for component, meta in power_grid_meta_data[data_type].items()}
@@ -204,7 +204,9 @@ def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComp
     return all_cross_unique(data, [(component, "id") for component in data])
 
 
-def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDataset) -> List[IdNotInDatasetError]:
+def validate_ids_exist(
+    update_data: Dict[ComponentType, np.ndarray], input_data: SingleDataset
+) -> List[IdNotInDatasetError]:
     """
     Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
     can only update existing components.
@@ -225,7 +227,9 @@ def validate_ids_exist(update_data: Dict[str, np.ndarray], input_data: SingleDat
 
 
 def _process_power_sigma_and_p_q_sigma(
-    data: SingleDataset, sensor: str, required_list: Dict[str, List[Union[str, List[str]]]]
+    data: SingleDataset,
+    sensor: ComponentType,
+    required_list: Dict[Union[ComponentType, str], List[Union[str, List[str]]]],
 ) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
@@ -276,7 +280,7 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required: Dict[str, List[Union[str, List[str]]]] = {"base": ["id"]}
+    required: Dict[Union[ComponentType, str], List[Union[str, List[str]]]] = {"base": ["id"]}
 
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
@@ -373,7 +377,7 @@ def validate_required_values(
     if calculation_type is None or calculation_type == CalculationType.short_circuit:
         required["fault"] += ["status", "fault_type"]
         if "fault" in data:
-            for elem in data["fault"]["fault_type"]:
+            for elem in data[ComponentType.fault]["fault_type"]:
                 if elem not in (FaultType.three_phase, FaultType.nan):
                     asym_sc = True
                     break
@@ -382,8 +386,8 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    _process_power_sigma_and_p_q_sigma(data, "sym_power_sensor", required)
-    _process_power_sigma_and_p_q_sigma(data, "asym_power_sensor", required)
+    _process_power_sigma_and_p_q_sigma(data, ComponentType.sym_power_sensor, required)
+    _process_power_sigma_and_p_q_sigma(data, ComponentType.asym_power_sensor, required)
 
     return _validate_required_in_data(data, required)
 
@@ -444,10 +448,10 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
         all_finite(
             data,
             {
-                "sym_power_sensor": ["power_sigma"],
-                "asym_power_sensor": ["power_sigma"],
-                "sym_voltage_sensor": ["u_sigma"],
-                "asym_voltage_sensor": ["u_sigma"],
+                ComponentType.sym_power_sensor: ["power_sigma"],
+                ComponentType.asym_power_sensor: ["power_sigma"],
+                ComponentType.sym_voltage_sensor: ["u_sigma"],
+                ComponentType.asym_voltage_sensor: ["u_sigma"],
             },
         )
     )
@@ -455,14 +459,14 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
     component_validators = {
         "node": validate_node,
         "line": validate_line,
-        "link": lambda d: validate_branch(d, "link"),
+        "link": lambda d: validate_branch(d, ComponentType.link),
         "transformer": validate_transformer,
         "three_winding_transformer": validate_three_winding_transformer,
         "source": validate_source,
-        "sym_load": lambda d: validate_generic_load_gen(d, "sym_load"),
-        "sym_gen": lambda d: validate_generic_load_gen(d, "sym_gen"),
-        "asym_load": lambda d: validate_generic_load_gen(d, "asym_load"),
-        "asym_gen": lambda d: validate_generic_load_gen(d, "asym_gen"),
+        "sym_load": lambda d: validate_generic_load_gen(d, ComponentType.sym_load),
+        "sym_gen": lambda d: validate_generic_load_gen(d, ComponentType.sym_gen),
+        "asym_load": lambda d: validate_generic_load_gen(d, ComponentType.asym_load),
+        "asym_gen": lambda d: validate_generic_load_gen(d, ComponentType.asym_gen),
         "shunt": validate_shunt,
     }
 
@@ -472,13 +476,13 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
 
     if calculation_type in (None, CalculationType.state_estimation):
         if "sym_voltage_sensor" in data:
-            errors += validate_generic_voltage_sensor(data, "sym_voltage_sensor")
+            errors += validate_generic_voltage_sensor(data, ComponentType.sym_voltage_sensor)
         if "asym_voltage_sensor" in data:
-            errors += validate_generic_voltage_sensor(data, "asym_voltage_sensor")
+            errors += validate_generic_voltage_sensor(data, ComponentType.asym_voltage_sensor)
         if "sym_power_sensor" in data:
-            errors += validate_generic_power_sensor(data, "sym_power_sensor")
+            errors += validate_generic_power_sensor(data, ComponentType.sym_power_sensor)
         if "asym_power_sensor" in data:
-            errors += validate_generic_power_sensor(data, "asym_power_sensor")
+            errors += validate_generic_power_sensor(data, ComponentType.asym_power_sensor)
 
     if calculation_type in (None, CalculationType.short_circuit) and "fault" in data:
         errors += validate_fault(data)
@@ -492,21 +496,21 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
 # pylint: disable=missing-function-docstring
 
 
-def validate_base(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_base(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors: List[ValidationError] = list(all_unique(data, component, "id"))
     return errors
 
 
 def validate_node(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_base(data, "node")
-    errors += all_greater_than_zero(data, "node", "u_rated")
+    errors = validate_base(data, ComponentType.node)
+    errors += all_greater_than_zero(data, ComponentType.node, "u_rated")
     return errors
 
 
-def validate_branch(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_branch(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
-    errors += all_valid_ids(data, component, "from_node", "node")
-    errors += all_valid_ids(data, component, "to_node", "node")
+    errors += all_valid_ids(data, component, "from_node", ComponentType.node)
+    errors += all_valid_ids(data, component, "to_node", ComponentType.node)
     errors += all_not_two_values_equal(data, component, "to_node", "from_node")
     errors += all_boolean(data, component, "from_status")
     errors += all_boolean(data, component, "to_status")
@@ -514,46 +518,56 @@ def validate_branch(data: SingleDataset, component: str) -> List[ValidationError
 
 
 def validate_line(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_branch(data, "line")
-    errors += all_not_two_values_zero(data, "line", "r1", "x1")
-    errors += all_not_two_values_zero(data, "line", "r0", "x0")
-    errors += all_greater_than_zero(data, "line", "i_n")
+    errors = validate_branch(data, ComponentType.line)
+    errors += all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
+    errors += all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
+    errors += all_greater_than_zero(data, ComponentType.line, "i_n")
     return errors
 
 
 def validate_transformer(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_branch(data, "transformer")
-    errors += all_greater_than_zero(data, "transformer", "u1")
-    errors += all_greater_than_zero(data, "transformer", "u2")
-    errors += all_greater_than_zero(data, "transformer", "sn")
-    errors += all_greater_or_equal(data, "transformer", "uk", "pk/sn")
-    errors += all_between(data, "transformer", "uk", 0, 1)
-    errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk")
-    errors += all_greater_or_equal(data, "transformer", "i0", "p0/sn")
-    errors += all_less_than(data, "transformer", "i0", 1)
-    errors += all_greater_than_or_equal_to_zero(data, "transformer", "p0")
-    errors += all_valid_enum_values(data, "transformer", "winding_from", WindingType)
-    errors += all_valid_enum_values(data, "transformer", "winding_to", WindingType)
-    errors += all_between_or_at(data, "transformer", "clock", 0, 12)
-    errors += all_valid_clocks(data, "transformer", "clock", "winding_from", "winding_to")
-    errors += all_valid_enum_values(data, "transformer", "tap_side", BranchSide)
-    errors += all_between_or_at(data, "transformer", "tap_pos", "tap_min", "tap_max", data["transformer"]["tap_nom"], 0)
-    errors += all_between_or_at(data, "transformer", "tap_nom", "tap_min", "tap_max", 0)
-    errors += all_greater_than_or_equal_to_zero(data, "transformer", "tap_size")
-    errors += all_greater_or_equal(data, "transformer", "uk_min", "pk_min/sn", data["transformer"]["uk"])
-    errors += all_between(data, "transformer", "uk_min", 0, 1, data["transformer"]["uk"])
-    errors += all_greater_or_equal(data, "transformer", "uk_max", "pk_max/sn", data["transformer"]["uk"])
-    errors += all_between(data, "transformer", "uk_max", 0, 1, data["transformer"]["uk"])
-    errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_min", data["transformer"]["pk"])
-    errors += all_greater_than_or_equal_to_zero(data, "transformer", "pk_max", data["transformer"]["pk"])
+    errors = validate_branch(data, ComponentType.transformer)
+    errors += all_greater_than_zero(data, ComponentType.transformer, "u1")
+    errors += all_greater_than_zero(data, ComponentType.transformer, "u2")
+    errors += all_greater_than_zero(data, ComponentType.transformer, "sn")
+    errors += all_greater_or_equal(data, ComponentType.transformer, "uk", "pk/sn")
+    errors += all_between(data, ComponentType.transformer, "uk", 0, 1)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.transformer, "pk")
+    errors += all_greater_or_equal(data, ComponentType.transformer, "i0", "p0/sn")
+    errors += all_less_than(data, ComponentType.transformer, "i0", 1)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.transformer, "p0")
+    errors += all_valid_enum_values(data, ComponentType.transformer, "winding_from", WindingType)
+    errors += all_valid_enum_values(data, ComponentType.transformer, "winding_to", WindingType)
+    errors += all_between_or_at(data, ComponentType.transformer, "clock", 0, 12)
+    errors += all_valid_clocks(data, ComponentType.transformer, "clock", "winding_from", "winding_to")
+    errors += all_valid_enum_values(data, ComponentType.transformer, "tap_side", BranchSide)
+    errors += all_between_or_at(
+        data, ComponentType.transformer, "tap_pos", "tap_min", "tap_max", data[ComponentType.transformer]["tap_nom"], 0
+    )
+    errors += all_between_or_at(data, ComponentType.transformer, "tap_nom", "tap_min", "tap_max", 0)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.transformer, "tap_size")
+    errors += all_greater_or_equal(
+        data, ComponentType.transformer, "uk_min", "pk_min/sn", data[ComponentType.transformer]["uk"]
+    )
+    errors += all_between(data, ComponentType.transformer, "uk_min", 0, 1, data[ComponentType.transformer]["uk"])
+    errors += all_greater_or_equal(
+        data, ComponentType.transformer, "uk_max", "pk_max/sn", data[ComponentType.transformer]["uk"]
+    )
+    errors += all_between(data, ComponentType.transformer, "uk_max", 0, 1, data[ComponentType.transformer]["uk"])
+    errors += all_greater_than_or_equal_to_zero(
+        data, ComponentType.transformer, "pk_min", data[ComponentType.transformer]["pk"]
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, ComponentType.transformer, "pk_max", data[ComponentType.transformer]["pk"]
+    )
     return errors
 
 
-def validate_branch3(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_branch3(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
-    errors += all_valid_ids(data, component, "node_1", "node")
-    errors += all_valid_ids(data, component, "node_2", "node")
-    errors += all_valid_ids(data, component, "node_3", "node")
+    errors += all_valid_ids(data, component, "node_1", ComponentType.node)
+    errors += all_valid_ids(data, component, "node_2", ComponentType.node)
+    errors += all_valid_ids(data, component, "node_3", ComponentType.node)
     errors += all_not_two_values_equal(data, component, "node_1", "node_2")
     errors += all_not_two_values_equal(data, component, "node_1", "node_3")
     errors += all_not_two_values_equal(data, component, "node_2", "node_3")
@@ -565,158 +579,254 @@ def validate_branch3(data: SingleDataset, component: str) -> List[ValidationErro
 
 # pylint: disable=R0915
 def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_branch3(data, "three_winding_transformer")
-    errors += all_greater_than_zero(data, "three_winding_transformer", "u1")
-    errors += all_greater_than_zero(data, "three_winding_transformer", "u2")
-    errors += all_greater_than_zero(data, "three_winding_transformer", "u3")
-    errors += all_greater_than_zero(data, "three_winding_transformer", "sn_1")
-    errors += all_greater_than_zero(data, "three_winding_transformer", "sn_2")
-    errors += all_greater_than_zero(data, "three_winding_transformer", "sn_3")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12", "pk_12/sn_1")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_12", "pk_12/sn_2")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13", "pk_13/sn_1")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_13", "pk_13/sn_3")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23", "pk_23/sn_2")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "uk_23", "pk_23/sn_3")
-    errors += all_between(data, "three_winding_transformer", "uk_12", 0, 1)
-    errors += all_between(data, "three_winding_transformer", "uk_13", 0, 1)
-    errors += all_between(data, "three_winding_transformer", "uk_23", 0, 1)
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_12")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_13")
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "pk_23")
-    errors += all_greater_or_equal(data, "three_winding_transformer", "i0", "p0/sn_1")
-    errors += all_less_than(data, "three_winding_transformer", "i0", 1)
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "p0")
-    errors += all_valid_enum_values(data, "three_winding_transformer", "winding_1", WindingType)
-    errors += all_valid_enum_values(data, "three_winding_transformer", "winding_2", WindingType)
-    errors += all_valid_enum_values(data, "three_winding_transformer", "winding_3", WindingType)
-    errors += all_between_or_at(data, "three_winding_transformer", "clock_12", 0, 12)
-    errors += all_between_or_at(data, "three_winding_transformer", "clock_13", 0, 12)
-    errors += all_valid_clocks(data, "three_winding_transformer", "clock_12", "winding_1", "winding_2")
-    errors += all_valid_clocks(data, "three_winding_transformer", "clock_13", "winding_1", "winding_3")
-    errors += all_valid_enum_values(data, "three_winding_transformer", "tap_side", Branch3Side)
+    errors = validate_branch3(data, ComponentType.three_winding_transformer)
+    errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "u1")
+    errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "u2")
+    errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "u3")
+    errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "sn_1")
+    errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "sn_2")
+    errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "sn_3")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "uk_12", "pk_12/sn_1")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "uk_12", "pk_12/sn_2")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "uk_13", "pk_13/sn_1")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "uk_13", "pk_13/sn_3")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "uk_23", "pk_23/sn_2")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "uk_23", "pk_23/sn_3")
+    errors += all_between(data, ComponentType.three_winding_transformer, "uk_12", 0, 1)
+    errors += all_between(data, ComponentType.three_winding_transformer, "uk_13", 0, 1)
+    errors += all_between(data, ComponentType.three_winding_transformer, "uk_23", 0, 1)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, "pk_12")
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, "pk_13")
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, "pk_23")
+    errors += all_greater_or_equal(data, ComponentType.three_winding_transformer, "i0", "p0/sn_1")
+    errors += all_less_than(data, ComponentType.three_winding_transformer, "i0", 1)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, "p0")
+    errors += all_valid_enum_values(data, ComponentType.three_winding_transformer, "winding_1", WindingType)
+    errors += all_valid_enum_values(data, ComponentType.three_winding_transformer, "winding_2", WindingType)
+    errors += all_valid_enum_values(data, ComponentType.three_winding_transformer, "winding_3", WindingType)
+    errors += all_between_or_at(data, ComponentType.three_winding_transformer, "clock_12", 0, 12)
+    errors += all_between_or_at(data, ComponentType.three_winding_transformer, "clock_13", 0, 12)
+    errors += all_valid_clocks(data, ComponentType.three_winding_transformer, "clock_12", "winding_1", "winding_2")
+    errors += all_valid_clocks(data, ComponentType.three_winding_transformer, "clock_13", "winding_1", "winding_3")
+    errors += all_valid_enum_values(data, ComponentType.three_winding_transformer, "tap_side", Branch3Side)
     errors += all_between_or_at(
         data,
-        "three_winding_transformer",
+        ComponentType.three_winding_transformer,
         "tap_pos",
         "tap_min",
         "tap_max",
-        data["three_winding_transformer"]["tap_nom"],
+        data[ComponentType.three_winding_transformer]["tap_nom"],
         0,
     )
-    errors += all_between_or_at(data, "three_winding_transformer", "tap_nom", "tap_min", "tap_max", 0)
-    errors += all_greater_than_or_equal_to_zero(data, "three_winding_transformer", "tap_size")
+    errors += all_between_or_at(data, ComponentType.three_winding_transformer, "tap_nom", "tap_min", "tap_max", 0)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, "tap_size")
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_1", data["three_winding_transformer"]["uk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_12_min",
+        "pk_12_min/sn_1",
+        data[ComponentType.three_winding_transformer]["uk_12"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_12_min", "pk_12_min/sn_2", data["three_winding_transformer"]["uk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_12_min",
+        "pk_12_min/sn_2",
+        data[ComponentType.three_winding_transformer]["uk_12"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_1", data["three_winding_transformer"]["uk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_13_min",
+        "pk_13_min/sn_1",
+        data[ComponentType.three_winding_transformer]["uk_13"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_13_min", "pk_13_min/sn_3", data["three_winding_transformer"]["uk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_13_min",
+        "pk_13_min/sn_3",
+        data[ComponentType.three_winding_transformer]["uk_13"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_2", data["three_winding_transformer"]["uk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_23_min",
+        "pk_23_min/sn_2",
+        data[ComponentType.three_winding_transformer]["uk_23"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_23_min", "pk_23_min/sn_3", data["three_winding_transformer"]["uk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_23_min",
+        "pk_23_min/sn_3",
+        data[ComponentType.three_winding_transformer]["uk_23"],
     )
     errors += all_between(
-        data, "three_winding_transformer", "uk_12_min", 0, 1, data["three_winding_transformer"]["uk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_12_min",
+        0,
+        1,
+        data[ComponentType.three_winding_transformer]["uk_12"],
     )
     errors += all_between(
-        data, "three_winding_transformer", "uk_13_min", 0, 1, data["three_winding_transformer"]["uk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_13_min",
+        0,
+        1,
+        data[ComponentType.three_winding_transformer]["uk_13"],
     )
     errors += all_between(
-        data, "three_winding_transformer", "uk_23_min", 0, 1, data["three_winding_transformer"]["uk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_23_min",
+        0,
+        1,
+        data[ComponentType.three_winding_transformer]["uk_23"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_1", data["three_winding_transformer"]["uk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_12_max",
+        "pk_12_max/sn_1",
+        data[ComponentType.three_winding_transformer]["uk_12"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_12_max", "pk_12_max/sn_2", data["three_winding_transformer"]["uk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_12_max",
+        "pk_12_max/sn_2",
+        data[ComponentType.three_winding_transformer]["uk_12"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_1", data["three_winding_transformer"]["uk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_13_max",
+        "pk_13_max/sn_1",
+        data[ComponentType.three_winding_transformer]["uk_13"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_13_max", "pk_13_max/sn_3", data["three_winding_transformer"]["uk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_13_max",
+        "pk_13_max/sn_3",
+        data[ComponentType.three_winding_transformer]["uk_13"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_2", data["three_winding_transformer"]["uk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_23_max",
+        "pk_23_max/sn_2",
+        data[ComponentType.three_winding_transformer]["uk_23"],
     )
     errors += all_greater_or_equal(
-        data, "three_winding_transformer", "uk_23_max", "pk_23_max/sn_3", data["three_winding_transformer"]["uk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_23_max",
+        "pk_23_max/sn_3",
+        data[ComponentType.three_winding_transformer]["uk_23"],
     )
     errors += all_between(
-        data, "three_winding_transformer", "uk_12_max", 0, 1, data["three_winding_transformer"]["uk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_12_max",
+        0,
+        1,
+        data[ComponentType.three_winding_transformer]["uk_12"],
     )
     errors += all_between(
-        data, "three_winding_transformer", "uk_13_max", 0, 1, data["three_winding_transformer"]["uk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_13_max",
+        0,
+        1,
+        data[ComponentType.three_winding_transformer]["uk_13"],
     )
     errors += all_between(
-        data, "three_winding_transformer", "uk_23_max", 0, 1, data["three_winding_transformer"]["uk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "uk_23_max",
+        0,
+        1,
+        data[ComponentType.three_winding_transformer]["uk_23"],
     )
     errors += all_greater_than_or_equal_to_zero(
-        data, "three_winding_transformer", "pk_12_min", data["three_winding_transformer"]["pk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "pk_12_min",
+        data[ComponentType.three_winding_transformer]["pk_12"],
     )
     errors += all_greater_than_or_equal_to_zero(
-        data, "three_winding_transformer", "pk_13_min", data["three_winding_transformer"]["pk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "pk_13_min",
+        data[ComponentType.three_winding_transformer]["pk_13"],
     )
     errors += all_greater_than_or_equal_to_zero(
-        data, "three_winding_transformer", "pk_23_min", data["three_winding_transformer"]["pk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "pk_23_min",
+        data[ComponentType.three_winding_transformer]["pk_23"],
     )
     errors += all_greater_than_or_equal_to_zero(
-        data, "three_winding_transformer", "pk_12_max", data["three_winding_transformer"]["pk_12"]
+        data,
+        ComponentType.three_winding_transformer,
+        "pk_12_max",
+        data[ComponentType.three_winding_transformer]["pk_12"],
     )
     errors += all_greater_than_or_equal_to_zero(
-        data, "three_winding_transformer", "pk_13_max", data["three_winding_transformer"]["pk_13"]
+        data,
+        ComponentType.three_winding_transformer,
+        "pk_13_max",
+        data[ComponentType.three_winding_transformer]["pk_13"],
     )
     errors += all_greater_than_or_equal_to_zero(
-        data, "three_winding_transformer", "pk_23_max", data["three_winding_transformer"]["pk_23"]
+        data,
+        ComponentType.three_winding_transformer,
+        "pk_23_max",
+        data[ComponentType.three_winding_transformer]["pk_23"],
     )
     return errors
 
 
-def validate_appliance(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_appliance(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_boolean(data, component, "status")
-    errors += all_valid_ids(data, component, "node", "node")
+    errors += all_valid_ids(data, component, "node", ComponentType.node)
     return errors
 
 
 def validate_source(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_appliance(data, "source")
-    errors += all_greater_than_zero(data, "source", "u_ref")
-    errors += all_greater_than_zero(data, "source", "sk")
-    errors += all_greater_than_or_equal_to_zero(data, "source", "rx_ratio")
-    errors += all_greater_than_zero(data, "source", "z01_ratio")
+    errors = validate_appliance(data, ComponentType.source)
+    errors += all_greater_than_zero(data, ComponentType.source, "u_ref")
+    errors += all_greater_than_zero(data, ComponentType.source, "sk")
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.source, "rx_ratio")
+    errors += all_greater_than_zero(data, ComponentType.source, "z01_ratio")
     return errors
 
 
-def validate_generic_load_gen(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_generic_load_gen(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_appliance(data, component)
     errors += all_valid_enum_values(data, component, "type", LoadGenType)
     return errors
 
 
 def validate_shunt(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_appliance(data, "shunt")
+    errors = validate_appliance(data, ComponentType.shunt)
     return errors
 
 
-def validate_generic_voltage_sensor(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "u_sigma")
     errors += all_greater_than_zero(data, component, "u_measured")
-    errors += all_valid_ids(data, component, "measured_object", "node")
+    errors += all_valid_ids(data, component, "measured_object", ComponentType.node)
     return errors
 
 
-def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_generic_power_sensor(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "power_sigma")
     errors += all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)
@@ -725,86 +835,86 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
         component,
         field="measured_object",
         ref_components=[
-            "node",
-            "line",
-            "transformer",
-            "three_winding_transformer",
-            "source",
-            "shunt",
-            "sym_load",
-            "asym_load",
-            "sym_gen",
-            "asym_gen",
+            ComponentType.node,
+            ComponentType.line,
+            ComponentType.transformer,
+            ComponentType.three_winding_transformer,
+            ComponentType.source,
+            ComponentType.shunt,
+            ComponentType.sym_load,
+            ComponentType.asym_load,
+            ComponentType.sym_gen,
+            ComponentType.asym_gen,
         ],
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=["line", "transformer"],
+        ref_components=[ComponentType.line, ComponentType.transformer],
         measured_terminal_type=MeasuredTerminalType.branch_from,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=["line", "transformer"],
+        ref_components=[ComponentType.line, ComponentType.transformer],
         measured_terminal_type=MeasuredTerminalType.branch_to,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components="source",
+        ref_components=ComponentType.source,
         measured_terminal_type=MeasuredTerminalType.source,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components="shunt",
+        ref_components=ComponentType.shunt,
         measured_terminal_type=MeasuredTerminalType.shunt,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=["sym_load", "asym_load"],
+        ref_components=[ComponentType.sym_load, ComponentType.asym_load],
         measured_terminal_type=MeasuredTerminalType.load,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=["sym_gen", "asym_gen"],
+        ref_components=[ComponentType.sym_gen, ComponentType.asym_gen],
         measured_terminal_type=MeasuredTerminalType.generator,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components="three_winding_transformer",
+        ref_components=ComponentType.three_winding_transformer,
         measured_terminal_type=MeasuredTerminalType.branch3_1,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components="three_winding_transformer",
+        ref_components=ComponentType.three_winding_transformer,
         measured_terminal_type=MeasuredTerminalType.branch3_2,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components="three_winding_transformer",
+        ref_components=ComponentType.three_winding_transformer,
         measured_terminal_type=MeasuredTerminalType.branch3_3,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components="node",
+        ref_components=ComponentType.node,
         measured_terminal_type=MeasuredTerminalType.node,
     )
     if component in ("sym_power_sensor", "asym_power_sensor"):
@@ -814,53 +924,64 @@ def validate_generic_power_sensor(data: SingleDataset, component: str) -> List[V
 
 
 def validate_fault(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_base(data, "fault")
-    errors += all_boolean(data, "fault", "status")
-    errors += all_valid_enum_values(data, "fault", "fault_type", FaultType)
-    errors += all_valid_enum_values(data, "fault", "fault_phase", FaultPhase)
-    errors += all_valid_fault_phases(data, "fault", "fault_type", "fault_phase")
-    errors += all_valid_ids(data, "fault", field="fault_object", ref_components="node")
-    errors += all_greater_than_or_equal_to_zero(data, "fault", "r_f")
-    errors += all_enabled_identical(data, "fault", "fault_type", "status")
-    errors += all_enabled_identical(data, "fault", "fault_phase", "status")
+    errors = validate_base(data, ComponentType.fault)
+    errors += all_boolean(data, ComponentType.fault, "status")
+    errors += all_valid_enum_values(data, ComponentType.fault, "fault_type", FaultType)
+    errors += all_valid_enum_values(data, ComponentType.fault, "fault_phase", FaultPhase)
+    errors += all_valid_fault_phases(data, ComponentType.fault, "fault_type", "fault_phase")
+    errors += all_valid_ids(data, ComponentType.fault, field="fault_object", ref_components=ComponentType.node)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.fault, "r_f")
+    errors += all_enabled_identical(data, ComponentType.fault, "fault_type", "status")
+    errors += all_enabled_identical(data, ComponentType.fault, "fault_phase", "status")
     return errors
 
 
-def validate_regulator(data: SingleDataset, component: str) -> List[ValidationError]:
+def validate_regulator(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(
         data,
         component,
         field="regulated_object",
-        ref_components=["transformer", "three_winding_transformer"],
+        ref_components=[ComponentType.transformer, ComponentType.three_winding_transformer],
     )
     return errors
 
 
 def validate_transformer_tap_regulator(data: SingleDataset) -> List[ValidationError]:
-    errors = validate_regulator(data, "transformer_tap_regulator")
-    errors += all_boolean(data, "transformer_tap_regulator", "status")
-    errors += all_valid_enum_values(data, "transformer_tap_regulator", "control_side", [BranchSide, Branch3Side])
-    errors += all_valid_associated_enum_values(
-        data, "transformer_tap_regulator", "control_side", "regulated_object", ["transformer"], [BranchSide]
+    errors = validate_regulator(data, ComponentType.transformer_tap_regulator)
+    errors += all_boolean(data, ComponentType.transformer_tap_regulator, "status")
+    errors += all_valid_enum_values(
+        data, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
     )
     errors += all_valid_associated_enum_values(
         data,
-        "transformer_tap_regulator",
+        ComponentType.transformer_tap_regulator,
         "control_side",
         "regulated_object",
-        ["three_winding_transformer"],
+        [ComponentType.transformer],
+        [BranchSide],
+    )
+    errors += all_valid_associated_enum_values(
+        data,
+        ComponentType.transformer_tap_regulator,
+        "control_side",
+        "regulated_object",
+        [ComponentType.three_winding_transformer],
         [Branch3Side],
     )
-    errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "u_set")
-    errors += all_greater_than_zero(data, "transformer_tap_regulator", "u_band")
-    errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "line_drop_compensation_r", 0.0)
-    errors += all_greater_than_or_equal_to_zero(data, "transformer_tap_regulator", "line_drop_compensation_x", 0.0)
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.transformer_tap_regulator, "u_set")
+    errors += all_greater_than_zero(data, ComponentType.transformer_tap_regulator, "u_band")
+    errors += all_greater_than_or_equal_to_zero(
+        data, ComponentType.transformer_tap_regulator, "line_drop_compensation_r", 0.0
+    )
+    errors += all_greater_than_or_equal_to_zero(
+        data, ComponentType.transformer_tap_regulator, "line_drop_compensation_x", 0.0
+    )
     errors += all_supported_tap_control_side(
         data,
-        "transformer_tap_regulator",
+        ComponentType.transformer_tap_regulator,
         "control_side",
         "regulated_object",
-        [("transformer", "tap_side"), ("three_winding_transformer", "tap_side")],
+        [(ComponentType.transformer, "tap_side"), (ComponentType.three_winding_transformer, "tap_side")],
     )
     return errors

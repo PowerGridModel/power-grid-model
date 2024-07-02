@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from copy import copy
+from typing import Dict
 
 import numpy as np
 import pytest
 
-from power_grid_model import PowerGridModel, initialize_array
+from power_grid_model import ComponentType, PowerGridModel, initialize_array
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.validation import assert_valid_input_data
 
@@ -81,7 +82,7 @@ def test_simple_update(model: PowerGridModel, case_data):
         "sym_load": update_batch["sym_load"][0, :],
     }
     model.update(update_data=update_data)
-    expected_result = {"node": case_data["output_batch"]["node"][0, :]}
+    expected_result = {ComponentType.node: case_data["output_batch"]["node"][0, :]}
     result = model.calculate_power_flow()
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
 
@@ -152,8 +153,8 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     np.allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
     # assert value result for scenario 0
-    result = {"node": result["node"][error.succeeded_scenarios, :]}
-    expected_result = {"node": case_data["output_batch"]["node"][error.succeeded_scenarios, :]}
+    result = {ComponentType.node: result[ComponentType.node][error.succeeded_scenarios, :]}
+    expected_result = {ComponentType.node: case_data["output_batch"][ComponentType.node][error.succeeded_scenarios, :]}
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
     # general error before the batch
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):

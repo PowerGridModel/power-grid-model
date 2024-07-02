@@ -10,16 +10,19 @@ Disclaimer!
 We do not officially support this functionality and may remove features in this library at any given time!
 """
 
-from typing import List, Optional, cast
+from typing import List, Optional, Union, cast
 
 import numpy as np
 
+from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
     BatchList,
     Dataset,
+    DenseBatchArray,
     PythonDataset,
+    SingleArray,
     SingleDataset,
     SinglePythonDataset,
     SparseBatchArray,
@@ -95,14 +98,15 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     """
 
     n_batch_size = 0
-    checked_components: List[str] = []
+    checked_components: List[ComponentType] = []
     for component, data in batch_data.items():
         n_component_batch_size = get_batch_size(data)
         if checked_components and n_component_batch_size != n_batch_size:
             if len(checked_components) == 1:
                 checked_components_str = f"'{checked_components.pop()}'"
             else:
-                checked_components_str = "/".join(sorted(checked_components))
+                str_checked_components = [str(component) for component in checked_components]
+                checked_components_str = "/".join(sorted(str_checked_components))
             raise ValueError(
                 f"Inconsistent number of batches in batch data. "
                 f"Component '{component}' contains {n_component_batch_size} batches, "
@@ -143,7 +147,9 @@ def get_batch_size(batch_data: BatchArray) -> int:
     return n_batches
 
 
-def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.ndarray]:
+def split_numpy_array_in_batches(
+    data: Union[DenseBatchArray, SingleArray], component: ComponentType
+) -> List[np.ndarray]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -170,7 +176,7 @@ def split_numpy_array_in_batches(data: np.ndarray, component: str) -> List[np.nd
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: str) -> List[np.ndarray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: ComponentType) -> List[np.ndarray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
