@@ -62,7 +62,7 @@ class ComponentType(str, Enum):
 
 
 def _str_to_datatype(data_type: Any) -> DatasetType:
-    """Helper function to transform data_type str to DatasetType."""
+    """Helper function to transform data_type str to DatasetType. Testing!"""
     if isinstance(data_type, str):
         return DatasetType[data_type]
     return data_type

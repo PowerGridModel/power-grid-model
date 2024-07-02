@@ -105,7 +105,6 @@ class MeasuredTerminalType(IntEnum):
     """
     shunt = 3
     """
-    
     Measuring the terminal between a shunt and a node
     """
     load = 4
