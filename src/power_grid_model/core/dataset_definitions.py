@@ -46,7 +46,7 @@ class DatasetType(str, Enum, metaclass=_MetaEnum):
 
 class ComponentType(str, Enum):
     """
-    A ComponentType is the type of a grid component.
+    A ComponentType is the type of a grid component. Testing!
 
     - Examples:
 
