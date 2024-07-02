@@ -88,12 +88,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr Idx ignore_output{-1};
 
+  protected:
     // run functors with all component types
     template <class Functor> static constexpr void run_functor_with_all_types_return_void(Functor functor) {
         (functor.template operator()<ComponentType>(), ...);
     }
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
         return std::array{functor.template operator()<ComponentType>()...};
+    }
+    template <class Functor> static constexpr void run_functor_with_all_retreivable_types_return_void(Functor functor) {
+        (functor.template operator()<ExtraRetrievableType>(), ...);
+        run_functor_with_all_types_return_void(functor);
     }
 
   public:
