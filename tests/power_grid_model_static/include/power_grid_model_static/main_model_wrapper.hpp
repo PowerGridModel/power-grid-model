@@ -41,7 +41,7 @@ class MainModelWrapper {
     void restore_components(ConstDataset const& update_data);
 
     // template forward declarations.
-    // If you get linking errors, it is likely a missing template instantiations in main_model_wrapper.cpp
+    // If you get linking errors, it is likely a missing template instantiation in main_model_wrapper.cpp
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
         add_component<CompType>(std::span<typename CompType::InputType const>{components});
     }
@@ -70,6 +70,8 @@ class MainModelWrapper {
 
   private:
     std::unique_ptr<Impl> impl_;
+
+    static void instantiate_templates();
 };
 
 } // namespace power_grid_model::pgm_static

@@ -19,8 +19,6 @@ class Base {
     using InputType = BaseInput;
     using UpdateType = BaseUpdate;
     template <symmetry_tag sym> using OutputType = BaseOutput;
-    using ShortCircuitOutputType = BaseOutput;
-
     static constexpr char const* name = "base";
     virtual ComponentType math_model_type() const = 0;
 
