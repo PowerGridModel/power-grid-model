@@ -406,7 +406,7 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
 
 @patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
-    update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}
+    update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}  # type: ignore
     with pytest.raises(
         KeyError,
         match="Missing 'indptr' in sparse batch data for 'foo' "

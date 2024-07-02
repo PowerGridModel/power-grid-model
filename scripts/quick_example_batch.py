@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 
-from power_grid_model import LoadGenType, PowerGridModel, initialize_array
+from power_grid_model import ComponentType, DatasetType, LoadGenType, PowerGridModel, initialize_array
 
 """
 node_1 ---line_3--- node_2 ---line_6--- node_7
@@ -15,12 +15,14 @@ source_4          asym_load_5          asym_load_8
 """
 
 # node
-node = initialize_array("input", "node", 3)
+node = initialize_array(DatasetType.input, ComponentType.node, 3)
+# The following is also supported
+# node = initialize_array("input", "node", 3)
 node["id"] = [1, 2, 7]
 node["u_rated"] = [10.5e3, 10.5e3, 10.5e3]
 
 # line
-line = initialize_array("input", "line", 2)
+line = initialize_array(DatasetType.input, ComponentType.line, 2)
 line["id"] = [3, 6]
 line["from_node"] = [1, 2]
 line["to_node"] = [2, 7]
@@ -36,7 +38,7 @@ line["c0"] = [10e-6, 10e-6]  # zero sequence parameters
 line["tan0"] = [0.0, 0.0]  # zero sequence parameters
 
 # load
-asym_load = initialize_array("input", "asym_load", 2)
+asym_load = initialize_array(DatasetType.input, ComponentType.asym_load, 2)
 asym_load["id"] = [4, 8]
 asym_load["node"] = [2, 7]
 asym_load["status"] = [1, 1]
@@ -47,14 +49,19 @@ asym_load["p_specified"] = [[2e6, 0.0, 0.0], [0.0, 1e6, 0.0]]
 asym_load["q_specified"] = [[0.5e6, 0.0, 0.0], [0.0, 0.2e6, 0.0]]  # input for three phase per entry
 
 # source
-source = initialize_array("input", "source", 1)
+source = initialize_array(DatasetType.input, ComponentType.source, 1)
 source["id"] = [5]
 source["node"] = [1]
 source["status"] = [1]
 source["u_ref"] = [1.0]
 
 # input_data
-input_data = {"node": node, "line": line, "asym_load": asym_load, "source": source}
+input_data = {
+    ComponentType.node: node,
+    ComponentType.line: line,
+    ComponentType.asym_load: asym_load,
+    ComponentType.source: source,
+}
 
 # call constructor
 model = PowerGridModel(input_data, system_frequency=50.0)
@@ -62,18 +69,18 @@ model = PowerGridModel(input_data, system_frequency=50.0)
 result = model.calculate_power_flow(symmetric=False)
 
 print("Node Input")
-print(pd.DataFrame(input_data["node"]))
+print(pd.DataFrame(input_data[ComponentType.node]))
 print("Node Result")
-print(result["node"]["u"])  # N*3 array, in symmetric calculation is this N array
-print(result["asym_load"]["p"])  # N*3 array, in symmetric calculation is this N array
+print(result[ComponentType.node]["u"])  # N*3 array, in symmetric calculation is this N array
+print(result[ComponentType.asym_load]["p"])  # N*3 array, in symmetric calculation is this N array
 
 # batch calculation
 scaler = np.linspace(0, 1, 1000)
 batch_p = asym_load["p_specified"].reshape(1, 2, 3) * scaler.reshape(-1, 1, 1)
-batch_load = initialize_array("update", "asym_load", (1000, 2))
+batch_load = initialize_array(DatasetType.update, ComponentType.asym_load, (1000, 2))
 batch_load["id"] = [[4, 8]]
 batch_load["p_specified"] = batch_p
-batch_update = {"asym_load": batch_load}
+batch_update = {ComponentType.asym_load: batch_load}
 
 result = model.calculate_power_flow(symmetric=False, update_data=batch_update)
-print(result["node"]["u"].shape)  # 1000 (scenarios) *3 (nodes) *3 (phases)
+print(result[ComponentType.node]["u"].shape)  # 1000 (scenarios) *3 (nodes) *3 (phases)

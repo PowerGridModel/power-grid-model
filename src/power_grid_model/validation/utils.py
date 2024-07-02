@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
@@ -96,7 +97,7 @@ def update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     return merged_data
 
 
-def update_component_data(component: str, input_data: np.ndarray, update_data: np.ndarray) -> None:
+def update_component_data(component: ComponentType, input_data: np.ndarray, update_data: np.ndarray) -> None:
     """
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
@@ -104,7 +105,7 @@ def update_component_data(component: str, input_data: np.ndarray, update_data: n
     for field in update_data.dtype.names:
         if field == "id":
             continue
-        nan = nan_type(component, field, "update")
+        nan = nan_type(component, field, DatasetType.update)
         if np.isnan(nan):
             mask = ~np.isnan(update_data[field])
         else:
@@ -161,10 +162,11 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: str, field: str, data_type="input"):
+def nan_type(component: Union[str, ComponentType], field: str, data_type: DatasetType = DatasetType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
+    component = _str_to_component_type(component)
     return power_grid_meta_data[data_type][component].nans[field]
 
 
@@ -204,7 +206,9 @@ def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[
     return np.where(source[clipped_indices] == target, permutation_sort[clipped_indices], default_value)
 
 
-def set_default_value(data: SingleDataset, component: str, field: str, default_value: Union[int, float, np.ndarray]):
+def set_default_value(
+    data: SingleDataset, component: ComponentType, field: str, default_value: Union[int, float, np.ndarray]
+):
     """
     This function sets the default value in the data that is to be validated, so the default values are included in the
     validation.
@@ -230,7 +234,7 @@ def set_default_value(data: SingleDataset, component: str, field: str, default_v
         data[component][field][mask] = default_value
 
 
-def get_valid_ids(data: SingleDataset, ref_components: Union[str, List[str]]) -> List[int]:
+def get_valid_ids(data: SingleDataset, ref_components: Union[ComponentType, List[ComponentType]]) -> List[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -243,7 +247,7 @@ def get_valid_ids(data: SingleDataset, ref_components: Union[str, List[str]]) ->
     """
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.
-    if isinstance(ref_components, str):
+    if isinstance(ref_components, (str, ComponentType)):
         ref_components = [ref_components]
 
     # Create a set of ids by chaining the ids of all ref_components
@@ -260,7 +264,7 @@ def get_valid_ids(data: SingleDataset, ref_components: Union[str, List[str]]) ->
     return list(valid_ids)
 
 
-def get_mask(data: SingleDataset, component: str, field: str, **filters: Any) -> np.ndarray:
+def get_mask(data: SingleDataset, component: ComponentType, field: str, **filters: Any) -> np.ndarray:
     """
     Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
 

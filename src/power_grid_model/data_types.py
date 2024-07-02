@@ -11,6 +11,8 @@ from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
+from power_grid_model.core.dataset_definitions import ComponentType
+
 # When we're dropping python 3.8, we should introduce proper NumPy type hinting
 
 SingleArray = Union[np.ndarray]
@@ -60,7 +62,7 @@ DataArray = Union[SingleArray, BatchArray]
 A data array can be a :class:`SingleArray` or a :class:`BatchArray`.
 """
 
-SingleDataset = Dict[str, SingleArray]
+SingleDataset = Dict[ComponentType, SingleArray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are
 :class:`SingleArray`
@@ -68,7 +70,7 @@ A single dataset is a dictionary where the keys are the component types and the 
 - Example: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
 """
 
-BatchDataset = Dict[str, BatchArray]
+BatchDataset = Dict[ComponentType, BatchArray]
 """
 A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchArray`
 
@@ -142,7 +144,7 @@ but in a native python format, without using numpy.
 - Example: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}]
 """
 
-SinglePythonDataset = Dict[str, ComponentList]
+SinglePythonDataset = Dict[ComponentType, ComponentList]
 """
 A single dataset in native python representation is a dictionary, where the keys are the component names and the
 values are a list of all the instances of such a component. In essence it stores the same information as a
