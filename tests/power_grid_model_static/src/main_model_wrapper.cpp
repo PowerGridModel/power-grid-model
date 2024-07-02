@@ -10,8 +10,8 @@ namespace power_grid_model::pgm_static {
 namespace {
 using SymMathOutput = MathOutput<std::vector<SolverOutput<symmetric_t>>>;
 using AsymMathOutput = MathOutput<std::vector<SolverOutput<asymmetric_t>>>;
-// using SymScMathOutput = MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>>;
-// using AsymScMathOutput = MathOutput<std::vector<ShortCircuitSolverOutput<asymmetric_t>>>;
+using SymScMathOutput = MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>>;
+using AsymScMathOutput = MathOutput<std::vector<ShortCircuitSolverOutput<asymmetric_t>>>;
 } // namespace
 
 class MainModelWrapper::Impl : public MainModel {
@@ -148,6 +148,18 @@ template BatchParameter MainModelWrapper::calculate_state_estimation<symmetric_t
 template BatchParameter MainModelWrapper::calculate_state_estimation<asymmetric_t>(Options const& options,
                                                                                    MutableDataset const& result_data,
                                                                                    ConstDataset const& update_data);
+template <symmetry_tag sym>
+MathOutput<std::vector<ShortCircuitSolverOutput<sym>>>
+MainModelWrapper::calculate_short_circuit(Options const& options) {
+    assert(impl_ != nullptr);
+    return impl_->calculate_short_circuit<sym>(options);
+}
+template SymScMathOutput MainModelWrapper::calculate_short_circuit<symmetric_t>(Options const& options);
+template AsymScMathOutput MainModelWrapper::calculate_short_circuit<asymmetric_t>(Options const& option);
+void MainModelWrapper::calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos) {
+    assert(impl_ != nullptr);
+    return impl_->calculate_short_circuit(options, result_data, pos);
+}
 BatchParameter MainModelWrapper::calculate_short_circuit(Options const& options, MutableDataset const& result_data,
                                                          ConstDataset const& update_data) {
     assert(impl_ != nullptr);
@@ -380,5 +392,228 @@ MainModelWrapper::output_result<GenericVoltageSensor, AsymMathOutput,
                                 std::vector<typename GenericVoltageSensor::OutputType<asymmetric_t>>::iterator>(
     AsymMathOutput const& math_output,
     std::vector<typename GenericVoltageSensor::OutputType<asymmetric_t>>::iterator res_it) const;
+
+template std::vector<typename Node::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Node, SymScMathOutput, std::vector<typename Node::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Node::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Line::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Line, SymScMathOutput, std::vector<typename Line::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Line::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Link::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Link, SymScMathOutput, std::vector<typename Link::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Link::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Transformer::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Transformer, SymScMathOutput,
+                                std::vector<typename Transformer::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename Transformer::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename ThreeWindingTransformer::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<ThreeWindingTransformer, SymScMathOutput,
+                                std::vector<typename ThreeWindingTransformer::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename ThreeWindingTransformer::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Shunt::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Shunt, SymScMathOutput, std::vector<typename Shunt::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Shunt::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Source::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Source, SymScMathOutput,
+                                std::vector<typename Source::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Source::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymGenerator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymGenerator, SymScMathOutput,
+                                std::vector<typename SymGenerator::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename SymGenerator::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymGenerator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymGenerator, SymScMathOutput,
+                                std::vector<typename AsymGenerator::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename AsymGenerator::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymLoad::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymLoad, SymScMathOutput,
+                                std::vector<typename SymLoad::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename SymLoad::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymLoad::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymLoad, SymScMathOutput,
+                                std::vector<typename AsymLoad::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename AsymLoad::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymPowerSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymPowerSensor, SymScMathOutput,
+                                std::vector<typename SymPowerSensor::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename SymPowerSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymPowerSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymPowerSensor, SymScMathOutput,
+                                std::vector<typename AsymPowerSensor::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename AsymPowerSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymVoltageSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymVoltageSensor, SymScMathOutput,
+                                std::vector<typename SymVoltageSensor::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename SymVoltageSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymVoltageSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymVoltageSensor, SymScMathOutput,
+                                std::vector<typename AsymVoltageSensor::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename AsymVoltageSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Fault::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Fault, SymScMathOutput, std::vector<typename Fault::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Fault::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename TransformerTapRegulator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<TransformerTapRegulator, SymScMathOutput,
+                                std::vector<typename TransformerTapRegulator::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename TransformerTapRegulator::ShortCircuitOutputType>::iterator res_it) const;
+
+template std::vector<typename Branch::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Branch, SymScMathOutput,
+                                std::vector<typename Branch::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Branch::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Branch3::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Branch3, SymScMathOutput,
+                                std::vector<typename Branch3::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Branch3::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Appliance::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Appliance, SymScMathOutput,
+                                std::vector<typename Appliance::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output, std::vector<typename Appliance::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericLoadGen::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericLoadGen, SymScMathOutput,
+                                std::vector<typename GenericLoadGen::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename GenericLoadGen::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericLoad::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericLoad, SymScMathOutput,
+                                std::vector<typename GenericLoad::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename GenericLoad::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericGenerator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericGenerator, SymScMathOutput,
+                                std::vector<typename GenericGenerator::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename GenericGenerator::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericPowerSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericPowerSensor, SymScMathOutput,
+                                std::vector<typename GenericPowerSensor::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename GenericPowerSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericVoltageSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericVoltageSensor, SymScMathOutput,
+                                std::vector<typename GenericVoltageSensor::ShortCircuitOutputType>::iterator>(
+    SymScMathOutput const& math_output,
+    std::vector<typename GenericVoltageSensor::ShortCircuitOutputType>::iterator res_it) const;
+
+template std::vector<typename Node::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Node, AsymScMathOutput, std::vector<typename Node::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Node::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Line::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Line, AsymScMathOutput, std::vector<typename Line::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Line::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Link::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Link, AsymScMathOutput, std::vector<typename Link::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Link::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Transformer::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Transformer, AsymScMathOutput,
+                                std::vector<typename Transformer::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename Transformer::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename ThreeWindingTransformer::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<ThreeWindingTransformer, AsymScMathOutput,
+                                std::vector<typename ThreeWindingTransformer::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename ThreeWindingTransformer::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Shunt::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Shunt, AsymScMathOutput, std::vector<typename Shunt::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Shunt::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Source::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Source, AsymScMathOutput,
+                                std::vector<typename Source::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Source::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymGenerator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymGenerator, AsymScMathOutput,
+                                std::vector<typename SymGenerator::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename SymGenerator::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymGenerator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymGenerator, AsymScMathOutput,
+                                std::vector<typename AsymGenerator::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename AsymGenerator::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymLoad::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymLoad, AsymScMathOutput,
+                                std::vector<typename SymLoad::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename SymLoad::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymLoad::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymLoad, AsymScMathOutput,
+                                std::vector<typename AsymLoad::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename AsymLoad::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymPowerSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymPowerSensor, AsymScMathOutput,
+                                std::vector<typename SymPowerSensor::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename SymPowerSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymPowerSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymPowerSensor, AsymScMathOutput,
+                                std::vector<typename AsymPowerSensor::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename AsymPowerSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename SymVoltageSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<SymVoltageSensor, AsymScMathOutput,
+                                std::vector<typename SymVoltageSensor::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename SymVoltageSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename AsymVoltageSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<AsymVoltageSensor, AsymScMathOutput,
+                                std::vector<typename AsymVoltageSensor::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename AsymVoltageSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Fault::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Fault, AsymScMathOutput, std::vector<typename Fault::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Fault::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename TransformerTapRegulator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<TransformerTapRegulator, AsymScMathOutput,
+                                std::vector<typename TransformerTapRegulator::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename TransformerTapRegulator::ShortCircuitOutputType>::iterator res_it) const;
+
+template std::vector<typename Branch::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Branch, AsymScMathOutput,
+                                std::vector<typename Branch::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Branch::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Branch3::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Branch3, AsymScMathOutput,
+                                std::vector<typename Branch3::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output, std::vector<typename Branch3::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename Appliance::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<Appliance, AsymScMathOutput,
+                                std::vector<typename Appliance::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename Appliance::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericLoadGen::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericLoadGen, AsymScMathOutput,
+                                std::vector<typename GenericLoadGen::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename GenericLoadGen::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericLoad::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericLoad, AsymScMathOutput,
+                                std::vector<typename GenericLoad::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename GenericLoad::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericGenerator::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericGenerator, AsymScMathOutput,
+                                std::vector<typename GenericGenerator::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename GenericGenerator::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericPowerSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericPowerSensor, AsymScMathOutput,
+                                std::vector<typename GenericPowerSensor::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename GenericPowerSensor::ShortCircuitOutputType>::iterator res_it) const;
+template std::vector<typename GenericVoltageSensor::ShortCircuitOutputType>::iterator
+MainModelWrapper::output_result<GenericVoltageSensor, AsymScMathOutput,
+                                std::vector<typename GenericVoltageSensor::ShortCircuitOutputType>::iterator>(
+    AsymScMathOutput const& math_output,
+    std::vector<typename GenericVoltageSensor::ShortCircuitOutputType>::iterator res_it) const;
 
 } // namespace power_grid_model::pgm_static

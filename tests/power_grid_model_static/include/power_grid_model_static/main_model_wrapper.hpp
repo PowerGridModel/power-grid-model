@@ -59,6 +59,9 @@ class MainModelWrapper {
     template <symmetry_tag sym>
     BatchParameter calculate_state_estimation(Options const& options, MutableDataset const& result_data,
                                               ConstDataset const& update_data);
+    template <symmetry_tag sym>
+    MathOutput<std::vector<ShortCircuitSolverOutput<sym>>> calculate_short_circuit(Options const& options);
+    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0);
     BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
                                            ConstDataset const& update_data);
 
