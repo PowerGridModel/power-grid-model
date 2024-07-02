@@ -3,14 +3,16 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/main_model.hpp>
+#include <power_grid_model_static/main_model_wrapper.hpp>
 
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
 namespace {
+using pgm_static::MainModelWrapper;
+
 constexpr auto get_default_options(CalculationMethod calculation_method, Idx threading = -1) {
-    return MainModel::Options{
+    return MainModelWrapper::Options{
         .calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20, .threading = threading};
 }
 
@@ -166,8 +168,8 @@ struct State {
     std::vector<FaultUpdate> fault_update{{30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
 };
 
-auto default_model(State const& state) -> MainModel {
-    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
+auto default_model(State const& state) -> MainModelWrapper {
+    MainModelWrapper main_model{50.0, meta_data::meta_data_gen::meta_data};
     main_model.add_component<Node>(state.node_input);
     main_model.add_component<Line>(state.line_input);
     main_model.add_component<Link>(state.link_input);
@@ -198,20 +200,20 @@ TEST_CASE("Test main model - power flow") {
     }
 
     SUBCASE("Test duplicated id") {
-        MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
+        MainModelWrapper main_model2{50.0, meta_data::meta_data_gen::meta_data};
         state.node_input[1].id = 1;
         CHECK_THROWS_AS(main_model2.add_component<Node>(state.node_input), ConflictID);
     }
 
     SUBCASE("Test no existing id") {
-        MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
+        MainModelWrapper main_model2{50.0, meta_data::meta_data_gen::meta_data};
         state.line_input[0].from_node = 100;
         main_model2.add_component<Node>(state.node_input);
         CHECK_THROWS_AS(main_model2.add_component<Line>(state.line_input), IDNotFound);
     }
 
     SUBCASE("Test id for wrong type") {
-        MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
+        MainModelWrapper main_model2{50.0, meta_data::meta_data_gen::meta_data};
 
         state.link_input[0].from_node = 4;
         main_model2.add_component<Node>(state.node_input); // 1 2 3
@@ -255,7 +257,7 @@ TEST_CASE("Test main model - power flow") {
 TEST_CASE("Test copy main model") {
     State state;
     auto main_model = default_model(state);
-    MainModel model_2{main_model};
+    MainModelWrapper model_2{main_model};
 
     SUBCASE("Copied - Symmetrical") {
         auto const solver_output =
@@ -955,7 +957,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
                            state.asym_load_update.data());
 
     main_model.update_component<typename settings::update_type>(update_data);
-    main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+    main_model.restore_components(update_data);
 
     SUBCASE("Symmetrical") {
         auto const solver_output_result =
@@ -1004,7 +1006,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
 }
 
 TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update, cached_update) {
-    constexpr auto check_sym = [](MainModel const& model_, auto const& math_output_) {
+    constexpr auto check_sym = [](MainModelWrapper const& model_, auto const& math_output_) {
         State state_;
         model_.output_result<Node>(math_output_, state_.sym_node.begin());
         model_.output_result<Branch>(math_output_, state_.sym_branch.begin());
@@ -1020,7 +1022,7 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
         CHECK(state_.sym_appliance[3].i == doctest::Approx(0.0));
         CHECK(state_.sym_appliance[4].i == doctest::Approx(0.0));
     };
-    constexpr auto check_asym = [](MainModel const& model_, auto const& math_output_) {
+    constexpr auto check_asym = [](MainModelWrapper const& model_, auto const& math_output_) {
         State state_;
         model_.output_result<Node>(math_output_, state_.asym_node.begin());
         model_.output_result<Branch>(math_output_, state_.asym_branch.begin());
@@ -1071,7 +1073,7 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
     }
     SUBCASE("With parameter change") {
         // Restore to original state and re-apply same update: causes param change for cached update
-        main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+        main_model.restore_components(update_data);
         main_model.update_component<typename settings::update_type>(update_data);
     }
 
@@ -1083,7 +1085,7 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
         main_model.calculate_power_flow<symmetric_t>(get_default_options(CalculationMethod::linear));
     check_sym(main_model, math_output_sym_2);
 
-    main_model.restore_components(main_model.get_sequence_idx_map(update_data));
+    main_model.restore_components(update_data);
 }
 
 TEST_CASE("Test main model - runtime dispatch") {
@@ -1138,7 +1140,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         asym_result_data.add_buffer("node", state.asym_node.size(), state.asym_node.size(), nullptr,
                                     state.asym_node.data());
 
-        MainModel model{50.0, input_data};
+        MainModelWrapper model{50.0, input_data};
         auto const count = model.all_component_count();
         CHECK(count.at("node") == 3);
         CHECK(count.at("source") == 2);
@@ -1162,7 +1164,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
 
         // update and calculation
-        model.update_component<MainModel::permanent_update_t>(update_data);
+        model.update_component<permanent_update_t>(update_data);
         model.calculate_power_flow<symmetric_t>(get_default_options(newton_raphson), sym_result_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
@@ -1173,7 +1175,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
 
         // test batch calculation
-        model = MainModel{50.0, input_data};
+        model = MainModelWrapper{50.0, input_data};
         // symmetric sequential
         model.calculate_power_flow<symmetric_t>(get_default_options(newton_raphson), sym_result_data, update_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
@@ -1197,7 +1199,7 @@ TEST_CASE("Test main model - runtime dispatch") {
     }
 
     SUBCASE("no dependent updates within batches") {
-        MainModel model{50.0, input_data};
+        MainModelWrapper model{50.0, input_data};
         std::vector<SymLoadGenUpdate> sym_load_update_2{{7, 1, nan, 1.0e7}, {7, 1, 1.0e3, nan}, {7, 1, 1.0e3, 1.0e7}};
 
         ConstDataset dependent_update_data{true, static_cast<Idx>(sym_load_update_2.size()), "update",
@@ -1225,8 +1227,8 @@ TEST_CASE("Test main model - runtime dispatch") {
 }
 
 namespace {
-auto incomplete_input_model(State const& state) -> MainModel {
-    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
+auto incomplete_input_model(State const& state) -> MainModelWrapper {
+    MainModelWrapper main_model{50.0, meta_data::meta_data_gen::meta_data};
 
     std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
                                                            {10, 3, 1, nan, nan, 1e12, nan, nan}};
@@ -1283,7 +1285,7 @@ TEST_CASE("Test main model - incomplete input") {
     incomplete_update_data.add_buffer("asym_load", incomplete_asym_load_update.size(),
                                       incomplete_asym_load_update.size(), nullptr, incomplete_asym_load_update.data());
 
-    MainModel const ref_model{main_model};
+    MainModelWrapper const ref_model{main_model};
 
     SUBCASE("Symmetrical - Complete") {
         MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};

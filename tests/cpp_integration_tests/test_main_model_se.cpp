@@ -314,7 +314,7 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
         SUBCASE("State Estimation") {
             MainModel test_model{50.0, input_data};
             MainModel ref_model{50.0, input_data};
-            ref_model.update_component<MainModel::permanent_update_t>(update_data);
+            ref_model.update_component<permanent_update_t>(update_data);
 
             SUBCASE("Symmetric Calculation") {
                 std::vector<NodeOutput<symmetric_t>> test_node_output(1);

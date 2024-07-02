@@ -232,6 +232,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         cached_state_changes_ = {};
     }
 
+    void restore_components(ConstDataset const& update_data) { restore_components(get_sequence_idx_map(update_data)); }
+
     // set complete construction
     // initialize internal arrays
     void set_construction_complete() {
