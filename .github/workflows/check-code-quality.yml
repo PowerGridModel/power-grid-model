@@ -88,3 +88,4 @@ jobs:
           else
             echo "All the generated files are up to date."
           fi
+          
