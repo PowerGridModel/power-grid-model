@@ -768,7 +768,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <solver_output_type SolverOutputType>
     void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
-                       Idx pos = 0) {
+                       Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
             // output
             auto const span = result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
@@ -784,7 +784,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     CalculationInfo calculation_info() const { return calculation_info_; }
 
   private:
-    CalculationInfo calculation_info_; // needs to be first due to padding override
+    mutable CalculationInfo calculation_info_; // needs to be first due to padding override
+                                               // may be changed in const functions for metrics
 
     double system_frequency_;
     meta_data::MetaData const* meta_data_;

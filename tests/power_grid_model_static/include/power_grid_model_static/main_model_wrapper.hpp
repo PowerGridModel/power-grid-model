@@ -5,8 +5,10 @@
 #pragma once
 
 #include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 
 #include <map>
@@ -53,6 +55,34 @@ class MainModelWrapper {
 
     template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0);
 
+    template <typename CompType, typename MathOutputType, typename OutputType>
+    void output_result(MathOutputType const& math_output, std::vector<OutputType>& target) const {
+        output_result<CompType>(math_output, std::span<OutputType>{target});
+    }
+    template <typename CompType, typename MathOutputType, typename OutputType>
+    void output_result(MathOutputType const& math_output, std::span<OutputType> target) const {
+        if constexpr (IsInList<CompType, AllComponents>::value) {
+            std::string const dataset_name = [] {
+                using namespace std::string_literals;
+                if constexpr (std::same_as<OutputType, typename CompType::template OutputType<symmetric_t>>) {
+                    return "sym_output"s;
+                }
+                if constexpr (std::same_as<OutputType, typename CompType::template OutputType<asymmetric_t>>) {
+                    return "asym_output"s;
+                }
+                if constexpr (std::same_as<OutputType, typename CompType::ShortCircuitOutputType>) {
+                    return "sc_output"s;
+                }
+                throw UnreachableHit{"MainModelWrapper::output_result", "Unknown output type"};
+            }();
+            MutableDataset dataset{true, 1, dataset_name, meta_data::meta_data_gen::meta_data};
+            dataset.add_buffer(CompType::name, target.size(), target.size(), nullptr, target.data());
+            output_result(math_output, dataset);
+        } else {
+            output_extra_retreivable_result<CompType>(math_output, target);
+        }
+    }
+
     template <symmetry_tag sym> MathOutput<std::vector<SolverOutput<sym>>> calculate_power_flow(Options const& options);
     template <symmetry_tag sym>
     void calculate_power_flow(Options const& options, MutableDataset const& result_data, Idx pos = 0);
@@ -70,13 +100,16 @@ class MainModelWrapper {
     BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
                                            ConstDataset const& update_data);
 
-    template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
-    ResIt output_result(MathOutputType const& math_output, ResIt res_it) const;
-
   private:
     std::unique_ptr<Impl> impl_;
 
     void add_components(ConstDataset const& input_data, Idx pos = 0);
+
+    template <solver_output_type SolverOutputType>
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
+                       Idx pos = 0) const;
+    template <typename CompType, typename MathOutputType, typename OutputType>
+    void output_extra_retreivable_result(MathOutputType const& math_output, std::span<OutputType> target) const;
 };
 
 } // namespace power_grid_model::pgm_static

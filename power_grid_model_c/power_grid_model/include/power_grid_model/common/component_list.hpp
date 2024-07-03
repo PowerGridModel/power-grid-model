@@ -4,9 +4,19 @@
 
 #pragma once
 
+#include "common.hpp"
+
 namespace power_grid_model {
 
 // component list
 template <class... T> struct ComponentList {};
+
+template <typename... Ts> struct IsInList : std::false_type {};
+// template <typename T, typename... Ts>
+//     requires(std::same_as<std::remove_const_t<T>, Ts> || ...)
+// struct IsInList : std::true_type {};
+template <typename T, typename... Ts>
+    requires is_in_list_c<T, Ts...>
+struct IsInList<T, ComponentList<Ts...>> : std::true_type {};
 
 } // namespace power_grid_model

@@ -41,14 +41,14 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 SUBCASE("Symmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<symmetric_t>(options);
                     std::vector<NodeOutput<symmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
                     CHECK(node_output[0].u_angle == doctest::Approx(0.1));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<asymmetric_t>(options);
                     std::vector<NodeOutput<asymmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
@@ -63,14 +63,14 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 SUBCASE("Symmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<symmetric_t>(options);
                     std::vector<NodeOutput<symmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
                     CHECK(node_output[0].u_angle == doctest::Approx(0.0));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<asymmetric_t>(options);
                     std::vector<NodeOutput<asymmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
@@ -86,7 +86,7 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 SUBCASE("Symmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<symmetric_t>(options);
                     std::vector<NodeOutput<symmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     double const u = (std::cos(0.1) + std::cos(0.2) + std::cos(0.3)) * 12.345e3;
                     double const v = (std::sin(0.1) + std::sin(0.2) + std::sin(0.3)) * 12.345e3;
                     double const expected_u = std::sqrt(u * u + v * v) / 3.0;
@@ -96,7 +96,7 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 SUBCASE("Asymmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<asymmetric_t>(options);
                     std::vector<NodeOutput<asymmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
@@ -112,14 +112,14 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                 SUBCASE("Symmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<symmetric_t>(options);
                     std::vector<NodeOutput<symmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u == doctest::Approx(12.345e3));
                     CHECK(node_output[0].u_angle == doctest::Approx(0.0));
                 }
                 SUBCASE("Asymmetric Calculation") {
                     auto const solver_output = main_model.calculate_state_estimation<asymmetric_t>(options);
                     std::vector<NodeOutput<asymmetric_t>> node_output(1);
-                    main_model.output_result<Node>(solver_output, node_output.begin());
+                    main_model.output_result<Node>(solver_output, node_output);
                     CHECK(node_output[0].u.x() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.y() == doctest::Approx(12.345e3 / s3));
                     CHECK(node_output[0].u.z() == doctest::Approx(12.345e3 / s3));
@@ -150,10 +150,10 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     std::vector<SymApplianceOutput> load_output(1);
                     std::vector<SymNodeOutput> node_output(2);
                     std::vector<SymPowerSensorOutput> power_sensor_output(2);
-                    main_model.output_result<AsymGenerator>(solver_output, gen_output.begin());
-                    main_model.output_result<AsymLoad>(solver_output, load_output.begin());
-                    main_model.output_result<Node>(solver_output, node_output.begin());
-                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output.begin());
+                    main_model.output_result<AsymGenerator>(solver_output, gen_output);
+                    main_model.output_result<AsymLoad>(solver_output, load_output);
+                    main_model.output_result<Node>(solver_output, node_output);
+                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output);
 
                     CHECK(gen_output[0].p == doctest::Approx(900.0).scale(1e3));
                     CHECK(gen_output[0].q == doctest::Approx(90.0).scale(1e3));
@@ -182,10 +182,10 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     std::vector<SymApplianceOutput> load_output(1);
                     std::vector<SymNodeOutput> node_output(2);
                     std::vector<SymPowerSensorOutput> power_sensor_output(3);
-                    main_model.output_result<AsymGenerator>(solver_output, gen_output.begin());
-                    main_model.output_result<AsymLoad>(solver_output, load_output.begin());
-                    main_model.output_result<Node>(solver_output, node_output.begin());
-                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output.begin());
+                    main_model.output_result<AsymGenerator>(solver_output, gen_output);
+                    main_model.output_result<AsymLoad>(solver_output, load_output);
+                    main_model.output_result<Node>(solver_output, node_output);
+                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output);
 
                     CHECK(gen_output[0].p == doctest::Approx(850.0).scale(1e3));
                     CHECK(gen_output[0].q == doctest::Approx(85.0).scale(1e3));
@@ -226,10 +226,10 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                     std::vector<SymNodeOutput> node_output(2);
                     std::vector<SymPowerSensorOutput> power_sensor_output(3);
                     std::vector<BranchOutput<symmetric_t>> line_output(1);
-                    main_model.output_result<Shunt>(solver_output, shunt_output.begin());
-                    main_model.output_result<Node>(solver_output, node_output.begin());
-                    main_model.output_result<Line>(solver_output, line_output.begin());
-                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output.begin());
+                    main_model.output_result<Shunt>(solver_output, shunt_output);
+                    main_model.output_result<Node>(solver_output, node_output);
+                    main_model.output_result<Line>(solver_output, line_output);
+                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output);
 
                     CHECK(shunt_output[0].p == doctest::Approx(1800.0).epsilon(0.01));
                     CHECK(shunt_output[0].q == doctest::Approx(180.0).epsilon(0.01));

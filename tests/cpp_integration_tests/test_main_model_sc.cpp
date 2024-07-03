@@ -50,12 +50,12 @@ TEST_CASE("Test main model - short circuit") {
                                                                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(solver_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output);
 
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(solver_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output);
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
 
@@ -65,11 +65,11 @@ TEST_CASE("Test main model - short circuit") {
                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(solver_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output);
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(solver_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output);
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
         }
@@ -92,12 +92,12 @@ TEST_CASE("Test main model - short circuit") {
                                                                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(solver_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output);
 
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(solver_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output);
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
 
@@ -107,11 +107,11 @@ TEST_CASE("Test main model - short circuit") {
                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
-                main_model.output_result<Fault>(solver_output, fault_output.begin());
+                main_model.output_result<Fault>(solver_output, fault_output);
                 CHECK(fault_output[0].i_f(0) == doctest::Approx(i_f_abs));
 
                 std::vector<NodeShortCircuitOutput> node_output(1);
-                main_model.output_result<Node>(solver_output, node_output.begin());
+                main_model.output_result<Node>(solver_output, node_output);
                 CHECK(node_output[0].u_pu(0) == doctest::Approx(u_node_abs_pu));
             }
         }
@@ -134,11 +134,11 @@ TEST_CASE("Test main model - short circuit") {
                 {.calculation_method = CalculationMethod::iec60909, .short_circuit_voltage_scaling = voltage_scaling});
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
-            main_model.output_result<Fault>(solver_output, fault_output.begin());
+            main_model.output_result<Fault>(solver_output, fault_output);
             CHECK(fault_output[0].i_f(0) == doctest::Approx(voltage_scaling_c * 10e4 / sqrt3));
 
             std::vector<NodeShortCircuitOutput> node_output(2);
-            main_model.output_result<Node>(solver_output, node_output.begin());
+            main_model.output_result<Node>(solver_output, node_output);
             CHECK(node_output[0].u_pu(0) != doctest::Approx(voltage_scaling_c)); // influenced by fault
             CHECK(node_output[1].u_pu(0) == doctest::Approx(0.0));               // fault location
 
