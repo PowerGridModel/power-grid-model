@@ -17,7 +17,7 @@ from power_grid_model.core.dataset_definitions import ComponentType
 
 SingleArray = Union[np.ndarray]
 """
-A single array is a one-dimensional structured containing a list of components of the same type.
+A single array is a one-dimensional structured numpy array containing a list of components of the same type.
 
 - Examples:
 
@@ -25,31 +25,100 @@ A single array is a one-dimensional structured containing a list of components o
     - concrete: array([(0, 10500.0), (0, 10500.0)], dtype=power_grid_meta_data["input"]["node"].dtype)
 """
 
+SingleColumn = Union[np.ndarray]
+"""
+A single column is a one-dimensional structured numpy array containing a list of the same attribute of
+multiple components of the same type.
+
+- Examples:
+
+    - structure: <1d-array>
+    - concrete:
+
+        - array([0, 1], dtype=power_grid_meta_data["input"]["node"].dtype.fields["id"][0])
+        - array([10500.0, 10500.0], dtype=power_grid_meta_data["input"]["node"].dtype.fields["u_rated"][0])
+"""
+
+SingleColumnarData = Dict[str, SingleColumn]
+"""
+Single columnar data is a dictionary where the keys are the attribute types of the same component
+and the values are :class:`SingleColumn`.
+
+- Example: {"id": :class:`SingleColumn`, "u_rated": :class:`SingleColumn`}
+"""
+
 DenseBatchArray = Union[np.ndarray]
 """
 A dense batch array is a two-dimensional structured numpy array containing a list of components of 
-the same type for each scenario.
+the same type for each scenario. Otherwise similar to :class:`SingleArray`.
 """
 
-SparseBatchArray = Dict[str, Union[np.ndarray, SingleArray]]
+BatchColumn = Union[np.ndarray]
 """
-A sparse batch array is a dictionary containing the keys `indptr` and `data`.
+A batch column is a two-dimensional structured numpy array containing a list of the same attribute of
+multiple components of the same type. Otherwise, similar to :class:`SingleColumn`.
+"""
 
-- data: a :class:`SingleArray`. The exact dtype depends on the type of component.
-- indptr: a one-dimensional numpy int64 array containing n+1 elements where n is the amount of scenarios.
+DenseBatchColumnarData = Dict[str, BatchColumn]
+"""
+Batch columnar data is a dictionary where the keys are the attribute types of the same component
+and the values are :class:`BatchColumn`.
+
+- Example: {"id": :class:`BatchColumn`, "from_status": :class:`BatchColumn`}
+"""
+
+IndexPointer = Union[np.ndarray]
+"""
+An index pointer is a one-dimensional numpy int64 array containing n+1 elements where n is the amount
+of scenarios, representing the start and end indices for each batch scenario as follows:
 
     - The elements are the indices in the data that point to the first element of that scenario.
     - The last element is one after the data index of the last element of the last scenario.
     - Usually, the last element will therefore be the size of the data.
+"""
+
+SparseBatchArray = Dict[str, Union[IndexPointer, SingleArray]]
+"""
+A sparse batch array is a dictionary containing the keys `indptr` and `data`.
+
+- data: a :class:`SingleArray`. The exact dtype depends on the type of component.
+- indptr: an :class:`IndexPointer` representing the start and end indices for each batch scenario.
 
 - Examples:
 
-    - structure: {"indptr": <1d-array>, "data": :class:`SingleArray`}
+    - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleArray`}
     - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
 
-        - the scenario 0 sets the statuses of components ids 0 and 1 to 1 (and keeps defaults for other components)
+        - the scenario 0 sets the statuses of components with ids 0 and 1 to 1 (and keeps defaults for other components)
         - scenario 1 keeps the default values for all components
         - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
+"""
+
+SparseBatchColumnarData = Dict[str, Union[IndexPointer, SingleColumnarData]]
+"""
+Sparse batch columnar data is a dictionary containing the keys `indptr` and `data`.
+
+- data: a :class:`SingleColumnarData`. The exact supported attribute columns depend on the component type.
+- indptr: an :class:`IndexPointer` representing the start and end indices for each batch scenario.
+
+- Examples:
+
+    - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleArray`}
+    - concrete example: {"indptr": [0, 2, 2, 3], "data": {"id": [0, 1, 0], "status": [1, 1, 0]}}
+
+        - the scenario 0 sets the status of components with ids 0 and 1 to 1 (and keeps defaults for other components)
+        - scenario 1 keeps the default values for all components
+        - scenario 2 sets the status of component with id 0 to 0 (and keeps defaults for other components)
+"""
+
+DenseBatchData = Union[DenseBatchArray, DenseBatchColumnarData]
+"""
+Dense batch data can be a :class:`DenseBatchArray` or a :class:`DenseBatchColumnarData`.
+"""
+
+SparseBatchData = Union[SparseBatchArray, SparseBatchColumnarData]
+"""
+Sparse batch data can be a :class:`SparseBatchArray` or a :class:`SparseBatchColumnarData`.
 """
 
 BatchArray = Union[DenseBatchArray, SparseBatchArray]
@@ -57,24 +126,62 @@ BatchArray = Union[DenseBatchArray, SparseBatchArray]
 A batch array is a either a :class:`DenseBatchArray` or a :class:`SparseBatchArray`.
 """
 
+BatchColumnarData = Union[DenseBatchColumnarData, SparseBatchColumnarData]
+"""
+Batch columnar data is either a :class:`DenseBatchColumnarData` or a :class:`SparseBatchColumnarData`.
+"""
+
 DataArray = Union[SingleArray, BatchArray]
 """
 A data array can be a :class:`SingleArray` or a :class:`BatchArray`.
 """
 
-SingleDataset = Dict[ComponentType, SingleArray]
+ColumnarData = Union[SingleColumnarData, BatchColumnarData]
+"""
+Columnar data can be :class:`SingleColumnarData` or :class:`BatchColumnarData`.
+"""
+
+# SingleComponentData = Union[SingleArray, SingleColumnarData]
+# """
+# Single component data can be :class:`SingleArray` or :class:`SingleColumnarData`.
+# """
+SingleComponentData = Union[SingleArray]
+"""
+Single component data is a :class:`SingleArray`.
+"""
+
+# BatchComponentData = Union[BatchArray, BatchColumnarData]
+# """
+# Batch component data can be :class:`BatchArray` or :class:`BatchColumnarData`.
+# """
+BatchComponentData = Union[BatchArray]
+"""
+Batch component data is a :class:`BatchArray`.
+"""
+
+# ComponentData = Union[DataArray, ColumnarData]
+# """
+# Component data can be :class:`DataArray` or :class:`ColumnarData`.
+# """
+ComponentData = Union[DataArray]
+"""
+Component data is a :class:`DataArray`.
+"""
+
+SingleDataset = Dict[ComponentType, SingleComponentData]
 """
 A single dataset is a dictionary where the keys are the component types and the values are
-:class:`SingleArray`
+:class:`ComponentData`
 
-- Example: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
+- Example: {"node": :class:`SingleArray`, "line": :class:`SingleColumnarData`}
 """
 
-BatchDataset = Dict[ComponentType, BatchArray]
+BatchDataset = Dict[ComponentType, BatchComponentData]
 """
-A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchArray`
+A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchComponentData`
 
-- Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
+- Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`,
+            "link": :class:`DenseBatchColumnarData`, "transformer": :class:`SparseBatchColumnarData`}
 """
 
 Dataset = Union[SingleDataset, BatchDataset]
@@ -83,8 +190,11 @@ A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
 - Examples:
 
-    - single: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
-    - batch: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
+    - single: {"node": :class:`SingleArray`, "line": :class:`SingleColumnarData`}
+
+    - batch: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`,
+             "link": :class:`DenseBatchColumnarData`, "transformer": :class:`SparseBatchColumnarData`}
+
 """
 
 BatchList = List[SingleDataset]
@@ -150,7 +260,7 @@ A single dataset in native python representation is a dictionary, where the keys
 values are a list of all the instances of such a component. In essence it stores the same information as a
 SingleDataset, but in a native python format, without using numpy.
 
-- Example: 
+- Example:
 
   {
     "node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}], 
@@ -164,7 +274,7 @@ A batch dataset in native python representation is a list of dictionaries, where
 the values are a list of all the instances of such a component. In essence it stores the same information as a
 BatchDataset, but in a native python format, without using numpy. Actually it looks more like the BatchList.
 
-- Example: 
+- Example:
 
   [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
    {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
