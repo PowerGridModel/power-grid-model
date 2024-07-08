@@ -59,11 +59,24 @@ template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, Compl
 
 template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
-                                    PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
+                                    PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
+                                    ComplexValue<sym> const& i_load_gen_bus) {
+    ComplexValue<sym> const i_source_total = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
+    ComplexTensor<sym> y_ref_total{};
+    ComplexValue<sym> i_norton_total{};
     for (Idx const source : sources) {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-        output.source[source].i = dot(y_ref, u_ref - output.u[bus_number]);
+        y_ref_total += y_ref;
+        i_norton_total += dot(y_ref, u_ref);
+    }
+
+    for (Idx const source : sources) {
+        ComplexValue<sym> const u_ref{input.source[source]};
+        ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+        ComplexValue<sym> const i_norton = dot(y_ref, u_ref);
+        ComplexTensor<sym> const y_ref_normalized = y_ref / y_ref_total;
+        output.source[source].i = (i_norton - dot(y_ref_normalized, i_norton_total)) + dot(y_ref_normalized, i_source_total);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
@@ -72,7 +85,8 @@ template <symmetry_tag sym, class LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
-                                      SolverOutput<sym>& output, LoadGenFunc&& load_gen_func) {
+                                      SolverOutput<sym>& output, LoadGenFunc&& load_gen_func,
+                                      ComplexValue<sym>& i_load_gen_bus) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
@@ -93,6 +107,7 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
             throw MissingCaseForEnumError("Power injection", type);
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
+        i_load_gen_bus += output.load_gen[load_gen].i;
     }
 }
 
@@ -114,11 +129,13 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
     output.load_gen.resize(load_gens_per_bus.element_size());
     output.bus_injection.resize(sources_per_bus.size());
 
-    for (auto const& [bus_number, sources, load_gens] : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus)) {
-        calculate_source_result<sym>(sources, bus_number, y_bus, input, output);
-        calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
-    }
     output.bus_injection = y_bus.calculate_injection(output.u);
+    for (auto const& [bus_number, sources, load_gens] : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus)) {
+        ComplexValue<sym> i_load_gen_bus{};
+        calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func, i_load_gen_bus);
+        calculate_source_result<sym>(sources, bus_number, y_bus, input, output, i_load_gen_bus);
+    }
+    
 }
 
 template <symmetry_tag sym>
