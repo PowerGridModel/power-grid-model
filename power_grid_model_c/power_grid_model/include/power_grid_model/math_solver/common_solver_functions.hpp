@@ -76,9 +76,8 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
     ComplexValue<sym> const i_norton_total =
         std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
     for (Idx const source : sources) {
-        ComplexTensor<sym> const y_ref_normalized = dot(y_ref_acc[source], z_ref_total);
-        output.source[source].i =
-            (i_norton_acc[source] - dot(y_ref_acc[source], z_ref_total, i_norton_total)) + dot(y_ref_acc[source], z_ref_total, i_source_total);
+        output.source[source].i = (i_norton_acc[source] - dot(y_ref_acc[source], z_ref_total, i_norton_total)) +
+                                  dot(y_ref_acc[source], z_ref_total, i_source_total);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
