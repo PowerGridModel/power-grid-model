@@ -61,7 +61,8 @@ template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
                                     PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
                                     ComplexValue<sym> const& i_load_gen_bus) {
-    ComplexValue<sym> const i_source_total = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
+    ComplexValue<sym> const i_source_total =
+        conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     ComplexTensor<sym> y_ref_total{};
     ComplexValue<sym> i_norton_total{};
     for (Idx const source : sources) {
@@ -76,7 +77,8 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
         ComplexValue<sym> const i_norton = dot(y_ref, u_ref);
         ComplexTensor<sym> const y_ref_normalized = y_ref / y_ref_total;
-        output.source[source].i = (i_norton - dot(y_ref_normalized, i_norton_total)) + dot(y_ref_normalized, i_source_total);
+        output.source[source].i =
+            (i_norton - dot(y_ref_normalized, i_norton_total)) + dot(y_ref_normalized, i_source_total);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
@@ -120,7 +122,7 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
                                 LoadGenFunc&& load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
-    // call y bus
+    // call y bus //
     output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);
     output.shunt = y_bus.template calculate_shunt_flow<ApplianceSolverOutput<sym>>(output.u);
 
@@ -135,7 +137,6 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
         calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func, i_load_gen_bus);
         calculate_source_result<sym>(sources, bus_number, y_bus, input, output, i_load_gen_bus);
     }
-    
 }
 
 template <symmetry_tag sym>
