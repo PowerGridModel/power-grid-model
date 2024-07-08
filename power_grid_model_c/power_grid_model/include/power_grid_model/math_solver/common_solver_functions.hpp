@@ -65,14 +65,18 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
         conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
     std::vector<ComplexValue<sym>> i_norton_acc(sources.size());
-    for (Idx const source : sources) {
+    std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
+        ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+        return y_ref;
+    });
+    std::ranges::transform(sources, i_norton_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
         ComplexValue<sym> const u_ref{input.source[source]};
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-        y_ref_acc[source] = y_ref;
-        i_norton_acc[source] = dot(y_ref, u_ref);
-    }
+        ;
+        return dot(y_ref, u_ref);
+    });
     ComplexTensor<sym> const y_ref_total = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
-    ComplexTensor<sym> z_ref_total = inv_sym_tensor<sym>(y_ref_total);
+    ComplexTensor<sym> const z_ref_total = inv_sym_tensor<sym>(y_ref_total);
     ComplexValue<sym> const i_norton_total =
         std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
     for (Idx const source : sources) {

@@ -284,9 +284,8 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
     return {(s + m) * det_1, -m * det_1};
 }
 
-// inverse of symmetric tensor
-template <symmetry_tag sym>
-inline ComplexTensor<sym> inv_sym_tensor(ComplexTensor<sym> const& x) {
+// inverse of symmetric tensor //
+template <symmetry_tag sym> inline ComplexTensor<sym> inv_sym_tensor(ComplexTensor<sym> const& x) {
     if constexpr (is_symmetric_v<sym>) {
         return 1.0 / x;
     } else {
