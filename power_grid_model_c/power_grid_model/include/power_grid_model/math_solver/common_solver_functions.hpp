@@ -71,14 +71,14 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
         y_ref_acc[source] = y_ref;
         i_norton_acc[source] = dot(y_ref, u_ref);
     }
-    ComplexTensor<sym> const y_ref_total_inv =
-        1.0 / std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
+    ComplexTensor<sym> const y_ref_total = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
+    ComplexTensor<sym> z_ref_total = inv_sym_tensor<sym>(y_ref_total);
     ComplexValue<sym> const i_norton_total =
         std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
     for (Idx const source : sources) {
-        ComplexTensor<sym> const y_ref_normalized = y_ref_acc[source] * y_ref_total_inv;
+        ComplexTensor<sym> const y_ref_normalized = dot(y_ref_acc[source], z_ref_total);
         output.source[source].i =
-            (i_norton_acc[source] - dot(y_ref_normalized, i_norton_total)) + dot(y_ref_normalized, i_source_total);
+            (i_norton_acc[source] - dot(y_ref_acc[source], z_ref_total, i_norton_total)) + dot(y_ref_acc[source], z_ref_total, i_source_total);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
