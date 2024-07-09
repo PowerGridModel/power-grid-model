@@ -75,28 +75,18 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
         ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
         return dot(y_ref, u_ref);
     });
-    std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) {
-        return source;
-    });
+    std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) { return source; });
     ComplexTensor<sym> const y_ref_total = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
     ComplexTensor<sym> const z_ref_total = inv_sym_tensor<sym>(y_ref_total);
     ComplexValue<sym> const i_norton_total =
         std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
 
-    for (size_t i = 0; i<sources.size(); ++i) {
+    for (size_t i = 0; i < sources.size(); ++i) {
         Idx const source = sources_acc[i];
         output.source[source].i = (i_norton_acc[i] - dot(y_ref_acc[i], z_ref_total, i_norton_total)) +
                                   dot(y_ref_acc[i], z_ref_total, i_source_total);
-        output.source[source].s = output.u[bus_number] * conj(output.source[source].i); 
-    }
-
-
-
-    /*for (Idx const source : sources) {
-        output.source[source].i = (i_norton_acc[source] - dot(y_ref_acc[source], z_ref_total, i_norton_total)) +
-                                  dot(y_ref_acc[source], z_ref_total, i_source_total);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
-    }*/
+    }
 }
 
 template <symmetry_tag sym, class LoadGenFunc>
