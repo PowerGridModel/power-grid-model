@@ -553,6 +553,7 @@ def test_supported_tap_control_side():
     valid = {
         "foo": np.array([(0, 4)], dtype=[("id", "i4"), ("foofoo", "i1")]),
         "bar": np.array([(1, 5)], dtype=[("id", "i4"), ("barbar", "i1")]),
+        "baz": np.array([], dtype=[("id", "i4"), ("bazbaz", "i1")]),
         "regulator": np.array([(2, 0, 6), (3, 1, 7)], dtype=[("id", "i4"), ("regulated", "i4"), ("control", "i1")]),
     }
     errors = all_supported_tap_control_side(
@@ -560,7 +561,7 @@ def test_supported_tap_control_side():
         "regulator",
         "control",
         "regulated",
-        [("foo", "foofoo"), ("bar", "barbar"), ("baz", "bazbaz")],
+        [("foo", "foofoo"), ("bar", "barbar"), ("baz", "bazbaz"), ("bla", "blabla")],
     )
     assert not errors
 
