@@ -28,10 +28,10 @@ def test_validation_exception(errors_to_string_mock: MagicMock):
 def test_assert_valid_input_data(validate_mock: MagicMock):
     validate_mock.return_value = None
     assert_valid_input_data(
-        input_data={"foo": np.array([1])}, calculation_type=CalculationType.state_estimation, symmetric=False
+        input_data={"foo": np.array([1])}, calculation_type=CalculationType.state_estimation, symmetric=False  # type: ignore
     )
     validate_mock.assert_called_once_with(
-        input_data={"foo": np.array([1])}, calculation_type=CalculationType.state_estimation, symmetric=False
+        input_data={"foo": np.array([1])}, calculation_type=CalculationType.state_estimation, symmetric=False  # type: ignore
     )
 
     validate_mock.return_value = [ValidationError()]
@@ -42,15 +42,15 @@ def test_assert_valid_input_data(validate_mock: MagicMock):
 @patch("power_grid_model.validation.assertions.validate_batch_data")
 def test_assert_valid_batch_data(validate_mock: MagicMock):
     validate_mock.return_value = None
-    assert_valid_batch_data(
-        input_data={"foo": np.array([1])},
-        update_data={"bar": np.array([2])},
+    assert_valid_batch_data(  # type: ignore
+        input_data={"foo": np.array([1])},  # type: ignore
+        update_data={"bar": np.array([2])},  # type: ignore
         calculation_type=CalculationType.state_estimation,
         symmetric=False,
     )
-    validate_mock.assert_called_once_with(
-        input_data={"foo": np.array([1])},
-        update_data={"bar": np.array([2])},
+    validate_mock.assert_called_once_with(  # type: ignore
+        input_data={"foo": np.array([1])},  # type: ignore
+        update_data={"bar": np.array([2])},  # type: ignore
         calculation_type=CalculationType.state_estimation,
         symmetric=False,
     )

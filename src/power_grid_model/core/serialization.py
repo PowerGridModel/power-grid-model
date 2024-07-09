@@ -9,10 +9,16 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
-from typing import Dict, Mapping, Optional, Union
+from typing import Mapping, Optional, Union
 
 import numpy as np
 
+from power_grid_model.core.dataset_definitions import (
+    ComponentType,
+    DatasetType,
+    _map_to_component_types,
+    _str_to_datatype,
+)
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import (
@@ -23,6 +29,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
+from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridSerializationError
 
 
@@ -63,7 +70,7 @@ class Deserializer:
         if hasattr(self, "_deserializer"):
             pgc.destroy_deserializer(self._deserializer)
 
-    def load(self) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
+    def load(self) -> Dataset:
         """
         Load the deserialized data to a new dataset.
 
@@ -83,15 +90,21 @@ class Serializer(ABC):
     Serializer for the Power grid model
     """
 
-    _data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]]
+    _data: Union[
+        Mapping[ComponentType, np.ndarray],
+        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+    ]
     _dataset: CConstDataset
     _serializer: SerializerPtr
 
     def __new__(
         cls,
-        data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
+        data: Union[
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+        ],
         serialization_type: SerializationType,
-        dataset_type: Optional[str] = None,
+        dataset_type: Optional[DatasetType] = None,
     ):
         instance = super().__new__(cls)
 
@@ -197,8 +210,11 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
 
     def __new__(
         cls,
-        data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
-        dataset_type: Optional[str] = None,
+        data: Union[
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+        ],
+        dataset_type: Optional[DatasetType] = None,
     ):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
@@ -210,13 +226,16 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
 
     def __new__(
         cls,
-        data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
-        dataset_type: Optional[str] = None,
+        data: Union[
+            Mapping[ComponentType, np.ndarray],
+            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+        ],
+        dataset_type: Optional[DatasetType] = None,
     ):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
-def json_deserialize(data: Union[str, bytes]) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def json_deserialize(data: Union[str, bytes]) -> Dataset:
     """
     Load serialized JSON data to a new dataset.
 
@@ -236,8 +255,11 @@ def json_deserialize(data: Union[str, bytes]) -> Dict[str, Union[np.ndarray, Dic
 
 
 def json_serialize(
-    data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
-    dataset_type: Optional[str] = None,
+    data: Union[
+        Mapping[ComponentType, np.ndarray],
+        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+    ],
+    dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
     indent: int = 2,
 ) -> str:
@@ -261,12 +283,14 @@ def json_serialize(
     Returns:
         A serialized string containing the dataset.
     """
+    data = _map_to_component_types(data)
+    dataset_type = _str_to_datatype(dataset_type)
     result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
     return result
 
 
-def msgpack_deserialize(data: bytes) -> Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]:
+def msgpack_deserialize(data: bytes) -> Dataset:
     """
     Load serialized msgpack data to a new dataset.
 
@@ -286,8 +310,11 @@ def msgpack_deserialize(data: bytes) -> Dict[str, Union[np.ndarray, Dict[str, np
 
 
 def msgpack_serialize(
-    data: Union[Mapping[str, np.ndarray], Mapping[str, Union[np.ndarray, Mapping[str, np.ndarray]]]],
-    dataset_type: Optional[str] = None,
+    data: Union[
+        Mapping[ComponentType, np.ndarray],
+        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+    ],
+    dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
 ) -> bytes:
     """
@@ -308,6 +335,8 @@ def msgpack_serialize(
     Returns:
         A serialized string containing the dataset.
     """
+    data = _map_to_component_types(data)
+    dataset_type = _str_to_datatype(dataset_type)
     result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()
     return result

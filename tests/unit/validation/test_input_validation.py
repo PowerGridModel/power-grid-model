@@ -7,7 +7,16 @@ from typing import Dict
 import numpy as np
 import pytest
 
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, MeasuredTerminalType, WindingType, initialize_array
+from power_grid_model import (
+    Branch3Side,
+    BranchSide,
+    ComponentType,
+    DatasetType,
+    LoadGenType,
+    MeasuredTerminalType,
+    WindingType,
+    initialize_array,
+)
 from power_grid_model.enum import CalculationType, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
@@ -31,12 +40,12 @@ from power_grid_model.validation.utils import nan_type
 
 
 @pytest.fixture
-def input_data() -> Dict[str, np.ndarray]:
-    node = initialize_array("input", "node", 4)
+def input_data() -> Dict[ComponentType, np.ndarray]:
+    node = initialize_array(DatasetType.input, ComponentType.node, 4)
     node["id"] = [0, 2, 1, 2]
     node["u_rated"] = [10.5e3, 10.5e3, 0, 10.5e3]
 
-    line = initialize_array("input", "line", 3)
+    line = initialize_array(DatasetType.input, ComponentType.line, 3)
     line["id"] = [3, 4, 5]
     line["from_node"] = [0, -1, 2]
     line["to_node"] = [2, 1, 8]
@@ -48,14 +57,14 @@ def input_data() -> Dict[str, np.ndarray]:
     line["x0"] = [0, 0, 50]
     line["i_n"] = [-3, 0, 50]
 
-    link = initialize_array("input", "link", 2)
+    link = initialize_array(DatasetType.input, ComponentType.link, 2)
     link["id"] = [12, 13]
     link["from_node"] = [0, -1]
     link["to_node"] = [8, 1]
     link["from_status"] = [3, 1]
     link["to_status"] = [0, 4]
 
-    transformer = initialize_array("input", "transformer", 3)
+    transformer = initialize_array(DatasetType.input, ComponentType.transformer, 3)
     transformer["id"] = [1, 14, 15]
     transformer["from_node"] = [1, 7, 2]  # TODO check from node 1 to node 1
     transformer["to_node"] = [1, 8, 1]
@@ -82,7 +91,7 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer["pk_min"] = [300.0, 0.0, nan_type("transformer", "pk_min")]
     transformer["pk_max"] = [400.0, -0.1, nan_type("transformer", "pk_max")]
 
-    three_winding_transformer = initialize_array("input", "three_winding_transformer", 4)
+    three_winding_transformer = initialize_array(DatasetType.input, ComponentType.three_winding_transformer, 4)
     three_winding_transformer["id"] = [1, 28, 29, 30]
     three_winding_transformer["node_1"] = [0, 1, 9, 2]
     three_winding_transformer["node_2"] = [1, 15, 1, 0]
@@ -158,7 +167,7 @@ def input_data() -> Dict[str, np.ndarray]:
     three_winding_transformer["pk_13_max"] = [-40, nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
     three_winding_transformer["pk_23_max"] = [-120, nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
 
-    transformer_tap_regulator = initialize_array("input", "transformer_tap_regulator", 5)
+    transformer_tap_regulator = initialize_array(DatasetType.input, ComponentType.transformer_tap_regulator, 5)
     transformer_tap_regulator["id"] = [51, 52, 53, 54, 1]
     transformer_tap_regulator["status"] = [0, -1, 2, 1, 5]
     transformer_tap_regulator["regulated_object"] = [14, 15, 28, 14, 2]
@@ -168,7 +177,7 @@ def input_data() -> Dict[str, np.ndarray]:
     transformer_tap_regulator["line_drop_compensation_r"] = [0.0, -1.0, 1.0, 0.0, 2.0]
     transformer_tap_regulator["line_drop_compensation_x"] = [0.0, 4.0, 2.0, 0.0, -4.0]
 
-    source = initialize_array("input", "source", 3)
+    source = initialize_array(DatasetType.input, ComponentType.source, 3)
     source["id"] = [16, 17, 1]
     source["node"] = [10, 1, 2]
     source["status"] = [0, -1, 2]
@@ -177,42 +186,42 @@ def input_data() -> Dict[str, np.ndarray]:
     source["rx_ratio"] = [0.0, -30.0, 300.0]
     source["z01_ratio"] = [-1.0, 0.0, 200.0]
 
-    shunt = initialize_array("input", "shunt", 3)
+    shunt = initialize_array(DatasetType.input, ComponentType.shunt, 3)
     shunt["id"] = [18, 19, 1]
     shunt["node"] = [10, 1, 2]
     shunt["status"] = [0, -1, 2]
 
-    sym_load = initialize_array("input", "sym_load", 3)
+    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 3)
     sym_load["id"] = [1, 20, 21]
     sym_load["type"] = [1, 0, 5]
     sym_load["node"] = [10, 1, 2]
     sym_load["status"] = [0, -1, 2]
 
-    sym_gen = initialize_array("input", "sym_gen", 3)
+    sym_gen = initialize_array(DatasetType.input, ComponentType.sym_gen, 3)
     sym_gen["id"] = [1, 22, 23]
     sym_gen["type"] = [2, -1, 1]
     sym_gen["node"] = [10, 1, 2]
     sym_gen["status"] = [0, -1, 2]
 
-    asym_load = initialize_array("input", "asym_load", 3)
+    asym_load = initialize_array(DatasetType.input, ComponentType.asym_load, 3)
     asym_load["id"] = [1, 24, 25]
     asym_load["type"] = [5, 0, 2]
     asym_load["node"] = [10, 1, 2]
     asym_load["status"] = [0, -1, 2]
 
-    asym_gen = initialize_array("input", "asym_gen", 3)
+    asym_gen = initialize_array(DatasetType.input, ComponentType.asym_gen, 3)
     asym_gen["id"] = [1, 26, 27]
     asym_gen["type"] = [-1, 5, 2]
     asym_gen["node"] = [10, 1, 2]
     asym_gen["status"] = [0, -1, 2]
 
-    sym_voltage_sensor = initialize_array("input", "sym_voltage_sensor", 4)
+    sym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.sym_voltage_sensor, 4)
     sym_voltage_sensor["id"] = [7, 8, 9, 10]
     sym_voltage_sensor["measured_object"] = [2, 3, 1, 200]
     sym_voltage_sensor["u_measured"] = [0.0, 10.4e3, 10.6e3, -20.0]
     sym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0]
 
-    asym_voltage_sensor = initialize_array("input", "asym_voltage_sensor", 4)
+    asym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.asym_voltage_sensor, 4)
     asym_voltage_sensor["id"] = [7, 8, 9, 10]
     asym_voltage_sensor["measured_object"] = [2, 3, 1, 200]
     asym_voltage_sensor["u_measured"] = [
@@ -223,19 +232,19 @@ def input_data() -> Dict[str, np.ndarray]:
     ]
     asym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0]
 
-    sym_power_sensor = initialize_array("input", "sym_power_sensor", 4)
+    sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 4)
     sym_power_sensor["id"] = [7, 8, 9, 10]
     sym_power_sensor["measured_object"] = [12, 3, 13, 200]
     sym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
     sym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
 
-    asym_power_sensor = initialize_array("input", "asym_power_sensor", 4)
+    asym_power_sensor = initialize_array(DatasetType.input, ComponentType.asym_power_sensor, 4)
     asym_power_sensor["id"] = [7, 8, 9, 10]
     asym_power_sensor["measured_object"] = [12, 3, 13, 200]
     asym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
 
-    fault = initialize_array("input", "fault", 20)
+    fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
     fault["id"] = [1] + list(range(32, 51))
     fault["status"] = [0, -1, 2] + 17 * [1]
     fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4]
@@ -245,23 +254,23 @@ def input_data() -> Dict[str, np.ndarray]:
     fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "x_f")]
 
     data = {
-        "node": node,
-        "line": line,
-        "link": link,
-        "transformer": transformer,
-        "three_winding_transformer": three_winding_transformer,
-        "transformer_tap_regulator": transformer_tap_regulator,
-        "source": source,
-        "shunt": shunt,
-        "sym_load": sym_load,
-        "sym_gen": sym_gen,
-        "asym_load": asym_load,
-        "asym_gen": asym_gen,
-        "sym_voltage_sensor": sym_voltage_sensor,
-        "asym_voltage_sensor": asym_voltage_sensor,
-        "sym_power_sensor": sym_power_sensor,
-        "asym_power_sensor": asym_power_sensor,
-        "fault": fault,
+        ComponentType.node: node,
+        ComponentType.line: line,
+        ComponentType.link: link,
+        ComponentType.transformer: transformer,
+        ComponentType.three_winding_transformer: three_winding_transformer,
+        ComponentType.transformer_tap_regulator: transformer_tap_regulator,
+        ComponentType.source: source,
+        ComponentType.shunt: shunt,
+        ComponentType.sym_load: sym_load,
+        ComponentType.sym_gen: sym_gen,
+        ComponentType.asym_load: asym_load,
+        ComponentType.asym_gen: asym_gen,
+        ComponentType.sym_voltage_sensor: sym_voltage_sensor,
+        ComponentType.asym_voltage_sensor: asym_voltage_sensor,
+        ComponentType.sym_power_sensor: sym_power_sensor,
+        ComponentType.asym_power_sensor: asym_power_sensor,
+        ComponentType.fault: fault,
     }
     return data
 
@@ -272,50 +281,50 @@ def test_validate_input_data_sym_calculation(input_data):
     assert (
         MultiComponentNotUniqueError(
             [
-                ("asym_gen", "id"),
-                ("asym_load", "id"),
-                ("asym_power_sensor", "id"),
-                ("asym_voltage_sensor", "id"),
-                ("node", "id"),
-                ("shunt", "id"),
-                ("source", "id"),
-                ("sym_gen", "id"),
-                ("sym_load", "id"),
-                ("sym_power_sensor", "id"),
-                ("sym_voltage_sensor", "id"),
-                ("transformer", "id"),
-                ("three_winding_transformer", "id"),
-                ("fault", "id"),
-                ("transformer_tap_regulator", "id"),
+                (ComponentType.asym_gen, "id"),
+                (ComponentType.asym_load, "id"),
+                (ComponentType.asym_power_sensor, "id"),
+                (ComponentType.asym_voltage_sensor, "id"),
+                (ComponentType.node, "id"),
+                (ComponentType.shunt, "id"),
+                (ComponentType.source, "id"),
+                (ComponentType.sym_gen, "id"),
+                (ComponentType.sym_load, "id"),
+                (ComponentType.sym_power_sensor, "id"),
+                (ComponentType.sym_voltage_sensor, "id"),
+                (ComponentType.transformer, "id"),
+                (ComponentType.three_winding_transformer, "id"),
+                (ComponentType.fault, "id"),
+                (ComponentType.transformer_tap_regulator, "id"),
             ],
             [
-                ("asym_gen", 1),
-                ("asym_load", 1),
-                ("asym_power_sensor", 7),
-                ("asym_power_sensor", 8),
-                ("asym_power_sensor", 9),
-                ("asym_power_sensor", 10),
-                ("asym_voltage_sensor", 7),
-                ("asym_voltage_sensor", 8),
-                ("asym_voltage_sensor", 9),
-                ("asym_voltage_sensor", 10),
-                ("node", 1),
-                ("shunt", 1),
-                ("source", 1),
-                ("sym_gen", 1),
-                ("sym_load", 1),
-                ("sym_power_sensor", 7),
-                ("sym_power_sensor", 8),
-                ("sym_power_sensor", 9),
-                ("sym_power_sensor", 10),
-                ("sym_voltage_sensor", 7),
-                ("sym_voltage_sensor", 8),
-                ("sym_voltage_sensor", 9),
-                ("sym_voltage_sensor", 10),
-                ("transformer", 1),
-                ("three_winding_transformer", 1),
-                ("fault", 1),
-                ("transformer_tap_regulator", 1),
+                (ComponentType.asym_gen, 1),
+                (ComponentType.asym_load, 1),
+                (ComponentType.asym_power_sensor, 7),
+                (ComponentType.asym_power_sensor, 8),
+                (ComponentType.asym_power_sensor, 9),
+                (ComponentType.asym_power_sensor, 10),
+                (ComponentType.asym_voltage_sensor, 7),
+                (ComponentType.asym_voltage_sensor, 8),
+                (ComponentType.asym_voltage_sensor, 9),
+                (ComponentType.asym_voltage_sensor, 10),
+                (ComponentType.node, 1),
+                (ComponentType.shunt, 1),
+                (ComponentType.source, 1),
+                (ComponentType.sym_gen, 1),
+                (ComponentType.sym_load, 1),
+                (ComponentType.sym_power_sensor, 7),
+                (ComponentType.sym_power_sensor, 8),
+                (ComponentType.sym_power_sensor, 9),
+                (ComponentType.sym_power_sensor, 10),
+                (ComponentType.sym_voltage_sensor, 7),
+                (ComponentType.sym_voltage_sensor, 8),
+                (ComponentType.sym_voltage_sensor, 9),
+                (ComponentType.sym_voltage_sensor, 10),
+                (ComponentType.transformer, 1),
+                (ComponentType.three_winding_transformer, 1),
+                (ComponentType.fault, 1),
+                (ComponentType.transformer_tap_regulator, 1),
             ],
         )
         in validation_errors
@@ -600,13 +609,13 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
 
 def test_fault(input_data):
     validation_errors = validate_input_data(input_data, calculation_type=CalculationType.short_circuit)
-    assert InvalidEnumValueError("fault", "fault_type", [50], FaultType) in validation_errors
-    assert InvalidEnumValueError("fault", "fault_phase", [50], FaultPhase) in validation_errors
-    assert FaultPhaseError("fault", ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
-    assert NotGreaterOrEqualError("fault", "r_f", [1], 0) in validation_errors
+    assert InvalidEnumValueError(ComponentType.fault, "fault_type", [50], FaultType) in validation_errors
+    assert InvalidEnumValueError(ComponentType.fault, "fault_phase", [50], FaultPhase) in validation_errors
+    assert FaultPhaseError(ComponentType.fault, ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
+    assert NotGreaterOrEqualError(ComponentType.fault, "r_f", [1], 0) in validation_errors
     assert (
         NotIdenticalError(
-            "fault",
+            ComponentType.fault,
             "fault_type",
             list(range(32, 51)),
             5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4],
@@ -615,7 +624,7 @@ def test_fault(input_data):
     )
     assert (
         NotIdenticalError(
-            "fault",
+            ComponentType.fault,
             "fault_phase",
             list(range(32, 51)),
             list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7],

@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, FaultType, TapChangingStrategy
 from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation.errors import (
@@ -33,7 +34,7 @@ from power_grid_model.validation.validation import (
     validate_values,
 )
 
-NaN = power_grid_meta_data["input"]["node"].nans["id"]
+NaN = power_grid_meta_data[DatasetType.input][ComponentType.node].nans["id"]
 
 
 def test_assert_valid_data_structure():
@@ -611,7 +612,7 @@ def test_validate_generic_power_sensor__all_terminal_types(
     all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
 ):
     # Act
-    validate_generic_power_sensor(data={}, component="")
+    validate_generic_power_sensor(data={}, component="")  # type: ignore
 
     # Assert
     all_valid_ids.assert_any_call(
@@ -642,7 +643,7 @@ def test_validate_generic_power_sensor__terminal_types(
     all_valid_ids: MagicMock, ref_component: Union[str, List[str]], measured_terminal_type: MeasuredTerminalType
 ):
     # Act
-    validate_generic_power_sensor(data={}, component="")
+    validate_generic_power_sensor(data={}, component="")  # type: ignore
 
     # Assert
     all_valid_ids.assert_any_call(

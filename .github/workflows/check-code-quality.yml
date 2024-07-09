@@ -75,3 +75,18 @@ jobs:
             git status --porcelain --untracked-files=no
             exit 1
           fi
+      
+      - name: Check generated code
+        if: success()
+        run: |
+          pip install -r code_generation/requirements.txt
+          python code_generation/code_gen.py
+          if [ -n "$(git status --porcelain)" ]; then
+            echo
+            echo "The following files are outdated or were manually updated:"
+            git status --porcelain
+            exit 1
+          else
+            echo
+            echo "All the generated files are up to date."
+          fi
