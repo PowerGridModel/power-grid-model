@@ -42,7 +42,7 @@ TEST_CASE("Test source") {
     ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
     ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
     ComplexTensor<asymmetric_t> y012;
-    y012 << y1, 0.0, 0.0, 0.0, y1, 0.0, 0.0, 0.0, y0;
+    y012 << y0, 0.0, 0.0, 0.0, y1, 0.0, 0.0, 0.0, y1;
     ComplexTensor<asymmetric_t> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
