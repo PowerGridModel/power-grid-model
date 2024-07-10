@@ -9,6 +9,7 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/exception.hpp"
+#include <numeric>
 
 namespace power_grid_model::math_solver::detail {
 
@@ -63,29 +64,47 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
                                     ComplexValue<sym> const& i_load_gen_bus) {
     ComplexValue<sym> const i_source_total =
         conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
-    std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
-    std::vector<ComplexValue<sym>> i_norton_acc(sources.size());
     std::vector<Idx> sources_acc(sources.size());
-    std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
-        ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-        return y_ref;
-    });
-    std::ranges::transform(sources, i_norton_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
-        ComplexValue<sym> const u_ref{input.source[source]};
-        ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-        return dot(y_ref, u_ref);
-    });
     std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) { return source; });
-    ComplexTensor<sym> const y_ref_total = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
-    ComplexTensor<sym> const z_ref_total = inv_sym_tensor<sym>(y_ref_total);
-    ComplexValue<sym> const i_norton_total =
-        std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
-
-    for (size_t i = 0; i < sources.size(); ++i) {
-        Idx const source = sources_acc[i];
-        output.source[source].i = (i_norton_acc[i] - dot(y_ref_acc[i], z_ref_total, i_norton_total)) +
-                                  dot(y_ref_acc[i], z_ref_total, i_source_total);
-        output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
+    if (sources_acc.size() == 1) {
+        output.source[sources_acc[0]].i = i_source_total;
+        output.source[sources_acc[0]].s = output.u[bus_number] * conj(output.source[sources_acc[0]].i);
+    } else {
+        std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
+        std::vector<ComplexValue<sym>> i_norton_acc(sources.size());
+        std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+            return y_ref;
+        });
+        std::ranges::transform(sources, i_norton_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
+            ComplexValue<sym> const u_ref{input.source[source]};
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+            return dot(y_ref, u_ref);
+        });
+        ComplexTensor<sym> const y_ref_total = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
+        //ComplexTensor<sym> const z_ref_total = inv_sym_tensor<sym>(y_ref_total);
+        //This needs further workout.
+        ComplexTensor<sym> z_ref_total{};
+        if constexpr (is_symmetric_v<sym>) {
+            z_ref_total = 1.0/y_ref_total;
+        } else {
+            z_ref_total = ComplexTensor<sym>{1.0/y_ref_total(0)};
+        }
+        ComplexValue<sym> const i_norton_total =
+            std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
+        for (size_t i = 0; i < sources.size(); ++i) {
+            Idx const source = sources_acc[i];
+            ComplexValue<sym> const aux1 = dot(z_ref_total, i_norton_total);
+            ComplexValue<sym> const u_ref_i{input.source[i]};
+            ComplexValue<sym> aux2 = (u_ref_i - aux1);
+            constexpr auto precision = 20.0 * std::numeric_limits<double>::epsilon();
+            if (max_val(cabs(aux2)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(aux1)))/2.0))) {
+                aux2 = ComplexValue<sym>{0.0};
+            }
+            ComplexValue<sym> const aux3 = dot(dot(y_ref_acc[i], z_ref_total), i_source_total);
+            output.source[source].i = dot(y_ref_acc[i], aux2) + aux3;
+            output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
+        }
     }
 }
 

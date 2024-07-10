@@ -42,7 +42,7 @@ class Source : public Appliance {
         y0_ref_ = y1_ref_ / z01_ratio;
     }
 
-    // getter for calculation param, y_ref
+    /*// getter for calculation param, y_ref  
     template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
         // internal element_admittance
         if constexpr (is_symmetric_v<sym>) {
@@ -51,11 +51,22 @@ class Source : public Appliance {
             ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
             ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
             ComplexTensor<asymmetric_t> y012;
-            y012 << y1_ref_, 0.0, 0.0, 0.0, y1_ref_, 0.0, 0.0, 0.0, y0_ref_;
+            y012 << y0_ref_, 0.0, 0.0, 0.0, y1_ref_, 0.0, 0.0, 0.0, y1_ref_;
+            
             ComplexTensor<asymmetric_t> yabc = dot(sym_matrix, y012, sym_matrix_inv);
             return yabc;
         }
+    }*/
+
+    template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
+        // internal element_admittance
+        if constexpr (is_symmetric_v<sym>) {
+            return y1_ref_;
+        } else {
+            return ComplexTensor<asymmetric_t>{(2.0 * y1_ref_ + y0_ref_) / 3.0, (y0_ref_ - y1_ref_) / 3.0};
+        }
     }
+ 
 
     // setter
     bool set_u_ref(double new_u_ref, double new_u_ref_angle) {
