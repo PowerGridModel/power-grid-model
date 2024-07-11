@@ -42,6 +42,7 @@ class Source : public Appliance {
         y0_ref_ = y1_ref_ / z01_ratio;
     }
 
+    // getter for calculation param, y_ref
     template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
         // internal element_admittance
         if constexpr (is_symmetric_v<sym>) {
