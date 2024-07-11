@@ -6,7 +6,7 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/container.hpp>
-#include <power_grid_model_static/main_model_wrapper.hpp>
+#include <power_grid_model/main_model_wrapper.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
