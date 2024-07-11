@@ -196,11 +196,15 @@ def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[
     Raises:
         IndexError: if default_value is None and there were values in target that were not in source
     """
+
     permutation_sort = np.argsort(source)  # complexity O(N_input * logN_input)
     indices = np.searchsorted(source, target, sorter=permutation_sort)  # complexity O(N_update * logN_input)
 
     if default_value is None:
         return permutation_sort[indices]
+
+    if len(source) == 0:
+        return np.full_like(target, fill_value=default_value)
 
     clipped_indices = np.take(permutation_sort, indices, mode="clip")
     return np.where(source[clipped_indices] == target, permutation_sort[clipped_indices], default_value)
