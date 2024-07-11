@@ -114,6 +114,7 @@ enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
     global_maximum = 2,               // global_maximum = argmax{f(x) \in Range} for x in Domain
     local_minimum = 3,                // local_minimum = Any{argmin{f(x) \in Range}} for x in Domain
     local_maximum = 4,                // local_maximum = Any{argmax{f(x) \in Range}} for x in Domain
+    fast_any = 5,                     // fast_any = Any{f(x) \in Range} for x \in Domain, but faster
 };
 
 } // namespace power_grid_model

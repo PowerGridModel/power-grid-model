@@ -303,7 +303,8 @@ std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_m
     {"disabled", OptimizerStrategy::any},
     {"any_valid_tap", OptimizerStrategy::any},
     {"min_voltage_tap", OptimizerStrategy::global_minimum},
-    {"max_voltage_tap", OptimizerStrategy::global_maximum}};
+    {"max_voltage_tap", OptimizerStrategy::global_maximum},
+    {"fast_any_tap", OptimizerStrategy::fast_any}};
 
 // case parameters
 struct CaseParam {

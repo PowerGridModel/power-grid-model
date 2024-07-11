@@ -218,6 +218,8 @@ enum PGM_TapChangingStrategy {
         2, /**< adjust tap position automatically; optimize for the lower end of the voltage band */
     PGM_tap_changing_strategy_max_voltage_tap =
         3, /**< adjust tap position automatically; optimize for the higher end of the voltage band */
+    PGM_tap_changing_strategy_fast_any_tap =
+        4, /**< adjust tap position automatically; optimize for any value in the voltage band; binary search */
 };
 
 /**
