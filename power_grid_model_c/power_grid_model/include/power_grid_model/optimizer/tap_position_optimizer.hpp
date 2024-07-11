@@ -365,7 +365,14 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
             return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
         });
     }
-
+    IntS get_tap_left() const { return binary_search_.lower_bound; }
+    IntS get_tap_right() const { return binary_search_.upper_bound; }
+    IntS get_current_tap() const { return binary_search_.current; }
+    void set_tap_left(IntS tap_left) { binary_search_.lower_bound = tap_left; }
+    void set_tap_right(IntS tap_right) { binary_search_.upper_bound = tap_right; }
+    void set_current_tap(IntS current_tap) { binary_search_.current = current_tap; }
+    void set_last_down(bool last_down) { binary_search_.last_down = last_down; }
+    bool get_last_down() const { return binary_search_.last_down; }
     template <typename Func>
         requires(std::invocable<Func, TransformerTypes const&> && ...)
     auto apply(Func const& func) const {
@@ -377,6 +384,12 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
 
     Idx2D index_;
     Idx topology_index_;
+    struct BinarySearch {
+        IntS lower_bound; // tap_position_left
+        IntS upper_bound; // tap_position_right
+        IntS current;     // tap_position_middle
+        bool last_down;   // last direction
+    } binary_search_;
 };
 
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
@@ -780,6 +793,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         };
 
         switch (strategy_) {
+        case OptimizerStrategy::fast_any:
+            [[fallthrough]];
         case OptimizerStrategy::any:
             break;
         case OptimizerStrategy::global_maximum:
@@ -836,13 +851,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         requires((std::invocable<Func, TransformerTypes const&> &&
                   std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
                  ...)
-    auto regulate_transformers(Func new_tap_pos,
+    auto regulate_transformers(Func to_new_tap_pos,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
-        auto const get_update = [new_tap_pos = std::move(new_tap_pos),
+        auto const get_update = [to_new_tap_pos = std::move(to_new_tap_pos),
                                  &update_data](transformer_c auto const& transformer) {
-            add_tap_pos_update(new_tap_pos(transformer), transformer, update_data);
+            add_tap_pos_update(to_new_tap_pos(transformer), transformer, update_data);
         };
 
         for (auto const& sub_order : regulator_order) {
