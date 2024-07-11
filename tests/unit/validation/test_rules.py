@@ -27,6 +27,7 @@ from power_grid_model.validation.errors import (
     NotUniqueError,
     SameValueError,
     TwoValuesZeroError,
+    UnsupportedTransformerRegulationError,
 )
 from power_grid_model.validation.rules import (
     all_between,
@@ -44,6 +45,7 @@ from power_grid_model.validation.rules import (
     all_less_than,
     all_not_two_values_equal,
     all_not_two_values_zero,
+    all_supported_tap_control_side,
     all_unique,
     all_valid_clocks,
     all_valid_enum_values,
@@ -545,3 +547,35 @@ def test_all_valid_fault_phases():
     errors = all_valid_fault_phases(invalid, "fault", "foo", "bar")
     assert len(errors) == 1
     assert FaultPhaseError("fault", fields=["foo", "bar"], ids=list(range(26))) in errors
+
+
+def test_supported_tap_control_side():
+    valid = {
+        "foo": np.array([(0, 4)], dtype=[("id", "i4"), ("foofoo", "i1")]),
+        "bar": np.array([(1, 5)], dtype=[("id", "i4"), ("barbar", "i1")]),
+        "baz": np.array([], dtype=[("id", "i4"), ("bazbaz", "i1")]),
+        "regulator": np.array([(2, 0, 6), (3, 1, 7)], dtype=[("id", "i4"), ("regulated", "i4"), ("control", "i1")]),
+    }
+    errors = all_supported_tap_control_side(
+        valid,
+        "regulator",
+        "control",
+        "regulated",
+        [("foo", "foofoo"), ("bar", "barbar"), ("baz", "bazbaz"), ("bla", "blabla")],
+    )
+    assert not errors
+
+    invalid = {
+        "foo": np.array([(0, 4)], dtype=[("id", "i4"), ("foofoo", "i1")]),
+        "bar": np.array([(1, 5)], dtype=[("id", "i4"), ("barbar", "i1")]),
+        "regulator": np.array([(2, 0, 4), (3, 1, 5)], dtype=[("id", "i4"), ("regulated", "i4"), ("control", "i1")]),
+    }
+    errors = all_supported_tap_control_side(
+        invalid,
+        "regulator",
+        "control",
+        "regulated",
+        [("foo", "foofoo"), ("bar", "barbar"), ("baz", "bazbaz")],
+    )
+    assert len(errors) == 1
+    assert UnsupportedTransformerRegulationError(component="regulator", fields=["control", "regulated"], ids=[2, 3])
