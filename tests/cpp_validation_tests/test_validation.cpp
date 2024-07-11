@@ -533,7 +533,7 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-constexpr bool should_skip_test(CaseParam const& param) { return param.fail; }
+constexpr bool should_skip_test(CaseParam const& param) { return !param.fail; }
 
 template <typename T>
     requires std::invocable<std::remove_cvref_t<T>>

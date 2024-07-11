@@ -1,0 +1,14 @@
+{
+  "calculation_method": "newton_raphson",
+  "rtol": 1e-05,
+  "atol": 1e-05,
+  "extra_params": {
+    "newton_raphson": {
+      "experimental_features": "enabled",
+      "fail": {
+        "reason": "Experimental feature under development",
+        "raises": "AssertionError"
+      }
+    }
+  }
+}
