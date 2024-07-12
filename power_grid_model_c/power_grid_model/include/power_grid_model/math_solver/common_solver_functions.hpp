@@ -65,7 +65,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
     ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     std::vector<Idx> sources_acc(sources.size());
     std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) { return source; });
-    if (sources_acc.size() == 0) {
+    if (sources_acc.empty()) {
         ; // Do nothing
     } else if (sources_acc.size() == 1) {
         output.source[sources_acc[0]].i = i_inj_t;
@@ -74,8 +74,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
         std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
         std::vector<ComplexValue<sym>> i_ref_acc(sources.size());
         std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
-            ComplexTensor<sym> y_ref = y_bus.math_model_param().source_param[source];
-            return y_ref;
+            return y_bus.math_model_param().source_param[source];
         });
         std::ranges::transform(sources, i_ref_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
             ComplexValue<sym> const u_ref{input.source[source]};
@@ -101,7 +100,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             ComplexValue<sym> const u_ref_t = dot(z_ref_t, i_ref_t);
             ComplexValue<sym> const u_ref_i{input.source[i]};
             ComplexValue<sym> delta_u = (u_ref_i - u_ref_t);
-            // Arbitrary precision threshold (20.0) needs further discussion.
+            // Arbitrary precision threshold (20.0) needs further discussion, as well as this whole cutoff.
             constexpr auto precision = 20.0 * std::numeric_limits<double>::epsilon();
             if (max_val(cabs(delta_u)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(u_ref_t))) / 2.0))) {
                 delta_u = ComplexValue<sym>{0.0};
