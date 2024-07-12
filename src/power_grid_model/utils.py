@@ -311,15 +311,12 @@ def self_test():
     Perform a self-test of the Power Grid Model functionality to check if the installation was successful
     and there are no build errors, segfaults, undefined symbols, etc.
 
+    This function is designed to validate the basic functionality of data serialization,
+    model instantiation, power flow calculation, and serialization of results using the
+    Power Grid Model library.
 
     Raises:
-        AssertionError: If the output data is empty or if the calculation results gives garbage value.
-
-    Notes:
-        This function is designed to validate the basic functionality of data
-        serialization, model instantiation, power flow calculation, and serialization
-        of results using the Power Grid Model library.
-
+        AssertionError: If the output data is empty or if the calculation results are incorrect.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a simple JSON input data file in the temporary directory
