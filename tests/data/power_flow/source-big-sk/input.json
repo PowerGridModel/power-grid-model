@@ -39,7 +39,8 @@
         "status": 0,
         "u_ref": 1.0,
         "sk": 2e50,
-        "rx_ratio": 0.1
+        "rx_ratio": 0.1,
+        "z01_ratio": 2.0
       },
       {
         "id": 7,
@@ -47,7 +48,8 @@
         "status": 0,
         "u_ref": 1.0,
         "sk": 3e50,
-        "rx_ratio": 0.1
+        "rx_ratio": 0.1,
+        "z01_ratio": 2.0
       }
     ],
     "sym_load": [

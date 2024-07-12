@@ -66,14 +66,16 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
         conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     std::vector<Idx> sources_acc(sources.size());
     std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) { return source; });
-    if (sources_acc.size() == 1) {
+    if (sources_acc.size() == 0) {
+        ; // Do nothing
+    } else if (sources_acc.size() == 1) {
         output.source[sources_acc[0]].i = i_source_total;
         output.source[sources_acc[0]].s = output.u[bus_number] * conj(output.source[sources_acc[0]].i);
     } else {
         std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
         std::vector<ComplexValue<sym>> i_norton_acc(sources.size());
         std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
-            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+            ComplexTensor<sym> y_ref = y_bus.math_model_param().source_param[source];
             return y_ref;
         });
         std::ranges::transform(sources, i_norton_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
