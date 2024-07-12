@@ -7,7 +7,7 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
-import os
+import math
 import tempfile
 import warnings
 from pathlib import Path
@@ -332,9 +332,8 @@ def self_test():
             },
         }
 
-        input_file_path = os.path.join(temp_dir, "input_data.json")
-        with open(input_file_path, "w", encoding="utf-8") as input_file:
-            json.dump(input_data, input_file)
+        input_file_path = Path(temp_dir) / "input_data.json"
+        input_file_path.write_text(json.dumps(input_data))
 
         # Load the created JSON input data file (deserialize)
         deserialized_data = json_deserialize_from_file(input_file_path)
@@ -346,11 +345,15 @@ def self_test():
         output_data = model.calculate_power_flow(calculation_method=CalculationMethod.linear)
 
         # Write the calculation result to a file in the temporary directory
-        output_file_path = os.path.join(temp_dir, "output_data.json")
+        output_file_path = Path(temp_dir) / "output_data.json"
+
         json_serialize_to_file(output_file_path, output_data)
 
         # Verify that the written output is correct
         with open(output_file_path, "r", encoding="utf-8") as output_file:
             output_data = json.load(output_file)
-            assert output_data is not None, "Output data is empty"
-            assert output_data["data"]["node"][0]["u"] == 10000, "Wrong Calculation"
+
+        assert output_data is not None, "Output data is empty"
+        assert math.isclose(
+            output_data["data"]["node"][0]["u"], input_data["data"]["node"][0]["u_rated"], abs_tol=1e-9
+        ), "Wrong Calculation"
