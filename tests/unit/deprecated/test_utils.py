@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from power_grid_model.data_types import Dataset
-from power_grid_model.utils import export_json_data
+from power_grid_model.utils import export_json_data, self_test
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -37,3 +37,7 @@ def test_export_json_data__deprecated_format(convert_mock: MagicMock, open_mock:
     convert_mock.assert_called_once_with(data={}, use_compact_list=False, indent=2)
     handle = open_mock()
     handle.write.assert_called_once_with('{"foo": [{"val": 123}]}')
+
+
+def test_self_test():
+    self_test()

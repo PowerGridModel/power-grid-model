@@ -7,12 +7,15 @@ This file contains all the helper functions for testing purpose
 """
 
 import json
+import os
+import tempfile
 import warnings
 from pathlib import Path
 from typing import Optional, cast as cast_type
 
 import numpy as np
 
+from power_grid_model import CalculationMethod, PowerGridModel
 from power_grid_model._utils import (
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
@@ -301,3 +304,56 @@ def _compatibility_deprecated_import_json_data(json_file: Path, data_type: Datas
         raise PowerGridSerializationError("An internal error occured during deserialization")
 
     return result
+
+
+def self_test():
+    """
+    Perform a self-test of the Power Grid Model functionality to check if the installation was successful
+    and there are no build errors, segfaults, undefined symbols, etc.
+
+
+    Raises:
+        AssertionError: If the output data is empty or if the calculation results gives garbage value.
+
+    Notes:
+        This function is designed to validate the basic functionality of data
+        serialization, model instantiation, power flow calculation, and serialization
+        of results using the Power Grid Model library.
+
+    """
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create a simple JSON input data file in the temporary directory
+        input_data = {
+            "version": "1.0",
+            "type": "input",
+            "is_batch": False,
+            "attributes": {},
+            "data": {
+                "node": [{"id": 1, "u_rated": 10000}],
+                "source": [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
+                "sym_load": [{"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}],
+            },
+        }
+
+        input_file_path = os.path.join(temp_dir, "input_data.json")
+        with open(input_file_path, "w", encoding="utf-8") as input_file:
+            json.dump(input_data, input_file)
+
+        # Load the created JSON input data file (deserialize)
+        deserialized_data = json_deserialize_from_file(input_file_path)
+
+        # Create a PowerGridModel instance from the loaded input data
+        model = PowerGridModel(deserialized_data)
+
+        # Run a simple power flow calculation on the created model (linear calculation)
+        output_data = model.calculate_power_flow(calculation_method=CalculationMethod.linear)
+
+        # Write the calculation result to a file in the temporary directory
+        output_file_path = os.path.join(temp_dir, "output_data.json")
+        json_serialize_to_file(output_file_path, output_data)
+
+        # Verify that the written output is correct
+        with open(output_file_path, "r", encoding="utf-8") as output_file:
+            output_data = json.load(output_file)
+            assert output_data is not None, "Output data is empty"
+            assert output_data["data"]["node"][0]["u"] == 10000, "Wrong Calculation"
