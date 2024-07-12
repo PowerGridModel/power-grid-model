@@ -28,7 +28,9 @@ class MainModel {
     // deep copy
     MainModel(MainModel const& other) : impl_{other.impl_ == nullptr ? nullptr : new Impl{*other.impl_}} {}
     MainModel& operator=(MainModel const& other) {
-        impl_.reset(other.impl_ == nullptr ? nullptr : new Impl{*other.impl_});
+        if (this != &other) {
+            impl_.reset(other.impl_ == nullptr ? nullptr : new Impl{*other.impl_});
+        }
         return *this;
     }
     MainModel(MainModel&& other) = default;
