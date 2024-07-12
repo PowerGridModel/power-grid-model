@@ -285,8 +285,6 @@ std::filesystem::path const data_dir{POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR};
 std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
 #endif
 
-using pgm_static::MainModelWrapper;
-
 // method map
 std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"newton_raphson", CalculationMethod::newton_raphson},
@@ -298,8 +296,8 @@ std::map<std::string, CalculationMethod> const calculation_method_mapping = {
 };
 std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
     {"minimum", ShortCircuitVoltageScaling::minimum}, {"maximum", ShortCircuitVoltageScaling::maximum}};
-using CalculationFunc = std::function<BatchParameter(MainModelWrapper&, CalculationMethod, MutableDataset const&,
-                                                     ConstDataset const&, Idx)>;
+using CalculationFunc =
+    std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
 
 std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_mapping = {
     {"disabled", OptimizerStrategy::any},
@@ -336,12 +334,12 @@ CalculationFunc calculation_func(CaseParam const& param) {
     std::string const voltage_scaling = param.short_circuit_voltage_scaling;
 
     auto const get_default_options = [](CalculationMethod calculation_method, Idx threading) {
-        return MainModelWrapper::Options{
+        return MainModel::Options{
             .calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20, .threading = threading};
     };
 
     if (calculation_type == "power_flow"s) {
-        return [param, get_default_options](MainModelWrapper& model, CalculationMethod calculation_method,
+        return [param, get_default_options](MainModel& model, CalculationMethod calculation_method,
                                             MutableDataset const& dataset, ConstDataset const& update_dataset,
                                             Idx threading) {
             auto options = get_default_options(calculation_method, threading);
@@ -356,7 +354,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
         };
     }
     if (calculation_type == "state_estimation"s) {
-        return [sym, get_default_options](MainModelWrapper& model, CalculationMethod calculation_method,
+        return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
                                           MutableDataset const& dataset, ConstDataset const& update_dataset,
                                           Idx threading) {
             if (sym) {
@@ -368,7 +366,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
         };
     }
     if (calculation_type == "short_circuit"s) {
-        return [voltage_scaling, get_default_options](MainModelWrapper& model, CalculationMethod calculation_method,
+        return [voltage_scaling, get_default_options](MainModel& model, CalculationMethod calculation_method,
                                                       MutableDataset const& dataset, ConstDataset const& update_dataset,
                                                       Idx threading) {
             auto options = get_default_options(calculation_method, threading);
@@ -557,7 +555,7 @@ void validate_single_case(CaseParam const& param) {
         auto const result = create_result_dataset(validation_case.input, output_prefix);
 
         // create model and run
-        MainModelWrapper model{50.0, validation_case.input.const_dataset, 0};
+        MainModel model{50.0, validation_case.input.const_dataset, 0};
         CalculationFunc const func = calculation_func(param);
 
         ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
@@ -575,7 +573,7 @@ void validate_batch_case(CaseParam const& param) {
         // create model
         // TODO (mgovers): fix false positive of misc-const-correctness
         // NOLINTNEXTLINE(misc-const-correctness)
-        MainModelWrapper model{50.0, validation_case.input.const_dataset, 0};
+        MainModel model{50.0, validation_case.input.const_dataset, 0};
         auto const n_scenario = static_cast<Idx>(validation_case.update_batch.value().batch_scenarios.size());
         CalculationFunc const func = calculation_func(param);
 
@@ -583,7 +581,7 @@ void validate_batch_case(CaseParam const& param) {
         for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
             CAPTURE(scenario);
 
-            MainModelWrapper model_copy{model};
+            MainModel model_copy{model};
 
             // update and run
             model_copy.update_component<permanent_update_t>(

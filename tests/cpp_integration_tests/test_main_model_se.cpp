@@ -9,8 +9,6 @@
 
 namespace power_grid_model {
 namespace {
-using pgm_static::MainModelWrapper;
-
 constexpr double s3 = sqrt3;
 constexpr double ph = 2.0 / 3.0 * pi;
 
@@ -26,10 +24,9 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                    NewtonRaphsonCalculationMethod) {
     constexpr auto calculation_method = CalculationMethod::calculation_method;
 
-    MainModelWrapper main_model{50.0, meta_data::meta_data_gen::meta_data};
+    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
 
-    auto const options =
-        MainModelWrapper::Options{.calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20};
+    auto const options = MainModel::Options{.calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20};
 
     SUBCASE("State Estimation") {
         SUBCASE("Single Node + Source") {
@@ -315,8 +312,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, Iter
                                complete_asym_sensor_update.size(), nullptr, complete_asym_sensor_update.data());
 
         SUBCASE("State Estimation") {
-            MainModelWrapper test_model{50.0, input_data};
-            MainModelWrapper ref_model{50.0, input_data};
+            MainModel test_model{50.0, input_data};
+            MainModel ref_model{50.0, input_data};
             ref_model.update_component<permanent_update_t>(update_data);
 
             SUBCASE("Symmetric Calculation") {

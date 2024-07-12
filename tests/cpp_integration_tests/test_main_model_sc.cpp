@@ -8,12 +8,9 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
-namespace {
-using pgm_static::MainModelWrapper;
-} // namespace
 
 TEST_CASE("Test main model - short circuit") {
-    MainModelWrapper main_model{50.0, meta_data::meta_data_gen::meta_data};
+    MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
 
     SUBCASE("Single node + source") {
         double const u_rated = 10e3;
@@ -164,7 +161,7 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
         input_data.add_buffer("source", source_input.size(), source_input.size(), nullptr, source_input.data());
         input_data.add_buffer("fault", fault_input.size(), fault_input.size(), nullptr, fault_input.data());
 
-        MainModelWrapper model{50.0, input_data};
+        MainModel model{50.0, input_data};
 
         std::vector<NodeShortCircuitOutput> node_output(2);
 

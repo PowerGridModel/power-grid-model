@@ -8,9 +8,6 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
-namespace {
-using pgm_static::MainModelWrapper;
-}
 
 TEST_CASE("Test main model static") {
     // Cacheable and independent base update data
@@ -32,11 +29,9 @@ TEST_CASE("Test main model static") {
     update_data_independent.add_buffer("link", -1, link_indptr.crbegin()[1], link_indptr.data(), source.data());
     update_data_independent.add_buffer("source", -1, source_indptr.crbegin()[1], source_indptr.data(), source.data());
 
-    SUBCASE("Independent update data") {
-        CHECK(MainModelWrapper::is_update_independent(update_data_independent) == true);
-    }
+    SUBCASE("Independent update data") { CHECK(MainModel::is_update_independent(update_data_independent) == true); }
 
-    SUBCASE("Dependent update data") { CHECK(MainModelWrapper::is_update_independent(update_data_dependent) == false); }
+    SUBCASE("Dependent update data") { CHECK(MainModel::is_update_independent(update_data_dependent) == false); }
 }
 
 } // namespace power_grid_model

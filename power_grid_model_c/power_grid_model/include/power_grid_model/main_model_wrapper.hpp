@@ -66,7 +66,7 @@ class MainModel {
     }
     template <typename CompType, typename MathOutputType, typename OutputType>
     void output_result(MathOutputType const& math_output, std::span<OutputType> target) const {
-        impl().output_result<CompType>(math_output, target);
+        impl().output_result<CompType>(math_output, target.begin());
     }
 
     template <symmetry_tag sym>
@@ -97,7 +97,9 @@ class MainModel {
 
         return impl().calculate_short_circuit<sym>(options);
     }
-    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0);
+    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
+        return impl().calculate_short_circuit(options, result_data, pos);
+    }
     BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
                                            ConstDataset const& update_data) {
         return impl().calculate_short_circuit(options, result_data, update_data);
