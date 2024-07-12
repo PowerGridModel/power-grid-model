@@ -343,7 +343,12 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     template <transformer_c TransformerType>
     TransformerWrapper(std::reference_wrapper<const TransformerType> transformer, Idx2D const& index,
                        Idx topology_index)
-        : transformer_{std::move(transformer)}, index_{index}, topology_index_{topology_index} {}
+        : transformer_{std::move(transformer)}, index_{index}, topology_index_{topology_index} {
+        binary_search_.lower_bound = tap_min();
+        binary_search_.upper_bound = tap_max();
+        binary_search_.current = tap_pos();
+        binary_search_.tap_reverse = tap_max() < tap_min();
+    }
 
     constexpr auto index() const { return index_; }
     constexpr auto topology_index() const { return topology_index_; }
@@ -365,14 +370,53 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
             return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
         });
     }
-    IntS get_tap_left() const { return binary_search_.lower_bound; }
-    IntS get_tap_right() const { return binary_search_.upper_bound; }
-    IntS get_current_tap() const { return binary_search_.current; }
-    void set_tap_left(IntS tap_left) { binary_search_.lower_bound = tap_left; }
-    void set_tap_right(IntS tap_right) { binary_search_.upper_bound = tap_right; }
-    void set_current_tap(IntS current_tap) { binary_search_.current = current_tap; }
-    void set_last_down(bool last_down) { binary_search_.last_down = last_down; }
-    bool get_last_down() const { return binary_search_.last_down; }
+    IntS get_bs_tap_left() const { return binary_search_.lower_bound; }
+    IntS get_bs_tap_right() const { return binary_search_.upper_bound; }
+    IntS get_bs_current_tap() const { return binary_search_.current; }
+    void set_bs_tap_left(IntS tap_left) { binary_search_.lower_bound = tap_left; }
+    void set_bs_tap_right(IntS tap_right) { binary_search_.upper_bound = tap_right; }
+    void set_bs_current_tap(IntS current_tap) { binary_search_.current = current_tap; }
+    void set_bs_last_down(bool last_down) { binary_search_.last_down = last_down; }
+    bool get_bs_last_down() const { return binary_search_.last_down; }
+    bool get_bs_last_check() const { return binary_search_.last_check; }
+    void set_bs_last_check(bool last_check) { binary_search_.last_check = last_check; }
+    bool get_bs_tap_reverse() const { return binary_search_.tap_reverse; }
+    void set_bs_tap_reverse(bool tap_reverse) { binary_search_.tap_reverse = tap_reverse; }
+    void reset_bs() {
+        binary_search_.last_down = false;
+        binary_search_.last_check = false;
+        binary_search_.current = tap_pos();
+        binary_search_.inevitable_run = false;
+        binary_search_.lower_bound = tap_min();
+        binary_search_.upper_bound = tap_max();
+        binary_search_.tap_reverse = tap_max() < tap_min();
+    }
+    bool adjust_bs(bool strategy_max = true) {
+        if (get_bs_last_down()) {
+            set_bs_tap_right(get_bs_current_tap());
+        } else {
+            set_bs_tap_left(get_bs_current_tap());
+        }
+        if (get_bs_tap_left() < get_bs_tap_right()) {
+            bool _max = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
+            IntS tap_pos = search_bs(_max);
+            if (get_bs_current_tap() == tap_pos) {
+                return false;
+            }
+            set_bs_current_tap(tap_pos);
+            return true;
+        }
+        return false;
+    }
+    IntS search_bs(bool strategy_max = true) {
+        auto mid_point = get_bs_tap_left() + (get_bs_tap_right() - get_bs_tap_left()) / 2;
+        if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0) {
+            if (strategy_max) {
+                return mid_point + 1;
+            }
+        }
+        return mid_point;
+    }
     template <typename Func>
         requires(std::invocable<Func, TransformerTypes const&> && ...)
     auto apply(Func const& func) const {
@@ -385,10 +429,13 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     Idx2D index_;
     Idx topology_index_;
     struct BinarySearch {
-        IntS lower_bound; // tap_position_left
-        IntS upper_bound; // tap_position_right
-        IntS current;     // tap_position_middle
-        bool last_down;   // last direction
+        IntS lower_bound;            // tap_position_left
+        IntS upper_bound;            // tap_position_right
+        IntS current;                // tap_position_middle
+        bool last_down = false;      // last direction
+        bool last_check = false;     // last check
+        bool tap_reverse;            // tap direction
+        bool inevitable_run = false; // inevitable run
     } binary_search_;
 };
 
