@@ -56,7 +56,7 @@ class MainModel {
         impl().add_component<CompType>(components);
     }
 
-    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
+    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data) {
         impl().update_component<CacheType>(update_data);
     }
 
@@ -73,9 +73,8 @@ class MainModel {
     MathOutput<std::vector<SolverOutput<sym>>> calculate_power_flow(Options const& options) {
         return impl().calculate_power_flow<sym>(options);
     }
-    template <symmetry_tag sym>
-    void calculate_power_flow(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
-        return impl().calculate_power_flow<sym>(options, result_data, pos);
+    template <symmetry_tag sym> void calculate_power_flow(Options const& options, MutableDataset const& result_data) {
+        return impl().calculate_power_flow<sym>(options, result_data);
     }
     template <symmetry_tag sym>
     BatchParameter calculate_power_flow(Options const& options, MutableDataset const& result_data,
@@ -97,8 +96,8 @@ class MainModel {
 
         return impl().calculate_short_circuit<sym>(options);
     }
-    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
-        return impl().calculate_short_circuit(options, result_data, pos);
+    void calculate_short_circuit(Options const& options, MutableDataset const& result_data) {
+        return impl().calculate_short_circuit(options, result_data);
     }
     BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
                                            ConstDataset const& update_data) {
