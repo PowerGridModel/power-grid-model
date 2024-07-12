@@ -81,14 +81,17 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
             return dot(y_ref, u_ref);
         });
-        ComplexTensor<sym> const y_ref_total = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
-        //ComplexTensor<sym> const z_ref_total = inv_sym_tensor<sym>(y_ref_total);
-        //This needs further workout.
+        ComplexTensor<sym> const y_ref_total =
+            std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
         ComplexTensor<sym> z_ref_total{};
         if constexpr (is_symmetric_v<sym>) {
-            z_ref_total = 1.0/y_ref_total;
+            z_ref_total = 1.0 / y_ref_total;
         } else {
-            z_ref_total = ComplexTensor<sym>{1.0/y_ref_total(0)};
+            DoubleComplex const s = y_ref_total(0);
+            DoubleComplex const m = y_ref_total(1);
+            DoubleComplex const s_z = (2.0 / (3.0 * (s - m))) + (1.0 / (3.0 * (s + (2.0 * m))));
+            DoubleComplex const m_z = (1.0 / (3.0 * (s + (2.0 * m)))) - (1.0 / (3.0 * (s - m)));
+            z_ref_total = ComplexTensor<sym>{s_z, m_z};
         }
         ComplexValue<sym> const i_norton_total =
             std::accumulate(i_norton_acc.begin(), i_norton_acc.end(), ComplexValue<sym>{});
@@ -98,7 +101,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             ComplexValue<sym> const u_ref_i{input.source[i]};
             ComplexValue<sym> aux2 = (u_ref_i - aux1);
             constexpr auto precision = 20.0 * std::numeric_limits<double>::epsilon();
-            if (max_val(cabs(aux2)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(aux1)))/2.0))) {
+            if (max_val(cabs(aux2)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(aux1))) / 2.0))) {
                 aux2 = ComplexValue<sym>{0.0};
             }
             ComplexValue<sym> const aux3 = dot(dot(y_ref_acc[i], z_ref_total), i_source_total);
