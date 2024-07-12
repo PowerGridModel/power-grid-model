@@ -119,12 +119,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // all component count
-    std::map<std::string, Idx> all_component_count() const {
+    std::map<std::string, Idx, std::less<>> all_component_count() const {
         auto const get_comp_count = [this]<typename CT>() -> std::pair<std::string, Idx> {
             return make_pair(std::string{CT::name}, this->component_count<CT>());
         };
         auto const all_count = run_functor_with_all_types_return_array(get_comp_count);
-        std::map<std::string, Idx> result;
+        std::map<std::string, Idx, std::less<>> result;
         for (auto const& [name, count] : all_count) {
             if (count > 0) {
                 // only add if count is greater than 0

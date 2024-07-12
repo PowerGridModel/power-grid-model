@@ -26,22 +26,29 @@ class MainModel {
         : impl_{std::make_unique<Impl>(system_frequency, meta_data)} {};
 
     // deep copy
-    MainModel(MainModel const& other) : impl_{other.impl_ == nullptr ? nullptr : new Impl{*other.impl_}} {}
+    MainModel(MainModel const& other) {
+        if (other.impl_ != nullptr) {
+            impl_.reset(new Impl{*other.impl_});
+        }
+    }
     MainModel& operator=(MainModel const& other) {
         if (this != &other) {
-            impl_.reset(other.impl_ == nullptr ? nullptr : new Impl{*other.impl_});
+            impl_.reset();
+            if (other.impl_ != nullptr) {
+                impl_.reset(new Impl{*other.impl_});
+            }
         }
         return *this;
     }
     MainModel(MainModel&& other) = default;
     MainModel& operator=(MainModel&& /* other */) = default;
-    ~MainModel() = default;
+    ~MainModel() { impl_.reset(); }
 
     static bool is_update_independent(ConstDataset const& update_data) {
         return Impl::is_update_independent(update_data);
     }
 
-    std::map<std::string, Idx> all_component_count() const { return impl().all_component_count(); }
+    std::map<std::string, Idx, std::less<>> all_component_count() const { return impl().all_component_count(); }
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         impl().get_indexer(component_type, id_begin, size, indexer_begin);
     }
