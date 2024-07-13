@@ -436,7 +436,8 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
         bool last_check = false;     // last check
         bool tap_reverse;            // tap direction
         bool inevitable_run = false; // inevitable run
-    } binary_search_;
+    };
+    BinarySearch binary_search_;
 };
 
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
@@ -902,9 +903,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
-        auto const get_update = [to_new_tap_pos = std::move(to_new_tap_pos),
+        auto const get_update = [to_new_tap_pos_func = std::move(to_new_tap_pos),
                                  &update_data](transformer_c auto const& transformer) {
-            add_tap_pos_update(to_new_tap_pos(transformer), transformer, update_data);
+            add_tap_pos_update(to_new_tap_pos_func(transformer), transformer, update_data);
         };
 
         for (auto const& sub_order : regulator_order) {
