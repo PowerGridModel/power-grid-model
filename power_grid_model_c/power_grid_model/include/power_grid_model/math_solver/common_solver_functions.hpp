@@ -90,7 +90,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             return dot(y_ref, u_ref);
         });
         ComplexTensor<sym> const y_ref_t = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
-        ComplexTensor<sym> z_ref_t = inv_y<sym>(y_ref_t); // s_E = 15E, m_Z = 6E truncation errors.
+        ComplexTensor<sym> const z_ref_t = inv_y<sym>(y_ref_t); // s_E = 15E, m_Z = 6E truncation errors.
         ComplexValue<sym> const i_ref_t = std::accumulate(i_ref_acc.begin(), i_ref_acc.end(), ComplexValue<sym>{});
         for (size_t i = 0; i < sources.size(); ++i) {
             Idx const source = sources_acc[i];
