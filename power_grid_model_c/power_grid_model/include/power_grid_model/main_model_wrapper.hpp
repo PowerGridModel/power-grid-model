@@ -28,14 +28,14 @@ class MainModel {
     // deep copy
     MainModel(MainModel const& other) {
         if (other.impl_ != nullptr) {
-            impl_.reset(new Impl{*other.impl_});
+            impl_ = std::make_unique<Impl>(*other.impl_);
         }
     }
     MainModel& operator=(MainModel const& other) {
         if (this != &other) {
             impl_.reset();
             if (other.impl_ != nullptr) {
-                impl_.reset(new Impl{*other.impl_});
+                impl_ = std::make_unique<Impl>(*other.impl_);
             }
         }
         return *this;
