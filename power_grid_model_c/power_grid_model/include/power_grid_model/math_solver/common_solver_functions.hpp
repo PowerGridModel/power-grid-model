@@ -88,18 +88,21 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             DoubleComplex const m = y_ref_t(1); // Off diagonal elements
             // z_ref_t is obtained from: y_ref_t -> y_012 -> z_012 -> z_ref_t
             // s_z, m_z are diagonal and off-diagonal elements of z_ref_t
+            // s_z epsilon (E): 6E + 9E = 15E
             DoubleComplex const s_z = (2.0 / (3.0 * (s - m))) + (1.0 / (3.0 * (s + (2.0 * m))));
+            // m_z epsilon (E): 9E - 3E = 6E
             DoubleComplex const m_z = (1.0 / (3.0 * (s + (2.0 * m)))) - (1.0 / (3.0 * (s - m)));
             z_ref_t = ComplexTensor<sym>{s_z, m_z};
         }
         ComplexValue<sym> const i_ref_t = std::accumulate(i_ref_acc.begin(), i_ref_acc.end(), ComplexValue<sym>{});
         for (size_t i = 0; i < sources.size(); ++i) {
             Idx const source = sources_acc[i];
+            // The resulting error (from the matrix multiplication) for every u_ref_t element is 54E
             ComplexValue<sym> const u_ref_t = dot(z_ref_t, i_ref_t);
             ComplexValue<sym> const u_ref_i{input.source[i]};
             ComplexValue<sym> delta_u = (u_ref_i - u_ref_t);
-            // Arbitrary precision threshold (20.0) needs further discussion, as well as this whole cutoff.
-            constexpr double theta = 20.0;
+            // This truncation needs further discussion.
+            constexpr double theta = 54.0; // From counting floating point operations involving E.
             constexpr auto precision = theta * std::numeric_limits<double>::epsilon();
             if (max_val(cabs(delta_u)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(u_ref_t))) / 2.0))) {
                 delta_u = ComplexValue<sym>{0.0};
