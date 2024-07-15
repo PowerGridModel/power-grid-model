@@ -40,8 +40,8 @@ class MainModel {
         }
         return *this;
     }
-    MainModel(MainModel&& other) { impl_ = std::move(other.impl_); }
-    MainModel& operator=(MainModel&& other) {
+    MainModel(MainModel&& other) noexcept : impl_{std::move(other.impl_)} {}
+    MainModel& operator=(MainModel&& other) noexcept {
         if (this != &other) {
             impl_ = std::move(other.impl_);
         }
