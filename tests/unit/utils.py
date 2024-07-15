@@ -30,7 +30,7 @@ from power_grid_model.errors import (
     PowerGridError,
     PowerGridSerializationError,
 )
-from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
+from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file, self_test
 
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
@@ -307,3 +307,7 @@ def convert_python_to_numpy(data: PythonDataset, data_type: DatasetType) -> Data
             }
         )
     )
+
+
+def test_self_test():
+    self_test()
