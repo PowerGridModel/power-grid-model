@@ -316,7 +316,9 @@ def self_test():
     Power Grid Model library.
 
     Raises:
+        PowerGridSerializationError: if an internal error occured during deserialization.
         AssertionError: If the output data is empty or if the calculation results are incorrect.
+        PowerGridError: if there was an internal error.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a simple JSON input data file in the temporary directory
@@ -337,6 +339,9 @@ def self_test():
 
         # Load the created JSON input data file (deserialize)
         deserialized_data = json_deserialize_from_file(input_file_path)
+
+        if get_dataset_type(deserialized_data) != "input":
+            raise PowerGridSerializationError("An internal error occured during deserialization")
 
         # Create a PowerGridModel instance from the loaded input data
         model = PowerGridModel(deserialized_data)
