@@ -11,6 +11,7 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <numeric>
 
 namespace power_grid_model::meta_data {
 
@@ -291,6 +292,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
     SUBCASE("Buffer query") {
         auto const& dataset_type = test_meta_data_all.datasets.front();
         CAPTURE(std::string_view{dataset_type.name});
+
         SUBCASE("Homogeneous buffer") {
             SUBCASE("Single dataset") {
                 for (auto const elements_per_scenario : {0, 1, 2}) {
@@ -300,7 +302,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     auto dataset = create_dataset(false, 1, dataset_type);
 
                     auto a_buffer = std::vector<A::InputType>(4);
-                    add_homogeneous_buffer(dataset, A::name, total_elements, static_cast<void*>(a_buffer.data()));
+                    add_homogeneous_buffer(dataset, A::name, elements_per_scenario,
+                                           static_cast<void*>(a_buffer.data()));
 
                     CHECK(dataset.template get_buffer_span<input_getter_s, A>().data() == a_buffer.data());
                     CHECK(dataset.template get_buffer_span<input_getter_s, A>().size() == total_elements);
@@ -313,6 +316,11 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     CHECK(dataset.template get_buffer_span<input_getter_s, A>(0).size() == elements_per_scenario);
                     CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(1)), DatasetError);
                     CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(2)), DatasetError);
+
+                    auto const all_scenario_spans = dataset.template get_buffer_span_all_scenarios<input_getter_s, A>();
+                    CHECK(all_scenario_spans.size() == 1);
+                    CHECK(all_scenario_spans[0].data() == a_buffer.data());
+                    CHECK(all_scenario_spans[0].size() == elements_per_scenario);
                 }
             }
             SUBCASE("Batch dataset") {
@@ -335,13 +343,21 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                         CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).size() ==
                               total_elements);
 
+                        auto const all_scenario_spans =
+                            dataset.template get_buffer_span_all_scenarios<input_getter_s, A>();
+                        CHECK(all_scenario_spans.size() == batch_size);
+
                         for (Idx scenario : {0, 1, 2, 3}) {
                             CAPTURE(scenario);
                             if (scenario < batch_size) {
-                                CHECK(dataset.template get_buffer_span<input_getter_s, A>(scenario).data() ==
+                                auto const scenario_span =
+                                    dataset.template get_buffer_span<input_getter_s, A>(scenario);
+
+                                CHECK(scenario_span.data() ==
                                       a_buffer.data() + scenario * elements_per_scenario * sizeof(A::InputType));
-                                CHECK(dataset.template get_buffer_span<input_getter_s, A>(scenario).size() ==
-                                      elements_per_scenario);
+                                CHECK(scenario_span.size() == elements_per_scenario);
+                                CHECK(all_scenario_spans[scenario].data() == scenario_span.data());
+                                CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
                             } else {
                                 CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(scenario)),
                                                 DatasetError);
@@ -350,12 +366,107 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     }
                 }
             }
-            SUBCASE("Duplicate buffer entry") {
-                auto dataset = create_dataset(true, 0, dataset_type);
-                auto a_buffer = std::vector<A::InputType>(1);
+        }
+        SUBCASE("Inomogeneous buffer") {
+            SUBCASE("Single dataset") {
+                for (auto const total_elements : {0, 1, 2}) {
+                    CAPTURE(total_elements);
+
+                    auto dataset = create_dataset(false, 1, dataset_type);
+
+                    auto a_buffer = std::vector<A::InputType>(4);
+                    auto a_indptr = std::vector<Idx>{0, total_elements};
+                    add_inhomogeneous_buffer(dataset, A::name, total_elements, a_indptr.data(),
+                                             static_cast<void*>(a_buffer.data()));
+
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>().data() == a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>().size() == total_elements);
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).data() ==
+                          a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).size() ==
+                          total_elements);
+
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(0).data() == a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(0).size() == total_elements);
+                    CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(1)), DatasetError);
+                    CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(2)), DatasetError);
+
+                    auto const all_scenario_spans = dataset.template get_buffer_span_all_scenarios<input_getter_s, A>();
+                    CHECK(all_scenario_spans.size() == 1);
+                    CHECK(all_scenario_spans[0].data() == a_buffer.data());
+                    CHECK(all_scenario_spans[0].size() == total_elements);
+                }
+            }
+            SUBCASE("Batch dataset") {
+                for (auto const elements_per_scenarios :
+                     {std::vector<Idx>{}, std::vector<Idx>{4}, std::vector<Idx>{1, 1, 2},
+                      std::vector<Idx>{0, 2, 0, 1, 1, 0}, std::vector<Idx>{2, 2}}) {
+                    auto const batch_size = static_cast<Idx>(elements_per_scenarios.size());
+                    auto const total_elements =
+                        std::accumulate(elements_per_scenarios.begin(), elements_per_scenarios.end(), Idx{0});
+                    CAPTURE(batch_size);
+                    CAPTURE(total_elements);
+                    CAPTURE(elements_per_scenarios);
+
+                    auto dataset = create_dataset(true, batch_size, dataset_type);
+
+                    auto a_buffer = std::vector<A::InputType>(total_elements);
+                    auto a_indptr = std::vector<Idx>{};
+                    std::exclusive_scan(elements_per_scenarios.begin(), elements_per_scenarios.end(),
+                                        std::back_insert_iterator(a_indptr), Idx{0});
+                    a_indptr.push_back(total_elements);
+
+                    add_inhomogeneous_buffer(dataset, A::name, total_elements, a_indptr.data(),
+                                             static_cast<void*>(a_buffer.data()));
+
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>().data() == a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>().size() == total_elements);
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).data() ==
+                          a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).size() ==
+                          total_elements);
+
+                    auto const all_scenario_spans = dataset.template get_buffer_span_all_scenarios<input_getter_s, A>();
+                    CHECK(all_scenario_spans.size() == batch_size);
+
+                    for (Idx scenario : {0, 1, 2, 3}) {
+                        CAPTURE(scenario);
+                        if (scenario < batch_size) {
+                            auto const scenario_span = dataset.template get_buffer_span<input_getter_s, A>(scenario);
+
+                            CHECK(scenario_span.data() == a_buffer.data() + a_indptr[scenario] * sizeof(A::InputType));
+                            CHECK(scenario_span.size() == elements_per_scenarios[scenario]);
+                            CHECK(all_scenario_spans[scenario].data() == scenario_span.data());
+                            CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
+                        } else {
+                            CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(scenario)),
+                                            DatasetError);
+                        }
+                    }
+                }
+            }
+        }
+        SUBCASE("Duplicate buffer entry") {
+            auto dataset = create_dataset(true, 0, dataset_type);
+            auto a_buffer = std::vector<A::InputType>(1);
+            auto a_indptr = std::vector<Idx>{0};
+            SUBCASE("Homogeneous buffer") {
                 add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data()));
                 CHECK_THROWS_AS(add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data())),
                                 DatasetError);
+            }
+            SUBCASE("Inhomogeneous buffer") {
+                add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data()));
+                CHECK_THROWS_AS(
+                    add_inhomogeneous_buffer(dataset, A::name, 0, a_indptr.data(), static_cast<void*>(a_buffer.data())),
+                    DatasetError);
+            }
+            SUBCASE("Mixed buffer types") {
+                auto a_indptr = std::vector<Idx>{0, 0};
+                add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data()));
+                CHECK_THROWS_AS(
+                    add_inhomogeneous_buffer(dataset, A::name, 0, a_indptr.data(), static_cast<void*>(a_buffer.data())),
+                    DatasetError);
             }
         }
     }
