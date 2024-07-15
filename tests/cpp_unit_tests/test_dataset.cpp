@@ -6,8 +6,11 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
 #include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/typing.hpp>
 
 #include <doctest/doctest.h>
+
+#include <algorithm>
 
 namespace power_grid_model::meta_data {
 
@@ -115,24 +118,63 @@ DatasetType create_dataset(bool const is_batch, Idx const batch_size, MetaDatase
 } // namespace test
 
 TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDataset, WritableDataset) {
+    std::vector<Idx> fake_data;
+    std::vector<Idx> fake_indptr;
+
     constexpr auto create_dataset = [](bool const is_batch, Idx const batch_size, MetaDataset const& dataset_type) {
         return test::create_dataset<DatasetType>(is_batch, batch_size, dataset_type);
+    };
+    auto const add_buffer = [](DatasetType& dataset, std::string_view name, Idx elements_per_scenario,
+                               Idx total_elements, Idx* indptr, void* data) {
+        if constexpr (std::same_as<DatasetType, WritableDataset>) {
+            dataset.add_component_info(name, elements_per_scenario, total_elements);
+            dataset.set_buffer(name, indptr, data);
+        } else {
+            dataset.add_buffer(name, elements_per_scenario, total_elements, indptr, data);
+        }
+    };
+    auto const add_homogeneous_buffer = [&add_buffer](DatasetType& dataset, std::string_view name,
+                                                      Idx elements_per_scenario, void* data) {
+        add_buffer(dataset, name, elements_per_scenario, elements_per_scenario * dataset.batch_size(), nullptr, data);
+    };
+    auto const add_inhomogeneous_buffer = [&add_buffer](DatasetType& dataset, std::string_view name, Idx total_elements,
+                                                        Idx* indptr, void* data) {
+        add_buffer(dataset, name, -1, total_elements, indptr, data);
+    };
+    auto const add_component_info = [&add_buffer, &fake_data, &fake_indptr](DatasetType& dataset, std::string_view name,
+                                                                            Idx elements_per_scenario,
+                                                                            Idx total_elements) {
+        if constexpr (std::same_as<DatasetType, WritableDataset>) {
+            dataset.add_component_info(name, elements_per_scenario, total_elements);
+        } else {
+            fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), total_elements));
+            if (elements_per_scenario != -1) {
+                add_buffer(dataset, name, elements_per_scenario, total_elements, nullptr,
+                           static_cast<void*>(fake_data.data()));
+            } else {
+                fake_indptr.resize(std::max(narrow_cast<Idx>(fake_indptr.size()), dataset.batch_size() + 1));
+                std::ranges::fill(fake_indptr, Idx{0});
+                fake_indptr.back() = total_elements;
+                add_buffer(dataset, name, elements_per_scenario, total_elements, fake_indptr.data(), fake_data.data());
+            }
+        }
     };
 
     SUBCASE("Constructor") {
         SUBCASE("Single dataset") {
             for (auto const& dataset_type : test_meta_data_all.datasets) {
-                CAPTURE(dataset_type.name);
+                CAPTURE(std::string_view{dataset_type.name});
                 create_dataset(false, 1, dataset_type);
             }
         }
         SUBCASE("Batch dataset") {
             for (auto const& dataset_type : test_meta_data_all.datasets) {
-                CAPTURE(dataset_type.name);
-                for (auto batch_size : {0, 1, 2, -1}) {
+                CAPTURE(std::string_view{dataset_type.name});
+                for (auto batch_size : {0, 1, 2}) {
                     CAPTURE(batch_size);
                     create_dataset(true, batch_size, dataset_type);
                 }
+                CHECK_THROWS_AS(create_dataset(true, -1, dataset_type), DatasetError);
             }
         }
         SUBCASE("Unknown dataset name") {
@@ -141,7 +183,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         }
         SUBCASE("Single dataset with wrong batch size") {
             for (auto const& dataset_type : test_meta_data_all.datasets) {
-                CAPTURE(dataset_type.name);
+                CAPTURE(std::string_view{dataset_type.name});
                 auto const construct = [&dataset_type] {
                     return DatasetType{false, 0, dataset_type.name, test_meta_data_all};
                 };
@@ -152,9 +194,9 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
 
     SUBCASE("Component info") {
         auto const& dataset_type = test_meta_data_all.datasets.front();
-        CAPTURE(dataset_type.name);
+        CAPTURE(std::string_view{dataset_type.name});
 
-        for (auto const batch_size : {-1, 0, 1, 2}) {
+        for (auto const batch_size : {0, 1, 2}) {
             CAPTURE(batch_size);
             auto dataset = create_dataset(true, batch_size, dataset_type);
 
@@ -164,18 +206,171 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 CHECK(dataset.get_description().component_info.empty());
                 CHECK_THROWS_AS(dataset.get_component_info(A::name), DatasetError);
             }
+            SUBCASE("Add homogeneous component info") {
+                for (auto const elements_per_scenario : {0, 1, 2}) {
+                    CAPTURE(elements_per_scenario);
+                    auto const total_elements = elements_per_scenario * batch_size;
+
+                    auto dataset = create_dataset(true, batch_size, dataset_type);
+                    CHECK_FALSE(dataset.contains_component(A::name));
+
+                    add_component_info(dataset, A::name, elements_per_scenario, total_elements);
+                    CHECK(dataset.n_components() == 1);
+                    CHECK(dataset.contains_component(A::name));
+
+                    auto const& component_info = dataset.get_component_info(A::name);
+                    CHECK(component_info.component == &dataset_type.get_component(A::name));
+                    CHECK(component_info.elements_per_scenario == elements_per_scenario);
+                    CHECK(component_info.total_elements == total_elements);
+
+                    auto const& info = dataset.get_description();
+                    CHECK_FALSE(dataset.get_description().component_info.empty());
+                }
+            }
+            SUBCASE("Add inhomogeneous component info") {
+                for (auto const total_elements : {0, 1, 2}) {
+                    CAPTURE(total_elements);
+                    constexpr auto elements_per_scenario = -1;
+
+                    auto dataset = create_dataset(true, batch_size, dataset_type);
+                    add_component_info(dataset, A::name, elements_per_scenario, total_elements);
+                    CHECK(dataset.n_components() == 1);
+                    CHECK(dataset.contains_component(A::name));
+
+                    auto const& component_info = dataset.get_component_info(A::name);
+                    CHECK(component_info.component == &dataset_type.get_component(A::name));
+                    CHECK(component_info.elements_per_scenario == elements_per_scenario);
+                    CHECK(component_info.total_elements == total_elements);
+
+                    auto const& info = dataset.get_description();
+                    CHECK_FALSE(dataset.get_description().component_info.empty());
+                }
+            }
+            SUBCASE("Add unknown component info") {
+                auto dataset = create_dataset(true, batch_size, dataset_type);
+                CHECK_THROWS_AS(add_component_info(dataset, "unknown", 0, 0), std::out_of_range);
+            }
+            SUBCASE("Add duplicate component info") {
+                auto dataset = create_dataset(true, batch_size, dataset_type);
+                CHECK_NOTHROW(add_component_info(dataset, A::name, 0, 0));
+                CHECK_THROWS_AS(add_component_info(dataset, A::name, 0, 0), DatasetError);
+            }
+            SUBCASE("Add inconsistent component info") {
+                auto dataset = create_dataset(true, batch_size, dataset_type);
+                CHECK_THROWS_AS(add_component_info(dataset, A::name, 1, batch_size + 1), DatasetError);
+            }
+        }
+    }
+
+    SUBCASE("Component query") {
+        auto const& dataset_type = test_meta_data_all.datasets.front();
+        CAPTURE(std::string_view{dataset_type.name});
+        auto dataset = create_dataset(true, 1, dataset_type);
+
+        auto const check_has_no_component = [&dataset](std::string_view name) {
+            CHECK(dataset.find_component(name) == DatasetType::invalid_index);
+            CHECK(dataset.find_component(name, false) == DatasetType::invalid_index);
+            CHECK_THROWS_AS(dataset.find_component(name, true), DatasetError);
+        };
+        auto const check_has_component_at_index = [&dataset](std::string_view name, Idx index) {
+            CHECK(dataset.find_component(name) == index);
+            CHECK(dataset.find_component(name, false) == index);
+            CHECK(dataset.find_component(name, true) == index);
+        };
+
+        check_has_no_component(A::name);
+        check_has_no_component(B::name);
+        add_component_info(dataset, B::name, 0, 0);
+        check_has_no_component(A::name);
+        check_has_component_at_index(B::name, 0);
+        add_component_info(dataset, A::name, 0, 0);
+        check_has_component_at_index(A::name, 1);
+        check_has_component_at_index(B::name, 0);
+    }
+
+    SUBCASE("Buffer query") {
+        auto const& dataset_type = test_meta_data_all.datasets.front();
+        CAPTURE(std::string_view{dataset_type.name});
+        SUBCASE("Homogeneous buffer") {
+            SUBCASE("Single dataset") {
+                for (auto const elements_per_scenario : {0, 1, 2}) {
+                    CAPTURE(elements_per_scenario);
+                    auto const total_elements = elements_per_scenario;
+
+                    auto dataset = create_dataset(false, 1, dataset_type);
+
+                    auto a_buffer = std::vector<A::InputType>(4);
+                    add_homogeneous_buffer(dataset, A::name, total_elements, static_cast<void*>(a_buffer.data()));
+
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>().data() == a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>().size() == total_elements);
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).data() ==
+                          a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).size() ==
+                          total_elements);
+
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(0).data() == a_buffer.data());
+                    CHECK(dataset.template get_buffer_span<input_getter_s, A>(0).size() == elements_per_scenario);
+                    CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(1)), DatasetError);
+                    CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(2)), DatasetError);
+                }
+            }
+            SUBCASE("Batch dataset") {
+                for (auto const batch_size : {0, 1, 2}) {
+                    CAPTURE(batch_size);
+                    for (auto const elements_per_scenario : {0, 1, 2}) {
+                        CAPTURE(elements_per_scenario);
+                        auto const total_elements = elements_per_scenario * batch_size;
+
+                        auto dataset = create_dataset(true, batch_size, dataset_type);
+
+                        auto a_buffer = std::vector<A::InputType>(4);
+                        add_homogeneous_buffer(dataset, A::name, elements_per_scenario,
+                                               static_cast<void*>(a_buffer.data()));
+
+                        CHECK(dataset.template get_buffer_span<input_getter_s, A>().data() == a_buffer.data());
+                        CHECK(dataset.template get_buffer_span<input_getter_s, A>().size() == total_elements);
+                        CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).data() ==
+                              a_buffer.data());
+                        CHECK(dataset.template get_buffer_span<input_getter_s, A>(DatasetType::invalid_index).size() ==
+                              total_elements);
+
+                        for (Idx scenario : {0, 1, 2, 3}) {
+                            CAPTURE(scenario);
+                            if (scenario < batch_size) {
+                                CHECK(dataset.template get_buffer_span<input_getter_s, A>(scenario).data() ==
+                                      a_buffer.data() + scenario * elements_per_scenario * sizeof(A::InputType));
+                                CHECK(dataset.template get_buffer_span<input_getter_s, A>(scenario).size() ==
+                                      elements_per_scenario);
+                            } else {
+                                CHECK_THROWS_AS((dataset.template get_buffer_span<input_getter_s, A>(scenario)),
+                                                DatasetError);
+                            }
+                        }
+                    }
+                }
+            }
+            SUBCASE("Duplicate buffer entry") {
+                auto dataset = create_dataset(true, 0, dataset_type);
+                auto a_buffer = std::vector<A::InputType>(1);
+                add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data()));
+                CHECK_THROWS_AS(add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data())),
+                                DatasetError);
+            }
         }
     }
 }
 
 TEST_CASE("Test writable dataset") {
+    using DatasetType = WritableDataset;
+
     constexpr auto create_dataset = [](bool const is_batch, Idx const batch_size, MetaDataset const& dataset_type) {
-        return test::create_dataset<WritableDataset>(is_batch, batch_size, dataset_type);
+        return test::create_dataset<DatasetType>(is_batch, batch_size, dataset_type);
     };
     auto const& dataset_type = test_meta_data_all.datasets.front();
-    CAPTURE(dataset_type.name);
+    CAPTURE(std::string_view{dataset_type.name});
 
-    for (auto const batch_size : {-1, 0, 1, 2}) {
+    for (auto const batch_size : {0, 1, 2}) {
         CAPTURE(batch_size);
 
         SUBCASE("Add homogeneous component info") {
@@ -184,6 +379,8 @@ TEST_CASE("Test writable dataset") {
                 auto const total_elements = elements_per_scenario * batch_size;
 
                 auto dataset = create_dataset(true, batch_size, dataset_type);
+                CHECK_FALSE(dataset.contains_component(A::name));
+
                 dataset.add_component_info(A::name, elements_per_scenario, total_elements);
                 CHECK(dataset.n_components() == 1);
                 CHECK(dataset.contains_component(A::name));
