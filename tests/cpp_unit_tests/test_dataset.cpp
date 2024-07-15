@@ -353,8 +353,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                 auto const scenario_span =
                                     dataset.template get_buffer_span<input_getter_s, A>(scenario);
 
-                                CHECK(scenario_span.data() ==
-                                      a_buffer.data() + scenario * elements_per_scenario * sizeof(A::InputType));
+                                CHECK(scenario_span.data() == a_buffer.data() + scenario * elements_per_scenario);
                                 CHECK(scenario_span.size() == elements_per_scenario);
                                 CHECK(all_scenario_spans[scenario].data() == scenario_span.data());
                                 CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
@@ -434,7 +433,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                         if (scenario < batch_size) {
                             auto const scenario_span = dataset.template get_buffer_span<input_getter_s, A>(scenario);
 
-                            CHECK(scenario_span.data() == a_buffer.data() + a_indptr[scenario] * sizeof(A::InputType));
+                            CHECK(scenario_span.data() == a_buffer.data() + a_indptr[scenario]);
                             CHECK(scenario_span.size() == elements_per_scenarios[scenario]);
                             CHECK(all_scenario_spans[scenario].data() == scenario_span.data());
                             CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
