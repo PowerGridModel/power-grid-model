@@ -8,6 +8,7 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include <numeric>
 
@@ -59,6 +60,15 @@ template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, Compl
 }
 
 template <symmetry_tag sym>
+inline void truncate_to_zero(double const& theta, ComplexValue<sym> const& val1, ComplexValue<sym> const& val2,
+                             ComplexValue<sym>& result) {
+    auto precision = theta * std::numeric_limits<double>::epsilon();
+    if (max_val(cabs(result)) < (precision * ((max_val(cabs(val1)) + max_val(cabs(val2))) / 2.0))) {
+        result = ComplexValue<sym>{0.0};
+    }
+}
+
+template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
                                     PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
                                     ComplexValue<sym> const& i_load_gen_bus) {
@@ -80,33 +90,16 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             return dot(y_ref, u_ref);
         });
         ComplexTensor<sym> const y_ref_t = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
-        ComplexTensor<sym> z_ref_t{};
-        if constexpr (is_symmetric_v<sym>) {
-            z_ref_t = 1.0 / y_ref_t;
-        } else {
-            DoubleComplex const s = y_ref_t(0); // Diagonal elements
-            DoubleComplex const m = y_ref_t(1); // Off diagonal elements
-            // z_ref_t is obtained from: y_ref_t -> y_012 -> z_012 -> z_ref_t
-            // s_z, m_z are diagonal and off-diagonal elements of z_ref_t
-            // s_z epsilon (E): 6E + 9E = 15E
-            DoubleComplex const s_z = (2.0 / (3.0 * (s - m))) + (1.0 / (3.0 * (s + (2.0 * m))));
-            // m_z epsilon (E): 9E - 3E = 6E
-            DoubleComplex const m_z = (1.0 / (3.0 * (s + (2.0 * m)))) - (1.0 / (3.0 * (s - m)));
-            z_ref_t = ComplexTensor<sym>{s_z, m_z};
-        }
+        ComplexTensor<sym> z_ref_t = inv_y<sym>(y_ref_t); // s_E = 15E, m_Z = 6E truncation errors.
         ComplexValue<sym> const i_ref_t = std::accumulate(i_ref_acc.begin(), i_ref_acc.end(), ComplexValue<sym>{});
         for (size_t i = 0; i < sources.size(); ++i) {
             Idx const source = sources_acc[i];
-            // The resulting error (from the matrix multiplication) for every u_ref_t element is 54E
-            ComplexValue<sym> const u_ref_t = dot(z_ref_t, i_ref_t);
+            ComplexValue<sym> const u_ref_t = dot(z_ref_t, i_ref_t); // 54E truncation error.
             ComplexValue<sym> const u_ref_i{input.source[i]};
             ComplexValue<sym> delta_u = (u_ref_i - u_ref_t);
             // This truncation needs further discussion.
             constexpr double theta = 54.0; // From counting floating point operations involving E.
-            constexpr auto precision = theta * std::numeric_limits<double>::epsilon();
-            if (max_val(cabs(delta_u)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(u_ref_t))) / 2.0))) {
-                delta_u = ComplexValue<sym>{0.0};
-            }
+            truncate_to_zero<sym>(theta, u_ref_i, u_ref_t, delta_u);
             ComplexValue<sym> const i_inj_rhs = dot(dot(y_ref_acc[i], z_ref_t), i_inj_t);
             output.source[source].i = dot(y_ref_acc[i], delta_u) + i_inj_rhs;
             output.source[source].s = output.u[bus_number] * conj(output.source[source].i);

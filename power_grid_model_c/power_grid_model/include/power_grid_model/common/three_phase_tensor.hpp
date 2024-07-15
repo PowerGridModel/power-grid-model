@@ -294,6 +294,24 @@ template <symmetry_tag sym> inline ComplexTensor<sym> inv_sym_tensor(ComplexTens
     }
 }
 
+// inverse of Y via s, m
+template <symmetry_tag sym> inline ComplexTensor<sym> inv_y(ComplexTensor<sym> const& y) {
+    if constexpr (is_symmetric_v<sym>) {
+        return 1.0 / y;
+    } else {
+        DoubleComplex const s = y(0); // Diagonal elements
+        DoubleComplex const m = y(1); // Off diagonal elements
+        // z is obtained from: y -> y_012 -> z_012 -> z
+        // s_z, m_z are diagonal and off-diagonal elements of z
+        DoubleComplex const s_z = (2.0 / (3.0 * (s - m))) + (1.0 / (3.0 * (s + (2.0 * m))));
+        DoubleComplex const m_z = (1.0 / (3.0 * (s + (2.0 * m)))) - (1.0 / (3.0 * (s - m)));
+        // If s, m >> 0, truncation errors can be approximated:
+        // s_z epsilon (E): 6E + 9E = 15E
+        // m_z epsilon (E): 9E - 3E = 6E
+        return ComplexTensor<sym>{s_z, m_z};
+    }
+}
+
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
