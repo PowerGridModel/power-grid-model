@@ -40,8 +40,13 @@ class MainModel {
         }
         return *this;
     }
-    MainModel(MainModel&& other) = default;
-    MainModel& operator=(MainModel&& /* other */) = default;
+    MainModel(MainModel&& other) { impl_ = std::move(other.impl_); }
+    MainModel& operator=(MainModel&& other) {
+        if (this != &other) {
+            impl_ = std::move(other.impl_);
+        }
+        return *this;
+    };
     ~MainModel() { impl_.reset(); }
 
     static bool is_update_independent(ConstDataset const& update_data) {
