@@ -65,12 +65,10 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
     ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     std::vector<Idx> sources_acc(sources.size());
     std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) { return source; });
-    if (sources_acc.empty()) {
-        ; // Do nothing
-    } else if (sources_acc.size() == 1) {
+    if (sources_acc.size() == 1) {
         output.source[sources_acc[0]].i = i_inj_t;
         output.source[sources_acc[0]].s = output.u[bus_number] * conj(output.source[sources_acc[0]].i);
-    } else {
+    } else if (!sources_acc.empty()) {
         std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
         std::vector<ComplexValue<sym>> i_ref_acc(sources.size());
         std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
@@ -101,7 +99,8 @@ inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBu
             ComplexValue<sym> const u_ref_i{input.source[i]};
             ComplexValue<sym> delta_u = (u_ref_i - u_ref_t);
             // Arbitrary precision threshold (20.0) needs further discussion, as well as this whole cutoff.
-            constexpr auto precision = 20.0 * std::numeric_limits<double>::epsilon();
+            constexpr double theta = 20.0;
+            constexpr auto precision = theta * std::numeric_limits<double>::epsilon();
             if (max_val(cabs(delta_u)) < (precision * ((max_val(cabs(u_ref_i)) + max_val(cabs(u_ref_t))) / 2.0))) {
                 delta_u = ComplexValue<sym>{0.0};
             }
@@ -151,7 +150,7 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
                                 LoadGenFunc&& load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
-    // call y bus //
+    // call y bus
     output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);
     output.shunt = y_bus.template calculate_shunt_flow<ApplianceSolverOutput<sym>>(output.u);
 
