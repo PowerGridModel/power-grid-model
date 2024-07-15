@@ -146,6 +146,9 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                                                             Idx elements_per_scenario,
                                                                             Idx total_elements) {
         if constexpr (std::same_as<DatasetType, WritableDataset>) {
+            (void)add_buffer;
+            (void)fake_data;
+            (void)fake_indptr;
             dataset.add_component_info(name, elements_per_scenario, total_elements);
         } else {
             fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), total_elements));
@@ -397,7 +400,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 }
             }
             SUBCASE("Batch dataset") {
-                for (auto const elements_per_scenarios :
+                for (auto const& elements_per_scenarios :
                      {std::vector<Idx>{}, std::vector<Idx>{4}, std::vector<Idx>{1, 1, 2},
                       std::vector<Idx>{0, 2, 0, 1, 1, 0}, std::vector<Idx>{2, 2}}) {
                     auto const batch_size = static_cast<Idx>(elements_per_scenarios.size());
@@ -556,7 +559,6 @@ TEST_CASE("Test writable dataset") {
                 CHECK(component_info.elements_per_scenario == elements_per_scenario);
                 CHECK(component_info.total_elements == total_elements);
 
-                auto const& info = dataset.get_description();
                 CHECK_FALSE(dataset.get_description().component_info.empty());
             }
         }
@@ -575,7 +577,6 @@ TEST_CASE("Test writable dataset") {
                 CHECK(component_info.elements_per_scenario == elements_per_scenario);
                 CHECK(component_info.total_elements == total_elements);
 
-                auto const& info = dataset.get_description();
                 CHECK_FALSE(dataset.get_description().component_info.empty());
             }
         }
