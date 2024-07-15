@@ -232,7 +232,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             }
             if constexpr (std::same_as<check_indptr_content, immutable_t>) {
                 auto indptr_span = get_indptr_span(indptr);
-                if (auto decreasing_found = std::ranges::adjacent_find(indptr_span, std::greater<Idx>());
+                if (auto decreasing_found = std::ranges::adjacent_find(indptr_span, std::greater<>());
                     decreasing_found != indptr_span.end()) {
                     throw DatasetError{"For a non-uniform buffer, indptr must be increasing!\n"};
                 }
