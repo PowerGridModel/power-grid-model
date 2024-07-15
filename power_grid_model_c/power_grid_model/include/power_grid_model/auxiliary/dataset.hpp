@@ -186,7 +186,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     // get individual dataset from batch
-    Dataset get_individual_scenario(Idx scenario) {
+    Dataset get_individual_scenario(Idx scenario)
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        if (scenario < 0 || scenario >= batch_size()) {
+            throw DatasetError{"Scenario cannot be less than 0 or greater or equal to batch size!\n"};
+        }
         Dataset result{false, 1, dataset().name, meta_data()};
         for (Idx i{}; i != n_components(); ++i) {
             auto const& buffer = get_buffer(i);

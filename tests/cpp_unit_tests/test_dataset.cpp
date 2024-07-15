@@ -470,6 +470,62 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
             }
         }
     }
+
+    if constexpr (std::same_as<DatasetType, ConstDataset> || std::same_as<DatasetType, MutableDataset>) {
+        SUBCASE("Get individual scenario") {
+            auto const& dataset_type = test_meta_data_all.datasets.front();
+            CAPTURE(std::string_view{dataset_type.name});
+
+            auto const batch_size = 2;
+            auto const a_elements_per_scenario = 3;
+
+            auto dataset = create_dataset(true, batch_size, dataset_type);
+
+            auto a_buffer = std::vector<A::InputType>(a_elements_per_scenario * batch_size);
+            auto b_buffer = std::vector<A::InputType>(3);
+            auto b_indptr = std::vector<Idx>{0, 0, narrow_cast<Idx>(b_buffer.size())};
+
+            add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, static_cast<void*>(a_buffer.data()));
+            add_inhomogeneous_buffer(dataset, B::name, b_buffer.size(), b_indptr.data(),
+                                     static_cast<void*>(b_buffer.data()));
+
+            for (auto scenario = -1; scenario <= batch_size; ++scenario) {
+                if (scenario >= 0 && scenario < batch_size) {
+                    auto const scenario_dataset = dataset.get_individual_scenario(scenario);
+
+                    CHECK(&scenario_dataset.meta_data() == &dataset.meta_data());
+                    CHECK(!scenario_dataset.empty());
+                    CHECK(scenario_dataset.is_batch() == false);
+                    CHECK(scenario_dataset.batch_size() == 1);
+                    CHECK(scenario_dataset.n_components() == dataset.n_components());
+
+                    CHECK(scenario_dataset.get_component_info(A::name).component ==
+                          &dataset_type.get_component(A::name));
+                    CHECK(scenario_dataset.get_component_info(A::name).elements_per_scenario ==
+                          a_elements_per_scenario);
+                    CHECK(scenario_dataset.get_component_info(A::name).total_elements == a_elements_per_scenario);
+
+                    CHECK(scenario_dataset.get_component_info(B::name).component ==
+                          &dataset_type.get_component(B::name));
+                    CHECK(scenario_dataset.get_component_info(B::name).elements_per_scenario ==
+                          dataset.template get_buffer_span<input_getter_s, B>(scenario).size());
+                    CHECK(scenario_dataset.get_component_info(B::name).total_elements ==
+                          scenario_dataset.get_component_info(B::name).elements_per_scenario);
+
+                    auto const scenario_span_a = scenario_dataset.template get_buffer_span<input_getter_s, A>();
+                    auto const scenario_span_b = scenario_dataset.template get_buffer_span<input_getter_s, B>();
+                    auto const dataset_span_a = dataset.template get_buffer_span<input_getter_s, A>(scenario);
+                    auto const dataset_span_b = dataset.template get_buffer_span<input_getter_s, B>(scenario);
+                    CHECK(scenario_span_a.data() == dataset_span_a.data());
+                    CHECK(scenario_span_a.size() == dataset_span_a.size());
+                    CHECK(scenario_span_b.data() == dataset_span_b.data());
+                    CHECK(scenario_span_b.size() == dataset_span_b.size());
+                } else {
+                    CHECK_THROWS_AS(dataset.get_individual_scenario(scenario), DatasetError);
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("Test writable dataset") {
