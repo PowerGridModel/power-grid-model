@@ -87,4 +87,7 @@ using DoubleVector = std::vector<double>;
 using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
 
+template <class T, class... Ts>
+concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
+
 } // namespace power_grid_model

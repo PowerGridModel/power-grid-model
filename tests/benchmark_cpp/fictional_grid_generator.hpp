@@ -5,7 +5,7 @@
 #pragma once
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_wrapper.hpp>
 
 #include <algorithm>
 #include <random>
