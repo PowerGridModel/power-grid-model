@@ -227,7 +227,6 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     CHECK(component_info.elements_per_scenario == elements_per_scenario);
                     CHECK(component_info.total_elements == total_elements);
 
-                    auto const& info = dataset.get_description();
                     CHECK_FALSE(dataset.get_description().component_info.empty());
                 }
             }
@@ -246,7 +245,6 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     CHECK(component_info.elements_per_scenario == elements_per_scenario);
                     CHECK(component_info.total_elements == total_elements);
 
-                    auto const& info = dataset.get_description();
                     CHECK_FALSE(dataset.get_description().component_info.empty());
                 }
             }
