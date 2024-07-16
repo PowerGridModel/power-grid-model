@@ -7,6 +7,7 @@ set(PROJECT_SOURCES
     "test_entry_point.cpp"
     "test_common.cpp"
     "test_exceptions.cpp"
+    "test_component_list.cpp"
     "test_component_input.cpp"
     "test_component_output.cpp"
     "test_component_update.cpp"
