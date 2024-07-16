@@ -917,10 +917,11 @@ def all_supported_tap_control_side(  # pylint: disable=too-many-arguments
     invalid = np.zeros_like(mask)
 
     for ref_component, ref_field in tap_side_fields:
-        indices = get_indexer(data[ref_component]["id"], data[component][regulated_object_field], default_value=-1)
-        found = indices != -1
-        ref_comp_values = data[ref_component][ref_field][indices[found]]
-        invalid[found] = np.logical_or(invalid[found], values[found] == ref_comp_values)
+        if ref_component in data:
+            indices = get_indexer(data[ref_component]["id"], data[component][regulated_object_field], default_value=-1)
+            found = indices != -1
+            ref_comp_values = data[ref_component][ref_field][indices[found]]
+            invalid[found] = np.logical_or(invalid[found], values[found] == ref_comp_values)
 
     if invalid.any():
         return [
