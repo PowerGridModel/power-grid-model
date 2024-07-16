@@ -163,12 +163,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <template <class> class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter<ComponentType>::type>>
     std::span<StructType> get_buffer_span(Idx scenario = invalid_index) const {
+        assert(scenario < batch_size());
+
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
         }
-        if (scenario >= batch_size()) {
-            throw DatasetError{"Scenario cannot be greater or equal to batch size!\n"};
-        }
+
         Idx const idx = find_component(ComponentType::name, false);
         return get_buffer_span_impl<StructType>(scenario, idx);
     }
@@ -189,9 +189,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Dataset get_individual_scenario(Idx scenario)
         requires(!is_indptr_mutable_v<dataset_type>)
     {
-        if (scenario < 0 || scenario >= batch_size()) {
-            throw DatasetError{"Scenario cannot be less than 0 or greater or equal to batch size!\n"};
-        }
+        assert(0 <= scenario && scenario < batch_size());
+
         Dataset result{false, 1, dataset().name, meta_data()};
         for (Idx i{}; i != n_components(); ++i) {
             auto const& buffer = get_buffer(i);
