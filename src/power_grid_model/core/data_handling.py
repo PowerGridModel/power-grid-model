@@ -8,7 +8,7 @@ Data handling
 
 
 from enum import Enum
-from typing import Dict, List, Mapping, Set, Tuple, Union
+from typing import Dict, Mapping, Tuple, Union
 
 import numpy as np
 
@@ -16,6 +16,7 @@ from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import CalculationType
+from power_grid_model.typing import OutputComponentNamesType, _OutputComponentTypeDict
 
 
 class OutputType(Enum):
@@ -101,7 +102,7 @@ def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_
 
 
 def create_output_data(
-    output_component_types: Union[Set[ComponentType], List[ComponentType]],
+    output_component_types: OutputComponentNamesType,
     output_type: OutputType,
     all_component_count: Dict[ComponentType, int],
     is_batch: bool,
@@ -135,10 +136,14 @@ def create_output_data(
                     Dimension 0: each batch
                     Dimension 1: the result of each element for this component type
     """
-    # raise error if some specified components are unknown
-    unknown_components = [x for x in output_component_types if x not in power_grid_meta_data[output_type.value]]
-    if unknown_components:
-        raise KeyError(f"You have specified some unknown component types: {unknown_components}")
+
+    # limit all component count to user specified component types in output
+    if output_component_types is None:
+        output_component_types = {k: None for k in all_component_count}
+    elif isinstance(output_component_types, (list, set)):
+        output_component_types = {k: None for k in output_component_types}
+
+    validate_output_component_types(output_type, output_component_types)
 
     all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
 
@@ -151,6 +156,44 @@ def create_output_data(
             shape: Union[Tuple[int], Tuple[int, int]] = (batch_size, count)
         else:
             shape = (count,)
-        result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
+        attributes = output_component_types[name]
+        if attributes is None:
+            result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
+        elif attributes in [[], set()]:
+            result_dict[name] = {}
+        else:
+            raise NotImplementedError(
+                "Columnar data types are not implemented yet."
+                "output_component_types must be provided with a list or set"
+            )
 
     return result_dict
+
+
+def validate_output_component_types(output_type: OutputType, dict_output_types: _OutputComponentTypeDict):
+    """Checks dict_output_types for any invalid component names and attribute names
+
+    Args:
+        output_type (OutputType): the type of output that the user will see (as per the calculation options)
+        dict_output_types (Dict[ComponentType, Optional[str]]): output_component_types converted to dictionary
+
+    Raises:
+        KeyError: with "unknown component" for any unknown components
+        KeyError: with "unknown attributes" for any unknown attributes for a known component
+    """
+    # raise error if some specified components are unknown
+    output_meta = power_grid_meta_data[output_type.value]
+    unknown_components = [x for x in dict_output_types if x not in output_meta]
+    if unknown_components:
+        raise KeyError(f"You have specified some unknown component types: {unknown_components}")
+
+    unknown_attributes = {}
+    for comp_name, attrs in dict_output_types.items():
+        if attrs is None:
+            continue
+        diff = set(attrs).difference(output_meta[comp_name].dtype.names)
+        if diff != set():
+            unknown_attributes[comp_name] = diff
+
+    if unknown_attributes:
+        raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")

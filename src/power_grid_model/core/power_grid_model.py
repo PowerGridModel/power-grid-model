@@ -30,6 +30,7 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     _ExperimentalFeatures,
 )
+from power_grid_model.typing import OutputComponentNamesType
 
 
 class PowerGridModel:
@@ -187,18 +188,13 @@ class PowerGridModel:
     # pylint: disable=too-many-arguments
     def _construct_output(
         self,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]],
+        output_component_types: OutputComponentNamesType,
         calculation_type: CalculationType,
         symmetric: bool,
         is_batch: bool,
         batch_size: int,
     ) -> Dict[ComponentType, np.ndarray]:
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
-
-        # limit all component count to user specified component types in output
-        if output_component_types is None:
-            output_component_types = set(all_component_count.keys())
-
         return create_output_data(
             output_component_types=output_component_types,
             output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
@@ -236,7 +232,7 @@ class PowerGridModel:
         calculation_type: CalculationType,
         symmetric: bool,
         update_data: Optional[Dataset],
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]],
+        output_component_types: OutputComponentNamesType,
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
