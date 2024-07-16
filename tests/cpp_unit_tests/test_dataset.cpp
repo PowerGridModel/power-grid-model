@@ -16,12 +16,38 @@
 namespace power_grid_model::meta_data {
 
 namespace {
-struct AInput {};
-struct AUpdate {};
+struct AInput {
+    static constexpr auto id_name = "id";
+    static constexpr auto a0_name = "a0";
+    static constexpr auto a1_name = "a1";
+
+    ID id{};
+    IntS a0{};
+    IntS a1{};
+};
+struct AUpdate {
+    static constexpr auto id_name = "id";
+    static constexpr auto a0_name = "a0";
+
+    ID id{};
+    IntS a0{};
+};
 template <symmetry_tag symmetry> struct AOutput {
     using sym = symmetry;
+
+    static constexpr auto id_name = "id";
+    static constexpr auto a2_name = "a2";
+    static constexpr auto a3_name = "a3";
+
+    ID id{};
+    IntS a2{};
+    IntS a3{};
 };
-struct AScOutput {};
+struct AScOutput {
+    static constexpr auto id_name = "id";
+
+    IntS id{};
+};
 struct BInput {};
 struct BUpdate {};
 template <symmetry_tag symmetry> struct BOutput {
@@ -31,19 +57,52 @@ struct BScOutput {};
 } // namespace
 
 template <> struct get_attributes_list<AInput> {
-    static constexpr std::array<MetaAttribute, 0> value{};
+    static constexpr std::array<MetaAttribute, 3> value{
+        meta_data_gen::get_meta_attribute<AInput, &AInput::id, offsetof(AInput, id),
+                                          [] { return AInput::id_name; }>::value,
+        meta_data_gen::get_meta_attribute<AInput, &AInput::a0, offsetof(AInput, a0),
+                                          [] { return AInput::a0_name; }>::value,
+        meta_data_gen::get_meta_attribute<AInput, &AInput::a1, offsetof(AInput, a1),
+                                          [] { return AInput::a1_name; }>::value,
+    };
 };
 template <> struct get_attributes_list<AUpdate> {
-    static constexpr std::array<MetaAttribute, 0> value{};
+    static constexpr std::array<MetaAttribute, 2> value{
+        meta_data_gen::get_meta_attribute<AUpdate, &AUpdate::id, offsetof(AUpdate, id),
+                                          [] { return AUpdate::id_name; }>::value,
+        meta_data_gen::get_meta_attribute<AUpdate, &AUpdate::a0, offsetof(AUpdate, a0),
+                                          [] { return AUpdate::a0_name; }>::value,
+    };
 };
 template <> struct get_attributes_list<AOutput<symmetric_t>> {
-    static constexpr std::array<MetaAttribute, 0> value{};
+    static constexpr std::array<MetaAttribute, 3> value{
+        meta_data_gen::get_meta_attribute<AOutput<symmetric_t>, &AOutput<symmetric_t>::id,
+                                          offsetof(AOutput<symmetric_t>, id), [] { return AInput::id_name; }>::value,
+        meta_data_gen::get_meta_attribute<AOutput<symmetric_t>, &AOutput<symmetric_t>::a2,
+                                          offsetof(AOutput<symmetric_t>, a2),
+                                          [] { return AOutput<symmetric_t>::a2_name; }>::value,
+        meta_data_gen::get_meta_attribute<AOutput<symmetric_t>, &AOutput<symmetric_t>::a3,
+                                          offsetof(AOutput<symmetric_t>, a3),
+                                          [] { return AOutput<symmetric_t>::a3_name; }>::value,
+    };
 };
 template <> struct get_attributes_list<AOutput<asymmetric_t>> {
-    static constexpr std::array<MetaAttribute, 0> value{};
+    static constexpr std::array<MetaAttribute, 3> value{
+        meta_data_gen::get_meta_attribute<AOutput<asymmetric_t>, &AOutput<asymmetric_t>::id,
+                                          offsetof(AOutput<asymmetric_t>, id), [] { return AInput::id_name; }>::value,
+        meta_data_gen::get_meta_attribute<AOutput<asymmetric_t>, &AOutput<asymmetric_t>::a2,
+                                          offsetof(AOutput<asymmetric_t>, a2),
+                                          [] { return AOutput<asymmetric_t>::a2_name; }>::value,
+        meta_data_gen::get_meta_attribute<AOutput<asymmetric_t>, &AOutput<asymmetric_t>::a3,
+                                          offsetof(AOutput<asymmetric_t>, a3),
+                                          [] { return AOutput<asymmetric_t>::a3_name; }>::value,
+    };
 };
 template <> struct get_attributes_list<AScOutput> {
-    static constexpr std::array<MetaAttribute, 0> value{};
+    static constexpr std::array<MetaAttribute, 1> value{
+        meta_data_gen::get_meta_attribute<AScOutput, &AScOutput::id, offsetof(AScOutput, id),
+                                          [] { return AScOutput::id_name; }>::value,
+    };
 };
 template <> struct get_attributes_list<BInput> {
     static constexpr std::array<MetaAttribute, 0> value{};
@@ -128,11 +187,15 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
     auto const add_buffer = [](DatasetType& dataset, std::string_view name, Idx elements_per_scenario,
                                Idx total_elements, Idx* indptr, void* data) {
         if constexpr (std::same_as<DatasetType, WritableDataset>) {
-            dataset.add_component_info(name, elements_per_scenario, total_elements);
-            dataset.set_buffer(name, indptr, data);
+            dataset.add_component_info(name, elements_per_scenario, total_elements); // in deserializer
+            dataset.set_buffer(name, indptr, data);                                  // by end-user
         } else {
             dataset.add_buffer(name, elements_per_scenario, total_elements, indptr, data);
         }
+    };
+    auto const add_attribute_buffer = [](DatasetType& dataset, std::string_view name, std::string_view attribute,
+                                         void* data) {
+        // dataset.add_attribute_buffer(name, attribute, data);
     };
     auto const add_homogeneous_buffer = [&add_buffer](DatasetType& dataset, std::string_view name,
                                                       Idx elements_per_scenario, void* data) {
@@ -142,26 +205,38 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                                         Idx* indptr, void* data) {
         add_buffer(dataset, name, -1, total_elements, indptr, data);
     };
-    auto const add_component_info = [&add_buffer, &fake_data, &fake_indptr](DatasetType& dataset, std::string_view name,
-                                                                            Idx elements_per_scenario,
-                                                                            Idx total_elements) {
-        if constexpr (std::same_as<DatasetType, WritableDataset>) {
-            (void)add_buffer;
-            (void)fake_data;
-            (void)fake_indptr;
-            dataset.add_component_info(name, elements_per_scenario, total_elements);
-        } else {
-            fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), total_elements));
-            if (elements_per_scenario != -1) {
-                add_buffer(dataset, name, elements_per_scenario, total_elements, nullptr,
-                           static_cast<void*>(fake_data.data()));
+    auto const add_component_info =
+        [&add_buffer, &fake_data, &fake_indptr](DatasetType& dataset, std::string_view name, Idx elements_per_scenario,
+                                                Idx total_elements, bool is_columnar = false) {
+            if constexpr (std::same_as<DatasetType, WritableDataset>) {
+                (void)add_buffer;
+                (void)fake_data;
+                (void)fake_indptr;
+                dataset.add_component_info(name, elements_per_scenario, total_elements);
             } else {
-                fake_indptr.resize(std::max(narrow_cast<Idx>(fake_indptr.size()), dataset.batch_size() + 1));
-                std::ranges::fill(fake_indptr, Idx{0});
-                fake_indptr.back() = total_elements;
-                add_buffer(dataset, name, elements_per_scenario, total_elements, fake_indptr.data(), fake_data.data());
+                void* data_buffer = [&]() -> void* {
+                    if (is_columnar) {
+                        return nullptr;
+                    }
+                    fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), total_elements));
+                    return static_cast<void*>(fake_data.data());
+                }();
+                Idx* indptr_buffer = [&]() -> Idx* {
+                    if (elements_per_scenario != -1) {
+                        return nullptr;
+                    }
+                    fake_indptr.resize(std::max(narrow_cast<Idx>(fake_indptr.size()), dataset.batch_size() + 1));
+                    std::ranges::fill(fake_indptr, Idx{0});
+                    fake_indptr.back() = total_elements;
+                    return fake_indptr.data();
+                }();
+                add_buffer(dataset, name, elements_per_scenario, total_elements, indptr_buffer, data_buffer);
             }
-        }
+        };
+    auto const add_attribute_info = [&add_attribute_buffer, &fake_data](DatasetType& dataset, std::string_view name,
+                                                                        std::string_view attribute) {
+        fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), dataset.get_component_info(name).total_elements));
+        add_attribute_buffer(dataset, name, attribute, static_cast<void*>(fake_data.data()));
     };
 
     SUBCASE("Constructor") {
