@@ -230,54 +230,49 @@ template <dataset_type_tag dataset_type_> class Dataset {
                 throw DatasetError{"For a non-uniform buffer, indptr should be supplied!\n"};
             }
             if constexpr (std::same_as<check_indptr_content, immutable_t>) {
-                auto indptr_span = get_indptr_span(indptr);
-                if (auto decreasing_found = std::ranges::adjacent_find(indptr_span, std::greater<>());
-                    decreasing_found != indptr_span.end()) {
-                    throw DatasetError{"For a non-uniform buffer, indptr must be increasing!\n"};
+                if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
+                    throw DatasetError{
+                        "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n"};
                 }
-                if (indptr_span.front() < 0 || indptr_span.back() > total_elements) {
-                    throw DatasetError{"For a non-uniform buffer, the elements of indptr cannot be less than 0 or "
-                                       "greater than total_elements!\n"};
-                }
+            } else if (indptr) {
+                throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
             }
-        } else if (indptr) {
-            throw DatasetError{"For a uniform buffer, indptr should be nullptr!\n"};
         }
-    }
 
-    void add_component_info_impl(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
-        if (find_component(component) >= 0) {
-            throw DatasetError{"Cannot have duplicated components!\n"};
+        void add_component_info_impl(std::string_view component, Idx elements_per_scenario, Idx total_elements) {
+            if (find_component(component) >= 0) {
+                throw DatasetError{"Cannot have duplicated components!\n"};
+            }
+            check_uniform_integrity(elements_per_scenario, total_elements);
+            dataset_info_.component_info.push_back(
+                {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
+            buffers_.push_back(Buffer{});
         }
-        check_uniform_integrity(elements_per_scenario, total_elements);
-        dataset_info_.component_info.push_back(
-            {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
-        buffers_.push_back(Buffer{});
-    }
 
-    template <class StructType> std::span<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
-        // return empty span if the component does not exist
-        if (component_idx < 0) {
-            return {};
+        template <class StructType> std::span<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
+            // return empty span if the component does not exist
+            if (component_idx < 0) {
+                return {};
+            }
+            // return span based on uniform or non-uniform buffer
+            ComponentInfo const& info = dataset_info_.component_info[component_idx];
+            Buffer const& buffer = buffers_[component_idx];
+            auto const ptr = reinterpret_cast<StructType*>(buffer.data);
+            if (scenario < 0) {
+                return std::span<StructType>{ptr, ptr + info.total_elements};
+            }
+            if (info.elements_per_scenario < 0) {
+                return std::span<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
+            }
+            return std::span<StructType>{ptr + info.elements_per_scenario * scenario,
+                                         ptr + info.elements_per_scenario * (scenario + 1)};
         }
-        // return span based on uniform or non-uniform buffer
-        ComponentInfo const& info = dataset_info_.component_info[component_idx];
-        Buffer const& buffer = buffers_[component_idx];
-        auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        if (scenario < 0) {
-            return std::span<StructType>{ptr, ptr + info.total_elements};
-        }
-        if (info.elements_per_scenario < 0) {
-            return std::span<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
-        }
-        return std::span<StructType>{ptr + info.elements_per_scenario * scenario,
-                                     ptr + info.elements_per_scenario * (scenario + 1)};
-    }
-};
+    };
 
 } // namespace meta_data
 
-template <dataset_type_tag dataset_type> using Dataset = meta_data::Dataset<dataset_type>;
+template <dataset_type_tag dataset_type>
+using Dataset = meta_data::Dataset<dataset_type>;
 using ConstDataset = Dataset<const_dataset_t>;
 using MutableDataset = Dataset<mutable_dataset_t>;
 using WritableDataset = Dataset<writable_dataset_t>;

@@ -201,10 +201,10 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         CAPTURE(std::string_view{dataset_type.name});
 
         for (auto const batch_size : {0, 1, 2}) {
-            CAPTURE(batch_size);
-            auto dataset = create_dataset(true, batch_size, dataset_type);
-
             SUBCASE("No component added") {
+                CAPTURE(batch_size);
+                auto dataset = create_dataset(true, batch_size, dataset_type);
+
                 CHECK(dataset.n_components() == 0);
                 CHECK_FALSE(dataset.contains_component(A::name));
                 CHECK(dataset.get_description().component_info.empty());
