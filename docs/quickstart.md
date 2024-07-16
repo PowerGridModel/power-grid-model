@@ -20,7 +20,7 @@ The library uses a graph data model to represent the physical components and the
 see [Graph Data Model](user_manual/data-model).
 
 Before we start working on the network, we need first import the main model class
-as well as some helper functions for enumerations and meta data.  
+as well as some helper functions for enumerations and meta data.
 
 ```python
 from power_grid_model import LoadGenType
@@ -30,7 +30,7 @@ from power_grid_model.utils import self_test
 ```
 
 A basic self_test function is provided to check if the installation was successful
-and there are no build errors, segfaults, undefined symbols, etc. 
+and there are no build errors, segfaults, undefined symbols, etc.
 The function should be imported and called by a user by running following commands:
 
 ```python

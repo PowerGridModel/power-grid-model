@@ -29,7 +29,7 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
-from power_grid_model.errors import PowerGridSerializationError
+from power_grid_model.errors import PowerGridError, PowerGridSerializationError
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
@@ -317,7 +317,6 @@ def self_test():
 
     Raises:
         PowerGridSerializationError: if an internal error occured during deserialization.
-        AssertionError: If the output data is empty or if the calculation results are incorrect.
         PowerGridError: if there was an internal error.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -337,28 +336,31 @@ def self_test():
         input_file_path = Path(temp_dir) / "input_data.json"
         input_file_path.write_text(json.dumps(input_data))
 
-        # Load the created JSON input data file (deserialize)
-        deserialized_data = json_deserialize_from_file(input_file_path)
+        try:
+            # Load the created JSON input data file (deserialize)
+            deserialized_data = json_deserialize_from_file(input_file_path)
 
-        if get_dataset_type(deserialized_data) != "input":
-            raise PowerGridSerializationError("An internal error occured during deserialization")
+            if get_dataset_type(deserialized_data) != "input":
+                raise PowerGridSerializationError("An internal error occured during deserialization")
 
-        # Create a PowerGridModel instance from the loaded input data
-        model = PowerGridModel(deserialized_data)
+            # Create a PowerGridModel instance from the loaded input data
+            model = PowerGridModel(deserialized_data)
 
-        # Run a simple power flow calculation on the created model (linear calculation)
-        output_data = model.calculate_power_flow(calculation_method=CalculationMethod.linear)
+            # Run a simple power flow calculation on the created model (linear calculation)
+            output_data = model.calculate_power_flow(calculation_method=CalculationMethod.linear)
 
-        # Write the calculation result to a file in the temporary directory
-        output_file_path = Path(temp_dir) / "output_data.json"
+            # Write the calculation result to a file in the temporary directory
+            output_file_path = Path(temp_dir) / "output_data.json"
 
-        json_serialize_to_file(output_file_path, output_data)
+            json_serialize_to_file(output_file_path, output_data)
 
-        # Verify that the written output is correct
-        with open(output_file_path, "r", encoding="utf-8") as output_file:
-            output_data = json.load(output_file)
+            # Verify that the written output is correct
+            with open(output_file_path, "r", encoding="utf-8") as output_file:
+                output_data = json.load(output_file)
 
-        assert output_data is not None, "Output data is empty"
-        assert math.isclose(
-            output_data["data"]["node"][0]["u"], input_data["data"]["node"][0]["u_rated"], abs_tol=1e-9
-        ), "Wrong Calculation"
+            assert output_data is not None
+            assert math.isclose(
+                output_data["data"]["node"][0]["u"], input_data["data"]["node"][0]["u_rated"], abs_tol=1e-9
+            )
+        except Exception as e:
+            raise PowerGridError from e
