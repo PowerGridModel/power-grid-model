@@ -31,34 +31,34 @@ struct BScOutput {};
 } // namespace
 
 template <> struct get_attributes_list<AInput> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<AUpdate> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<AOutput<symmetric_t>> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<AOutput<asymmetric_t>> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<AScOutput> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<BInput> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<BUpdate> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<BOutput<symmetric_t>> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<BOutput<asymmetric_t>> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 template <> struct get_attributes_list<BScOutput> {
-    static constexpr std::array<MetaAttribute, 0> value;
+    static constexpr std::array<MetaAttribute, 0> value{};
 };
 
 namespace {
