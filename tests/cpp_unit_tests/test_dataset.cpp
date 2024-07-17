@@ -238,7 +238,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     constexpr auto elements_per_scenario = -1;
 
                     auto dataset = create_dataset(true, batch_size, dataset_type);
-                    if (batch_size == 0 && total_elements > 0) {
+                    if (batch_size == 0 && total_elements > 0 && !std::same_as<DatasetType, WritableDataset>) {
                         CHECK_THROWS_AS(add_component_info(dataset, A::name, elements_per_scenario, total_elements),
                                         DatasetError);
                     } else {
