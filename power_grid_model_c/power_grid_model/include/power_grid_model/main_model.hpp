@@ -881,6 +881,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             math_param[i].branch_param.resize(state_.math_topology[i]->n_branch());
             math_param[i].shunt_param.resize(state_.math_topology[i]->n_shunt());
             math_param[i].source_param.resize(state_.math_topology[i]->n_source());
+            math_param[i].source_param_y0_y1.resize(state_.math_topology[i]->n_source());
         }
         // loop all branch
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch_node_idx.size()); ++i) {
@@ -924,6 +925,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // assign parameters
             math_param[math_idx.group].source_param[math_idx.pos] =
                 state_.components.template get_item_by_seq<Source>(i).template math_param<sym>();
+            math_param[math_idx.group].source_param_y0_y1[math_idx.pos] =
+                state_.components.template get_item_by_seq<Source>(i).get_y0_y1();
         }
         return math_param;
     }

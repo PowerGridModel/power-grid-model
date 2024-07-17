@@ -60,50 +60,121 @@ template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, Compl
 }
 
 template <symmetry_tag sym>
-inline void truncate_to_zero(double const& theta, ComplexValue<sym> const& val1, ComplexValue<sym> const& val2,
-                             ComplexValue<sym>& result) {
-    auto precision = theta * std::numeric_limits<double>::epsilon();
-    if (max_val(cabs(result)) < (precision * ((max_val(cabs(val1)) + max_val(cabs(val2))) / 2.0))) {
-        result = ComplexValue<sym>{0.0};
+inline void accumulate_y_ref(std::vector<ComplexTensor<sym>>& y_ref_acc, ComplexTensor<sym>& y_ref_t,
+                             IdxRange const& sources, YBus<sym> const& y_bus) {
+    std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
+        return y_bus.math_model_param().source_param[source];
+    });
+    y_ref_t = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
+}
+
+template <symmetry_tag sym>
+inline void accumulate_i_ref(std::vector<ComplexValue<sym>>& i_ref_acc, ComplexValue<sym>& i_ref_t,
+                             IdxRange const& sources, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
+    std::ranges::transform(sources, i_ref_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
+        ComplexValue<sym> const u_ref{input.source[source]};
+        ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
+        return dot(y_ref, u_ref);
+    });
+    i_ref_t = std::accumulate(i_ref_acc.begin(), i_ref_acc.end(), ComplexValue<sym>{});
+}
+
+inline void accumulate_y0_y1(std::vector<DoubleComplex>& y_ref_0_acc, std::vector<DoubleComplex>& y_ref_1_acc,
+                             DoubleComplex& y_ref_0_t, DoubleComplex& y_ref_1_t, IdxRange const& sources,
+                             YBus<asymmetric_t> const& y_bus, PowerFlowInput<asymmetric_t> const& input) {
+    std::ranges::transform(sources, y_ref_0_acc.begin(), [&](Idx const source) -> DoubleComplex {
+        return y_bus.math_model_param().source_param_y0_y1[source].first;
+    });
+    std::ranges::transform(sources, y_ref_1_acc.begin(), [&](Idx const source) -> DoubleComplex {
+        return y_bus.math_model_param().source_param_y0_y1[source].second;
+    });
+    y_ref_0_t = std::accumulate(y_ref_0_acc.begin(), y_ref_0_acc.end(), DoubleComplex{});
+    y_ref_1_t = std::accumulate(y_ref_1_acc.begin(), y_ref_1_acc.end(), DoubleComplex{});
+}
+
+// calculates current and power result for a single source (sym or asym)
+template <symmetry_tag sym>
+inline void calculate_single_source_result(SolverOutput<sym>& output, Idx const& source_id, Idx const& bus_number,
+                                           ComplexValue<sym> const& i_inj_t) {
+    output.source[source_id].i = i_inj_t;
+    output.source[source_id].s = output.u[bus_number] * conj(output.source[source_id].i);
+}
+
+// calculates current and power source result for multiple symmetric sources
+inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symmetric_t> const& y_bus,
+                                             PowerFlowInput<symmetric_t> const& input,
+                                             std::vector<Idx> const& sources_acc,
+                                             ComplexValue<symmetric_t> const& i_inj_t,
+                                             SolverOutput<symmetric_t>& output, Idx const& bus_number) {
+    std::vector<ComplexTensor<symmetric_t>> y_ref_acc(sources.size());
+    ComplexTensor<symmetric_t> y_ref_t;
+    accumulate_y_ref<symmetric_t>(y_ref_acc, y_ref_t, sources, y_bus);
+    std::vector<ComplexValue<symmetric_t>> i_ref_acc(sources.size());
+    ComplexValue<symmetric_t> i_ref_t;
+    accumulate_i_ref<symmetric_t>(i_ref_acc, i_ref_t, sources, y_bus, input);
+    ComplexTensor<symmetric_t> z_ref_t = inv(y_ref_t);
+
+    for (size_t i = 0; i < sources.size(); ++i) {
+        Idx const source = sources_acc[i];
+        ComplexTensor<symmetric_t> y_ref_i_z_ref_t = y_ref_acc[i] / y_ref_t;
+        auto aux = dot(y_ref_i_z_ref_t, i_ref_t);
+        ComplexValue<symmetric_t> i_inj_lhs = i_ref_acc[i] - dot(y_ref_i_z_ref_t, i_ref_t);
+        ComplexValue<symmetric_t> i_inj_rhs = dot(y_ref_i_z_ref_t, i_inj_t);
+        output.source[source].i = i_inj_lhs + i_inj_rhs;
+        output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
+    }
+}
+
+// calculates current and power source result for multiple asymmetric sources
+inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymmetric_t> const& y_bus,
+                                             PowerFlowInput<asymmetric_t> const& input,
+                                             std::vector<Idx> const& sources_acc,
+                                             ComplexValue<asymmetric_t> const& i_inj_t,
+                                             SolverOutput<asymmetric_t>& output, Idx const& bus_number) {
+    DoubleComplex i_inj_t_0 = (i_inj_t(0) + i_inj_t(1) + i_inj_t(2)) / 3.0;
+    DoubleComplex i_inj_t_1 = (i_inj_t(0) + a * i_inj_t(1) + a2 * i_inj_t(2)) / 3.0;
+    DoubleComplex i_inj_t_2 = (i_inj_t(0) + a2 * i_inj_t(1) + a * i_inj_t(2)) / 3.0;
+
+    std::vector<DoubleComplex> y_ref_0_acc(sources.size());
+    std::vector<DoubleComplex> y_ref_1_acc(sources.size());
+    DoubleComplex y_ref_0_t;
+    DoubleComplex y_ref_1_t;
+    accumulate_y0_y1(y_ref_0_acc, y_ref_1_acc, y_ref_0_t, y_ref_1_t, sources, y_bus, input);
+    std::vector<ComplexValue<asymmetric_t>> i_ref_acc(sources.size());
+    ComplexValue<asymmetric_t> i_ref_t;
+    accumulate_i_ref<asymmetric_t>(i_ref_acc, i_ref_t, sources, y_bus, input);
+
+    for (size_t i = 0; i < sources.size(); ++i) {
+        Idx const source = sources_acc[i];
+        DoubleComplex const i_ref_1_i = i_ref_acc[i](0) + a * i_ref_acc[i](1) + a2 * i_ref_acc[i](2);
+        DoubleComplex const i_ref_1_t = i_ref_t(0) + a * i_ref_t(1) + a2 * i_ref_t(2);
+        DoubleComplex y_ref_0_over_y_ref_0_t = (y_ref_0_acc[i] / y_ref_0_t);
+        DoubleComplex const i_inj_0 = (y_ref_0_acc[i] / y_ref_0_t) * i_inj_t_0;
+        DoubleComplex i_inj_1_rhs = (y_ref_1_acc[i] / y_ref_1_t) * i_inj_t_1;
+        DoubleComplex i_inj_1_lhs = i_ref_1_i - ((y_ref_1_acc[i] / y_ref_1_t) * i_ref_1_t);
+        DoubleComplex const i_inj_1 = i_inj_1_lhs - i_inj_1_rhs;
+        DoubleComplex const i_inj_2 = (y_ref_1_acc[i] / y_ref_1_t) * i_inj_t_2;
+        DoubleComplex i_inj_a = i_inj_0 + i_inj_1 + i_inj_2;
+        DoubleComplex i_inj_b = i_inj_0 + a2 * i_inj_1 + a * i_inj_2;
+        DoubleComplex i_inj_c = i_inj_0 + a * i_inj_1 + a2 * i_inj_2;
+        ComplexValue<asymmetric_t> i_inj_abc{i_inj_a, i_inj_b, i_inj_c};
+        output.source[source].i = i_inj_abc;
+        output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
 
 template <symmetry_tag sym>
-inline void calculate_source_result(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
+inline void calculate_source_result(IdxRange const& sources, Idx const& bus_number, YBus<sym> const& y_bus,
                                     PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
                                     ComplexValue<sym> const& i_load_gen_bus) {
     ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     std::vector<Idx> sources_acc(sources.size());
     std::ranges::transform(sources, sources_acc.begin(), [&](Idx const source) { return source; });
+
     if (sources_acc.size() == 1) {
-        output.source[sources_acc[0]].i = i_inj_t;
-        output.source[sources_acc[0]].s = output.u[bus_number] * conj(output.source[sources_acc[0]].i);
+        calculate_single_source_result(output, sources_acc[0], bus_number, i_inj_t);
     } else if (!sources_acc.empty()) {
-        std::vector<ComplexTensor<sym>> y_ref_acc(sources.size());
-        std::vector<ComplexValue<sym>> i_ref_acc(sources.size());
-        std::ranges::transform(sources, y_ref_acc.begin(), [&](Idx const source) -> ComplexTensor<sym> {
-            return y_bus.math_model_param().source_param[source];
-        });
-        std::ranges::transform(sources, i_ref_acc.begin(), [&](Idx const source) -> ComplexValue<sym> {
-            ComplexValue<sym> const u_ref{input.source[source]};
-            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source];
-            return dot(y_ref, u_ref);
-        });
-        ComplexTensor<sym> const y_ref_t = std::accumulate(y_ref_acc.begin(), y_ref_acc.end(), ComplexTensor<sym>{});
-        ComplexTensor<sym> const z_ref_t = inv_y<sym>(y_ref_t); // s_E = 15E, m_Z = 6E truncation errors.
-        ComplexValue<sym> const i_ref_t = std::accumulate(i_ref_acc.begin(), i_ref_acc.end(), ComplexValue<sym>{});
-        for (size_t i = 0; i < sources.size(); ++i) {
-            Idx const source = sources_acc[i];
-            ComplexValue<sym> const u_ref_t = dot(z_ref_t, i_ref_t); // 54E truncation error.
-            ComplexValue<sym> const u_ref_i{input.source[i]};
-            ComplexValue<sym> delta_u = (u_ref_i - u_ref_t);
-            // This truncation needs further discussion.
-            constexpr double theta = 54.0; // From counting floating point operations involving E.
-            truncate_to_zero<sym>(theta, u_ref_i, u_ref_t, delta_u);
-            ComplexValue<sym> const i_inj_rhs = dot(dot(y_ref_acc[i], z_ref_t), i_inj_t);
-            output.source[source].i = dot(y_ref_acc[i], delta_u) + i_inj_rhs;
-            output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
-        }
+        calculate_multiple_source_result(sources, y_bus, input, sources_acc, i_inj_t, output, bus_number);
     }
 }
 

@@ -190,6 +190,7 @@ template <symmetry_tag sym_type> struct MathModelParam {
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
     ComplexTensorVector<sym> source_param;
+    std::vector<std::pair<DoubleComplex, DoubleComplex>> source_param_y0_y1;
 };
 
 struct MathModelParamIncrement {
