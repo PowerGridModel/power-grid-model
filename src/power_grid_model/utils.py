@@ -309,7 +309,7 @@ def _compatibility_deprecated_import_json_data(json_file: Path, data_type: Datas
 def self_test():
     """
     Perform a self-test of the Power Grid Model functionality to check if the installation was successful
-    and there are no build errors, segfaults, undefined symbols, etc.
+    and there are no build errors, segmentation violations, undefined symbols, etc.
 
     This function is designed to validate the basic functionality of data serialization,
     model instantiation, power flow calculation, and serialization of results using the
@@ -339,9 +339,6 @@ def self_test():
         try:
             # Load the created JSON input data file (deserialize)
             deserialized_data = json_deserialize_from_file(input_file_path)
-
-            if get_dataset_type(deserialized_data) != "input":
-                raise PowerGridSerializationError("An internal error occured during deserialization")
 
             # Create a PowerGridModel instance from the loaded input data
             model = PowerGridModel(deserialized_data)

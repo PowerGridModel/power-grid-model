@@ -110,7 +110,7 @@ Then you can run the tests.
 pytest
 ```
 
-A basic `self_test` function is provided to check if the installation was successful and ensures there are no build errors, segmentation faults, undefined symbols, etc. It performs multiple C API calls, runs through the main data flow, and verifies the integrity of serialization and deserialization.
+A basic `self_test` function is provided to check if the installation was successful and ensures there are no build errors, segmentation violations, undefined symbols, etc. It performs multiple C API calls, runs through the main data flow, and verifies the integrity of serialization and deserialization.
 
 ```
 from power_grid_model.utils import self_test

@@ -30,7 +30,7 @@ from power_grid_model.utils import self_test
 ```
 
 A basic self_test function is provided to check if the installation was successful
-and there are no build errors, segfaults, undefined symbols, etc.
+and there are no build errors, segmentation violations, undefined symbols, etc.
 The function should be imported and called by a user by running following commands:
 
 ```python
