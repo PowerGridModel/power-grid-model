@@ -317,7 +317,6 @@ def self_test():
 
     Raises:
         PowerGridError: if there was an internal error.
-        AssertionError: If the output data is empty or if the calculation results are incorrect.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a simple JSON input data file in the temporary directory
