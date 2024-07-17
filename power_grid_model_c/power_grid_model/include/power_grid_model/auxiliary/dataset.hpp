@@ -73,6 +73,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
                         .batch_size = batch_size,
                         .dataset = &meta_data.get_dataset(dataset_name),
                         .component_info = {}} {
+        if (dataset_info_.batch_size < 0) {
+            throw DatasetError{"Batch size cannot be negative!\n"};
+        }
         if (!dataset_info_.is_batch && (dataset_info_.batch_size != 1)) {
             throw DatasetError{"For non-batch dataset, batch size should be one!\n"};
         }
@@ -136,7 +139,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         add_component_info_impl(component, elements_per_scenario, total_elements);
         buffers_.back().data = data;
         if (indptr) {
-            buffers_.back().indptr = std::span{indptr, static_cast<size_t>(batch_size() + 1)};
+            buffers_.back().indptr = get_indptr_span(indptr);
         } else {
             buffers_.back().indptr = {};
         }
@@ -150,7 +153,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         check_non_uniform_integrity<mutable_t>(info.elements_per_scenario, info.total_elements, indptr);
         buffers_[idx].data = data;
         if (indptr) {
-            buffers_[idx].indptr = std::span{indptr, static_cast<size_t>(batch_size() + 1)};
+            buffers_[idx].indptr = get_indptr_span(indptr);
         } else {
             buffers_[idx].indptr = {};
         }
@@ -160,9 +163,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <template <class> class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter<ComponentType>::type>>
     std::span<StructType> get_buffer_span(Idx scenario = invalid_index) const {
+        assert(scenario < batch_size());
+
         if (!is_batch() && scenario > 0) {
             throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
         }
+
         Idx const idx = find_component(ComponentType::name, false);
         return get_buffer_span_impl<StructType>(scenario, idx);
     }
@@ -180,7 +186,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     // get individual dataset from batch
-    Dataset get_individual_scenario(Idx scenario) {
+    Dataset get_individual_scenario(Idx scenario)
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        assert(0 <= scenario && scenario < batch_size());
+
         Dataset result{false, 1, dataset().name, meta_data()};
         for (Idx i{}; i != n_components(); ++i) {
             auto const& buffer = get_buffer(i);
@@ -201,10 +211,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
     DatasetInfo dataset_info_;
     std::vector<Buffer> buffers_;
 
+    std::span<Indptr> get_indptr_span(Indptr* indptr) const {
+        return std::span{indptr, static_cast<size_t>(batch_size() + 1)};
+    }
+
     void check_uniform_integrity(Idx elements_per_scenario, Idx total_elements) {
         if ((elements_per_scenario >= 0) && (elements_per_scenario * batch_size() != total_elements)) {
             throw DatasetError{
-                "For a uniform buffer, total_elements should be equal to elements_per_scenario * batch_size !\n"};
+                "For a uniform buffer, total_elements should be equal to elements_per_scenario * batch_size!\n"};
         }
     }
 
