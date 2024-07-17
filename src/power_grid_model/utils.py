@@ -308,8 +308,10 @@ def _compatibility_deprecated_import_json_data(json_file: Path, data_type: Datas
 
 def self_test():
     """
-    Perform a self-test of the Power Grid Model functionality to check if the installation was successful
-    and there are no build errors, segmentation violations, undefined symbols, etc.
+    Perform a self-test of the Power Grid Model functionality.
+
+    Tests whether the installation was successful and there are no build errors,
+    segmentation violations, undefined symbols, etc.
 
     This function is designed to validate the basic functionality of data serialization,
     model instantiation, power flow calculation, and serialization of results using the
