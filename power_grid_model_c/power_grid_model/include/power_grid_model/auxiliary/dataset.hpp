@@ -12,6 +12,8 @@
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
 
+#include <boost/range.hpp>
+
 #include <span>
 #include <string_view>
 
@@ -47,6 +49,161 @@ struct DatasetInfo {
     std::vector<ComponentInfo> component_info;
 };
 
+template <typename T> class const_range_object {
+  public:
+    using Data = void const;
+
+    class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, T, Idx> {
+      public:
+        using value_type = T;
+
+        iterator() = default;
+        iterator(Idx idx, std::span<Data*> data,
+                 std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+            : idx_{idx}, data_{data}, meta_attributes_{meta_attributes} {
+            assert(data.size() == meta_attributes.size());
+        }
+
+      private:
+        friend class boost::iterator_core_access;
+
+        constexpr auto dereference() const -> value_type {
+            value_type result{};
+            for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
+                auto const& meta_attribute = meta_attributes_[attribute_idx].get();
+                Data* attribute_ptr = data_[attribute_idx];
+                meta_attribute.set_value(&result,
+                                         reinterpret_cast<char const*>(attribute_ptr) + meta_attribute.size * idx_, 0);
+            }
+            return result;
+        }
+        constexpr auto equal(iterator const& other) const {
+            return idx_ == other.idx_ && meta_attributes_.size() == other.meta_attributes_.size() &&
+                   meta_attributes_.begin() == other.meta_attributes_.begin();
+        }
+        constexpr auto distance_to(iterator const& other) const { return other.idx_ - idx_; }
+        constexpr void increment() { ++idx_; }
+        constexpr void decrement() { --idx_; }
+        constexpr void advance(Idx n) { idx_ += n; }
+
+        Idx idx_{};
+        std::span<Data*> data_{};
+        std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
+    };
+
+    const_range_object() = default;
+    const_range_object(Idx size, std::span<Data*> data,
+                       std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+        : size_{size}, data_{data}, meta_attributes_{meta_attributes} {}
+
+    Idx size() const { return size_; }
+    iterator begin() const { return get(0); }
+    iterator end() const { return get(size_); }
+    auto iter() const { return boost::make_iterator_range(begin(), end()); }
+    auto operator[](Idx idx) const { return *get(idx); }
+
+  private:
+    iterator get(Idx idx) const { return iterator{idx, data_, meta_attributes_}; }
+
+    Idx size_{};
+    std::span<Data*> data_{};
+    std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
+};
+
+template <typename T> class mutable_range_object {
+  public:
+    using Data = void;
+
+    class iterator;
+
+    class Proxy {
+      public:
+        using value_type = T;
+
+        Proxy() = default;
+        Proxy(Idx idx, std::span<Data*> data,
+              std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+            : idx_{idx}, data_{data}, meta_attributes_{meta_attributes} {
+            assert(data.size() == meta_attributes.size());
+        }
+
+        Proxy& operator=(value_type const& value) {
+            for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
+                auto const& meta_attribute = get_meta_attribute(attribute_idx);
+                meta_attribute.get_value(&value, attribute_ptr(attribute_idx, meta_attribute.size), 0);
+            }
+            return *this;
+        }
+        operator value_type() const {
+            value_type result{};
+            for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
+                auto const& meta_attribute = get_meta_attribute(attribute_idx);
+                meta_attribute.set_value(&result, attribute_ptr(attribute_idx, meta_attribute.size), 0);
+            }
+            return result;
+        }
+
+      private:
+        friend class mutable_range_object<T>::iterator;
+
+        char const* attribute_ptr(Idx attribute_idx, size_t attribute_size) const {
+            return reinterpret_cast<char const*>(data_[attribute_idx]) + attribute_size * idx_;
+        };
+        MetaAttribute const& get_meta_attribute(Idx attribute_idx) const {
+            return meta_attributes_[attribute_idx].get();
+        }
+
+        Idx idx_{};
+        std::span<Data*> data_{};
+        std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
+    };
+
+    class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
+      public:
+        using value_type = Proxy;
+
+        iterator() = default;
+        iterator(Idx idx, std::span<Data*> data,
+                 std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+            : current_{idx, data, meta_attributes} {}
+
+      private:
+        friend class boost::iterator_core_access;
+
+        constexpr auto dereference() const -> value_type const { return *&current_; }
+        constexpr auto dereference() -> value_type { return *&current_; }
+        constexpr auto equal(iterator const& other) const {
+            return current_.idx_ == other.current_.idx_ &&
+                   current_.meta_attributes_.size() == other.current_.meta_attributes_.size() &&
+                   current_.meta_attributes_.begin() == other.current_.meta_attributes_.begin();
+        }
+        constexpr auto distance_to(iterator const& other) const { return other.current_.idx_ - current_.idx_; }
+        constexpr void increment() { ++current_.idx_; }
+        constexpr void decrement() { --current_.idx_; }
+        constexpr void advance(Idx n) { current_.idx_ += n; }
+
+        Proxy current_;
+    };
+
+    mutable_range_object() = default;
+    mutable_range_object(Idx size, std::span<Data*> data,
+                         std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+        : size_{size}, data_{data}, meta_attributes_{meta_attributes} {}
+
+    Idx size() const { return size_; }
+    iterator begin() const { return get(0); }
+    iterator end() const { return get(size_); }
+    auto iter() const { return boost::make_iterator_range(begin(), end()); }
+    auto operator[](Idx idx) const { return *get(idx); }
+
+  private:
+    iterator get(Idx idx) const { return iterator{idx, data_, meta_attributes_}; }
+
+    Idx size_{};
+    std::span<Data*> data_{};
+    std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
+};
+
 template <dataset_type_tag dataset_type_> class Dataset {
     struct immutable_t {};
     struct mutable_t {};
@@ -64,6 +221,10 @@ template <dataset_type_tag dataset_type_> class Dataset {
         // for uniform buffer, indptr is empty
         std::span<Indptr> indptr;
     };
+
+    template <class StructType>
+    using RangeObject = std::conditional_t<is_data_mutable_v<dataset_type>, mutable_range_object<StructType>,
+                                           const_range_object<StructType>>;
 
     static constexpr Idx invalid_index{-1};
 
@@ -172,6 +333,18 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Idx const idx = find_component(ComponentType::name, false);
         return get_buffer_span_impl<StructType>(scenario, idx);
     }
+    template <template <class> class type_getter, class ComponentType,
+              class StructType = DataStruct<typename type_getter<ComponentType>::type>>
+    RangeObject<StructType> get_columnar_buffer_span(Idx scenario = invalid_index) const {
+        assert(scenario < batch_size());
+
+        if (!is_batch() && scenario > 0) {
+            throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
+        }
+
+        Idx const idx = find_component(ComponentType::name, false);
+        return get_columnar_buffer_span_impl<StructType>(scenario, idx);
+    }
 
     // get buffer by component type for all scenarios in vector span
     template <template <class> class type_getter, class ComponentType,
@@ -181,6 +354,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
         std::vector<std::span<StructType>> result(batch_size());
         for (Idx scenario{}; scenario != batch_size(); scenario++) {
             result[scenario] = get_buffer_span_impl<StructType>(scenario, idx);
+        }
+        return result;
+    }
+    template <template <class> class type_getter, class ComponentType,
+              class StructType = DataStruct<typename type_getter<ComponentType>::type>>
+    std::vector<RangeObject<StructType>> get_columnar_buffer_span_all_scenarios() const {
+        Idx const idx = find_component(ComponentType::name, false);
+        std::vector<RangeObject<StructType>> result(batch_size());
+        for (Idx scenario{}; scenario != batch_size(); scenario++) {
+            result[scenario] = get_columnar_buffer_span_impl<StructType>(scenario, idx);
         }
         return result;
     }
@@ -267,6 +450,27 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
         return std::span<StructType>{ptr + info.elements_per_scenario * scenario,
                                      ptr + info.elements_per_scenario * (scenario + 1)};
+    }
+
+    template <class StructType>
+    RangeObject<StructType> get_columnar_buffer_span_impl(Idx scenario, Idx component_idx) const {
+        return {};
+        // // return empty span if the component does not exist
+        // if (component_idx < 0) {
+        //     return {};
+        // }
+        // // return span based on uniform or non-uniform buffer
+        // ComponentInfo const& info = dataset_info_.component_info[component_idx];
+        // Buffer const& buffer = buffers_[component_idx];
+        // auto const ptr = reinterpret_cast<StructType*>(buffer.data);
+        // if (scenario < 0) {
+        //     return RangeObject<StructType>{ptr, ptr + info.total_elements};
+        // }
+        // if (info.elements_per_scenario < 0) {
+        //     return RangeObject<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
+        // }
+        // return RangeObject<StructType>{ptr + info.elements_per_scenario * scenario,
+        //                                ptr + info.elements_per_scenario * (scenario + 1)};
     }
 };
 
