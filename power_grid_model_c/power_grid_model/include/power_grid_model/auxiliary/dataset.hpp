@@ -56,9 +56,6 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     class iterator;
 
     class Proxy {
-      private:
-        using ConstProxy = ColumnarAttributeRange<T, const_dataset_t>::Proxy;
-
       public:
         using value_type = T;
 
