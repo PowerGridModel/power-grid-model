@@ -57,18 +57,17 @@ def test_create_output_data(output_component_types, is_batch, expected):
     )
 
     assert actual.keys() == expected.keys()
-    for k in expected:
-        if isinstance(expected[k], np.ndarray):
+    for comp in expected:
+        if isinstance(expected[comp], np.ndarray):
             # Row based
-            assert actual[k].dtype == expected[k].dtype
-        elif expected[k] == dict():
+            assert actual[comp].dtype == expected[comp].dtype
+        elif expected[comp] == dict():
             # Empty atrtibutes
-            assert actual[k] == expected[k]
+            assert actual[comp] == expected[comp]
         else:
             # Columnar data
-            assert "data" in actual[k] and "indptr" in actual[k]
-            assert actual[k]["data"].dtype == expected[k]["data"].dtype
-            assert actual[k]["indptr"].dtype == expected[k]["indptr"].dtype
+            assert actual[comp].keys() == expected[comp].keys()
+            assert all(actual[comp][attr].dtype == expected[comp][attr].dtype for attr in expected[comp])
 
 
 @pytest.mark.parametrize(
