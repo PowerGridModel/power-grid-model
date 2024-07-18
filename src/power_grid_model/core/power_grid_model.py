@@ -30,7 +30,7 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     _ExperimentalFeatures,
 )
-from power_grid_model.typing import OutputComponentNamesType
+from power_grid_model.typing import ComponentAttributeMapping
 
 
 class PowerGridModel:
@@ -188,7 +188,7 @@ class PowerGridModel:
     # pylint: disable=too-many-arguments
     def _construct_output(
         self,
-        output_component_types: OutputComponentNamesType,
+        output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
         symmetric: bool,
         is_batch: bool,
@@ -232,7 +232,7 @@ class PowerGridModel:
         calculation_type: CalculationType,
         symmetric: bool,
         update_data: Optional[Dataset],
-        output_component_types: OutputComponentNamesType,
+        output_component_types: ComponentAttributeMapping,
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,

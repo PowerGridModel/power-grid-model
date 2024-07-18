@@ -5,10 +5,10 @@
 """
 Type hints for PGM. This includes all miscellaneous type hints not under dataset or dataset_definitions categories
 """
-from typing import Dict, List, Optional, Set, Union
-
 from power_grid_model.core.dataset_definitions import ComponentType
 
-_OutputComponentTypeDict = Dict[ComponentType, Optional[Union[Set[str], List[str]]]]
+_ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None]
 
-OutputComponentNamesType = Optional[Union[Set[ComponentType], List[ComponentType], _OutputComponentTypeDict]]
+ComponentAttributeMapping = (
+    set[ComponentType] | list[ComponentType] | None | dict[ComponentType, set[str] | list[str] | None]
+)

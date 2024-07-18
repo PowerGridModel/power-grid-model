@@ -8,15 +8,16 @@ Data handling
 
 
 from enum import Enum
-from typing import Dict, Mapping, Tuple, Union
+from typing import Mapping, Tuple, Union
 
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
+from power_grid_model.data_types import Dataset
 from power_grid_model.enum import CalculationType
-from power_grid_model.typing import OutputComponentNamesType, _OutputComponentTypeDict
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class OutputType(Enum):
@@ -102,15 +103,14 @@ def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_
 
 
 def create_output_data(
-    output_component_types: OutputComponentNamesType,
+    output_component_types: ComponentAttributeMapping,
     output_type: OutputType,
-    all_component_count: Dict[ComponentType, int],
+    all_component_count: dict[ComponentType, int],
     is_batch: bool,
     batch_size: int,
-) -> Dict[ComponentType, np.ndarray]:
+) -> Dataset:
     """
-    Create the output data that the user can use. always returns batch type output data.
-        Use reduce_output_data to flatten to single scenario output if applicable.
+    Create the output dataset based on component and batch size from the model; and output attribtues requested by user.
 
     Args:
         output_component_types:
@@ -124,28 +124,14 @@ def create_output_data(
         batch_size:
             the batch size
 
-    Raises:
-        KeyError: if some specified components are unknown.
-
     Returns:
-        dictionary of results of all components
-            key: component type name to be updated in batch
-            value:
-                for single calculation: 1D numpy structured array for the results of this component type
-                for batch calculation: 2D numpy structured array for the results of this component type
-                    Dimension 0: each batch
-                    Dimension 1: the result of each element for this component type
+        Dataset: output dataset
     """
+    processed_output_types = process_output_component_types(
+        output_type, output_component_types, list(all_component_count.keys())
+    )
 
-    # limit all component count to user specified component types in output
-    if output_component_types is None:
-        output_component_types = {k: None for k in all_component_count}
-    elif isinstance(output_component_types, (list, set)):
-        output_component_types = {k: None for k in output_component_types}
-
-    validate_output_component_types(output_type, output_component_types)
-
-    all_component_count = {k: v for k, v in all_component_count.items() if k in output_component_types}
+    all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}
 
     # create result dataset
     result_dict = {}
@@ -156,7 +142,7 @@ def create_output_data(
             shape: Union[Tuple[int], Tuple[int, int]] = (batch_size, count)
         else:
             shape = (count,)
-        attributes = output_component_types[name]
+        attributes = processed_output_types[name]
         if attributes is None:
             result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
         elif attributes in [[], set()]:
@@ -170,25 +156,44 @@ def create_output_data(
     return result_dict
 
 
-def validate_output_component_types(output_type: OutputType, dict_output_types: _OutputComponentTypeDict):
-    """Checks dict_output_types for any invalid component names and attribute names
+def process_output_component_types(
+    output_type: OutputType,
+    output_component_types: ComponentAttributeMapping,
+    available_components: list[ComponentType],
+) -> _ComponentAttributeMappingDict:
+    """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
 
     Args:
         output_type (OutputType): the type of output that the user will see (as per the calculation options)
-        dict_output_types (Dict[ComponentType, Optional[str]]): output_component_types converted to dictionary
+        output_component_types (OutputComponentNamesType):  output_component_types provided by user
+        available_components (list[ComponentType]):  all components available in model instance
 
     Raises:
+        ValueError: when the type for output_comoponent_types is incorrect
         KeyError: with "unknown component" for any unknown components
         KeyError: with "unknown attributes" for any unknown attributes for a known component
+
+    Returns:
+        _OutputComponentTypeDict: processed output_component_types in a dictionary
     """
+    # limit all component count to user specified component types in output and convert to a dict
+    if output_component_types is None:
+        output_component_types = {k: None for k in available_components}
+    elif isinstance(output_component_types, (list, set)):
+        output_component_types = {k: None for k in output_component_types}
+    elif not isinstance(output_component_types, dict) or not all(
+        attrs is None or isinstance(attrs, (set, list)) for attrs in output_component_types.values()
+    ):
+        raise ValueError(f"Invalid output_component_types provided: {output_component_types}")
+
     # raise error if some specified components are unknown
     output_meta = power_grid_meta_data[output_type.value]
-    unknown_components = [x for x in dict_output_types if x not in output_meta]
+    unknown_components = [x for x in output_component_types if x not in output_meta]
     if unknown_components:
         raise KeyError(f"You have specified some unknown component types: {unknown_components}")
 
     unknown_attributes = {}
-    for comp_name, attrs in dict_output_types.items():
+    for comp_name, attrs in output_component_types.items():
         if attrs is None:
             continue
         diff = set(attrs).difference(output_meta[comp_name].dtype.names)
@@ -197,3 +202,5 @@ def validate_output_component_types(output_type: OutputType, dict_output_types: 
 
     if unknown_attributes:
         raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")
+
+    return output_component_types
