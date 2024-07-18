@@ -49,74 +49,16 @@ struct DatasetInfo {
     std::vector<ComponentInfo> component_info;
 };
 
-template <typename T> class const_range_object {
+template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
   public:
-    using Data = void const;
-
-    class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, T, Idx> {
-      public:
-        using value_type = T;
-
-        iterator() = default;
-        iterator(Idx idx, std::span<Data*> data,
-                 std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
-            : idx_{idx}, data_{data}, meta_attributes_{meta_attributes} {
-            assert(data.size() == meta_attributes.size());
-        }
-
-      private:
-        friend class boost::iterator_core_access;
-
-        constexpr auto dereference() const -> value_type {
-            value_type result{};
-            for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
-                auto const& meta_attribute = meta_attributes_[attribute_idx].get();
-                Data* attribute_ptr = data_[attribute_idx];
-                meta_attribute.set_value(&result,
-                                         reinterpret_cast<char const*>(attribute_ptr) + meta_attribute.size * idx_, 0);
-            }
-            return result;
-        }
-        constexpr auto equal(iterator const& other) const {
-            return idx_ == other.idx_ && meta_attributes_.size() == other.meta_attributes_.size() &&
-                   meta_attributes_.begin() == other.meta_attributes_.begin();
-        }
-        constexpr auto distance_to(iterator const& other) const { return other.idx_ - idx_; }
-        constexpr void increment() { ++idx_; }
-        constexpr void decrement() { --idx_; }
-        constexpr void advance(Idx n) { idx_ += n; }
-
-        Idx idx_{};
-        std::span<Data*> data_{};
-        std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
-    };
-
-    const_range_object() = default;
-    const_range_object(Idx size, std::span<Data*> data,
-                       std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
-        : size_{size}, data_{data}, meta_attributes_{meta_attributes} {}
-
-    Idx size() const { return size_; }
-    iterator begin() const { return get(0); }
-    iterator end() const { return get(size_); }
-    auto iter() const { return boost::make_iterator_range(begin(), end()); }
-    auto operator[](Idx idx) const { return *get(idx); }
-
-  private:
-    iterator get(Idx idx) const { return iterator{idx, data_, meta_attributes_}; }
-
-    Idx size_{};
-    std::span<Data*> data_{};
-    std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
-};
-
-template <typename T> class mutable_range_object {
-  public:
-    using Data = void;
+    using Data = std::conditional_t<is_data_mutable_v<dataset_type>, void, void const>;
 
     class iterator;
 
     class Proxy {
+      private:
+        using ConstProxy = ColumnarAttributeRange<T, const_dataset_t>::Proxy;
+
       public:
         using value_type = T;
 
@@ -127,7 +69,9 @@ template <typename T> class mutable_range_object {
             assert(data.size() == meta_attributes.size());
         }
 
-        Proxy& operator=(value_type const& value) {
+        Proxy& operator=(value_type const& value)
+            requires is_data_mutable_v<dataset_type>
+        {
             for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
                 char* buffer_ptr = reinterpret_cast<char*>(data_[attribute_idx]) + meta_attribute.size * idx_;
@@ -148,7 +92,7 @@ template <typename T> class mutable_range_object {
         }
 
       private:
-        friend class mutable_range_object<T>::iterator;
+        friend class iterator;
 
         MetaAttribute const& get_meta_attribute(Idx attribute_idx) const {
             return meta_attributes_[attribute_idx].get();
@@ -186,9 +130,9 @@ template <typename T> class mutable_range_object {
         Proxy current_;
     };
 
-    mutable_range_object() = default;
-    mutable_range_object(Idx size, std::span<Data*> data,
-                         std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+    ColumnarAttributeRange() = default;
+    ColumnarAttributeRange(Idx size, std::span<Data*> data,
+                           std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
         : size_{size}, data_{data}, meta_attributes_{meta_attributes} {}
 
     Idx size() const { return size_; }
@@ -204,6 +148,9 @@ template <typename T> class mutable_range_object {
     std::span<Data*> data_{};
     std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
 };
+
+template <typename T> using const_range_object = ColumnarAttributeRange<T, const_dataset_t>;
+template <typename T> using mutable_range_object = ColumnarAttributeRange<T, mutable_dataset_t>;
 
 template <dataset_type_tag dataset_type_> class Dataset {
     struct immutable_t {};
