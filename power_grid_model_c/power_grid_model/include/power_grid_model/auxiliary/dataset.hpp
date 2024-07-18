@@ -130,15 +130,19 @@ template <typename T> class mutable_range_object {
         Proxy& operator=(value_type const& value) {
             for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                meta_attribute.get_value(&value, attribute_ptr(attribute_idx, meta_attribute.size), 0);
+                char* buffer_ptr = reinterpret_cast<char*>(data_[attribute_idx]) + meta_attribute.size * idx_;
+                meta_attribute.get_value(&value, buffer_ptr, 0);
             }
             return *this;
         }
-        operator value_type() const {
+        operator value_type() const { return get(); }
+        value_type get() const {
             value_type result{};
             for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                meta_attribute.set_value(&result, attribute_ptr(attribute_idx, meta_attribute.size), 0);
+                char const* buffer_ptr =
+                    reinterpret_cast<char const*>(data_[attribute_idx]) + meta_attribute.size * idx_;
+                meta_attribute.set_value(&result, buffer_ptr, 0);
             }
             return result;
         }
@@ -146,9 +150,6 @@ template <typename T> class mutable_range_object {
       private:
         friend class mutable_range_object<T>::iterator;
 
-        char const* attribute_ptr(Idx attribute_idx, size_t attribute_size) const {
-            return reinterpret_cast<char const*>(data_[attribute_idx]) + attribute_size * idx_;
-        };
         MetaAttribute const& get_meta_attribute(Idx attribute_idx) const {
             return meta_attributes_[attribute_idx].get();
         }

@@ -208,7 +208,7 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
 
     static_assert(std::convertible_to<decltype(*range_object.begin()), A::InputType>);
 
-    auto const check = [total_elements, &id_buffer, &a1_buffer](auto const& object) {
+    auto const check_buffer = [total_elements, &id_buffer, &a1_buffer](auto const& object) {
         CHECK(object.size() == total_elements);
         for (Idx idx = 0; idx < object.size(); ++idx) {
             auto const element = static_cast<A::InputType>(object[idx]);
@@ -216,42 +216,85 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
             test::check_nan_or_equal(element.a1, a1_buffer[idx]);
             test::check_nan(element.a0);
             test::check_equal(object[idx], *(object.begin() + idx));
-
-            CHECK(std::distance(object.begin(), object.begin() + idx) == idx);
-            CHECK(std::distance(object.begin() + idx, object.end()) == object.size() - idx);
-
-            CHECK(object.begin() + idx == object.end() - object.size() + idx);
-            CHECK(object.begin() + idx != object.begin() + idx + 1);
-            CHECK(object.begin() + idx != object.begin() + idx - 1);
-
-            auto to_prefix_increment = object.begin() + idx;
-            CHECK(object.begin() + idx + 1 == ++to_prefix_increment);
-            CHECK(object.begin() + idx + 1 == to_prefix_increment);
-            auto to_prefix_decrement = object.begin() + idx;
-            CHECK(object.begin() + idx - 1 == --to_prefix_decrement);
-            CHECK(object.begin() + idx - 1 == to_prefix_decrement);
-            auto to_suffix_increment = object.begin() + idx;
-            CHECK(object.begin() + idx == to_suffix_increment++);
-            CHECK(object.begin() + idx + 1 == to_suffix_increment);
-            auto to_suffix_decrement = object.begin() + idx;
-            CHECK(object.begin() + idx == to_suffix_decrement--);
-            CHECK(object.begin() + idx - 1 == to_suffix_decrement);
-        }
-        Idx count = 0;
-        for (auto const& element : object) {
-            test::check_equal(element, object[count]);
-            ++count;
         }
     };
 
-    check(range_object);
-    id_buffer = {2, 3, 4};
-    a1_buffer = {6.0, -2.0, 2.0, nan};
-    check(range_object);
-    // static_assert(std::same_as<decltype(buffer_span[idx]),
-    //                            mutable_range_object<A::InputType>::Proxy>);
-    // static_assert(std::convertible_to<decltype(buffer_span[idx]), A::InputType>);
-    // return static_cast<A::InputType>(buffer_span[idx]);
+    SUBCASE("Read access") {
+        check_buffer(range_object);
+        id_buffer = {2, 3, 4};
+        a1_buffer = {6.0, -2.0, 2.0, nan};
+        check_buffer(range_object);
+    }
+
+    if constexpr (std::same_as<RangeObjectType, mutable_range_object<A::InputType>>) {
+        SUBCASE("Write access") {
+            A::InputType const new_values{.id = 20, .a0 = -10.0, .a1 = nan};
+            A::InputType const expected{.id = new_values.id, .a0 = nan, .a1 = new_values.a1};
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                check_buffer(range_object);
+                range_object[idx] = new_values;
+                check_buffer(range_object);
+                test::check_equal(range_object[idx].get(), expected);
+            }
+            for (auto proxy : range_object) {
+                check_buffer(range_object);
+                proxy = new_values;
+                check_buffer(range_object);
+                test::check_equal(proxy.get(), expected);
+            }
+        }
+    }
+
+    SUBCASE("Iterator access") {
+        SUBCASE("Distance") {
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                CHECK(std::distance(range_object.begin(), range_object.begin() + idx) == idx);
+                CHECK(std::distance(range_object.begin() + idx, range_object.end()) == range_object.size() - idx);
+            }
+        }
+        SUBCASE("Equal") {
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                CHECK(range_object.begin() + idx == range_object.end() - range_object.size() + idx);
+                CHECK(range_object.begin() + idx != range_object.begin() + idx + 1);
+                CHECK(range_object.begin() + idx != range_object.begin() + idx - 1);
+            }
+        }
+        SUBCASE("Prefix increment") {
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                auto to_prefix_increment = range_object.begin() + idx;
+                CHECK(range_object.begin() + idx + 1 == ++to_prefix_increment);
+                CHECK(range_object.begin() + idx + 1 == to_prefix_increment);
+            }
+        }
+        SUBCASE("Prefix decrement") {
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                auto to_prefix_decrement = range_object.begin() + idx;
+                CHECK(range_object.begin() + idx - 1 == --to_prefix_decrement);
+                CHECK(range_object.begin() + idx - 1 == to_prefix_decrement);
+            }
+        }
+        SUBCASE("Suffix increment") {
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                auto to_suffix_increment = range_object.begin() + idx;
+                CHECK(range_object.begin() + idx == to_suffix_increment++);
+                CHECK(range_object.begin() + idx + 1 == to_suffix_increment);
+            }
+        }
+        SUBCASE("Suffix decrement") {
+            for (Idx idx = 0; idx < range_object.size(); ++idx) {
+                auto to_suffix_decrement = range_object.begin() + idx;
+                CHECK(range_object.begin() + idx == to_suffix_decrement--);
+                CHECK(range_object.begin() + idx - 1 == to_suffix_decrement);
+            }
+        }
+        SUBCASE("Iteration") {
+            Idx count = 0;
+            for (auto const& element : range_object) {
+                test::check_equal(element, range_object[count]);
+                ++count;
+            }
+        }
+    }
 }
 
 TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDataset, WritableDataset) {
