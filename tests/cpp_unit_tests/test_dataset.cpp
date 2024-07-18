@@ -396,6 +396,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         CAPTURE(std::string_view{dataset_type.name});
 
         for (auto const batch_size : {0, 1, 2}) {
+            CAPTURE(batch_size);
+
             SUBCASE("No component added") {
                 CAPTURE(batch_size);
                 auto dataset = create_dataset(true, batch_size, dataset_type);
@@ -431,16 +433,21 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     constexpr auto elements_per_scenario = -1;
 
                     auto dataset = create_dataset(true, batch_size, dataset_type);
-                    add_component_info(dataset, A::name, elements_per_scenario, total_elements);
-                    CHECK(dataset.n_components() == 1);
-                    CHECK(dataset.contains_component(A::name));
+                    if (batch_size == 0 && total_elements > 0 && !std::same_as<DatasetType, WritableDataset>) {
+                        CHECK_THROWS_AS(add_component_info(dataset, A::name, elements_per_scenario, total_elements),
+                                        DatasetError);
+                    } else {
+                        add_component_info(dataset, A::name, elements_per_scenario, total_elements);
+                        CHECK(dataset.n_components() == 1);
+                        CHECK(dataset.contains_component(A::name));
 
-                    auto const& component_info = dataset.get_component_info(A::name);
-                    CHECK(component_info.component == &dataset_type.get_component(A::name));
-                    CHECK(component_info.elements_per_scenario == elements_per_scenario);
-                    CHECK(component_info.total_elements == total_elements);
+                        auto const& component_info = dataset.get_component_info(A::name);
+                        CHECK(component_info.component == &dataset_type.get_component(A::name));
+                        CHECK(component_info.elements_per_scenario == elements_per_scenario);
+                        CHECK(component_info.total_elements == total_elements);
 
-                    CHECK_FALSE(dataset.get_description().component_info.empty());
+                        CHECK_FALSE(dataset.get_description().component_info.empty());
+                    }
                 }
             }
             SUBCASE("Add unknown component info") {
