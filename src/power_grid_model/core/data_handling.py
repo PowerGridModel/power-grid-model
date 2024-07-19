@@ -8,7 +8,7 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping, Sequence, Tuple, Union
+from typing import Mapping, Tuple, Union
 
 import numpy as np
 
@@ -145,7 +145,7 @@ def create_output_data(
         attributes = processed_output_types[name]
         if attributes is None:
             result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
-        elif isinstance(attributes, Sequence) and len(attributes) == 0:
+        elif attributes in [[], set()]:
             result_dict[name] = {}
         else:
             raise NotImplementedError(
