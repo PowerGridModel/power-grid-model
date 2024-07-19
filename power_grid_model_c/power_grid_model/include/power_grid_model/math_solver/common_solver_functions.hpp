@@ -131,22 +131,26 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymm
     std::vector<ComplexValue<asymmetric_t>> y_ref_012_acc(sources.size());
     ComplexValue<asymmetric_t> y_ref_012_t;
     accumulate_y0_y1(y_ref_012_acc, y_ref_012_t, sources, y_bus, input);
-    std::vector<ComplexValue<asymmetric_t>> i_ref_acc(sources.size());
-    ComplexValue<asymmetric_t> i_ref_t;
-    accumulate_i_ref<asymmetric_t>(i_ref_acc, i_ref_t, sources, y_bus, input);
+    std::vector<DoubleComplex> i_ref_acc(sources.size());
+    DoubleComplex i_ref_t;
+    std::ranges::transform(sources, i_ref_acc.begin(), [&](Idx const source) -> DoubleComplex {
+        DoubleComplex const u_ref{input.source[source]};
+        DoubleComplex const y_ref = y_ref_012_acc[source][1];
+        return dot(y_ref, u_ref);
+    });
+    i_ref_t = std::accumulate(i_ref_acc.begin(), i_ref_acc.end(), DoubleComplex{});
+
     ComplexValue<asymmetric_t> const i_inj_t_012 = dot(get_sym_matrix_inv(), i_inj_t);
-    ComplexValue<asymmetric_t> const i_ref_t_012 = dot(get_sym_matrix_inv(), i_ref_t);
 
     for (size_t i = 0; i < sources.size(); ++i) {
         Idx const source = sources_acc[i];
-        ComplexValue<asymmetric_t> const i_ref_i_012 = dot(get_sym_matrix_inv(), i_ref_acc[i]);
         ComplexValue<asymmetric_t> const y_ref_i_012_over_y_ref_t_012 = y_ref_012_acc[i] / y_ref_012_t;
-        ComplexValue<asymmetric_t> const i_inj_012{
-            y_ref_i_012_over_y_ref_t_012(0) * i_ref_t_012(0),
-            (i_ref_i_012(1) - y_ref_i_012_over_y_ref_t_012(1) * i_ref_t_012(1)) +
-                (y_ref_i_012_over_y_ref_t_012(1) * i_ref_t_012(1)),
-            y_ref_i_012_over_y_ref_t_012(2) * i_ref_t_012(2),
-        };
+        DoubleComplex i_inj_i_0 = y_ref_i_012_over_y_ref_t_012(0) * i_inj_t_012(0);
+        DoubleComplex i_inj_i_1_diff_u = y_ref_i_012_over_y_ref_t_012(1) * (input.source[i] * y_ref_012_t[1] - i_ref_t);
+        DoubleComplex i_inj_i_1 = i_inj_i_1_diff_u + (y_ref_i_012_over_y_ref_t_012(1) * i_inj_t_012(1));
+        DoubleComplex i_inj_i_2 = y_ref_i_012_over_y_ref_t_012(2) * i_inj_t_012(2);
+
+        ComplexValue<asymmetric_t> const i_inj_012{i_inj_i_0, i_inj_i_1, i_inj_i_2};
         output.source[source].i = dot(get_sym_matrix(), i_inj_012);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
