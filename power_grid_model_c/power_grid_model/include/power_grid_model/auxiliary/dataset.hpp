@@ -447,10 +447,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
         if (scenario < 0) {
             return total_range;
         }
-        // if (info.elements_per_scenario < 0) {
-        //     return RangeObject<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
-        // }
-        return RangeObject<StructType>{total_range.begin() + scenario * info.elements_per_scenario,
+        if (info.elements_per_scenario < 0) {
+            return RangeObject<StructType>{total_range.begin() + buffer.indptr[scenario],
+                                           total_range.begin() + buffer.indptr[scenario + 1]};
+        }
+        return RangeObject<StructType>{total_range.begin() + info.elements_per_scenario * scenario,
                                        total_range.begin() + info.elements_per_scenario * (scenario + 1)};
     }
 };
