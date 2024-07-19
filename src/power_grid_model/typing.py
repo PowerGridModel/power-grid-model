@@ -9,6 +9,4 @@ from power_grid_model.core.dataset_definitions import ComponentType
 
 _ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None]
 
-ComponentAttributeMapping = (
-    set[ComponentType] | list[ComponentType] | None | dict[ComponentType, set[str] | list[str] | None]
-)
+ComponentAttributeMapping = set[ComponentType] | list[ComponentType] | None | _ComponentAttributeMappingDict

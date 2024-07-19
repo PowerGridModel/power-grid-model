@@ -38,7 +38,9 @@ from power_grid_model.core.power_grid_meta import initialize_array
                 CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
             },
         ),
-        ({CT.node: [], CT.sym_load: []}, True, {CT.node: dict(), CT.sym_load: dict()}),
+        pytest.param(
+            {CT.node: [], CT.sym_load: []}, True, {CT.node: dict(), CT.sym_load: dict()}, marks=pytest.mark.xfail
+        ),
         pytest.param({CT.node: [], CT.sym_load: ["p"]}, True, {}, marks=pytest.mark.xfail),
         pytest.param({CT.node: ["u"], CT.sym_load: ["p"]}, True, {}, marks=pytest.mark.xfail),
         pytest.param({CT.node: None, CT.sym_load: ["p"]}, True, {}, marks=pytest.mark.xfail),

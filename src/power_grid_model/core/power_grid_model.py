@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Set, Type, Union
 
 import numpy as np
 
+from power_grid_model._utils import copy_output_to_columnar_dataset
 from power_grid_model.core.data_handling import (
     create_output_data,
     get_output_type,
@@ -287,6 +288,13 @@ class PowerGridModel:
             continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
         )
 
+        available_components = list(self._get_output_component_count(calculation_type=calculation_type).keys())
+        output_data = copy_output_to_columnar_dataset(
+            output_data=output_data,
+            output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
+            available_components=available_components,
+            output_component_types=output_component_types,
+        )
         return output_data
 
     def _calculate_power_flow(

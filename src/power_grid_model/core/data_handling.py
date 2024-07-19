@@ -142,17 +142,7 @@ def create_output_data(
             shape: Union[Tuple[int], Tuple[int, int]] = (batch_size, count)
         else:
             shape = (count,)
-        attributes = processed_output_types[name]
-        if attributes is None:
-            result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
-        elif attributes in [[], set()]:
-            result_dict[name] = {}
-        else:
-            raise NotImplementedError(
-                "Columnar data types are not implemented yet."
-                "output_component_types must be provided with a list or set"
-            )
-
+        result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
     return result_dict
 
 
