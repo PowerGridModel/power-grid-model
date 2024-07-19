@@ -60,7 +60,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = T;
 
         Proxy() = default;
-        Proxy(Idx idx, std::span<Data*> data,
+        Proxy(Idx idx, std::span<Data* const> data,
               std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
             : idx_{idx}, data_{data}, meta_attributes_{meta_attributes} {
             assert(data.size() == meta_attributes.size());
@@ -78,7 +78,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         }
         operator value_type() const { return get(); }
         value_type get() const {
-            value_type result{};
+            std::remove_const_t<value_type> result{};
             for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
                 char const* buffer_ptr =
@@ -96,7 +96,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         }
 
         Idx idx_{};
-        std::span<Data*> data_{};
+        std::span<Data* const> data_{};
         std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
     };
 
@@ -105,7 +105,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = Proxy;
 
         iterator() = default;
-        iterator(Idx idx, std::span<Data*> data,
+        iterator(Idx idx, std::span<Data* const> data,
                  std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
             : current_{idx, data, meta_attributes} {}
 
@@ -128,11 +128,12 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     };
 
     ColumnarAttributeRange() = default;
-    ColumnarAttributeRange(Idx size, std::span<Data*> data,
+    ColumnarAttributeRange(Idx size, std::span<Data* const> data,
                            std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
         : size_{size}, data_{data}, meta_attributes_{meta_attributes} {}
 
-    Idx size() const { return size_; }
+    constexpr Idx size() const { return size_; }
+    constexpr bool empty() const { return size_ == 0; }
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
     auto iter() const { return boost::make_iterator_range(begin(), end()); }
@@ -142,7 +143,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     iterator get(Idx idx) const { return iterator{idx, data_, meta_attributes_}; }
 
     Idx size_{};
-    std::span<Data*> data_{};
+    std::span<Data* const> data_{};
     std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
 };
 
@@ -161,9 +162,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <class StructType>
     using DataStruct = std::conditional_t<is_data_mutable_v<dataset_type>, StructType, StructType const>;
 
+    struct AttributeBuffers {
+        std::vector<Data*> data;
+        std::vector<std::reference_wrapper<MetaAttribute const>> meta_attributes;
+    };
+
+    // for columnar buffers, Data* data is empty and attributes is filled
+    // for uniform buffers, indptr is empty
     struct Buffer {
         Data* data;
-        // for uniform buffer, indptr is empty
+        AttributeBuffers attributes;
         std::span<Indptr> indptr;
     };
 
@@ -263,6 +271,22 @@ template <dataset_type_tag dataset_type_> class Dataset {
         } else {
             buffers_[idx].indptr = {};
         }
+    }
+
+    void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data) {
+        Idx const idx = find_component(component, true);
+        Buffer& buffer = buffers_[idx];
+        if (buffer.data != nullptr) {
+            throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
+        }
+        if (std::ranges::find_if(buffer.attributes.meta_attributes, [&attribute](MetaAttribute const& meta_attribute) {
+                return meta_attribute.name == attribute;
+            }) != buffer.attributes.meta_attributes.end()) {
+            throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
+        }
+        buffer.attributes.data.emplace_back(data);
+        buffer.attributes.meta_attributes.emplace_back(
+            dataset_info_.component_info[idx].component->get_attribute(attribute));
     }
 
     // get buffer by component type
@@ -399,14 +423,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
     template <class StructType>
     RangeObject<StructType> get_columnar_buffer_span_impl(Idx scenario, Idx component_idx) const {
-        return {};
-        // // return empty span if the component does not exist
-        // if (component_idx < 0) {
-        //     return {};
-        // }
-        // // return span based on uniform or non-uniform buffer
-        // ComponentInfo const& info = dataset_info_.component_info[component_idx];
-        // Buffer const& buffer = buffers_[component_idx];
+        // return empty span if the component does not exist
+        if (component_idx < 0) {
+            return {};
+        }
+        // return span based on uniform or non-uniform buffer
+        ComponentInfo const& info = dataset_info_.component_info[component_idx];
+        Buffer const& buffer = buffers_[component_idx];
+        assert(buffer.data == nullptr);
+
+        return RangeObject<StructType>{info.total_elements, buffer.attributes.data, buffer.attributes.meta_attributes};
         // auto const ptr = reinterpret_cast<StructType*>(buffer.data);
         // if (scenario < 0) {
         //     return RangeObject<StructType>{ptr, ptr + info.total_elements};
