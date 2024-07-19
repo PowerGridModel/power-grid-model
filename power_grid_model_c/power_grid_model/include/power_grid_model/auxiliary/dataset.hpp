@@ -89,6 +89,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         }
 
       private:
+        friend class ColumnarAttributeRange;
         friend class iterator;
 
         MetaAttribute const& get_meta_attribute(Idx attribute_idx) const {
@@ -128,9 +129,18 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     };
 
     ColumnarAttributeRange() = default;
-    ColumnarAttributeRange(Idx size, std::span<Data* const> data,
+    ColumnarAttributeRange(Idx size, std::vector<Data*> data,
                            std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
-        : size_{size}, data_{data}, meta_attributes_{meta_attributes} {}
+        : size_{size}, data_{std::move(data)}, meta_attributes_{meta_attributes} {
+        assert(data_.size() == meta_attributes_.size());
+    }
+    ColumnarAttributeRange(ColumnarAttributeRange::iterator begin, ColumnarAttributeRange::iterator end)
+        : size_{std::distance(begin, end)},
+          data_{begin->data_.begin(), begin->data_.end()},
+          meta_attributes_{begin->meta_attributes_} {
+        assert(data_.size() == meta_attributes_.size());
+        assert(begin + std::distance(begin, end) == end);
+    }
 
     constexpr Idx size() const { return size_; }
     constexpr bool empty() const { return size_ == 0; }
@@ -143,7 +153,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     iterator get(Idx idx) const { return iterator{idx, data_, meta_attributes_}; }
 
     Idx size_{};
-    std::span<Data* const> data_{};
+    std::vector<Data*> data_{};
     std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
 };
 
@@ -432,16 +442,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Buffer const& buffer = buffers_[component_idx];
         assert(buffer.data == nullptr);
 
-        return RangeObject<StructType>{info.total_elements, buffer.attributes.data, buffer.attributes.meta_attributes};
-        // auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        // if (scenario < 0) {
-        //     return RangeObject<StructType>{ptr, ptr + info.total_elements};
-        // }
+        RangeObject<StructType> total_range{info.total_elements, buffer.attributes.data,
+                                            buffer.attributes.meta_attributes};
+        if (scenario < 0) {
+            return total_range;
+        }
         // if (info.elements_per_scenario < 0) {
         //     return RangeObject<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
         // }
-        // return RangeObject<StructType>{ptr + info.elements_per_scenario * scenario,
-        //                                ptr + info.elements_per_scenario * (scenario + 1)};
+        return RangeObject<StructType>{total_range.begin() + scenario * info.elements_per_scenario,
+                                       total_range.begin() + info.elements_per_scenario * (scenario + 1)};
     }
 };
 
