@@ -344,10 +344,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     TransformerWrapper(std::reference_wrapper<const TransformerType> transformer, Idx2D const& index,
                        Idx topology_index)
         : transformer_{std::move(transformer)}, index_{index}, topology_index_{topology_index} {
-        binary_search_.lower_bound = tap_min();
-        binary_search_.upper_bound = tap_max();
-        binary_search_.current = tap_pos();
-        binary_search_.tap_reverse = tap_max() < tap_min();
+        reset_bs();
     }
 
     constexpr auto index() const { return index_; }
@@ -806,6 +803,74 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 add_tap_pos_update(new_tap_pos, transformer, update_data);
                 tap_changed = true;
             }
+        });
+
+        return tap_changed;
+    }
+
+    bool adjust_transformer_bs(RegulatedTransformer const& regulator, State const& state,
+                               ResultType const& solver_output, UpdateBuffer& update_data,
+                               bool strategy_max = true) const {
+        bool tap_changed = false;
+
+        regulator.transformer.apply([&](transformer_c auto const& transformer) {
+            using TransformerType = std::remove_cvref_t<decltype(transformer)>;
+            using sym = typename ResultType::value_type::sym;
+
+            auto const param = regulator.regulator.get().template calc_param<sym>();
+            auto const node_state =
+                NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
+                               .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
+
+            auto const cmp = node_state <=> param;
+            auto new_tap_pos = [&transformer, &cmp] {
+                if (cmp != 0) {
+                    auto state_above_range = cmp > 0; // NOLINT(modernize-use-nullptr)
+                    if (transformer.get_bs_last_check()) {
+                        auto is_down =
+                            state_above_range ? transformer.get_bs_tap_reverse() : !transformer.get_bs_tap_reverse();
+                        transformer.set_bs_current_tap(is_down ? transformer.get_bs_tap_left()
+                                                               : transformer.get_bs_tap_right());
+                        transformer.set_bs_inevitable_run(true);
+                        transformer.set_bs_last_down(is_down);
+                        transformer.adjust_bs(strategy_max);
+                    }
+                }
+                return transformer.get_bs_current_tap();
+            }();
+
+            if (new_tap_pos != transformer.tap_pos()) {
+                add_tap_pos_update(new_tap_pos, transformer, update_data);
+                tap_changed = true;
+            }
+
+            // Only return false if the binary search condition is met
+            if (transformer.get_bs_tap_left() >= transformer.get_bs_tap_right() ||
+                transformer.get_bs_inevitable_run()) {
+                tap_changed = false;
+                return;
+            }
+
+            bool previous_down = transformer.get_bs_last_down();
+            if (transformer.get_bs_tap_reverse() ? strategy_max : !strategy_max;) {
+                transformer.set_bs_tap_left(transformer.get_bs_current_tap());
+                transformer.set_bs_last_down(false);
+            } else {
+                transformer.set_bs_tap_right(transformer.get_bs_current_tap());
+                transformer.set_bs_last_down(true);
+            }
+
+            bool search_mode = strategy_max ? !transformer.get_bs_tap_reverse() : transformer.get_bs_tap_reverse();
+            auto tap_pos = transformer.search_bs(search_mode);
+            auto tap_diff = tap_pos - transformer.get_bs_current_tap();
+            if (tap_diff == 0) {
+                tap_changed = false;
+                return;
+            }
+            if ((tap_diff == 1 && previous_down) || (tap_diff == -1 && !previous_down) {
+                transformer.set_bs_last_check(true);
+            }
+            transformer.set_bs_current_tap(tap_pos);
         });
 
         return tap_changed;
