@@ -379,6 +379,8 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     void set_bs_last_check(bool last_check) { binary_search_.last_check = last_check; }
     bool get_bs_tap_reverse() const { return binary_search_.tap_reverse; }
     void set_bs_tap_reverse(bool tap_reverse) { binary_search_.tap_reverse = tap_reverse; }
+    bool get_bs_inevitable_run() const { return binary_search_.inevitable_run; }
+    void set_bs_inevitable_run(bool inevitable_run) { binary_search_.inevitable_run = inevitable_run; }
     void reset_bs() {
         binary_search_.last_down = false;
         binary_search_.last_check = false;
@@ -744,7 +746,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size() + 1),
                                               static_cast<IntS>(0));
-
+        auto stratygy_max =
+            strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
         while (tap_changed) {
             tap_changed = false;
@@ -753,7 +756,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             for (auto const& same_rank_regulators : regulator_order) {
                 for (auto const& regulator : same_rank_regulators) {
-                    tap_changed = adjust_transformer(regulator, state, result, update_data) || tap_changed;
+                    // tap_changed = adjust_transformer(regulator, state, result, update_data) || tap_changed;
+                    tap_changed =
+                        adjust_transformer_bs(regulator, state, result, update_data, stratygy_max) || tap_changed;
                 }
                 if (tap_changed) {
                     break;
@@ -815,26 +820,27 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
             using sym = typename ResultType::value_type::sym;
 
+            auto transformer_wraper = regulator.transformer;
             auto const param = regulator.regulator.get().template calc_param<sym>();
             auto const node_state =
                 NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
                                .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
 
             auto const cmp = node_state <=> param;
-            auto new_tap_pos = [&transformer, &cmp] {
+            auto new_tap_pos = [&transformer, &cmp, strategy_max, &transformer_wraper] {
                 if (cmp != 0) {
                     auto state_above_range = cmp > 0; // NOLINT(modernize-use-nullptr)
-                    if (transformer.get_bs_last_check()) {
-                        auto is_down =
-                            state_above_range ? transformer.get_bs_tap_reverse() : !transformer.get_bs_tap_reverse();
-                        transformer.set_bs_current_tap(is_down ? transformer.get_bs_tap_left()
-                                                               : transformer.get_bs_tap_right());
-                        transformer.set_bs_inevitable_run(true);
-                        transformer.set_bs_last_down(is_down);
-                        transformer.adjust_bs(strategy_max);
+                    if (transformer_wraper.get_bs_last_check()) {
+                        auto is_down = state_above_range ? transformer_wraper.get_bs_tap_reverse()
+                                                         : !transformer_wraper.get_bs_tap_reverse();
+                        transformer_wraper.set_bs_current_tap(is_down ? transformer_wraper.get_bs_tap_left()
+                                                                      : transformer_wraper.get_bs_tap_right());
+                        transformer_wraper.set_bs_inevitable_run(true);
+                        transformer_wraper.set_bs_last_down(is_down);
+                        transformer_wraper.adjust_bs(strategy_max);
                     }
                 }
-                return transformer.get_bs_current_tap();
+                return transformer_wraper.get_bs_current_tap();
             }();
 
             if (new_tap_pos != transformer.tap_pos()) {
@@ -843,32 +849,33 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
 
             // Only return false if the binary search condition is met
-            if (transformer.get_bs_tap_left() >= transformer.get_bs_tap_right() ||
-                transformer.get_bs_inevitable_run()) {
+            if (transformer_wraper.get_bs_tap_left() >= transformer_wraper.get_bs_tap_right() ||
+                transformer_wraper.get_bs_inevitable_run()) {
                 tap_changed = false;
                 return;
             }
 
-            bool previous_down = transformer.get_bs_last_down();
-            if (transformer.get_bs_tap_reverse() ? strategy_max : !strategy_max;) {
-                transformer.set_bs_tap_left(transformer.get_bs_current_tap());
-                transformer.set_bs_last_down(false);
+            bool previous_down = transformer_wraper.get_bs_last_down();
+            if (transformer_wraper.get_bs_tap_reverse() ? strategy_max : !strategy_max) {
+                transformer_wraper.set_bs_tap_left(transformer_wraper.get_bs_current_tap());
+                transformer_wraper.set_bs_last_down(false);
             } else {
-                transformer.set_bs_tap_right(transformer.get_bs_current_tap());
-                transformer.set_bs_last_down(true);
+                transformer_wraper.set_bs_tap_right(transformer_wraper.get_bs_current_tap());
+                transformer_wraper.set_bs_last_down(true);
             }
 
-            bool search_mode = strategy_max ? !transformer.get_bs_tap_reverse() : transformer.get_bs_tap_reverse();
-            auto tap_pos = transformer.search_bs(search_mode);
-            auto tap_diff = tap_pos - transformer.get_bs_current_tap();
+            bool search_mode =
+                strategy_max ? !transformer_wraper.get_bs_tap_reverse() : transformer_wraper.get_bs_tap_reverse();
+            auto tap_pos = transformer_wraper.search_bs(search_mode);
+            auto tap_diff = tap_pos - transformer_wraper.get_bs_current_tap();
             if (tap_diff == 0) {
                 tap_changed = false;
                 return;
             }
-            if ((tap_diff == 1 && previous_down) || (tap_diff == -1 && !previous_down) {
-                transformer.set_bs_last_check(true);
+            if ((tap_diff == 1 && previous_down) || (tap_diff == -1 && !previous_down)) {
+                transformer_wraper.set_bs_last_check(true);
             }
-            transformer.set_bs_current_tap(tap_pos);
+            transformer_wraper.set_bs_current_tap(tap_pos);
         });
 
         return tap_changed;
