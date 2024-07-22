@@ -98,7 +98,7 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymm
                                              SolverOutput<asymmetric_t>& output, Idx const& bus_number) {
     std::vector<std::pair<power_grid_model::DoubleComplex, power_grid_model::DoubleComplex>> const y0_y1 =
         y_bus.math_model_param().source_param_y0_y1;
-    ComplexValue<asymmetric_t> y_ref_t_012 =
+    ComplexValue<asymmetric_t> const y_ref_t_012 =
         std::accumulate(sources.begin(), sources.end(), ComplexValue<asymmetric_t>{},
                         [&](ComplexValue<asymmetric_t> sum, Idx const source) {
                             sum(0) += y0_y1[source].first;
