@@ -110,7 +110,7 @@ def create_output_data(
     batch_size: int,
 ) -> Dataset:
     """
-    Create the output dataset based on component and batch size from the model; and output attribtues requested by user.
+    Create the output dataset based on component and batch size from the model; and output attributes requested by user.
 
     Args:
         output_component_types:

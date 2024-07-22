@@ -296,6 +296,7 @@ def copy_output_to_columnar_dataset(
     available_components: list[ComponentType],
 ) -> Dataset:
     """Temporary function to copy row based dataset to a column based dataset as per output_component_types.
+    The purpose of this function is to mimic columnar data without any memory overhead benefits.
 
     Args:
         data (Dataset):
