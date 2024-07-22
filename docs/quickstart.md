@@ -26,6 +26,16 @@ as well as some helper functions for enumerations and meta data.
 from power_grid_model import LoadGenType
 from power_grid_model import PowerGridModel
 from power_grid_model import initialize_array
+from power_grid_model.utils import self_test
+```
+
+A basic self_test function is provided to check if the installation was successful
+and there are no build errors, segmentation violations, undefined symbols, etc.
+The function should be imported and called by a user by running following commands:
+
+```python
+from power_grid_model.utils import self_test
+self_test()
 ```
 
 ## Input Data
