@@ -50,7 +50,7 @@ template <class T, class... Ts>
 constexpr size_t get_sub_cls_pos_v = get_index_bool_array(std::array{std::is_base_of_v<T, Ts>...});
 
 template <class T, class... SupportedTs>
-concept supported_type_c = (std::same_as<std::remove_const_t<T>, SupportedTs> || ...);
+concept supported_type_c = is_in_list_c<T, SupportedTs...>;
 
 // define what types are retrievable using sequence number
 template <class... T> struct RetrievableTypes;

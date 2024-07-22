@@ -40,7 +40,7 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
     - The elements are the indices in the data that point to the first element of that scenario.
     - The last element is one after the data index of the last element of the last scenario.
-    - Usually, the last element will therefore be the size of the data.
+    - The first element and last element will therefore be 0 and the size of the data, respectively.
 
 - Examples:
 

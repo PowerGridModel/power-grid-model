@@ -6,7 +6,7 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/container.hpp>
-#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_wrapper.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
@@ -585,7 +585,7 @@ void validate_batch_case(CaseParam const& param) {
             MainModel model_copy{model};
 
             // update and run
-            model_copy.update_component<MainModel::permanent_update_t>(
+            model_copy.update_component<permanent_update_t>(
                 validation_case.update_batch.value().batch_scenarios[scenario]);
             ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
             func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
