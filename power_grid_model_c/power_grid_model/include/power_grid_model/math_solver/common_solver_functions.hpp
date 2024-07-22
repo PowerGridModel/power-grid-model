@@ -77,7 +77,7 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symme
         std::accumulate(sources.begin(), sources.end(), DoubleComplex{}, [&](DoubleComplex sum, Idx const source) {
             return input.source[source] * y_ref[source] + sum;
         });
-    for (Idx source : sources) {
+    for (Idx const source : sources) {
         DoubleComplex const y_ref_i_over_y_ref_t = y_ref[source] / y_ref_t;
         DoubleComplex const i_inj_i_lhs = y_ref_i_over_y_ref_t * (input.source[source] * y_ref_t - i_ref_t);
         output.source[source].i = i_inj_i_lhs + (y_ref_i_over_y_ref_t * i_inj_t);
@@ -112,7 +112,7 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymm
         });
     ComplexValue<asymmetric_t> const i_inj_t_012 = dot(get_sym_matrix_inv(), i_inj_t);
 
-    for (Idx source : sources) {
+    for (Idx const source : sources) {
         DoubleComplex const y_ref_i_1_over_y_ref_t_1 = y0_y1[source].second / y_ref_t_012[1];
         DoubleComplex const i_inj_i_1_lhs =
             y_ref_i_1_over_y_ref_t_1 * (input.source[source] * y_ref_t_012[1] - i_ref_1_t);
