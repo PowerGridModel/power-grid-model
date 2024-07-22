@@ -78,8 +78,9 @@ Meanwhile, both symmetric and asymmetric calculations can be run on the same mod
 
 ## Reference Direction
 
-The sign of active/reactive power of the {ref}`user_manual/components:Appliance` and
+The sign of active/reactive power of the {ref}`user_manual/components:Branch`, {ref}`user_manual/components:Branch3`, {ref}`user_manual/components:Appliance` and
 {ref}`user_manual/components:Sensor` depends on the reference direction.
 
-* For load reference direction, positive active power means the power flows *from the node to the appliance/sensor*.
-* For generator reference direction, positive active power means the power flows *from the appliance/sensor to the node*.
+* For load reference direction, positive active/reactive power means the power flows *from the node to the appliance/sensor*.
+* For generator reference direction, positive active/reactive power means the power flows *from the appliance/sensor to the node*.
+* For `branch` and `branch3` type of components, positive active/reactive power means the power flows *from the node to the branch*.
