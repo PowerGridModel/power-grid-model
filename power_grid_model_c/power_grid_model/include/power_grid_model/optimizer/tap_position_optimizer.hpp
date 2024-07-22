@@ -407,10 +407,8 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     }
     IntS search_bs(bool strategy_max = true) {
         auto mid_point = get_bs_tap_left() + (get_bs_tap_right() - get_bs_tap_left()) / 2;
-        if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0) {
-            if (strategy_max) {
-                return mid_point + 1;
-            }
+        if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0 && strategy_max) {
+            return mid_point + 1;
         }
         return mid_point;
     }
