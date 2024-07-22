@@ -630,10 +630,6 @@ TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
     for (CaseParam const& param : all_cases) {
         SUBCASE(param.case_name.c_str()) {
-            // if (param.case_name != "power_flow/source-big-sk-asym-newton_raphson_batch" &&
-            //     param.case_name != "power_flow/source-big-sk-sym-newton_raphson_batch") {
-            //     continue;
-            // }
             try {
                 validate_batch_case(param);
             } catch (std::exception& e) {

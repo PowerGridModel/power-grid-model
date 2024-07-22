@@ -59,70 +59,84 @@ template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, Compl
     });
 }
 
-// calculate_multiple_source_result() is overloaded for symmetric_t and assymetric_t
-// calculates current and power source result for multiple symmetric sources
+// Calculates current and power injection of source i for multiple symmetric sources at a node.
+// The current injection of source i to the bus in phase space is:
+//     i_inj_i = (y_ref_i * z_ref_t) [ (u_ref_i * y_ref_t - i_ref_t) + i_inj_t]
+// Phase space is used because y_ref is a DoubleComplex in the symmetric case.
+// The equation is organized in such a way to avoid the numerical instability induced in the substraction if y_ref_i
+// is large.
 inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symmetric_t> const& y_bus,
                                              PowerFlowInput<symmetric_t> const& input,
                                              ComplexValue<symmetric_t> const& i_inj_t,
                                              SolverOutput<symmetric_t>& output, Idx const& bus_number) {
-    auto const y0y1 = y_bus.math_model_param().source_param_y0_y1;
-    DoubleComplex y_ref_t_1 =
+    ComplexVector const y_ref = y_bus.math_model_param().source_param;
+    DoubleComplex const y_ref_t =
         std::accumulate(sources.begin(), sources.end(), DoubleComplex{},
-                        [&](DoubleComplex sum, Idx const source) { return y0y1[source].second + sum; });
-    DoubleComplex i_ref_t =
+                        [&](DoubleComplex sum, Idx const source) { return y_ref[source] + sum; });
+    DoubleComplex const i_ref_t =
         std::accumulate(sources.begin(), sources.end(), DoubleComplex{}, [&](DoubleComplex sum, Idx const source) {
-            return input.source[source] * y0y1[source].second + sum;
+            return input.source[source] * y_ref[source] + sum;
         });
-    for (auto source : sources) {
-        DoubleComplex const y_ref_i_1_over_y_ref_t_1 = y0y1[source].second / y_ref_t_1;
-        DoubleComplex i_inj_i_1_diff_u = y_ref_i_1_over_y_ref_t_1 * (input.source[source] * y_ref_t_1 - i_ref_t);
-        output.source[source].i = i_inj_i_1_diff_u + (y_ref_i_1_over_y_ref_t_1 * i_inj_t);
+    for (Idx source : sources) {
+        DoubleComplex const y_ref_i_over_y_ref_t = y_ref[source] / y_ref_t;
+        DoubleComplex const i_inj_i_lhs = y_ref_i_over_y_ref_t * (input.source[source] * y_ref_t - i_ref_t);
+        output.source[source].i = i_inj_i_lhs + (y_ref_i_over_y_ref_t * i_inj_t);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
 
-// calculates current and power source result for multiple asymmetric sources
+// Calculates current and power injection for source i for multiple asymmetric sources at a node.
+// The current injection of source i to the bus in 012 domain is:
+// i_inj_0 = y_ref_i_0 / y_ref_t_0 * i_inj_t_0
+// i_inj_1 = y_ref_i_1 * [(u_ref_i_1 - i_ref_t_1 / y_ref_t_1) + i_inj_t_1 / y_ref_t_1]
+// i_inj_2 = y_ref_i_2 / y_ref_t_2 * i_inj_t_2
+// Note: u_ref_i_0 = u_ref_i_2 = 0
+// 012 domain is used to solve the numerical instability as for the symmetric case.
 inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymmetric_t> const& y_bus,
                                              PowerFlowInput<asymmetric_t> const& input,
                                              ComplexValue<asymmetric_t> const& i_inj_t,
                                              SolverOutput<asymmetric_t>& output, Idx const& bus_number) {
-    auto const y0y1 = y_bus.math_model_param().source_param_y0_y1;
-    ComplexValue<asymmetric_t> y_ref_t = std::accumulate(
-        sources.begin(), sources.end(), ComplexValue<asymmetric_t>{},
-        [&](ComplexValue<asymmetric_t> sum, Idx const source) {
-            return sum + ComplexValue<asymmetric_t>{y0y1[source].first, y0y1[source].second, y0y1[source].second};
-        });
-    DoubleComplex i_ref_t =
+    std::vector<std::pair<power_grid_model::DoubleComplex, power_grid_model::DoubleComplex>> const y0_y1 =
+        y_bus.math_model_param().source_param_y0_y1;
+    ComplexValue<asymmetric_t> y_ref_t_012 =
+        std::accumulate(sources.begin(), sources.end(), ComplexValue<asymmetric_t>{},
+                        [&](ComplexValue<asymmetric_t> sum, Idx const source) {
+                            sum(0) += y0_y1[source].first;
+                            sum(1) += y0_y1[source].second;
+                            sum(2) = sum(1); // y1 = y2
+                            return sum;
+                        });
+    DoubleComplex const i_ref_1_t =
         std::accumulate(sources.begin(), sources.end(), DoubleComplex{}, [&](DoubleComplex sum, Idx const source) {
-            return input.source[source] * y0y1[source].second + sum;
+            return input.source[source] * y0_y1[source].second + sum;
         });
     ComplexValue<asymmetric_t> const i_inj_t_012 = dot(get_sym_matrix_inv(), i_inj_t);
 
-    for (auto source : sources) {
-        DoubleComplex const y_ref_i_1_over_y_ref_t_1 = y0y1[source].second / y_ref_t[1];
-        DoubleComplex const i_inj_i_1_diff_u = y_ref_i_1_over_y_ref_t_1 * (input.source[source] * y_ref_t[1] - i_ref_t);
-        DoubleComplex const i_inj_i_1 = i_inj_i_1_diff_u + (y_ref_i_1_over_y_ref_t_1 * i_inj_t_012(1));
+    for (Idx source : sources) {
+        DoubleComplex const y_ref_i_1_over_y_ref_t_1 = y0_y1[source].second / y_ref_t_012[1];
+        DoubleComplex const i_inj_i_1_lhs =
+            y_ref_i_1_over_y_ref_t_1 * (input.source[source] * y_ref_t_012[1] - i_ref_1_t);
+        DoubleComplex const i_inj_i_1 = i_inj_i_1_lhs + (y_ref_i_1_over_y_ref_t_1 * i_inj_t_012(1));
 
-        DoubleComplex const i_inj_i_0 = y0y1[source].first / y_ref_t[0] * i_inj_t_012(0);
-        DoubleComplex const i_inj_i_2 = y0y1[source].second / y_ref_t[2] * i_inj_t_012(2);
+        DoubleComplex const i_inj_i_0 = (y0_y1[source].first / y_ref_t_012[0]) * i_inj_t_012(0);
+        DoubleComplex const i_inj_i_2 = (y0_y1[source].second / y_ref_t_012[2]) * i_inj_t_012(2);
         ComplexValue<asymmetric_t> const i_inj_012{i_inj_i_0, i_inj_i_1, i_inj_i_2};
         output.source[source].i = dot(get_sym_matrix(), i_inj_012);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
     }
 }
 
+// Current implementation avoids numerical instability. For details refer to:
+// https://github.com/PowerGridModel/power-grid-model-workshop/blob/experiment/source-calculation/source_calculation/source_calculation.ipynb
 template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx const& bus_number, YBus<sym> const& y_bus,
                                     PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
                                     ComplexValue<sym> const& i_load_gen_bus) {
-    if (sources.empty()) {
-        return;
-    }
     ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     if (sources.size() == 1) {
         output.source[*sources.begin()].i = i_inj_t;
         output.source[*sources.begin()].s = output.u[bus_number] * conj(output.source[*sources.begin()].i);
-    } else {
+    } else if (!sources.empty()) {
         calculate_multiple_source_result(sources, y_bus, input, i_inj_t, output, bus_number);
     }
 }
