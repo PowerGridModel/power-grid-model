@@ -238,7 +238,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: _ExperimentalFeatures,
+        experimental_features: Union[_ExperimentalFeatures, str],  # pylint: disable=too-many-arguments
     ):
         """
         Core calculation routine
@@ -265,7 +265,10 @@ class PowerGridModel:
             update_ptr = ConstDatasetPtr()
             batch_size = 1
 
-        if experimental_features == _ExperimentalFeatures.disabled and isinstance(output_component_types, dict):
+        if experimental_features in [
+            _ExperimentalFeatures.disabled,
+            _ExperimentalFeatures.disabled.name,
+        ] and isinstance(output_component_types, dict):
             raise PowerGridError(
                 "Experimental features flag must be enabled when providing a dict for output_component_types"
             )
@@ -295,11 +298,10 @@ class PowerGridModel:
             continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
         )
 
-        available_components = list(self._get_output_component_count(calculation_type=calculation_type).keys())
         output_data = copy_output_to_columnar_dataset(
             output_data=output_data,
             output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
-            available_components=available_components,
+            available_components=list(self._get_output_component_count(calculation_type=calculation_type).keys()),
             output_component_types=output_component_types,
         )
         return output_data
