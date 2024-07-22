@@ -311,7 +311,7 @@ class PowerGridModel:
         decode_error: bool = True,
         tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
-    ) -> Dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+    ):
         calculation_type = CalculationType.power_flow
         options = self._options(
             calculation_type=calculation_type,
@@ -346,7 +346,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
-    ) -> Dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+    ) -> Dict[ComponentType, np.ndarray]:
         calculation_type = CalculationType.state_estimation
         options = self._options(
             calculation_type=calculation_type,
@@ -378,7 +378,7 @@ class PowerGridModel:
         decode_error: bool = True,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
         experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
-    ) -> Dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+    ) -> Dict[ComponentType, np.ndarray]:
         calculation_type = CalculationType.short_circuit
         symmetric = False
 
@@ -418,7 +418,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
-    ) -> Dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+    ) -> Dict[ComponentType, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -511,7 +511,7 @@ class PowerGridModel:
         output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-    ) -> Dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+    ) -> Dict[ComponentType, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -598,7 +598,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
-    ) -> Dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+    ) -> Dict[ComponentType, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
         Or calculate in batch with the given update dataset in batch

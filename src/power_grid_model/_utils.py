@@ -294,7 +294,7 @@ def copy_output_to_columnar_dataset(
     output_component_types: ComponentAttributeMapping,
     output_type: OutputType,
     available_components: list[ComponentType],
-) -> dict[ComponentType, np.ndarray] | dict[ComponentType, dict[str, np.ndarray]]:
+) -> Dataset:
     """Temporary function to copy row based dataset to a column based dataset as per output_component_types.
     The purpose of this function is to mimic columnar data without any memory overhead benefits.
 
