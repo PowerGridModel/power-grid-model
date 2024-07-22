@@ -31,6 +31,7 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     _ExperimentalFeatures,
 )
+from power_grid_model.errors import PowerGridError
 from power_grid_model.typing import ComponentAttributeMapping
 
 
@@ -237,6 +238,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
+        experimental_features: _ExperimentalFeatures,
     ):
         """
         Core calculation routine
@@ -262,6 +264,11 @@ class PowerGridModel:
         else:
             update_ptr = ConstDatasetPtr()
             batch_size = 1
+
+        if experimental_features == _ExperimentalFeatures.disabled and isinstance(output_component_types, dict):
+            raise PowerGridError(
+                "Experimental features flag must be enabled when providing a dict for output_component_types"
+            )
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
@@ -331,6 +338,7 @@ class PowerGridModel:
             options=options,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            experimental_features=experimental_features,
         )
 
     def _calculate_state_estimation(
@@ -365,6 +373,7 @@ class PowerGridModel:
             options=options,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            experimental_features=experimental_features,
         )
 
     def _calculate_short_circuit(
@@ -398,6 +407,7 @@ class PowerGridModel:
             options=options,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            experimental_features=experimental_features,
         )
 
     def calculate_power_flow(
