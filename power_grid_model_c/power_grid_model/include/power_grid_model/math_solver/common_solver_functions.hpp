@@ -68,12 +68,12 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symme
                                              ComplexValue<symmetric_t> const& i_inj_t,
                                              SolverOutput<symmetric_t>& output, Idx const& bus_number) {
     std::vector<SourceCalcParam> const y_ref = y_bus.math_model_param().source_param;
-    DoubleComplex const y_ref_t = std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus<>{},
+    DoubleComplex const y_ref_t = std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus{},
                                                         [&](Idx const source) { return y_ref[source].y1; });
 
     auto const z_ref_t = 1.0 / y_ref_t;
     DoubleComplex const i_ref_t =
-        std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus<>{},
+        std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus{},
                               [&](Idx const source) { return input.source[source] * y_ref[source].y1; });
     for (Idx const source : sources) {
         DoubleComplex const y_ref_i_over_y_ref_t = y_ref[source].y1 * z_ref_t;
@@ -96,7 +96,7 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymm
                                              SolverOutput<asymmetric_t>& output, Idx const& bus_number) {
     std::vector<SourceCalcParam> const y_ref_012 = y_bus.math_model_param().source_param;
     ComplexValue<asymmetric_t> const y_ref_t_012 = std::transform_reduce(
-        sources.begin(), sources.end(), ComplexValue<asymmetric_t>{}, std::plus<>{}, [&](Idx const source) {
+        sources.begin(), sources.end(), ComplexValue<asymmetric_t>{}, std::plus{}, [&](Idx const source) {
             ComplexValue<asymmetric_t> y_012;
             y_012(0) = y_ref_012[source].y0;
             y_012(1) = y_ref_012[source].y1;
@@ -104,7 +104,7 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymm
             return y_012;
         });
     DoubleComplex const i_ref_1_t =
-        std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus<>{},
+        std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus{},
                               [&](Idx const source) { return input.source[source] * y_ref_012[source].y1; });
     ComplexValue<asymmetric_t> const i_inj_t_012 = dot(get_sym_matrix_inv(), i_inj_t);
 
@@ -131,7 +131,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
         return;
     }
     ComplexValue<sym> const i_load_gen_bus =
-        std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus<>{},
+        std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus{},
                               [&](Idx const load_gen) { return output.load_gen[load_gen].i; });
     ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     if (sources.size() == 1) {
