@@ -628,13 +628,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool get_bs_tap_reverse() const { return tap_reverse; }
         bool get_bs_inevitable_run() const { return inevitable_run; }
 
-        void set_bs_tap_left(IntS tap_left) { lower_bound = tap_left; }
-        void set_bs_tap_right(IntS tap_right) { upper_bound = tap_right; }
-        void set_bs_current_tap(IntS current_tap) { current = current_tap; }
-        void set_bs_last_down(bool last_down) { last_down = last_down; }
-        void set_bs_last_check(bool last_check) { last_check = last_check; }
-        void set_bs_tap_reverse(bool tap_reverse) { tap_reverse = tap_reverse; }
-        void set_bs_inevitable_run(bool inevitable_run) { inevitable_run = inevitable_run; }
+        void set_bs_tap_left(IntS tap_left) { this->lower_bound = tap_left; }
+        void set_bs_tap_right(IntS tap_right) { this->upper_bound = tap_right; }
+        void set_bs_current_tap(IntS current_tap) { this->current = current_tap; }
+        void set_bs_last_down(bool last_down) { this->last_down = last_down; }
+        void set_bs_last_check(bool last_check) { this->last_check = last_check; }
+        void set_bs_tap_reverse(bool tap_reverse) { this->tap_reverse = tap_reverse; }
+        void set_bs_inevitable_run(bool inevitable_run) { this->inevitable_run = inevitable_run; }
 
         bool adjust_bs(bool strategy_max = true) {
             if (get_bs_last_down()) {
@@ -759,6 +759,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size() + 1),
                                               static_cast<IntS>(0));
+        // TODO: update the strategy instead of using a bool
         auto stratygy_max =
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
@@ -828,6 +829,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                                ResultType const& solver_output, UpdateBuffer& update_data, bool strategy_max) const {
         bool tap_changed = false;
 
+        // TODO: add indexing of transformer in order to correctly index the _bs
         auto& transformer_wraper = binary_search_[0][0];
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
@@ -839,7 +841,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                                .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
 
             auto const cmp = node_state <=> param;
-            auto new_tap_pos = [&transformer, &cmp, strategy_max, &transformer_wraper] {
+            auto new_tap_pos = [&cmp, strategy_max, &transformer_wraper] {
                 if (cmp != 0) {
                     auto state_above_range = cmp > 0; // NOLINT(modernize-use-nullptr)
                     if (transformer_wraper.get_bs_last_check()) {
