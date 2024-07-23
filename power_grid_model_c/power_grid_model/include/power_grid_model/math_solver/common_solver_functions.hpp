@@ -70,11 +70,13 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symme
     std::vector<SourceCalcParam> const y_ref = y_bus.math_model_param().source_param;
     DoubleComplex const y_ref_t = std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus<>{},
                                                         [&](Idx const source) { return y_ref[source].y1; });
+
+    auto const z_ref_t = 1.0 / y_ref_t;
     DoubleComplex const i_ref_t =
         std::transform_reduce(sources.begin(), sources.end(), DoubleComplex{}, std::plus<>{},
                               [&](Idx const source) { return input.source[source] * y_ref[source].y1; });
     for (Idx const source : sources) {
-        DoubleComplex const y_ref_i_over_y_ref_t = y_ref[source].y1 / y_ref_t;
+        DoubleComplex const y_ref_i_over_y_ref_t = y_ref[source].y1 * z_ref_t;
         DoubleComplex const i_inj_i_lhs = y_ref_i_over_y_ref_t * (input.source[source] * y_ref_t - i_ref_t);
         output.source[source].i = i_inj_i_lhs + (y_ref_i_over_y_ref_t * i_inj_t);
         output.source[source].s = output.u[bus_number] * conj(output.source[source].i);
@@ -128,7 +130,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
     if (sources.empty()) {
         return;
     }
-    ComplexValue<sym> i_load_gen_bus =
+    ComplexValue<sym> const i_load_gen_bus =
         std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus<>{},
                               [&](Idx const load_gen) { return output.load_gen[load_gen].i; });
     ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;

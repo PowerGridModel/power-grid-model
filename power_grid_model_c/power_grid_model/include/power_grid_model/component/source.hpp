@@ -116,7 +116,7 @@ class Source : public Appliance {
     template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceSolverOutput<sym_calc> appliance_solver_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
-        SourceCalcParam source_param = math_param<sym_calc>();
+        SourceCalcParam const source_param = math_param<sym_calc>();
         ComplexTensor<sym_calc> const y_ref = source_param.template y_ref<sym_calc>();
         appliance_solver_output.i = dot(y_ref, u_ref - u);
         appliance_solver_output.s = u * conj(appliance_solver_output.i);
