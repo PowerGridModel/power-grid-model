@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Set, Type, Union
 
 import numpy as np
 
+from power_grid_model._utils import copy_output_to_columnar_dataset
 from power_grid_model.core.data_handling import (
     create_output_data,
     get_output_type,
@@ -30,6 +31,8 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     _ExperimentalFeatures,
 )
+from power_grid_model.errors import PowerGridError
+from power_grid_model.typing import ComponentAttributeMapping
 
 
 class PowerGridModel:
@@ -187,18 +190,13 @@ class PowerGridModel:
     # pylint: disable=too-many-arguments
     def _construct_output(
         self,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]],
+        output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
         symmetric: bool,
         is_batch: bool,
         batch_size: int,
     ) -> Dict[ComponentType, np.ndarray]:
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
-
-        # limit all component count to user specified component types in output
-        if output_component_types is None:
-            output_component_types = set(all_component_count.keys())
-
         return create_output_data(
             output_component_types=output_component_types,
             output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
@@ -236,10 +234,11 @@ class PowerGridModel:
         calculation_type: CalculationType,
         symmetric: bool,
         update_data: Optional[Dataset],
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]],
+        output_component_types: ComponentAttributeMapping,
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
+        experimental_features: Union[_ExperimentalFeatures, str],  # pylint: disable=too-many-arguments
     ):
         """
         Core calculation routine
@@ -266,6 +265,14 @@ class PowerGridModel:
             update_ptr = ConstDatasetPtr()
             batch_size = 1
 
+        if experimental_features in [
+            _ExperimentalFeatures.disabled,
+            _ExperimentalFeatures.disabled.name,
+        ] and isinstance(output_component_types, dict):
+            raise PowerGridError(
+                "Experimental features flag must be enabled when providing a dict for output_component_types"
+            )
+
         output_data = self._construct_output(
             output_component_types=output_component_types,
             calculation_type=calculation_type,
@@ -291,6 +298,12 @@ class PowerGridModel:
             continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
         )
 
+        output_data = copy_output_to_columnar_dataset(
+            output_data=output_data,
+            output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
+            available_components=list(self._get_output_component_count(calculation_type=calculation_type).keys()),
+            output_component_types=output_component_types,
+        )
         return output_data
 
     def _calculate_power_flow(
@@ -327,6 +340,7 @@ class PowerGridModel:
             options=options,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            experimental_features=experimental_features,
         )
 
     def _calculate_state_estimation(
@@ -361,6 +375,7 @@ class PowerGridModel:
             options=options,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            experimental_features=experimental_features,
         )
 
     def _calculate_short_circuit(
@@ -394,6 +409,7 @@ class PowerGridModel:
             options=options,
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
+            experimental_features=experimental_features,
         )
 
     def calculate_power_flow(
