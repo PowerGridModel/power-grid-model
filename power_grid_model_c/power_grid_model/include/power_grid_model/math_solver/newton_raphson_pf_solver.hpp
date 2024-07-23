@@ -408,7 +408,7 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     void add_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position, YBus<sym> const& y_bus,
                      PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
         for (Idx const source_number : sources) {
-            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number].y_ref<sym>();
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
             ComplexValue<sym> const u_ref{input.source[source_number]};
             // calculate block, um = ui, us = uref
             PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);

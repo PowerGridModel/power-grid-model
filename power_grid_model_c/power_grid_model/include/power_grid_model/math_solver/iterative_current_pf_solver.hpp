@@ -98,7 +98,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 Idx const data_sequence = bus_entry[bus_number];
                 for (auto source_number : sources) {
                     // YBus_diag += Y_source
-                    mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number].y_ref<sym>();
+                    mat_data[data_sequence] +=
+                        y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
                 }
             }
             // prefactorize
@@ -186,7 +187,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                      PowerFlowInput<sym> const& input) {
         for (Idx const source_number : sources) {
             // I_inj_i += Y_source_j * U_ref_j
-            rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number].y_ref<sym>(),
+            rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number].template y_ref<sym>(),
                                       ComplexValue<sym>{input.source[source_number]});
         }
     }

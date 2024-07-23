@@ -17,7 +17,7 @@ inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym>
                         ComplexVector const& u_source_vector, ComplexTensor<sym>& diagonal_element,
                         ComplexValue<sym>& u_bus) {
     for (Idx const source_number : sources) {
-        ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number].y_ref<sym>();
+        ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
         diagonal_element += y_source; // add y_source to the diagonal of Ybus
         u_bus += dot(y_source, ComplexValue<sym>{u_source_vector[source_number]}); // rhs += Y_source * U_source
     }

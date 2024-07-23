@@ -75,9 +75,10 @@ TEST_CASE("Test source") {
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         // yref
-        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().y_ref<symmetric_t>();
+        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().template y_ref<symmetric_t>();
         CHECK(cabs(y_ref_sym_cal - y_ref_sym) < numerical_tolerance);
-        ComplexTensor<asymmetric_t> const y_ref_asym_cal = source.math_param<asymmetric_t>().y_ref<asymmetric_t>();
+        ComplexTensor<asymmetric_t> const y_ref_asym_cal =
+            source.math_param<asymmetric_t>().template y_ref<asymmetric_t>();
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 

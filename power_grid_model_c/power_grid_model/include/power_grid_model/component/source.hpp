@@ -117,7 +117,7 @@ class Source : public Appliance {
         ApplianceSolverOutput<sym_calc> appliance_solver_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
         SourceCalcParam source_param = math_param<sym_calc>();
-        ComplexTensor<sym_calc> const y_ref = source_param.y_ref<sym_calc>();
+        ComplexTensor<sym_calc> const y_ref = source_param.template y_ref<sym_calc>();
         appliance_solver_output.i = dot(y_ref, u_ref - u);
         appliance_solver_output.s = u * conj(appliance_solver_output.i);
         return appliance_solver_output;
