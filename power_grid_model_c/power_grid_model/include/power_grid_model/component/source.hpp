@@ -42,14 +42,12 @@ class Source : public Appliance {
         y0_ref_ = y1_ref_ / z01_ratio;
     }
 
-    // getter for calculation param, y_ref
-    template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
+    template <symmetry_tag sym> SourceCalcParam math_param() const {
         // internal element_admittance
-        if constexpr (is_symmetric_v<sym>) {
-            return y1_ref_;
-        } else {
-            return ComplexTensor<asymmetric_t>{(2.0 * y1_ref_ + y0_ref_) / 3.0, (y0_ref_ - y1_ref_) / 3.0};
-        }
+        SourceCalcParam math_param;
+        math_param.y0 = y0_ref_;
+        math_param.y1 = y1_ref_;
+        return math_param;
     }
 
     // setter
@@ -118,7 +116,8 @@ class Source : public Appliance {
     template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceSolverOutput<sym_calc> appliance_solver_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
-        ComplexTensor<sym_calc> const y_ref = math_param<sym_calc>();
+        SourceCalcParam const source_param = math_param<sym_calc>();
+        ComplexTensor<sym_calc> const y_ref = source_param.template y_ref<sym_calc>();
         appliance_solver_output.i = dot(y_ref, u_ref - u);
         appliance_solver_output.s = u * conj(appliance_solver_output.i);
         return appliance_solver_output;
