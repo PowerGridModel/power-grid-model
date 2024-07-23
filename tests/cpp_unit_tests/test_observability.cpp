@@ -46,7 +46,7 @@ TEST_CASE("Necessary observability check") {
     topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
 
     MathModelParam<symmetric_t> param;
-    param.source_param = {10.0 - 50.0i};
+    param.source_param = {SourceCalcParam{10.0 - 50.0i, 0.0}};
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
 

@@ -196,7 +196,7 @@ TEST_CASE("Test math solver") {
     DoubleComplex const yref = 10.0 - 50.0i;
     pf_input.source = {vref};
     // source param and result
-    param.source_param = {yref};
+    param.source_param = {SourceCalcParam{yref, 0.0}};
     output_ref.source.resize(1);
     output_ref.source[0].i = yref * (uref - u0);
     output_ref.source[0].s = conj(output_ref.source[0].i) * u0;
@@ -264,7 +264,7 @@ TEST_CASE("Test math solver") {
     ysa /= 3.0;
     param_asym.shunt_param = {ysa};
     // source
-    param_asym.source_param = {ComplexTensor<asymmetric_t>{yref}};
+    param_asym.source_param = {SourceCalcParam{yref, 0.0}};
 
     // load and source
     PowerFlowInput<asymmetric_t> pf_input_asym;
@@ -783,14 +783,14 @@ TEST_CASE("Short circuit solver") {
     // params sym
     MathModelParam<symmetric_t> param_sc_sym;
     param_sc_sym.branch_param = {{y0, -y0, -y0, y0}};
-    param_sc_sym.source_param = {yref};
+    param_sc_sym.source_param = {SourceCalcParam{yref, 0.0}};
 
     // params asym
     MathModelParam<asymmetric_t> param_sc_asym;
     ComplexTensor<asymmetric_t> const y0a{(2.0 * y0 + y0_0) / 3.0, (y0_0 - y0) / 3.0};
     param_sc_asym.branch_param = {{y0a, -y0a, -y0a, y0a}};
     ComplexTensor<asymmetric_t> const yref_asym{yref};
-    param_sc_asym.source_param = {yref_asym};
+    param_sc_asym.source_param = {SourceCalcParam{yref, 0.0}};
 
     // topo and param ptr
     auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
@@ -953,9 +953,9 @@ TEST_CASE("Short circuit solver") {
         DenseGroupedIdxVector const fault_buses_2 = {from_sparse, {0, 1}};
         // params source injection
         MathModelParam<asymmetric_t> asym_param_comp;
-        asym_param_comp.source_param = {yref_asym};
+        asym_param_comp.source_param = {SourceCalcParam{yref, 0.0}};
         MathModelParam<symmetric_t> sym_param_comp;
-        sym_param_comp.source_param = {yref};
+        sym_param_comp.source_param = {SourceCalcParam{yref, 0.0}};
         // topo and param ptr
         auto topo_comp_ptr = std::make_shared<MathModelTopology const>(topo_comp);
         auto asym_param_comp_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(asym_param_comp);

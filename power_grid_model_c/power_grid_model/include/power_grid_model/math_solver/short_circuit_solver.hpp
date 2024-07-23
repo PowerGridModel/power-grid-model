@@ -294,7 +294,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             ComplexValue<sym> i_source_bus{};    // total source current in to the bus
             ComplexValue<sym> i_source_inject{}; // total raw source current as a Norton equivalent
             for (Idx const source_number : sources) {
-                ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number];
+                ComplexTensor<sym> const y_source = y_bus.math_model_param().source_param[source_number].y_ref<sym>();
                 ComplexValue<sym> const i_source_inject_single =
                     dot(y_source, ComplexValue<sym>{input.source[source_number]});
                 output.source[source_number].i = i_source_inject_single - dot(y_source, output.u_bus[bus_number]);
