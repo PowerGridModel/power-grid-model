@@ -57,12 +57,11 @@ template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, Compl
     });
 }
 
-// Calculates current and power injection of source i for multiple symmetric sources at a node.
-// The current injection of source i to the bus in phase space is:
-//     i_inj_i = (y_ref_i * z_ref_t) [ (u_ref_i * y_ref_t - i_ref_t) + i_inj_t]
-// Phase space is used because y_ref is a DoubleComplex in the symmetric case.
-// The equation is organized in such a way to avoid the numerical instability induced in the substraction if y_ref_i
-// is large.
+/// @brief Calculates current and power injection of source i for multiple symmetric sources at a node.
+/// The current injection of source i to the bus in phase space is:
+///     i_inj_i = (y_ref_i * z_ref_t) [ (u_ref_i * y_ref_t - i_ref_t) + i_inj_t]
+/// The equation is organized in such a way to avoid the numerical instability induced in the substraction if y_ref_i
+/// is large.
 inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symmetric_t> const& y_bus,
                                              PowerFlowInput<symmetric_t> const& input,
                                              ComplexValue<symmetric_t> const& i_inj_t,
@@ -83,13 +82,13 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<symme
     }
 }
 
-// Calculates current and power injection for source i for multiple asymmetric sources at a node.
-// The current injection of source i to the bus in 012 domain is:
-// i_inj_0 = y_ref_i_0 / y_ref_t_0 * i_inj_t_0
-// i_inj_1 = y_ref_i_1 * [(u_ref_i_1 - i_ref_t_1 / y_ref_t_1) + i_inj_t_1 / y_ref_t_1]
-// i_inj_2 = y_ref_i_2 / y_ref_t_2 * i_inj_t_2
-// Note: u_ref_i_0 = u_ref_i_2 = 0
-// 012 domain is used to solve the numerical instability as for the symmetric case.
+/// @brief Calculates current and power injection for source i for multiple asymmetric sources at a node.
+/// The current injection of source i to the bus in 012 domain is:
+/// i_inj_0 = y_ref_i_0 / y_ref_t_0 * i_inj_t_0
+/// i_inj_1 = y_ref_i_1 * [(u_ref_i_1 - i_ref_t_1 / y_ref_t_1) + i_inj_t_1 / y_ref_t_1]
+/// i_inj_2 = y_ref_i_2 / y_ref_t_2 * i_inj_t_2
+/// Note: u_ref_i_0 = u_ref_i_2 = 0
+/// 012 domain is used to solve the numerical instability as for the symmetric case.
 inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymmetric_t> const& y_bus,
                                              PowerFlowInput<asymmetric_t> const& input,
                                              ComplexValue<asymmetric_t> const& i_inj_t,
