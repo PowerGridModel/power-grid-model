@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/component/source.hpp>
-#include <power_grid_model/math_solver/common_solver_functions.hpp>
 
 #include <doctest/doctest.h>
 
@@ -76,13 +75,9 @@ TEST_CASE("Test source") {
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         // yref
-        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().y1;
+        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().y_ref<symmetric_t>();
         CHECK(cabs(y_ref_sym_cal - y_ref_sym) < numerical_tolerance);
-        SourceCalcParam const y_ref_asym_cal_012 = source.math_param<asymmetric_t>();
-        ComplexTensor<asymmetric_t> const y_ref_asym_cal{
-            (2.0 * y_ref_asym_cal_012.y1 + y_ref_asym_cal_012.y0) / 3.0,
-            (y_ref_asym_cal_012.y0 - y_ref_asym_cal_012.y1) / 3.0
-        };
+        ComplexTensor<asymmetric_t> const y_ref_asym_cal = source.math_param<asymmetric_t>().y_ref<asymmetric_t>();
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 

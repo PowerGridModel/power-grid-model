@@ -284,16 +284,6 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
     return {(s + m) * det_1, -m * det_1};
 }
 
-// inverse of symmetric tensor
-template <symmetry_tag sym> inline ComplexTensor<sym> inv_sym_tensor(ComplexTensor<sym> const& x) {
-    if constexpr (is_symmetric_v<sym>) {
-        return 1.0 / x;
-    } else {
-        auto [s, m] = inv_sym_param(x(0), x(1));
-        return ComplexTensor<sym>(s, m);
-    }
-}
-
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
