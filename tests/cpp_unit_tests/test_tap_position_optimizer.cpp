@@ -639,7 +639,8 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
-    constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
+    // DEBUG
+    // constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
     auto const& meta_data =
         meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
                                 meta_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
@@ -657,6 +658,7 @@ TEST_CASE("Test Tap position optimizer") {
                                                      std::back_inserter(changed_components));
     };
 
+    /* DEBUG
     auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
         if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>()) {
             return false;
@@ -676,7 +678,7 @@ TEST_CASE("Test Tap position optimizer") {
 
         return true;
     };
-
+    */
     auto const get_optimizer = [&](OptimizerStrategy strategy) {
         return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
             test::mock_state_calculator, updater, strategy, meta_data};
@@ -741,8 +743,9 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
-        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
-        auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
+        // DEBUG
+        // auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
+        // auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
 
         state.components.set_construction_complete();
 
