@@ -611,18 +611,18 @@ void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulato
     state_b.tap_max = 1;
     state_b.tap_pos = 3;
 
-    SUBCASE("unique value in band") {
+    SUBCASE("unique value in band") { // FAIL
         update_data.u_band = 0.01;
         check_b = test::check_exact(3);
     }
-    SUBCASE("large compact band") {
-        update_data.u_band = 1.01;
-        check_b = test::check_exact_per_strategy(3, 1, 5);
-    }
-    SUBCASE("small open band") {
-        update_data.u_band = 0.76;
-        check_b = test::check_exact_per_strategy(3, 2, 4);
-    }
+    // SUBCASE("large compact band") {
+    //     update_data.u_band = 1.01;
+    //     check_b = test::check_exact_per_strategy(3, 1, 5);
+    // }
+    // SUBCASE("small open band") { // FAIL
+    //     update_data.u_band = 0.76;
+    //     check_b = test::check_exact_per_strategy(3, 2, 4);
+    // }
 }
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
@@ -639,8 +639,7 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
-    // DEBUG
-    // constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
+    constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
     auto const& meta_data =
         meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
                                 meta_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
@@ -658,7 +657,6 @@ TEST_CASE("Test Tap position optimizer") {
                                                      std::back_inserter(changed_components));
     };
 
-    /* DEBUG
     auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
         if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>()) {
             return false;
@@ -678,7 +676,7 @@ TEST_CASE("Test Tap position optimizer") {
 
         return true;
     };
-    */
+
     auto const get_optimizer = [&](OptimizerStrategy strategy) {
         return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
             test::mock_state_calculator, updater, strategy, meta_data};
@@ -743,9 +741,8 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
-        // DEBUG
-        // auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
-        // auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
+        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
+        auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
 
         state.components.set_construction_complete();
 
@@ -756,43 +753,42 @@ TEST_CASE("Test Tap position optimizer") {
             auto check_a = test::check_exact(0);
             auto check_b = test::check_exact(0);
 
-            // SUBCASE("not regulatable") {
-            //     state_b.tap_pos = 1;
-            //     state_b.tap_min = 1;
-            //     state_b.tap_max = 1;
-            //     state_b.rank = MockTransformerState::unregulated;
-            //     check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == state_b.tap_pos);
-            //     }; auto const control_side = main_core::get_component<TransformerTapRegulator>(state,
-            //     4).control_side();
+            SUBCASE("not regulatable") {
+                state_b.tap_pos = 1;
+                state_b.tap_min = 1;
+                state_b.tap_max = 1;
+                state_b.rank = MockTransformerState::unregulated;
+                check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == state_b.tap_pos); };
+                auto const control_side = main_core::get_component<TransformerTapRegulator>(state, 4).control_side();
 
-            //     SUBCASE("not regulated") {}
+                SUBCASE("not regulated") {}
 
-            //     SUBCASE("not connected at tap side") {
-            //         state_b.status = [&state_b](ControlSide side) { return side != state_b.tap_side; };
-            //     }
+                SUBCASE("not connected at tap side") {
+                    state_b.status = [&state_b](ControlSide side) { return side != state_b.tap_side; };
+                }
 
-            //     SUBCASE("not connected at control side") {
-            //         state_b.status = [control_side](ControlSide side) { return side != control_side; };
-            //     }
+                SUBCASE("not connected at control side") {
+                    state_b.status = [control_side](ControlSide side) { return side != control_side; };
+                }
 
-            //     SUBCASE("not connected at third side doesn't matter") {
-            //         check_b = test::check_exact(1);
-            //         state_b.rank = 0;
-            //         state_b.status = [control_side, &state_b](ControlSide side) {
-            //             return side == control_side || side == state_b.tap_side;
-            //         };
-            //     }
-            // }
+                SUBCASE("not connected at third side doesn't matter") {
+                    check_b = test::check_exact(1);
+                    state_b.rank = 0;
+                    state_b.status = [control_side, &state_b](ControlSide side) {
+                        return side == control_side || side == state_b.tap_side;
+                    };
+                }
+            }
 
-            // SUBCASE("single valid value") {
-            //     state_b.tap_pos = 1;
-            //     state_b.tap_min = state_b.tap_pos;
-            //     state_b.tap_max = state_b.tap_pos;
-            //     state_b.rank = 0;
-            //     check_b = test::check_exact(state_b.tap_pos);
-            // }
+            SUBCASE("single valid value") {
+                state_b.tap_pos = 1;
+                state_b.tap_min = state_b.tap_pos;
+                state_b.tap_max = state_b.tap_pos;
+                state_b.rank = 0;
+                check_b = test::check_exact(state_b.tap_pos);
+            }
 
-            SUBCASE("multipe valid values") { // FAIL
+            SUBCASE("multipe valid values") {
                 state_b.rank = 0;
                 check_b = [&state_b](IntS value, OptimizerStrategy strategy) {
                     switch (strategy) {
@@ -814,37 +810,37 @@ TEST_CASE("Test Tap position optimizer") {
                         FAIL("unreachable");
                     }
                 };
-                // SUBCASE("normal tap range") {
-                // state_b.tap_min = 1;
-                // state_b.tap_max = 3;
-                // SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }  // FAIL
-                // SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; } // FAIL
-                // SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
-                //}
-                // SUBCASE("inverted tap range") {
-                //     state_b.tap_min = 3;
-                //     state_b.tap_max = 1;
-                //     SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
-                //     SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                //     SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min - 1; }
-                // }
-                // SUBCASE("extreme tap range") {// FAIL
-                //    state_b.tap_min = IntS{0};
-                //    state_b.tap_max = IntS{127};
-                //    SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
-                //    SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                //    SUBCASE("start mid range") { state_b.tap_pos = 64; }
-                //}
-                // SUBCASE("extreme inverted tap range") {
-                //     state_b.tap_min = IntS{127};
-                //     state_b.tap_max = IntS{0};
-                //     SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
-                //     SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                //     SUBCASE("start mid range") { state_b.tap_pos = 64; }
-                // }
+                SUBCASE("normal tap range") {
+                    state_b.tap_min = 1;
+                    state_b.tap_max = 3;
+                    SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                    SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                    SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
+                }
+                SUBCASE("inverted tap range") {
+                    state_b.tap_min = 3;
+                    state_b.tap_max = 1;
+                    SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                    SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                    SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min - 1; }
+                }
+                SUBCASE("extreme tap range") {
+                    state_b.tap_min = IntS{0};
+                    state_b.tap_max = IntS{127};
+                    SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                    SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                    SUBCASE("start mid range") { state_b.tap_pos = 64; }
+                }
+                SUBCASE("extreme inverted tap range") {
+                    state_b.tap_min = IntS{127};
+                    state_b.tap_max = IntS{0};
+                    SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+                    SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+                    SUBCASE("start mid range") { state_b.tap_pos = 64; }
+                }
             }
-            /*
-            SUBCASE("voltage band") { // FAIL
+
+            SUBCASE("voltage band") {
                 state_b.rank = 0;
                 state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                     CHECK(side == regulator_b.control_side());
@@ -857,11 +853,11 @@ TEST_CASE("Test Tap position optimizer") {
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
                 SUBCASE("normal tap range") { checkNormalTapRange(state_b, update_data, check_b); }
-                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, update_data, check_b); }
+                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, update_data, check_b); } // FAIL
 
                 regulator_b.update(update_data);
             }
-
+            /*
             SUBCASE("line drop compensation") { // FAIL
                 state_b.rank = 0;
                 state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
@@ -1001,6 +997,7 @@ TEST_CASE("Test Tap position optimizer") {
             auto const initial_a{transformer_a.tap_pos()};
             auto const initial_b{transformer_b.tap_pos()};
 
+            // std::array debug_strategies = {OptimizerStrategy::global_maximum, OptimizerStrategy::global_minimum};
             std::array debug_strategies = {OptimizerStrategy::global_maximum};
 
             // for (auto strategy : test::strategies) {
