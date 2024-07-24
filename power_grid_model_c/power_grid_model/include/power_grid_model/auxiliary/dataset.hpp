@@ -69,7 +69,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         Proxy& operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
-            for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
+            for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
                 char* buffer_ptr = reinterpret_cast<char*>(data_[attribute_idx]) + meta_attribute.size * idx_;
                 meta_attribute.get_value(&value, buffer_ptr, 0);
@@ -79,7 +79,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         operator value_type() const { return get(); }
         value_type get() const {
             std::remove_const_t<value_type> result{};
-            for (Idx attribute_idx = 0; attribute_idx < meta_attributes_.size(); ++attribute_idx) {
+            for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
                 char const* buffer_ptr =
                     reinterpret_cast<char const*>(data_[attribute_idx]) + meta_attribute.size * idx_;
