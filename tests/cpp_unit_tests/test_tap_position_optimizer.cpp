@@ -611,7 +611,7 @@ void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulato
     state_b.tap_max = 1;
     state_b.tap_pos = 3;
 
-    SUBCASE("unique value in band") { 
+    SUBCASE("unique value in band") {
         update_data.u_band = 0.01;
         check_b = test::check_exact(3);
     }
@@ -619,7 +619,7 @@ void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulato
         update_data.u_band = 1.01;
         check_b = test::check_exact_per_strategy(3, 1, 5);
     }
-    SUBCASE("small open band") { 
+    SUBCASE("small open band") {
         update_data.u_band = 0.76;
         check_b = test::check_exact_per_strategy(3, 2, 4);
     }
@@ -853,7 +853,7 @@ TEST_CASE("Test Tap position optimizer") {
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
                 SUBCASE("normal tap range") { checkNormalTapRange(state_b, update_data, check_b); }
-                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, update_data, check_b); } 
+                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, update_data, check_b); }
 
                 regulator_b.update(update_data);
             }
