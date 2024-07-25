@@ -697,16 +697,16 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     if constexpr (!std::same_as<DatasetType, ConstDataset>) {
                         auto const buffer_span = dataset.template get_columnar_buffer_span<input_getter_s, A>();
                         for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                            buffer_span[0] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
-                            CHECK(id_buffer.front() == -10);
-                            CHECK(a1_buffer.front() == -2.0);
+                            buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
+                            CHECK(id_buffer[idx] == -10);
+                            CHECK(a1_buffer[idx] == -2.0);
                             check_all_spans();
                         }
                     }
                 }
             }
             SUBCASE("Batch dataset") {
-                for (auto const batch_size : {0, 1, 2}) { // fails for batch_size = 2. problem with duplicate attribute
+                for (auto const batch_size : {0, 1, 2}) {
                     CAPTURE(batch_size);
                     for (auto const elements_per_scenario : {0, 1, 2}) {
                         CAPTURE(elements_per_scenario);
@@ -727,25 +727,25 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             }
                             CHECK(buffer_span.size() == element_number);
                             for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                                auto const element = [idx, &buffer_span] {
-                                    if constexpr(std::same_as<DatasetType, ConstDataset>) {
-                                        static_assert(std::same_as<decltype(buffer_span[idx]),
-                                                                const_range_object<A::InputType const>::Proxy>);
+                                auto const element = [idx, aux_idx, &buffer_span] {
+                                    if constexpr (std::same_as<DatasetType, ConstDataset>) {
+                                        static_assert(std::same_as<decltype(buffer_span[aux_idx + idx]),
+                                                                   const_range_object<A::InputType const>::Proxy>);
                                     } else {
-                                        static_assert(std::same_as<decltype(buffer_span[idx]),
-                                                                mutable_range_object<A::InputType>::Proxy>);
+                                        static_assert(std::same_as<decltype(buffer_span[aux_idx + idx]),
+                                                                   mutable_range_object<A::InputType>::Proxy>);
                                     }
-                                    return static_cast<A::InputType>(buffer_span[idx]);
+                                    return static_cast<A::InputType>(buffer_span[aux_idx + idx]);
                                 }();
                                 CHECK(element.id == id_buffer[aux_idx + idx]);
                                 CHECK(element.a1 == a1_buffer[aux_idx + idx]);
                                 CHECK(is_nan(element.a0));
                             }
                         };
-                        auto const check_all_spans = [&] (auto const& scenario) {
+                        auto const check_all_spans = [&](auto const& scenario) {
                             check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>());
-                            check_span(
-                                dataset.template get_columnar_buffer_span<input_getter_s, A>(DatasetType::invalid_index));
+                            check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>(
+                                DatasetType::invalid_index));
 
                             auto const all_scenario_spans =
                                 dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
@@ -757,25 +757,46 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
                             check_span(all_scenario_spans[scenario], scenario);
                         };
+                        add_attribute_buffer(dataset, A::name, A::InputType::a1_name, a1_buffer.data());
+                        add_attribute_buffer(dataset, A::name, A::InputType::id_name, id_buffer.data());
                         for (Idx scenario : {0, 1, 2, 3}) {
                             CAPTURE(scenario);
                             if (scenario < batch_size) {
-                                add_attribute_buffer(dataset, A::name, A::InputType::a1_name, a1_buffer.data());
-                                add_attribute_buffer(dataset, A::name, A::InputType::id_name, id_buffer.data());
+                                auto aux_test = 0;
+                                CAPTURE(aux_test);
                                 check_all_spans(scenario);
 
                                 std::ranges::fill(id_buffer, 1);
+                                aux_test++;
+                                CAPTURE(aux_test);
                                 check_all_spans(scenario);
 
-                                std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
-                                            id_buffer.begin(), [](ID value) { return value * 2; });
+                                std::transform(boost::counting_iterator<ID>{0},
+                                               boost::counting_iterator<ID>{total_elements}, id_buffer.begin(),
+                                               [](ID value) { return value * 2; });
+                                aux_test++;
+                                CAPTURE(aux_test);
                                 check_all_spans(scenario);
 
                                 std::ranges::transform(id_buffer, a1_buffer.begin(),
-                                                    [](ID value) { return static_cast<double>(value); });
+                                                       [](ID value) { return static_cast<double>(value); });
+                                aux_test++;
+                                CAPTURE(aux_test);
                                 check_all_spans(scenario);
+
+                                if constexpr (!std::same_as<DatasetType, ConstDataset>) {
+                                    auto buffer_span =
+                                        dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
+                                    for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
+                                        buffer_span[idx + (scenario * elements_per_scenario)] =
+                                            A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
+                                        CHECK(id_buffer[idx + (scenario * elements_per_scenario)] == -10);
+                                        CHECK(a1_buffer[idx + (scenario * elements_per_scenario)] == -2.0);
+                                        check_all_spans(scenario);
+                                    }
+                                }
                             }
-                        }//missing last check. Will be added after add attributes is fixed
+                        }
                     }
                 }
             }
