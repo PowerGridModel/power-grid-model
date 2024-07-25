@@ -569,14 +569,6 @@ template <symmetry_tag sym> struct NodeState {
     }
 };
 
-template <typename T> auto enumerate(T&& iterable) {
-    return std::views::transform(
-        std::views::iota(0, std::ranges::distance(iterable)),
-        [iterable = std::forward<T>(iterable)](auto i) -> std::pair<decltype(i), decltype(*std::begin(iterable))> {
-            return {i, *(std::begin(iterable) + i)};
-        });
-}
-
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
           typename TransformerRanker_>
