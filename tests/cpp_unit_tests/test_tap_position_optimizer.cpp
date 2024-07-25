@@ -615,14 +615,14 @@ void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulato
         update_data.u_band = 0.01;
         check_b = test::check_exact(3);
     }
-    // SUBCASE("large compact band") {
-    //     update_data.u_band = 1.01;
-    //     check_b = test::check_exact_per_strategy(3, 1, 5);
-    // }
-    // SUBCASE("small open band") { // FAIL
-    //     update_data.u_band = 0.76;
-    //     check_b = test::check_exact_per_strategy(3, 2, 4);
-    // }
+    SUBCASE("large compact band") {
+        update_data.u_band = 1.01;
+        check_b = test::check_exact_per_strategy(3, 1, 5);
+    }
+    SUBCASE("small open band") { // FAIL
+        update_data.u_band = 0.76;
+        check_b = test::check_exact_per_strategy(3, 2, 4);
+    }
 }
 } // namespace
 } // namespace optimizer::tap_position_optimizer::test
@@ -857,8 +857,8 @@ TEST_CASE("Test Tap position optimizer") {
 
                 regulator_b.update(update_data);
             }
-            /*
-            SUBCASE("line drop compensation") { // FAIL
+
+            SUBCASE("line drop compensation") {
                 state_b.rank = 0;
                 state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                     CHECK(side == regulator_b.control_side());
@@ -895,7 +895,7 @@ TEST_CASE("Test Tap position optimizer") {
 
                 regulator_b.update(update_data);
             }
-
+            /*
             SUBCASE("multiple transformers with control function based on ranking") { // FAIL
                 state_a.rank = 0;
                 state_b.rank = 1;
@@ -997,15 +997,15 @@ TEST_CASE("Test Tap position optimizer") {
             auto const initial_a{transformer_a.tap_pos()};
             auto const initial_b{transformer_b.tap_pos()};
 
-            // std::array debug_strategies = {OptimizerStrategy::global_maximum, OptimizerStrategy::global_minimum};
-            std::array debug_strategies = {OptimizerStrategy::global_maximum};
+            std::array debug_strategies = {OptimizerStrategy::global_maximum, OptimizerStrategy::global_minimum};
+            // std::array debug_strategies = {OptimizerStrategy::global_maximum};
 
             // for (auto strategy : test::strategies) {
             for (auto strategy : debug_strategies) {
                 CAPTURE(strategy);
                 constexpr auto debug_tap_sides = std::array{ControlSide::side_1};
-                // for (auto tap_side : tap_sides) {
-                for (auto tap_side : debug_tap_sides) {
+                for (auto tap_side : tap_sides) {
+                    // for (auto tap_side : debug_tap_sides) {
                     CAPTURE(tap_side);
 
                     state_b.tap_side = tap_side;
