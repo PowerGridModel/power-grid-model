@@ -895,8 +895,8 @@ TEST_CASE("Test Tap position optimizer") {
 
                 regulator_b.update(update_data);
             }
-            /*
-            SUBCASE("multiple transformers with control function based on ranking") { // FAIL
+
+            SUBCASE("multiple transformers with control function based on ranking") {
                 state_a.rank = 0;
                 state_b.rank = 1;
                 state_a.tap_min = -5;
@@ -946,7 +946,7 @@ TEST_CASE("Test Tap position optimizer") {
                 }
             }
 
-            SUBCASE("multiple transformers with generic control function") {// FAIL
+            SUBCASE("multiple transformers with generic control function") {
                 state_a.tap_min = 0;
                 state_a.tap_max = 2;
                 state_b.tap_min = 0;
@@ -993,19 +993,14 @@ TEST_CASE("Test Tap position optimizer") {
                     check_b = test::check_exact(1);
                 }
             }
-            */
+
             auto const initial_a{transformer_a.tap_pos()};
             auto const initial_b{transformer_b.tap_pos()};
 
-            std::array debug_strategies = {OptimizerStrategy::global_maximum, OptimizerStrategy::global_minimum};
-            // std::array debug_strategies = {OptimizerStrategy::global_maximum};
-
-            // for (auto strategy : test::strategies) {
-            for (auto strategy : debug_strategies) {
+            for (auto strategy : test::strategies) {
                 CAPTURE(strategy);
-                constexpr auto debug_tap_sides = std::array{ControlSide::side_1};
+
                 for (auto tap_side : tap_sides) {
-                    // for (auto tap_side : debug_tap_sides) {
                     CAPTURE(tap_side);
 
                     state_b.tap_side = tap_side;
@@ -1047,8 +1042,7 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
-        /*
-        SUBCASE("Check throw as MaxIterationReached") { // FAIL
+        SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
             state_b.rank = 0;
             state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_b.control_side());
@@ -1060,7 +1054,7 @@ TEST_CASE("Test Tap position optimizer") {
 
             auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
 
-            // tap pos will jump between 3 and 4
+            // tap pos will jump between 3 and 4 in scanline method
             state_b.tap_min = 1;
             state_b.tap_max = 5;
             state_b.tap_pos = 5;
@@ -1078,12 +1072,12 @@ TEST_CASE("Test Tap position optimizer") {
 
                     auto optimizer = get_optimizer(strategy);
                     auto const cached_state = state; // NOSONAR
-                    CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                    CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method, false),
+                                    MaxIterationReached);
                     CHECK(twoStatesEqual(cached_state, state));
                 }
             }
         }
-        */
     }
 }
 
