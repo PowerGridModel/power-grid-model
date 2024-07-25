@@ -113,7 +113,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
       private:
         friend class boost::iterator_core_access;
 
-        constexpr auto dereference() const -> value_type const { return *&current_; }
+        constexpr auto dereference() const -> value_type { return *&current_; }
         constexpr auto dereference() -> value_type { return *&current_; }
         constexpr auto equal(iterator const& other) const {
             return current_.idx_ == other.current_.idx_ &&

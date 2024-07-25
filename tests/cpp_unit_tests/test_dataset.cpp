@@ -351,11 +351,6 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 add_buffer(dataset, name, elements_per_scenario, total_elements, indptr_buffer, data_buffer);
             }
         };
-    auto const add_attribute_info = [&add_attribute_buffer, &fake_data](DatasetType& dataset, std::string_view name,
-                                                                        std::string_view attribute) {
-        fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), dataset.get_component_info(name).total_elements));
-        add_attribute_buffer(dataset, name, attribute, static_cast<void*>(fake_data.data()));
-    };
 
     SUBCASE("Constructor") {
         SUBCASE("Single dataset") {
