@@ -6,7 +6,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Any, List, Mapping, Optional, Union
+from typing import Any, Mapping, Optional
 
 import numpy as np
 
@@ -84,7 +84,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         """
         return pgc.dataset_info_n_components(self._info)
 
-    def components(self) -> List[ComponentType]:
+    def components(self) -> list[ComponentType]:
         """
         The components in the dataset.
 
@@ -124,7 +124,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(data: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]]) -> DatasetType:
+def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> DatasetType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -184,14 +184,11 @@ class CMutableDataset:
     _is_batch: bool
     _batch_size: int
     _mutable_dataset: MutableDatasetPtr
-    _buffer_views: List[CBuffer]
+    _buffer_views: list[CBuffer]
 
     def __new__(
         cls,
-        data: Union[
-            Mapping[ComponentType, np.ndarray],
-            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-        ],
+        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
         dataset_type: Any = None,
     ):
         instance = super().__new__(cls)
@@ -237,7 +234,7 @@ class CMutableDataset:
         """
         return CDatasetInfo(pgc.dataset_mutable_get_info(self._mutable_dataset))
 
-    def get_buffer_views(self) -> List[CBuffer]:
+    def get_buffer_views(self) -> list[CBuffer]:
         """
         Get list of buffer views
 
@@ -247,11 +244,7 @@ class CMutableDataset:
         return self._buffer_views
 
     def _add_data(
-        self,
-        data: Union[
-            Mapping[ComponentType, np.ndarray],
-            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-        ],
+        self, data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]
     ):
         """
         Add Power Grid Model data to the mutable dataset view.
@@ -270,7 +263,7 @@ class CMutableDataset:
     def _add_component_data(
         self,
         component: ComponentType,
-        data: Union[np.ndarray, Mapping[str, np.ndarray]],
+        data: np.ndarray | Mapping[str, np.ndarray],
         allow_unknown: bool = False,
     ):
         """
@@ -307,7 +300,7 @@ class CMutableDataset:
         )
         assert_no_error()
 
-    def _validate_properties(self, data: Union[np.ndarray, Mapping[str, np.ndarray]]):
+    def _validate_properties(self, data: np.ndarray | Mapping[str, np.ndarray]):
         properties = get_buffer_properties(data)
         if properties.is_batch != self._is_batch:
             raise ValueError(
@@ -332,14 +325,11 @@ class CConstDataset:
     """
 
     _const_dataset: ConstDatasetPtr
-    _buffer_views: List[CBuffer]
+    _buffer_views: list[CBuffer]
 
     def __new__(
         cls,
-        data: Union[
-            Mapping[ComponentType, np.ndarray],
-            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-        ],
+        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
         dataset_type: Optional[DatasetType] = None,
     ):
         instance = super().__new__(cls)
@@ -428,7 +418,7 @@ class CWritableDataset:
         """
         return self._data
 
-    def get_component_data(self, component: ComponentType) -> Union[np.ndarray, Mapping[str, np.ndarray]]:
+    def get_component_data(self, component: ComponentType) -> np.ndarray | Mapping[str, np.ndarray]:
         """
         Retrieve Power Grid Model data from the dataset for a specific component.
 

@@ -4,7 +4,6 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List
 
 from jinja2 import Environment, FileSystemLoader
 from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData
@@ -28,7 +27,7 @@ def _data_type_nan(data_type: str):
 
 
 class CodeGenerator:
-    all_classes: Dict[str, AttributeClass]
+    all_classes: dict[str, AttributeClass]
     base_output_path: Path
 
     def __init__(self, base_output_path: Path) -> None:
@@ -98,7 +97,7 @@ class CodeGenerator:
     def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
         with open(data_path) as data_file:
             json_data = data_file.read()
-        dataset_meta_data: List[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
+        dataset_meta_data: list[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
 
         # create list
         all_map = {}

@@ -8,7 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Dict, Union
+from typing import Any
 
 import numpy as np
 
@@ -49,8 +49,8 @@ class ComponentMetaData:
     """
 
     dtype: np.dtype
-    dtype_dict: Dict[str, Any]
-    nans: Dict[str, Union[float, int]]
+    dtype_dict: dict[str, Any]
+    nans: dict[str, float | int]
     nan_scalar: np.ndarray
 
     def __getitem__(self, item):
@@ -66,8 +66,8 @@ class ComponentMetaData:
         return getattr(self, item)
 
 
-DatasetMetaData = Dict[ComponentType, ComponentMetaData]
-PowerGridMetaData = Dict[DatasetType, DatasetMetaData]
+DatasetMetaData = dict[ComponentType, ComponentMetaData]
+PowerGridMetaData = dict[DatasetType, DatasetMetaData]
 
 
 def _generate_meta_data() -> PowerGridMetaData:
@@ -165,9 +165,9 @@ power_grid_meta_data = _generate_meta_data()
 
 
 def initialize_array(
-    data_type: Union[str, DatasetType],
-    component_type: Union[str, ComponentType],
-    shape: Union[tuple, int],
+    data_type: str | DatasetType,
+    component_type: str | ComponentType,
+    shape: tuple | int,
     empty: bool = False,
 ) -> np.ndarray:
     """

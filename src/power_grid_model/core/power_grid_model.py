@@ -6,7 +6,7 @@
 Main power grid model class
 """
 from enum import IntEnum
-from typing import Dict, List, Optional, Set, Type, Union
+from typing import Optional, Set, Type
 
 import numpy as np
 
@@ -41,7 +41,7 @@ class PowerGridModel:
     """
 
     _model_ptr: ModelPtr
-    _all_component_count: Optional[Dict[ComponentType, int]]
+    _all_component_count: Optional[dict[ComponentType, int]]
     _batch_error: Optional[PowerGridBatchError]
 
     @property
@@ -61,7 +61,7 @@ class PowerGridModel:
         return self._model_ptr
 
     @property
-    def all_component_count(self) -> Dict[ComponentType, int]:
+    def all_component_count(self) -> dict[ComponentType, int]:
         """
         Get count of number of elements per component type.
         If the count for a component type is zero, it will not be in the returned dictionary.
@@ -99,7 +99,7 @@ class PowerGridModel:
         return instance
 
     def __init__(
-        self, input_data: Union[Dict[ComponentType, np.ndarray], Dict[str, np.ndarray]], system_frequency: float = 50.0
+        self, input_data: dict[ComponentType, np.ndarray] | dict[str, np.ndarray], system_frequency: float = 50.0
     ):
         """
         Initialize the model from an input data set.
@@ -122,7 +122,7 @@ class PowerGridModel:
         assert_no_error()
         self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
-    def update(self, *, update_data: Union[Dict[ComponentType, np.ndarray], Dict[str, np.ndarray]]):
+    def update(self, *, update_data: dict[ComponentType, np.ndarray] | dict[str, np.ndarray]):
         """
         Update the model with changes.
 
@@ -140,7 +140,7 @@ class PowerGridModel:
         pgc.update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
-    def get_indexer(self, component_type: Union[ComponentType, str], ids: np.ndarray):
+    def get_indexer(self, component_type: ComponentType | str, ids: np.ndarray):
         """
         Get array of indexers given array of ids for component type
 
@@ -195,7 +195,7 @@ class PowerGridModel:
         symmetric: bool,
         is_batch: bool,
         batch_size: int,
-    ) -> Dict[ComponentType, np.ndarray]:
+    ) -> dict[ComponentType, np.ndarray]:
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
         return create_output_data(
             output_component_types=output_component_types,
@@ -238,7 +238,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: Union[_ExperimentalFeatures, str],  # pylint: disable=too-many-arguments
+        experimental_features: _ExperimentalFeatures | str,  # pylint: disable=too-many-arguments
     ):
         """
         Core calculation routine
@@ -312,14 +312,14 @@ class PowerGridModel:
         symmetric: bool = True,
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
-        calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
+        calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-        tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
-        experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
+        tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+        experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
     ):
         calculation_type = CalculationType.power_flow
         options = self._options(
@@ -349,14 +349,14 @@ class PowerGridModel:
         symmetric: bool = True,
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
-        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iterative_linear,
+        calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-        experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
-    ) -> Dict[ComponentType, np.ndarray]:
+        experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
+    ) -> dict[ComponentType, np.ndarray]:
         calculation_type = CalculationType.state_estimation
         options = self._options(
             calculation_type=calculation_type,
@@ -381,15 +381,15 @@ class PowerGridModel:
     def _calculate_short_circuit(
         self,
         *,
-        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iec60909,
+        calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
-        experimental_features: Union[_ExperimentalFeatures, str] = _ExperimentalFeatures.disabled,
-    ) -> Dict[ComponentType, np.ndarray]:
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
+        experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
+    ) -> dict[ComponentType, np.ndarray]:
         calculation_type = CalculationType.short_circuit
         symmetric = False
 
@@ -418,19 +418,14 @@ class PowerGridModel:
         symmetric: bool = True,
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
-        calculation_method: Union[CalculationMethod, str] = CalculationMethod.newton_raphson,
-        update_data: Optional[
-            Union[
-                Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]],
-                Dataset,
-            ]
-        ] = None,
+        calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
+        update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-        tap_changing_strategy: Union[TapChangingStrategy, str] = TapChangingStrategy.disabled,
-    ) -> Dict[ComponentType, np.ndarray]:
+        tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+    ) -> dict[ComponentType, np.ndarray]:
         """
         Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -512,18 +507,13 @@ class PowerGridModel:
         symmetric: bool = True,
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
-        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iterative_linear,
-        update_data: Optional[
-            Union[
-                Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]],
-                Dataset,
-            ]
-        ] = None,
+        calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
+        update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-    ) -> Dict[ComponentType, np.ndarray]:
+    ) -> dict[ComponentType, np.ndarray]:
         """
         Calculate state estimation once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -598,19 +588,14 @@ class PowerGridModel:
     def calculate_short_circuit(
         self,
         *,
-        calculation_method: Union[CalculationMethod, str] = CalculationMethod.iec60909,
-        update_data: Optional[
-            Union[
-                Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]],
-                Dataset,
-            ]
-        ] = None,
+        calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
+        update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[Union[Set[ComponentType], List[ComponentType]]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-        short_circuit_voltage_scaling: Union[ShortCircuitVoltageScaling, str] = ShortCircuitVoltageScaling.maximum,
-    ) -> Dict[ComponentType, np.ndarray]:
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
+    ) -> dict[ComponentType, np.ndarray]:
         """
         Calculate a short circuit once with the current model attributes.
         Or calculate in batch with the given update dataset in batch

@@ -15,8 +15,8 @@ Two helper type definitions are used throughout the validation functions, `Input
 special types or classes, but merely type hinting aliases:
 
 ```python
-InputData = Dict[str, np.ndarray]
-UpdateData = Dict[str, Union[np.ndarray, Dict[str, np.ndarray]]]
+InputData = dict[str, np.ndarray]
+UpdateData = dict[str, np.ndarray | dict[str, np.ndarray]]
 ```
 
 ```{seealso}
@@ -33,13 +33,13 @@ e.g. which object IDs are involved.
 class ValidationError:
     
     # Component(s): e.g. "node" or ["node", "line"]
-    component: Union[str, List[str]]
+    component: str | list[str]
     
     # Field(s): e.g. "id" or ["line_from", "line_to"] or [("node", "id"), ("line", "id")]
-    field: Union[str, List[str], List[Tuple[str, str]]]
+    field: str | list[str] | list[Tuple[str, str]]
 
     # IDs: e.g. [1, 2, 3] or [("node", 1), ("line", 1)]
-    ids: Union[List[int], List[Tuple[str, int]]] = []    
+    ids: list[int] | list[Tuple[str, int]] = []    
 ```
 
 ## Validation functions
@@ -51,8 +51,8 @@ and `symmetric: bool`, stating if the data will be used for symmetric or asymmet
 allow missing values for unused fields; see the [API reference](../api_reference/python-api-reference.md#enum) for more information. To validate update/batch data `update_data: UpdateData`,
 power-grid-model update data, should also be supplied.
 
-- `validate_input_data(input_data, calculation_type, symmetric) -> List[ValidationError]` validates input_data.
-- `validate_batch_data(input_data, update_data, calculation_type, symmetric) -> Dict[int, List[ValidationError]]` validates input_data in combination with batch/update data.
+- `validate_input_data(input_data, calculation_type, symmetric) -> list[ValidationError]` validates input_data.
+- `validate_batch_data(input_data, update_data, calculation_type, symmetric) -> dict[int, list[ValidationError]]` validates input_data in combination with batch/update data.
 
 ```{note}
 When doing [batch calculations](./calculations.md#batch-calculations), the input data set by itself is not required to be valid, as long as all missing and invalid values are overwritten in all scenarios in the batch data set.

@@ -9,7 +9,7 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
-from typing import Mapping, Optional, Union
+from typing import Mapping, Optional
 
 import numpy as np
 
@@ -49,7 +49,7 @@ class Deserializer:
     _dataset_ptr: WritableDatasetPtr
     _dataset: CWritableDataset
 
-    def __new__(cls, data: Union[str, bytes], serialization_type: SerializationType):
+    def __new__(cls, data: str | bytes, serialization_type: SerializationType):
         instance = super().__new__(cls)
 
         raw_data = data if isinstance(data, bytes) else data.encode()
@@ -90,19 +90,13 @@ class Serializer(ABC):
     Serializer for the Power grid model
     """
 
-    _data: Union[
-        Mapping[ComponentType, np.ndarray],
-        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-    ]
+    _data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]
     _dataset: CConstDataset
     _serializer: SerializerPtr
 
     def __new__(
         cls,
-        data: Union[
-            Mapping[ComponentType, np.ndarray],
-            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-        ],
+        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
         serialization_type: SerializationType,
         dataset_type: Optional[DatasetType] = None,
     ):
@@ -190,7 +184,7 @@ class JsonDeserializer(Deserializer):  # pylint: disable=too-few-public-methods
     JSON deserializer for the Power grid model
     """
 
-    def __new__(cls, data: Union[str, bytes]):
+    def __new__(cls, data: str | bytes):
         return super().__new__(cls, data, SerializationType.JSON)
 
 
@@ -210,10 +204,7 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
 
     def __new__(
         cls,
-        data: Union[
-            Mapping[ComponentType, np.ndarray],
-            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-        ],
+        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
         dataset_type: Optional[DatasetType] = None,
     ):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
@@ -226,16 +217,13 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
 
     def __new__(
         cls,
-        data: Union[
-            Mapping[ComponentType, np.ndarray],
-            Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-        ],
+        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
         dataset_type: Optional[DatasetType] = None,
     ):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
-def json_deserialize(data: Union[str, bytes]) -> Dataset:
+def json_deserialize(data: str | bytes) -> Dataset:
     """
     Load serialized JSON data to a new dataset.
 
@@ -255,10 +243,7 @@ def json_deserialize(data: Union[str, bytes]) -> Dataset:
 
 
 def json_serialize(
-    data: Union[
-        Mapping[ComponentType, np.ndarray],
-        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-    ],
+    data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
     dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
     indent: int = 2,
@@ -310,10 +295,7 @@ def msgpack_deserialize(data: bytes) -> Dataset:
 
 
 def msgpack_serialize(
-    data: Union[
-        Mapping[ComponentType, np.ndarray],
-        Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
-    ],
+    data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
     dataset_type: Optional[DatasetType] = None,
     use_compact_list: bool = False,
 ) -> bytes:
