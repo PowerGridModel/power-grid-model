@@ -803,76 +803,74 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         }
         SUBCASE("Inhomogeneous columnar buffer") {
             SUBCASE("Single dataset") {
-                //     for (auto const elements_per_scenario : {0, 1, 2}) {
-                //         CAPTURE(elements_per_scenario);
-                //         auto const total_elements = elements_per_scenario;
+                for (auto const elements_per_scenario : {0, 1, 2}) {
+                    CAPTURE(elements_per_scenario);
+                    auto const total_elements = elements_per_scenario;
 
-                //         auto dataset = create_dataset(false, 1, dataset_type);
+                    auto dataset = create_dataset(false, 1, dataset_type);
 
-                //         auto id_buffer = std::vector<ID>(total_elements);
-                //         auto a1_buffer = std::vector<double>(total_elements);
+                    auto id_buffer = std::vector<ID>(total_elements);
+                    auto a1_buffer = std::vector<double>(total_elements);
+                    auto a_indptr = std::vector<Idx>{0, total_elements};
 
-                //         add_homogeneous_buffer(dataset, A::name, elements_per_scenario, nullptr);
+                    add_inhomogeneous_buffer(dataset, A::name, total_elements, a_indptr.data(), nullptr);
 
-                //         auto const check_span = [&](auto const& buffer_span) {
-                //             CHECK(buffer_span.size() == total_elements);
-                //             for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                //                 auto const element = [idx, &buffer_span] {
-                //                     if constexpr (std::same_as<DatasetType, ConstDataset>) {
-                //                         static_assert(std::same_as<decltype(buffer_span[idx]),
-                //                                                    const_range_object<A::InputType const>::Proxy>);
-                //                     } else {
-                //                         static_assert(std::same_as<decltype(buffer_span[idx]),
-                //                                                    mutable_range_object<A::InputType>::Proxy>);
-                //                     }
-                //                     return static_cast<A::InputType>(buffer_span[idx]);
-                //                 }();
-                //                 CHECK(element.id == id_buffer[idx]);
-                //                 CHECK(element.a1 == a1_buffer[idx]);
-                //                 CHECK(is_nan(element.a0));
-                //             }
-                //         };
-                //         auto const check_all_spans = [&] {
-                //             check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>());
-                //             check_span(
-                //                 dataset.template get_columnar_buffer_span<input_getter_s,
-                //                 A>(DatasetType::invalid_index));
+                    auto const check_span = [&](auto const& buffer_span) {
+                        CHECK(buffer_span.size() == total_elements);
+                        for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
+                            auto const element = [idx, &buffer_span] {
+                                if constexpr (std::same_as<DatasetType, ConstDataset>) {
+                                    static_assert(std::same_as<decltype(buffer_span[idx]),
+                                                               const_range_object<A::InputType const>::Proxy>);
+                                } else {
+                                    static_assert(std::same_as<decltype(buffer_span[idx]),
+                                                               mutable_range_object<A::InputType>::Proxy>);
+                                }
+                                return static_cast<A::InputType>(buffer_span[idx]);
+                            }();
+                            CHECK(element.id == id_buffer[idx]);
+                            CHECK(element.a1 == a1_buffer[idx]);
+                            CHECK(is_nan(element.a0));
+                        }
+                    };
+                    auto const check_all_spans = [&] {
+                        check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>());
+                        check_span(
+                            dataset.template get_columnar_buffer_span<input_getter_s, A>(DatasetType::invalid_index));
 
-                //             check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>(0));
+                        check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>(0));
 
-                //             auto const all_scenario_spans =
-                //                 dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
-                //             CHECK(all_scenario_spans.size() == 1);
-                //             check_span(all_scenario_spans[0]);
-                //         };
+                        auto const all_scenario_spans =
+                            dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
+                        CHECK(all_scenario_spans.size() == 1);
+                        check_span(all_scenario_spans[0]);
+                    };
 
-                //         add_attribute_buffer(dataset, A::name, A::InputType::a1_name, a1_buffer.data());
-                //         add_attribute_buffer(dataset, A::name, A::InputType::id_name, id_buffer.data());
+                    add_attribute_buffer(dataset, A::name, A::InputType::a1_name, a1_buffer.data());
+                    add_attribute_buffer(dataset, A::name, A::InputType::id_name, id_buffer.data());
+                    check_all_spans();
 
-                //         check_all_spans();
+                    std::ranges::fill(id_buffer, 1);
+                    check_all_spans();
 
-                //         std::ranges::fill(id_buffer, 1);
-                //         check_all_spans();
+                    std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
+                                   id_buffer.begin(), [](ID value) { return value * 2; });
+                    check_all_spans();
 
-                //         std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
-                //                        id_buffer.begin(), [](ID value) { return value * 2; });
+                    std::ranges::transform(id_buffer, a1_buffer.begin(),
+                                           [](ID value) { return static_cast<double>(value); });
+                    check_all_spans();
 
-                //         check_all_spans();
-                //         std::ranges::transform(id_buffer, a1_buffer.begin(),
-                //                                [](ID value) { return static_cast<double>(value); });
-                //         check_all_spans();
-
-                //         if constexpr (!std::same_as<DatasetType, ConstDataset>) {
-                //             auto const buffer_span = dataset.template get_columnar_buffer_span<input_getter_s, A>();
-                //             for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                //                 buffer_span[0] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
-                //                 CHECK(id_buffer.front() == -10);
-                //                 CHECK(a1_buffer.front() == -2.0);
-                //                 check_all_spans();
-                //             }
-                //         }
-                //     }
-                // }
+                    if constexpr (!std::same_as<DatasetType, ConstDataset>) {
+                        auto const buffer_span = dataset.template get_columnar_buffer_span<input_getter_s, A>();
+                        for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
+                            buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
+                            CHECK(id_buffer[idx] == -10);
+                            CHECK(a1_buffer[idx] == -2.0);
+                            check_all_spans();
+                        }
+                    }
+                }
             }
             SUBCASE("Batch dataset") {
                 // for (auto const batch_size : {0, 1, 2}) {
