@@ -713,26 +713,19 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                   CalculationMethod method, bool use_binary_search) const -> MathOutput<ResultType> {
-        pilot_run(regulator_order);
-        if (use_binary_search) {
-            update_binary_search(regulator_order);
-        }
+        // bool use_binary_search = false;
+        pilot_run(regulator_order, use_binary_search);
 
         if (strategy_ == OptimizerStrategy::any) {
             auto result = iterate_with_fallback(state, regulator_order, method, false);
             return produce_output(regulator_order, std::move(result));
-        }
-
-        if (strategy_ == OptimizerStrategy::fast_any) {
-            auto result = iterate_with_fallback(state, regulator_order, method, use_binary_search);
+        } else if (auto result = iterate_with_fallback(state, regulator_order, method, use_binary_search);
+                   strategy_ == OptimizerStrategy::fast_any) {
             return produce_output(regulator_order, std::move(result));
         }
 
         // refine solution
-        exploit_neighborhood(regulator_order);
-        if (use_binary_search) {
-            update_binary_search(regulator_order);
-        }
+        exploit_neighborhood(regulator_order, use_binary_search);
         return produce_output(regulator_order,
                               iterate_with_fallback(state, regulator_order, method, use_binary_search));
     }
@@ -949,7 +942,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                   bool use_binary_search = false) const {
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
@@ -979,9 +973,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::pilot_run"s, strategy_};
         }
+        if (use_binary_search) {
+            update_binary_search(regulator_order);
+        }
     }
 
-    void exploit_neighborhood(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    void exploit_neighborhood(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                              bool use_binary_search = false) const {
+        if (use_binary_search) {
+            return;
+        }
         using namespace std::string_literals;
 
         constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
