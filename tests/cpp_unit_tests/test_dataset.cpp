@@ -359,13 +359,13 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         fake_indptr.back() = total_elements;
         return fake_indptr.data();
     };
-    auto const add_component_info = [&add_buffer, &fake_data, &fake_indptr, &get_data_buffer, &get_indptr_buffer](
+    auto const add_component_info = [&add_buffer, &get_data_buffer, &get_indptr_buffer](
                                         DatasetType& dataset, std::string_view name, Idx elements_per_scenario,
                                         Idx total_elements, bool is_columnar = false) {
         if constexpr (std::same_as<DatasetType, WritableDataset>) {
             (void)add_buffer;
-            (void)fake_data;
-            (void)fake_indptr;
+            (void)get_data_buffer;
+            (void)get_indptr_buffer;
             dataset.add_component_info(name, elements_per_scenario, total_elements);
         } else {
             void* data_buffer = get_data_buffer(is_columnar, total_elements);
