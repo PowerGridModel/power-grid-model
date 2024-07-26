@@ -189,6 +189,18 @@ void check_equal(A::InputType const& first, A::InputType const& second) {
 } // namespace
 } // namespace test
 
+namespace {
+template <typename DatasetType, typename BufferSpan, typename Idx>
+auto get_colummnar_element(BufferSpan const& buffer_span, Idx idx) {
+    if constexpr (std::same_as<DatasetType, ConstDataset>) {
+        static_assert(std::same_as<decltype(buffer_span[idx]), const_range_object<A::InputType const>::Proxy>);
+    } else {
+        static_assert(std::same_as<decltype(buffer_span[idx]), mutable_range_object<A::InputType>::Proxy>);
+    }
+    return static_cast<A::InputType>(buffer_span[idx]);
+}
+} // namespace
+
 TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::InputType>,
                    mutable_range_object<A::InputType>) {
     using Data = std::conditional_t<std::same_as<RangeObjectType, const_range_object<A::InputType>>, void const, void>;
@@ -645,16 +657,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     auto const check_span = [&](auto const& buffer_span) {
                         CHECK(buffer_span.size() == total_elements);
                         for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                            auto const element = [idx, &buffer_span] {
-                                if constexpr (std::same_as<DatasetType, ConstDataset>) {
-                                    static_assert(std::same_as<decltype(buffer_span[idx]),
-                                                               const_range_object<A::InputType const>::Proxy>);
-                                } else {
-                                    static_assert(std::same_as<decltype(buffer_span[idx]),
-                                                               mutable_range_object<A::InputType>::Proxy>);
-                                }
-                                return static_cast<A::InputType>(buffer_span[idx]);
-                            }();
+                            auto const element = get_colummnar_element<DatasetType>(buffer_span, idx);
                             CHECK(element.id == id_buffer[idx]);
                             CHECK(element.a1 == a1_buffer[idx]);
                             CHECK(is_nan(element.a0));
@@ -722,16 +725,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             }
                             CHECK(buffer_span.size() == element_number);
                             for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                                auto const element = [idx, aux_idx, &buffer_span] {
-                                    if constexpr (std::same_as<DatasetType, ConstDataset>) {
-                                        static_assert(std::same_as<decltype(buffer_span[aux_idx + idx]),
-                                                                   const_range_object<A::InputType const>::Proxy>);
-                                    } else {
-                                        static_assert(std::same_as<decltype(buffer_span[aux_idx + idx]),
-                                                                   mutable_range_object<A::InputType>::Proxy>);
-                                    }
-                                    return static_cast<A::InputType>(buffer_span[aux_idx + idx]);
-                                }();
+                                auto const element = get_colummnar_element<DatasetType>(buffer_span, aux_idx + idx);
                                 CHECK(element.id == id_buffer[aux_idx + idx]);
                                 CHECK(element.a1 == a1_buffer[aux_idx + idx]);
                                 CHECK(is_nan(element.a0));
@@ -805,16 +799,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     auto const check_span = [&](auto const& buffer_span) {
                         CHECK(buffer_span.size() == total_elements);
                         for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                            auto const element = [idx, &buffer_span] {
-                                if constexpr (std::same_as<DatasetType, ConstDataset>) {
-                                    static_assert(std::same_as<decltype(buffer_span[idx]),
-                                                               const_range_object<A::InputType const>::Proxy>);
-                                } else {
-                                    static_assert(std::same_as<decltype(buffer_span[idx]),
-                                                               mutable_range_object<A::InputType>::Proxy>);
-                                }
-                                return static_cast<A::InputType>(buffer_span[idx]);
-                            }();
+                            auto const element = get_colummnar_element<DatasetType>(buffer_span, idx);
                             CHECK(element.id == id_buffer[idx]);
                             CHECK(element.a1 == a1_buffer[idx]);
                             CHECK(is_nan(element.a0));
@@ -890,16 +875,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                         }
                         CHECK(buffer_span.size() == element_number);
                         for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                            auto const element = [idx, aux_idx, &buffer_span] {
-                                if constexpr (std::same_as<DatasetType, ConstDataset>) {
-                                    static_assert(std::same_as<decltype(buffer_span[aux_idx + idx]),
-                                                               const_range_object<A::InputType const>::Proxy>);
-                                } else {
-                                    static_assert(std::same_as<decltype(buffer_span[aux_idx + idx]),
-                                                               mutable_range_object<A::InputType>::Proxy>);
-                                }
-                                return static_cast<A::InputType>(buffer_span[aux_idx + idx]);
-                            }();
+                            auto const element = get_colummnar_element<DatasetType>(buffer_span, aux_idx + idx);
                             CHECK(element.id == id_buffer[aux_idx + idx]);
                             CHECK(element.a1 == a1_buffer[aux_idx + idx]);
                             CHECK(is_nan(element.a0));
