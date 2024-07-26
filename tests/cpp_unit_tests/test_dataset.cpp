@@ -192,11 +192,10 @@ void check_equal(A::InputType const& first, A::InputType const& second) {
 namespace {
 template <typename DatasetType, typename BufferSpan, typename Idx>
 auto get_colummnar_element(BufferSpan const& buffer_span, Idx idx) {
-    if constexpr (std::same_as<DatasetType, ConstDataset>) {
-        static_assert(std::same_as<decltype(buffer_span[idx]), const_range_object<A::InputType const>::Proxy>);
-    } else {
-        static_assert(std::same_as<decltype(buffer_span[idx]), mutable_range_object<A::InputType>::Proxy>);
-    }
+    using ProxyType =
+        std::conditional_t<std::same_as<DatasetType, ConstDataset>, const_range_object<A::InputType const>::Proxy,
+                           mutable_range_object<A::InputType>::Proxy>;
+    static_assert(std::same_as<decltype(buffer_span[idx]), ProxyType>);
     return static_cast<A::InputType>(buffer_span[idx]);
 }
 } // namespace
