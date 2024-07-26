@@ -49,7 +49,7 @@ struct DatasetInfo {
     std::vector<ComponentInfo> component_info;
 
     DatasetInfo(bool is_batch, Idx batch_size, MetaDataset const* dataset)
-        : is_batch(is_batch), batch_size(batch_size), dataset(dataset), component_info() {}
+        : is_batch(is_batch), batch_size(batch_size), dataset(dataset) {}
 };
 
 template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
