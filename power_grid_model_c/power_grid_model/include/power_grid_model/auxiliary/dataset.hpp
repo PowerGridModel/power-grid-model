@@ -47,6 +47,9 @@ struct DatasetInfo {
     Idx batch_size; // for single dataset, the batch size is one
     MetaDataset const* dataset;
     std::vector<ComponentInfo> component_info;
+
+    DatasetInfo(bool is_batch, Idx batch_size, MetaDataset const* dataset)
+        : is_batch(is_batch), batch_size(batch_size), dataset(dataset), component_info() {}
 };
 
 template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
@@ -183,6 +186,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Data* data;
         AttributeBuffers attributes;
         std::span<Indptr> indptr;
+
+        Buffer(Data* data = nullptr, std::span<Indptr> indptr = {}) : data(data), indptr(indptr) {}
     };
 
     template <class StructType>
@@ -192,11 +197,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     static constexpr Idx invalid_index{-1};
 
     Dataset(bool is_batch, Idx batch_size, std::string_view dataset_name, MetaData const& meta_data)
-        : meta_data_{&meta_data},
-          dataset_info_{.is_batch = is_batch,
-                        .batch_size = batch_size,
-                        .dataset = &meta_data.get_dataset(dataset_name),
-                        .component_info = {}} {
+        : meta_data_{&meta_data}, dataset_info_{is_batch, batch_size, &meta_data.get_dataset(dataset_name)} {
         if (dataset_info_.batch_size < 0) {
             throw DatasetError{"Batch size cannot be negative!\n"};
         }
@@ -213,7 +214,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         : meta_data_{&other.meta_data()}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
-            buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
+            buffers_.push_back(Buffer{buffer.data, buffer.indptr});
         }
     }
 
