@@ -628,9 +628,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool get_bs_last_check() const { return last_check; }
         bool get_bs_tap_reverse() const { return tap_reverse; }
         bool get_bs_inevitable_run() const { return inevitable_run; }
-        bool get_end_of_bs() const {
-            return get_bs_tap_left() >= get_bs_tap_right();
-        }
+        bool get_end_of_bs() const { return get_bs_tap_left() >= get_bs_tap_right(); }
 
         void set_bs_tap_left(IntS tap_left) { this->lower_bound = tap_left; }
         void set_bs_tap_right(IntS tap_right) { this->upper_bound = tap_right; }
@@ -872,7 +870,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&cmp, strategy_max, &bs_ref] {
-                if (cmp != 0) { // NOLINT(modernize-use-nullptr)
+                if (cmp != 0) {                       // NOLINT(modernize-use-nullptr)
                     auto state_above_range = cmp > 0; // NOLINT(modernize-use-nullptr)
                     auto is_down = state_above_range ? bs_ref.get_bs_tap_reverse() : !bs_ref.get_bs_tap_reverse();
                     if (bs_ref.get_bs_last_check()) {
