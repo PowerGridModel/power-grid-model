@@ -74,7 +74,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         {
             for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                char* buffer_ptr = reinterpret_cast<char*>(data_[attribute_idx]) + meta_attribute.size * idx_;
+                std::byte* buffer_ptr = reinterpret_cast<std::byte*>(data_[attribute_idx]) + meta_attribute.size * idx_;
                 meta_attribute.get_value(&value, buffer_ptr, 0);
             }
             return *this;
@@ -84,8 +84,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
             std::remove_const_t<value_type> result{};
             for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                char const* buffer_ptr =
-                    reinterpret_cast<char const*>(data_[attribute_idx]) + meta_attribute.size * idx_;
+                std::byte const* buffer_ptr =
+                    reinterpret_cast<std::byte const*>(data_[attribute_idx]) + meta_attribute.size * idx_;
                 meta_attribute.set_value(&result, buffer_ptr, 0);
             }
             return result;
