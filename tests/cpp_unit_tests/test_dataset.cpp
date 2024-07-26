@@ -222,7 +222,7 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
     SUBCASE("Read access") {
         check_buffer(range_object);
         id_buffer = {2, 3, 4};
-        a1_buffer = {6.0, -2.0, 2.0, nan};
+        a1_buffer = {6.0, -2.0, nan};
         check_buffer(range_object);
     }
 
