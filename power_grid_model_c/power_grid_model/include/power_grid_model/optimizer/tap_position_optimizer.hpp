@@ -630,7 +630,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool get_bs_inevitable_run() const { return inevitable_run; }
         bool get_end_of_bs() const {
             return get_bs_tap_left() >= get_bs_tap_right();
-            return (get_bs_tap_left() > get_bs_tap_right()) != get_bs_tap_reverse();
         }
 
         void set_bs_tap_left(IntS tap_left) { this->lower_bound = tap_left; }
@@ -648,8 +647,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 set_bs_tap_left(get_bs_current_tap());
             }
             if (get_bs_tap_left() < get_bs_tap_right()) {
-                bool _max = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
-                IntS tap_pos = search_bs(_max);
+                const bool _max = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
+                const IntS tap_pos = search_bs(_max);
                 if (get_bs_current_tap() == tap_pos) {
                     return false;
                 }
@@ -658,9 +657,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
             return false;
         }
-        IntS search_bs(bool strategy_max = true) const {
-            auto mid_point = get_bs_tap_left() + (get_bs_tap_right() - get_bs_tap_left()) / 2;
-            if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0 && strategy_max) {
+        IntS search_bs(bool prefer_higher = true) const {
+            const auto mid_point = get_bs_tap_left() + (get_bs_tap_right() - get_bs_tap_left()) / 2;
+            if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0 && prefer_higher) {
                 return mid_point + 1;
             }
             return mid_point;
@@ -779,7 +778,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size() + 1),
                                               static_cast<IntS>(0));
-        auto stratygy_max =
+        auto strategy_max =
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
         while (tap_changed) {
@@ -793,7 +792,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                     const auto& regulator = same_rank_regulators[j];
                     if (use_binary_search) {
                         tap_changed =
-                            adjust_transformer_bs(regulator, state, result, update_data, stratygy_max, i, j) ||
+                            adjust_transformer_bs(regulator, state, result, update_data, strategy_max, i, j) ||
                             tap_changed;
                     } else {
                         tap_changed = adjust_transformer(regulator, state, result, update_data) || tap_changed;
@@ -873,7 +872,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&cmp, strategy_max, &bs_ref] {
-                if (cmp != 0) {
+                if (cmp != 0) { // NOLINT(modernize-use-nullptr)
                     auto state_above_range = cmp > 0; // NOLINT(modernize-use-nullptr)
                     auto is_down = state_above_range ? bs_ref.get_bs_tap_reverse() : !bs_ref.get_bs_tap_reverse();
                     if (bs_ref.get_bs_last_check()) {
@@ -894,7 +893,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return;
             }
 
-            bool previous_down = bs_ref.get_bs_last_down();
+            const bool previous_down = bs_ref.get_bs_last_down();
             if (bs_ref.get_bs_tap_reverse() ? strategy_max : !strategy_max) {
                 bs_ref.set_bs_tap_left(bs_ref.get_bs_current_tap());
                 bs_ref.set_bs_last_down(false);
@@ -903,9 +902,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 bs_ref.set_bs_last_down(true);
             }
 
-            bool search_mode = strategy_max ? !bs_ref.get_bs_tap_reverse() : bs_ref.get_bs_tap_reverse();
-            auto tap_pos = bs_ref.search_bs(search_mode);
-            auto tap_diff = tap_pos - bs_ref.get_bs_current_tap();
+            const bool prefer_higher = strategy_max ? !bs_ref.get_bs_tap_reverse() : bs_ref.get_bs_tap_reverse();
+            const auto tap_pos = bs_ref.search_bs(prefer_higher);
+            const auto tap_diff = tap_pos - bs_ref.get_bs_current_tap();
             if (tap_diff == 0) {
                 tap_changed = false;
                 return;
