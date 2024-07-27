@@ -653,9 +653,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                     return;
                 }
                 set_bs_current_tap(tap_pos);
-                return;
             }
-            return;
         }
 
         void recalibrate(bool strategy_max) {
@@ -735,12 +733,14 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         if (max_tap_ranges_per_rank.empty()) {
             max_tap_ranges_per_rank.reserve(regulator_order.size());
+            binary_search_.reserve(regulator_order.size());
             for (auto const& same_rank_regulators : regulator_order) {
                 max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
                                                                            same_rank_regulators.end(),
                                                                            tap_pos_range_cmp)
                                                       ->transformer.tap_range());
                 std::vector<BinarySearch> binary_search_group;
+                binary_search_group.reserve(same_rank_regulators.size());
                 for (auto const& regulator : same_rank_regulators) {
                     binary_search_group.push_back(BinarySearch{regulator.transformer.tap_pos(),
                                                                regulator.transformer.tap_min(),
