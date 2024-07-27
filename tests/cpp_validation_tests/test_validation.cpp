@@ -627,16 +627,10 @@ TEST_CASE("Validation test single") {
     }
 }
 
-// Failed cases binary search automatic tap changer:
-// - power_flow/automatic-tap-regulator/pgm-automatic-tap-line-drop-min
-// - power_flow/automatic-tap-regulator/pgm-automatic-tap-min
 TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
-    int ctr = 0;
     for (CaseParam const& param : all_cases) {
-        ctr++;
         SUBCASE(param.case_name.c_str()) {
-            auto const& debug_case_name = param.case_name.c_str();
             try {
                 validate_batch_case(param);
             } catch (std::exception& e) {

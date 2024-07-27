@@ -598,8 +598,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     static constexpr auto transformer_index_of = container_impl::get_cls_pos_v<T, TransformerTypes...>;
     static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
-  public:
+    // binary search logic
     struct BinarySearch {
+      private:
         IntS lower_bound = -12;      // tap_position_left
         IntS upper_bound = 12;       // tap_position_right
         IntS current = 0;            // tap_position_middle
@@ -608,6 +609,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool tap_reverse = false;    // tap direction
         bool inevitable_run = false; // inevitable run
 
+      public:
         BinarySearch() = default;
         BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max) { reset_bs(tap_pos, tap_min, tap_max); }
 
@@ -638,29 +640,67 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         void set_bs_tap_reverse(bool tap_reverse) { this->tap_reverse = tap_reverse; }
         void set_bs_inevitable_run(bool inevitable_run) { this->inevitable_run = inevitable_run; }
 
-        bool adjust_bs(bool strategy_max = true) {
+        void adjust_bs(bool strategy_max = true) {
             if (get_bs_last_down()) {
                 set_bs_tap_right(get_bs_current_tap());
             } else {
                 set_bs_tap_left(get_bs_current_tap());
             }
             if (get_bs_tap_left() < get_bs_tap_right()) {
-                const bool _max = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
-                const IntS tap_pos = search_bs(_max);
+                const bool prefer_higher = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
+                const IntS tap_pos = search_bs(prefer_higher);
                 if (get_bs_current_tap() == tap_pos) {
-                    return false;
+                    return;
                 }
                 set_bs_current_tap(tap_pos);
-                return true;
+                return;
             }
-            return false;
+            return;
         }
+
+        void recalibrate(bool strategy_max) {
+            if (get_bs_tap_reverse() ? strategy_max : !strategy_max) {
+                set_bs_tap_left(get_bs_current_tap());
+                set_bs_last_down(false);
+            } else {
+                set_bs_tap_right(get_bs_current_tap());
+                set_bs_last_down(true);
+            }
+        }
+
         IntS search_bs(bool prefer_higher = true) const {
             const auto mid_point = get_bs_tap_left() + (get_bs_tap_right() - get_bs_tap_left()) / 2;
             if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0 && prefer_higher) {
                 return mid_point + 1;
             }
             return mid_point;
+        }
+
+        void propose_new_pos(bool strategy_max, bool above_range) {
+            auto is_down = above_range ? get_bs_tap_reverse() : !get_bs_tap_reverse();
+            if (get_bs_last_check()) {
+                set_bs_current_tap(is_down ? get_bs_tap_left() : get_bs_tap_right());
+                set_bs_inevitable_run(true);
+            } else {
+                set_bs_last_down(is_down);
+                adjust_bs(strategy_max);
+            }
+        }
+
+        IntS post_process(bool strategy_max, bool previous_down, bool& tap_changed) {
+            const bool prefer_higher = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
+            const auto tap_pos = search_bs(prefer_higher);
+            const auto tap_diff = tap_pos - get_bs_current_tap();
+            if (tap_diff == 0) {
+                tap_changed = false;
+                return tap_pos;
+            }
+            if ((tap_diff == 1 && previous_down) || (tap_diff == -1 && !previous_down)) {
+                set_bs_last_check(true);
+            }
+            tap_changed = true;
+            set_bs_current_tap(tap_pos);
+            return tap_pos;
         }
     };
     mutable std::vector<std::vector<BinarySearch>> binary_search_;
@@ -716,15 +756,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         // bool use_binary_search = false;
         pilot_run(regulator_order, use_binary_search);
 
-        if (strategy_ == OptimizerStrategy::any) {
-            auto result = iterate_with_fallback(state, regulator_order, method, false);
-            return produce_output(regulator_order, std::move(result));
-        } else if (auto result = iterate_with_fallback(state, regulator_order, method, use_binary_search);
-                   strategy_ == OptimizerStrategy::fast_any) {
+        if (auto result = iterate_with_fallback(state, regulator_order, method, false);
+            strategy_ == OptimizerStrategy::any) {
             return produce_output(regulator_order, std::move(result));
         }
 
-        // refine solution
+        // refine solution, only for non-binary search
         exploit_neighborhood(regulator_order, use_binary_search);
         return produce_output(regulator_order,
                               iterate_with_fallback(state, regulator_order, method, use_binary_search));
@@ -863,16 +900,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&cmp, strategy_max, &bs_ref] {
-                if (cmp != 0) {                       // NOLINT(modernize-use-nullptr)
-                    auto state_above_range = cmp > 0; // NOLINT(modernize-use-nullptr)
-                    auto is_down = state_above_range ? bs_ref.get_bs_tap_reverse() : !bs_ref.get_bs_tap_reverse();
-                    if (bs_ref.get_bs_last_check()) {
-                        bs_ref.set_bs_current_tap(is_down ? bs_ref.get_bs_tap_left() : bs_ref.get_bs_tap_right());
-                        bs_ref.set_bs_inevitable_run(true);
-                        return bs_ref.get_bs_current_tap();
-                    }
-                    bs_ref.set_bs_last_down(is_down);
-                    bs_ref.adjust_bs(strategy_max);
+                if (cmp != 0) {                                    // NOLINT(modernize-use-nullptr)
+                    bs_ref.propose_new_pos(strategy_max, cmp > 0); // NOLINT(modernize-use-nullptr)
                 }
                 return bs_ref.get_bs_current_tap();
             }();
@@ -885,27 +914,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
 
             const bool previous_down = bs_ref.get_bs_last_down();
-            if (bs_ref.get_bs_tap_reverse() ? strategy_max : !strategy_max) {
-                bs_ref.set_bs_tap_left(bs_ref.get_bs_current_tap());
-                bs_ref.set_bs_last_down(false);
-            } else {
-                bs_ref.set_bs_tap_right(bs_ref.get_bs_current_tap());
-                bs_ref.set_bs_last_down(true);
-            }
+            bs_ref.recalibrate(strategy_max);
 
-            const bool prefer_higher = strategy_max ? !bs_ref.get_bs_tap_reverse() : bs_ref.get_bs_tap_reverse();
-            const auto tap_pos = bs_ref.search_bs(prefer_higher);
-            const auto tap_diff = tap_pos - bs_ref.get_bs_current_tap();
-            if (tap_diff == 0) {
-                tap_changed = false;
+            const auto tap_pos = bs_ref.post_process(strategy_max, previous_down, tap_changed);
+            if (!tap_changed) {
                 return;
             }
-            if ((tap_diff == 1 && previous_down) || (tap_diff == -1 && !previous_down)) {
-                bs_ref.set_bs_last_check(true);
-            }
-            bs_ref.set_bs_current_tap(tap_pos);
             add_tap_pos_update(tap_pos, transformer, update_data);
-            tap_changed = true;
         });
 
         return tap_changed;
