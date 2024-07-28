@@ -1009,7 +1009,7 @@ TEST_CASE("Test Tap position optimizer") {
 
                     auto optimizer = get_optimizer(strategy);
                     auto const result = optimizer.optimize(state, CalculationMethod::default_method);
-                    
+
                     auto const get_state_tap_pos = [&](const ID id) {
                         REQUIRE(!result.solver_output.empty());
                         return result.solver_output.front().state_tap_positions.at(id);
