@@ -11,6 +11,7 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <chrono>
 #include <map>
 #include <ranges>
 
@@ -1008,7 +1009,7 @@ TEST_CASE("Test Tap position optimizer") {
 
                     auto optimizer = get_optimizer(strategy);
                     auto const result = optimizer.optimize(state, CalculationMethod::default_method);
-
+                    
                     auto const get_state_tap_pos = [&](const ID id) {
                         REQUIRE(!result.solver_output.empty());
                         return result.solver_output.front().state_tap_positions.at(id);
@@ -1075,6 +1076,38 @@ TEST_CASE("Test Tap position optimizer") {
                     CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method, false),
                                     MaxIterationReached);
                     CHECK(twoStatesEqual(cached_state, state));
+                }
+            }
+        }
+
+        SUBCASE("Binary search vs scanline optimization for tap changer") {
+            state_b.tap_min = IntS{-100};
+            state_b.tap_max = IntS{100};
+
+            SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
+            SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
+            SUBCASE("start mid range") { state_b.tap_pos = 0; }
+
+            auto const strategies = std::vector{OptimizerStrategy::any, OptimizerStrategy::fast_any,
+                                                OptimizerStrategy::global_minimum, OptimizerStrategy::global_maximum};
+            for (auto strategy : strategies) {
+                CAPTURE(strategy);
+
+                for (auto tap_side : tap_sides) {
+                    CAPTURE(tap_side);
+
+                    state_b.tap_side = tap_side;
+                    state_a.tap_side = tap_side;
+
+                    auto optimizer = get_optimizer(strategy);
+
+                    auto const result = optimizer.optimize(state, CalculationMethod::default_method, false);
+                    auto const scan_number_of_pf_runs = optimizer.get_total_iterations();
+
+                    auto const result_bs = optimizer.optimize(state, CalculationMethod::default_method, true);
+                    auto const bs_number_of_pf_runs = optimizer.get_total_iterations();
+
+                    CHECK(scan_number_of_pf_runs >= bs_number_of_pf_runs); // In need of a more complex grid
                 }
             }
         }
