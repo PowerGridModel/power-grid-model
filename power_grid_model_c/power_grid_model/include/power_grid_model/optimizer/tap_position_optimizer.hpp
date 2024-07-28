@@ -598,86 +598,34 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     static constexpr auto transformer_index_of = container_impl::get_cls_pos_v<T, TransformerTypes...>;
     static_assert(((transformer_index_of<TransformerTypes> < sizeof...(TransformerTypes)) && ...));
 
-    // binary search logic
     struct BinarySearch {
-      private:
-        IntS lower_bound = -12;      // tap_position_left
-        IntS upper_bound = 12;       // tap_position_right
-        IntS current = 0;            // tap_position_middle
-        bool last_down = false;      // last direction
-        bool last_check = false;     // last check
-        bool tap_reverse = false;    // tap direction
-        bool inevitable_run = false; // inevitable run
-
       public:
         BinarySearch() = default;
         BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max) { reset_bs(tap_pos, tap_min, tap_max); }
 
-        void reset_bs(IntS tap_pos, IntS tap_min, IntS tap_max) {
-            last_down = false;
-            last_check = false;
-            current = tap_pos;
-            inevitable_run = false;
-            lower_bound = std::min(tap_min, tap_max);
-            upper_bound = std::max(tap_min, tap_max);
-            tap_reverse = tap_max < tap_min;
-        }
-
-        IntS get_bs_tap_left() const { return lower_bound; }
-        IntS get_bs_tap_right() const { return upper_bound; }
         IntS get_bs_current_tap() const { return current; }
         bool get_bs_last_down() const { return last_down; }
-        bool get_bs_last_check() const { return last_check; }
-        bool get_bs_tap_reverse() const { return tap_reverse; }
         bool get_bs_inevitable_run() const { return inevitable_run; }
-        bool get_end_of_bs() const { return get_bs_tap_left() >= get_bs_tap_right(); }
+        bool get_end_of_bs() const { return get_bs_tap_lower_bound() >= get_bs_tap_upper_bound(); }
 
-        void set_bs_tap_left(IntS tap_left) { this->lower_bound = tap_left; }
-        void set_bs_tap_right(IntS tap_right) { this->upper_bound = tap_right; }
-        void set_bs_current_tap(IntS current_tap) { this->current = current_tap; }
-        void set_bs_last_down(bool last_down) { this->last_down = last_down; }
-        void set_bs_last_check(bool last_check) { this->last_check = last_check; }
-        void set_bs_tap_reverse(bool tap_reverse) { this->tap_reverse = tap_reverse; }
-        void set_bs_inevitable_run(bool inevitable_run) { this->inevitable_run = inevitable_run; }
-
-        void adjust_bs(bool strategy_max = true) {
-            if (get_bs_last_down()) {
-                set_bs_tap_right(get_bs_current_tap());
-            } else {
-                set_bs_tap_left(get_bs_current_tap());
-            }
-            if (get_bs_tap_left() < get_bs_tap_right()) {
-                const bool prefer_higher = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
-                const IntS tap_pos = search_bs(prefer_higher);
-                if (get_bs_current_tap() == tap_pos) {
-                    return;
-                }
-                set_bs_current_tap(tap_pos);
-            }
-        }
+        void set_bs_current_tap(IntS _current_tap) { this->current = _current_tap; }
+        void set_bs_last_check(bool _last_check) { this->last_check = _last_check; }
+        void set_bs_inevitable_run(bool _inevitable_run) { this->inevitable_run = _inevitable_run; }
 
         void recalibrate(bool strategy_max) {
             if (get_bs_tap_reverse() ? strategy_max : !strategy_max) {
-                set_bs_tap_left(get_bs_current_tap());
+                set_bs_tap_lower_bound(get_bs_current_tap());
                 set_bs_last_down(false);
             } else {
-                set_bs_tap_right(get_bs_current_tap());
+                set_bs_tap_upper_bound(get_bs_current_tap());
                 set_bs_last_down(true);
             }
-        }
-
-        IntS search_bs(bool prefer_higher = true) const {
-            const auto mid_point = get_bs_tap_left() + (get_bs_tap_right() - get_bs_tap_left()) / 2;
-            if ((get_bs_tap_right() - get_bs_tap_left()) % 2 != 0 && prefer_higher) {
-                return mid_point + 1;
-            }
-            return mid_point;
         }
 
         void propose_new_pos(bool strategy_max, bool above_range) {
             auto is_down = above_range ? get_bs_tap_reverse() : !get_bs_tap_reverse();
             if (get_bs_last_check()) {
-                set_bs_current_tap(is_down ? get_bs_tap_left() : get_bs_tap_right());
+                set_bs_current_tap(is_down ? get_bs_tap_lower_bound() : get_bs_tap_upper_bound());
                 set_bs_inevitable_run(true);
             } else {
                 set_bs_last_down(is_down);
@@ -700,8 +648,66 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             set_bs_current_tap(tap_pos);
             return tap_pos;
         }
+
+      private:
+        IntS lower_bound{-12};      // tap position lower bound
+        IntS upper_bound{12};       // tap position upper bound
+        IntS current{0};            // current tap position
+        bool last_down{false};      // last direction
+        bool last_check{false};     // last run checked
+        bool tap_reverse{false};    // tap range normal or reversed
+        bool inevitable_run{false}; // inevitable run
+
+        inline IntS get_bs_tap_lower_bound() const { return lower_bound; }
+        inline IntS get_bs_tap_upper_bound() const { return upper_bound; }
+        inline bool get_bs_last_check() const { return last_check; }
+        inline bool get_bs_tap_reverse() const { return tap_reverse; }
+
+        inline void set_bs_tap_lower_bound(IntS _lower_bound) { this->lower_bound = _lower_bound; }
+        inline void set_bs_tap_upper_bound(IntS _upper_bound) { this->upper_bound = _upper_bound; }
+        inline void set_bs_last_down(bool _last_down) { this->last_down = _last_down; }
+        inline void set_bs_tap_reverse(bool _tap_reverse) { this->tap_reverse = _tap_reverse; }
+
+        void reset_bs(IntS tap_pos, IntS tap_min, IntS tap_max) {
+            last_down = false;
+            last_check = false;
+            current = tap_pos;
+            inevitable_run = false;
+            lower_bound = std::min(tap_min, tap_max);
+            upper_bound = std::max(tap_min, tap_max);
+            tap_reverse = tap_max < tap_min;
+        }
+
+        void adjust_bs(bool strategy_max = true) {
+            if (get_bs_last_down()) {
+                set_bs_tap_upper_bound(get_bs_current_tap());
+            } else {
+                set_bs_tap_lower_bound(get_bs_current_tap());
+            }
+            if (get_bs_tap_lower_bound() < get_bs_tap_upper_bound()) {
+                const bool prefer_higher = strategy_max ? !get_bs_tap_reverse() : get_bs_tap_reverse();
+                const IntS tap_pos = search_bs(prefer_higher);
+                if (get_bs_current_tap() == tap_pos) {
+                    return;
+                }
+                set_bs_current_tap(tap_pos);
+            }
+        }
+
+        IntS search_bs(bool prefer_higher = true) const {
+            const auto mid_point = get_bs_tap_lower_bound() + (get_bs_tap_upper_bound() - get_bs_tap_lower_bound()) / 2;
+            if ((get_bs_tap_upper_bound() - get_bs_tap_lower_bound()) % 2 != 0 && prefer_higher) {
+                return static_cast<IntS>(mid_point + 1);
+            }
+            return static_cast<IntS>(mid_point);
+        }
     };
     mutable std::vector<std::vector<BinarySearch>> binary_search_;
+    struct BinarySearchOptions {
+        bool strategy_max{false};
+        bool use_binary_search{false};
+        Idx2Du idx_bs{0, 0};
+    };
 
   public:
     TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy,
@@ -753,7 +759,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                   CalculationMethod method, bool use_binary_search) const -> MathOutput<ResultType> {
-        // bool use_binary_search = false;
         pilot_run(regulator_order, use_binary_search);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method, false);
@@ -761,7 +766,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             return produce_output(regulator_order, std::move(result));
         }
 
-        // refine solution, only for non-binary search
         exploit_neighborhood(regulator_order, use_binary_search);
         return produce_output(regulator_order,
                               iterate_with_fallback(state, regulator_order, method, use_binary_search));
@@ -814,17 +818,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             UpdateBuffer update_data;
             size_t rank_index = 0;
 
-            for (std::size_t i = 0; i < regulator_order.size(); ++i) {
+            for (IDu i = 0; i < regulator_order.size(); ++i) {
                 const auto& same_rank_regulators = regulator_order[i];
-                for (std::size_t j = 0; j < same_rank_regulators.size(); ++j) {
+                for (IDu j = 0; j < same_rank_regulators.size(); ++j) {
                     const auto& regulator = same_rank_regulators[j];
-                    if (use_binary_search) {
-                        tap_changed =
-                            adjust_transformer_bs(regulator, state, result, update_data, strategy_max, i, j) ||
-                            tap_changed;
-                    } else {
-                        tap_changed = adjust_transformer(regulator, state, result, update_data) || tap_changed;
-                    }
+                    const BinarySearchOptions bs_options{strategy_max, use_binary_search, Idx2Du{i, j}};
+                    tap_changed = adjust_transformer(regulator, state, result, update_data, bs_options) || tap_changed;
                 }
                 if (tap_changed) {
                     break;
@@ -845,7 +844,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& solver_output,
-                            UpdateBuffer& update_data) const {
+                            UpdateBuffer& update_data, BinarySearchOptions const& bs_options) const {
+        if (bs_options.use_binary_search) {
+            return adjust_transformer_bs(regulator, state, solver_output, update_data, bs_options);
+        } else {
+            return adjust_transformer_scan(regulator, state, solver_output, update_data);
+        }
+    }
+
+    bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
+                                 ResultType const& solver_output, UpdateBuffer& update_data) const {
         bool tap_changed = false;
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
@@ -878,10 +886,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     bool adjust_transformer_bs(RegulatedTransformer const& regulator, State const& state,
-                               ResultType const& solver_output, UpdateBuffer& update_data, bool strategy_max,
-                               std::size_t i, std::size_t j) const {
+                               ResultType const& solver_output, UpdateBuffer& update_data,
+                               BinarySearchOptions const& bs_options) const {
+        auto const strategy_max = bs_options.strategy_max;
         bool tap_changed = false;
-        auto& bs_ref = binary_search_[i][j];
+        auto& bs_ref = binary_search_[bs_options.idx_bs.x][bs_options.idx_bs.y];
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
@@ -892,7 +901,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
                                .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
 
-            // Only return false if the binary search condition is met
             if (bs_ref.get_end_of_bs() || bs_ref.get_bs_inevitable_run()) {
                 tap_changed = false;
                 return;
@@ -913,13 +921,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return;
             }
 
+            if (strategy_ == OptimizerStrategy::fast_any) {
+                tap_changed = false;
+                return;
+            }
+
             const bool previous_down = bs_ref.get_bs_last_down();
             bs_ref.recalibrate(strategy_max);
 
             const auto tap_pos = bs_ref.post_process(strategy_max, previous_down, tap_changed);
-            if (!tap_changed) {
-                return;
-            }
             add_tap_pos_update(tap_pos, transformer, update_data);
         });
 

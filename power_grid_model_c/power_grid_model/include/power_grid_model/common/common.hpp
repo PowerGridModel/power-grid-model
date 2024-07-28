@@ -16,6 +16,7 @@ namespace power_grid_model {
 
 // id type
 using ID = int32_t;
+using IDu = size_t;
 // idx type
 using Idx = int64_t;
 using IdxVector = std::vector<Idx>;
@@ -25,9 +26,14 @@ using IntS = int8_t;
 // struct of indexing to sub modules
 struct Idx2D {
     Idx group; // sequence number of outer module/groups
-    Idx pos;   //  sequence number inside the group
+    Idx pos;   // sequence number inside the group
 
     friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
+};
+
+struct Idx2Du {
+    IDu x;
+    IDu y;
 };
 
 struct Idx2DHash {
