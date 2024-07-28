@@ -847,9 +847,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                             UpdateBuffer& update_data, BinarySearchOptions const& bs_options) const {
         if (bs_options.use_binary_search) {
             return adjust_transformer_bs(regulator, state, solver_output, update_data, bs_options);
-        } else {
-            return adjust_transformer_scan(regulator, state, solver_output, update_data);
         }
+        return adjust_transformer_scan(regulator, state, solver_output, update_data);
     }
 
     bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
