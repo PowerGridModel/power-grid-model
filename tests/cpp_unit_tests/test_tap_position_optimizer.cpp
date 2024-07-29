@@ -1080,19 +1080,6 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
-        auto make_combinations = [](const auto& strategies, const auto& tap_sides) {
-            using StrategyType = typename std::decay_t<decltype(strategies)>::value_type;
-            using TapSideType = typename std::decay_t<decltype(tap_sides)>::value_type;
-
-            std::vector<std::tuple<StrategyType, TapSideType>> combinations;
-            for (const auto& strategy : strategies) {
-                for (const auto& tap_side : tap_sides) {
-                    combinations.emplace_back(strategy, tap_side);
-                }
-            }
-            return combinations;
-        };
-
         SUBCASE("Binary search vs scanline optimization for tap changer") {
             state_b.tap_min = IntS{-100};
             state_b.tap_max = IntS{100};
@@ -1104,25 +1091,25 @@ TEST_CASE("Test Tap position optimizer") {
             auto const strategies = std::vector{OptimizerStrategy::any, OptimizerStrategy::fast_any,
                                                 OptimizerStrategy::global_minimum, OptimizerStrategy::global_maximum};
 
-            auto all_test_options = make_combinations(strategies, tap_sides);
-
-            for (const auto& test_option : all_test_options) {
-                auto [strategy, tap_side] = test_option;
+            for (auto strategy : strategies) { // NOSONAR
                 CAPTURE(strategy);
-                CAPTURE(tap_side);
 
-                state_b.tap_side = tap_side;
-                state_a.tap_side = tap_side;
+                for (auto tap_side : tap_sides) { // NOSONAR
+                    CAPTURE(tap_side);
 
-                auto optimizer = get_optimizer(strategy);
+                    state_b.tap_side = tap_side;
+                    state_a.tap_side = tap_side;
 
-                auto const result = optimizer.optimize(state, CalculationMethod::default_method, false);
-                auto const scan_number_of_pf_runs = optimizer.get_total_iterations();
+                    auto optimizer = get_optimizer(strategy);
 
-                auto const result_bs = optimizer.optimize(state, CalculationMethod::default_method, true);
-                auto const bs_number_of_pf_runs = optimizer.get_total_iterations();
+                    auto const result = optimizer.optimize(state, CalculationMethod::default_method, false);
+                    auto const scan_number_of_pf_runs = optimizer.get_total_iterations();
 
-                CHECK(scan_number_of_pf_runs >= bs_number_of_pf_runs); // In need of a more complex grid
+                    auto const result_bs = optimizer.optimize(state, CalculationMethod::default_method, true);
+                    auto const bs_number_of_pf_runs = optimizer.get_total_iterations();
+
+                    CHECK(scan_number_of_pf_runs >= bs_number_of_pf_runs); // In need of a more complex grid
+                }
             }
         }
     }
