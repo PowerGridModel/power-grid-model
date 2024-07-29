@@ -10,10 +10,12 @@ Disclaimer!
 We do not officially support this functionality and may remove features in this library at any given time!
 """
 
+from copy import deepcopy
 from typing import List, Optional, Union, cast
 
 import numpy as np
 
+from power_grid_model.core.data_handling import OutputType, process_output_component_types
 from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.data_types import (
     BatchArray,
@@ -27,6 +29,7 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchArray,
 )
+from power_grid_model.typing import ComponentAttributeMapping
 
 
 def is_nan(data) -> bool:
@@ -284,3 +287,40 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
         ]
         for component, objects in data.items()
     }
+
+
+def copy_output_to_columnar_dataset(
+    output_data: Dataset,
+    output_component_types: ComponentAttributeMapping,
+    output_type: OutputType,
+    available_components: list[ComponentType],
+) -> Dataset:
+    """Temporary function to copy row based dataset to a column based dataset as per output_component_types.
+    The purpose of this function is to mimic columnar data without any memory footprint benefits.
+
+    Args:
+        data (Dataset):
+        component_types (_ComponentAttributeMappingDict):
+
+    Returns:
+        Dataset: converted to
+    Args:
+        output_data (Dataset): dataset to convert
+        output_component_types (ComponentAttributeMapping): desired component and attribute mapping
+        output_type (OutputType): output type sym or asym
+        available_components (list[ComponentType]): available components in model
+
+    Returns:
+        Dataset: converted dataset
+    """
+    processed_output_types = process_output_component_types(output_type, output_component_types, available_components)
+
+    result_data = {}
+    for comp_name, attrs in processed_output_types.items():
+        if attrs is None:
+            result_data[comp_name] = output_data[comp_name]
+        elif isinstance(attrs, (list, set)) and len(attrs) == 0:
+            result_data[comp_name] = {}
+        else:
+            result_data[comp_name] = {attr: deepcopy(output_data[comp_name][attr]) for attr in attrs}
+    return result_data
