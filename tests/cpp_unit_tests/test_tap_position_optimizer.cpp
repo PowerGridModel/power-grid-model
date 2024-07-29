@@ -1106,7 +1106,8 @@ TEST_CASE("Test Tap position optimizer") {
 
             auto all_test_options = make_combinations(strategies, tap_sides);
 
-            for (const auto& [strategy, tap_side] : all_test_options) {
+            for (const auto& test_option : all_test_options) {
+                auto [strategy, tap_side] = test_option;
                 CAPTURE(strategy);
                 CAPTURE(tap_side);
 
