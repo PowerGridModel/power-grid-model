@@ -48,6 +48,12 @@ struct DatasetInfo {
     MetaDataset const* dataset{nullptr};
     std::vector<ComponentInfo> component_info;
 };
+template <typename Data> struct AttributeBuffer {
+    Data* data;
+    MetaAttribute const* meta_attribute;
+    bool is_c_order{true};
+    Idx stride{1};
+};
 
 template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
   public:
@@ -60,8 +66,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = std::remove_const_t<T>;
 
         Proxy() = default;
-        Proxy(Idx idx, std::span<Data* const> data,
-              std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+        Proxy(Idx idx, std::span<Data* const> data, std::vector<AttributeBuffer<Data>> meta_attributes)
             : idx_{idx}, data_{data}, meta_attributes_{meta_attributes} {
             assert(data.size() == meta_attributes.size());
         }
@@ -109,7 +114,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
         Idx idx_{};
         std::span<Data* const> data_{};
-        std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
+        std::vector<AttributeBuffer<Data>> meta_attributes_;
     };
 
     class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
@@ -117,8 +122,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = Proxy;
 
         iterator() = default;
-        iterator(Idx idx, std::span<Data* const> data,
-                 std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+        iterator(Idx idx, std::span<Data* const> data, std::vector<AttributeBuffer<Data>> meta_attributes)
             : current_{idx, data, meta_attributes} {}
 
       private:
@@ -136,8 +140,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     };
 
     ColumnarAttributeRange() = default;
-    ColumnarAttributeRange(Idx size, std::vector<Data*> data,
-                           std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes)
+    ColumnarAttributeRange(Idx size, std::vector<Data*> data, std::vector<AttributeBuffer<Data>> meta_attributes)
         : size_{size}, data_{std::move(data)}, meta_attributes_{meta_attributes} {
         assert(data_.size() == meta_attributes_.size());
     }
@@ -161,7 +164,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
     Idx size_{};
     std::vector<Data*> data_{};
-    std::span<std::reference_wrapper<MetaAttribute const> const> meta_attributes_;
+    std::vector<AttributeBuffer<Data>> meta_attributes_;
 };
 
 template <typename T> using const_range_object = ColumnarAttributeRange<T, const_dataset_t>;
@@ -179,19 +182,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <class StructType>
     using DataStruct = std::conditional_t<is_data_mutable_v<dataset_type>, StructType, StructType const>;
 
-    struct AttributeBuffers {
-        std::vector<Data*> data;
-        std::vector<std::reference_wrapper<MetaAttribute const>> meta_attributes;
-    };
-
     // for columnar buffers, Data* data is empty and attributes is filled
     // for uniform buffers, indptr is empty
     struct Buffer {
-        Data* data;
-        AttributeBuffers attributes;
-        std::span<Indptr> indptr;
-
-        Buffer(Data* data = nullptr, std::span<Indptr> indptr = {}) : data(data), indptr(indptr) {}
+        Data* data{nullptr};
+        std::vector<AttributeBuffer<Data>> attributes;
+        std::span<Indptr> indptr{};
     };
 
     template <class StructType>
@@ -201,7 +197,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
     static constexpr Idx invalid_index{-1};
 
     Dataset(bool is_batch, Idx batch_size, std::string_view dataset_name, MetaData const& meta_data)
-        : meta_data_{&meta_data}, dataset_info_{is_batch, batch_size, &meta_data.get_dataset(dataset_name)} {
+        : meta_data_{&meta_data},
+          dataset_info_{.is_batch = is_batch,
+                        .batch_size = batch_size,
+                        .dataset = &meta_data.get_dataset(dataset_name),
+                        .component_info = {}} {
         if (dataset_info_.batch_size < 0) {
             throw DatasetError{"Batch size cannot be negative!\n"};
         }
@@ -218,7 +218,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         : meta_data_{&other.meta_data()}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
-            buffers_.push_back(Buffer{buffer.data, buffer.indptr});
+            buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
         }
     }
 
@@ -294,14 +294,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
         if (buffer.data != nullptr) {
             throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
         }
-        if (std::ranges::find_if(buffer.attributes.meta_attributes, [&attribute](MetaAttribute const& meta_attribute) {
-                return meta_attribute.name == attribute;
-            }) != buffer.attributes.meta_attributes.end()) {
+        if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
+                return buffer_attribute.meta_attribute->name == attribute;
+            }) != buffer.attributes.end()) {
             throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
         }
-        buffer.attributes.data.emplace_back(data);
-        buffer.attributes.meta_attributes.emplace_back(
-            dataset_info_.component_info[idx].component->get_attribute(attribute));
+        AttributeBuffer<Data> attribute_buffer{
+            .data = static_cast<void*>(data),
+            .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
+        buffer.attributes.emplace_back(attribute_buffer);
     }
 
     // get buffer by component type
@@ -446,9 +447,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
         assert(buffer.data == nullptr);
+        auto const size = buffer.attributes.size();
+        std::vector<Data*> attribute_buffer_data(size);
+        std::ranges::transform(buffer.attributes, std::back_inserter(attribute_buffer_data),
+                               [](AttributeBuffer const& attribute) { return attribute.data; });
+        std::vector<MetaAttribute const*> attribute_buffer_meta_attributes(size);
+        std::ranges::transform(buffer.attributes, std::back_inserter(attribute_buffer_meta_attributes),
+                               [](AttributeBuffer const& attribute) { return attribute.meta_attribute; });
 
-        RangeObject<StructType> total_range{info.total_elements, buffer.attributes.data,
-                                            buffer.attributes.meta_attributes};
+        RangeObject<StructType> total_range{info.total_elements, attribute_buffer_data,
+                                            attribute_buffer_meta_attributes};
         if (scenario < 0) {
             return total_range;
         }
