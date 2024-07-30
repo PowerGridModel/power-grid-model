@@ -109,7 +109,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         friend class iterator;
 
         MetaAttribute const& get_meta_attribute(Idx attribute_idx) const {
-            return meta_attributes_[attribute_idx].get();
+            return meta_attributes_[attribute_idx].meta_attribute.get();
         }
 
         Idx idx_{};
