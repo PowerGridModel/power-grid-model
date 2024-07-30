@@ -38,18 +38,15 @@ static_assert(is_indptr_mutable_v<writable_dataset_t>);
 struct ComponentInfo {
     MetaComponent const* component;
     // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
-    Idx elements_per_scenario;
-    Idx total_elements;
+    Idx elements_per_scenario{};
+    Idx total_elements{};
 };
 
 struct DatasetInfo {
-    bool is_batch;
-    Idx batch_size; // for single dataset, the batch size is one
-    MetaDataset const* dataset;
+    bool is_batch{false};
+    Idx batch_size{0}; // for single dataset, the batch size is one
+    MetaDataset const* dataset{nullptr};
     std::vector<ComponentInfo> component_info;
-
-    DatasetInfo(bool is_batch, Idx batch_size, MetaDataset const* dataset)
-        : is_batch(is_batch), batch_size(batch_size), dataset(dataset) {}
 };
 
 template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
@@ -75,7 +72,10 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
             for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
                 std::byte* buffer_ptr = reinterpret_cast<std::byte*>(data_[attribute_idx]) + meta_attribute.size * idx_;
-                meta_attribute.get_value(&value, buffer_ptr, 0);
+                
+                ctype_func_selector(meta_attribute.ctype, [&value, &meta_attribute, &buffer_ptr]<class T> {
+                    *reinterpret_cast<T*>(buffer_ptr) = meta_attribute.get_attribute<T>(reinterpret_cast<RawDataConstPtr>(&value));
+                });
             }
             return *this;
         }
