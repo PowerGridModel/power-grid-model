@@ -57,7 +57,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
     class Proxy {
       public:
-        using value_type = T;
+        using value_type = std::remove_const_t<T>;
 
         Proxy() = default;
         Proxy(Idx idx, std::span<Data* const> data,
@@ -84,7 +84,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         }
         operator value_type() const { return get(); }
         value_type get() const {
-            std::remove_const_t<value_type> result{};
+            value_type result{};
             for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
                 Data* attribute_buffer = data_[attribute_idx];
