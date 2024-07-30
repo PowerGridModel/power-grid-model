@@ -71,11 +71,14 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         {
             for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                std::byte* buffer_ptr = reinterpret_cast<std::byte*>(data_[attribute_idx]) + meta_attribute.size * idx_;
-                
-                ctype_func_selector(meta_attribute.ctype, [&value, &meta_attribute, &buffer_ptr]<class T> {
-                    *reinterpret_cast<T*>(buffer_ptr) = meta_attribute.get_attribute<T>(reinterpret_cast<RawDataConstPtr>(&value));
-                });
+                Data* attribute_buffer = data_[attribute_idx];
+                ctype_func_selector(
+                    meta_attribute.ctype, [&value, &meta_attribute, attribute_buffer, this]<typename AttributeType> {
+                        AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer) + idx_;
+                        AttributeType const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
+                            reinterpret_cast<RawDataConstPtr>(&value));
+                        *buffer_ptr = attribute_ref;
+                    });
             }
             return *this;
         }
@@ -84,9 +87,14 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
             std::remove_const_t<value_type> result{};
             for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
                 auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                std::byte const* buffer_ptr =
-                    reinterpret_cast<std::byte const*>(data_[attribute_idx]) + meta_attribute.size * idx_;
-                meta_attribute.set_value(&result, buffer_ptr, 0);
+                Data* attribute_buffer = data_[attribute_idx];
+                ctype_func_selector(meta_attribute.ctype, [&result, &meta_attribute, attribute_buffer,
+                                                           this]<typename AttributeType> {
+                    AttributeType const* buffer_ptr = reinterpret_cast<AttributeType const*>(attribute_buffer) + idx_;
+                    AttributeType& attribute_ref =
+                        meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
+                    attribute_ref = *buffer_ptr;
+                });
             }
             return result;
         }
