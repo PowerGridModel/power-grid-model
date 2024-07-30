@@ -117,4 +117,9 @@ enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
     fast_any = 5,                     // fast_any = Any{f(x) \in Range} for x \in Domain, but faster
 };
 
+enum class TapChangerBinarySearch : IntS { // Which type of tap search for tap changer
+    use_scaneline = 0,                     // use scaneline method: one step per iteration
+    use_binary_search = 1,                 // use binary search: half a tap range at a time
+};
+
 } // namespace power_grid_model
