@@ -615,6 +615,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr void set_inevitable_run(bool inevitable_run) { _inevitable_run = inevitable_run; }
 
         void recalibrate(bool strategy_max) {
+            // This if statement checks both conditions in the corresponding transformer
+            // whether the tap_max and tap_min are reversed, as well as whether the optimization
+            // has a max strategy.
+            // Lower bound should be updated to the current tap position if following is the case:
+            //  - tap_max > tap_min && strategy_max == true
+            //  - tap_max < tap_min && strategy_max == false
+            // Upper bound should be updated to the current tap position if the rest is the case.
             if (get_tap_reverse() == strategy_max) {
                 set_tap_lower_bound(get_current_tap());
                 set_last_down(false);
@@ -636,7 +643,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         IntS post_process(bool strategy_max, bool previous_down, bool& tap_changed) {
-            bool const prefer_higher = strategy_max ? !get_tap_reverse() : get_tap_reverse();
+            // __prefer_higher__ indicates a preference towards higher voltage
+            // that is a result of both the strategy as well as whether the current
+            // transformer has a reversed tap_max and tap_min
+            bool const prefer_higher = strategy_max != get_tap_reverse();
             auto const tap_pos = search(prefer_higher);
             auto const tap_diff = tap_pos - get_current_tap();
             if (tap_diff == 0) {
@@ -686,6 +696,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         IntS search(bool prefer_higher = true) const {
+            // This logic is used to determin which of the middle points could be of interest
+            // given strategy used in optimization:
+            // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
+            // find the corresponding mid point. std::midpoint returns always the lower mid point
+            // if the range is of even length. This is why we need to adjust bounds accordingly.
+            // Not because upper bound and lower bound might be reversed, which is not possible.
             auto const primary_bound = prefer_higher ? get_tap_upper_bound() : get_tap_lower_bound();
             auto const secondary_bound = prefer_higher ? get_tap_lower_bound() : get_tap_upper_bound();
             return std::midpoint(primary_bound, secondary_bound);
