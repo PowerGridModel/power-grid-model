@@ -656,7 +656,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                    options.optimizer_type, options.optimizer_strategy,
                    calculate_power_flow_<sym>(options.err_tol, options.max_iter),
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
-                   *meta_data_)
+                   *meta_data_, options.search_method)
             ->optimize(state_, options.calculation_method);
     }
 

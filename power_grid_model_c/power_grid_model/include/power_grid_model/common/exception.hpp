@@ -255,4 +255,12 @@ class UnreachableHit : public PowerGridError {
     }
 };
 
+class BinarySearchIncompatibleError : public InvalidArguments {
+  public:
+    template <typename T>
+    BinarySearchIncompatibleError(std::string const& method, const T& value)
+        : InvalidArguments{method, std::string{typeid(T).name()} + " #" + detail::to_string(static_cast<IntS>(value))} {
+    }
+};
+
 } // namespace power_grid_model

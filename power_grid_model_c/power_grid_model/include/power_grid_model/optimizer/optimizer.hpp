@@ -18,7 +18,8 @@ template <typename State, typename UpdateType, typename StateCalculator, typenam
     requires detail::state_calculator_c<StateCalculator, State> &&
              std::invocable<std::remove_cvref_t<StateUpdater>, UpdateType>
 constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy strategy, StateCalculator calculator,
-                             StateUpdater updater, meta_data::MetaData const& meta_data) {
+                             StateUpdater updater, meta_data::MetaData const& meta_data,
+                             SearchMethod search = SearchMethod::binary_search) {
     using enum OptimizerType;
     using namespace std::string_literals;
     using BaseOptimizer = detail::BaseOptimizer<StateCalculator, State>;
@@ -31,7 +32,7 @@ constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy str
                       std::invocable<std::remove_cvref_t<StateUpdater>, ConstDataset const&> &&
                       main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>) {
             return BaseOptimizer::template make_shared<TapPositionOptimizer<StateCalculator, StateUpdater, State>>(
-                std::move(calculator), std::move(updater), strategy, meta_data);
+                std::move(calculator), std::move(updater), strategy, meta_data, search);
         }
         [[fallthrough]];
     default:

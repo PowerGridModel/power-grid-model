@@ -29,23 +29,37 @@ TEST_CASE("Test construct tap position optimizer") {
 
     SUBCASE("symmetric") {
         for (auto strategy_method : strategies_and_methods) {
-            CAPTURE(strategy_method.strategy);
-            CAPTURE(strategy_method.method);
-            auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy,
-                meta_data};
-            auto res = optimizer.optimize(empty_state, strategy_method.method);
-            CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
+            for (auto search_method : search_methods) {
+                if (strategy_method.strategy == OptimizerStrategy::any &&
+                    search_method == SearchMethod::binary_search) {
+                    continue;
+                }
+                CAPTURE(strategy_method.strategy);
+                CAPTURE(strategy_method.method);
+                CAPTURE(search_method);
+                auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
+                    stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update,
+                    strategy_method.strategy, meta_data, search_method};
+                auto res = optimizer.optimize(empty_state, strategy_method.method);
+                CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
+            }
         }
     }
     SUBCASE("asymmetric") {
         for (auto strategy_method : strategies_and_methods) {
-            CAPTURE(strategy_method.strategy);
-            CAPTURE(strategy_method.method);
-            auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy_method.strategy,
-                meta_data};
-            CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
+            for (auto search_method : search_methods) {
+                if (strategy_method.strategy == OptimizerStrategy::any &&
+                    search_method == SearchMethod::binary_search) {
+                    continue;
+                }
+                CAPTURE(strategy_method.strategy);
+                CAPTURE(strategy_method.method);
+                CAPTURE(search_method);
+                auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
+                    stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update,
+                    strategy_method.strategy, meta_data, search_method};
+                CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
+            }
         }
     }
 }
@@ -55,6 +69,10 @@ TEST_CASE("Test get optimizer") {
 
     StubState empty_state;
     empty_state.components.set_construction_complete();
+    auto const search_methods = [] {
+        using enum SearchMethod;
+        return std::array{scanline, binary_search};
+    }();
 
     SUBCASE("Stub state calculator") {
         SUBCASE("Noop") {
@@ -78,10 +96,11 @@ TEST_CASE("Test get optimizer") {
     }
 
     SUBCASE("Symmetric state calculator") {
-        auto const get_instance = [](OptimizerType optimizer_type, OptimizerStrategy strategy) {
+        auto const get_instance = [](OptimizerType optimizer_type, OptimizerStrategy strategy,
+                                     SearchMethod search = SearchMethod::binary_search) {
             return get_optimizer<StubState, ConstDataset>(optimizer_type, strategy,
                                                           stub_steady_state_state_calculator<symmetric_t>,
-                                                          stub_const_dataset_update, meta_data);
+                                                          stub_const_dataset_update, meta_data, search);
         };
 
         SUBCASE("Noop") {
@@ -93,19 +112,27 @@ TEST_CASE("Test get optimizer") {
             }
         }
         SUBCASE("Automatic tap adjustment") {
+
             for (auto strategy_method : strategies_and_methods) {
-                CAPTURE(strategy_method.strategy);
-                CAPTURE(strategy_method.method);
-                auto optimizer = get_instance(automatic_tap_adjustment, strategy_method.strategy);
+                for (auto search_method : search_methods) {
+                    CAPTURE(strategy_method.strategy);
+                    CAPTURE(strategy_method.method);
+                    CAPTURE(search_method);
+                    if (strategy_method.strategy == OptimizerStrategy::any &&
+                        search_method == SearchMethod::binary_search) {
+                        continue;
+                    }
+                    auto optimizer = get_instance(automatic_tap_adjustment, strategy_method.strategy, search_method);
 
-                auto tap_optimizer = std::dynamic_pointer_cast<
-                    TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
-                REQUIRE(tap_optimizer != nullptr);
-                CHECK(tap_optimizer->get_strategy() == strategy_method.strategy);
+                    auto tap_optimizer = std::dynamic_pointer_cast<
+                        TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
+                    REQUIRE(tap_optimizer != nullptr);
+                    CHECK(tap_optimizer->get_strategy() == strategy_method.strategy);
 
-                StubState empty_state{};
-                empty_state.components.set_construction_complete();
-                CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
+                    StubState empty_state{};
+                    empty_state.components.set_construction_complete();
+                    CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
+                }
             }
         }
     }

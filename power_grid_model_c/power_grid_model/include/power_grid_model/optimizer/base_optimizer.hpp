@@ -48,8 +48,7 @@ class BaseOptimizer {
     BaseOptimizer& operator=(BaseOptimizer&&) noexcept = default;
     virtual ~BaseOptimizer() = default;
 
-    virtual auto optimize(State const& state, CalculationMethod method, bool extra_option = true)
-        -> MathOutput<ResultType> = 0;
+    virtual auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> = 0;
 
     template <std::derived_from<BaseOptimizer> Optimizer, typename... Args>
         requires std::constructible_from<Optimizer, Args...>
@@ -79,8 +78,7 @@ class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
 
     NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
-    auto optimize(State const& state, CalculationMethod method, bool /*extra_option*/ = true)
-        -> MathOutput<ResultType> final {
+    auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         return {.solver_output = func_(state, method), .optimizer_output = {}};
     }
 

@@ -150,6 +150,8 @@ constexpr auto calculation_methods = [] {
                       iterative_current, newton_raphson, iec60909};
 }();
 
+constexpr auto tap_sides = [] { return std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3}; }();
+
 struct OptimizerStrategyMethod {
     OptimizerStrategy strategy{};
     CalculationMethod method{};
@@ -161,6 +163,48 @@ constexpr auto strategies_and_methods = [] {
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
             result[idx++] = {strategy, method};
+        }
+    }
+    return result;
+}();
+
+struct OptimizerStrategySide {
+    OptimizerStrategy strategy{};
+    ControlSide side{};
+};
+
+constexpr auto strategies_and_sides = [] {
+    std::array<OptimizerStrategySide, strategies.size() * tap_sides.size()> result;
+    size_t idx{};
+    for (auto strategy : strategies) {
+        for (auto side : tap_sides) {
+            result[idx++] = {strategy, side};
+        }
+    }
+    return result;
+}();
+
+struct OptimizerStrategySearchSide {
+    OptimizerStrategy strategy{};
+    SearchMethod search{};
+    ControlSide side{};
+};
+
+constexpr auto search_methods = [] { return std::array{SearchMethod::scanline, SearchMethod::binary_search}; }();
+
+constexpr auto strategy_search_and_sides = [] {
+    // regular any strategy is only used in combination with scanline search
+    IDu const options_size = strategies.size() * tap_sides.size() * search_methods.size() - search_methods.size();
+    std::array<OptimizerStrategySearchSide, options_size> result;
+    size_t idx{};
+    for (auto strategy : strategies) {
+        for (auto search : search_methods) {
+            if (strategy == OptimizerStrategy::any && search == SearchMethod::binary_search) {
+                continue;
+            }
+            for (auto side : tap_sides) {
+                result[idx++] = {strategy, search, side};
+            }
         }
     }
     return result;

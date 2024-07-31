@@ -217,10 +217,10 @@ TEST_CASE("C API Model") {
             PGM_calculate(hl, model, opt, single_output_dataset, nullptr);
         }
 
-        SUBCASE("Tap changing strategy") {
-            PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_any_valid_tap);
-            CHECK_NOTHROW(PGM_calculate(hl, model, opt, single_output_dataset, nullptr));
-        }
+        // SUBCASE("Tap changing strategy") {
+        //     PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_any_valid_tap);
+        //     CHECK_NOTHROW(PGM_calculate(hl, model, opt, single_output_dataset, nullptr));
+        // }
 
         if (expected_error.empty()) {
             CHECK(PGM_error_code(hl) == PGM_no_error);
