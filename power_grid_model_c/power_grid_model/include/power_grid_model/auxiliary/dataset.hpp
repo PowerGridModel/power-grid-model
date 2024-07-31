@@ -72,7 +72,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         Proxy& operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
-            for (auto const& attribute_buffer :  attribute_buffers_) {
+            for (auto const& attribute_buffer : attribute_buffers_) {
                 assert(attribute_buffer.meta_attribute != nullptr);
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
                 ctype_func_selector(
@@ -91,12 +91,14 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
             for (auto const& attribute_buffer : attribute_buffers_) {
                 assert(attribute_buffer.meta_attribute != nullptr);
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
-                ctype_func_selector(meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
-                    AttributeType const* buffer_ptr = reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
-                    AttributeType& attribute_ref =
-                        meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
-                    attribute_ref = *buffer_ptr;
-                });
+                ctype_func_selector(
+                    meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
+                        AttributeType const* buffer_ptr =
+                            reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
+                        AttributeType& attribute_ref =
+                            meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
+                        attribute_ref = *buffer_ptr;
+                    });
             }
             return result;
         }
@@ -114,8 +116,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = Proxy;
 
         iterator() = default;
-        iterator(Idx idx, std::vector<AttributeBuffer<Data>> attribute_buffers)
-            : current_{idx, attribute_buffers} {}
+        iterator(Idx idx, std::vector<AttributeBuffer<Data>> attribute_buffers) : current_{idx, attribute_buffers} {}
 
       private:
         friend class boost::iterator_core_access;
@@ -220,6 +221,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
+    bool is_columnar(Data* data) { return data == nullptr; }
+
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
             return x.component->name == component;
@@ -278,7 +281,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data) {
         Idx const idx = find_component(component, true);
         Buffer& buffer = buffers_[idx];
-        if (buffer.data != nullptr) {
+        if (!is_columnar(buffer.data)) {
             throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
         }
         if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
@@ -304,7 +307,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
         Idx const idx = find_component(ComponentType::name, false);
         return get_buffer_span_impl<StructType>(scenario, idx);
-    }
+    } // here I can also combine the two into one after maybe I have defined a function to tell if something is columnar
+      // or not
     template <template <class> class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter<ComponentType>::type>>
     RangeObject<StructType> get_columnar_buffer_span(Idx scenario = invalid_index) const {
@@ -328,7 +332,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             result[scenario] = get_buffer_span_impl<StructType>(scenario, idx);
         }
         return result;
-    }
+    } // these two as well
     template <template <class> class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter<ComponentType>::type>>
     std::vector<RangeObject<StructType>> get_columnar_buffer_span_all_scenarios() const {
