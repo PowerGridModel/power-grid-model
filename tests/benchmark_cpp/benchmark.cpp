@@ -7,7 +7,7 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/timer.hpp>
-#include <power_grid_model/main_model_wrapper.hpp>
+#include <power_grid_model/main_model.hpp>
 
 #include <iostream>
 #include <random>
