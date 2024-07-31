@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <optional>
 #include <queue>
 #include <ranges>
 #include <variant>
@@ -767,12 +768,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                   CalculationMethod method) const -> MathOutput<ResultType> {
         pilot_run(regulator_order);
 
-        if (auto result = iterate_with_fallback(state, regulator_order, method); strategy_ == OptimizerStrategy::any) {
+        if (auto result = iterate_with_fallback(state, regulator_order, method, SearchMethod::scanline);
+            strategy_ == OptimizerStrategy::any) {
             return produce_output(regulator_order, std::move(result));
         }
-
         exploit_neighborhood(regulator_order);
-        return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method));
+        return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method, tap_search_));
     }
 
     auto produce_output(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
@@ -793,14 +794,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto iterate_with_fallback(State const& state,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                               CalculationMethod method) const -> ResultType {
-        auto fallback = [this, &state, &regulator_order, &method] {
-            std::ignore = iterate(state, regulator_order, CalculationMethod::linear);
-            return iterate(state, regulator_order, method);
+                               CalculationMethod method, std::optional<SearchMethod> search = std::nullopt) const
+        -> ResultType {
+        SearchMethod const actual_search = search.value_or(tap_search_);
+        auto fallback = [this, &state, &regulator_order, &method, &actual_search] {
+            std::ignore = iterate(state, regulator_order, CalculationMethod::linear, SearchMethod::scanline);
+            return iterate(state, regulator_order, method, actual_search);
         };
 
         try {
-            return iterate(state, regulator_order, method);
+            return iterate(state, regulator_order, method, actual_search);
         } catch (IterationDiverge const& /* ex */) {
             return fallback();
         } catch (SparseMatrixError const& /* ex */) {
@@ -809,7 +812,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                 CalculationMethod method) const -> ResultType {
+                 CalculationMethod method, SearchMethod search) const -> ResultType {
         auto result = calculate_(state, method);
         ++total_iterations;
 
@@ -828,7 +831,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 for (IDu j = 0; j < same_rank_regulators.size(); ++j) {
                     auto const& regulator = same_rank_regulators[j];
                     BinarySearchOptions const options{strategy_max, Idx2Du{i, j}};
-                    tap_changed = adjust_transformer(regulator, state, result, update_data, options) || tap_changed;
+                    tap_changed =
+                        adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
                 }
                 if (tap_changed) {
                     break;
@@ -850,8 +854,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& solver_output,
-                            UpdateBuffer& update_data, BinarySearchOptions const& options) const {
-        if (tap_search_ == SearchMethod::binary_search) {
+                            UpdateBuffer& update_data, SearchMethod search, BinarySearchOptions const& options) const {
+        if (search == SearchMethod::binary_search) {
             return adjust_transformer_bs(regulator, state, solver_output, update_data, options);
         }
         return adjust_transformer_scan(regulator, state, solver_output, update_data);
