@@ -66,20 +66,18 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = std::remove_const_t<T>;
 
         Proxy() = default;
-        Proxy(Idx idx, std::span<Data* const> data, std::vector<AttributeBuffer<Data>> meta_attributes)
-            : idx_{idx}, data_{data}, meta_attributes_{meta_attributes} {
-            assert(data.size() == meta_attributes.size());
-        }
+        Proxy(Idx idx, std::vector<AttributeBuffer<Data>> attribute_buffers)
+            : idx_{idx}, attribute_buffers_{attribute_buffers} {}
 
         Proxy& operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
-            for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
-                auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                Data* attribute_buffer = data_[attribute_idx];
+            for (auto const& attribute_buffer :  attribute_buffers_) {
+                assert(attribute_buffer.meta_attribute != nullptr);
+                auto const& meta_attribute = *attribute_buffer.meta_attribute;
                 ctype_func_selector(
-                    meta_attribute.ctype, [&value, &meta_attribute, attribute_buffer, this]<typename AttributeType> {
-                        AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer) + idx_;
+                    meta_attribute.ctype, [&value, &attribute_buffer, &meta_attribute this]<typename AttributeType> {
+                        AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer.data) + idx_;
                         AttributeType const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
                             reinterpret_cast<RawDataConstPtr>(&value));
                         *buffer_ptr = attribute_ref;
@@ -90,12 +88,11 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         operator value_type() const { return get(); }
         value_type get() const {
             value_type result{};
-            for (Idx attribute_idx = 0; attribute_idx < static_cast<Idx>(meta_attributes_.size()); ++attribute_idx) {
-                auto const& meta_attribute = get_meta_attribute(attribute_idx);
-                Data* attribute_buffer = data_[attribute_idx];
-                ctype_func_selector(meta_attribute.ctype, [&result, &meta_attribute, attribute_buffer,
-                                                           this]<typename AttributeType> {
-                    AttributeType const* buffer_ptr = reinterpret_cast<AttributeType const*>(attribute_buffer) + idx_;
+            for (auto const& attribute_buffer : attribute_buffers_) {
+                assert(attribute_buffer.meta_attribute != nullptr);
+                auto const& meta_attribute = *attribute_buffer.meta_attribute;
+                ctype_func_selector(meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
+                    AttributeType const* buffer_ptr = reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
                     AttributeType& attribute_ref =
                         meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
                     attribute_ref = *buffer_ptr;
@@ -108,13 +105,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         friend class ColumnarAttributeRange;
         friend class iterator;
 
-        MetaAttribute const& get_meta_attribute(Idx attribute_idx) const {
-            return meta_attributes_[attribute_idx].meta_attribute.get();
-        }
-
         Idx idx_{};
-        std::span<Data* const> data_{};
-        std::vector<AttributeBuffer<Data>> meta_attributes_;
+        std::vector<AttributeBuffer<Data>> attribute_buffers_{};
     };
 
     class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
@@ -122,8 +114,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = Proxy;
 
         iterator() = default;
-        iterator(Idx idx, std::span<Data* const> data, std::vector<AttributeBuffer<Data>> meta_attributes)
-            : current_{idx, data, meta_attributes} {}
+        iterator(Idx idx, std::vector<AttributeBuffer<Data>> attribute_buffers)
+            : current_{idx, attribute_buffers} {}
 
       private:
         friend class boost::iterator_core_access;
@@ -140,15 +132,11 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     };
 
     ColumnarAttributeRange() = default;
-    ColumnarAttributeRange(Idx size, std::vector<Data*> data, std::vector<AttributeBuffer<Data>> meta_attributes)
-        : size_{size}, data_{std::move(data)}, meta_attributes_{meta_attributes} {
-        assert(data_.size() == meta_attributes_.size());
-    }
+    ColumnarAttributeRange(Idx size, std::vector<AttributeBuffer<Data>> attribute_buffers)
+        : size_{size}, attribute_buffers_{attribute_buffers} {}
     ColumnarAttributeRange(ColumnarAttributeRange::iterator begin, ColumnarAttributeRange::iterator end)
         : size_{std::distance(begin, end)},
-          data_{begin->data_.begin(), begin->data_.end()},
-          meta_attributes_{begin->meta_attributes_} {
-        assert(data_.size() == meta_attributes_.size());
+          attribute_buffers_{begin->attribute_buffers_.begin(), begin->attribute_buffers_.end()} {
         assert(begin + std::distance(begin, end) == end);
     }
 
@@ -160,11 +148,10 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     auto operator[](Idx idx) const { return *get(idx); }
 
   private:
-    iterator get(Idx idx) const { return iterator{idx, data_, meta_attributes_}; }
+    iterator get(Idx idx) const { return iterator{idx, attribute_buffers_}; }
 
     Idx size_{};
-    std::vector<Data*> data_{};
-    std::vector<AttributeBuffer<Data>> meta_attributes_;
+    std::vector<AttributeBuffer<Data>> attribute_buffers_;
 };
 
 template <typename T> using const_range_object = ColumnarAttributeRange<T, const_dataset_t>;
@@ -418,6 +405,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         buffers_.push_back(Buffer{});
     }
 
+    // mix two impl functions by templating
     template <class StructType> std::span<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
         // return empty span if the component does not exist
         if (component_idx < 0) {
@@ -446,17 +434,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
-        assert(buffer.data == nullptr);
-        auto const size = buffer.attributes.size();
-        std::vector<Data*> attribute_buffer_data(size);
-        std::ranges::transform(buffer.attributes, std::back_inserter(attribute_buffer_data),
-                               [](AttributeBuffer const& attribute) { return attribute.data; });
-        std::vector<MetaAttribute const*> attribute_buffer_meta_attributes(size);
-        std::ranges::transform(buffer.attributes, std::back_inserter(attribute_buffer_meta_attributes),
-                               [](AttributeBuffer const& attribute) { return attribute.meta_attribute; });
-
-        RangeObject<StructType> total_range{info.total_elements, attribute_buffer_data,
-                                            attribute_buffer_meta_attributes};
+        assert(buffer.data == nullptr); // assert this for each attribute buffer's data on attribute_buffers vector?
+        RangeObject<StructType> total_range{info.total_elements, buffer.attributes};
         if (scenario < 0) {
             return total_range;
         }

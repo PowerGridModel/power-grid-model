@@ -212,6 +212,7 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
     using Data = std::conditional_t<std::same_as<RangeObjectType, const_range_object<A::InputType>>, void const, void>;
 
     auto const& all_attributes = test_meta_data.datasets.front().get_component(A::name);
+    
     auto const sub_attributes =
         std::vector<AttributeBuffer<Data>>{all_attributes.get_attribute("a1"), all_attributes.get_attribute("id")};
 
