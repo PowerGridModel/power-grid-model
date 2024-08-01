@@ -733,12 +733,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 }();
                 calculation_symmetry_func_selector(
                     calculation_symmetry,
-                    []<symmetry_tag sym>(MainModelImpl& main_model__, Options const& opts_,
+                    []<symmetry_tag sym>(MainModelImpl& main_model_, Options const& opts_,
                                          MutableDataset const& res_data_, Idx scenario_idx_) {
-                        auto const math_output = main_model__.calculate<calculation_type, sym>(opts_);
+                        auto const math_output = main_model_.calculate<calculation_type, sym>(opts_);
 
                         if (scenario_idx_ != ignore_output) {
-                            main_model__.output_result(math_output, res_data_, scenario_idx_);
+                            main_model_.output_result(math_output, res_data_, scenario_idx_);
                         }
                     },
                     main_model, opts, res_data, scenario_idx);
