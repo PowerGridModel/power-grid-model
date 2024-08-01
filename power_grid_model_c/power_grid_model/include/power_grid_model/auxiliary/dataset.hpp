@@ -66,10 +66,10 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = std::remove_const_t<T>;
 
         Proxy() = default;
-        Proxy(Idx idx, std::vector<AttributeBuffer<Data>> attribute_buffers)
-            : idx_{idx}, attribute_buffers_{attribute_buffers} {}
+        Proxy(Idx idx, std::span<AttributeBuffer<Data>> attribute_buffers)
+            : idx_{idx}, attribute_buffers_{std::move(attribute_buffers)} {}
 
-        Proxy& operator=(value_type const& value)
+        decltype(auto) operator=(value_type const& value) const
             requires is_data_mutable_v<dataset_type>
         {
             for (auto const& attribute_buffer : attribute_buffers_) {
@@ -108,7 +108,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         friend class iterator;
 
         Idx idx_{};
-        std::vector<AttributeBuffer<Data>> attribute_buffers_{};
+        std::span<AttributeBuffer<Data>> attribute_buffers_{};
     };
 
     class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
@@ -121,8 +121,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
       private:
         friend class boost::iterator_core_access;
 
-        constexpr auto dereference() const -> value_type const& { return *&current_; }
-        constexpr auto dereference() -> value_type& { return *&current_; }
+        constexpr auto dereference() const { return current_; }
         constexpr auto equal(iterator const& other) const { return current_.idx_ == other.current_.idx_; }
         constexpr auto distance_to(iterator const& other) const { return other.current_.idx_ - current_.idx_; }
         constexpr void increment() { ++current_.idx_; }
