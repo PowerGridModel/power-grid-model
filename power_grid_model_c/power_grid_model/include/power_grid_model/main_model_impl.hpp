@@ -689,57 +689,33 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
+    // Single calculation
+    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
+        auto const calculator = [this, &options] {
+            if constexpr (std::derived_from<calculation_type, power_flow_t>) {
+                return calculate_power_flow_<sym>(options.err_tol, options.max_iter);
+            }
+            assert(options.optimizer_type == OptimizerType::no_optimization);
+            if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
+                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter);
+            }
+            if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
+                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling);
+            }
+            throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
+        }();
+
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
-                   options.optimizer_type, options.optimizer_strategy,
-                   calculate_power_flow_<sym>(options.err_tol, options.max_iter),
+                   options.optimizer_type, options.optimizer_strategy, calculator,
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
                    *meta_data_)
             ->optimize(state_, options.calculation_method);
     }
 
-    // Single state estimation calculation, returning math output results
-    template <symmetry_tag sym> auto calculate_state_estimation(Options const& options) {
-        return MathOutput<std::vector<SolverOutput<sym>>>{
-            .solver_output =
-                calculate_state_estimation_<sym>(options.err_tol, options.max_iter)(state_, options.calculation_method),
-            .optimizer_output = {}};
-    }
-
-    // Single short circuit calculation, returning short circuit math output results
-    template <symmetry_tag sym> auto calculate_short_circuit(Options const& options) {
-        return MathOutput<std::vector<ShortCircuitSolverOutput<sym>>>{
-            .solver_output = calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling)(
-                state_, options.calculation_method),
-            .optimizer_output = {}};
-    }
-
-    // Single calculation
-    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
-        if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-            return calculate_power_flow<sym>(options);
-        }
-        if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-            return calculate_state_estimation<sym>(options);
-        }
-        if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-            return calculate_short_circuit<sym>(options);
-        }
-        throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
-    }
-
-    template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate_impl(Options const& options, MutableDataset const& result_data, Idx pos) {
-        assert(construction_complete_);
-        auto const math_output = calculate<calculation_type, sym>(options);
-
-        if (pos != ignore_output) {
-            output_result(math_output, result_data, pos);
-        }
-    }
-
     // Single calculation, propagating the results to result_data
     void calculate(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
+        assert(construction_complete_);
+
         calculation_type_func_selector(
             options.calculation_type,
             []<calculation_type_tag calculation_type>(MainModelImpl& main_model, Options const& options_,
@@ -758,7 +734,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     calculation_symmetry,
                     []<symmetry_tag sym>(MainModelImpl& main_model__, Options const& options__,
                                          MutableDataset const& result_data__, Idx pos__) {
-                        main_model__.calculate_impl<calculation_type, sym>(options__, result_data__, pos__);
+                        auto const math_output = main_model__.calculate<calculation_type, sym>(options__);
+
+                        if (pos__ != ignore_output) {
+                            main_model__.output_result(math_output, result_data__, pos__);
+                        }
                     },
                     main_model, options_, result_data_, pos_);
             },

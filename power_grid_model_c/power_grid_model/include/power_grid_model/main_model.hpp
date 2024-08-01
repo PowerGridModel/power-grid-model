@@ -85,7 +85,7 @@ class MainModel {
 
     template <symmetry_tag sym> MathOutput<std::vector<SolverOutput<sym>>> calculate_power_flow(Options options) {
         options.calculation_type = CalculationType::power_flow;
-        return impl().calculate_power_flow<sym>(options);
+        return impl().calculate<power_flow_t, sym>(options);
     }
     template <symmetry_tag sym> void calculate_power_flow(Options options, MutableDataset const& result_data) {
         options.calculation_type = CalculationType::power_flow;
@@ -105,7 +105,7 @@ class MainModel {
         options.calculation_type = CalculationType::state_estimation;
         options.calculation_symmetry =
             is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate_state_estimation<sym>(options);
+        return impl().calculate<state_estimation_t, sym>(options);
     }
     template <symmetry_tag sym>
     BatchParameter calculate_state_estimation(Options options, MutableDataset const& result_data,
@@ -120,7 +120,7 @@ class MainModel {
         options.calculation_type = CalculationType::short_circuit;
         options.calculation_symmetry =
             is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate_short_circuit<sym>(options);
+        return impl().calculate<short_circuit_t, sym>(options);
     }
     void calculate_short_circuit(Options options, MutableDataset const& result_data) {
         options.calculation_type = CalculationType::short_circuit;
