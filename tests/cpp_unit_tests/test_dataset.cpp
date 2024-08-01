@@ -213,17 +213,14 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
 
     auto const& all_attributes = test_meta_data.datasets.front().get_component(A::name);
     
-    auto const sub_attributes =
-        std::vector<AttributeBuffer<Data>>{all_attributes.get_attribute("a1"), all_attributes.get_attribute("id")};
-
     auto id_buffer = std::vector<ID>{0, 1, 2};
     auto a1_buffer = std::vector<double>{0.0, 1.0, nan};
     auto const total_elements = narrow_cast<Idx>(id_buffer.size());
     REQUIRE(narrow_cast<Idx>(a1_buffer.size()) >= total_elements);
-
-    auto buffers = std::vector{static_cast<Data*>(a1_buffer.data()), static_cast<Data*>(id_buffer.data())};
-
-    RangeObjectType range_object{total_elements, buffers, sub_attributes};
+    AttributeBuffer<Data> const attribute_id{.data = static_cast<Data*>(id_buffer.data()), .meta_attribute = &all_attributes.get_attribute("id")};
+    AttributeBuffer<Data> const attribute_a1{.data = static_cast<Data*>(a1_buffer.data()), .meta_attribute = &all_attributes.get_attribute("a1")};
+    std::vector<AttributeBuffer<Data>> const elements{attribute_id, attribute_a1};
+    RangeObjectType range_object{total_elements, elements};
 
     static_assert(std::convertible_to<decltype(*range_object.begin()), A::InputType>);
 

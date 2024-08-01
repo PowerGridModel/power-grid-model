@@ -134,7 +134,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
     ColumnarAttributeRange() = default;
     ColumnarAttributeRange(Idx size, std::vector<AttributeBuffer<Data>> attribute_buffers)
-        : size_{size}, attribute_buffers_{attribute_buffers} {}
+        : size_{size}, attribute_buffers_{std::move(attribute_buffers)} {}
     ColumnarAttributeRange(ColumnarAttributeRange::iterator begin, ColumnarAttributeRange::iterator end)
         : size_{std::distance(begin, end)},
           attribute_buffers_{begin->attribute_buffers_.begin(), begin->attribute_buffers_.end()} {
