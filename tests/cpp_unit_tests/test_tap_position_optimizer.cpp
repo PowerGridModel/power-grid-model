@@ -339,6 +339,7 @@ TEST_CASE("Test Transformer ranking") {
 namespace optimizer::tap_position_optimizer::test {
 namespace {
 using power_grid_model::optimizer::test::ConstDatasetUpdate;
+using power_grid_model::optimizer::test::OptStrategyMethodSearch;
 using power_grid_model::optimizer::test::search_methods;
 using power_grid_model::optimizer::test::strategies;
 using power_grid_model::optimizer::test::strategies_and_methods;
@@ -649,10 +650,12 @@ TEST_CASE("Test Tap position optimizer") {
     MockState state;
 
     auto strategy_method_searches = [] {
-        std::vector<std::tuple<OptimizerStrategy, CalculationMethod, SearchMethod>> result;
+        std::vector<test::OptStrategyMethodSearch> result;
+        result.reserve(test::strategies_and_methods.size() * test::search_methods.size());
+        size_t idx{};
         for (auto strategy_method : test::strategies_and_methods) {
             for (auto search_method : test::search_methods) {
-                result.push_back({strategy_method.strategy, strategy_method.method, search_method});
+                result[idx++] = {strategy_method.strategy, strategy_method.method, search_method}; // NOSONAR
             }
         }
         return result;
@@ -710,9 +713,9 @@ TEST_CASE("Test Tap position optimizer") {
         state.components.set_construction_complete();
 
         for (auto strategy_method_search : strategy_method_searches) {
-            auto strategy = std::get<0>(strategy_method_search);
-            auto method = std::get<1>(strategy_method_search);
-            auto search = std::get<2>(strategy_method_search);
+            auto strategy = strategy_method_search.strategy;
+            auto method = strategy_method_search.method;
+            auto search = strategy_method_search.search;
             CAPTURE(strategy);
             CAPTURE(method);
             CAPTURE(search);

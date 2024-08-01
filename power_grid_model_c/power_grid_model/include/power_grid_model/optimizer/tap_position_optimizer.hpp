@@ -842,9 +842,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             UpdateBuffer update_data;
             size_t rank_index = 0;
 
-            for (IDu i = 0; i < regulator_order.size(); ++i) {
+            for (size_t i = 0; i < regulator_order.size(); ++i) {
                 auto const& same_rank_regulators = regulator_order[i];
-                for (IDu j = 0; j < same_rank_regulators.size(); ++j) {
+                for (size_t j = 0; j < same_rank_regulators.size(); ++j) {
                     auto const& regulator = same_rank_regulators[j];
                     BinarySearchOptions const options{strategy_max, Idx2Du{i, j}};
                     tap_changed =
@@ -979,9 +979,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     void update_binary_search(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
-        for (IDu i = 0; i < regulator_order.size(); ++i) {
+        for (size_t i = 0; i < regulator_order.size(); ++i) {
             const auto& sub_order = regulator_order[i];
-            for (IDu j = 0; j < sub_order.size(); ++j) {
+            for (size_t j = 0; j < sub_order.size(); ++j) {
                 const auto& regulator = sub_order[j];
                 if (i < binary_search_.size() && j < binary_search_[i].size()) {
                     binary_search_[i][j].set_current_tap(regulator.transformer.tap_pos());

@@ -16,7 +16,6 @@ namespace power_grid_model {
 
 // id type
 using ID = int32_t;
-using IDu = size_t;
 // idx type
 using Idx = int64_t;
 using IdxVector = std::vector<Idx>;
@@ -32,8 +31,8 @@ struct Idx2D {
 };
 
 struct Idx2Du {
-    IDu x;
-    IDu y;
+    size_t x;
+    size_t y;
 };
 
 struct Idx2DHash {
