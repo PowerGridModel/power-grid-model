@@ -45,7 +45,7 @@ struct ComponentInfo {
 
 struct DatasetInfo {
     bool is_batch{false};
-    Idx batch_size{0}; // for single dataset, the batch size is one
+    Idx batch_size{1}; // for single dataset, the batch size is one
     MetaDataset const* dataset{nullptr};
     std::vector<ComponentInfo> component_info;
 };
