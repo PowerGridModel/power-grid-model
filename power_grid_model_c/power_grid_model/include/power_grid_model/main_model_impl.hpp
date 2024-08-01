@@ -95,6 +95,24 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
     }
 }
 
+template <class Functor, class... Args>
+decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
+                                                       CalculationSymmetry calculation_symmetry, Functor f,
+                                                       Args&&... args) {
+    calculation_type_func_selector(
+        calculation_type,
+        []<calculation_type_tag calculation_type>(CalculationSymmetry calculation_symmetry_, Functor f_,
+                                                  Args&&... args_) {
+            calculation_symmetry_func_selector(
+                calculation_symmetry_,
+                []<symmetry_tag sym>(Functor sub_f, Args&&... sub_args) {
+                    sub_f.template operator()<calculation_type, sym>(std::forward<Args>(sub_args)...);
+                },
+                std::forward<Functor>(f_), std::forward<Args>(args_)...);
+        },
+        calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
+}
+
 // main model implementation template
 template <class T, class U> class MainModelImpl;
 
@@ -713,35 +731,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
+    void calculate(Options options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
 
-        calculation_type_func_selector(
-            options.calculation_type,
-            []<calculation_type_tag calculation_type>(MainModelImpl& main_model, Options const& opts,
-                                                      MutableDataset const& res_data, Idx scenario_idx) {
-                CalculationSymmetry const calculation_symmetry = [&main_model, &opts] {
-                    (void)opts; // suppress unused variable warnings
-                    if constexpr (!std::same_as<calculation_type, short_circuit_t>) {
-                        return opts.calculation_symmetry;
-                    }
-                    auto const faults = main_model.state_.components.template citer<Fault>();
-                    auto const is_three_phase = std::all_of(faults.begin(), faults.end(), [](Fault const& fault) {
-                        return fault.get_fault_type() == FaultType::three_phase;
-                    });
-                    return is_three_phase ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-                }();
-                calculation_symmetry_func_selector(
-                    calculation_symmetry,
-                    []<symmetry_tag sym>(MainModelImpl& main_model_, Options const& opts_,
-                                         MutableDataset const& res_data_, Idx scenario_idx_) {
-                        auto const math_output = main_model_.calculate<calculation_type, sym>(opts_);
+        if (options.calculation_type == CalculationType::short_circuit) {
+            auto const faults = state_.components.template citer<Fault>();
+            auto const is_three_phase = std::ranges::all_of(
+                faults, [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; });
+            options.calculation_symmetry =
+                is_three_phase ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
+        };
 
-                        if (scenario_idx_ != ignore_output) {
-                            main_model_.output_result(math_output, res_data_, scenario_idx_);
-                        }
-                    },
-                    main_model, opts, res_data, scenario_idx);
+        calculation_type_symmetry_func_selector(
+            options.calculation_type, options.calculation_symmetry,
+            []<calculation_type_tag calculation_type, symmetry_tag sym>(
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Idx pos_) {
+                auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
+
+                if (pos_ != ignore_output) {
+                    main_model_.output_result(math_output, result_data_, pos_);
+                }
             },
             *this, options, result_data, pos);
     }
