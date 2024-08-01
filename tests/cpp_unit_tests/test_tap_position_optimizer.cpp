@@ -649,9 +649,9 @@ TEST_CASE("Test Tap position optimizer") {
 
     MockState state;
 
-    auto strategy_method_searches = [] {
-        std::vector<test::OptStrategyMethodSearch> result;
-        result.reserve(test::strategies_and_methods.size() * test::search_methods.size());
+    auto strategy_method_searches = [&] {
+        std::array<test::OptStrategyMethodSearch, test::strategies_and_methods.size() * test::search_methods.size()>
+            result;
         size_t idx{};
         for (auto strategy_method : test::strategies_and_methods) {
             for (auto search_method : test::search_methods) {
