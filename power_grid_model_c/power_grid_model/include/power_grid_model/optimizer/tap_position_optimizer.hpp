@@ -731,8 +731,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
           update_{std::move(updater)},
           strategy_{strategy},
           tap_search_{tap_search} {
-        if (strategy_ == OptimizerStrategy::any && tap_search_ == SearchMethod::binary_search) {
-            throw BinarySearchIncompatibleError{"TapPositionOptimizer::TapPositionOptimizerImpl", strategy_};
+        auto const any_binary_search =
+            (strategy_ == OptimizerStrategy::any) && (tap_search_ == SearchMethod::binary_search);
+        auto const fast_any_scanline =
+            (strategy_ == OptimizerStrategy::fast_any) && (tap_search_ == SearchMethod::scanline);
+        if (any_binary_search || fast_any_scanline) {
+            throw BinarySearchIncompatibleError{"Search method is incompatible with optimization strategy: ", strategy_,
+                                                tap_search_};
         }
     }
 

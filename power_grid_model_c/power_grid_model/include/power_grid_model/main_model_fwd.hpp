@@ -19,7 +19,7 @@ struct MainModelOptions {
 
     CalculationMethod calculation_method{CalculationMethod::default_method};
     OptimizerType optimizer_type{OptimizerType::no_optimization};
-    OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
+    OptimizerStrategy optimizer_strategy{OptimizerStrategy::fast_any};
     SearchMethod search_method{SearchMethod::binary_search};
 
     double err_tol{1e-8};

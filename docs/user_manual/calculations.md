@@ -648,11 +648,12 @@ Hence, this assumption is reflected in the requirements mentioned in {hoverxreft
 
 Internally, to achieve an optimal regulated tap position, the control algorithm sets initial tap positions and exploits neighborhoods around local optima, depending on the strategy as follows.
 
-| strategy                                                                                                    | initial tap position | exploitation direction | description                                                                           |
-| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
-| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | Find any tap position that gives a control side voltage within the `u_band`           |
-| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Find the tap position that gives the lowest control side voltage within the `u_band`  |
-| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Find the tap position that gives the highest control side voltage within the `u_band` |
+| strategy                                                                                                    | initial tap position | exploitation direction | search method | description                                                                           |
+| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | scanline      | Find any tap position that gives a control side voltage within the `u_band`           |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | binary_search | Find the tap position that gives the lowest control side voltage within the `u_band`  |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | binary_search | Find the tap position that gives the highest control side voltage within the `u_band` |
+| {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       | current tap position | no exploitation        | binary_search | Find any tap position that gives a control side voltage within the `u_band`           |
 
 ##### Search methods used for tap changing optimization
 
