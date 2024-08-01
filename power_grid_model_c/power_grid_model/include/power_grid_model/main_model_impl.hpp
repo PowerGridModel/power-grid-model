@@ -91,7 +91,7 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
     case CalculationType::short_circuit:
         return f.template operator()<short_circuit_t>(std::forward<Args>(args)...);
     default:
-        throw MissingCaseForEnumError{"Calculation type selector", calculation_type};
+        throw MissingCaseForEnumError{"CalculationType", calculation_type};
     }
 }
 
