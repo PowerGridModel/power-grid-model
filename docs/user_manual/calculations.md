@@ -656,16 +656,20 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 
 ##### Search methods used for tap changing optimization
 
-Given the discrete nature of the finite tap ranges, we use the following two search methods to find the next tap position along the exploitation direction.
+Given the discrete nature of the finite tap ranges, we use the following search methods to find the next tap position along the exploitation direction.
 
-| search method                                                                        | description                                                                            | Default  | works with                                                                                                        |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
-| {py:class}`SearchMethod.scanline <power_grid_model.enum.SearchMethod.scanline>`      | In the context of finite discrete range search, go one value at a time.                |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`           |
-|                                                                                      |                                                                                        |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>`       |
-|                                                                                      |                                                                                        |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`       |
-| {py:class}`SearchMethod.scanline <power_grid_model.enum.SearchMethod.binary_search>` | In the context of finite discrete range search, go half the remaining range at a time. | &#10004; | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`            |
-|                                                                                      |                                                                                        | &#10004; | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>`       |
-|                                                                                      |                                                                                        | &#10004; | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`       |
+| Search method                                                                             | Description                                                                            | Default  |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------- |
+| {py:class}`SearchMethod.scanline <power_grid_model.enum.SearchMethod.scanline>`           | In the context of finite discrete range search, go one value at a time.                |          |
+| {py:class}`SearchMethod.binary_search <power_grid_model.enum.SearchMethod.binary_search>` | In the context of finite discrete range search, go half the remaining range at a time. | &#10004; |
+
+Compatibility of search methods and tap changing strategies
+
+|                                                                                           | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>` | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>` |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| {py:class}`SearchMethod.scanline <power_grid_model.enum.SearchMethod.scanline>`           | &#10004;                                                                                                | &#10004;                                                                                                    | &#10004;                                                                                                    | &#10008; |
+| {py:class}`SearchMethod.binary_search <power_grid_model.enum.SearchMethod.binary_search>` | &#10008;                                                                                                | &#10004;                                                                                                    | &#10004;                                                                                                    | &#10004; |
+
 
 ```{note}
 Note that the combination of `any_valid_tap` and search method `binary_search` is not acceptable and error will be thrown.

@@ -92,6 +92,19 @@ class TapChangingStrategy(IntEnum):
     """
 
 
+class SearchMethod(IntEnum):
+    """Search Methods"""
+
+    scanline = 0
+    """
+    Linear search
+    """
+    binary_search = 1
+    """
+    Binary search
+    """
+
+
 class MeasuredTerminalType(IntEnum):
     """The type of asset measured by a (power) sensor"""
 

@@ -30,6 +30,7 @@ from power_grid_model.errors import (
     IterationDiverge,
     MissingCaseForEnumError,
     NotObservableError,
+    TapSearchStrategyIncompatibleError,
 )
 
 from .utils import PowerGridModelWithExt
@@ -334,7 +335,7 @@ def test_transformer_tap_regulator_at_lv_tap_side():
 
 def test_automatic_tap_changing():
     model = PowerGridModel(input_data={})
-    model.calculate_power_flow(tap_changing_strategy=TapChangingStrategy.any_valid_tap)
+    model.calculate_power_flow(tap_changing_strategy=TapChangingStrategy.min_voltage_tap)
 
 
 @pytest.mark.skip(reason="TODO")
