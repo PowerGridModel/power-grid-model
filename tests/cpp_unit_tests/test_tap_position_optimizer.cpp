@@ -339,6 +339,7 @@ TEST_CASE("Test Transformer ranking") {
 namespace optimizer::tap_position_optimizer::test {
 namespace {
 using power_grid_model::optimizer::test::ConstDatasetUpdate;
+using power_grid_model::optimizer::test::search_methods;
 using power_grid_model::optimizer::test::strategies;
 using power_grid_model::optimizer::test::strategies_and_methods;
 using power_grid_model::optimizer::test::strategies_and_sides;
@@ -647,6 +648,16 @@ TEST_CASE("Test Tap position optimizer") {
 
     MockState state;
 
+    auto strategy_method_searches = [] {
+        std::vector<std::tuple<OptimizerStrategy, CalculationMethod, SearchMethod>> result;
+        for (auto strategy_method : test::strategies_and_methods) {
+            for (auto search_method : test::search_methods) {
+                result.push_back({strategy_method.strategy, strategy_method.method, search_method});
+            }
+        }
+        return result;
+    }();
+
     auto const updater = [&state](ConstDataset const& update_dataset) {
         REQUIRE(!update_dataset.empty());
         REQUIRE(update_dataset.n_components() == 1);
@@ -698,28 +709,23 @@ TEST_CASE("Test Tap position optimizer") {
             state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
         state.components.set_construction_complete();
 
-        auto const search_methods = [] {
-            return std::vector<SearchMethod>{SearchMethod::scanline, SearchMethod::binary_search};
-        }();
+        for (auto strategy_method_search : strategy_method_searches) {
+            auto strategy = std::get<0>(strategy_method_search);
+            auto method = std::get<1>(strategy_method_search);
+            auto search = std::get<2>(strategy_method_search);
+            CAPTURE(strategy);
+            CAPTURE(method);
+            CAPTURE(search);
 
-        for (auto strategy_method : test::strategies_and_methods) {
-            for (auto search_method : search_methods) {
-                CAPTURE(strategy_method.strategy);
-                CAPTURE(strategy_method.method);
-                CAPTURE(search_method);
+            if (strategy == OptimizerStrategy::any && search == SearchMethod::binary_search) {
+                CHECK_THROWS_AS(get_optimizer(strategy, search), BinarySearchIncompatibleError);
 
-                if (strategy_method.strategy == OptimizerStrategy::any &&
-                    search_method == SearchMethod::binary_search) {
-                    CHECK_THROWS_AS(get_optimizer(strategy_method.strategy, search_method),
-                                    BinarySearchIncompatibleError);
+            } else {
+                auto optimizer = get_optimizer(strategy, search);
+                auto result = optimizer.optimize(state, method);
 
-                } else {
-                    auto optimizer = get_optimizer(strategy_method.strategy, search_method);
-                    auto result = optimizer.optimize(state, strategy_method.method);
-
-                    CHECK(result.solver_output.size() == 1);
-                    CHECK(result.solver_output[0].method == strategy_method.method);
-                }
+                CHECK(result.solver_output.size() == 1);
+                CHECK(result.solver_output[0].method == method);
             }
         }
     }

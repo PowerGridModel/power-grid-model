@@ -162,7 +162,7 @@ constexpr auto strategies_and_methods = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
-            result[idx++] = {strategy, method};
+            result[idx++] = {strategy, method}; // NOSONAR
         }
     }
     return result;
@@ -178,7 +178,7 @@ constexpr auto strategies_and_sides = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto side : tap_sides) {
-            result[idx++] = {strategy, side};
+            result[idx++] = {strategy, side}; // NOSONAR
         }
     }
     return result;
@@ -203,12 +203,38 @@ constexpr auto strategy_search_and_sides = [] {
                 continue;
             }
             for (auto side : tap_sides) {
-                result[idx++] = {strategy, search, side};
+                result[idx++] = {strategy, search, side}; // NOSONAR
             }
         }
     }
     return result;
 }();
+
+struct OptStrategyMethodSearch {
+    OptimizerStrategy strategy{};
+    CalculationMethod method{};
+    SearchMethod search{};
+};
+
+constexpr auto strategy_method_and_searches = [] {
+    // regular any strategy is only used in combination with scanline search
+    IDu const options_size =
+        strategies.size() * calculation_methods.size() * search_methods.size() - search_methods.size();
+    std::array<OptStrategyMethodSearch, options_size> result;
+    size_t idx{};
+    for (auto strategy : strategies) {
+        for (auto search : search_methods) {
+            if (strategy == OptimizerStrategy::any && search == SearchMethod::binary_search) {
+                continue;
+            }
+            for (auto method : calculation_methods) {
+                result[idx++] = {strategy, method, search}; // NOSONAR
+            }
+        }
+    }
+    return result;
+}();
+
 } // namespace optimizer::test
 
 namespace meta_data {
