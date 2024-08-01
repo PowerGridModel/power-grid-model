@@ -720,7 +720,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             options.calculation_type,
             []<calculation_type_tag calculation_type>(MainModelImpl& main_model, Options const& options_,
                                                       MutableDataset const& result_data_, Idx pos_) {
-                CalculationSymmetry const calculation_symmetry = [&] {
+                CalculationSymmetry const calculation_symmetry = [&main_model, &options_] {
+                    (void)options_; // suppress unused variable warnings
                     if constexpr (!std::same_as<calculation_type, short_circuit_t>) {
                         return options_.calculation_symmetry;
                     }
