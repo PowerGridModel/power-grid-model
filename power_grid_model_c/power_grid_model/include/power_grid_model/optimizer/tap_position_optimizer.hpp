@@ -741,7 +741,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
         };
 
-        if (!is_supported(tap_search)) {
+        if (tap_search && !is_supported(tap_search)) {
             throw TapSearchStrategyIncompatibleError{
                 "Search method is incompatible with optimization strategy: ", strategy_, tap_search.value()};
         }
