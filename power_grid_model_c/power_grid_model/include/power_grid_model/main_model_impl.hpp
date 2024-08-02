@@ -108,9 +108,10 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
                 calculation_symmetry_,
                 []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor && sub_f,
                                                                                SubArgs && ... sub_args) {
-                    sub_f.template operator()<calculation_type, sym>(std::forward<Args>(sub_args)...);
+                    std::forward<SubFunctor>(sub_f).template operator()<calculation_type, sym>(
+                        std::forward<SubArgs>(sub_args)...);
                 },
-                std::forward<Functor_>(f_), std::forward<Args>(args_)...);
+                std::forward<Functor_>(f_), std::forward<Args_>(args_)...);
         },
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
