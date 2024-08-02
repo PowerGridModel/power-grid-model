@@ -66,30 +66,31 @@ concept calculation_type_tag = std::derived_from<T, power_flow_t> || std::derive
                                std::derived_from<T, short_circuit_t>;
 
 template <class Functor, class... Args>
-decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, Functor f, Args&&... args) {
+decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, Functor&& f,
+                                                  Args&&... args) {
     using enum CalculationSymmetry;
 
     switch (calculation_symmetry) {
     case symmetric:
-        return f.template operator()<symmetric_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<symmetric_t>(std::forward<Args>(args)...);
     case asymmetric:
-        return f.template operator()<asymmetric_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<asymmetric_t>(std::forward<Args>(args)...);
     default:
         throw MissingCaseForEnumError{"Calculation symmetry selector", calculation_symmetry};
     }
 }
 
 template <class Functor, class... Args>
-decltype(auto) calculation_type_func_selector(CalculationType calculation_type, Functor f, Args&&... args) {
+decltype(auto) calculation_type_func_selector(CalculationType calculation_type, Functor&& f, Args&&... args) {
     using enum CalculationType;
 
     switch (calculation_type) {
     case CalculationType::power_flow:
-        return f.template operator()<power_flow_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<power_flow_t>(std::forward<Args>(args)...);
     case CalculationType::state_estimation:
-        return f.template operator()<state_estimation_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<state_estimation_t>(std::forward<Args>(args)...);
     case CalculationType::short_circuit:
-        return f.template operator()<short_circuit_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<short_circuit_t>(std::forward<Args>(args)...);
     default:
         throw MissingCaseForEnumError{"CalculationType", calculation_type};
     }
@@ -97,16 +98,17 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
 
 template <class Functor, class... Args>
 decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
-                                                       CalculationSymmetry calculation_symmetry, Functor f,
+                                                       CalculationSymmetry calculation_symmetry, Functor&& f,
                                                        Args&&... args) {
     calculation_type_func_selector(
         calculation_type,
-        []<calculation_type_tag calculation_type>(CalculationSymmetry calculation_symmetry_, Functor f_,
+        []<calculation_type_tag calculation_type>(CalculationSymmetry calculation_symmetry_, Functor&& f_,
                                                   Args&&... args_) {
             calculation_symmetry_func_selector(
                 calculation_symmetry_,
-                []<symmetry_tag sym>(Functor sub_f, Args&&... sub_args) {
-                    sub_f.template operator()<calculation_type, sym>(std::forward<Args>(sub_args)...);
+                []<symmetry_tag sym>(Functor&& sub_f, Args&&... sub_args) {
+                    std::forward<Functor>(sub_f).template operator()<calculation_type, sym>(
+                        std::forward<Args>(sub_args)...);
                 },
                 std::forward<Functor>(f_), std::forward<Args>(args_)...);
         },
