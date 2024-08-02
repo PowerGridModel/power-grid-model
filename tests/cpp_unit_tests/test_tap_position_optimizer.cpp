@@ -1035,11 +1035,11 @@ TEST_CASE("Test Tap position optimizer") {
                 auto optimizer = get_optimizer(strategy, search);
                 auto const result = optimizer.optimize(state, CalculationMethod::default_method);
 
-                auto const get_state_tap_pos = [&](const ID id) {
+                auto const get_state_tap_pos = [&](ID const id) {
                     REQUIRE(!result.solver_output.empty());
                     return result.solver_output.front().state_tap_positions.at(id);
                 };
-                auto const get_output_tap_pos = [&](const ID id) {
+                auto const get_output_tap_pos = [&](ID const id) {
                     REQUIRE(!result.optimizer_output.transformer_tap_positions.empty());
                     auto const it = std::ranges::find_if(result.optimizer_output.transformer_tap_positions,
                                                          [id](auto const& x) { return x.transformer_id == id; });

@@ -995,9 +995,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     void update_binary_search(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         for (size_t i = 0; i < regulator_order.size(); ++i) {
-            const auto& sub_order = regulator_order[i];
+            auto const& sub_order = regulator_order[i];
             for (size_t j = 0; j < sub_order.size(); ++j) {
-                const auto& regulator = sub_order[j];
+                auto const& regulator = sub_order[j];
                 if (i < binary_search_.size() && j < binary_search_[i].size()) {
                     binary_search_[i][j].set_current_tap(regulator.transformer.tap_pos());
                     binary_search_[i][j].set_last_check(false);
