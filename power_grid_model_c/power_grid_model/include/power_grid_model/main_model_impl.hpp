@@ -98,7 +98,7 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
 
 template <class Functor, class... Args>
 decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
-                                                       CalculationSymmetry calculation_symmetry, Functor f,
+                                                       CalculationSymmetry calculation_symmetry, Functor&& f,
                                                        Args&&... args) {
     calculation_type_func_selector(
         calculation_type,
