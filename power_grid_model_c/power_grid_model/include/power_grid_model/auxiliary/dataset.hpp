@@ -49,8 +49,8 @@ struct DatasetInfo {
     std::vector<ComponentInfo> component_info;
 };
 template <typename Data> struct AttributeBuffer {
-    Data* data;
-    MetaAttribute const* meta_attribute;
+    Data* data{nullptr};
+    MetaAttribute const* meta_attribute{nullptr};
     bool is_c_order{true};
     Idx stride{1};
 };
@@ -69,7 +69,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         Proxy(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : idx_{idx}, attribute_buffers_{std::move(attribute_buffers)} {}
 
-        decltype(auto) operator=(value_type const& value)
+        Proxy& operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
             for (auto const& attribute_buffer : attribute_buffers_) {
@@ -220,7 +220,10 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
-    bool is_columnar(Data* data) const { return data == nullptr; }
+    bool is_columnar(std::string_view component) const {
+        return buffers_[find_component(component, true)].data == nullptr; } 
+    bool is_columnar(Idx const i) const { return buffers_[i].data == nullptr; } 
+    bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
 
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
@@ -280,7 +283,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data) {
         Idx const idx = find_component(component, true);
         Buffer& buffer = buffers_[idx];
-        if (!is_columnar(buffer.data)) {
+        if (!is_columnar(buffer)) {
             throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
         }
         if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
