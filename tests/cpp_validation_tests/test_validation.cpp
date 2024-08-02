@@ -333,9 +333,6 @@ struct CaseParam {
 };
 
 CalculationFunc calculation_func(CaseParam const& param) {
-    std::string const calculation_type = param.calculation_type;
-    bool const sym = param.sym;
-
     auto const get_options = [&param](CalculationMethod calculation_method, Idx threading) {
         return MainModel::Options{
             .calculation_type = calculation_type_mapping.at(param.calculation_type),
