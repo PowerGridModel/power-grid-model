@@ -118,7 +118,7 @@ enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
 };
 
 enum class SearchMethod : IntS { // Which type of tap search method for finite element optimization process
-    scanline = 0,                // use scanline method: one step per iteration
+    linear_search = 0,           // use linear_search method: one step per iteration
     binary_search = 1,           // use binary search: half a tap range at a time
 };
 

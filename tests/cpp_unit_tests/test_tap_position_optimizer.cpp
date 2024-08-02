@@ -699,7 +699,7 @@ TEST_CASE("Test Tap position optimizer") {
 
     SUBCASE("empty state") {
         state.components.set_construction_complete();
-        auto optimizer = get_optimizer(OptimizerStrategy::any, SearchMethod::scanline);
+        auto optimizer = get_optimizer(OptimizerStrategy::any, SearchMethod::linear_search);
         auto result = optimizer.optimize(state, CalculationMethod::default_method);
         CHECK(result.solver_output.size() == 1);
         CHECK(result.solver_output[0].method == CalculationMethod::default_method);
@@ -1079,7 +1079,7 @@ TEST_CASE("Test Tap position optimizer") {
 
             auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
 
-            // tap pos will jump between 3 and 4 in scanline method
+            // tap pos will jump between 3 and 4 in linear_search method
             state_b.tap_min = 1;
             state_b.tap_max = 5;
             state_b.tap_pos = 5;
@@ -1095,14 +1095,14 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_side = tap_side;
                 state_a.tap_side = tap_side;
 
-                auto optimizer = get_optimizer(strategy, SearchMethod::scanline);
+                auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
                 auto const cached_state = state; // NOSONAR
                 CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
                 CHECK(twoStatesEqual(cached_state, state));
             }
         }
 
-        SUBCASE("Binary search vs scanline optimization for tap changer") {
+        SUBCASE("Binary search vs linear_search optimization for tap changer") {
             state_b.tap_min = IntS{-100};
             state_b.tap_max = IntS{100};
 
@@ -1123,7 +1123,7 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_side = tap_side;
                 state_a.tap_side = tap_side;
 
-                auto optimizer_scan = get_optimizer(strategy, SearchMethod::scanline);
+                auto optimizer_scan = get_optimizer(strategy, SearchMethod::linear_search);
                 auto optimizer_bs = get_optimizer(strategy, SearchMethod::binary_search);
 
                 auto const result = optimizer_scan.optimize(state, CalculationMethod::default_method);
@@ -1132,7 +1132,7 @@ TEST_CASE("Test Tap position optimizer") {
                 auto const result_bs = optimizer_bs.optimize(state, CalculationMethod::default_method);
                 auto const bs_number_of_pf_runs = optimizer_bs.get_total_iterations();
 
-                CHECK(scan_number_of_pf_runs >= bs_number_of_pf_runs); // ToDo: In need of a more complex grid
+                CHECK(scan_number_of_pf_runs >= bs_number_of_pf_runs);
             }
         }
     }

@@ -307,7 +307,7 @@ std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_m
     {"fast_any_tap", OptimizerStrategy::fast_any}};
 
 std::map<std::string, SearchMethod, std::less<>> const optimizer_search_mapping = {
-    {"scanline", SearchMethod::scanline}, {"binary_search", SearchMethod::binary_search}};
+    {"linear_search", SearchMethod::linear_search}, {"binary_search", SearchMethod::binary_search}};
 
 // case parameters
 struct CaseParam {
@@ -353,7 +353,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
                                          : OptimizerType::automatic_tap_adjustment;
             options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
             if (options.optimizer_strategy == OptimizerStrategy::any) {
-                options.search_method = SearchMethod::scanline;
+                options.search_method = SearchMethod::linear_search;
             } else {
                 options.search_method = optimizer_search_mapping.at(param.search_method);
             }

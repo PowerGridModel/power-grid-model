@@ -650,7 +650,7 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 
 | strategy                                                                                                    | initial tap position | exploitation direction | search method | description                                                                           |
 | ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | scanline      | Find any tap position that gives a control side voltage within the `u_band`           |
+| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | linear_search      | Find any tap position that gives a control side voltage within the `u_band`           |
 | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | binary_search | Find the tap position that gives the lowest control side voltage within the `u_band`  |
 | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | binary_search | Find the tap position that gives the highest control side voltage within the `u_band` |
 | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       | current tap position | no exploitation        | binary_search | Find any tap position that gives a control side voltage within the `u_band`           |
@@ -659,21 +659,21 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 
 Given the discrete nature of the finite tap ranges, we use the following search methods to find the next tap position along the exploitation direction.
 
-| Search method                                                                             | Description                                                                            | Default  |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------- |
-| {py:class}`SearchMethod.scanline <power_grid_model.enum.SearchMethod.scanline>`           | In the context of finite discrete range search, go one value at a time.                |          |
-| {py:class}`SearchMethod.binary_search <power_grid_model.enum.SearchMethod.binary_search>` | In the context of finite discrete range search, go half the remaining range at a time. | &#10004; |
+| Search method | Description                                                                            |
+| ------------- | -------------------------------------------------------------------------------------- |
+| linear search | In the context of finite discrete range search, go one value at a time.                |
+| binary search | In the context of finite discrete range search, go half the remaining range at a time. |
 
 Compatibility of search methods and tap changing strategies
 
-|                                                                                           | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>` | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>` |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| {py:class}`SearchMethod.scanline <power_grid_model.enum.SearchMethod.scanline>`           | &#10004;                                                                                                | &#10004;                                                                                                    | &#10004;                                                                                                    | &#10008; |
-| {py:class}`SearchMethod.binary_search <power_grid_model.enum.SearchMethod.binary_search>` | &#10008;                                                                                                | &#10004;                                                                                                    | &#10004;                                                                                                    | &#10004; |
+|               | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>` | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>` |
+| ------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| linear search | &#10004;                                                                                                | &#10004;                                                                                                    | &#10004;                                                                                                    | &#10008; |
+| binary search | &#10008;                                                                                                | &#10004; default                                                                                            | &#10004; default                                                                                            | &#10004; |
 
 
 ```{note}
-Note that the combination of `any_valid_tap` with `binary_search` and `fast_any_tap` with `scanline` are not acceptable and exceptions will be thrown.
+Note that the combination of `any_valid_tap` with `binary_search` and `fast_any_tap` with `linear_search` are not acceptable and exceptions will be thrown.
 ```
 
 ## Batch Calculations

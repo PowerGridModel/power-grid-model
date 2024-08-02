@@ -725,25 +725,44 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
   public:
     TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy,
                              meta_data::MetaData const& meta_data,
-                             SearchMethod tap_search = SearchMethod::binary_search)
-        : meta_data_{&meta_data},
-          calculate_{std::move(calculator)},
-          update_{std::move(updater)},
-          strategy_{strategy},
-          tap_search_{tap_search} {
-        auto const is_supported = [&strategy, &tap_search] {
+                             std::optional<SearchMethod> tap_search = std::nullopt)
+        : meta_data_{&meta_data}, calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {
+        auto const is_supported = [&strategy](std::optional<SearchMethod> const& tap_search) {
+            if (!tap_search) {
+                return true;
+            }
             switch (strategy) {
             case OptimizerStrategy::any:
-                return tap_search == SearchMethod::scanline;
+                return tap_search == SearchMethod::linear_search;
             case OptimizerStrategy::fast_any:
                 return tap_search == SearchMethod::binary_search;
             default:
                 return true;
             }
         };
-        if (!is_supported()) {
+
+        if (!is_supported(tap_search)) {
             throw TapSearchStrategyIncompatibleError{
-                "Search method is incompatible with optimization strategy: ", strategy_, tap_search_};
+                "Search method is incompatible with optimization strategy: ", strategy_, tap_search.value()};
+        }
+
+        if (!tap_search) {
+            switch (strategy) {
+            case OptimizerStrategy::any:
+                tap_search_ = SearchMethod::linear_search;
+                break;
+            case OptimizerStrategy::fast_any:
+            case OptimizerStrategy::local_maximum:
+            case OptimizerStrategy::global_maximum:
+            case OptimizerStrategy::local_minimum:
+            case OptimizerStrategy::global_minimum:
+                tap_search_ = SearchMethod::binary_search;
+                break;
+            default:
+                throw MissingCaseForEnumError{"TapPositionOptimizer::TapPositionOptimizerImpl", tap_search.value()};
+            }
+        } else {
+            tap_search_ = tap_search.value();
         }
     }
 
@@ -795,7 +814,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                   CalculationMethod method) -> MathOutput<ResultType> {
         pilot_run(regulator_order);
 
-        if (auto result = iterate_with_fallback(state, regulator_order, method, SearchMethod::scanline);
+        if (auto result = iterate_with_fallback(state, regulator_order, method, SearchMethod::linear_search);
             strategy_ == OptimizerStrategy::any) {
             return produce_output(regulator_order, std::move(result));
         }
@@ -825,7 +844,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         -> ResultType {
         SearchMethod const actual_search = search.value_or(tap_search_);
         auto fallback = [this, &state, &regulator_order, &method, &actual_search] {
-            std::ignore = iterate(state, regulator_order, CalculationMethod::linear, SearchMethod::scanline);
+            std::ignore = iterate(state, regulator_order, CalculationMethod::linear, SearchMethod::linear_search);
             return iterate(state, regulator_order, method, actual_search);
         };
 
@@ -885,7 +904,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         switch (search) {
         case SearchMethod::binary_search:
             return adjust_transformer_bs(regulator, state, solver_output, update_data, options);
-        case SearchMethod::scanline:
+        case SearchMethod::linear_search:
             return adjust_transformer_scan(regulator, state, solver_output, update_data);
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::adjust_transformer", search};

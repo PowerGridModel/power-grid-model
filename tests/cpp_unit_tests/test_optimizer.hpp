@@ -190,10 +190,10 @@ struct OptimizerStrategySearchSide {
     ControlSide side{};
 };
 
-constexpr auto search_methods = [] { return std::array{SearchMethod::scanline, SearchMethod::binary_search}; }();
+constexpr auto search_methods = [] { return std::array{SearchMethod::linear_search, SearchMethod::binary_search}; }();
 
 constexpr auto strategy_search_and_sides = [] {
-    // regular any strategy is only used in combination with scanline search
+    // regular any strategy is only used in combination with linear_search search
     size_t const options_size = strategies.size() * tap_sides.size() * search_methods.size() - search_methods.size();
     std::array<OptimizerStrategySearchSide, options_size> result;
     size_t idx{};
@@ -217,7 +217,7 @@ struct OptStrategyMethodSearch {
 };
 
 constexpr auto strategy_method_and_searches = [] {
-    // regular any strategy is only used in combination with scanline search
+    // regular any strategy is only used in combination with linear_search search
     size_t const options_size =
         strategies.size() * calculation_methods.size() * search_methods.size() - search_methods.size();
     std::array<OptStrategyMethodSearch, options_size> result;
