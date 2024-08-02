@@ -286,16 +286,21 @@ std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_pa
 #endif
 
 // method map
+std::map<std::string, CalculationType> const calculation_type_mapping = {
+    {"power_flow", CalculationType::power_flow},
+    {"state_estimation", CalculationType::state_estimation},
+    {"short_circuit", CalculationType::short_circuit}};
 std::map<std::string, CalculationMethod> const calculation_method_mapping = {
     {"newton_raphson", CalculationMethod::newton_raphson},
     {"linear", CalculationMethod::linear},
     {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
     {"linear_current", CalculationMethod::linear_current},
-    {"iec60909", CalculationMethod::iec60909},
-};
+    {"iec60909", CalculationMethod::iec60909}};
 std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
-    {"minimum", ShortCircuitVoltageScaling::minimum}, {"maximum", ShortCircuitVoltageScaling::maximum}};
+    {"", ShortCircuitVoltageScaling::maximum}, // not provided returns default value
+    {"minimum", ShortCircuitVoltageScaling::minimum},
+    {"maximum", ShortCircuitVoltageScaling::maximum}};
 using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
 
@@ -328,53 +333,31 @@ struct CaseParam {
 };
 
 CalculationFunc calculation_func(CaseParam const& param) {
-    using namespace std::string_literals;
     std::string const calculation_type = param.calculation_type;
     bool const sym = param.sym;
-    std::string const voltage_scaling = param.short_circuit_voltage_scaling;
 
-    auto const get_default_options = [](CalculationMethod calculation_method, Idx threading) {
+    auto const get_options = [&param](CalculationMethod calculation_method, Idx threading) {
         return MainModel::Options{
-            .calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20, .threading = threading};
+            .calculation_type = calculation_type_mapping.at(param.calculation_type),
+            .calculation_symmetry = param.sym ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric,
+            .calculation_method = calculation_method,
+            .optimizer_type = param.tap_changing_strategy == "disabled" ? OptimizerType::no_optimization
+                                                                        : OptimizerType::automatic_tap_adjustment,
+            .optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy),
+            .err_tol = 1e-8,
+            .max_iter = 20,
+            .threading = threading,
+            .short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling)};
     };
 
-    if (calculation_type == "power_flow"s) {
-        return [param, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                            MutableDataset const& dataset, ConstDataset const& update_dataset,
-                                            Idx threading) {
-            auto options = get_default_options(calculation_method, threading);
-            options.optimizer_type = param.tap_changing_strategy == "disabled"
-                                         ? OptimizerType::no_optimization
-                                         : OptimizerType::automatic_tap_adjustment;
-            options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
-            if (param.sym) {
-                return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
-            }
-            return model.calculate_power_flow<asymmetric_t>(options, dataset, update_dataset);
-        };
-    }
-    if (calculation_type == "state_estimation"s) {
-        return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                          MutableDataset const& dataset, ConstDataset const& update_dataset,
-                                          Idx threading) {
-            if (sym) {
-                return model.calculate_state_estimation<symmetric_t>(get_default_options(calculation_method, threading),
-                                                                     dataset, update_dataset);
-            }
-            return model.calculate_state_estimation<asymmetric_t>(get_default_options(calculation_method, threading),
-                                                                  dataset, update_dataset);
-        };
-    }
-    if (calculation_type == "short_circuit"s) {
-        return [voltage_scaling, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                                      MutableDataset const& dataset, ConstDataset const& update_dataset,
-                                                      Idx threading) {
-            auto options = get_default_options(calculation_method, threading);
-            options.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(voltage_scaling);
-            return model.calculate_short_circuit(options, dataset, update_dataset);
-        };
-    }
-    throw UnsupportedValidationCase{calculation_type, sym};
+    return [param, get_options](MainModel& model, CalculationMethod calculation_method, MutableDataset const& dataset,
+                                ConstDataset const& update_dataset, Idx threading) {
+        auto options = get_options(calculation_method, threading);
+        if (options.optimizer_type != OptimizerType::no_optimization) {
+            REQUIRE(options.calculation_type == CalculationType::power_flow);
+        }
+        return model.calculate(options, dataset, update_dataset);
+    };
 }
 
 std::string get_output_type(std::string const& calculation_type, bool sym) {
