@@ -417,18 +417,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
-        assert(buffer.data != nullptr);
         auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        std::span<StructType> const total_range{ptr, ptr + info.total_elements};
+        // std::span<StructType> const total_range{ptr, ptr + info.total_elements};
         if (scenario < 0) {
-            return total_range;
+            return std::span<StructType>{ptr, ptr + info.total_elements};
         }
         if (info.elements_per_scenario < 0) {
-            return std::span<StructType>{total_range.begin() + buffer.indptr[scenario],
-                                         total_range.begin() + buffer.indptr[scenario + 1]};
+            return std::span<StructType>{ptr + buffer.indptr[scenario], ptr + buffer.indptr[scenario + 1]};
         }
-        return std::span<StructType>{total_range.begin() + info.elements_per_scenario * scenario,
-                                     total_range.begin() + info.elements_per_scenario * (scenario + 1)};
+        return std::span<StructType>{ptr + info.elements_per_scenario * scenario,
+                                     ptr + info.elements_per_scenario * (scenario + 1)};
     }
 
     // get non-empty columnar buffer

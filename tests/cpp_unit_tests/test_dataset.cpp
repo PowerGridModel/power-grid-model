@@ -212,13 +212,15 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
     using Data = std::conditional_t<std::same_as<RangeObjectType, const_range_object<A::InputType>>, void const, void>;
 
     auto const& all_attributes = test_meta_data.datasets.front().get_component(A::name);
-    
+
     auto id_buffer = std::vector<ID>{0, 1, 2};
     auto a1_buffer = std::vector<double>{0.0, 1.0, nan};
     auto const total_elements = narrow_cast<Idx>(id_buffer.size());
     REQUIRE(narrow_cast<Idx>(a1_buffer.size()) >= total_elements);
-    AttributeBuffer<Data> const attribute_id{.data = static_cast<Data*>(id_buffer.data()), .meta_attribute = &all_attributes.get_attribute("id")};
-    AttributeBuffer<Data> const attribute_a1{.data = static_cast<Data*>(a1_buffer.data()), .meta_attribute = &all_attributes.get_attribute("a1")};
+    AttributeBuffer<Data> const attribute_id{.data = static_cast<Data*>(id_buffer.data()),
+                                             .meta_attribute = &all_attributes.get_attribute("id")};
+    AttributeBuffer<Data> const attribute_a1{.data = static_cast<Data*>(a1_buffer.data()),
+                                             .meta_attribute = &all_attributes.get_attribute("a1")};
     std::vector<AttributeBuffer<Data>> const elements{attribute_id, attribute_a1};
     RangeObjectType range_object{total_elements, elements};
 
