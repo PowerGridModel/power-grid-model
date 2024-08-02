@@ -792,7 +792,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                  CalculationMethod method) const -> MathOutput<ResultType> {
+                  CalculationMethod method) -> MathOutput<ResultType> {
         pilot_run(regulator_order);
 
         if (auto result = iterate_with_fallback(state, regulator_order, method, SearchMethod::scanline);
@@ -821,7 +821,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto iterate_with_fallback(State const& state,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                               CalculationMethod method, std::optional<SearchMethod> search = std::nullopt) const
+                               CalculationMethod method, std::optional<SearchMethod> search = std::nullopt)
         -> ResultType {
         SearchMethod const actual_search = search.value_or(tap_search_);
         auto fallback = [this, &state, &regulator_order, &method, &actual_search] {
@@ -839,7 +839,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                 CalculationMethod method, SearchMethod search) const -> ResultType {
+                 CalculationMethod method, SearchMethod search) -> ResultType {
         auto result = calculate_(state, method);
         ++total_iterations;
 
@@ -881,11 +881,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& solver_output,
-                            UpdateBuffer& update_data, SearchMethod search, BinarySearchOptions const& options) const {
+                            UpdateBuffer& update_data, SearchMethod search, BinarySearchOptions const& options) {
         switch (search) {
         case SearchMethod::binary_search:
-            return const_cast<TapPositionOptimizerImpl*>(this)->adjust_transformer_bs(regulator, state, solver_output,
-                                                                                      update_data, options);
+            return adjust_transformer_bs(regulator, state, solver_output, update_data, options);
         case SearchMethod::scanline:
             return adjust_transformer_scan(regulator, state, solver_output, update_data);
         default:
@@ -894,7 +893,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
-                                 ResultType const& solver_output, UpdateBuffer& update_data) const {
+                                 ResultType const& solver_output, UpdateBuffer& update_data) {
         bool tap_changed = false;
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
@@ -1008,7 +1007,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
+    auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
@@ -1039,7 +1038,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             throw MissingCaseForEnumError{"TapPositionOptimizer::pilot_run"s, strategy_};
         }
         if (tap_search_ == SearchMethod::binary_search) {
-            const_cast<TapPositionOptimizerImpl*>(this)->update_binary_search(regulator_order);
+            update_binary_search(regulator_order);
         }
     }
 
