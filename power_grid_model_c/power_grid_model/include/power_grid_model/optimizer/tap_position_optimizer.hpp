@@ -727,15 +727,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                              meta_data::MetaData const& meta_data,
                              std::optional<SearchMethod> tap_search = std::nullopt)
         : meta_data_{&meta_data}, calculate_{std::move(calculator)}, update_{std::move(updater)}, strategy_{strategy} {
-        auto const is_supported = [&strategy](std::optional<SearchMethod> const& tap_search) {
-            if (!tap_search) {
+        auto const is_supported = [&strategy](std::optional<SearchMethod> const& search) {
+            if (!search) {
                 return true;
             }
             switch (strategy) {
             case OptimizerStrategy::any:
-                return tap_search == SearchMethod::linear_search;
+                return search == SearchMethod::linear_search;
             case OptimizerStrategy::fast_any:
-                return tap_search == SearchMethod::binary_search;
+                return search == SearchMethod::binary_search;
             default:
                 return true;
             }
