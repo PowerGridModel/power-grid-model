@@ -66,10 +66,10 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = std::remove_const_t<T>;
 
         Proxy() = default;
-        Proxy(Idx idx, std::span<AttributeBuffer<Data>> attribute_buffers)
+        Proxy(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : idx_{idx}, attribute_buffers_{std::move(attribute_buffers)} {}
 
-        decltype(auto) operator=(value_type const& value) const
+        decltype(auto) operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
             for (auto const& attribute_buffer : attribute_buffers_) {
@@ -108,7 +108,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         friend class iterator;
 
         Idx idx_{};
-        std::span<AttributeBuffer<Data>> attribute_buffers_{};
+        std::span<AttributeBuffer<Data> const> attribute_buffers_{};
     };
 
     class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
@@ -116,7 +116,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         using value_type = Proxy;
 
         iterator() = default;
-        iterator(Idx idx, std::vector<AttributeBuffer<Data>> attribute_buffers) : current_{idx, attribute_buffers} {}
+        iterator(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
+            : current_{idx, attribute_buffers} {}
 
       private:
         friend class boost::iterator_core_access;
@@ -172,7 +173,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // for uniform buffers, indptr is empty
     struct Buffer {
         Data* data{nullptr};
-        std::vector<AttributeBuffer<Data>> attributes;
+        std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
     };
 
@@ -288,8 +289,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
         }
         AttributeBuffer<Data> attribute_buffer{
-            .data = data,
-            .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
+            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
         buffer.attributes.emplace_back(attribute_buffer);
     }
 
@@ -411,13 +411,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // get non-empty row buffer
     template <class StructType> std::span<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
         // return empty span if the component does not exist
-        if (component_idx < 0) { return {}; }
+        if (component_idx < 0) {
+            return {};
+        }
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
         assert(buffer.data != nullptr);
         auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        std::span<StructType> total_range{ptr, ptr + info.total_elements};
+        std::span<StructType> const total_range{ptr, ptr + info.total_elements};
         if (scenario < 0) {
             return total_range;
         }
@@ -433,12 +435,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <class StructType>
     RangeObject<StructType> get_columnar_buffer_span_impl(Idx scenario, Idx component_idx) const {
         // return empty span if the component does not exist
-        if (component_idx < 0) { return {}; }
+        if (component_idx < 0) {
+            return {};
+        }
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
         assert(buffer.data == nullptr);
-        RangeObject<StructType> total_range{info.total_elements, buffer.attributes};
+        RangeObject<StructType> const total_range{info.total_elements, buffer.attributes};
         if (scenario < 0) {
             return total_range;
         }
