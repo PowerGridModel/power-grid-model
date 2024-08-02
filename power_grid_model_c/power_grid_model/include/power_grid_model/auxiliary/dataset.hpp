@@ -221,8 +221,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
     bool is_columnar(std::string_view component) const {
-        return buffers_[find_component(component, true)].data == nullptr; } 
-    bool is_columnar(Idx const i) const { return buffers_[i].data == nullptr; } 
+        return buffers_[find_component(component, true)].data == nullptr;
+    }
+    bool is_columnar(Idx const i) const { return buffers_[i].data == nullptr; }
     bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
 
     Idx find_component(std::string_view component, bool required = false) const {
@@ -442,7 +443,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
-        assert(buffer.data == nullptr);
+        assert(is_columnar(buffer));
         RangeObject<StructType> const total_range{info.total_elements, buffer.attributes};
         if (scenario < 0) {
             return total_range;
