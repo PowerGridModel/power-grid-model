@@ -24,6 +24,8 @@ struct AInput {
     ID id{na_IntID};
     double a0{nan};
     double a1{nan};
+
+    bool operator==(AInput const& other) const { return this->id == other.id; }
 };
 struct AUpdate {
     static constexpr auto id_name = "id";
@@ -236,6 +238,27 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
             test::check_equal(object[idx], *(object.begin() + idx));
         }
     };
+
+    SUBCASE("Constructor") {
+        using Data =
+            std::conditional_t<std::same_as<RangeObjectType, const_range_object<A::InputType>>, void const, void>;
+
+        auto const& all_attributes = test_meta_data.datasets.front().get_component(A::name);
+
+        auto id_buffer = std::vector<ID>{0, 1, 2, 3, 4};
+        auto const total_elements = narrow_cast<Idx>(id_buffer.size());
+        AttributeBuffer<Data> const attribute_id{.data = static_cast<Data*>(id_buffer.data()),
+                                                 .meta_attribute = &all_attributes.get_attribute("id")};
+        std::vector<AttributeBuffer<Data>> const elements{attribute_id};
+        RangeObjectType total_range{total_elements, elements};
+        auto const start = total_range.begin() + 1;
+        auto const stop = total_range.begin() + 4;
+        RangeObjectType sub_range{start, stop};
+        auto const tr0 = total_range[0].get();
+        auto const tr1 = total_range[1].get();
+        auto const sr0 = sub_range[0].get();
+        CHECK(sub_range[0].get() == total_range[1].get());
+    }
 
     SUBCASE("Read access") {
         check_buffer(range_object);

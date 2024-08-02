@@ -422,7 +422,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
         auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        // std::span<StructType> const total_range{ptr, ptr + info.total_elements};
         if (scenario < 0) {
             return std::span<StructType>{ptr, ptr + info.total_elements};
         }
