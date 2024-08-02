@@ -721,7 +721,7 @@ TEST_CASE("Test Tap position optimizer") {
             CAPTURE(search);
 
             if (strategy == OptimizerStrategy::any && search == SearchMethod::binary_search) {
-                CHECK_THROWS_AS(get_optimizer(strategy, search), BinarySearchIncompatibleError);
+                CHECK_THROWS_AS(get_optimizer(strategy, search), TapSearchStrategyIncompatibleError);
 
             } else {
                 auto optimizer = get_optimizer(strategy, search);

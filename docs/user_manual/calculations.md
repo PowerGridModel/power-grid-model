@@ -673,7 +673,7 @@ Compatibility of search methods and tap changing strategies
 
 
 ```{note}
-Note that the combination of `any_valid_tap` and search method `binary_search` is not acceptable and error will be thrown.
+Note that the combination of `any_valid_tap` with `binary_search` and `fast_any_tap` with `scanline` are not acceptable and exceptions will be thrown.
 ```
 
 ## Batch Calculations
