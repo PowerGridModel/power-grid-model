@@ -6,7 +6,7 @@
 Helper functions to assert valid data. They basically call validate_input_data or validate_batch_data and raise a
 ValidationException if the validation results in one or more errors.
 """
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 from power_grid_model.data_types import BatchDataset, SingleDataset
 from power_grid_model.enum import CalculationType
@@ -21,7 +21,7 @@ class ValidationException(ValueError):
     to display a summary of all the errors when printing the exception.
     """
 
-    def __init__(self, errors: Union[List[ValidationError], Dict[int, List[ValidationError]]], name: str = "data"):
+    def __init__(self, errors: list[ValidationError] | dict[int, list[ValidationError]], name: str = "data"):
         super().__init__(f"Invalid {name}")
         self.errors = errors
         self.name = name

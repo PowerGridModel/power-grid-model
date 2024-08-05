@@ -7,7 +7,6 @@ import platform
 import shutil
 from itertools import chain
 from pathlib import Path
-from typing import List
 
 # noinspection PyPackageRequirements
 from setuptools import Extension, setup
@@ -23,7 +22,7 @@ else:
     raise SystemError("Only Windows, Linux, or MacOS is supported!")
 
 
-def get_required_dependency_include() -> List[str]:
+def get_required_dependency_include() -> list[str]:
     """
     Get build requirements includes.
 
@@ -39,7 +38,7 @@ def get_required_dependency_include() -> List[str]:
         return []
 
 
-def get_pre_installed_header_include() -> List[str]:
+def get_pre_installed_header_include() -> list[str]:
     """
     Get header files from pybuild_header_dependency, if it is installed
 
@@ -55,7 +54,7 @@ def get_pre_installed_header_include() -> List[str]:
         return []
 
 
-def get_conda_include() -> List[str]:
+def get_conda_include() -> list[str]:
     """
     Get conda include path, if we are inside conda environment
 
@@ -151,10 +150,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     include_dirs += get_pre_installed_header_include()
     include_dirs += get_conda_include()
     # compiler and link flag
-    cflags: List[str] = []
-    lflags: List[str] = []
-    library_dirs: List[str] = []
-    libraries: List[str] = []
+    cflags: list[str] = []
+    lflags: list[str] = []
+    library_dirs: list[str] = []
+    libraries: list[str] = []
     sources = [
         str(pgm_c / pgm_c / "src" / "handle.cpp"),
         str(pgm_c / pgm_c / "src" / "meta_data.cpp"),

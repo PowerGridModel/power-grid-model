@@ -4,7 +4,7 @@
 
 from copy import copy
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -14,7 +14,7 @@ from power_grid_model.enum import TapChangingStrategy
 
 from .utils import EXPORT_OUTPUT, PowerGridModelWithExt, compare_result, import_case_data, pytest_cases, save_json_data
 
-calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
+calculation_function_arguments_map: dict[str, tuple[Callable, list[str]]] = {
     "power_flow": (
         PowerGridModelWithExt.calculate_power_flow_with_ext,
         [
@@ -59,11 +59,11 @@ calculation_function_arguments_map: Dict[str, Tuple[Callable, List[str]]] = {
 }
 
 
-def supported_kwargs(kwargs, supported: List[str]):
+def supported_kwargs(kwargs, supported: list[str]):
     return {key: value for key, value in kwargs.items() if key in supported}
 
 
-def get_kwargs(sym: bool, calculation_type: str, calculation_method: str, params: Dict, **extra_kwargs) -> Dict:
+def get_kwargs(sym: bool, calculation_type: str, calculation_method: str, params: dict, **extra_kwargs) -> dict:
     base_kwargs = {"symmetric": sym, "calculation_method": calculation_method}
     for key, value in params.items():
         if key not in base_kwargs:
@@ -97,7 +97,7 @@ def test_single_validation(
     calculation_method: str,
     rtol: float,
     atol: float,
-    params: Dict,
+    params: dict,
 ):
     # Initialization
     case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)
@@ -148,7 +148,7 @@ def test_batch_validation(
     calculation_method: str,
     rtol: float,
     atol: float,
-    params: Dict,
+    params: dict,
 ):
     # Initialization
     case_data = import_case_data(case_path, calculation_type=calculation_type, sym=sym)

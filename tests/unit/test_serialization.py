@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, List, Mapping, Optional, Union
+from typing import Any, Mapping, Optional
 
 import msgpack
 import numpy as np
@@ -269,7 +269,7 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
 def assert_scenario_correct(
     deserialized_dataset: Mapping[ComponentType, np.ndarray],
     serialized_dataset: Mapping[str, Any],
-    sparse_components: List[ComponentType],
+    sparse_components: list[ComponentType],
 ):
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset:
@@ -294,7 +294,7 @@ def assert_scenario_correct(
 
 
 def assert_serialization_correct(
-    deserialized_dataset: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]],
+    deserialized_dataset: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
     serialized_dataset: Mapping[str, Any],
 ):
     """Assert the dataset correctly reprensents the input data."""

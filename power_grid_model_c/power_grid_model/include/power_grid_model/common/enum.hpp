@@ -22,6 +22,10 @@ enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
 enum class ControlSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3 = 2 };
 
+enum class CalculationType : IntS { power_flow = 0, state_estimation = 1, short_circuit = 2 };
+
+enum class CalculationSymmetry : IntS { symmetric = 0, asymmetric = 1 };
+
 enum class CalculationMethod : IntS {
     default_method = -128,
     linear = 0,

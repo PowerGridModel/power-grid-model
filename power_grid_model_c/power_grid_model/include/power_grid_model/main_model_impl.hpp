@@ -57,6 +57,65 @@ template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
     template <class T> using type = meta_data::asym_output_getter_s<T>;
 };
 
+struct power_flow_t {};
+struct state_estimation_t {};
+struct short_circuit_t {};
+
+template <typename T>
+concept calculation_type_tag = std::derived_from<T, power_flow_t> || std::derived_from<T, state_estimation_t> ||
+                               std::derived_from<T, short_circuit_t>;
+
+template <class Functor, class... Args>
+decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, Functor&& f,
+                                                  Args&&... args) {
+    using enum CalculationSymmetry;
+
+    switch (calculation_symmetry) {
+    case symmetric:
+        return std::forward<Functor>(f).template operator()<symmetric_t>(std::forward<Args>(args)...);
+    case asymmetric:
+        return std::forward<Functor>(f).template operator()<asymmetric_t>(std::forward<Args>(args)...);
+    default:
+        throw MissingCaseForEnumError{"Calculation symmetry selector", calculation_symmetry};
+    }
+}
+
+template <class Functor, class... Args>
+decltype(auto) calculation_type_func_selector(CalculationType calculation_type, Functor&& f, Args&&... args) {
+    using enum CalculationType;
+
+    switch (calculation_type) {
+    case CalculationType::power_flow:
+        return std::forward<Functor>(f).template operator()<power_flow_t>(std::forward<Args>(args)...);
+    case CalculationType::state_estimation:
+        return std::forward<Functor>(f).template operator()<state_estimation_t>(std::forward<Args>(args)...);
+    case CalculationType::short_circuit:
+        return std::forward<Functor>(f).template operator()<short_circuit_t>(std::forward<Args>(args)...);
+    default:
+        throw MissingCaseForEnumError{"CalculationType", calculation_type};
+    }
+}
+
+template <class Functor, class... Args>
+decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
+                                                       CalculationSymmetry calculation_symmetry, Functor&& f,
+                                                       Args&&... args) {
+    calculation_type_func_selector(
+        calculation_type,
+        []<calculation_type_tag calculation_type, typename Functor_, typename... Args_>(
+            CalculationSymmetry calculation_symmetry_, Functor_ && f_, Args_ && ... args_) {
+            calculation_symmetry_func_selector(
+                calculation_symmetry_,
+                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor && sub_f,
+                                                                               SubArgs && ... sub_args) {
+                    std::forward<SubFunctor>(sub_f).template operator()<calculation_type, sym>(
+                        std::forward<SubArgs>(sub_args)...);
+                },
+                std::forward<Functor_>(f_), std::forward<Args_>(args_)...);
+        },
+        calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
+}
+
 // main model implementation template
 template <class T, class U> class MainModelImpl;
 
@@ -651,109 +710,67 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
+    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
+        auto const calculator = [this, &options] {
+            if constexpr (std::derived_from<calculation_type, power_flow_t>) {
+                return calculate_power_flow_<sym>(options.err_tol, options.max_iter);
+            }
+            assert(options.optimizer_type == OptimizerType::no_optimization);
+            if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
+                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter);
+            }
+            if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
+                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling);
+            }
+            throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
+        }();
+        
         SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
                                                 ? SearchMethod::linear_search
                                                 : SearchMethod::binary_search;
+        
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
-                   options.optimizer_type, options.optimizer_strategy,
-                   calculate_power_flow_<sym>(options.err_tol, options.max_iter),
+                   options.optimizer_type, options.optimizer_strategy, calculator,
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
                    *meta_data_, search_method)
             ->optimize(state_, options.calculation_method);
     }
 
-    // Single load flow calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    void calculate_power_flow(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
+    // Single calculation, propagating the results to result_data
+    void calculate(Options options, MutableDataset const& result_data, Idx pos = 0) {
         assert(construction_complete_);
-        auto const math_output = calculate_power_flow<sym>(options);
 
-        if (pos != ignore_output) {
-            output_result(math_output, result_data, pos);
-        }
-    }
+        if (options.calculation_type == CalculationType::short_circuit) {
+            auto const faults = state_.components.template citer<Fault>();
+            auto const is_three_phase = std::ranges::all_of(
+                faults, [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; });
+            options.calculation_symmetry =
+                is_three_phase ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
+        };
 
-    // Batch load flow calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    BatchParameter calculate_power_flow(Options const& options, MutableDataset const& result_data,
-                                        ConstDataset const& update_data) {
-        return batch_calculation_(
-            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                auto sub_opt = options; // copy
-                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+        calculation_type_symmetry_func_selector(
+            options.calculation_type, options.calculation_symmetry,
+            []<calculation_type_tag calculation_type, symmetry_tag sym>(
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Idx pos_) {
+                auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
 
-                model.calculate_power_flow<sym>(sub_opt, target_data, pos);
-            },
-            result_data, update_data, options.threading);
-    }
-
-    // Single state estimation calculation, returning math output results
-    template <symmetry_tag sym> auto calculate_state_estimation(Options const& options) {
-        return MathOutput<std::vector<SolverOutput<sym>>>{
-            .solver_output =
-                calculate_state_estimation_<sym>(options.err_tol, options.max_iter)(state_, options.calculation_method),
-            .optimizer_output = {}};
-    }
-
-    // Single state estimation calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    void calculate_state_estimation(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
-        assert(construction_complete_);
-        auto const solver_output = calculate_state_estimation<sym>(options);
-
-        if (pos != ignore_output) {
-            output_result(solver_output, result_data, pos);
-        }
-    }
-
-    // Batch state estimation calculation, propagating the results to result_data
-    template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(Options const& options, MutableDataset const& result_data,
-                                              ConstDataset const& update_data) {
-        return batch_calculation_(
-            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                auto sub_opt = options; // copy
-
-                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
-
-                model.calculate_state_estimation<sym>(sub_opt, target_data, pos);
-            },
-            result_data, update_data, options.threading);
-    }
-
-    // Single short circuit calculation, returning short circuit math output results
-    template <symmetry_tag sym> auto calculate_short_circuit(Options const& options) {
-        return MathOutput<std::vector<ShortCircuitSolverOutput<sym>>>{
-            .solver_output = calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling)(
-                state_, options.calculation_method),
-            .optimizer_output = {}};
-    }
-
-    // Single short circuit calculation, propagating the results to result_data
-    void calculate_short_circuit(Options const& options, MutableDataset const& result_data, Idx pos = 0) {
-        assert(construction_complete_);
-        if (std::all_of(state_.components.template citer<Fault>().begin(),
-                        state_.components.template citer<Fault>().end(),
-                        [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; })) {
-            auto const solver_output = calculate_short_circuit<symmetric_t>(options);
-            output_result(solver_output, result_data, pos);
-        } else {
-            auto const solver_output = calculate_short_circuit<asymmetric_t>(options);
-            output_result(solver_output, result_data, pos);
-        }
-    }
-
-    // Batch load flow calculation, propagating the results to result_data
-    BatchParameter calculate_short_circuit(Options const& options, MutableDataset const& result_data,
-                                           ConstDataset const& update_data) {
-        return batch_calculation_(
-            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                if (pos != ignore_output) {
-                    model.calculate_short_circuit(options, target_data, pos);
+                if (pos_ != ignore_output) {
+                    main_model_.output_result(math_output, result_data_, pos_);
                 }
+            },
+            *this, options, result_data, pos);
+    }
+
+    // Batch calculation, propagating the results to result_data
+    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
+                             ConstDataset const& update_data) {
+        return batch_calculation_(
+            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+                auto sub_opt = options; // copy
+                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+
+                model.calculate(sub_opt, target_data, pos);
             },
             result_data, update_data, options.threading);
     }

@@ -6,7 +6,6 @@
 Error classes
 """
 
-from typing import List
 
 import numpy as np
 
@@ -20,8 +19,8 @@ class PowerGridBatchError(PowerGridError):
 
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
-    error_messages: List[str]
-    errors: List[PowerGridError]
+    error_messages: list[str]
+    errors: list[PowerGridError]
 
 
 class InvalidArguments(PowerGridError):
