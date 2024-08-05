@@ -202,8 +202,8 @@ bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCons
 }
 
 // assert single result
-void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::map<std::string, double> atol,
-                   double rtol) {
+void assert_result(ConstDataset const& result, ConstDataset const& reference_result,
+                   std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
     MetaDataset const& meta = result.dataset();
     Idx const batch_size = result.batch_size();
@@ -286,18 +286,18 @@ std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_pa
 #endif
 
 // method map
-std::map<std::string, CalculationType> const calculation_type_mapping = {
+std::map<std::string, CalculationType, std::less<>> const calculation_type_mapping = {
     {"power_flow", CalculationType::power_flow},
     {"state_estimation", CalculationType::state_estimation},
     {"short_circuit", CalculationType::short_circuit}};
-std::map<std::string, CalculationMethod> const calculation_method_mapping = {
+std::map<std::string, CalculationMethod, std::less<>> const calculation_method_mapping = {
     {"newton_raphson", CalculationMethod::newton_raphson},
     {"linear", CalculationMethod::linear},
     {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
     {"linear_current", CalculationMethod::linear_current},
     {"iec60909", CalculationMethod::iec60909}};
-std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
+std::map<std::string, ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
     {"", ShortCircuitVoltageScaling::maximum}, // not provided returns default value
     {"minimum", ShortCircuitVoltageScaling::minimum},
     {"maximum", ShortCircuitVoltageScaling::maximum}};
@@ -347,8 +347,8 @@ CalculationFunc calculation_func(CaseParam const& param) {
             .short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling)};
     };
 
-    return [param, get_options](MainModel& model, CalculationMethod calculation_method, MutableDataset const& dataset,
-                                ConstDataset const& update_dataset, Idx threading) {
+    return [get_options](MainModel& model, CalculationMethod calculation_method, MutableDataset const& dataset,
+                         ConstDataset const& update_dataset, Idx threading) {
         auto options = get_options(calculation_method, threading);
         if (options.optimizer_type != OptimizerType::no_optimization) {
             REQUIRE(options.calculation_type == CalculationType::power_flow);
