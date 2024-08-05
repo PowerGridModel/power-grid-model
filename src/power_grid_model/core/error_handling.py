@@ -37,7 +37,6 @@ from power_grid_model.errors import (
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,
-    TapSearchStrategyIncompatibleError,
 )
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
