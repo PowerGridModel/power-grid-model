@@ -24,8 +24,6 @@ struct AInput {
     ID id{na_IntID};
     double a0{nan};
     double a1{nan};
-
-    bool operator==(AInput const& other) const { return this->id == other.id; }
 };
 struct AUpdate {
     static constexpr auto id_name = "id";
@@ -254,7 +252,7 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
         auto const start = total_range.begin() + 2;
         auto const stop = total_range.begin() + 4;
         RangeObjectType sub_range{start, stop};
-        CHECK(sub_range[0].get() == total_range[2].get());
+        CHECK(sub_range[0].get().id == total_range[2].get().id);
     }
 
     SUBCASE("Read access") {
@@ -745,7 +743,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             }
                             CHECK(buffer_span.size() == element_number);
                             for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                                auto const element = get_colummnar_element<DatasetType>(buffer_span, aux_idx + idx);
+                                auto const element = get_colummnar_element<DatasetType>(buffer_span, idx);
                                 CHECK(element.id == id_buffer[aux_idx + idx]);
                                 CHECK(element.a1 == a1_buffer[aux_idx + idx]);
                                 CHECK(is_nan(element.a0));
@@ -790,7 +788,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                         dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
                                     Idx size = buffer_span.size();
                                     for (Idx idx = 0; idx < size; ++idx) {
-                                        buffer_span[idx + (scenario * elements_per_scenario)] =
+                                        buffer_span[idx] =
                                             A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                         CHECK(id_buffer[idx + (scenario * elements_per_scenario)] == -10);
                                         CHECK(a1_buffer[idx + (scenario * elements_per_scenario)] == -2.0);
@@ -896,7 +894,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                         }
                         CHECK(buffer_span.size() == element_number);
                         for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                            auto const element = get_colummnar_element<DatasetType>(buffer_span, aux_idx + idx);
+                            auto const element = get_colummnar_element<DatasetType>(buffer_span, idx);
                             CHECK(element.id == id_buffer[aux_idx + idx]);
                             CHECK(element.a1 == a1_buffer[aux_idx + idx]);
                             CHECK(is_nan(element.a0));
@@ -941,7 +939,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                     dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
                                 Idx size = buffer_span.size();
                                 for (Idx idx = 0; idx < size; ++idx) {
-                                    buffer_span[idx + (a_indptr[scenario])] =
+                                    buffer_span[idx] =
                                         A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                     CHECK(id_buffer[idx + (a_indptr[scenario])] == -10);
                                     CHECK(a1_buffer[idx + (a_indptr[scenario])] == -2.0);
