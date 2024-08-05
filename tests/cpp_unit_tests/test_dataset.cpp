@@ -199,11 +199,18 @@ auto get_colummnar_element(BufferSpan const& buffer_span, Idx idx) {
     return static_cast<A::InputType>(buffer_span[idx]);
 }
 
+template <typename BufferSpan> Idx get_size(BufferSpan const& buffer_span) { return buffer_span.size(); }
+
+template <typename BufferSpan> auto get_data(BufferSpan const& buffer_span) -> decltype(buffer_span.data()) {
+
+    return buffer_span.data();
+}
+
 template <typename BufferSpan>
 void check_row_span(BufferSpan const& buffer_span, Idx const& total_elements,
                     std::vector<A::InputType> const& a_buffer) {
-    CHECK(buffer_span.size() == total_elements);
-    CHECK(buffer_span.data() == a_buffer.data());
+    CHECK(get_size(buffer_span) == total_elements);
+    CHECK(get_data(buffer_span) == a_buffer.data());
 }
 } // namespace
 
@@ -360,12 +367,12 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                                         Idx* indptr, void* data) {
         add_buffer(dataset, name, -1, total_elements, indptr, data);
     };
-    auto get_data_buffer = [&fake_data](bool const& is_columnar, Idx const& total_elements) -> void* {
+    auto get_data_buffer = [&fake_data](bool const& is_columnar, Idx const& total_elements) -> Idx* {
         if (is_columnar) {
             return nullptr;
         }
         fake_data.resize(std::max(narrow_cast<Idx>(fake_data.size()), total_elements));
-        return static_cast<void*>(fake_data.data());
+        return fake_data.data();
     };
     auto get_indptr_buffer = [&fake_indptr](Idx const& elements_per_scenario, Idx const& total_elements,
                                             DatasetType const& dataset) -> Idx* {
@@ -788,8 +795,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                         dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
                                     Idx size = buffer_span.size();
                                     for (Idx idx = 0; idx < size; ++idx) {
-                                        buffer_span[idx] =
-                                            A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
+                                        buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                         CHECK(id_buffer[idx + (scenario * elements_per_scenario)] == -10);
                                         CHECK(a1_buffer[idx + (scenario * elements_per_scenario)] == -2.0);
                                         check_all_spans(scenario);
@@ -939,8 +945,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                     dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
                                 Idx size = buffer_span.size();
                                 for (Idx idx = 0; idx < size; ++idx) {
-                                    buffer_span[idx] =
-                                        A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
+                                    buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                     CHECK(id_buffer[idx + (a_indptr[scenario])] == -10);
                                     CHECK(a1_buffer[idx + (a_indptr[scenario])] == -2.0);
                                     check_all_spans(scenario);

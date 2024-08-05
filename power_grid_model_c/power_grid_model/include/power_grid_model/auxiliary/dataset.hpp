@@ -117,7 +117,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
         iterator() = default;
         iterator(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
-            : current_{idx, attribute_buffers}, idx_{idx} {}
+            : idx_{idx}, current_{idx, attribute_buffers} {}
 
         Idx get_idx() const { return idx_; }
 
