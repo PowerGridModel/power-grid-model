@@ -17,6 +17,8 @@ concept cache_type_c = std::same_as<T, cached_update_t> || std::same_as<T, perma
 struct MainModelOptions {
     static constexpr Idx sequential = -1;
 
+    CalculationType calculation_type{CalculationType::power_flow};
+    CalculationSymmetry calculation_symmetry{CalculationSymmetry::symmetric};
     CalculationMethod calculation_method{CalculationMethod::default_method};
     OptimizerType optimizer_type{OptimizerType::no_optimization};
     OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
