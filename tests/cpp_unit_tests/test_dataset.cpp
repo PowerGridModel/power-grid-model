@@ -199,18 +199,11 @@ auto get_colummnar_element(BufferSpan const& buffer_span, Idx idx) {
     return static_cast<A::InputType>(buffer_span[idx]);
 }
 
-template <typename BufferSpan> Idx get_size(BufferSpan const& buffer_span) { return buffer_span.size(); }
-
-template <typename BufferSpan> auto get_data(BufferSpan const& buffer_span) -> decltype(buffer_span.data()) {
-
-    return buffer_span.data();
-}
-
 template <typename BufferSpan>
 void check_row_span(BufferSpan const& buffer_span, Idx const& total_elements,
                     std::vector<A::InputType> const& a_buffer) {
-    CHECK(get_size(buffer_span) == total_elements);
-    CHECK(get_data(buffer_span) == a_buffer.data());
+    CHECK(std::size(buffer_span) == total_elements);
+    CHECK(std::data(buffer_span) == a_buffer.data());
 }
 } // namespace
 
@@ -245,17 +238,12 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
     };
 
     SUBCASE("Constructor") {
-        using Data =
-            std::conditional_t<std::same_as<RangeObjectType, const_range_object<A::InputType>>, void const, void>;
-
-        auto const& all_attributes = test_meta_data.datasets.front().get_component(A::name);
-
-        auto id_buffer = std::vector<ID>{0, 1, 2, 3, 4};
-        auto const total_elements = narrow_cast<Idx>(id_buffer.size());
-        AttributeBuffer<Data> const attribute_id{.data = static_cast<Data*>(id_buffer.data()),
+        id_buffer = {0, 1, 2, 3, 4};
+        auto const element_total = narrow_cast<Idx>(id_buffer.size());
+        AttributeBuffer<Data> const id_attribute{.data = static_cast<Data*>(id_buffer.data()),
                                                  .meta_attribute = &all_attributes.get_attribute("id")};
-        std::vector<AttributeBuffer<Data>> const elements{attribute_id};
-        RangeObjectType total_range{total_elements, elements};
+        std::vector<AttributeBuffer<Data>> const element{id_attribute};
+        RangeObjectType total_range{element_total, elements};
         auto const start = total_range.begin() + 2;
         auto const stop = total_range.begin() + 4;
         RangeObjectType sub_range{start, stop};
