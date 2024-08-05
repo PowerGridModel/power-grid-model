@@ -117,9 +117,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
         iterator() = default;
         iterator(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
-            : idx_{idx}, current_{idx, attribute_buffers} {}
-
-        Idx get_idx() const { return idx_; }
+            : current_{idx, attribute_buffers} {}
 
       private:
         friend class boost::iterator_core_access;
@@ -131,7 +129,6 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         constexpr void decrement() { --current_.idx_; }
         constexpr void advance(Idx n) { current_.idx_ += n; }
 
-        Idx idx_{};
         Proxy current_;
     };
 
@@ -225,11 +222,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
-    bool is_columnar(std::string_view component) const {
-        return buffers_[find_component(component, true)].data == nullptr;
+    constexpr bool is_columnar(std::string_view component) const {
+        return is_columnar(find_component(component, true));
     }
-    bool is_columnar(Idx const i) const { return buffers_[i].data == nullptr; }
-    bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
+    constexpr bool is_columnar(Idx const i) const { return is_columnar(buffers_[i]); }
+    constexpr bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
 
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
