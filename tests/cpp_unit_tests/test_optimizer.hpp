@@ -162,7 +162,7 @@ constexpr auto strategies_and_methods = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
-            result[idx++] = {strategy, method}; // NOSONAR
+            result[idx++] = {strategy, method}; // NOSONAR {no more than one thing per line}
         }
     }
     return result;
@@ -178,7 +178,7 @@ constexpr auto strategies_and_sides = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto side : tap_sides) {
-            result[idx++] = {strategy, side}; // NOSONAR
+            result[idx++] = {strategy, side}; // NOSONAR {no more than one thing per line}
         }
     }
     return result;

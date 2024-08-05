@@ -642,7 +642,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
         }
 
-        IntS post_process(bool strategy_max, bool previous_down, bool& tap_changed) {
+        IntS repropose_tap(bool strategy_max, bool previous_down, bool& tap_changed) {
             // __prefer_higher__ indicates a preference towards higher voltage
             // that is a result of both the strategy as well as whether the current
             // transformer has a reversed tap_max and tap_min
@@ -667,10 +667,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr bool get_last_check() const { return last_check_; }
         constexpr bool get_tap_reverse() const { return tap_reverse_; }
 
-        constexpr void set_tap_lower_bound(IntS lower_bound) { this->lower_bound_ = lower_bound; }
-        constexpr void set_tap_upper_bound(IntS upper_bound) { this->upper_bound_ = upper_bound; }
-        constexpr void set_last_down(bool last_down) { this->last_down_ = last_down; }
-        constexpr void set_tap_reverse(bool tap_reverse) { this->tap_reverse_ = tap_reverse; }
+        constexpr void set_tap_lower_bound(IntS lower_bound) { lower_bound_ = lower_bound; }
+        constexpr void set_tap_upper_bound(IntS upper_bound) { upper_bound_ = upper_bound; }
+        constexpr void set_last_down(bool last_down) { last_down_ = last_down; }
+        constexpr void set_tap_reverse(bool tap_reverse) { tap_reverse_ = tap_reverse; }
 
         void reset(IntS tap_pos, IntS tap_min, IntS tap_max) {
             last_down_ = false;
@@ -720,7 +720,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool strategy_max{false};
         Idx2Du idx_bs{0, 0};
     };
-    mutable Idx total_iterations{0}; // metric purpose only
+    Idx total_iterations{0}; // metric purpose only
 
   public:
     TapPositionOptimizerImpl(Calculator calculator, StateUpdater updater, OptimizerStrategy strategy,
@@ -743,7 +743,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         if (tap_search && !is_supported(tap_search)) {
             throw TapSearchStrategyIncompatibleError{
-                "Search method is incompatible with optimization strategy: ", strategy_, tap_search.value()};
+                "Search method is incompatible with optimization strategy: ", strategy, tap_search.value()};
         }
 
         if (!tap_search) {
@@ -759,7 +759,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 tap_search_ = SearchMethod::binary_search;
                 break;
             default:
-                throw MissingCaseForEnumError{"TapPositionOptimizer::TapPositionOptimizerImpl", tap_search.value()};
+                throw MissingCaseForEnumError{"TapPositionOptimizer::TapPositionOptimizerImpl", strategy};
             }
         } else {
             tap_search_ = tap_search.value();
@@ -789,22 +789,25 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             return a.transformer.tap_range() < b.transformer.tap_range();
         };
 
+        if (tap_search_ == SearchMethod::binary_search) {
+            binary_search_.reserve(regulator_order.size());
+        }
         if (max_tap_ranges_per_rank.empty()) {
             max_tap_ranges_per_rank.reserve(regulator_order.size());
-            binary_search_.reserve(regulator_order.size());
             for (auto const& same_rank_regulators : regulator_order) {
                 max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
                                                                            same_rank_regulators.end(),
                                                                            tap_pos_range_cmp)
                                                       ->transformer.tap_range());
-                std::vector<BinarySearch> binary_search_group;
-                binary_search_group.reserve(same_rank_regulators.size());
-                for (auto const& regulator : same_rank_regulators) {
-                    binary_search_group.push_back(BinarySearch{regulator.transformer.tap_pos(),
-                                                               regulator.transformer.tap_min(),
-                                                               regulator.transformer.tap_max()});
+                if (tap_search_ == SearchMethod::linear_search) {
+                    continue;
                 }
-                binary_search_.push_back(binary_search_group);
+                std::vector<BinarySearch> binary_search_group(same_rank_regulators.size());
+                std::ranges::transform(same_rank_regulators, binary_search_group.begin(), [](auto const& regulator) {
+                    return BinarySearch{regulator.transformer.tap_pos(), regulator.transformer.tap_min(),
+                                        regulator.transformer.tap_max()};
+                });
+                binary_search_.push_back(std::move(binary_search_group));
             }
         }
         total_iterations = 0;
@@ -818,6 +821,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             strategy_ == OptimizerStrategy::any) {
             return produce_output(regulator_order, std::move(result));
         }
+        // if (strategy_ == OptimizerStrategy::any) {
+        //     return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method,
+        //     SearchMethod::linear_search));
+        // }
         exploit_neighborhood(regulator_order);
         return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method, tap_search_));
     }
@@ -840,16 +847,14 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto iterate_with_fallback(State const& state,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                               CalculationMethod method, std::optional<SearchMethod> search = std::nullopt)
-        -> ResultType {
-        SearchMethod const actual_search = search.value_or(tap_search_);
-        auto fallback = [this, &state, &regulator_order, &method, &actual_search] {
-            std::ignore = iterate(state, regulator_order, CalculationMethod::linear, SearchMethod::linear_search);
-            return iterate(state, regulator_order, method, actual_search);
+                               CalculationMethod method, SearchMethod search) -> ResultType {
+        auto fallback = [this, &state, &regulator_order, &method, &search] {
+            std::ignore = iterate(state, regulator_order, CalculationMethod::linear, search);
+            return iterate(state, regulator_order, method, search);
         };
 
         try {
-            return iterate(state, regulator_order, method, actual_search);
+            return iterate(state, regulator_order, method, search);
         } catch (IterationDiverge const& /* ex */) {
             return fallback();
         } catch (SparseMatrixError const& /* ex */) {
@@ -988,7 +993,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             bool const previous_down = current_bs.get_last_down();
             current_bs.recalibrate(strategy_max);
 
-            IntS const tap_pos = current_bs.post_process(strategy_max, previous_down, tap_changed);
+            IntS const tap_pos = current_bs.repropose_tap(strategy_max, previous_down, tap_changed);
             add_tap_pos_update(tap_pos, transformer, update_data);
         });
 
