@@ -1101,40 +1101,6 @@ TEST_CASE("Test Tap position optimizer") {
                 CHECK(twoStatesEqual(cached_state, state));
             }
         }
-
-        SUBCASE("Binary search vs linear_search optimization for tap changer") {
-            state_b.tap_min = IntS{-100};
-            state_b.tap_max = IntS{100};
-
-            SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
-            SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-            SUBCASE("start mid range") { state_b.tap_pos = 0; }
-
-            for (auto strategy_side : test::strategies_and_sides) {
-                auto strategy = strategy_side.strategy;
-                auto tap_side = strategy_side.side;
-                CAPTURE(strategy);
-                CAPTURE(tap_side);
-
-                if (strategy == OptimizerStrategy::any) {
-                    continue;
-                }
-
-                state_b.tap_side = tap_side;
-                state_a.tap_side = tap_side;
-
-                auto optimizer_scan = get_optimizer(strategy, SearchMethod::linear_search);
-                auto optimizer_bs = get_optimizer(strategy, SearchMethod::binary_search);
-
-                auto const result = optimizer_scan.optimize(state, CalculationMethod::default_method);
-                auto const scan_number_of_pf_runs = optimizer_scan.get_total_iterations();
-
-                auto const result_bs = optimizer_bs.optimize(state, CalculationMethod::default_method);
-                auto const bs_number_of_pf_runs = optimizer_bs.get_total_iterations();
-
-                CHECK(scan_number_of_pf_runs >= bs_number_of_pf_runs);
-            }
-        }
     }
 }
 

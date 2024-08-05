@@ -18,8 +18,7 @@ template <typename State, typename UpdateType, typename StateCalculator, typenam
     requires detail::state_calculator_c<StateCalculator, State> &&
              std::invocable<std::remove_cvref_t<StateUpdater>, UpdateType>
 constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy strategy, StateCalculator calculator,
-                             StateUpdater updater, meta_data::MetaData const& meta_data,
-                             SearchMethod search = SearchMethod::binary_search) {
+                             StateUpdater updater, meta_data::MetaData const& meta_data, SearchMethod search) {
     using enum OptimizerType;
     using namespace std::string_literals;
     using BaseOptimizer = detail::BaseOptimizer<StateCalculator, State>;

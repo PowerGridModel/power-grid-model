@@ -70,8 +70,9 @@ TEST_CASE("Test get optimizer") {
             for (auto strategy_method : strategies_and_methods) {
                 CAPTURE(strategy_method.strategy);
                 CAPTURE(strategy_method.method);
-                auto optimizer = get_optimizer<StubState, StubUpdateType>(
-                    no_optimization, strategy_method.strategy, mock_state_calculator, stub_update, meta_data);
+                auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy_method.strategy,
+                                                                          mock_state_calculator, stub_update, meta_data,
+                                                                          SearchMethod::binary_search);
                 CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.x == 1);
             }
         }
@@ -79,9 +80,10 @@ TEST_CASE("Test get optimizer") {
         SUBCASE("Not implemented type") {
             for (auto strategy : strategies) {
                 CAPTURE(strategy);
-                CHECK_THROWS_AS((get_optimizer<StubState, StubUpdateType>(
-                                    automatic_tap_adjustment, strategy, mock_state_calculator, stub_update, meta_data)),
-                                MissingCaseForEnumError);
+                CHECK_THROWS_AS(
+                    (get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, strategy, mock_state_calculator,
+                                                              stub_update, meta_data, SearchMethod::binary_search)),
+                    MissingCaseForEnumError);
             }
         }
     }

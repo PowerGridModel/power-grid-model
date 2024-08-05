@@ -652,11 +652,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym> auto calculate_power_flow(Options const& options) {
+        SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
+                                                ? SearchMethod::linear_search
+                                                : SearchMethod::binary_search;
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy,
                    calculate_power_flow_<sym>(options.err_tol, options.max_iter),
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
-                   *meta_data_, options.search_method)
+                   *meta_data_, search_method)
             ->optimize(state_, options.calculation_method);
     }
 

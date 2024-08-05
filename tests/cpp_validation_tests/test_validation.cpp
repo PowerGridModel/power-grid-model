@@ -352,11 +352,6 @@ CalculationFunc calculation_func(CaseParam const& param) {
                                          ? OptimizerType::no_optimization
                                          : OptimizerType::automatic_tap_adjustment;
             options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
-            if (options.optimizer_strategy == OptimizerStrategy::any) {
-                options.search_method = SearchMethod::linear_search;
-            } else {
-                options.search_method = optimizer_search_mapping.at(param.search_method);
-            }
 
             if (param.sym) {
                 return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
@@ -640,6 +635,7 @@ TEST_CASE("Validation test single") {
 
 TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+
     for (CaseParam const& param : all_cases) {
         SUBCASE(param.case_name.c_str()) {
             try {
