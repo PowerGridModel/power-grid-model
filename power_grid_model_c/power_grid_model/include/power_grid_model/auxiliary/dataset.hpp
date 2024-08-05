@@ -119,7 +119,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         iterator(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : current_{idx, attribute_buffers}, idx_{idx} {}
 
-        Idx const get_idx() const { return idx_; }
+        Idx get_idx() const { return idx_; }
 
       private:
         friend class boost::iterator_core_access;
