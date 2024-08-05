@@ -817,14 +817,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                   CalculationMethod method) -> MathOutput<ResultType> {
         pilot_run(regulator_order);
 
-        if (auto result = iterate_with_fallback(state, regulator_order, method, SearchMethod::linear_search);
-            strategy_ == OptimizerStrategy::any) {
+        if (auto result = iterate_with_fallback(state, regulator_order, method, tap_search_);
+            strategy_ == OptimizerStrategy::any || strategy_ == OptimizerStrategy::fast_any) {
             return produce_output(regulator_order, std::move(result));
         }
-        // if (strategy_ == OptimizerStrategy::any) {
-        //     return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method,
-        //     SearchMethod::linear_search));
-        // }
+
         exploit_neighborhood(regulator_order);
         return produce_output(regulator_order, iterate_with_fallback(state, regulator_order, method, tap_search_));
     }

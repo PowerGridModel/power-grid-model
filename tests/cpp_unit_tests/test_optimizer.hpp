@@ -203,7 +203,7 @@ constexpr auto strategy_search_and_sides = [] {
                 continue;
             }
             for (auto side : tap_sides) {
-                result[idx++] = {strategy, search, side}; // NOSONAR
+                result[idx++] = {strategy, search, side}; // NOSONAR (no-more-than-one-thing-per-line)
             }
         }
     }
@@ -228,7 +228,7 @@ constexpr auto strategy_method_and_searches = [] {
                 continue;
             }
             for (auto method : calculation_methods) {
-                result[idx++] = {strategy, method, search}; // NOSONAR
+                result[idx++] = {strategy, method, search}; // NOSONAR (no-more-than-one-thing-per-line)
             }
         }
     }
