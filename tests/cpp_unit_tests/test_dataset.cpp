@@ -251,10 +251,10 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
                                                  .meta_attribute = &all_attributes.get_attribute("id")};
         std::vector<AttributeBuffer<Data>> const elements{attribute_id};
         RangeObjectType total_range{total_elements, elements};
-        auto const start = total_range.begin() + 1;
+        auto const start = total_range.begin() + 2;
         auto const stop = total_range.begin() + 4;
         RangeObjectType sub_range{start, stop};
-        CHECK(sub_range[0].get() == total_range[1].get());
+        CHECK(sub_range[0].get() == total_range[2].get());
     }
 
     SUBCASE("Read access") {

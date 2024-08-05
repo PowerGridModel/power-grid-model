@@ -140,7 +140,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         : size_{size}, attribute_buffers_{std::move(attribute_buffers)} {}
     ColumnarAttributeRange(ColumnarAttributeRange::iterator begin, ColumnarAttributeRange::iterator end)
         : size_{std::distance(begin, end)},
-          start_{std::distance(get(0), begin)},
+          start_{begin->idx_},
           attribute_buffers_{begin->attribute_buffers_.begin(), begin->attribute_buffers_.end()} {
         assert(begin + std::distance(begin, end) == end);
     }
