@@ -117,7 +117,9 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
         iterator() = default;
         iterator(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
-            : current_{idx, attribute_buffers} {}
+            : current_{idx, attribute_buffers}, idx_{idx} {}
+
+        Idx const get_idx() const { return idx_; }
 
       private:
         friend class boost::iterator_core_access;
@@ -129,6 +131,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         constexpr void decrement() { --current_.idx_; }
         constexpr void advance(Idx n) { current_.idx_ += n; }
 
+        Idx idx_{};
         Proxy current_;
     };
 
@@ -137,6 +140,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         : size_{size}, attribute_buffers_{std::move(attribute_buffers)} {}
     ColumnarAttributeRange(ColumnarAttributeRange::iterator begin, ColumnarAttributeRange::iterator end)
         : size_{std::distance(begin, end)},
+          start_{std::distance(get(0), begin)},
           attribute_buffers_{begin->attribute_buffers_.begin(), begin->attribute_buffers_.end()} {
         assert(begin + std::distance(begin, end) == end);
     }
@@ -149,9 +153,10 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     auto operator[](Idx idx) const { return *get(idx); }
 
   private:
-    iterator get(Idx idx) const { return iterator{idx, attribute_buffers_}; }
+    iterator get(Idx idx) const { return iterator{start_ + idx, attribute_buffers_}; }
 
     Idx size_{};
+    Idx start_{};
     std::vector<AttributeBuffer<Data>> attribute_buffers_;
 };
 

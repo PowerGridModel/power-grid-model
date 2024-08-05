@@ -254,9 +254,6 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
         auto const start = total_range.begin() + 1;
         auto const stop = total_range.begin() + 4;
         RangeObjectType sub_range{start, stop};
-        auto const tr0 = total_range[0].get();
-        auto const tr1 = total_range[1].get();
-        auto const sr0 = sub_range[0].get();
         CHECK(sub_range[0].get() == total_range[1].get());
     }
 
