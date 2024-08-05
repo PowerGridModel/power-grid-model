@@ -7,15 +7,16 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file.
 """
 
-from typing import Dict, List, Tuple, Union
+from typing import TypeVar, Union
 
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType
 
-# When we're dropping python 3.8, we should introduce proper NumPy type hinting
+ComponentTypeVar = TypeVar("ComponentTypeVar", ComponentType, str)
 
 SingleArray = Union[np.ndarray]
+
 """
 A single array is a one-dimensional structured containing a list of components of the same type.
 
@@ -26,12 +27,13 @@ A single array is a one-dimensional structured containing a list of components o
 """
 
 DenseBatchArray = Union[np.ndarray]
+
 """
 A dense batch array is a two-dimensional structured numpy array containing a list of components of 
 the same type for each scenario.
 """
 
-SparseBatchArray = Dict[str, Union[np.ndarray, SingleArray]]
+SparseBatchArray = dict[str, np.ndarray | SingleArray]
 """
 A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
@@ -52,17 +54,17 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
         - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
 """
 
-BatchArray = Union[DenseBatchArray, SparseBatchArray]
+BatchArray = DenseBatchArray | SparseBatchArray
 """
 A batch array is a either a :class:`DenseBatchArray` or a :class:`SparseBatchArray`.
 """
 
-DataArray = Union[SingleArray, BatchArray]
+DataArray = SingleArray | BatchArray
 """
 A data array can be a :class:`SingleArray` or a :class:`BatchArray`.
 """
 
-SingleDataset = Dict[ComponentType, SingleArray]
+SingleDataset = dict[ComponentTypeVar, SingleArray]
 """
 A single dataset is a dictionary where the keys are the component types and the values are
 :class:`SingleArray`
@@ -70,14 +72,14 @@ A single dataset is a dictionary where the keys are the component types and the 
 - Example: {"node": :class:`SingleArray`, "line": :class:`SingleArray`}
 """
 
-BatchDataset = Dict[ComponentType, BatchArray]
+BatchDataset = dict[ComponentTypeVar, BatchArray]
 """
 A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchArray`
 
 - Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
 
-Dataset = Union[SingleDataset, BatchDataset]
+Dataset = SingleDataset | BatchDataset
 """
 A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
@@ -87,7 +89,7 @@ A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
     - batch: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
 
-BatchList = List[SingleDataset]
+BatchList = list[SingleDataset]
 """
 A batch list is an alternative representation of a batch. It is a list of single datasets, where each single dataset
 is actually a batch. The batch list is intended as an intermediate data type, during conversions.
@@ -109,14 +111,14 @@ Symmetrical values can be anything like cable properties, symmetric loads, etc.
 - Example: 10500.0
 """
 
-AsymValue = Tuple[RealValue, RealValue, RealValue]
+AsymValue = tuple[RealValue, RealValue, RealValue]
 """
 Asymmetrical values are three-phase values like p or u_measured.
 
 - Example: (10400.0, 10500.0, 10600.0)
 """
 
-AttributeValue = Union[RealValue, NominalValue, AsymValue]
+AttributeValue = RealValue | NominalValue | AsymValue
 """
 When representing a grid as a native python structure, each attribute (u_rated etc) is either a nominal value,
 a real value, or a tuple of three real values.
@@ -128,7 +130,7 @@ a real value, or a tuple of three real values.
     - asym: (10400.0, 10500.0, 10600.0)
 """
 
-Component = Dict[str, Union[AttributeValue, str]]
+Component = dict[str, AttributeValue | str]
 """
 A component, when represented in native python format, is a dictionary, where the keys are the attributes and the values
 are the corresponding values. It is allowed to add extra fields, containing either an AttributeValue or a string.
@@ -136,7 +138,7 @@ are the corresponding values. It is allowed to add extra fields, containing eith
 - Example: {"id": 1, "u_rated": 10500.0, "original_id": "Busbar #1"}
 """
 
-ComponentList = List[Component]
+ComponentList = list[Component]
 """
 A component list is a list containing components. In essence it stores the same information as a np.ndarray,
 but in a native python format, without using numpy.
@@ -144,7 +146,7 @@ but in a native python format, without using numpy.
 - Example: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}]
 """
 
-SinglePythonDataset = Dict[ComponentType, ComponentList]
+SinglePythonDataset = dict[ComponentTypeVar, ComponentList]
 """
 A single dataset in native python representation is a dictionary, where the keys are the component names and the
 values are a list of all the instances of such a component. In essence it stores the same information as a
@@ -158,7 +160,7 @@ SingleDataset, but in a native python format, without using numpy.
   }
 """
 
-BatchPythonDataset = List[SinglePythonDataset]
+BatchPythonDataset = list[SinglePythonDataset]
 """
 A batch dataset in native python representation is a list of dictionaries, where the keys are the component names and
 the values are a list of all the instances of such a component. In essence it stores the same information as a
@@ -170,7 +172,7 @@ BatchDataset, but in a native python format, without using numpy. Actually it lo
    {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
 
-PythonDataset = Union[SinglePythonDataset, BatchPythonDataset]
+PythonDataset = SinglePythonDataset | BatchPythonDataset
 """
 A general python data set can be a single or a batch python dataset.
 

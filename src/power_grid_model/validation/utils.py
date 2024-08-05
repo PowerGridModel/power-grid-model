@@ -6,7 +6,7 @@
 Utilities used for validation. Only errors_to_string() is intended for end users.
 """
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 import numpy as np
 
@@ -16,7 +16,7 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
 
-def eval_expression(data: np.ndarray, expression: Union[int, float, str]) -> np.ndarray:
+def eval_expression(data: np.ndarray, expression: int | float | str) -> np.ndarray:
     """
     Wrapper function that checks the type of the 'expression'. If the expression is a string, it is assumed to be a
     field expression and the expression is validated. Otherwise it is assumed to be a numerical value and the value
@@ -126,10 +126,10 @@ def update_component_data(component: ComponentType, input_data: np.ndarray, upda
 
 
 def errors_to_string(
-    errors: Union[List[ValidationError], Dict[int, List[ValidationError]], None],
+    errors: list[ValidationError] | dict[int, list[ValidationError]] | None,
     name: str = "the data",
     details: bool = False,
-    id_lookup: Optional[Union[List[str], Dict[int, str]]] = None,
+    id_lookup: Optional[list[str] | dict[int, str]] = None,
 ) -> str:
     """
     Convert a set of errors (list or dict) to a human readable string representation.
@@ -162,7 +162,7 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: Union[str, ComponentType], field: str, data_type: DatasetType = DatasetType.input):
+def nan_type(component: str | ComponentType, field: str, data_type: DatasetType = DatasetType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
@@ -211,7 +211,7 @@ def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[
 
 
 def set_default_value(
-    data: SingleDataset, component: ComponentType, field: str, default_value: Union[int, float, np.ndarray]
+    data: SingleDataset, component: ComponentType, field: str, default_value: int | float | np.ndarray
 ):
     """
     This function sets the default value in the data that is to be validated, so the default values are included in the
@@ -238,7 +238,7 @@ def set_default_value(
         data[component][field][mask] = default_value
 
 
-def get_valid_ids(data: SingleDataset, ref_components: Union[ComponentType, List[ComponentType]]) -> List[int]:
+def get_valid_ids(data: SingleDataset, ref_components: ComponentType | list[ComponentType]) -> list[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -247,7 +247,7 @@ def get_valid_ids(data: SingleDataset, ref_components: Union[ComponentType, List
         ref_components: The component or components in which we want to look for ids
 
     Returns:
-        List[int]: the list of valid IDs
+        list[int]: the list of valid IDs
     """
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.

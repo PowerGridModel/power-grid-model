@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Dict
 
 import numpy as np
 import pytest
@@ -40,7 +39,7 @@ from power_grid_model.validation.utils import nan_type
 
 
 @pytest.fixture
-def input_data() -> Dict[ComponentType, np.ndarray]:
+def input_data() -> dict[ComponentType, np.ndarray]:
     node = initialize_array(DatasetType.input, ComponentType.node, 4)
     node["id"] = [0, 2, 1, 2]
     node["u_rated"] = [10.5e3, 10.5e3, 0, 10.5e3]

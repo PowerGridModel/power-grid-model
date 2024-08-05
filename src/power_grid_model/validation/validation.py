@@ -11,7 +11,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
-from typing import Dict, List, Optional, Union, cast
+from typing import Optional, cast
 
 import numpy as np
 
@@ -63,7 +63,7 @@ from power_grid_model.validation.utils import update_input_data
 
 def validate_input_data(
     input_data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
-) -> Optional[List[ValidationError]]:
+) -> Optional[list[ValidationError]]:
     """
     Validates the entire input dataset:
 
@@ -87,7 +87,7 @@ def validate_input_data(
     input_data_copy = copy.deepcopy(input_data)
     assert_valid_data_structure(input_data_copy, DatasetType.input)
 
-    errors: List[ValidationError] = []
+    errors: list[ValidationError] = []
     errors += validate_required_values(input_data_copy, calculation_type, symmetric)
     errors += validate_unique_ids_across_components(input_data_copy)
     errors += validate_values(input_data_copy, calculation_type)
@@ -99,7 +99,7 @@ def validate_batch_data(
     update_data: BatchDataset,
     calculation_type: Optional[CalculationType] = None,
     symmetric: bool = True,
-) -> Optional[Dict[int, List[ValidationError]]]:
+) -> Optional[dict[int, list[ValidationError]]]:
     """
     The input dataset is validated:
 
@@ -129,7 +129,7 @@ def validate_batch_data(
     """
     assert_valid_data_structure(input_data, DatasetType.input)
 
-    input_errors: List[ValidationError] = list(validate_unique_ids_across_components(input_data))
+    input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
     # Splitting update_data_into_batches may raise TypeErrors and ValueErrors
     batch_data = convert_batch_dataset_to_batch_list(update_data)
@@ -137,7 +137,7 @@ def validate_batch_data(
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
         assert_valid_data_structure(batch_update_data, DatasetType.update)
-        id_errors: List[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
+        id_errors: list[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
 
         batch_errors = input_errors + id_errors
         if not id_errors:
@@ -190,7 +190,7 @@ def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
             )
 
 
-def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComponentNotUniqueError]:
+def validate_unique_ids_across_components(data: SingleDataset) -> list[MultiComponentNotUniqueError]:
     """
     Checks if all ids in the input dataset are unique
 
@@ -205,8 +205,8 @@ def validate_unique_ids_across_components(data: SingleDataset) -> List[MultiComp
 
 
 def validate_ids_exist(
-    update_data: Dict[ComponentType, np.ndarray], input_data: SingleDataset
-) -> List[IdNotInDatasetError]:
+    update_data: dict[ComponentType, np.ndarray], input_data: SingleDataset
+) -> list[IdNotInDatasetError]:
     """
     Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
     can only update existing components.
@@ -229,7 +229,7 @@ def validate_ids_exist(
 def _process_power_sigma_and_p_q_sigma(
     data: SingleDataset,
     sensor: ComponentType,
-    required_list: Dict[Union[ComponentType, str], List[Union[str, List[str]]]],
+    required_list: dict[ComponentType | str, list[str | list[str]]],
 ) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
@@ -251,7 +251,7 @@ def _process_power_sigma_and_p_q_sigma(
 
         for sublist, should_remove in zip(_sensor_mask, _mask):
             if should_remove and "power_sigma" in sublist:
-                sublist = cast(List[str], sublist)
+                sublist = cast(list[str], sublist)
                 sublist.remove("power_sigma")
 
     if _check_sensor_in_data(data, sensor):
@@ -267,7 +267,7 @@ def _process_power_sigma_and_p_q_sigma(
 
 def validate_required_values(
     data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
-) -> List[MissingValueError]:
+) -> list[MissingValueError]:
     """
     Checks if all required data is available.
 
@@ -280,7 +280,7 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required: Dict[Union[ComponentType, str], List[Union[str, List[str]]]] = {"base": ["id"]}
+    required: dict[ComponentType | str, list[str | list[str]]] = {"base": ["id"]}
 
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
@@ -432,7 +432,7 @@ def _validate_required_in_data(data, required):
     return list(chain(*results))
 
 
-def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> List[ValidationError]:
+def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> list[ValidationError]:
     """
     For each component supplied in the data, call the appropriate validation function
 
@@ -444,7 +444,7 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
         An empty list if all required data is valid, or a list of ValidationErrors.
 
     """
-    errors: List[ValidationError] = list(
+    errors: list[ValidationError] = list(
         all_finite(
             data,
             {
@@ -496,18 +496,18 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
 # pylint: disable=missing-function-docstring
 
 
-def validate_base(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
-    errors: List[ValidationError] = list(all_unique(data, component, "id"))
+def validate_base(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
+    errors: list[ValidationError] = list(all_unique(data, component, "id"))
     return errors
 
 
-def validate_node(data: SingleDataset) -> List[ValidationError]:
+def validate_node(data: SingleDataset) -> list[ValidationError]:
     errors = validate_base(data, ComponentType.node)
     errors += all_greater_than_zero(data, ComponentType.node, "u_rated")
     return errors
 
 
-def validate_branch(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_branch(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(data, component, "from_node", ComponentType.node)
     errors += all_valid_ids(data, component, "to_node", ComponentType.node)
@@ -517,7 +517,7 @@ def validate_branch(data: SingleDataset, component: ComponentType) -> List[Valid
     return errors
 
 
-def validate_line(data: SingleDataset) -> List[ValidationError]:
+def validate_line(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, ComponentType.line)
     errors += all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
     errors += all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
@@ -525,7 +525,7 @@ def validate_line(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_transformer(data: SingleDataset) -> List[ValidationError]:
+def validate_transformer(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, ComponentType.transformer)
     errors += all_greater_than_zero(data, ComponentType.transformer, "u1")
     errors += all_greater_than_zero(data, ComponentType.transformer, "u2")
@@ -563,7 +563,7 @@ def validate_transformer(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_branch3(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_branch3(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(data, component, "node_1", ComponentType.node)
     errors += all_valid_ids(data, component, "node_2", ComponentType.node)
@@ -578,7 +578,7 @@ def validate_branch3(data: SingleDataset, component: ComponentType) -> List[Vali
 
 
 # pylint: disable=R0915
-def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationError]:
+def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch3(data, ComponentType.three_winding_transformer)
     errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "u1")
     errors += all_greater_than_zero(data, ComponentType.three_winding_transformer, "u2")
@@ -791,14 +791,14 @@ def validate_three_winding_transformer(data: SingleDataset) -> List[ValidationEr
     return errors
 
 
-def validate_appliance(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_appliance(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
     errors += all_boolean(data, component, "status")
     errors += all_valid_ids(data, component, "node", ComponentType.node)
     return errors
 
 
-def validate_source(data: SingleDataset) -> List[ValidationError]:
+def validate_source(data: SingleDataset) -> list[ValidationError]:
     errors = validate_appliance(data, ComponentType.source)
     errors += all_greater_than_zero(data, ComponentType.source, "u_ref")
     errors += all_greater_than_zero(data, ComponentType.source, "sk")
@@ -807,18 +807,18 @@ def validate_source(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_generic_load_gen(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_generic_load_gen(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_appliance(data, component)
     errors += all_valid_enum_values(data, component, "type", LoadGenType)
     return errors
 
 
-def validate_shunt(data: SingleDataset) -> List[ValidationError]:
+def validate_shunt(data: SingleDataset) -> list[ValidationError]:
     errors = validate_appliance(data, ComponentType.shunt)
     return errors
 
 
-def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "u_sigma")
     errors += all_greater_than_zero(data, component, "u_measured")
@@ -826,7 +826,7 @@ def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentTyp
     return errors
 
 
-def validate_generic_power_sensor(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_generic_power_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
     errors += all_greater_than_zero(data, component, "power_sigma")
     errors += all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)
@@ -923,7 +923,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
     return errors
 
 
-def validate_fault(data: SingleDataset) -> List[ValidationError]:
+def validate_fault(data: SingleDataset) -> list[ValidationError]:
     errors = validate_base(data, ComponentType.fault)
     errors += all_boolean(data, ComponentType.fault, "status")
     errors += all_valid_enum_values(data, ComponentType.fault, "fault_type", FaultType)
@@ -936,7 +936,7 @@ def validate_fault(data: SingleDataset) -> List[ValidationError]:
     return errors
 
 
-def validate_regulator(data: SingleDataset, component: ComponentType) -> List[ValidationError]:
+def validate_regulator(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
     errors += all_valid_ids(
         data,
@@ -947,7 +947,7 @@ def validate_regulator(data: SingleDataset, component: ComponentType) -> List[Va
     return errors
 
 
-def validate_transformer_tap_regulator(data: SingleDataset) -> List[ValidationError]:
+def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationError]:
     errors = validate_regulator(data, ComponentType.transformer_tap_regulator)
     errors += all_boolean(data, ComponentType.transformer_tap_regulator, "status")
     errors += all_valid_enum_values(
