@@ -239,11 +239,11 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
 
     SUBCASE("Constructor") {
         id_buffer = {0, 1, 2, 3, 4};
-        auto const element_total = narrow_cast<Idx>(id_buffer.size());
+        auto const elements_total = narrow_cast<Idx>(id_buffer.size());
         AttributeBuffer<Data> const id_attribute{.data = static_cast<Data*>(id_buffer.data()),
                                                  .meta_attribute = &all_attributes.get_attribute("id")};
         std::vector<AttributeBuffer<Data>> const element{id_attribute};
-        RangeObjectType total_range{element_total, elements};
+        RangeObjectType total_range{elements_total, element};
         auto const start = total_range.begin() + 2;
         auto const stop = total_range.begin() + 4;
         RangeObjectType sub_range{start, stop};
