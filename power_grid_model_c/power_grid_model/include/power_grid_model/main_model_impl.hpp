@@ -724,11 +724,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
             throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
         }();
-        
+
         SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
                                                 ? SearchMethod::linear_search
                                                 : SearchMethod::binary_search;
-        
+
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy, calculator,
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
