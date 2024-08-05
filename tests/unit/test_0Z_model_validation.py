@@ -4,7 +4,7 @@
 
 from copy import copy
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -14,7 +14,7 @@ from power_grid_model.enum import TapChangingStrategy
 
 from .utils import EXPORT_OUTPUT, PowerGridModelWithExt, compare_result, import_case_data, pytest_cases, save_json_data
 
-calculation_function_arguments_map: dict[str, Tuple[Callable, list[str]]] = {
+calculation_function_arguments_map: dict[str, tuple[Callable, list[str]]] = {
     "power_flow": (
         PowerGridModelWithExt.calculate_power_flow_with_ext,
         [

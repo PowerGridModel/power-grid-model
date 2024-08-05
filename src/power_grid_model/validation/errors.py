@@ -8,7 +8,7 @@ Error classes
 import re
 from abc import ABC
 from enum import Enum
-from typing import Any, Iterable, Optional, Set, Type
+from typing import Any, Iterable, Optional, Type
 
 from power_grid_model import ComponentType
 
@@ -205,7 +205,7 @@ class NotIdenticalError(SingleFieldValidationError):
 
     _message = "Field {field} is not unique for {n} {objects}: {num_unique} different values."
     values: list[Any]
-    unique: Set[Any]
+    unique: set[Any]
     num_unique: int
 
     def __init__(self, component: ComponentType, field: str, ids: Iterable[int], values: list[Any]):

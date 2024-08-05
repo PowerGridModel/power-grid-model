@@ -7,7 +7,6 @@ import platform
 import shutil
 from itertools import chain
 from pathlib import Path
-from typing import List
 
 # noinspection PyPackageRequirements
 from setuptools import Extension, setup

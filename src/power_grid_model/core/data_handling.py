@@ -8,7 +8,7 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping, Tuple
+from typing import Mapping
 
 import numpy as np
 
@@ -137,7 +137,7 @@ def create_output_data(
     for name, count in all_component_count.items():
         # shape
         if is_batch:
-            shape: Tuple[int] | Tuple[int, int] = (batch_size, count)
+            shape: tuple[int] | tuple[int, int] = (batch_size, count)
         else:
             shape = (count,)
         result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
