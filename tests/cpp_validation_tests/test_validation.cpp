@@ -323,7 +323,7 @@ struct CaseParam {
     double rtol{};
     bool fail{};
     [[no_unique_address]] BatchParameter batch_parameter{};
-    std::map<std::string, double> atol;
+    std::map<std::string, double, std::less<>> atol;
 
     static std::string replace_backslash(std::string const& str) {
         std::string str_out{str};
