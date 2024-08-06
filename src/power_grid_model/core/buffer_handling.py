@@ -8,7 +8,7 @@ Power grid model buffer handler
 
 
 from dataclasses import dataclass
-from typing import Mapping, Optional
+from typing import Mapping, Optional, TypeVar
 
 import numpy as np
 
@@ -17,6 +17,8 @@ from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
+
+ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 
 @dataclass
@@ -233,7 +235,7 @@ def get_buffer_view(data: np.ndarray | Mapping[str, np.ndarray], schema: Compone
 
 def create_buffer(
     properties: BufferProperties, schema: ComponentMetaData
-) -> np.ndarray | dict[ComponentType, np.ndarray]:
+) -> np.ndarray | dict[ComponentTypeVar, np.ndarray]:
     """
     Create a buffer with the provided properties and type.
 
