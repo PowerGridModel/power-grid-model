@@ -25,7 +25,7 @@ using IntS = int8_t;
 // struct of indexing to sub modules
 struct Idx2D {
     Idx group; // sequence number of outer module/groups
-    Idx pos;   //  sequence number inside the group
+    Idx pos;   // sequence number inside the group
 
     friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
 };

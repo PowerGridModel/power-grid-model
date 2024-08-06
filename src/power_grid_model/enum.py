@@ -86,6 +86,10 @@ class TapChangingStrategy(IntEnum):
     """
     Adjust tap position automatically; optimize for the higher end of the voltage band
     """
+    fast_any_tap = 4
+    """
+    Adjust tap position automatically; optimize for any value in the voltage band; binary search
+    """
 
 
 class MeasuredTerminalType(IntEnum):

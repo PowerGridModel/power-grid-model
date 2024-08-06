@@ -255,4 +255,13 @@ class UnreachableHit : public PowerGridError {
     }
 };
 
+class TapSearchStrategyIncompatibleError : public InvalidArguments {
+  public:
+    template <typename T1, typename T2>
+    TapSearchStrategyIncompatibleError(std::string const& method, const T1& value1, const T2& value2)
+        : InvalidArguments{
+              method, std::string{typeid(T1).name()} + " #" + detail::to_string(static_cast<IntS>(value1)) + " and " +
+                          std::string{typeid(T2).name()} + " #" + detail::to_string(static_cast<IntS>(value2))} {}
+};
+
 } // namespace power_grid_model

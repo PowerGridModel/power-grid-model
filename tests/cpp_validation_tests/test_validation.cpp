@@ -6,7 +6,7 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/container.hpp>
-#include <power_grid_model/main_model_wrapper.hpp>
+#include <power_grid_model/main_model.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
@@ -303,7 +303,8 @@ std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_m
     {"disabled", OptimizerStrategy::any},
     {"any_valid_tap", OptimizerStrategy::any},
     {"min_voltage_tap", OptimizerStrategy::global_minimum},
-    {"max_voltage_tap", OptimizerStrategy::global_maximum}};
+    {"max_voltage_tap", OptimizerStrategy::global_maximum},
+    {"fast_any_tap", OptimizerStrategy::fast_any}};
 
 // case parameters
 struct CaseParam {
@@ -347,6 +348,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
                                          ? OptimizerType::no_optimization
                                          : OptimizerType::automatic_tap_adjustment;
             options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
+
             if (param.sym) {
                 return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
             }
@@ -628,6 +630,7 @@ TEST_CASE("Validation test single") {
 
 TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+
     for (CaseParam const& param : all_cases) {
         SUBCASE(param.case_name.c_str()) {
             try {
