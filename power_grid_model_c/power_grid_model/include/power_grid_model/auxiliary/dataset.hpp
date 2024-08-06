@@ -48,7 +48,7 @@ struct DatasetInfo {
     MetaDataset const* dataset{nullptr};
     std::vector<ComponentInfo> component_info;
 };
-template <typename Data> struct AttributeBuffer {
+template <class Data> struct AttributeBuffer {
     Data* data{nullptr};
     MetaAttribute const* meta_attribute{nullptr};
     bool is_c_order{true};
@@ -223,7 +223,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
     constexpr bool is_columnar(std::string_view component) const {
-        return is_columnar(find_component(component, true));
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_columnar(idx);
     }
     constexpr bool is_columnar(Idx const i) const { return is_columnar(buffers_[i]); }
     constexpr bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
