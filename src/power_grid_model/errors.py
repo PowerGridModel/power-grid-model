@@ -113,3 +113,7 @@ class PowerGridUnreachableHitError(PowerGridError):
     """Supposedly unreachable code was hit.
 
     This usually means a failed assumption and may be caused by a bug in the PGM library."""
+
+
+class TapSearchStrategyIncompatibleError(PowerGridError):
+    """Automatic tap search method and optimization strategy is incompatible with the current configuration."""

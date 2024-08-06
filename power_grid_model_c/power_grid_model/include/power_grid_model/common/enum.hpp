@@ -118,6 +118,12 @@ enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
     global_maximum = 2,               // global_maximum = argmax{f(x) \in Range} for x in Domain
     local_minimum = 3,                // local_minimum = Any{argmin{f(x) \in Range}} for x in Domain
     local_maximum = 4,                // local_maximum = Any{argmax{f(x) \in Range}} for x in Domain
+    fast_any = 5,                     // fast_any = Any{f(x) \in Range} for x \in Domain, but faster
+};
+
+enum class SearchMethod : IntS { // Which type of tap search method for finite element optimization process
+    linear_search = 0,           // use linear_search method: one step per iteration
+    binary_search = 1,           // use binary search: half a tap range at a time
 };
 
 } // namespace power_grid_model

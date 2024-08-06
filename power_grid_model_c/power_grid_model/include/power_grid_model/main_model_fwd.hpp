@@ -21,7 +21,7 @@ struct MainModelOptions {
     CalculationSymmetry calculation_symmetry{CalculationSymmetry::symmetric};
     CalculationMethod calculation_method{CalculationMethod::default_method};
     OptimizerType optimizer_type{OptimizerType::no_optimization};
-    OptimizerStrategy optimizer_strategy{OptimizerStrategy::any};
+    OptimizerStrategy optimizer_strategy{OptimizerStrategy::fast_any};
 
     double err_tol{1e-8};
     Idx max_iter{20};

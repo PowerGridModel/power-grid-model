@@ -710,7 +710,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
     }
 
-    // Single calculation
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {
@@ -726,10 +725,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
         }();
 
+        SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
+                                                ? SearchMethod::linear_search
+                                                : SearchMethod::binary_search;
+
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy, calculator,
                    [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
-                   *meta_data_)
+                   *meta_data_, search_method)
             ->optimize(state_, options.calculation_method);
     }
 
