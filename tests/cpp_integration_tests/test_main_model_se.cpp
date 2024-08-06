@@ -22,9 +22,9 @@ struct NewtonRaphsonCalculationMethod {
 };
 } // namespace
 
-TEST_CASE_TEMPLATE("Test main model - state estimation", CalculationMethod, IterativeLinearCalculationMethod,
+TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLinearCalculationMethod,
                    NewtonRaphsonCalculationMethod) {
-    constexpr auto calculation_method = CalculationMethod::calculation_method;
+    constexpr auto calculation_method = CalcMethod::calculation_method;
 
     MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
 
