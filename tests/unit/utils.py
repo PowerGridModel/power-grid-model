@@ -6,7 +6,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 import numpy as np
 import pytest
@@ -93,7 +93,7 @@ def get_output_type(calculation_type: str, sym: bool) -> str:
     return "asym_output"
 
 
-def get_test_case_paths(calculation_type: str, test_cases: Optional[List[str]] = None) -> Dict[str, Path]:
+def get_test_case_paths(calculation_type: str, test_cases: Optional[list[str]] = None) -> dict[str, Path]:
     """get a list of all cases, directories in validation datasets"""
     calculation_type_dir = DATA_PATH / calculation_type
     test_case_paths = {
@@ -173,7 +173,7 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
             )
 
 
-def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[List[str]] = None):
+def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[list[str]] = None):
     if data_dir is not None:
         relevant_calculations = [data_dir]
     else:
@@ -198,7 +198,7 @@ def bool_params(true_id: str, false_id: Optional[str] = None, **kwargs):
     yield pytest.param(True, **kwargs, id=true_id)
 
 
-def dict_params(params: Dict[Any, str], **kwargs):
+def dict_params(params: dict[Any, str], **kwargs):
     for value, param_id in params.items():
         yield pytest.param(value, **kwargs, id=param_id)
 
@@ -224,7 +224,7 @@ def save_json_data(json_file: str, data: Dataset):
     json_serialize_to_file(data_file, data)
 
 
-def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: Union[float, Dict[str, float]]):
+def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: float | dict[str, float]):
     for key, expected_data in expected.items():
         for col_name in expected_data.dtype.names:
             actual_col = actual[key][col_name]

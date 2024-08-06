@@ -8,7 +8,7 @@ Power grid model buffer handler
 
 
 from dataclasses import dataclass
-from typing import Dict, Mapping, Optional, Tuple, Union
+from typing import Mapping, Optional
 
 import numpy as np
 
@@ -148,12 +148,12 @@ def _get_sparse_buffer_properties(data: Mapping[str, np.ndarray]) -> BufferPrope
     )
 
 
-def get_buffer_properties(data: Union[np.ndarray, Mapping[str, np.ndarray]]) -> BufferProperties:
+def get_buffer_properties(data: np.ndarray | Mapping[str, np.ndarray]) -> BufferProperties:
     """
     Extract the properties of the dataset component
 
     Args:
-        data (Union[np.ndarray, Mapping[str, np.ndarray]]): the dataset component.
+        data (np.ndarray | Mapping[str, np.ndarray]): the dataset component.
 
     Raises:
         ValueError: if the dataset component contains conflicting or bad data.
@@ -214,7 +214,7 @@ def _get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMet
     )
 
 
-def get_buffer_view(data: Union[np.ndarray, Mapping[str, np.ndarray]], schema: ComponentMetaData) -> CBuffer:
+def get_buffer_view(data: np.ndarray | Mapping[str, np.ndarray], schema: ComponentMetaData) -> CBuffer:
     """
     Get a C API compatible view on a buffer.
 
@@ -233,7 +233,7 @@ def get_buffer_view(data: Union[np.ndarray, Mapping[str, np.ndarray]], schema: C
 
 def create_buffer(
     properties: BufferProperties, schema: ComponentMetaData
-) -> Union[np.ndarray, Dict[ComponentType, np.ndarray]]:
+) -> np.ndarray | dict[ComponentType, np.ndarray]:
     """
     Create a buffer with the provided properties and type.
 
@@ -245,7 +245,7 @@ def create_buffer(
         ValueError: if the buffer properties are not consistent.
 
     Returns:
-        Union[np.ndarray, Dict[str, np.ndarray]]: a buffer with the correct properties.
+        np.ndarray | dict[[str, np.ndarray]: a buffer with the correct properties.
     """
     if properties.is_sparse:
         return _create_sparse_buffer(properties=properties, schema=schema)
@@ -270,7 +270,7 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
     if properties.is_sparse:
         raise ValueError(f"A uniform buffer cannot be sparse. {VALIDATOR_MSG}")
 
-    shape: Union[int, Tuple[int, int]] = (
+    shape: int | tuple[int, int] = (
         (properties.batch_size, properties.n_elements_per_scenario)
         if properties.is_batch
         else properties.n_elements_per_scenario
@@ -278,7 +278,7 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
     return np.empty(shape=shape, dtype=schema.dtype)
 
 
-def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Dict[str, np.ndarray]:
+def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> dict[str, np.ndarray]:
     """
     Create a sparse buffer with the provided properties and type.
 

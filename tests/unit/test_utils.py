@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Dict
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np

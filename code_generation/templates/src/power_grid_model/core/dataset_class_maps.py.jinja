@@ -10,7 +10,7 @@
 {%- set components = all_map['input'].keys() %}
 
 from enum import Enum, EnumMeta
-from typing import Any, Dict, Mapping
+from typing import Any, Mapping
 
 # pylint: disable=invalid-name
 
@@ -68,7 +68,7 @@ def _str_to_datatype(data_type: Any) -> DatasetType:
     return data_type
 
 
-def _map_to_datatypes(data: Mapping[Any, Any]) -> Dict[DatasetType, Any]:
+def _map_to_datatypes(data: Mapping[Any, Any]) -> dict[DatasetType, Any]:
     """Helper function to map datatype str keys to DatasetType."""
     return {_str_to_datatype(key): value for key, value in data.items()}
 
@@ -80,7 +80,7 @@ def _str_to_component_type(component: Any) -> ComponentType:
     return component
 
 
-def _map_to_component_types(data: Mapping[Any, Any]) -> Dict[ComponentType, Any]:
+def _map_to_component_types(data: Mapping[Any, Any]) -> dict[ComponentType, Any]:
     """Helper function to map componenttype str keys to ComponentType."""
     return {_str_to_component_type(key): value for key, value in data.items()}
 

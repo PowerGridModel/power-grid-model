@@ -8,7 +8,7 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping, Tuple, Union
+from typing import Mapping
 
 import numpy as np
 
@@ -70,9 +70,7 @@ def prepare_input_view(input_data: Mapping[ComponentType, np.ndarray]) -> CConst
     return CConstDataset(input_data, dataset_type=DatasetType.input)
 
 
-def prepare_update_view(
-    update_data: Mapping[ComponentType, Union[np.ndarray, Mapping[str, np.ndarray]]]
-) -> CConstDataset:
+def prepare_update_view(update_data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> CConstDataset:
     """
     Create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary.
 
@@ -139,7 +137,7 @@ def create_output_data(
     for name, count in all_component_count.items():
         # shape
         if is_batch:
-            shape: Union[Tuple[int], Tuple[int, int]] = (batch_size, count)
+            shape: tuple[int] | tuple[int, int] = (batch_size, count)
         else:
             shape = (count,)
         result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)

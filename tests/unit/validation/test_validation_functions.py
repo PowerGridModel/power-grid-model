@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from itertools import product
-from typing import List, Union
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
@@ -640,7 +639,7 @@ def test_validate_generic_power_sensor__all_terminal_types(
 @patch("power_grid_model.validation.validation.all_valid_enum_values", new=MagicMock())
 @patch("power_grid_model.validation.validation.all_valid_ids")
 def test_validate_generic_power_sensor__terminal_types(
-    all_valid_ids: MagicMock, ref_component: Union[str, List[str]], measured_terminal_type: MeasuredTerminalType
+    all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
 ):
     # Act
     validate_generic_power_sensor(data={}, component="")  # type: ignore

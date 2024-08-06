@@ -30,12 +30,12 @@ Input data:
         The name of the column, which should be an field in the component data (numpy structured array)
 
 Output data:
-    errors: List[ValidationError]
+    errors: list[ValidationError]
         A list containing errors; in case of success, `errors` is the empty list: [].
 
 """
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Optional, Type, TypeVar
 
 import numpy as np
 
@@ -81,7 +81,7 @@ Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
 
 
-def all_greater_than_zero(data: SingleDataset, component: ComponentType, field: str) -> List[NotGreaterThanError]:
+def all_greater_than_zero(data: SingleDataset, component: ComponentType, field: str) -> list[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
     zero. Returns an empty list on success, or a list containing a single error object on failure.
@@ -102,8 +102,8 @@ def all_greater_than_or_equal_to_zero(
     data: SingleDataset,
     component: ComponentType,
     field: str,
-    default_value: Optional[Union[np.ndarray, int, float]] = None,
-) -> List[NotGreaterOrEqualError]:
+    default_value: Optional[np.ndarray | int | float] = None,
+) -> list[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
     or equal to zero. Returns an empty list on success, or a list containing a single error object on failure.
@@ -112,7 +112,7 @@ def all_greater_than_or_equal_to_zero(
         data (SingleDataset): The input/update data set for all components
         component (ComponentType) The component of interest
         field (str): The field of interest
-        default_value (Optional[Union[np.ndarray, int, float]], optional): Some values are not required, but will
+        default_value (Optional[np.ndarray | int | float], optional): Some values are not required, but will
             receive a default value in the C++ core. To do a proper input validation, these default values should be
             included in the validation. It can be a fixed value for the entire column (int/float) or be different for
             each element (np.ndarray).
@@ -125,8 +125,8 @@ def all_greater_than_or_equal_to_zero(
 
 
 def all_greater_than(
-    data: SingleDataset, component: ComponentType, field: str, ref_value: Union[int, float, str]
-) -> List[NotGreaterThanError]:
+    data: SingleDataset, component: ComponentType, field: str, ref_value: int | float | str
+) -> list[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
     the reference value. Returns an empty list on success, or a list containing a single error object on failure.
@@ -154,9 +154,9 @@ def all_greater_or_equal(
     data: SingleDataset,
     component: ComponentType,
     field: str,
-    ref_value: Union[int, float, str],
-    default_value: Optional[Union[np.ndarray, int, float]] = None,
-) -> List[NotGreaterOrEqualError]:
+    ref_value: int | float | str,
+    default_value: Optional[np.ndarray | int | float] = None,
+) -> list[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
     or equal to the reference value. Returns an empty list on success, or a list containing a single error object on
@@ -188,8 +188,8 @@ def all_greater_or_equal(
 
 
 def all_less_than(
-    data: SingleDataset, component: ComponentType, field: str, ref_value: Union[int, float, str]
-) -> List[NotLessThanError]:
+    data: SingleDataset, component: ComponentType, field: str, ref_value: int | float | str
+) -> list[NotLessThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than the
     reference value. Returns an empty list on success, or a list containing a single error object on failure.
@@ -214,8 +214,8 @@ def all_less_than(
 
 
 def all_less_or_equal(
-    data: SingleDataset, component: ComponentType, field: str, ref_value: Union[int, float, str]
-) -> List[NotLessOrEqualError]:
+    data: SingleDataset, component: ComponentType, field: str, ref_value: int | float | str
+) -> list[NotLessOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than,
     or equal to the reference value. Returns an empty list on success, or a list containing a single error object on
@@ -245,10 +245,10 @@ def all_between(  # pylint: disable=too-many-arguments
     data: SingleDataset,
     component: ComponentType,
     field: str,
-    ref_value_1: Union[int, float, str],
-    ref_value_2: Union[int, float, str],
-    default_value: Optional[Union[np.ndarray, int, float]] = None,
-) -> List[NotBetweenError]:
+    ref_value_1: int | float | str,
+    ref_value_2: int | float | str,
+    default_value: Optional[np.ndarray | int | float] = None,
+) -> list[NotBetweenError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are (exclusively)
     between reference value 1 and 2. Value 1 may be smaller, but also larger than value 2. Returns an empty list on
@@ -285,11 +285,11 @@ def all_between_or_at(  # pylint: disable=too-many-arguments
     data: SingleDataset,
     component: ComponentType,
     field: str,
-    ref_value_1: Union[int, float, str],
-    ref_value_2: Union[int, float, str],
-    default_value_1: Optional[Union[np.ndarray, int, float]] = None,
-    default_value_2: Optional[Union[np.ndarray, int, float]] = None,
-) -> List[NotBetweenOrAtError]:
+    ref_value_1: int | float | str,
+    ref_value_2: int | float | str,
+    default_value_1: Optional[np.ndarray | int | float] = None,
+    default_value_2: Optional[np.ndarray | int | float] = None,
+) -> list[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
     between reference value 1 and 2. Value 1 may be smaller, but also larger than value 2. Returns an empty list on
@@ -338,9 +338,9 @@ def none_match_comparison(
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
-    default_value_1: Optional[Union[np.ndarray, int, float]] = None,
-    default_value_2: Optional[Union[np.ndarray, int, float]] = None,
-) -> List[CompError]:
+    default_value_1: Optional[np.ndarray | int | float] = None,
+    default_value_2: Optional[np.ndarray | int | float] = None,
+) -> list[CompError]:
     # pylint: disable=too-many-arguments
     """
     For all records of a particular type of component, check if the value in the 'field' column match the comparison.
@@ -384,7 +384,7 @@ def none_match_comparison(
     return []
 
 
-def all_identical(data: SingleDataset, component: ComponentType, field: str) -> List[NotIdenticalError]:
+def all_identical(data: SingleDataset, component: ComponentType, field: str) -> list[NotIdenticalError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
 
@@ -409,7 +409,7 @@ def all_identical(data: SingleDataset, component: ComponentType, field: str) -> 
 
 def all_enabled_identical(
     data: SingleDataset, component: ComponentType, field: str, status_field: str
-) -> List[NotIdenticalError]:
+) -> list[NotIdenticalError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
     Only entries are checked where the 'status' field is not 0.
@@ -436,7 +436,7 @@ def all_enabled_identical(
     )
 
 
-def all_unique(data: SingleDataset, component: ComponentType, field: str) -> List[NotUniqueError]:
+def all_unique(data: SingleDataset, component: ComponentType, field: str) -> list[NotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
     the 'field' column of that component.
@@ -460,15 +460,15 @@ def all_unique(data: SingleDataset, component: ComponentType, field: str) -> Lis
 
 
 def all_cross_unique(
-    data: SingleDataset, fields: List[Tuple[ComponentType, str]], cross_only=True
-) -> List[MultiComponentNotUniqueError]:
+    data: SingleDataset, fields: list[tuple[ComponentType, str]], cross_only=True
+) -> list[MultiComponentNotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
     the 'field' column of that component.
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        fields (List[Tuple[str, str]]): The fields of interest, formatted as
+        fields (list[tuple[str, str]]): The fields of interest, formatted as
             [(component_1, field_1), (component_2, field_2)]
         cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use
             all_unique() to explicitly check uniqueness within a single field.
@@ -477,7 +477,7 @@ def all_cross_unique(
         A list containing zero or one MultiComponentNotUniqueError, listing all fields and ids where the value was not
         unique between the fields.
     """
-    all_values: Dict[int, List[Tuple[Tuple[ComponentType, str], int]]] = {}
+    all_values: dict[int, list[tuple[tuple[ComponentType, str], int]]] = {}
     duplicate_ids = set()
     for component, field in fields:
         for obj_id, value in zip(data[component]["id"], data[component][field]):
@@ -496,8 +496,8 @@ def all_cross_unique(
 
 
 def all_valid_enum_values(
-    data: SingleDataset, component: ComponentType, field: str, enum: Union[Type[Enum], List[Type[Enum]]]
-) -> List[InvalidEnumValueError]:
+    data: SingleDataset, component: ComponentType, field: str, enum: Type[Enum] | list[Type[Enum]]
+) -> list[InvalidEnumValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
     the supplied enum class. Returns an empty list on success, or a list containing a single error object on failure.
@@ -506,13 +506,13 @@ def all_valid_enum_values(
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
         field (str): The field of interest
-        enum (Type[Enum] | List[Type[Enum]]): The enum type to validate against, or a list of such enum types
+        enum (Type[Enum] | list[Type[Enum]]): The enum type to validate against, or a list of such enum types
 
     Returns:
         A list containing zero or one InvalidEnumValueError, listing all ids where the value in the field of interest
         was not a valid value in the supplied enum type.
     """
-    enums: List[Type[Enum]] = enum if isinstance(enum, list) else [enum]
+    enums: list[Type[Enum]] = enum if isinstance(enum, list) else [enum]
 
     valid = {nan_type(component, field)}
     for enum_type in enums:
@@ -530,25 +530,25 @@ def all_valid_associated_enum_values(  # pylint: disable=too-many-arguments
     component: ComponentType,
     field: str,
     ref_object_id_field: str,
-    ref_components: List[ComponentType],
-    enum: Union[Type[Enum], List[Type[Enum]]],
+    ref_components: list[ComponentType],
+    enum: Type[Enum] | list[Type[Enum]],
     **filters: Any,
-) -> List[InvalidAssociatedEnumValueError]:
+) -> list[InvalidAssociatedEnumValueError]:
     """
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
         field (str): The field of interest
         ref_object_id_field (str): The field that contains the referenced component ids
-        ref_components (List[ComponentType]): The component or components in which we want to look for ids
-        enum (Type[Enum] | List[Type[Enum]]): The enum type to validate against, or a list of such enum types
+        ref_components (list[ComponentType]): The component or components in which we want to look for ids
+        enum (Type[Enum] | list[Type[Enum]]): The enum type to validate against, or a list of such enum types
         **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
 
     Returns:
         A list containing zero or one InvalidAssociatedEnumValueError, listing all ids where the value in the field
         of interest was not a valid value in the supplied enum type.
     """
-    enums: List[Type[Enum]] = enum if isinstance(enum, list) else [enum]
+    enums: list[Type[Enum]] = enum if isinstance(enum, list) else [enum]
 
     valid_ids = get_valid_ids(data=data, ref_components=ref_components)
     mask = np.logical_and(
@@ -571,9 +571,9 @@ def all_valid_ids(
     data: SingleDataset,
     component: ComponentType,
     field: str,
-    ref_components: Union[ComponentType, List[ComponentType]],
+    ref_components: ComponentType | list[ComponentType],
     **filters: Any,
-) -> List[InvalidIdError]:
+) -> list[InvalidIdError]:
     """
     For a column which should contain object identifiers (ids), check if the id exists in the data, for a specific set
     of reference component types. E.g. is the from_node field of each line referring to an existing node id?
@@ -600,7 +600,7 @@ def all_valid_ids(
     return []
 
 
-def all_boolean(data: SingleDataset, component: ComponentType, field: str) -> List[NotBooleanError]:
+def all_boolean(data: SingleDataset, component: ComponentType, field: str) -> list[NotBooleanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid boolean
     values, i.e. 0 or 1. Returns an empty list on success, or a list containing a single error object on failure.
@@ -623,7 +623,7 @@ def all_boolean(data: SingleDataset, component: ComponentType, field: str) -> Li
 
 def all_not_two_values_zero(
     data: SingleDataset, component: ComponentType, field_1: str, field_2: str
-) -> List[TwoValuesZeroError]:
+) -> list[TwoValuesZeroError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
     not both zero. Returns an empty list on success, or a list containing a single error object on failure.
@@ -648,7 +648,7 @@ def all_not_two_values_zero(
 
 def all_not_two_values_equal(
     data: SingleDataset, component: ComponentType, field_1: str, field_2: str
-) -> List[SameValueError]:
+) -> list[SameValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
     not both the same value. E.g. from_node and to_node of a line. Returns an empty list on success, or a list
@@ -674,7 +674,7 @@ def all_not_two_values_equal(
 
 def all_ids_exist_in_data_set(
     data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: str
-) -> List[IdNotInDatasetError]:
+) -> list[IdNotInDatasetError]:
     """
     Check that for all records of a particular type of component, the ids exist in the reference data set.
 
@@ -694,7 +694,7 @@ def all_ids_exist_in_data_set(
     return []
 
 
-def all_finite(data: SingleDataset, exceptions: Optional[Dict[ComponentType, List[str]]] = None) -> List[InfinityError]:
+def all_finite(data: SingleDataset, exceptions: Optional[dict[ComponentType, list[str]]] = None) -> list[InfinityError]:
     """
     Check that for all records in all component, the values in all columns are finite value, i.e. float values other
     than inf, or -inf. Nan values are ignored, as in all other comparison functions. You can use non_missing() to
@@ -729,9 +729,9 @@ def all_finite(data: SingleDataset, exceptions: Optional[Dict[ComponentType, Lis
 def none_missing(
     data: SingleDataset,
     component: ComponentType,
-    fields: Union[List[Union[str, List[str]]], str, List[str]],
+    fields: list[str | list[str]] | str | list[str],
     index: int = 0,
-) -> List[MissingValueError]:
+) -> list[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
     Returns an empty list on success, or a list containing a single error object on failure.
@@ -765,7 +765,7 @@ def none_missing(
     return errors
 
 
-def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> List[MultiFieldValidationError]:
+def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[MultiFieldValidationError]:
     """
     Check validity of the pair `(p_sigma, q_sigma)` for 'sym_power_sensor' and 'asym_power_sensor'.
 
@@ -799,7 +799,7 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> List[Multi
 
 def all_valid_clocks(
     data: SingleDataset, component: ComponentType, clock_field: str, winding_from_field: str, winding_to_field: str
-) -> List[TransformerClockError]:
+) -> list[TransformerClockError]:
     """
     Custom validation rule: Odd clock number is only allowed for Dy(n) or Y(N)d configuration.
 
@@ -837,7 +837,7 @@ def all_valid_clocks(
 
 def all_valid_fault_phases(
     data: SingleDataset, component: ComponentType, fault_type_field: str, fault_phase_field: str
-) -> List[FaultPhaseError]:
+) -> list[FaultPhaseError]:
     """
     Custom validation rule: Only a subset of fault_phases is supported for each fault type.
 
@@ -854,7 +854,7 @@ def all_valid_fault_phases(
     fault_types = data[component][fault_type_field]
     fault_phases = data[component][fault_phase_field]
 
-    supported_combinations: Dict[FaultType, List[FaultPhase]] = {
+    supported_combinations: dict[FaultType, list[FaultPhase]] = {
         FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value, FaultPhase.nan],
         FaultType.single_phase_to_ground: [
             FaultPhase.a,
@@ -894,16 +894,16 @@ def all_supported_tap_control_side(  # pylint: disable=too-many-arguments
     component: ComponentType,
     control_side_field: str,
     regulated_object_field: str,
-    tap_side_fields: List[Tuple[ComponentType, str]],
+    tap_side_fields: list[tuple[ComponentType, str]],
     **filters: Any,
-) -> List[UnsupportedTransformerRegulationError]:
+) -> list[UnsupportedTransformerRegulationError]:
     """
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
         control_side_field (str): The field of interest
         regulated_object_field (str): The field that contains the regulated component ids
-        tap_side_fields (List[Tuple[ComponentType, str]]): The fields of interest per regulated component,
+        tap_side_fields (list[tuple[ComponentType, str]]): The fields of interest per regulated component,
             formatted as [(component_1, field_1), (component_2, field_2)]
         **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
 

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Dict
 
 import numpy as np
 import pytest
@@ -13,7 +12,7 @@ from power_grid_model.validation.errors import MultiComponentNotUniqueError, Not
 
 
 @pytest.fixture
-def input_data() -> Dict[str, np.ndarray]:
+def input_data() -> dict[str, np.ndarray]:
     node = initialize_array("input", "node", 4)
     node["id"] = [1, 2, 3, 4]
     node["u_rated"] = 10.5e3
@@ -42,7 +41,7 @@ def input_data() -> Dict[str, np.ndarray]:
 
 
 @pytest.fixture
-def batch_data() -> Dict[str, np.ndarray]:
+def batch_data() -> dict[str, np.ndarray]:
     line = initialize_array("update", "line", (3, 2))
     line["id"] = [[5, 6], [6, 7], [7, 5]]
     line["from_status"] = [[1, 1], [1, 1], [1, 1]]

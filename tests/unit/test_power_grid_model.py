@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from copy import copy
-from typing import Dict
 
 import numpy as np
 import pytest
