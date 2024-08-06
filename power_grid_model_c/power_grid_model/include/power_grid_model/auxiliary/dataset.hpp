@@ -415,17 +415,17 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     template <class RangeType>
-    RangeType get_span_impl(Buffer const& buffer, ComponentInfo const& info, Idx scenario,
-                            RangeType const& total_range) const {
+    RangeType get_span_impl(RangeType const& total_range, Idx scenario, Buffer const& buffer,
+                            ComponentInfo const& info) const {
         if (scenario < 0) {
-            return RangeType{total_range.begin(), total_range.end()};
+            return RangeType{std::begin(total_range), std::end(total_range)};
         }
         if (info.elements_per_scenario < 0) {
-            return RangeType{total_range.begin() + buffer.indptr[scenario],
-                             total_range.begin() + buffer.indptr[scenario + 1]};
+            return RangeType{std::begin(total_range) + buffer.indptr[scenario],
+                             std::begin(total_range) + buffer.indptr[scenario + 1]};
         }
-        return RangeType{total_range.begin() + info.elements_per_scenario * scenario,
-                         total_range.begin() + info.elements_per_scenario * (scenario + 1)};
+        return RangeType{std::begin(total_range) + info.elements_per_scenario * scenario,
+                         std::begin(total_range) + info.elements_per_scenario * (scenario + 1)};
     }
 
     // get non-empty row buffer
@@ -438,8 +438,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
         auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        auto const total_range = std::span<StructType>{ptr, ptr + info.total_elements};
-        return get_span_impl<std::span<StructType>>(buffer, info, scenario, total_range);
+        return get_span_impl(std::span<StructType>{ptr, ptr + info.total_elements}, scenario, buffer, info);
     }
 
     // get non-empty columnar buffer
@@ -453,8 +452,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
         assert(is_columnar(buffer));
-        RangeObject<StructType> const total_range{info.total_elements, buffer.attributes};
-        return get_span_impl<RangeObject<StructType>>(buffer, info, scenario, total_range);
+        return get_span_impl(RangeObject<StructType>{info.total_elements, buffer.attributes}, scenario, buffer, info);
     }
 };
 
