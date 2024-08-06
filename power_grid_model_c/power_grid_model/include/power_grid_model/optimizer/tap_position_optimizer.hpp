@@ -713,7 +713,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct BinarySearchOptions {
         bool strategy_max{false};
-        Idx2Du idx_bs{0, 0};
+        Idx2D idx_bs{0, 0};
     };
     Idx total_iterations{0}; // metric purpose only
 
@@ -803,12 +803,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         if (tap_search_ == SearchMethod::linear_search) {
             return;
         }
-        if (!binary_search_.empty()) {
-            binary_search_.clear();
-        } else {
-            binary_search_.reserve(regulator_order.size());
-        }
 
+        binary_search_.reserve(regulator_order.size());
         for (auto const& same_rank_regulators : regulator_order) {
             std::vector<BinarySearch> binary_search_group(same_rank_regulators.size());
             std::ranges::transform(same_rank_regulators, binary_search_group.begin(), [](auto const& regulator) {
@@ -880,13 +876,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         while (tap_changed) {
             tap_changed = false;
             UpdateBuffer update_data;
-            size_t rank_index = 0;
+            Idx rank_index = 0;
 
-            for (size_t i = 0; i < regulator_order.size(); ++i) {
+            for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
                 auto const& same_rank_regulators = regulator_order[i];
-                for (size_t j = 0; j < same_rank_regulators.size(); ++j) {
+                for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
                     auto const& regulator = same_rank_regulators[j];
-                    BinarySearchOptions const options{strategy_max, Idx2Du{i, j}};
+                    BinarySearchOptions const options{strategy_max, Idx2D{i, j}};
                     tap_changed =
                         adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
                 }
@@ -921,18 +917,26 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
+    template <typename TransformerType, typename Regulator, typename State, typename ResultType>
+    auto compute_node_state_and_param(Regulator const& regulator, State const& state, ResultType const& solver_output) {
+        using sym = typename ResultType::value_type::sym;
+
+        auto const param = regulator.regulator.get().template calc_param<sym>();
+        auto const node_state =
+            NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
+                           .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
+
+        return std::make_pair(node_state, param);
+    }
+
     bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
                                  ResultType const& solver_output, UpdateBuffer& update_data) {
         bool tap_changed = false;
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
-            using sym = typename ResultType::value_type::sym;
 
-            auto const param = regulator.regulator.get().template calc_param<sym>();
-            auto const node_state =
-                NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
-                               .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
+            auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp] {
@@ -959,16 +963,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                                BinarySearchOptions const& options) {
         auto const strategy_max = options.strategy_max;
         bool tap_changed = false;
-        auto& current_bs = binary_search_[options.idx_bs.x][options.idx_bs.y];
+        auto& current_bs = binary_search_[options.idx_bs.group][options.idx_bs.pos];
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) { // NOSONAR
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
-            using sym = typename ResultType::value_type::sym;
 
-            auto const param = regulator.regulator.get().template calc_param<sym>();
-            auto const node_state =
-                NodeState<sym>{.u = u_pu_controlled_node<TransformerType>(regulator, state, solver_output),
-                               .i = i_pu_controlled_node<TransformerType>(regulator, state, solver_output)};
+            auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
             if (current_bs.get_end_of_bs() || current_bs.get_inevitable_run()) {
                 tap_changed = false;
@@ -1023,11 +1023,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     void update_binary_search(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
-        for (size_t i = 0; i < regulator_order.size(); ++i) {
+        for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
             auto const& sub_order = regulator_order[i];
-            for (size_t j = 0; j < sub_order.size(); ++j) {
+            for (Idx j = 0; j < static_cast<Idx>(sub_order.size()); ++j) {
                 auto const& regulator = sub_order[j];
-                if (i < binary_search_.size() && j < binary_search_[i].size()) {
+                if (i < static_cast<Idx>(binary_search_.size()) && j < static_cast<Idx>(binary_search_[i].size())) {
                     binary_search_[i][j].set_current_tap(regulator.transformer.tap_pos());
                     binary_search_[i][j].set_last_check(false);
                     binary_search_[i][j].set_inevitable_run(false);
