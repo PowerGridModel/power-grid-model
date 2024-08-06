@@ -8,6 +8,11 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+using CalculationMethod::iec60909;
+using CalculationType::short_circuit;
+using enum CalculationSymmetry;
+} // namespace
 
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
@@ -43,9 +48,9 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Symmetric Calculation") {
                 auto const solver_output = main_model.calculate<short_circuit_t, symmetric_t>(
-                    {.calculation_type = CalculationType::short_circuit,
-                     .calculation_symmetry = CalculationSymmetry::symmetric,
-                     .calculation_method = CalculationMethod::iec60909,
+                    {.calculation_type = short_circuit,
+                     .calculation_symmetry = symmetric,
+                     .calculation_method = iec60909,
                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
@@ -60,9 +65,9 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Asymmetric Calculation") {
                 auto const solver_output = main_model.calculate<short_circuit_t, asymmetric_t>(
-                    {.calculation_type = CalculationType::short_circuit,
-                     .calculation_symmetry = CalculationSymmetry::asymmetric,
-                     .calculation_method = CalculationMethod::iec60909,
+                    {.calculation_type = short_circuit,
+                     .calculation_symmetry = asymmetric,
+                     .calculation_method = iec60909,
                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
@@ -89,9 +94,9 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Symmetric Calculation") {
                 auto const solver_output = main_model.calculate<short_circuit_t, symmetric_t>(
-                    {.calculation_type = CalculationType::short_circuit,
-                     .calculation_symmetry = CalculationSymmetry::symmetric,
-                     .calculation_method = CalculationMethod::iec60909,
+                    {.calculation_type = short_circuit,
+                     .calculation_symmetry = symmetric,
+                     .calculation_method = iec60909,
                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
@@ -106,9 +111,9 @@ TEST_CASE("Test main model - short circuit") {
 
             SUBCASE("Asymmetric Calculation") {
                 auto const solver_output = main_model.calculate<short_circuit_t, asymmetric_t>(
-                    {.calculation_type = CalculationType::short_circuit,
-                     .calculation_symmetry = CalculationSymmetry::asymmetric,
-                     .calculation_method = CalculationMethod::iec60909,
+                    {.calculation_type = short_circuit,
+                     .calculation_symmetry = asymmetric,
+                     .calculation_method = iec60909,
                      .short_circuit_voltage_scaling = voltage_scaling});
 
                 std::vector<FaultShortCircuitOutput> fault_output(1);
@@ -135,11 +140,11 @@ TEST_CASE("Test main model - short circuit") {
                 {{5, 2, FaultType::single_phase_to_ground, FaultPhase::default_value, 1, nan, nan}});
             main_model.set_construction_complete();
 
-            auto const solver_output = main_model.calculate<short_circuit_t, asymmetric_t>(
-                {.calculation_type = CalculationType::short_circuit,
-                 .calculation_symmetry = CalculationSymmetry::asymmetric,
-                 .calculation_method = CalculationMethod::iec60909,
-                 .short_circuit_voltage_scaling = voltage_scaling});
+            auto const solver_output =
+                main_model.calculate<short_circuit_t, asymmetric_t>({.calculation_type = short_circuit,
+                                                                     .calculation_symmetry = asymmetric,
+                                                                     .calculation_method = iec60909,
+                                                                     .short_circuit_voltage_scaling = voltage_scaling});
 
             std::vector<FaultShortCircuitOutput> fault_output(1);
             main_model.output_result<Fault>(solver_output, fault_output);
@@ -179,9 +184,9 @@ TEST_CASE("Test main model - short circuit - Dataset input") {
         MutableDataset result_data{false, 1, "sc_output", meta_data::meta_data_gen::meta_data};
         result_data.add_buffer("node", node_output.size(), node_output.size(), nullptr, node_output.data());
 
-        model.calculate({.calculation_type = CalculationType::short_circuit,
-                         .calculation_symmetry = CalculationSymmetry::asymmetric,
-                         .calculation_method = CalculationMethod::iec60909,
+        model.calculate({.calculation_type = short_circuit,
+                         .calculation_symmetry = asymmetric,
+                         .calculation_method = iec60909,
                          .short_circuit_voltage_scaling = ShortCircuitVoltageScaling::maximum},
                         result_data);
 

@@ -14,7 +14,7 @@ using enum CalculationSymmetry;
 
 constexpr auto get_default_options(CalculationSymmetry calculation_symmetry, CalculationMethod calculation_method,
                                    Idx threading = -1) {
-    return MainModel::Options{.calculation_type = CalculationType::power_flow,
+    return MainModel::Options{.calculation_type = power_flow,
                               .calculation_symmetry = calculation_symmetry,
                               .calculation_method = calculation_method,
                               .err_tol = 1e-8,
@@ -252,8 +252,8 @@ TEST_CASE("Test main model - power flow") {
     }
 
     SUBCASE("Test calculate power flow") {
-        auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -266,8 +266,8 @@ TEST_CASE("Test copy main model") {
     MainModel model_2{main_model};
 
     SUBCASE("Copied - Symmetrical") {
-        auto const solver_output = model_2.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            model_2.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.sym_node);
         model_2.output_result<Branch>(solver_output, state.sym_branch);
         model_2.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -282,8 +282,8 @@ TEST_CASE("Test copy main model") {
         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Copied - Asymmetrical") {
-        auto const solver_output = model_2.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+        auto const solver_output =
+            model_2.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.asym_node);
         model_2.output_result<Branch>(solver_output, state.asym_branch);
         model_2.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -299,8 +299,8 @@ TEST_CASE("Test copy main model") {
     }
     model_2 = main_model;
     SUBCASE("Assigned - Symmetrical") {
-        auto const solver_output = model_2.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            model_2.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.sym_node);
         model_2.output_result<Branch>(solver_output, state.sym_branch);
         model_2.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -316,8 +316,8 @@ TEST_CASE("Test copy main model") {
         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Assigned - Asymmetrical") {
-        auto const solver_output = model_2.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+        auto const solver_output =
+            model_2.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.asym_node);
         model_2.output_result<Branch>(solver_output, state.asym_branch);
         model_2.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -332,8 +332,8 @@ TEST_CASE("Test copy main model") {
         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
     SUBCASE("Original - Symmetrical") {
-        auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -349,7 +349,7 @@ TEST_CASE("Test copy main model") {
     }
     SUBCASE("Original - Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+            get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -371,7 +371,7 @@ TEST_CASE("Test main model - iterative calculation") {
 
     SUBCASE("Symmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::newton_raphson));
+            get_default_options(symmetric, CalculationMethod::newton_raphson));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -387,7 +387,7 @@ TEST_CASE("Test main model - iterative calculation") {
     }
     SUBCASE("Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::newton_raphson));
+            get_default_options(asymmetric, CalculationMethod::newton_raphson));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -408,7 +408,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     auto main_model = default_model(state);
 
     auto const res = main_model.calculate<power_flow_t, symmetric_t>(
-        get_default_options(CalculationSymmetry::symmetric, CalculationMethod::newton_raphson));
+        get_default_options(symmetric, CalculationMethod::newton_raphson));
 
     SUBCASE("Node, sym output") {
         main_model.output_result<Node>(res, state.sym_node);
@@ -601,7 +601,7 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
     auto main_model = default_model(state);
 
     auto const res = main_model.calculate<power_flow_t, asymmetric_t>(
-        get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::newton_raphson));
+        get_default_options(asymmetric, CalculationMethod::newton_raphson));
 
     /*
     TODO:
@@ -758,8 +758,8 @@ TEST_CASE("Test main model - linear calculation") {
     auto main_model = default_model(state);
 
     SUBCASE("Symmetrical") {
-        auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -775,7 +775,7 @@ TEST_CASE("Test main model - linear calculation") {
     }
     SUBCASE("Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+            get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -813,8 +813,8 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
     main_model.update_component<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
-        auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -830,7 +830,7 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
     }
     SUBCASE("Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+            get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -861,8 +861,8 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
     main_model.update_component<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
-        auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -878,7 +878,7 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
     }
     SUBCASE("Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+            get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -916,8 +916,8 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     main_model.update_component<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
-        auto const solver_output = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
         main_model.output_result<Branch>(solver_output, state.sym_branch);
         main_model.output_result<Appliance>(solver_output, state.sym_appliance);
@@ -933,7 +933,7 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     }
     SUBCASE("Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+            get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -953,8 +953,8 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     State state;
     auto main_model = default_model(state);
 
-    auto const solver_output_orig = main_model.calculate<power_flow_t, symmetric_t>(
-        get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+    auto const solver_output_orig =
+        main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
 
     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
     update_data.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(), nullptr,
@@ -966,8 +966,8 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     main_model.restore_components(update_data);
 
     SUBCASE("Symmetrical") {
-        auto const solver_output_result = main_model.calculate<power_flow_t, symmetric_t>(
-            get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+        auto const solver_output_result =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output_result, state.sym_node);
         main_model.output_result<Branch>(solver_output_result, state.sym_branch);
         main_model.output_result<Appliance>(solver_output_result, state.sym_appliance);
@@ -989,7 +989,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     }
     SUBCASE("Asymmetrical") {
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+            get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
         main_model.output_result<Branch>(solver_output, state.asym_branch);
         main_model.output_result<Appliance>(solver_output, state.asym_appliance);
@@ -1060,12 +1060,12 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
     // This will lead to no topo change but param change
     main_model.update_component<typename settings::update_type>(update_data);
 
-    auto const math_output_sym_1 = main_model.calculate<power_flow_t, symmetric_t>(
-        get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+    auto const math_output_sym_1 =
+        main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
     check_sym(main_model, math_output_sym_1);
 
-    auto const math_output_asym_1 = main_model.calculate<power_flow_t, asymmetric_t>(
-        get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+    auto const math_output_asym_1 =
+        main_model.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
     check_asym(main_model, math_output_asym_1);
 
     SUBCASE("No new update") {
@@ -1083,12 +1083,12 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
         main_model.update_component<typename settings::update_type>(update_data);
     }
 
-    auto const math_output_asym_2 = main_model.calculate<power_flow_t, asymmetric_t>(
-        get_default_options(CalculationSymmetry::asymmetric, CalculationMethod::linear));
+    auto const math_output_asym_2 =
+        main_model.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
     check_asym(main_model, math_output_asym_2);
 
-    auto const math_output_sym_2 = main_model.calculate<power_flow_t, symmetric_t>(
-        get_default_options(CalculationSymmetry::symmetric, CalculationMethod::linear));
+    auto const math_output_sym_2 =
+        main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
     check_sym(main_model, math_output_sym_2);
 
     main_model.restore_components(update_data);
@@ -1153,7 +1153,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(count.find("sym_gen") == count.cend());
 
         // calculation
-        model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson), sym_result_data);
+        model.calculate(get_default_options(symmetric, newton_raphson), sym_result_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
@@ -1164,18 +1164,18 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(state.sym_load_sym[0].i == doctest::Approx(test::i_load));
         CHECK(state.sym_load_asym[0].i == doctest::Approx(test::i_load));
         CHECK(state.sym_shunt[0].i == doctest::Approx(test::i_shunt));
-        model.calculate(get_default_options(CalculationSymmetry::asymmetric, newton_raphson), asym_result_data);
+        model.calculate(get_default_options(asymmetric, newton_raphson), asym_result_data);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
 
         // update and calculation
         model.update_component<permanent_update_t>(update_data);
-        model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson), sym_result_data);
+        model.calculate(get_default_options(symmetric, newton_raphson), sym_result_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-        model.calculate(get_default_options(CalculationSymmetry::asymmetric, newton_raphson), asym_result_data);
+        model.calculate(get_default_options(asymmetric, newton_raphson), asym_result_data);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
@@ -1183,26 +1183,22 @@ TEST_CASE("Test main model - runtime dispatch") {
         // test batch calculation
         model = MainModel{50.0, input_data};
         // symmetric sequential
-        model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson), sym_result_data,
-                        update_data);
+        model.calculate(get_default_options(symmetric, newton_raphson), sym_result_data, update_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         // symmetric parallel
-        model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson, 0), sym_result_data,
-                        update_data);
+        model.calculate(get_default_options(symmetric, newton_raphson, 0), sym_result_data, update_data);
         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
         // asymmetric sequential
-        model.calculate(get_default_options(CalculationSymmetry::asymmetric, newton_raphson), asym_result_data,
-                        update_data);
+        model.calculate(get_default_options(asymmetric, newton_raphson), asym_result_data, update_data);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
         // asymmetric parallel
-        model.calculate(get_default_options(CalculationSymmetry::asymmetric, newton_raphson, 0), asym_result_data,
-                        update_data);
+        model.calculate(get_default_options(asymmetric, newton_raphson, 0), asym_result_data, update_data);
         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
@@ -1222,8 +1218,7 @@ TEST_CASE("Test main model - runtime dispatch") {
         std::vector<NodeOutput<symmetric_t>> sym_node_2(sym_load_update_2.size() * state.sym_node.size());
         dependent_result_data.add_buffer("node", state.sym_node.size(), sym_node_2.size(), nullptr, sym_node_2.data());
 
-        model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson), dependent_result_data,
-                        dependent_update_data);
+        model.calculate(get_default_options(symmetric, newton_raphson), dependent_result_data, dependent_update_data);
         CHECK(sym_node_2[0].u_pu == doctest::Approx(1.05));
         CHECK(sym_node_2[1].u_pu == doctest::Approx(0.66).epsilon(0.005));
         CHECK(sym_node_2[2].u_pu == doctest::Approx(0.66).epsilon(0.005));
@@ -1307,31 +1302,23 @@ TEST_CASE("Test main model - incomplete input") {
         ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr, ref_sym_node.data());
 
         SUBCASE("Test linear calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::symmetric, linear), test_result_data,
-                                 update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::symmetric, linear), ref_result_data,
-                                 update_data);
+            test_model.calculate(get_default_options(symmetric, linear), test_result_data, update_data);
+            main_model.calculate(get_default_options(symmetric, linear), ref_result_data, update_data);
         }
 
         SUBCASE("Test linear current calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::symmetric, linear_current), test_result_data,
-                                 update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::symmetric, linear_current), ref_result_data,
-                                 update_data);
+            test_model.calculate(get_default_options(symmetric, linear_current), test_result_data, update_data);
+            main_model.calculate(get_default_options(symmetric, linear_current), ref_result_data, update_data);
         }
 
         SUBCASE("Test iterative current calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::symmetric, iterative_current),
-                                 test_result_data, update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::symmetric, iterative_current),
-                                 ref_result_data, update_data);
+            test_model.calculate(get_default_options(symmetric, iterative_current), test_result_data, update_data);
+            main_model.calculate(get_default_options(symmetric, iterative_current), ref_result_data, update_data);
         }
 
         SUBCASE("Test iterative Newton-Raphson calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson), test_result_data,
-                                 update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::symmetric, newton_raphson), ref_result_data,
-                                 update_data);
+            test_model.calculate(get_default_options(symmetric, newton_raphson), test_result_data, update_data);
+            main_model.calculate(get_default_options(symmetric, newton_raphson), ref_result_data, update_data);
         }
 
         CHECK(test_sym_node[0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
@@ -1350,31 +1337,23 @@ TEST_CASE("Test main model - incomplete input") {
         ref_result_data.add_buffer("node", ref_asym_node.size(), ref_asym_node.size(), nullptr, ref_asym_node.data());
 
         SUBCASE("Test linear calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::asymmetric, linear), test_result_data,
-                                 update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::asymmetric, linear), ref_result_data,
-                                 update_data);
+            test_model.calculate(get_default_options(asymmetric, linear), test_result_data, update_data);
+            main_model.calculate(get_default_options(asymmetric, linear), ref_result_data, update_data);
         }
 
         SUBCASE("Test linear current calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::asymmetric, linear_current), test_result_data,
-                                 update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::asymmetric, linear_current), ref_result_data,
-                                 update_data);
+            test_model.calculate(get_default_options(asymmetric, linear_current), test_result_data, update_data);
+            main_model.calculate(get_default_options(asymmetric, linear_current), ref_result_data, update_data);
         }
 
         SUBCASE("Test iterative current calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::asymmetric, iterative_current),
-                                 test_result_data, update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::asymmetric, iterative_current),
-                                 ref_result_data, update_data);
+            test_model.calculate(get_default_options(asymmetric, iterative_current), test_result_data, update_data);
+            main_model.calculate(get_default_options(asymmetric, iterative_current), ref_result_data, update_data);
         }
 
         SUBCASE("Test iterative Newton-Rhapson calculation") {
-            test_model.calculate(get_default_options(CalculationSymmetry::asymmetric, newton_raphson), test_result_data,
-                                 update_data);
-            main_model.calculate(get_default_options(CalculationSymmetry::asymmetric, newton_raphson), ref_result_data,
-                                 update_data);
+            test_model.calculate(get_default_options(asymmetric, newton_raphson), test_result_data, update_data);
+            main_model.calculate(get_default_options(asymmetric, newton_raphson), ref_result_data, update_data);
         }
 
         for (auto component_idx : {0, 1, 2}) {
@@ -1397,8 +1376,8 @@ TEST_CASE("Test main model - incomplete input") {
         test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr, test_sym_node.data());
 
         SUBCASE("Target dataset") {
-            CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                                  .calculation_symmetry = CalculationSymmetry::symmetric,
+            CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                                  .calculation_symmetry = symmetric,
                                                   .calculation_method = linear,
                                                   .err_tol = 1e-8,
                                                   .max_iter = 1},
@@ -1408,8 +1387,8 @@ TEST_CASE("Test main model - incomplete input") {
         SUBCASE("Empty update dataset") {
             ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
 
-            CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                                  .calculation_symmetry = CalculationSymmetry::symmetric,
+            CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                                  .calculation_symmetry = symmetric,
                                                   .calculation_method = linear,
                                                   .err_tol = 1e-8,
                                                   .max_iter = 1},
@@ -1417,8 +1396,8 @@ TEST_CASE("Test main model - incomplete input") {
                             SparseMatrixError);
         }
         SUBCASE("Update dataset") {
-            CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                                  .calculation_symmetry = CalculationSymmetry::symmetric,
+            CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                                  .calculation_symmetry = symmetric,
                                                   .calculation_method = linear,
                                                   .err_tol = 1e-8,
                                                   .max_iter = 1},
@@ -1435,8 +1414,8 @@ TEST_CASE("Test main model - incomplete input") {
         test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr, test_sym_node.data());
 
         SUBCASE("Target dataset") {
-            CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                                  .calculation_symmetry = CalculationSymmetry::asymmetric,
+            CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                                  .calculation_symmetry = asymmetric,
                                                   .calculation_method = linear,
                                                   .err_tol = 1e-8,
                                                   .max_iter = 1},
@@ -1446,8 +1425,8 @@ TEST_CASE("Test main model - incomplete input") {
         SUBCASE("Empty update dataset") {
             ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
 
-            CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                                  .calculation_symmetry = CalculationSymmetry::asymmetric,
+            CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                                  .calculation_symmetry = asymmetric,
                                                   .calculation_method = linear,
                                                   .err_tol = 1e-8,
                                                   .max_iter = 1},
@@ -1455,8 +1434,8 @@ TEST_CASE("Test main model - incomplete input") {
                             SparseMatrixError);
         }
         SUBCASE("Update dataset") {
-            CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                                  .calculation_symmetry = CalculationSymmetry::asymmetric,
+            CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                                  .calculation_symmetry = asymmetric,
                                                   .calculation_method = linear,
                                                   .err_tol = 1e-8,
                                                   .max_iter = 1},
@@ -1507,15 +1486,15 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
         test_result_data.add_buffer("node", state.sym_node.size(), test_sym_node.size(), nullptr, test_sym_node.data());
         ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr, ref_sym_node.data());
 
-        CHECK_THROWS_AS(test_model.calculate({.calculation_type = CalculationType::power_flow,
-                                              .calculation_symmetry = CalculationSymmetry::symmetric,
+        CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+                                              .calculation_symmetry = symmetric,
                                               .calculation_method = linear,
                                               .err_tol = 1e-8,
                                               .max_iter = 1},
                                              test_result_data, mixed_update_data),
                         BatchCalculationError);
-        main_model.calculate({.calculation_type = CalculationType::power_flow,
-                              .calculation_symmetry = CalculationSymmetry::symmetric,
+        main_model.calculate({.calculation_type = power_flow,
+                              .calculation_symmetry = symmetric,
                               .calculation_method = linear,
                               .err_tol = 1e-8,
                               .max_iter = 1},
@@ -1552,8 +1531,8 @@ TEST_CASE("Test main model - Incomplete followed by complete") {
                                               .max_iter = 1},
                                              test_result_data, mixed_update_data),
                         BatchCalculationError);
-        main_model.calculate({.calculation_type = CalculationType::power_flow,
-                              .calculation_symmetry = CalculationSymmetry::asymmetric,
+        main_model.calculate({.calculation_type = power_flow,
+                              .calculation_symmetry = asymmetric,
                               .calculation_method = linear,
                               .err_tol = 1e-8,
                               .max_iter = 1},
