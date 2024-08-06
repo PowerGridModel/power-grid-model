@@ -83,53 +83,8 @@ class MainModel {
         impl().output_result<CompType>(math_output, target.begin());
     }
 
-    template <symmetry_tag sym> MathOutput<std::vector<SolverOutput<sym>>> calculate_power_flow(Options options) {
-        options.calculation_type = CalculationType::power_flow;
-        return impl().calculate<power_flow_t, sym>(options);
-    }
-    template <symmetry_tag sym> void calculate_power_flow(Options options, MutableDataset const& result_data) {
-        options.calculation_type = CalculationType::power_flow;
-        options.calculation_symmetry =
-            is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate(options, result_data);
-    }
-    template <symmetry_tag sym>
-    BatchParameter calculate_power_flow(Options options, MutableDataset const& result_data,
-                                        ConstDataset const& update_data) {
-        options.calculation_type = CalculationType::power_flow;
-        options.calculation_symmetry =
-            is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate(options, result_data, update_data);
-    }
-    template <symmetry_tag sym> MathOutput<std::vector<SolverOutput<sym>>> calculate_state_estimation(Options options) {
-        options.calculation_type = CalculationType::state_estimation;
-        options.calculation_symmetry =
-            is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate<state_estimation_t, sym>(options);
-    }
-    template <symmetry_tag sym>
-    BatchParameter calculate_state_estimation(Options options, MutableDataset const& result_data,
-                                              ConstDataset const& update_data) {
-        options.calculation_type = CalculationType::state_estimation;
-        options.calculation_symmetry =
-            is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate(options, result_data, update_data);
-    }
-    template <symmetry_tag sym>
-    MathOutput<std::vector<ShortCircuitSolverOutput<sym>>> calculate_short_circuit(Options options) {
-        options.calculation_type = CalculationType::short_circuit;
-        options.calculation_symmetry =
-            is_symmetric_v<sym> ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        return impl().calculate<short_circuit_t, sym>(options);
-    }
-    void calculate_short_circuit(Options options, MutableDataset const& result_data) {
-        options.calculation_type = CalculationType::short_circuit;
-        return impl().calculate(options, result_data);
-    }
-    BatchParameter calculate_short_circuit(Options options, MutableDataset const& result_data,
-                                           ConstDataset const& update_data) {
-        options.calculation_type = CalculationType::short_circuit;
-        return impl().calculate(options, result_data, update_data);
+    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
+        return impl().calculate<calculation_type, sym>(options);
     }
     void calculate(Options const& options, MutableDataset const& result_data) {
         return impl().calculate(options, result_data);

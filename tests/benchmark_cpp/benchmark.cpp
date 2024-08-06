@@ -31,11 +31,14 @@ struct PowerGridBenchmark {
         Idx const max_iter = (calculation_method == CalculationMethod::iterative_current) ? 100 : 20;
         try {
             // calculate
-            main_model->calculate_power_flow<sym>({.calculation_method = calculation_method,
-                                                   .err_tol = 1e-8,
-                                                   .max_iter = max_iter,
-                                                   .threading = threading},
-                                                  output.get_dataset(), batch_data.get_dataset());
+            main_model->calculate({.calculation_type = CalculationType::power_flow,
+                                   .calculation_symmetry = is_symmetric_v<sym> ? CalculationSymmetry::symmetric
+                                                                               : CalculationSymmetry::asymmetric,
+                                   .calculation_method = calculation_method,
+                                   .err_tol = 1e-8,
+                                   .max_iter = max_iter,
+                                   .threading = threading},
+                                  output.get_dataset(), batch_data.get_dataset());
             CalculationInfo info_extra = main_model->calculation_info();
             info.merge(info_extra);
         } catch (std::exception const& e) {
