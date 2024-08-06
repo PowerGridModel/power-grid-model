@@ -218,7 +218,7 @@ TEST_CASE("C API Model") {
         }
 
         SUBCASE("Tap changing strategy") {
-            PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_any_valid_tap);
+            PGM_set_tap_changing_strategy(hl, opt, PGM_tap_changing_strategy_min_voltage_tap);
             CHECK_NOTHROW(PGM_calculate(hl, model, opt, single_output_dataset, nullptr));
         }
 

@@ -28,24 +28,33 @@ TEST_CASE("Test construct tap position optimizer") {
     empty_state.components.set_construction_complete();
 
     SUBCASE("symmetric") {
-        for (auto strategy_method : strategies_and_methods) {
-            CAPTURE(strategy_method.strategy);
-            CAPTURE(strategy_method.method);
+        for (auto strategy_method_search : strategy_method_and_searches) {
+            auto strategy = strategy_method_search.strategy;
+            auto method = strategy_method_search.method;
+            auto search = strategy_method_search.search;
+            CAPTURE(strategy);
+            CAPTURE(method);
+            CAPTURE(search);
+
             auto optimizer = TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy_method.strategy,
-                meta_data};
-            auto res = optimizer.optimize(empty_state, strategy_method.method);
-            CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
+                stub_steady_state_state_calculator<symmetric_t>, stub_const_dataset_update, strategy, meta_data,
+                search};
+            auto res = optimizer.optimize(empty_state, method);
+            CHECK(optimizer.optimize(empty_state, method).solver_output.empty());
         }
     }
     SUBCASE("asymmetric") {
-        for (auto strategy_method : strategies_and_methods) {
-            CAPTURE(strategy_method.strategy);
-            CAPTURE(strategy_method.method);
+        for (auto strategy_method_search : strategy_method_and_searches) {
+            auto strategy = strategy_method_search.strategy;
+            auto method = strategy_method_search.method;
+            auto search = strategy_method_search.search;
+            CAPTURE(strategy);
+            CAPTURE(method);
+            CAPTURE(search);
             auto optimizer = TapPositionOptimizer<AsymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>{
-                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy_method.strategy,
-                meta_data};
-            CHECK(optimizer.optimize(empty_state, strategy_method.method).solver_output.empty());
+                stub_steady_state_state_calculator<asymmetric_t>, stub_const_dataset_update, strategy, meta_data,
+                search};
+            CHECK(optimizer.optimize(empty_state, method).solver_output.empty());
         }
     }
 }
@@ -61,8 +70,9 @@ TEST_CASE("Test get optimizer") {
             for (auto strategy_method : strategies_and_methods) {
                 CAPTURE(strategy_method.strategy);
                 CAPTURE(strategy_method.method);
-                auto optimizer = get_optimizer<StubState, StubUpdateType>(
-                    no_optimization, strategy_method.strategy, mock_state_calculator, stub_update, meta_data);
+                auto optimizer = get_optimizer<StubState, StubUpdateType>(no_optimization, strategy_method.strategy,
+                                                                          mock_state_calculator, stub_update, meta_data,
+                                                                          SearchMethod::binary_search);
                 CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.x == 1);
             }
         }
@@ -70,18 +80,20 @@ TEST_CASE("Test get optimizer") {
         SUBCASE("Not implemented type") {
             for (auto strategy : strategies) {
                 CAPTURE(strategy);
-                CHECK_THROWS_AS((get_optimizer<StubState, StubUpdateType>(
-                                    automatic_tap_adjustment, strategy, mock_state_calculator, stub_update, meta_data)),
-                                MissingCaseForEnumError);
+                CHECK_THROWS_AS(
+                    (get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, strategy, mock_state_calculator,
+                                                              stub_update, meta_data, SearchMethod::binary_search)),
+                    MissingCaseForEnumError);
             }
         }
     }
 
     SUBCASE("Symmetric state calculator") {
-        auto const get_instance = [](OptimizerType optimizer_type, OptimizerStrategy strategy) {
+        auto const get_instance = [](OptimizerType optimizer_type, OptimizerStrategy strategy,
+                                     SearchMethod search = SearchMethod::binary_search) {
             return get_optimizer<StubState, ConstDataset>(optimizer_type, strategy,
                                                           stub_steady_state_state_calculator<symmetric_t>,
-                                                          stub_const_dataset_update, meta_data);
+                                                          stub_const_dataset_update, meta_data, search);
         };
 
         SUBCASE("Noop") {
@@ -93,19 +105,25 @@ TEST_CASE("Test get optimizer") {
             }
         }
         SUBCASE("Automatic tap adjustment") {
-            for (auto strategy_method : strategies_and_methods) {
-                CAPTURE(strategy_method.strategy);
-                CAPTURE(strategy_method.method);
-                auto optimizer = get_instance(automatic_tap_adjustment, strategy_method.strategy);
+
+            for (auto strategy_method_search : strategy_method_and_searches) {
+                auto strategy = strategy_method_search.strategy;
+                auto method = strategy_method_search.method;
+                auto search = strategy_method_search.search;
+                CAPTURE(strategy);
+                CAPTURE(method);
+                CAPTURE(search);
+
+                auto optimizer = get_instance(automatic_tap_adjustment, strategy, search);
 
                 auto tap_optimizer = std::dynamic_pointer_cast<
                     TapPositionOptimizer<SymStubSteadyStateCalculator, ConstDatasetUpdate, StubState>>(optimizer);
                 REQUIRE(tap_optimizer != nullptr);
-                CHECK(tap_optimizer->get_strategy() == strategy_method.strategy);
+                CHECK(tap_optimizer->get_strategy() == strategy);
 
                 StubState empty_state{};
                 empty_state.components.set_construction_complete();
-                CHECK(optimizer->optimize(empty_state, strategy_method.method).solver_output.empty());
+                CHECK(optimizer->optimize(empty_state, method).solver_output.empty());
             }
         }
     }

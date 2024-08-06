@@ -76,6 +76,7 @@ _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid 
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
 _POWER_GRID_DATASET_ERROR_RE = re.compile(r"Dataset error: ")  # multiple different flavors
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
+_POWER_GRID_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
 
 _ERROR_MESSAGE_PATTERNS = {
     _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
@@ -98,6 +99,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
     _POWER_GRID_DATASET_ERROR_RE: PowerGridDatasetError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
+    _POWER_GRID_SEARCH_OPT_INCMPT_RE: PowerGridUnreachableHitError,
 }
 
 

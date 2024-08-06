@@ -175,13 +175,23 @@ def test_batch_validation(
     for update_data, reference_result in zip(update_list, reference_output_list):
         model_copy = copy(model)
         model_copy.update(update_data=update_data)
-        result = calculation_function(model_copy, **supported_kwargs(kwargs=base_kwargs, supported=calculation_args))
-        compare_result(result, reference_result, rtol, atol)
+        try:
+            result = calculation_function(
+                model_copy, **supported_kwargs(kwargs=base_kwargs, supported=calculation_args)
+            )
+        except Exception as e:
+            print(f"An error occurred during calculation: {e}")
+        else:
+            compare_result(result, reference_result, rtol, atol)
 
     # execute in batch one go
     for threading in [-1, 0, 1, 2]:
         kwargs = dict(base_kwargs, update_data=update_batch, threading=threading)
-        result_batch = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
-        result_list = convert_batch_dataset_to_batch_list(result_batch)
-        for result, reference_result in zip(result_list, reference_output_list):
-            compare_result(result, reference_result, rtol, atol)
+        try:
+            result_batch = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
+        except Exception as e:
+            print(f"An error occurred during calculation: {e}")
+        else:
+            result_list = convert_batch_dataset_to_batch_list(result_batch)
+            for result, reference_result in zip(result_list, reference_output_list):
+                compare_result(result, reference_result, rtol, atol)

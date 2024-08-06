@@ -97,6 +97,7 @@ constexpr auto get_optimizer_type(PGM_Options const& opt) {
     case PGM_tap_changing_strategy_any_valid_tap:
     case PGM_tap_changing_strategy_max_voltage_tap:
     case PGM_tap_changing_strategy_min_voltage_tap:
+    case PGM_tap_changing_strategy_fast_any_tap:
         return automatic_tap_adjustment;
     default:
         throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
@@ -114,6 +115,8 @@ constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
         return global_maximum;
     case PGM_tap_changing_strategy_min_voltage_tap:
         return global_minimum;
+    case PGM_tap_changing_strategy_fast_any_tap:
+        return fast_any;
     default:
         throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
     }

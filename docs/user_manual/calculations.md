@@ -588,12 +588,13 @@ These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try 
 The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
 Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` option.
 
-| Algorithm                                                              | Default  | Speed    | Algorithm call                                                                                              |
-| ---------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| No automatic tap changing (regular power flow)                         | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
-| Optimize tap positions for any value in the voltage band               |          | &#10004; | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
-| Optimize tap positions for lowest possible voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
-| Optimize tap positions for lowest possible voltage in the voltage band |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Algorithm                                                                   | Default  | Speed    | Algorithm call                                                                                              |
+| --------------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
+| Optimize tap positions for any value in the voltage band                    |          |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
+| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
+| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
 
 ##### Control logic for power flow with automatic tap changing
 
@@ -647,11 +648,21 @@ Hence, this assumption is reflected in the requirements mentioned in {hoverxreft
 
 Internally, to achieve an optimal regulated tap position, the control algorithm sets initial tap positions and exploits neighborhoods around local optima, depending on the strategy as follows.
 
-| strategy                                                                                                    | initial tap position | exploitation direction | description                                                                           |
-| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
-| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | Find any tap position that gives a control side voltage within the `u_band`           |
-| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | Find the tap position that gives the lowest control side voltage within the `u_band`  |
-| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | Find the tap position that gives the highest control side voltage within the `u_band` |
+| strategy                                                                                                    | initial tap position | exploitation direction | search method | description                                                                           |
+| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | linear search | Find any tap position that gives a control side voltage within the `u_band`           |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | binary search | Find the tap position that gives the lowest control side voltage within the `u_band`  |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | binary search | Find the tap position that gives the highest control side voltage within the `u_band` |
+| {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       | current tap position | no exploitation        | binary search | Find any tap position that gives a control side voltage within the `u_band`           |
+
+##### Search methods used for tap changing optimization
+
+Given the discrete nature of the finite tap ranges, we use the following search methods to find the next tap position along the exploitation direction.
+
+| Search method | Description                                                                            |
+| ------------- | -------------------------------------------------------------------------------------- |
+| linear search | Start with an initial guess and do a local search with step size 1 for each iteration step. |
+| binary search | Start with a large search region and reduce the search region by half for every iteration step. |
 
 
 ## Batch Calculations

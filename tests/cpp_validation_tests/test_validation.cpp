@@ -303,7 +303,11 @@ std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_m
     {"disabled", OptimizerStrategy::any},
     {"any_valid_tap", OptimizerStrategy::any},
     {"min_voltage_tap", OptimizerStrategy::global_minimum},
-    {"max_voltage_tap", OptimizerStrategy::global_maximum}};
+    {"max_voltage_tap", OptimizerStrategy::global_maximum},
+    {"fast_any_tap", OptimizerStrategy::fast_any}};
+
+std::map<std::string, SearchMethod, std::less<>> const optimizer_search_mapping = {
+    {"linear_search", SearchMethod::linear_search}, {"binary_search", SearchMethod::binary_search}};
 
 // case parameters
 struct CaseParam {
@@ -313,6 +317,7 @@ struct CaseParam {
     std::string calculation_method;
     std::string short_circuit_voltage_scaling;
     std::string tap_changing_strategy;
+    std::string search_method;
     bool sym{};
     bool is_batch{};
     double rtol{};
@@ -347,6 +352,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
                                          ? OptimizerType::no_optimization
                                          : OptimizerType::automatic_tap_adjustment;
             options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
+
             if (param.sym) {
                 return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
             }
@@ -435,6 +441,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     }
 
     param.tap_changing_strategy = calculation_method_params.value("tap_changing_strategy", "disabled");
+    param.search_method = calculation_method_params.value("search_method", "binary_search");
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
     param.case_name += is_batch ? "_batch"s : ""s;
@@ -628,6 +635,7 @@ TEST_CASE("Validation test single") {
 
 TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+
     for (CaseParam const& param : all_cases) {
         SUBCASE(param.case_name.c_str()) {
             try {
