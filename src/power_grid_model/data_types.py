@@ -13,7 +13,7 @@ import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType
 
-ComponentTypeVar = TypeVar("ComponentTypeVar", ComponentType, str)
+ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 SingleArray = Union[np.ndarray]
 

@@ -8,7 +8,7 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping
+from typing import Mapping, TypeVar
 
 import numpy as np
 
@@ -18,6 +18,8 @@ from power_grid_model.core.power_grid_meta import initialize_array, power_grid_m
 from power_grid_model.data_types import Dataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+
+ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 
 class OutputType(Enum):
@@ -103,7 +105,7 @@ def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_
 def create_output_data(
     output_component_types: ComponentAttributeMapping,
     output_type: OutputType,
-    all_component_count: dict[ComponentType, int],
+    all_component_count: dict[ComponentTypeVar, int],
     is_batch: bool,
     batch_size: int,
 ) -> Dataset:
@@ -147,14 +149,14 @@ def create_output_data(
 def process_output_component_types(
     output_type: OutputType,
     output_component_types: ComponentAttributeMapping,
-    available_components: list[ComponentType],
+    available_components: list[ComponentTypeVar],
 ) -> _ComponentAttributeMappingDict:
     """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
 
     Args:
         output_type (OutputType): the type of output that the user will see (as per the calculation options)
         output_component_types (OutputComponentNamesType):  output_component_types provided by user
-        available_components (list[ComponentType]):  all components available in model instance
+        available_components (list[ComponentTypeVar]):  all components available in model instance
 
     Raises:
         ValueError: when the type for output_comoponent_types is incorrect
@@ -162,7 +164,7 @@ def process_output_component_types(
         KeyError: with "unknown attributes" for any unknown attributes for a known component
 
     Returns:
-        _OutputComponentTypeDict: processed output_component_types in a dictionary
+        _OutputComponentTypeVarDict: processed output_component_types in a dictionary
     """
     # limit all component count to user specified component types in output and convert to a dict
     if output_component_types is None:

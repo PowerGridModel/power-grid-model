@@ -6,7 +6,7 @@
 Main power grid model class
 """
 from enum import IntEnum
-from typing import Optional, Type
+from typing import Optional, Set, Type
 
 import numpy as np
 
@@ -315,7 +315,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentType] | list[ComponentType]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
@@ -352,7 +352,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentType] | list[ComponentType]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
@@ -384,7 +384,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentType] | list[ComponentType]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
@@ -421,7 +421,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
         update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentType] | list[ComponentType]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
@@ -510,7 +510,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
         update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentType] | list[ComponentType]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
     ) -> dict[ComponentType, np.ndarray]:
@@ -591,7 +591,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
         update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentType] | list[ComponentType]] = None,
+        output_component_types: Optional[Set[ComponentType] | list[ComponentType]] = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
