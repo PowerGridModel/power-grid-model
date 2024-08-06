@@ -30,7 +30,6 @@ from power_grid_model.errors import (
     IterationDiverge,
     MissingCaseForEnumError,
     NotObservableError,
-    TapSearchStrategyIncompatibleError,
 )
 
 from .utils import PowerGridModelWithExt
