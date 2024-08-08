@@ -528,20 +528,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // cache component update order if possible
         bool const is_independent = MainModelImpl::is_update_independent(update_data);
 
-        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
-                is_independent](Idx start, Idx stride, Idx n_scenarios) {
+        SequenceIdx scenario_sequence = is_independent ? get_sequence_idx_map(update_data) : SequenceIdx{};
+
+        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, is_independent,
+                scenario_sequence](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
-            auto copy_model = [&base_model, &infos](Idx scenario_idx) {
+            auto model = [&base_model, &infos](Idx scenario_idx) {
                 Timer const t_copy_model(infos[scenario_idx], 1100, "Copy model");
                 return MainModelImpl{base_model};
-            };
-            auto model = copy_model(start);
-
-            SequenceIdx scenario_sequence = is_independent ? model.get_sequence_idx_map(update_data) : SequenceIdx{};
+            }(start);
 
             auto [setup, winddown] =
                 scenario_update_restore(model, update_data, is_independent, scenario_sequence, infos);
@@ -577,14 +576,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         } else {
             // create parallel threads
             Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_scenarios);
-            std::vector<std::thread> threads;
+            std::vector<std::jthread> threads;
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
                 // compute each sub batch with stride
                 threads.emplace_back(sub_batch, thread_number, n_thread, n_scenarios);
-            }
-            for (auto& thread : threads) {
-                thread.join();
             }
         }
     }
@@ -618,7 +614,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
                                         bool const is_independent, SequenceIdx& scenario_sequence,
-                                        std::vector<CalculationInfo>& infos) {
+                                        std::vector<CalculationInfo>& infos) noexcept {
         return std::make_pair(
             [&model, &update_data, &scenario_sequence, is_independent, &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
