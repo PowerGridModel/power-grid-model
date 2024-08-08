@@ -44,10 +44,6 @@ class Topology {
     using GlobalGraph = boost::compressed_sparse_row_graph<boost::directedS, GlobalVertex, GlobalEdge,
                                                            boost::no_property, GraphIdx, GraphIdx>;
 
-    using ReorderGraph = boost::adjacency_list<boost::vecS, // vector as adjacency
-                                               boost::vecS, // vector for vertices
-                                               boost::directedS>;
-
     // dfs visitor for global graph
     class GlobalDFSVisitor : public boost::dfs_visitor<> {
       public:
