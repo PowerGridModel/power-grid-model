@@ -102,7 +102,7 @@ public:
     static void get_info(PGM_Handle* provided_handle, PGM_ConstDataset const* dataset) {
         PGM_dataset_const_get_info(provided_handle, dataset);
     }
-    void get_info() {
+    void get_info() const {
         PGM_dataset_const_get_info(handle.get(), dataset_.get());
     }
 
