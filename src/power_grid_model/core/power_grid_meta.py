@@ -8,7 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any
+from typing import Any, TypeVar
 
 import numpy as np
 
@@ -19,6 +19,8 @@ from power_grid_model.core.dataset_definitions import (
     _str_to_datatype,
 )
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
+
+ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 
 # constant enum for ctype
@@ -66,7 +68,7 @@ class ComponentMetaData:
         return getattr(self, item)
 
 
-DatasetMetaData = dict[ComponentType, ComponentMetaData]
+DatasetMetaData = dict[ComponentTypeVar, ComponentMetaData]
 PowerGridMetaData = dict[DatasetType, DatasetMetaData]
 
 
@@ -166,7 +168,7 @@ power_grid_meta_data = _generate_meta_data()
 
 def initialize_array(
     data_type: str | DatasetType,
-    component_type: str | ComponentType,
+    component_type: str | ComponentTypeVar,
     shape: tuple | int,
     empty: bool = False,
 ) -> np.ndarray:

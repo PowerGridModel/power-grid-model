@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, TypeVar
 
 import msgpack
 import numpy as np
@@ -12,6 +12,8 @@ import pytest
 from power_grid_model import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
+
+ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 
 def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):
@@ -267,9 +269,9 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
 
 
 def assert_scenario_correct(
-    deserialized_dataset: Mapping[ComponentType, np.ndarray],
+    deserialized_dataset: Mapping[ComponentTypeVar, np.ndarray],
     serialized_dataset: Mapping[str, Any],
-    sparse_components: list[ComponentType],
+    sparse_components: list[ComponentTypeVar],
 ):
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset:
@@ -294,7 +296,7 @@ def assert_scenario_correct(
 
 
 def assert_serialization_correct(
-    deserialized_dataset: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
+    deserialized_dataset: Mapping[ComponentTypeVar, np.ndarray | Mapping[str, np.ndarray]],
     serialized_dataset: Mapping[str, Any],
 ):
     """Assert the dataset correctly reprensents the input data."""
