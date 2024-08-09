@@ -22,14 +22,17 @@ from power_grid_model._utils import (
 )
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
 from power_grid_model.core.power_grid_dataset import get_dataset_type
+from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
     json_serialize,
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import BatchArray, BatchDataset, DataArray, Dataset, SingleDataset
+from power_grid_model.enum import DatasetFormat
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
+from power_grid_model.typing import ComponentAttributeMapping
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
@@ -90,7 +93,9 @@ def get_component_batch_size(data_array: BatchArray) -> int:
     return _get_batch_size(data_array)
 
 
-def json_deserialize_from_file(file_path: Path) -> Dataset:
+def json_deserialize_from_file(
+    file_path: Path, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping | None = None
+) -> Dataset:
     """
     Load and deserialize a JSON file to a new dataset.
 
@@ -105,7 +110,7 @@ def json_deserialize_from_file(file_path: Path) -> Dataset:
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, encoding="utf-8") as file_pointer:
-        return json_deserialize(file_pointer.read())
+        return json_deserialize(file_pointer.read(), dataset_format=dataset_format, data_filter=data_filter)
 
 
 def json_serialize_to_file(
@@ -136,7 +141,9 @@ def json_serialize_to_file(
         file_pointer.write(result)
 
 
-def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
+def msgpack_deserialize_from_file(
+    file_path: Path, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping | None = None
+) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
 
@@ -151,7 +158,7 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, mode="rb") as file_pointer:
-        return msgpack_deserialize(file_pointer.read())
+        return msgpack_deserialize(file_pointer.read(), dataset_format=dataset_format, data_filter=data_filter)
 
 
 def msgpack_serialize_to_file(
@@ -339,7 +346,7 @@ def self_test():
 
         try:
             # Load the created JSON input data file (deserialize)
-            deserialized_data = json_deserialize_from_file(input_file_path)
+            deserialized_data = json_deserialize_from_file(input_file_path, dataset_format=DatasetFormat.row)
 
             # Create a PowerGridModel instance from the loaded input data
             model = PowerGridModel(deserialized_data)
@@ -364,3 +371,19 @@ def self_test():
             print("Self test finished.")
         except Exception as e:
             raise PowerGridError from e
+
+
+def deduce_dataset_type(data) -> DatasetType:
+    if not isinstance(data, Dataset):  # TODO Change to RowDataset
+        raise ValueError(
+            "Dataset type cannot be deduced for only columnar data. Atleast one component must have row based data."
+        )
+
+    for comp_name, comp in data.items():
+        if not isinstance(comp, DataArray):  # TODO Change to RowDataArray
+            continue
+        for dataset_type in DatasetType:
+            if comp.dtype is power_grid_meta_data[dataset_type][comp_name].dtype:
+                return dataset_type
+
+    raise ValueError("Dataset type cannot be deduced. `data` is not of `Dataset` format")
