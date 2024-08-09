@@ -12,6 +12,7 @@ from power_grid_model.enum import (
     BranchSide,
     CalculationMethod,
     CalculationType,
+    DatasetFormat,
     FaultPhase,
     FaultType,
     LoadGenType,

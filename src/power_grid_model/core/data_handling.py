@@ -156,11 +156,6 @@ def process_output_component_types(
         output_component_types (OutputComponentNamesType):  output_component_types provided by user
         available_components (list[ComponentType]):  all components available in model instance
 
-    Raises:
-        ValueError: when the type for output_comoponent_types is incorrect
-        KeyError: with "unknown component" for any unknown components
-        KeyError: with "unknown attributes" for any unknown attributes for a known component
-
     Returns:
         _OutputComponentTypeDict: processed output_component_types in a dictionary
     """
@@ -174,21 +169,38 @@ def process_output_component_types(
     ):
         raise ValueError(f"Invalid output_component_types provided: {output_component_types}")
 
-    # raise error if some specified components are unknown
-    output_meta = power_grid_meta_data[output_type.value]
-    unknown_components = [x for x in output_component_types if x not in output_meta]
+    #
+    validate_data_filter(output_component_types, output_type.value)
+
+    return output_component_types
+
+
+def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType) -> None:
+    """Raise error if some specified components or attributes are unknown
+
+    Args:
+        data_filter (OutputType): Component to attribtue dictionary
+        dataset_type (DatasetType):  Type of dataset
+
+    Raises:
+        ValueError: when the type for output_comoponent_types is incorrect
+        KeyError: with "unknown component" for any unknown components
+        KeyError: with "unknown attributes" for any unknown attributes for a known component
+    """
+    dataset_meta = power_grid_meta_data[dataset_type]
+    unknown_components = [x for x in data_filter if x not in dataset_meta]
     if unknown_components:
         raise KeyError(f"You have specified some unknown component types: {unknown_components}")
 
     unknown_attributes = {}
-    for comp_name, attrs in output_component_types.items():
+    for comp_name, attrs in data_filter.items():
         if attrs is None:
             continue
-        diff = set(attrs).difference(output_meta[comp_name].dtype.names)
+        diff = set(attrs).difference(dataset_meta[comp_name].dtype.names)
         if diff != set():
             unknown_attributes[comp_name] = diff
 
     if unknown_attributes:
         raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")
 
-    return output_component_types
+    return data_filter
