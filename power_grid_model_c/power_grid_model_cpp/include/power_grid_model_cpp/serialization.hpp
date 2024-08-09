@@ -26,7 +26,7 @@ public:
     static PGM_WritableDataset* deserializer_get_dataset(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
         return PGM_deserializer_get_dataset(provided_handle, deserializer);
     }
-    PGM_WritableDataset* deserializer_get_dataset() {
+    PGM_WritableDataset* deserializer_get_dataset() const {
         return PGM_deserializer_get_dataset(handle.get(), deserializer_.get());
     }
 
@@ -52,7 +52,7 @@ public:
                                                 PGM_Idx use_compact_list, char const** data, PGM_Idx* size) {
         PGM_serializer_get_to_binary_buffer(provided_handle, serializer, use_compact_list, data, size);
     }
-    void serializer_get_to_binary_buffer(PGM_Idx use_compact_list, char const** data, PGM_Idx* size) {
+    void serializer_get_to_binary_buffer(PGM_Idx use_compact_list, char const** data, PGM_Idx* size) const {
         PGM_serializer_get_to_binary_buffer(handle.get(), serializer_.get(), use_compact_list, data, size);
     }
 
