@@ -42,4 +42,4 @@ private:
 };
 } // namespace power_grid_model_cpp
 
-#endif
+#endif // POWER_GRID_MODEL_CPP_HANDLE_HPP

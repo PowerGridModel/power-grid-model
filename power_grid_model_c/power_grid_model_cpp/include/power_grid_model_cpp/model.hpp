@@ -22,7 +22,7 @@ public:
         : handle(), model_{PGM_copy_model(handle.get(), other.model_.get()), details::DeleterFunctor<&PGM_destroy_model>()} {}
 
     ~Model() = default;
-    
+
     static PGM_PowerGridModel* copy_model(PGM_Handle* provided_handle, PGM_PowerGridModel const* model) {
         return PGM_copy_model(provided_handle, model);
     }
@@ -56,4 +56,4 @@ private:
 };
 } // namespace power_grid_model_cpp
 
-#endif
+#endif // POWER_GRID_MODEL_CPP_MODEL_HPP

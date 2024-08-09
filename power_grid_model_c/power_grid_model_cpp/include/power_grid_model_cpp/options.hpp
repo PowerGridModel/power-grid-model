@@ -19,7 +19,7 @@ public:
     Options() : handle(), options_{PGM_create_options(handle.get()), details::DeleterFunctor<&PGM_destroy_options>()} {}
 
     ~Options() = default;
-    
+
     static void set_calculation_type(PGM_Handle* provided_handle, PGM_Options* opt, PGM_Idx type) {
         PGM_set_calculation_type(provided_handle, opt, type);
     }
@@ -88,4 +88,4 @@ private:
 };
 } // namespace power_grid_model_cpp
 
-#endif
+#endif // POWER_GRID_MODEL_CPP_OPTIONS_HPP

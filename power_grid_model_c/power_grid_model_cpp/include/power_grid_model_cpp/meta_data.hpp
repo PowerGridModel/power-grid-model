@@ -87,4 +87,4 @@ int is_little_endian(PGM_Handle* handle) {
 
 } // namespace power_grid_model_cpp
 
-#endif
+#endif // POWER_GRID_MODEL_CPP_META_DATA_HPP
