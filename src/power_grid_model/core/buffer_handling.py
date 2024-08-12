@@ -8,17 +8,15 @@ Power grid model buffer handler
 
 
 from dataclasses import dataclass
-from typing import Mapping, Optional, TypeVar
+from typing import Mapping, Optional
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
-
-ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
+from power_grid_model.data_types import ComponentTypeVar
 
 
 @dataclass

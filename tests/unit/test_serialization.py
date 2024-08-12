@@ -3,17 +3,16 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, Mapping, Optional, TypeVar
+from typing import Any, Mapping, Optional
 
 import msgpack
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, DatasetType
+from power_grid_model import DatasetType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
+from power_grid_model.data_types import ComponentTypeVar
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
-
-ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 
 def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):

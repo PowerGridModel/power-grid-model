@@ -8,19 +8,13 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, TypeVar
+from typing import Any
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import (
-    ComponentType,
-    DatasetType,
-    _str_to_component_type,
-    _str_to_datatype,
-)
+from power_grid_model.core.dataset_definitions import DatasetType, _str_to_component_type, _str_to_datatype
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-
-ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
+from power_grid_model.data_types import ComponentTypeVar
 
 
 # constant enum for ctype

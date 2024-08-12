@@ -8,18 +8,16 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping, TypeVar
+from typing import Mapping
 
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.data_types import Dataset
+from power_grid_model.data_types import ComponentTypeVar, Dataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
-
-ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentType | str)
 
 
 class OutputType(Enum):

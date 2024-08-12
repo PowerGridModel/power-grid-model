@@ -6,16 +6,14 @@
 Utilities used for validation. Only errors_to_string() is intended for end users.
 """
 import re
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, cast
 
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
-from power_grid_model.data_types import SingleDataset
+from power_grid_model.data_types import ComponentTypeVar, SingleDataset
 from power_grid_model.validation.errors import ValidationError
-
-ComponentTypeVar = TypeVar("ComponentTypeVar", ComponentType, str)
 
 
 def eval_expression(data: np.ndarray, expression: int | float | str) -> np.ndarray:
@@ -254,7 +252,7 @@ def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeVar | list[C
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.
     if isinstance(ref_components, (str, ComponentType)):
-        ref_components = [ref_components]
+        ref_components = cast(list[ComponentTypeVar], [ref_components])
 
     # Create a set of ids by chaining the ids of all ref_components
     valid_ids = set()
