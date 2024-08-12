@@ -34,12 +34,12 @@ class Model {
         return PGM_update_model(handle.get(), model_.get(), update_dataset);
     }
 
-    static void get_indexer(PGM_Handle* provided_handle, PGM_PowerGridModel const* model, char const* component,
+    static void get_indexer(PGM_Handle* provided_handle, PGM_PowerGridModel const* model, std::string const& component,
                             Idx size, ID const* ids, Idx* indexer) {
-        PGM_get_indexer(provided_handle, model, component, size, ids, indexer);
+        PGM_get_indexer(provided_handle, model, component.c_str(), size, ids, indexer);
     }
-    void get_indexer(char const* component, Idx size, ID const* ids, Idx* indexer) const {
-        PGM_get_indexer(handle.get(), model_.get(), component, size, ids, indexer);
+    void get_indexer(std::string const& component, Idx size, ID const* ids, Idx* indexer) const {
+        PGM_get_indexer(handle.get(), model_.get(), component.c_str(), size, ids, indexer);
     }
 
     static void calculate(PGM_Handle* provided_handle, PGM_PowerGridModel* model, PGM_Options const* opt,

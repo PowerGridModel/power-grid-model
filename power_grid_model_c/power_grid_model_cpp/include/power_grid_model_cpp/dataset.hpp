@@ -18,10 +18,12 @@ class Dataset {
 
     virtual ~Dataset() = default;
 
-    static char const* info_name(PGM_Handle* provided_handle, PGM_DatasetInfo const* info) {
-        return PGM_dataset_info_name(provided_handle, info);
+    static std::string const info_name(PGM_Handle* provided_handle, PGM_DatasetInfo const* info) {
+        return std::string(PGM_dataset_info_name(provided_handle, info));
     }
-    char const* info_name(PGM_DatasetInfo const* info) const { return PGM_dataset_info_name(handle.get(), info); }
+    std::string const info_name(PGM_DatasetInfo const* info) const {
+        return std::string(PGM_dataset_info_name(handle.get(), info));
+    }
 
     static Idx info_is_batch(PGM_Handle* provided_handle, PGM_DatasetInfo const* info) {
         return PGM_dataset_info_is_batch(provided_handle, info);
@@ -40,12 +42,12 @@ class Dataset {
         return PGM_dataset_info_n_components(handle.get(), info);
     }
 
-    static char const* info_component_name(PGM_Handle* provided_handle, PGM_DatasetInfo const* info,
-                                           Idx component_idx) {
-        return PGM_dataset_info_component_name(provided_handle, info, component_idx);
+    static std::string const info_component_name(PGM_Handle* provided_handle, PGM_DatasetInfo const* info,
+                                                 Idx component_idx) {
+        return std::string(PGM_dataset_info_component_name(provided_handle, info, component_idx));
     }
-    char const* info_component_name(PGM_DatasetInfo const* info, Idx component_idx) const {
-        return PGM_dataset_info_component_name(handle.get(), info, component_idx);
+    std::string const info_component_name(PGM_DatasetInfo const* info, Idx component_idx) const {
+        return std::string(PGM_dataset_info_component_name(handle.get(), info, component_idx));
     }
 
     static Idx info_elements_per_scenario(PGM_Handle* provided_handle, PGM_DatasetInfo const* info, Idx component_idx) {
@@ -68,8 +70,8 @@ class Dataset {
 
 class DatasetConst : public Dataset {
   public:
-    DatasetConst(char const* dataset, Idx is_batch, Idx batch_size)
-        : Dataset(), dataset_{PGM_create_dataset_const(handle.get(), dataset, is_batch, batch_size)} {}
+    DatasetConst(std::string const& dataset, Idx is_batch, Idx batch_size)
+        : Dataset(), dataset_{PGM_create_dataset_const(handle.get(), dataset.c_str(), is_batch, batch_size)} {}
     DatasetConst(PGM_WritableDataset const* writable_dataset)
         : Dataset(), dataset_{PGM_create_dataset_const_from_writable(handle.get(), writable_dataset)} {}
     DatasetConst(PGM_MutableDataset const* mutable_dataset)
@@ -77,15 +79,15 @@ class DatasetConst : public Dataset {
 
     ~DatasetConst() = default;
 
-    static void add_buffer(PGM_Handle* provided_handle, PGM_ConstDataset* dataset, char const* component,
+    static void add_buffer(PGM_Handle* provided_handle, PGM_ConstDataset* dataset, std::string const& component,
                            Idx elements_per_scenario, Idx total_elements, Idx const* indptr, void const* data) {
-        PGM_dataset_const_add_buffer(provided_handle, dataset, component, elements_per_scenario, total_elements, indptr,
-                                     data);
-    }
-    void add_buffer(char const* component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    void const* data) {
-        PGM_dataset_const_add_buffer(handle.get(), dataset_.get(), component, elements_per_scenario, total_elements,
+        PGM_dataset_const_add_buffer(provided_handle, dataset, component.c_str(), elements_per_scenario, total_elements,
                                      indptr, data);
+    }
+    void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
+                    void const* data) {
+        PGM_dataset_const_add_buffer(handle.get(), dataset_.get(), component.c_str(), elements_per_scenario,
+                                     total_elements, indptr, data);
     }
 
     static void get_info(PGM_Handle* provided_handle, PGM_ConstDataset const* dataset) {
@@ -108,15 +110,15 @@ class DatasetWritable : public Dataset {
     }
     PGM_DatasetInfo const* get_info() const { return PGM_dataset_writable_get_info(handle.get(), dataset_.get()); }
 
-    static void set_buffer(PGM_Handle* provided_handle, PGM_WritableDataset* dataset, char const* component,
+    static void set_buffer(PGM_Handle* provided_handle, PGM_WritableDataset* dataset, std::string const& component,
                            Idx* indptr, void* data) {
-        PGM_dataset_writable_set_buffer(provided_handle, dataset, component, indptr, data);
+        PGM_dataset_writable_set_buffer(provided_handle, dataset, component.c_str(), indptr, data);
     }
-    void set_buffer(char const* component, Idx* indptr, void* data) {
-        PGM_dataset_writable_set_buffer(handle.get(), dataset_.get(), component, indptr, data);
+    void set_buffer(std::string const& component, Idx* indptr, void* data) {
+        PGM_dataset_writable_set_buffer(handle.get(), dataset_.get(), component.c_str(), indptr, data);
     }
 
-    void set_dataset(PGM_WritableDataset* dataset) { // Why isn't there a constructor/destructor in the C api?
+    void set(PGM_WritableDataset* dataset) { // Why isn't there a constructor/destructor in the C api?
         dataset_ = std::unique_ptr<PGM_WritableDataset>(dataset);
     }
 
@@ -125,20 +127,20 @@ class DatasetWritable : public Dataset {
 };
 
 class DatasetMutable : public Dataset {
-    DatasetMutable(char const* dataset, Idx is_batch, Idx batch_size)
-        : Dataset(), dataset_{PGM_create_dataset_mutable(handle.get(), dataset, is_batch, batch_size)} {}
+    DatasetMutable(std::string const& dataset, Idx is_batch, Idx batch_size)
+        : Dataset(), dataset_{PGM_create_dataset_mutable(handle.get(), dataset.c_str(), is_batch, batch_size)} {}
 
     ~DatasetMutable() = default;
 
-    static void add_buffer(PGM_Handle* provided_handle, PGM_MutableDataset* dataset, char const* component,
+    static void add_buffer(PGM_Handle* provided_handle, PGM_MutableDataset* dataset, std::string const& component,
                            Idx elements_per_scenario, Idx total_elements, Idx const* indptr, void* data) {
-        PGM_dataset_mutable_add_buffer(provided_handle, dataset, component, elements_per_scenario, total_elements,
-                                       indptr, data);
+        PGM_dataset_mutable_add_buffer(provided_handle, dataset, component.c_str(), elements_per_scenario,
+                                       total_elements, indptr, data);
     }
-    void add_buffer(char const* component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
+    void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
                     void* data) {
-        PGM_dataset_mutable_add_buffer(handle.get(), dataset_.get(), component, elements_per_scenario, total_elements,
-                                       indptr, data);
+        PGM_dataset_mutable_add_buffer(handle.get(), dataset_.get(), component.c_str(), elements_per_scenario,
+                                       total_elements, indptr, data);
     }
 
     static PGM_DatasetInfo const* get_info(PGM_Handle* provided_handle, PGM_MutableDataset const* dataset) {

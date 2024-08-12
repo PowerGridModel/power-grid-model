@@ -16,27 +16,26 @@ class Deserializer {
   public:
     power_grid_model_cpp::Handle handle;
 
-    Deserializer(char const* data, Idx size, Idx serialization_format)
+    Deserializer(std::vector<std::byte> const& data, Idx serialization_format)
         : handle(),
-          deserializer_{PGM_create_deserializer_from_binary_buffer(handle.get(), data, size, serialization_format)} {}
-    Deserializer(char const* data_string, Idx serialization_format)
+          deserializer_{PGM_create_deserializer_from_binary_buffer(
+              handle.get(), reinterpret_cast<char const*>(data.data()), data.size(), serialization_format)} {}
+    Deserializer(std::string const& data_string, Idx serialization_format)
         : handle(),
-          deserializer_{
-              PGM_create_deserializer_from_null_terminated_string(handle.get(), data_string, serialization_format)} {}
+          deserializer_{PGM_create_deserializer_from_null_terminated_string(handle.get(), data_string.c_str(),
+                                                                            serialization_format)} {}
 
     ~Deserializer() = default;
 
-    static PGM_WritableDataset* deserializer_get_dataset(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
+    static PGM_WritableDataset* get_dataset(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
         return PGM_deserializer_get_dataset(provided_handle, deserializer);
     }
-    PGM_WritableDataset* deserializer_get_dataset() const {
-        return PGM_deserializer_get_dataset(handle.get(), deserializer_.get());
-    }
+    PGM_WritableDataset* get_dataset() const { return PGM_deserializer_get_dataset(handle.get(), deserializer_.get()); }
 
-    static void deserializer_parse_to_buffer(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
+    static void parse_to_buffer(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
         PGM_deserializer_parse_to_buffer(provided_handle, deserializer);
     }
-    void deserializer_parse_to_buffer() { PGM_deserializer_parse_to_buffer(handle.get(), deserializer_.get()); }
+    void parse_to_buffer() { PGM_deserializer_parse_to_buffer(handle.get(), deserializer_.get()); }
 
   private:
     UniquePtr<PGM_Deserializer, PGM_destroy_deserializer> deserializer_;
@@ -51,20 +50,32 @@ class Serializer {
 
     ~Serializer() = default;
 
-    static void serializer_get_to_binary_buffer(PGM_Handle* provided_handle, PGM_Serializer* serializer,
-                                                Idx use_compact_list, char const** data, Idx* size) {
-        PGM_serializer_get_to_binary_buffer(provided_handle, serializer, use_compact_list, data, size);
+    static void get_to_binary_buffer(PGM_Handle* provided_handle, PGM_Serializer* serializer, Idx use_compact_list,
+                                     std::vector<std::byte>& data, Idx* size) {
+        char* temp_data = nullptr;
+        PGM_serializer_get_to_binary_buffer(provided_handle, serializer, use_compact_list, &temp_data, size);
+        if (temp_data != nullptr) {
+            data.resize(*size);
+            std::memcpy(data.data(), temp_data, *size);
+        }
     }
-    void serializer_get_to_binary_buffer(Idx use_compact_list, char const** data, Idx* size) const {
-        PGM_serializer_get_to_binary_buffer(handle.get(), serializer_.get(), use_compact_list, data, size);
+    void get_to_binary_buffer(Idx use_compact_list, std::vector<std::byte>& data, Idx* size) const {
+        char* temp_data = nullptr;
+        PGM_serializer_get_to_binary_buffer(handle.get(), serializer_.get(), use_compact_list, &temp_data, size);
+        if (temp_data != nullptr) {
+            data.resize(*size);
+            std::memcpy(data.data(), temp_data, *size);
+        }
     }
 
-    static char const* serializer_get_to_zero_terminated_string(PGM_Handle* provided_handle, PGM_Serializer* serializer,
-                                                                Idx use_compact_list, Idx indent) {
-        return PGM_serializer_get_to_zero_terminated_string(provided_handle, serializer, use_compact_list, indent);
+    static std::string const get_to_zero_terminated_string(PGM_Handle* provided_handle, PGM_Serializer* serializer,
+                                                           Idx use_compact_list, Idx indent) {
+        return std::string(
+            PGM_serializer_get_to_zero_terminated_string(provided_handle, serializer, use_compact_list, indent));
     }
-    char const* serializer_get_to_zero_terminated_string(Idx use_compact_list, Idx indent) {
-        return PGM_serializer_get_to_zero_terminated_string(handle.get(), serializer_.get(), use_compact_list, indent);
+    std::string const get_to_zero_terminated_string(Idx use_compact_list, Idx indent) {
+        return std::string(
+            PGM_serializer_get_to_zero_terminated_string(handle.get(), serializer_.get(), use_compact_list, indent));
     }
 
   private:
