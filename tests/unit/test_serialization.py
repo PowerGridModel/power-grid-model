@@ -11,7 +11,7 @@ import pytest
 
 from power_grid_model import DatasetType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
-from power_grid_model.data_types import ComponentTypeVar
+from power_grid_model.data_types import ComponentTypeLike
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -268,9 +268,9 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
 
 
 def assert_scenario_correct(
-    deserialized_dataset: Mapping[ComponentTypeVar, np.ndarray],
+    deserialized_dataset: Mapping[ComponentTypeLike, np.ndarray],
     serialized_dataset: Mapping[str, Any],
-    sparse_components: list[ComponentTypeVar],
+    sparse_components: list[ComponentTypeLike],
 ):
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset:
@@ -295,7 +295,7 @@ def assert_scenario_correct(
 
 
 def assert_serialization_correct(
-    deserialized_dataset: Mapping[ComponentTypeVar, np.ndarray | Mapping[str, np.ndarray]],
+    deserialized_dataset: Mapping[ComponentTypeLike, np.ndarray | Mapping[str, np.ndarray]],
     serialized_dataset: Mapping[str, Any],
 ):
     """Assert the dataset correctly reprensents the input data."""

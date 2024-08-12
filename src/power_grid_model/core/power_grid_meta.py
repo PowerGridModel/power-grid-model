@@ -14,7 +14,7 @@ import numpy as np
 
 from power_grid_model.core.dataset_definitions import DatasetType, _str_to_component_type, _str_to_datatype
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-from power_grid_model.data_types import ComponentTypeVar
+from power_grid_model.data_types import ComponentTypeLike
 
 
 # constant enum for ctype
@@ -62,7 +62,7 @@ class ComponentMetaData:
         return getattr(self, item)
 
 
-DatasetMetaData = dict[ComponentTypeVar, ComponentMetaData]
+DatasetMetaData = dict[ComponentTypeLike, ComponentMetaData]
 PowerGridMetaData = dict[DatasetType, DatasetMetaData]
 
 
@@ -162,7 +162,7 @@ power_grid_meta_data = _generate_meta_data()
 
 def initialize_array(
     data_type: str | DatasetType,
-    component_type: str | ComponentTypeVar,
+    component_type: str | ComponentTypeLike,
     shape: tuple | int,
     empty: bool = False,
 ) -> np.ndarray:
