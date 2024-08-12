@@ -162,7 +162,7 @@ def process_output_component_types(
         KeyError: with "unknown attributes" for any unknown attributes for a known component
 
     Returns:
-        _OutputComponentTypeVarDict: processed output_component_types in a dictionary
+        _OutputComponentTypeDict: processed output_component_types in a dictionary
     """
     # limit all component count to user specified component types in output and convert to a dict
     if output_component_types is None:

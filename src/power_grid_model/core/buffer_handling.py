@@ -12,11 +12,11 @@ from typing import Mapping, Optional
 
 import numpy as np
 
+from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
-from power_grid_model.data_types import ComponentTypeVar
 
 
 @dataclass
@@ -233,7 +233,7 @@ def get_buffer_view(data: np.ndarray | Mapping[str, np.ndarray], schema: Compone
 
 def create_buffer(
     properties: BufferProperties, schema: ComponentMetaData
-) -> np.ndarray | dict[ComponentTypeVar, np.ndarray]:
+) -> np.ndarray | dict[ComponentType, np.ndarray]:
     """
     Create a buffer with the provided properties and type.
 
