@@ -10,6 +10,7 @@
 #error "You should not define PGM_DLL_EXPORTS when using the C++ headers"
 #endif
 
+#include <exception>
 #include <memory>
 #include <string>
 #include <vector>

@@ -11,26 +11,75 @@
 #include "basics.hpp"
 
 namespace power_grid_model_cpp {
-class Handle {
+class PowerGridError : public std::exception {
+  public:
+    PowerGridError(const std::string& message) : message_(message) {}
+    const char* what() const noexcept override { return message_.c_str(); }
+    virtual Idx error_code() const = 0;
 
+  private:
+    std::string message_;
+};
+
+class PowerGridRegularError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const override { return PGM_regular_error; }
+};
+
+class PowerGridSerializationError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const override { return PGM_serialization_error; }
+};
+
+class PowerGridBatchError : public PowerGridError {
+  public:
+    struct FailedScenario {
+        Idx scenario;
+        std::string error_message;
+    };
+
+    PowerGridBatchError(std::string const& message, std::vector<FailedScenario>&& failed_scenarios_c)
+        : PowerGridError{message}, failed_scenarios_{std::move(failed_scenarios_c)} {}
+    Idx error_code() const override { return PGM_batch_error; }
+    std::vector<FailedScenario> const& failed_scenarios() const { return failed_scenarios_; }
+
+  private:
+    std::vector<FailedScenario> failed_scenarios_;
+};
+
+class Handle {
   public:
     Handle() : handle_{PGM_create_handle()} {}
 
     ~Handle() = default;
 
-    Idx error_code() const { return PGM_error_code(handle_.get()); }
-
-    char const* error_message() const { return PGM_error_message(handle_.get()); }
-
-    Idx n_failed_scenarios() const { return PGM_n_failed_scenarios(handle_.get()); }
-
-    Idx const* failed_scenarios() const { return PGM_failed_scenarios(handle_.get()); }
-
-    char const** batch_errors() const { return PGM_batch_errors(handle_.get()); }
-
-    void clear_error() const { PGM_clear_error(handle_.get()); }
-
     PGM_Handle* get() const { return handle_.get(); }
+
+    void check_error() const {
+        Idx error_code = PGM_error_code(handle_.get());
+        std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_.get());
+        switch (error_code) {
+        case 0:
+            break;
+        case PGM_regular_error:
+            throw PowerGridRegularError{error_message};
+        case PGM_batch_error: {
+            Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_.get());
+            std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
+            auto const failed_scenario_seqs = PGM_failed_scenarios(handle_.get());
+            auto const failed_scenario_messages = PGM_batch_errors(handle_.get());
+            for (Idx i = 0; i < n_failed_scenarios; ++i) {
+                failed_scenarios[i] =
+                    PowerGridBatchError::FailedScenario{failed_scenario_seqs[i], failed_scenario_messages[i]};
+            }
+            throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
+        }
+        case PGM_serialization_error:
+            throw PowerGridSerializationError{error_message};
+        }
+    }
 
   private:
     UniquePtr<PGM_Handle, PGM_destroy_handle> handle_;
