@@ -13,11 +13,9 @@
 namespace power_grid_model_cpp {
 
 class Meta {
-public:
-    static PGM_Idx n_datasets(PGM_Handle* handle) {
-        return PGM_meta_n_datasets(handle);
-    }
-        
+  public:
+    static PGM_Idx n_datasets(PGM_Handle* handle) { return PGM_meta_n_datasets(handle); }
+
     static PGM_MetaDataset const* get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
         return PGM_meta_get_dataset_by_idx(handle, idx);
     }
@@ -35,12 +33,12 @@ public:
     }
 
     static PGM_MetaComponent const* get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
-                                                                PGM_Idx idx) {
+                                                         PGM_Idx idx) {
         return PGM_meta_get_component_by_idx(handle, dataset, idx);
     }
 
     static PGM_MetaComponent const* get_component_by_name(PGM_Handle* handle, char const* dataset,
-                                                                    char const* component) {
+                                                          char const* component) {
         return PGM_meta_get_component_by_name(handle, dataset, component);
     }
 
@@ -61,12 +59,12 @@ public:
     }
 
     static PGM_MetaAttribute const* get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
-                                                                PGM_Idx idx) {
+                                                         PGM_Idx idx) {
         return PGM_meta_get_attribute_by_idx(handle, component, idx);
     }
 
     static PGM_MetaAttribute const* get_attribute_by_name(PGM_Handle* handle, char const* dataset,
-                                                                    char const* component, char const* attribute) {
+                                                          char const* component, char const* attribute) {
         return PGM_meta_get_attribute_by_name(handle, dataset, component, attribute);
     }
 
@@ -82,9 +80,7 @@ public:
         return PGM_meta_attribute_offset(handle, attribute);
     }
 
-    static int is_little_endian(PGM_Handle* handle) {
-        return PGM_is_little_endian(handle);
-    }
+    static int is_little_endian(PGM_Handle* handle) { return PGM_is_little_endian(handle); }
 };
 } // namespace power_grid_model_cpp
 

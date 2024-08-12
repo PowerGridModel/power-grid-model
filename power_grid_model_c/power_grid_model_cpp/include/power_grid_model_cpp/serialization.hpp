@@ -8,19 +8,24 @@
 
 #include <memory>
 
-#include "serialization.h"
 #include "handle.hpp"
+#include "serialization.h"
 
 namespace power_grid_model_cpp {
 class Deserializer {
-public:
+  public:
     power_grid_model_cpp::Handle handle;
 
     Deserializer(char const* data, PGM_Idx size, PGM_Idx serialization_format)
-        : handle(), deserializer_{PGM_create_deserializer_from_binary_buffer(handle.get(), data, size, serialization_format), details::DeleterFunctor<&PGM_destroy_deserializer>()} {}
+        : handle(),
+          deserializer_{PGM_create_deserializer_from_binary_buffer(handle.get(), data, size, serialization_format),
+                        details::DeleterFunctor<&PGM_destroy_deserializer>()} {}
     Deserializer(char const* data_string, PGM_Idx serialization_format)
-        : handle(), deserializer_{PGM_create_deserializer_from_null_terminated_string(handle.get(), data_string, serialization_format), details::DeleterFunctor<&PGM_destroy_deserializer>()} {}
-    
+        : handle(),
+          deserializer_{
+              PGM_create_deserializer_from_null_terminated_string(handle.get(), data_string, serialization_format),
+              details::DeleterFunctor<&PGM_destroy_deserializer>()} {}
+
     ~Deserializer() = default;
 
     static PGM_WritableDataset* deserializer_get_dataset(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
@@ -33,20 +38,20 @@ public:
     static void deserializer_parse_to_buffer(PGM_Handle* provided_handle, PGM_Deserializer* deserializer) {
         PGM_deserializer_parse_to_buffer(provided_handle, deserializer);
     }
-    void deserializer_parse_to_buffer() {
-        PGM_deserializer_parse_to_buffer(handle.get(), deserializer_.get());
-    }
+    void deserializer_parse_to_buffer() { PGM_deserializer_parse_to_buffer(handle.get(), deserializer_.get()); }
 
-private:
+  private:
     std::unique_ptr<PGM_Deserializer, details::DeleterFunctor<&PGM_destroy_deserializer>> deserializer_;
 };
 
 class Serializer {
-public:
+  public:
     power_grid_model_cpp::Handle handle;
 
     Serializer(PGM_ConstDataset const* dataset, PGM_Idx serialization_format)
-        : handle(), serializer_{PGM_create_serializer(handle.get(), dataset, serialization_format), details::DeleterFunctor<&PGM_destroy_serializer>()} {}
+        : handle(),
+          serializer_{PGM_create_serializer(handle.get(), dataset, serialization_format),
+                      details::DeleterFunctor<&PGM_destroy_serializer>()} {}
 
     static void serializer_get_to_binary_buffer(PGM_Handle* provided_handle, PGM_Serializer* serializer,
                                                 PGM_Idx use_compact_list, char const** data, PGM_Idx* size) {
@@ -64,7 +69,7 @@ public:
         return PGM_serializer_get_to_zero_terminated_string(handle.get(), serializer_.get(), use_compact_list, indent);
     }
 
-private:
+  private:
     std::unique_ptr<PGM_Serializer, details::DeleterFunctor<&PGM_destroy_serializer>> serializer_;
 };
 } // namespace power_grid_model_cpp
