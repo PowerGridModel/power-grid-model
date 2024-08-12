@@ -5,7 +5,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 # export the license and readme
-configure_file("${CMAKE_SOURCE_DIR}/cmake/README.md.in" "${CMAKE_CURRENT_BINARY_DIR}/README.md")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/README.md.in" "${CMAKE_CURRENT_BINARY_DIR}/README.md")
 install(FILES "LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/README.md"
   DESTINATION "share"
 )
@@ -20,7 +20,7 @@ install(EXPORT "power_grid_modelTargets"
 # export configuration and version to enable find_package(power_grid_model)
 include(CMakePackageConfigHelpers)
 
-configure_package_config_file("${CMAKE_SOURCE_DIR}/cmake/power_grid_modelConfig.cmake.in"
+configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/power_grid_modelConfig.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfig.cmake"
   INSTALL_DESTINATION "lib/cmake/power_grid_model"
 )
