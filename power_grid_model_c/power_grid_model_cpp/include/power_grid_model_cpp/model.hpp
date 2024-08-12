@@ -6,10 +6,10 @@
 #ifndef POWER_GRID_MODEL_CPP_MODEL_HPP
 #define POWER_GRID_MODEL_CPP_MODEL_HPP
 
-#include <memory>
-
-#include "handle.hpp"
 #include "model.h"
+
+#include "basics.hpp"
+#include "handle.hpp"
 
 namespace power_grid_model_cpp {
 class Model {
@@ -17,12 +17,8 @@ class Model {
     power_grid_model_cpp::Handle handle;
 
     Model(double system_frequency, PGM_ConstDataset const* input_dataset)
-        : handle(),
-          model_{PGM_create_model(handle.get(), system_frequency, input_dataset),
-                 details::DeleterFunctor<&PGM_destroy_model>()} {}
-    Model(Model const& other)
-        : handle(),
-          model_{PGM_copy_model(handle.get(), other.model_.get()), details::DeleterFunctor<&PGM_destroy_model>()} {}
+        : handle(), model_{PGM_create_model(handle.get(), system_frequency, input_dataset)} {}
+    Model(Model const& other) : handle(), model_{PGM_copy_model(handle.get(), other.model_.get())} {}
 
     ~Model() = default;
 
@@ -39,10 +35,10 @@ class Model {
     }
 
     static void get_indexer(PGM_Handle* provided_handle, PGM_PowerGridModel const* model, char const* component,
-                            PGM_Idx size, PGM_ID const* ids, PGM_Idx* indexer) {
+                            Idx size, ID const* ids, Idx* indexer) {
         PGM_get_indexer(provided_handle, model, component, size, ids, indexer);
     }
-    void get_indexer(char const* component, PGM_Idx size, PGM_ID const* ids, PGM_Idx* indexer) const {
+    void get_indexer(char const* component, Idx size, ID const* ids, Idx* indexer) const {
         PGM_get_indexer(handle.get(), model_.get(), component, size, ids, indexer);
     }
 
@@ -56,7 +52,7 @@ class Model {
     }
 
   private:
-    std::unique_ptr<PGM_PowerGridModel, details::DeleterFunctor<&PGM_destroy_model>> model_;
+    UniquePtr<PGM_PowerGridModel, PGM_destroy_model> model_;
 };
 } // namespace power_grid_model_cpp
 

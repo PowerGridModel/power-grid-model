@@ -6,17 +6,17 @@
 #ifndef POWER_GRID_MODEL_CPP_META_DATA_HPP
 #define POWER_GRID_MODEL_CPP_META_DATA_HPP
 
-#include <memory>
-
 #include "meta_data.h"
+
+#include "basics.hpp"
 
 namespace power_grid_model_cpp {
 
-class Meta {
+class MetaData {
   public:
-    static PGM_Idx n_datasets(PGM_Handle* handle) { return PGM_meta_n_datasets(handle); }
+    static Idx n_datasets(PGM_Handle* handle) { return PGM_meta_n_datasets(handle); }
 
-    static PGM_MetaDataset const* get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
+    static PGM_MetaDataset const* get_dataset_by_idx(PGM_Handle* handle, Idx idx) {
         return PGM_meta_get_dataset_by_idx(handle, idx);
     }
 
@@ -28,12 +28,11 @@ class Meta {
         return PGM_meta_dataset_name(handle, dataset);
     }
 
-    static PGM_Idx n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
+    static Idx n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
         return PGM_meta_n_components(handle, dataset);
     }
 
-    static PGM_MetaComponent const* get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
-                                                         PGM_Idx idx) {
+    static PGM_MetaComponent const* get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset, Idx idx) {
         return PGM_meta_get_component_by_idx(handle, dataset, idx);
     }
 
@@ -54,12 +53,12 @@ class Meta {
         return PGM_meta_component_alignment(handle, component);
     }
 
-    static PGM_Idx n_attributes(PGM_Handle* handle, PGM_MetaComponent const* component) {
+    static Idx n_attributes(PGM_Handle* handle, PGM_MetaComponent const* component) {
         return PGM_meta_n_attributes(handle, component);
     }
 
     static PGM_MetaAttribute const* get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
-                                                         PGM_Idx idx) {
+                                                         Idx idx) {
         return PGM_meta_get_attribute_by_idx(handle, component, idx);
     }
 
@@ -72,7 +71,7 @@ class Meta {
         return PGM_meta_attribute_name(handle, attribute);
     }
 
-    static PGM_Idx attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
+    static Idx attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
         return PGM_meta_attribute_ctype(handle, attribute);
     }
 
@@ -81,6 +80,9 @@ class Meta {
     }
 
     static int is_little_endian(PGM_Handle* handle) { return PGM_is_little_endian(handle); }
+
+  private:
+    MetaData() {}
 };
 } // namespace power_grid_model_cpp
 

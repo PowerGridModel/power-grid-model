@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_CPP_HPP
 #define POWER_GRID_MODEL_CPP_HPP
 
-#include "power_grid_model_c/basics.h"
+#include "power_grid_model_cpp/basics.hpp"
 #include "power_grid_model_cpp/buffer.hpp"
 #include "power_grid_model_cpp/dataset.hpp"
 #include "power_grid_model_cpp/handle.hpp"
