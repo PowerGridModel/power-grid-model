@@ -528,22 +528,27 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // cache component update order if possible
         bool const is_independent = MainModelImpl::is_update_independent(update_data);
 
-        SequenceIdx scenario_sequence = is_independent ? get_sequence_idx_map(update_data) : SequenceIdx{};
+        std::shared_ptr<SequenceIdx const> all_scenarios_sequence{
+            is_independent ? std::make_shared<SequenceIdx const>(get_sequence_idx_map(update_data)) : nullptr};
 
-        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, is_independent,
-                scenario_sequence](Idx start, Idx stride, Idx n_scenarios) {
+        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, all_scenarios_sequence,
+                is_independent](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
+            assert(is_independent == (all_scenarios_sequence != nullptr));
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
-            auto model = [&base_model, &infos](Idx scenario_idx) {
+            auto const copy_model = [&base_model, &infos](Idx scenario_idx) {
                 Timer const t_copy_model(infos[scenario_idx], 1100, "Copy model");
                 return MainModelImpl{base_model};
-            }(start);
+            };
+            auto model = copy_model(start);
 
-            auto [setup, winddown] =
-                scenario_update_restore(model, update_data, is_independent, scenario_sequence, infos);
+            SequenceIdx cacheable_scenario_sequence = SequenceIdx{};
+            auto const& scenario_sequence = is_independent ? *all_scenarios_sequence : cacheable_scenario_sequence;
+            auto [setup, winddown] = scenario_update_restore(model, update_data, scenario_sequence,
+                                                             cacheable_scenario_sequence, is_independent, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
                 [&model, &calculation_fn, &result_data, &infos](Idx scenario_idx) {
@@ -576,11 +581,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         } else {
             // create parallel threads
             Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_scenarios);
-            std::vector<std::jthread> threads;
+            std::vector<std::thread> threads;
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
                 // compute each sub batch with stride
                 threads.emplace_back(sub_batch, thread_number, n_thread, n_scenarios);
+            }
+            for (auto& thread : threads) {
+                thread.join();
             }
         }
     }
@@ -613,21 +621,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
-                                        bool const is_independent, SequenceIdx& scenario_sequence,
-                                        std::vector<CalculationInfo>& infos) noexcept {
+                                        SequenceIdx const& scenario_sequence, SequenceIdx& scenario_sequence_cache,
+                                        bool is_independent, std::vector<CalculationInfo>& infos) noexcept {
+        bool const do_update_cache = !is_independent;
         return std::make_pair(
-            [&model, &update_data, &scenario_sequence, is_independent, &infos](Idx scenario_idx) {
+            [&model, &update_data, &scenario_sequence, &scenario_sequence_cache, do_update_cache,
+             &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
-                if (!is_independent) {
-                    scenario_sequence = model.get_sequence_idx_map(update_data, scenario_idx);
+                if (do_update_cache) {
+                    scenario_sequence_cache = model.get_sequence_idx_map(update_data, scenario_idx);
                 }
                 model.template update_component<cached_update_t>(update_data, scenario_idx, scenario_sequence);
             },
-            [&model, &scenario_sequence, is_independent, &infos](Idx scenario_idx) {
+            [&model, &scenario_sequence, &scenario_sequence_cache, do_update_cache, &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
                 model.restore_components(scenario_sequence);
-                if (!is_independent) {
-                    std::ranges::for_each(scenario_sequence, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
+                if (do_update_cache) {
+                    std::ranges::for_each(scenario_sequence_cache, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
                 }
             });
     }
