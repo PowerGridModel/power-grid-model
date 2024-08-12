@@ -507,7 +507,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<CalculationInfo> infos(n_scenarios);
 
         // lambda for sub batch calculation
-        auto sub_batch = sub_batch_calculation_(calculation_fn, result_data, update_data, exceptions, infos);
+        SequenceIdx all_scenarios_sequence;
+        auto sub_batch =
+            sub_batch_calculation_(calculation_fn, result_data, update_data, all_scenarios_sequence, exceptions, infos);
 
         batch_dispatch(sub_batch, n_scenarios, threading);
 
@@ -520,33 +522,33 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                ConstDataset const& update_data, std::vector<std::string>& exceptions,
-                                std::vector<CalculationInfo>& infos) {
+                                ConstDataset const& update_data, SequenceIdx& all_scenarios_sequence,
+                                std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
         // cache component update order if possible
         bool const is_independent = MainModelImpl::is_update_independent(update_data);
+        if (is_independent) {
+            all_scenarios_sequence = get_sequence_idx_map(update_data);
+        }
 
-        std::shared_ptr<SequenceIdx const> all_scenarios_sequence{
-            is_independent ? std::make_shared<SequenceIdx const>(get_sequence_idx_map(update_data)) : nullptr};
-
-        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data, all_scenarios_sequence,
+        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
+                &all_scenarios_sequence = std::as_const(all_scenarios_sequence),
                 is_independent](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
-            assert(is_independent == (all_scenarios_sequence != nullptr));
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
-            auto const copy_model = [&base_model, &infos](Idx scenario_idx) {
-                Timer const t_copy_model(infos[scenario_idx], 1100, "Copy model");
+            auto const copy_model_functor = [&base_model, &infos](Idx scenario_idx) {
+                Timer const t_copy_model_functor(infos[scenario_idx], 1100, "Copy model");
                 return MainModelImpl{base_model};
             };
-            auto model = copy_model(start);
+            auto model = copy_model_functor(start);
 
             SequenceIdx cacheable_scenario_sequence = SequenceIdx{};
-            auto const& scenario_sequence = is_independent ? *all_scenarios_sequence : cacheable_scenario_sequence;
+            auto const& scenario_sequence = is_independent ? all_scenarios_sequence : cacheable_scenario_sequence;
             auto [setup, winddown] = scenario_update_restore(model, update_data, scenario_sequence,
                                                              cacheable_scenario_sequence, is_independent, infos);
 
@@ -556,7 +558,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     infos[scenario_idx].merge(model.calculation_info_);
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
-                [&model, &copy_model](Idx scenario_idx) { model = copy_model(scenario_idx); });
+                [&model, &copy_model_functor](Idx scenario_idx) { model = copy_model_functor(scenario_idx); });
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single(infos[scenario_idx], 0100, "Total single calculation in thread");
