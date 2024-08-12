@@ -149,15 +149,17 @@ def process_data_filter(
     data_filter: ComponentAttributeMapping,
     available_components: list[ComponentType],
 ) -> _ComponentAttributeMappingDict:
-    """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
+    """Checks valid type for a mapping of componenet to attributes. 
+    The default for `None` is row_based format while Ellipsis (...) is columnar format.
+    Also checks for any invalid component names and attribute names
 
     Args:
         dataset_type (DatasetType): the type of output that the user will see (as per the calculation options)
-        output_component_types (OutputComponentNamesType):  output_component_types provided by user
+        data_filter (ComponentAttributeMapping):  component to attribute mapping or list provided by user
         available_components (list[ComponentType]):  all components available in model instance
 
     Returns:
-        _OutputComponentTypeDict: processed output_component_types in a dictionary
+        _ComponentAttributeMappingDict: processed component to attribute mapping
     """
     # limit all component count to user specified component types in output and convert to a dict
     if data_filter is None:
@@ -167,7 +169,7 @@ def process_data_filter(
     elif isinstance(data_filter, (list, set)):
         data_filter = {k: None for k in data_filter}
     elif not isinstance(data_filter, dict) or not all(
-        attrs is None or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
         raise ValueError(f"Invalid filter provided: {data_filter}")
 
@@ -180,7 +182,7 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
     """Raise error if some specified components or attributes are unknown
 
     Args:
-        data_filter (OutputType): Component to attribtue dictionary
+        data_filter (_ComponentAttributeMappingDict): Component to attribtue mapping
         dataset_type (DatasetType):  Type of dataset
 
     Raises:
