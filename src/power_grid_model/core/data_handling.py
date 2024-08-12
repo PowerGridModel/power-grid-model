@@ -125,8 +125,8 @@ def create_output_data(
     Returns:
         Dataset: output dataset
     """
-    processed_output_types = process_output_component_types(
-        output_type, output_component_types, list(all_component_count.keys())
+    processed_output_types = process_data_filter(
+        output_type.value, output_component_types, list(all_component_count.keys())
     )
 
     all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}
@@ -144,15 +144,15 @@ def create_output_data(
     return result_dict
 
 
-def process_output_component_types(
-    output_type: OutputType,
-    output_component_types: ComponentAttributeMapping,
+def process_data_filter(
+    dataset_type: DatasetType,
+    data_filter: ComponentAttributeMapping,
     available_components: list[ComponentType],
 ) -> _ComponentAttributeMappingDict:
     """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
 
     Args:
-        output_type (OutputType): the type of output that the user will see (as per the calculation options)
+        dataset_type (DatasetType): the type of output that the user will see (as per the calculation options)
         output_component_types (OutputComponentNamesType):  output_component_types provided by user
         available_components (list[ComponentType]):  all components available in model instance
 
@@ -160,18 +160,20 @@ def process_output_component_types(
         _OutputComponentTypeDict: processed output_component_types in a dictionary
     """
     # limit all component count to user specified component types in output and convert to a dict
-    if output_component_types is None:
-        output_component_types = {k: None for k in available_components}
-    elif isinstance(output_component_types, (list, set)):
-        output_component_types = {k: None for k in output_component_types}
-    elif not isinstance(output_component_types, dict) or not all(
-        attrs is None or isinstance(attrs, (set, list)) for attrs in output_component_types.values()
+    if data_filter is None:
+        data_filter = {k: None for k in available_components}
+    elif data_filter is Ellipsis:
+        data_filter = {k: Ellipsis for k in available_components}
+    elif isinstance(data_filter, (list, set)):
+        data_filter = {k: None for k in data_filter}
+    elif not isinstance(data_filter, dict) or not all(
+        attrs is None or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
-        raise ValueError(f"Invalid output_component_types provided: {output_component_types}")
+        raise ValueError(f"Invalid filter provided: {data_filter}")
 
-    validate_data_filter(output_component_types, output_type.value)
+    validate_data_filter(data_filter, dataset_type)
 
-    return output_component_types
+    return data_filter
 
 
 def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType) -> None:
@@ -193,7 +195,7 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():
-        if attrs is None:
+        if attrs is None or attrs is Ellipsis:
             continue
         diff = set(attrs).difference(dataset_meta[comp_name].dtype.names)
         if diff != set():

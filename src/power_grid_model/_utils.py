@@ -11,18 +11,17 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
+from types import EllipsisType
 from typing import Optional, cast
 
 import numpy as np
 
-from power_grid_model.core.data_handling import OutputType, process_output_component_types
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
+from power_grid_model.core.data_handling import OutputType, process_data_filter
+from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
     BatchList,
-    DataArray,
     Dataset,
     DenseBatchArray,
     PythonDataset,
@@ -313,7 +312,7 @@ def copy_output_to_columnar_dataset(
     Returns:
         Dataset: converted dataset
     """
-    processed_output_types = process_output_component_types(output_type, output_component_types, available_components)
+    processed_output_types = process_data_filter(output_type.value, output_component_types, available_components)
 
     result_data = {}
     for comp_name, attrs in processed_output_types.items():
@@ -321,22 +320,8 @@ def copy_output_to_columnar_dataset(
             result_data[comp_name] = output_data[comp_name]
         elif isinstance(attrs, (list, set)) and len(attrs) == 0:
             result_data[comp_name] = {}
+        elif isinstance(attrs, EllipsisType):
+            result_data[comp_name] = {attr: deepcopy(output_data[comp_name][attr]) for attr in result_data[comp_name]}
         else:
             result_data[comp_name] = {attr: deepcopy(output_data[comp_name][attr]) for attr in attrs}
     return result_data
-
-
-def deduce_dataset_type(data: Dataset) -> DatasetType:
-    if not any(isinstance(arr, np.ndarray) for arr in data.values()):  # TODO Change to RowDataset
-        raise ValueError(
-            "Dataset type cannot be deduced for only columnar data. Atleast one component must have row based data."
-        )
-
-    for comp_name, comp in data.items():
-        if not isinstance(comp, np.ndarray):  # TODO Change to RowDataArray
-            continue
-        for dataset_type in DatasetType:
-            if comp.dtype is power_grid_meta_data[dataset_type][comp_name].dtype:
-                return dataset_type
-
-    raise ValueError("Dataset type cannot be deduced. `data` is not of `Dataset` format")

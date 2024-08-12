@@ -13,8 +13,6 @@ from typing import Mapping, Optional
 
 import numpy as np
 
-from power_grid_model._utils import deduce_dataset_type
-from power_grid_model.core.data_handling import validate_data_filter
 from power_grid_model.core.dataset_definitions import (
     ComponentType,
     DatasetType,
@@ -32,9 +30,8 @@ from power_grid_model.core.power_grid_core import (
 )
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.data_types import Dataset
-from power_grid_model.enum import DatasetFormat
 from power_grid_model.errors import PowerGridSerializationError
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model.typing import ComponentAttributeMapping
 
 
 class SerializationType(IntEnum):
@@ -52,26 +49,16 @@ class Deserializer:
     _deserializer: DeserializerPtr
     _dataset_ptr: WritableDatasetPtr
     _dataset: CWritableDataset
-    _data_filter: _ComponentAttributeMappingDict
 
     def __new__(
         cls,
         data: str | bytes,
         serialization_type: SerializationType,
-        dataset_format: DatasetFormat,
         data_filter: ComponentAttributeMapping,
     ):
         instance = super().__new__(cls)
 
         raw_data = data if isinstance(data, bytes) else data.encode()
-
-        if dataset_format == DatasetFormat.columnar:
-            raise NotImplementedError("Deserialization to `DatasetFormat.columnar` is currently under development")
-
-        # TODO Get dataset_type form somewhere.
-        # TODO Process data_filter from ComponentAttributeMapping to _ComponentAttributeMappingDict
-        # validate_data_filter(data_filter=data_filter, dataset_type=dataset_type)
-        instance._data_filter = data_filter
         instance._deserializer = pgc.create_deserializer_from_binary_buffer(
             raw_data, len(raw_data), serialization_type.value
         )
@@ -80,7 +67,7 @@ class Deserializer:
         instance._dataset_ptr = pgc.deserializer_get_dataset(instance._deserializer)
         assert_no_error()
 
-        instance._dataset = CWritableDataset(instance._dataset_ptr)
+        instance._dataset = CWritableDataset(instance._dataset_ptr, data_filter=data_filter)
         assert_no_error()
 
         return instance
@@ -120,9 +107,6 @@ class Serializer(ABC):
         dataset_type: Optional[DatasetType] = None,
     ):
         instance = super().__new__(cls)
-
-        if dataset_type is None:
-            dataset_type = deduce_dataset_type(data)
 
         instance._data = data
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
@@ -206,10 +190,8 @@ class JsonDeserializer(Deserializer):  # pylint: disable=too-few-public-methods
     JSON deserializer for the Power grid model
     """
 
-    def __new__(cls, data: str | bytes, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping):
-        return super().__new__(
-            cls, data, SerializationType.JSON, dataset_format=dataset_format, data_filter=data_filter
-        )
+    def __new__(cls, data: str | bytes, data_filter: ComponentAttributeMapping):
+        return super().__new__(cls, data, SerializationType.JSON, data_filter=data_filter)
 
 
 class MsgpackDeserializer(Deserializer):  # pylint: disable=too-few-public-methods
@@ -217,10 +199,8 @@ class MsgpackDeserializer(Deserializer):  # pylint: disable=too-few-public-metho
     msgpack deserializer for the Power grid model
     """
 
-    def __new__(cls, data: bytes, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping):
-        return super().__new__(
-            cls, data, SerializationType.MSGPACK, dataset_format=dataset_format, data_filter=data_filter
-        )
+    def __new__(cls, data: bytes, data_filter: ComponentAttributeMapping):
+        return super().__new__(cls, data, SerializationType.MSGPACK, data_filter=data_filter)
 
 
 class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-methods
@@ -250,7 +230,8 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
 
 
 def json_deserialize(
-    data: str | bytes, dataset_format: DatasetFormat = DatasetFormat.row, data_filter: ComponentAttributeMapping = None
+    data: str | bytes,
+    data_filter: ComponentAttributeMapping = None,
 ) -> Dataset:
     """
     Load serialized JSON data to a new dataset.
@@ -265,7 +246,7 @@ def json_deserialize(
     Returns:
         A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
     """
-    result = JsonDeserializer(data, dataset_format=dataset_format, data_filter=data_filter).load()
+    result = JsonDeserializer(data, data_filter=data_filter).load()
     assert_no_error()
     return result
 
@@ -303,9 +284,7 @@ def json_serialize(
     return result
 
 
-def msgpack_deserialize(
-    data: bytes, dataset_format: DatasetFormat = DatasetFormat.row, data_filter: ComponentAttributeMapping = None
-) -> Dataset:
+def msgpack_deserialize(data: bytes, data_filter: ComponentAttributeMapping = None) -> Dataset:
     """
     Load serialized msgpack data to a new dataset.
 
@@ -319,7 +298,7 @@ def msgpack_deserialize(
     Returns:
         A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
     """
-    result = MsgpackDeserializer(data, dataset_format=dataset_format, data_filter=data_filter).load()
+    result = MsgpackDeserializer(data, data_filter=data_filter).load()
     assert_no_error()
     return result
 

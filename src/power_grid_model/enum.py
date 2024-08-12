@@ -203,8 +203,3 @@ class _ExperimentalFeatures(IntEnum):
 
     disabled = 0
     enabled = 1
-
-
-class DatasetFormat(IntEnum):
-    row = 0
-    columnar = 1

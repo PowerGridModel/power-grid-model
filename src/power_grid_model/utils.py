@@ -29,7 +29,6 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
-from power_grid_model.enum import DatasetFormat
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
 
@@ -93,7 +92,8 @@ def get_component_batch_size(data_array: BatchArray) -> int:
 
 
 def json_deserialize_from_file(
-    file_path: Path, dataset_format: DatasetFormat = DatasetFormat.row, data_filter: ComponentAttributeMapping = None
+    file_path: Path,
+    data_filter: ComponentAttributeMapping = None,
 ) -> Dataset:
     """
     Load and deserialize a JSON file to a new dataset.
@@ -109,7 +109,7 @@ def json_deserialize_from_file(
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, encoding="utf-8") as file_pointer:
-        return json_deserialize(file_pointer.read(), dataset_format=dataset_format, data_filter=data_filter)
+        return json_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
 def json_serialize_to_file(
@@ -142,8 +142,7 @@ def json_serialize_to_file(
 
 def msgpack_deserialize_from_file(
     file_path: Path,
-    dataset_format: DatasetFormat = DatasetFormat.row,
-    data_filter: ComponentAttributeMapping | None = None,
+    data_filter: ComponentAttributeMapping = None,
 ) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
@@ -159,7 +158,7 @@ def msgpack_deserialize_from_file(
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, mode="rb") as file_pointer:
-        return msgpack_deserialize(file_pointer.read(), dataset_format=dataset_format, data_filter=data_filter)
+        return msgpack_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
 def msgpack_serialize_to_file(
@@ -347,7 +346,7 @@ def self_test():
 
         try:
             # Load the created JSON input data file (deserialize)
-            deserialized_data = json_deserialize_from_file(input_file_path, dataset_format=DatasetFormat.row)
+            deserialized_data = json_deserialize_from_file(input_file_path)
 
             # Create a PowerGridModel instance from the loaded input data
             model = PowerGridModel(deserialized_data)
