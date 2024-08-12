@@ -22,14 +22,13 @@ from power_grid_model._utils import (
 )
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
 from power_grid_model.core.power_grid_dataset import get_dataset_type
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
     json_serialize,
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchArray, BatchDataset, DataArray, Dataset, SingleDataset
+from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import DatasetFormat
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
@@ -94,7 +93,7 @@ def get_component_batch_size(data_array: BatchArray) -> int:
 
 
 def json_deserialize_from_file(
-    file_path: Path, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping | None = None
+    file_path: Path, dataset_format: DatasetFormat = DatasetFormat.row, data_filter: ComponentAttributeMapping = None
 ) -> Dataset:
     """
     Load and deserialize a JSON file to a new dataset.
@@ -142,7 +141,9 @@ def json_serialize_to_file(
 
 
 def msgpack_deserialize_from_file(
-    file_path: Path, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping | None = None
+    file_path: Path,
+    dataset_format: DatasetFormat = DatasetFormat.row,
+    data_filter: ComponentAttributeMapping | None = None,
 ) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
@@ -371,19 +372,3 @@ def self_test():
             print("Self test finished.")
         except Exception as e:
             raise PowerGridError from e
-
-
-def deduce_dataset_type(data) -> DatasetType:
-    if not isinstance(data, Dataset):  # TODO Change to RowDataset
-        raise ValueError(
-            "Dataset type cannot be deduced for only columnar data. Atleast one component must have row based data."
-        )
-
-    for comp_name, comp in data.items():
-        if not isinstance(comp, DataArray):  # TODO Change to RowDataArray
-            continue
-        for dataset_type in DatasetType:
-            if comp.dtype is power_grid_meta_data[dataset_type][comp_name].dtype:
-                return dataset_type
-
-    raise ValueError("Dataset type cannot be deduced. `data` is not of `Dataset` format")

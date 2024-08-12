@@ -13,6 +13,7 @@ from typing import Mapping, Optional
 
 import numpy as np
 
+from power_grid_model._utils import deduce_dataset_type
 from power_grid_model.core.data_handling import validate_data_filter
 from power_grid_model.core.dataset_definitions import (
     ComponentType,
@@ -34,7 +35,6 @@ from power_grid_model.data_types import Dataset
 from power_grid_model.enum import DatasetFormat
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
-from power_grid_model.utils import deduce_dataset_type
 
 
 class SerializationType(IntEnum):
@@ -64,7 +64,14 @@ class Deserializer:
         instance = super().__new__(cls)
 
         raw_data = data if isinstance(data, bytes) else data.encode()
-        instance._data_filter = validate_data_filter(data_filter=data_filter, dataset_type=dataset_type)
+
+        if dataset_format == DatasetFormat.columnar:
+            raise NotImplementedError("Deserialization to `DatasetFormat.columnar` is currently under development")
+
+        # TODO Get dataset_type form somewhere.
+        # TODO Process data_filter from ComponentAttributeMapping to _ComponentAttributeMappingDict
+        # validate_data_filter(data_filter=data_filter, dataset_type=dataset_type)
+        instance._data_filter = data_filter
         instance._deserializer = pgc.create_deserializer_from_binary_buffer(
             raw_data, len(raw_data), serialization_type.value
         )
@@ -243,7 +250,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
 
 
 def json_deserialize(
-    data: str | bytes, dataset_format: DatasetFormat, data_filter: _ComponentAttributeMappingDict
+    data: str | bytes, dataset_format: DatasetFormat = DatasetFormat.row, data_filter: ComponentAttributeMapping = None
 ) -> Dataset:
     """
     Load serialized JSON data to a new dataset.
@@ -297,7 +304,7 @@ def json_serialize(
 
 
 def msgpack_deserialize(
-    data: bytes, dataset_format: DatasetFormat, data_filter: ComponentAttributeMapping = None
+    data: bytes, dataset_format: DatasetFormat = DatasetFormat.row, data_filter: ComponentAttributeMapping = None
 ) -> Dataset:
     """
     Load serialized msgpack data to a new dataset.

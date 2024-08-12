@@ -169,7 +169,6 @@ def process_output_component_types(
     ):
         raise ValueError(f"Invalid output_component_types provided: {output_component_types}")
 
-    #
     validate_data_filter(output_component_types, output_type.value)
 
     return output_component_types
@@ -202,5 +201,3 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
 
     if unknown_attributes:
         raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")
-
-    return data_filter
