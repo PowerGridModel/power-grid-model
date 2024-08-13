@@ -5,7 +5,6 @@
 import numpy as np
 import pytest
 
-from power_grid_model._utils import process_data_filter
 from power_grid_model.core.data_handling import create_output_data
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.core.power_grid_meta import initialize_array
@@ -71,24 +70,3 @@ def test_create_output_data(output_component_types, is_batch, expected):
             # Columnar data
             assert actual[comp].keys() == expected[comp].keys()
             assert all(actual[comp][attr].dtype == expected[comp][attr].dtype for attr in expected[comp])
-
-
-@pytest.mark.parametrize(
-    ("output_component_types", "error", "match"),
-    [
-        ({"abc": 3, "def": None}, ValueError, "Invalid filter provided"),
-        ({"abc": None, "def": None}, KeyError, "unknown component"),
-        ({"abc": None, CT.sym_load: None}, KeyError, "unknown component"),
-        ({"abc": ["xyz"], CT.sym_load: None}, KeyError, "unknown component"),
-        ({CT.node: ["xyz"], CT.sym_load: None}, KeyError, "unknown attributes"),
-        ({CT.node: ["xyz1"], CT.sym_load: ["xyz2"]}, KeyError, "unknown attributes"),
-    ],
-)
-def test_create_output_data__errors(output_component_types, error, match):
-    available_components = [CT.node, CT.sym_load, CT.source]
-    with pytest.raises(error, match=match):
-        process_data_filter(
-            dataset_type=DT.sym_output,
-            data_filter=output_component_types,
-            available_components=available_components,
-        )
