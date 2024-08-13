@@ -12,9 +12,11 @@ from power_grid_model._utils import (
     convert_dataset_to_python_dataset,
     get_and_verify_batch_sizes,
     is_nan,
+    process_data_filter,
     split_numpy_array_in_batches,
     split_sparse_batches_in_batches,
 )
+from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType
 from power_grid_model.data_types import BatchDataset, BatchList
 
 from .utils import convert_python_to_numpy
@@ -424,3 +426,47 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
         r"\(should be a Numpy structured array or a python dictionary\).",
     ):
         convert_batch_dataset_to_batch_list(update_data)
+
+
+@pytest.mark.parametrize(
+    ("data_filter", "expected"),
+    [
+        (None, {CT.node: None, CT.sym_load: None, CT.source: None}),
+        (..., {CT.node: ..., CT.sym_load: ..., CT.source: ...}),
+        ([CT.node, CT.sym_load], {CT.node: None, CT.sym_load: None}),
+        ({CT.node, CT.sym_load}, {CT.node: None, CT.sym_load: None}),
+        ({CT.node: [], CT.sym_load: []}, {CT.node: [], CT.sym_load: []}),
+        ({CT.node: [], CT.sym_load: ["p"]}, {CT.node: [], CT.sym_load: ["p"]}),
+        ({CT.node: None, CT.sym_load: ["p"]}, {CT.node: None, CT.sym_load: ["p"]}),
+        ({CT.node: ..., CT.sym_load: ["p"]}, {CT.node: ..., CT.sym_load: ["p"]}),
+        ({CT.node: ..., CT.sym_load: ...}, {CT.node: ..., CT.sym_load: ...}),
+        ({CT.node: ["u"], CT.sym_load: ["p"]}, {CT.node: ["u"], CT.sym_load: ["p"]}),
+    ],
+)
+def test_process_data_filter(data_filter, expected):
+    actual = process_data_filter(
+        dataset_type=DatasetType.sym_output,
+        data_filter=data_filter,
+        available_components=[CT.node, CT.sym_load, CT.source],
+    )
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("data_filter", "error", "match"),
+    [
+        ({"abc": 3, "def": None}, ValueError, "Invalid filter provided"),
+        ({"abc": None, "def": None}, KeyError, "unknown component"),
+        ({"abc": None, CT.sym_load: None}, KeyError, "unknown component"),
+        ({"abc": ["xyz"], CT.sym_load: None}, KeyError, "unknown component"),
+        ({CT.node: ["xyz"], CT.sym_load: None}, KeyError, "unknown attributes"),
+        ({CT.node: ["xyz1"], CT.sym_load: ["xyz2"]}, KeyError, "unknown attributes"),
+    ],
+)
+def test_process_data_filter__errors(data_filter, error, match):
+    with pytest.raises(error, match=match):
+        process_data_filter(
+            dataset_type=DatasetType.sym_output,
+            data_filter=data_filter,
+            available_components=[CT.node, CT.sym_load, CT.source],
+        )

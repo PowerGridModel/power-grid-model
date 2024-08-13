@@ -345,12 +345,12 @@ def process_data_filter(
     # limit all component count to user specified component types in output and convert to a dict
     if data_filter is None:
         data_filter = {k: None for k in available_components}
-    elif data_filter is Ellipsis:
-        data_filter = {k: Ellipsis for k in available_components}
+    elif data_filter == ...:
+        data_filter = {k: ... for k in available_components}
     elif isinstance(data_filter, (list, set)):
         data_filter = {k: None for k in data_filter}
     elif not isinstance(data_filter, dict) or not all(
-        attrs is None or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+        attrs is None or attrs == ... or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
         raise ValueError(f"Invalid filter provided: {data_filter}")
 
