@@ -10,6 +10,7 @@ from typing import Any, Mapping, Optional
 
 import numpy as np
 
+from power_grid_model._utils import process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CBuffer,
@@ -17,7 +18,6 @@ from power_grid_model.core.buffer_handling import (
     get_buffer_properties,
     get_buffer_view,
 )
-from power_grid_model.core.data_handling import process_data_filter
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
 from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model.core.power_grid_core import (

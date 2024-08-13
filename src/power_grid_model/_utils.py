@@ -16,8 +16,8 @@ from typing import Optional, cast
 
 import numpy as np
 
-from power_grid_model.core.data_handling import process_data_filter
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
@@ -30,7 +30,7 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchArray,
 )
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 def is_nan(data) -> bool:
@@ -325,3 +325,64 @@ def copy_output_to_columnar_dataset(
         else:
             result_data[comp_name] = {attr: deepcopy(output_data[comp_name][attr]) for attr in attrs}
     return result_data
+
+
+def process_data_filter(
+    dataset_type: DatasetType,
+    data_filter: ComponentAttributeMapping,
+    available_components: list[ComponentType],
+) -> _ComponentAttributeMappingDict:
+    """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
+
+    Args:
+        dataset_type (DatasetType): the type of output that the user will see (as per the calculation options)
+        output_component_types (OutputComponentNamesType):  output_component_types provided by user
+        available_components (list[ComponentType]):  all components available in model instance
+
+    Returns:
+        _OutputComponentTypeDict: processed output_component_types in a dictionary
+    """
+    # limit all component count to user specified component types in output and convert to a dict
+    if data_filter is None:
+        data_filter = {k: None for k in available_components}
+    elif data_filter is Ellipsis:
+        data_filter = {k: Ellipsis for k in available_components}
+    elif isinstance(data_filter, (list, set)):
+        data_filter = {k: None for k in data_filter}
+    elif not isinstance(data_filter, dict) or not all(
+        attrs is None or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+    ):
+        raise ValueError(f"Invalid filter provided: {data_filter}")
+
+    validate_data_filter(data_filter, dataset_type)
+
+    return data_filter
+
+
+def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType) -> None:
+    """Raise error if some specified components or attributes are unknown
+
+    Args:
+        data_filter (OutputType): Component to attribtue dictionary
+        dataset_type (DatasetType):  Type of dataset
+
+    Raises:
+        ValueError: when the type for output_comoponent_types is incorrect
+        KeyError: with "unknown component" for any unknown components
+        KeyError: with "unknown attributes" for any unknown attributes for a known component
+    """
+    dataset_meta = power_grid_meta_data[dataset_type]
+    unknown_components = [x for x in data_filter if x not in dataset_meta]
+    if unknown_components:
+        raise KeyError(f"You have specified some unknown component types: {unknown_components}")
+
+    unknown_attributes = {}
+    for comp_name, attrs in data_filter.items():
+        if attrs is None or attrs is Ellipsis:
+            continue
+        diff = set(attrs).difference(dataset_meta[comp_name].dtype.names)
+        if diff != set():
+            unknown_attributes[comp_name] = diff
+
+    if unknown_attributes:
+        raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")
