@@ -153,8 +153,8 @@ def process_output_component_types(
 
     Args:
         output_type (OutputType): the type of output that the user will see (as per the calculation options)
-        output_component_types (OutputComponentNamesType):  output_component_types provided by user
-        available_components (list[ComponentTypeVar]):  all components available in model instance
+        output_component_types (ComponentAttributeMapping): output_component_types provided by user
+        available_components (list[ComponentTypeLike]): all components available in model instance
 
     Raises:
         ValueError: when the type for output_comoponent_types is incorrect
