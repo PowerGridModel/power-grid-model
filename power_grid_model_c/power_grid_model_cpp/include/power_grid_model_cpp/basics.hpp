@@ -7,7 +7,7 @@
 #define POWER_GRID_MODEL_CPP_BASICS_HPP
 
 #ifdef PGM_DLL_EXPORTS
-#error "You should not define PGM_DLL_EXPORTS when using the C++ headers"
+#error "Cannot export dynamic targets from the PGM C API wrapper. Please disable PGM_DLL_EXPORT."
 #endif
 
 #include <exception>
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "basics.h"
+#include "power_grid_model_c/basics.h"
 
 namespace power_grid_model_cpp {
 

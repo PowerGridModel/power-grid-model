@@ -6,7 +6,7 @@
 #ifndef POWER_GRID_MODEL_CPP_HANDLE_HPP
 #define POWER_GRID_MODEL_CPP_HANDLE_HPP
 
-#include "handle.h"
+#include "power_grid_model_c/handle.h"
 
 #include "basics.hpp"
 
@@ -15,7 +15,6 @@ class PowerGridError : public std::exception {
   public:
     PowerGridError(const std::string& message) : message_(message) {}
     const char* what() const noexcept override { return message_.c_str(); }
-    virtual Idx error_code() const = 0;
 
   private:
     std::string message_;
@@ -24,13 +23,13 @@ class PowerGridError : public std::exception {
 class PowerGridRegularError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
-    Idx error_code() const override { return PGM_regular_error; }
+    static constexpr Idx error_code() { return PGM_regular_error; }
 };
 
 class PowerGridSerializationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
-    Idx error_code() const override { return PGM_serialization_error; }
+    static constexpr Idx error_code() { return PGM_serialization_error; }
 };
 
 class PowerGridBatchError : public PowerGridError {
@@ -42,7 +41,7 @@ class PowerGridBatchError : public PowerGridError {
 
     PowerGridBatchError(std::string const& message, std::vector<FailedScenario>&& failed_scenarios_c)
         : PowerGridError{message}, failed_scenarios_{std::move(failed_scenarios_c)} {}
-    Idx error_code() const override { return PGM_batch_error; }
+    static constexpr Idx error_code() { return PGM_batch_error; }
     std::vector<FailedScenario> const& failed_scenarios() const { return failed_scenarios_; }
 
   private:
@@ -62,7 +61,7 @@ class Handle {
         std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_.get());
         switch (error_code) {
         case 0:
-            break;
+            return;
         case PGM_regular_error:
             throw PowerGridRegularError{error_message};
         case PGM_batch_error: {
