@@ -9,9 +9,9 @@
 from enum import Enum, EnumMeta
 from typing import Any, Mapping, TypeAlias, TypeVar
 
-# pylint: disable=invalid-name
-
 # fmt: off
+
+# pylint: disable=invalid-name
 
 class _MetaEnum(EnumMeta):
     def __contains__(cls, member):
@@ -72,22 +72,24 @@ class ComponentType(str, Enum, metaclass=_MetaEnum):
     asym_power_sensor = "asym_power_sensor"
     fault = "fault"
 
-# fmt: on
 
 # pylint: enable=invalid-name
+
+DatasetTypeLike: TypeAlias = DatasetType | str
+DatasetTypeVar = TypeVar("DatasetTypeVar", bound=DatasetTypeLike)  # helper used for type deduction
 
 ComponentTypeLike: TypeAlias = ComponentType | str
 ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentTypeLike)  # helper used for type deduction
 
 
-def _str_to_datatype(data_type: DatasetType | str) -> DatasetType:
+def _str_to_datatype(data_type: DatasetTypeLike) -> DatasetType:
     """Helper function to transform data_type str to DatasetType."""
     if isinstance(data_type, DatasetType):
         return data_type
     return DatasetType[data_type]
 
 
-def _map_to_datatypes(data: Mapping[DatasetType | str, Any]) -> dict[DatasetType, Any]:
+def _map_to_datatypes(data: Mapping[DatasetTypeVar, Any]) -> dict[DatasetType, Any]:
     """Helper function to map datatype str keys to DatasetType."""
     return {_str_to_datatype(key): value for key, value in data.items()}
 
@@ -102,3 +104,5 @@ def _str_to_component_type(component: ComponentTypeLike) -> ComponentType:
 def _map_to_component_types(data: Mapping[ComponentTypeVar, Any]) -> dict[ComponentType, Any]:
     """Helper function to map componenttype str keys to ComponentType."""
     return {_str_to_component_type(key): value for key, value in data.items()}
+
+# fmt: on
