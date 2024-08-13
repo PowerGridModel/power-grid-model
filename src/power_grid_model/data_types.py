@@ -78,7 +78,8 @@ A batch dataset is a dictionary where the keys are the component types and the v
 - Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
 
-Dataset = SingleDataset | BatchDataset
+_ComponentData = TypeVar("_ComponentData", SingleArray, BatchArray)  # deduction helper
+Dataset = dict[ComponentTypeVar, _ComponentData]
 """
 A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 

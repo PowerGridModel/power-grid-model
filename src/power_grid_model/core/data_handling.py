@@ -15,7 +15,7 @@ import numpy as np
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.data_types import ComponentTypeLike, Dataset
+from power_grid_model.data_types import ComponentTypeLike, ComponentTypeVar, Dataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -147,7 +147,7 @@ def create_output_data(
 def process_output_component_types(
     output_type: OutputType,
     output_component_types: ComponentAttributeMapping,
-    available_components: list[ComponentTypeLike],
+    available_components: list[ComponentTypeVar],
 ) -> _ComponentAttributeMappingDict:
     """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
 
@@ -184,7 +184,8 @@ def process_output_component_types(
     for comp_name, attrs in output_component_types.items():
         if attrs is None:
             continue
-        diff = set(attrs).difference(output_meta[comp_name].dtype.names)
+        attr_names = output_meta[comp_name].dtype.names
+        diff = set(attrs).difference(attr_names) if attr_names is not None else set(attrs)
         if diff != set():
             unknown_attributes[comp_name] = diff
 

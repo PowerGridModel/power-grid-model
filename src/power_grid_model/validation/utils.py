@@ -12,7 +12,7 @@ import numpy as np
 
 from power_grid_model import power_grid_meta_data
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
-from power_grid_model.data_types import ComponentTypeLike, SingleDataset
+from power_grid_model.data_types import ComponentTypeLike, ComponentTypeVar, SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -238,7 +238,7 @@ def set_default_value(
         data[component][field][mask] = default_value
 
 
-def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[ComponentTypeLike]) -> list[int]:
+def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[ComponentTypeVar]) -> list[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -252,7 +252,7 @@ def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.
     if isinstance(ref_components, (str, ComponentType)):
-        ref_components = cast(list[ComponentTypeLike], [ref_components])
+        ref_components = cast(list[ComponentTypeVar], [ref_components])
 
     # Create a set of ids by chaining the ids of all ref_components
     valid_ids = set()
