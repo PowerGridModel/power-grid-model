@@ -15,7 +15,7 @@ import numpy as np
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.data_types import ComponentTypeLike, Dataset
+from power_grid_model.data_types import Dataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -103,7 +103,7 @@ def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_
 def create_output_data(
     output_component_types: ComponentAttributeMapping,
     output_type: OutputType,
-    all_component_count: dict[ComponentTypeLike, int],
+    all_component_count: dict[ComponentType, int],
     is_batch: bool,
     batch_size: int,
 ) -> Dataset:
@@ -126,7 +126,7 @@ def create_output_data(
         Dataset: output dataset
     """
     processed_output_types = process_output_component_types(
-        output_type, output_component_types, [ComponentType[k] for k in all_component_count.keys()]
+        output_type, output_component_types, list(all_component_count.keys())
     )
 
     all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}

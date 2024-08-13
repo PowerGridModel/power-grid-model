@@ -12,9 +12,14 @@ from typing import Any
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import DatasetType, _str_to_component_type, _str_to_datatype
+from power_grid_model.core.dataset_definitions import (
+    ComponentTypeLike,
+    ComponentTypeVar,
+    DatasetType,
+    _str_to_component_type,
+    _str_to_datatype,
+)
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-from power_grid_model.data_types import ComponentTypeLike, ComponentTypeVar
 
 
 # constant enum for ctype

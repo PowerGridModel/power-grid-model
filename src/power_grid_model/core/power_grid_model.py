@@ -18,12 +18,18 @@ from power_grid_model.core.data_handling import (
     prepare_output_view,
     prepare_update_view,
 )
-from power_grid_model.core.dataset_definitions import ComponentType, _map_to_component_types, _str_to_component_type
+from power_grid_model.core.dataset_definitions import (
+    ComponentType,
+    ComponentTypeLike,
+    ComponentTypeVar,
+    _map_to_component_types,
+    _str_to_component_type,
+)
 from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model.data_types import ComponentTypeVar, Dataset
+from power_grid_model.data_types import Dataset
 from power_grid_model.enum import (
     CalculationMethod,
     CalculationType,
@@ -98,16 +104,14 @@ class PowerGridModel:
         instance._all_component_count = None
         return instance
 
-    def __init__(
-        self, input_data: dict[ComponentType, np.ndarray] | dict[str, np.ndarray], system_frequency: float = 50.0
-    ):
+    def __init__(self, input_data: dict[ComponentTypeVar, np.ndarray], system_frequency: float = 50.0):
         """
         Initialize the model from an input data set.
 
         Args:
             input_data: Input data dictionary
 
-                - key: Component type name
+                - key: Component type
                 - value: 1D numpy structured array for this component input
 
             system_frequency: Frequency of the power system, default 50 Hz
@@ -116,31 +120,29 @@ class PowerGridModel:
         pgc.destroy_model(self._model_ptr)
         self._all_component_count = None
         # create new
-        input_data = _map_to_component_types(input_data)
-        prepared_input = prepare_input_view(input_data)
+        prepared_input = prepare_input_view(_map_to_component_types(input_data))
         self._model_ptr = pgc.create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
         assert_no_error()
         self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
-    def update(self, *, update_data: dict[ComponentType, np.ndarray] | dict[str, np.ndarray]):
+    def update(self, *, update_data: dict[ComponentTypeVar, np.ndarray]):
         """
         Update the model with changes.
 
         Args:
             update_data: Update data dictionary
 
-                - key: Component type name
+                - key: Component type
                 - value: 1D numpy structured array for this component update
 
         Returns:
             None
         """
-        update_data = _map_to_component_types(update_data)
-        prepared_update = prepare_update_view(update_data)
+        prepared_update = prepare_update_view(_map_to_component_types(update_data))
         pgc.update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
-    def get_indexer(self, component_type: ComponentType | str, ids: np.ndarray):
+    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
         """
         Get array of indexers given array of ids for component type
 
@@ -185,7 +187,7 @@ class PowerGridModel:
                     return False
             return True
 
-        return {k: v for k, v in self.all_component_count.items() if include_type(k)}
+        return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
     # pylint: disable=too-many-arguments
     def _construct_output(
