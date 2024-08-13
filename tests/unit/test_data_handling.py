@@ -5,8 +5,8 @@
 import numpy as np
 import pytest
 
-from power_grid_model.core.data_handling import create_output_data, process_data_filter
-from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT, OutputType
+from power_grid_model.core.data_handling import OutputType, create_output_data, process_data_filter
+from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.core.power_grid_meta import initialize_array
 
 
