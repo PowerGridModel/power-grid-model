@@ -5,8 +5,8 @@
 """
 Type hints for PGM. This includes all miscellaneous type hints not under dataset or dataset_definitions categories
 """
-from power_grid_model.data_types import ComponentTypeLike
+from power_grid_model.data_types import ComponentTypeVar
 
-_ComponentAttributeMappingDict = dict[ComponentTypeLike, set[str] | list[str] | None]
+_ComponentAttributeMappingDict = dict[ComponentTypeVar, set[str] | list[str] | None]
 
-ComponentAttributeMapping = set[ComponentTypeLike] | list[ComponentTypeLike] | None | _ComponentAttributeMappingDict
+ComponentAttributeMapping = set[ComponentTypeVar] | list[ComponentTypeVar] | None | _ComponentAttributeMappingDict
