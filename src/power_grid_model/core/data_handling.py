@@ -126,7 +126,7 @@ def create_output_data(
         Dataset: output dataset
     """
     processed_output_types = process_output_component_types(
-        output_type, output_component_types, list(all_component_count.keys())
+        output_type, output_component_types, [ComponentType[k] for k in all_component_count.keys()]
     )
 
     all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}
@@ -147,14 +147,14 @@ def create_output_data(
 def process_output_component_types(
     output_type: OutputType,
     output_component_types: ComponentAttributeMapping,
-    available_components: list[ComponentTypeLike],
+    available_components: list[ComponentType],
 ) -> _ComponentAttributeMappingDict:
     """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
 
     Args:
         output_type (OutputType): the type of output that the user will see (as per the calculation options)
         output_component_types (ComponentAttributeMapping): output_component_types provided by user
-        available_components (list[ComponentTypeLike]): all components available in model instance
+        available_components (list[ComponentType]): all components available in model instance
 
     Raises:
         ValueError: when the type for output_comoponent_types is incorrect
