@@ -162,7 +162,7 @@ power_grid_meta_data = _generate_meta_data()
 
 def initialize_array(
     data_type: str | DatasetType,
-    component_type: str | ComponentTypeLike,
+    component_type: ComponentTypeLike,
     shape: tuple | int,
     empty: bool = False,
 ) -> np.ndarray:

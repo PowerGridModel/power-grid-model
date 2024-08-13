@@ -15,7 +15,7 @@ import numpy as np
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.data_types import ComponentTypeLike, ComponentTypeVar, Dataset
+from power_grid_model.data_types import ComponentTypeLike, Dataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -147,7 +147,7 @@ def create_output_data(
 def process_output_component_types(
     output_type: OutputType,
     output_component_types: ComponentAttributeMapping,
-    available_components: list[ComponentTypeVar],
+    available_components: list[ComponentTypeLike],
 ) -> _ComponentAttributeMappingDict:
     """Checks valid type for output_component_types. Also checks for any invalid component names and attribute names
 
