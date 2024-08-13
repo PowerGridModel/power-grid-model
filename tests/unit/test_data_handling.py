@@ -76,7 +76,7 @@ def test_create_output_data(output_component_types, is_batch, expected):
 @pytest.mark.parametrize(
     ("output_component_types", "error", "match"),
     [
-        ({"abc": 3, "def": None}, ValueError, "Invalid output_component_types"),
+        ({"abc": 3, "def": None}, ValueError, "Invalid filter provided"),
         ({"abc": None, "def": None}, KeyError, "unknown component"),
         ({"abc": None, CT.sym_load: None}, KeyError, "unknown component"),
         ({"abc": ["xyz"], CT.sym_load: None}, KeyError, "unknown component"),
