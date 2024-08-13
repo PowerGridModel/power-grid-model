@@ -202,8 +202,8 @@ bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCons
 }
 
 // assert single result
-void assert_result(ConstDataset const& result, ConstDataset const& reference_result, std::map<std::string, double> atol,
-                   double rtol) {
+void assert_result(ConstDataset const& result, ConstDataset const& reference_result,
+                   std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
     MetaDataset const& meta = result.dataset();
     Idx const batch_size = result.batch_size();
@@ -286,16 +286,21 @@ std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_pa
 #endif
 
 // method map
-std::map<std::string, CalculationMethod> const calculation_method_mapping = {
+std::map<std::string, CalculationType, std::less<>> const calculation_type_mapping = {
+    {"power_flow", CalculationType::power_flow},
+    {"state_estimation", CalculationType::state_estimation},
+    {"short_circuit", CalculationType::short_circuit}};
+std::map<std::string, CalculationMethod, std::less<>> const calculation_method_mapping = {
     {"newton_raphson", CalculationMethod::newton_raphson},
     {"linear", CalculationMethod::linear},
     {"iterative_current", CalculationMethod::iterative_current},
     {"iterative_linear", CalculationMethod::iterative_linear},
     {"linear_current", CalculationMethod::linear_current},
-    {"iec60909", CalculationMethod::iec60909},
-};
-std::map<std::string, ShortCircuitVoltageScaling> const sc_voltage_scaling_mapping = {
-    {"minimum", ShortCircuitVoltageScaling::minimum}, {"maximum", ShortCircuitVoltageScaling::maximum}};
+    {"iec60909", CalculationMethod::iec60909}};
+std::map<std::string, ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
+    {"", ShortCircuitVoltageScaling::maximum}, // not provided returns default value
+    {"minimum", ShortCircuitVoltageScaling::minimum},
+    {"maximum", ShortCircuitVoltageScaling::maximum}};
 using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
 
@@ -303,7 +308,8 @@ std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_m
     {"disabled", OptimizerStrategy::any},
     {"any_valid_tap", OptimizerStrategy::any},
     {"min_voltage_tap", OptimizerStrategy::global_minimum},
-    {"max_voltage_tap", OptimizerStrategy::global_maximum}};
+    {"max_voltage_tap", OptimizerStrategy::global_maximum},
+    {"fast_any_tap", OptimizerStrategy::fast_any}};
 
 // case parameters
 struct CaseParam {
@@ -318,7 +324,7 @@ struct CaseParam {
     double rtol{};
     bool fail{};
     [[no_unique_address]] BatchParameter batch_parameter{};
-    std::map<std::string, double> atol;
+    std::map<std::string, double, std::less<>> atol;
 
     static std::string replace_backslash(std::string const& str) {
         std::string str_out{str};
@@ -328,53 +334,28 @@ struct CaseParam {
 };
 
 CalculationFunc calculation_func(CaseParam const& param) {
-    using namespace std::string_literals;
-    std::string const calculation_type = param.calculation_type;
-    bool const sym = param.sym;
-    std::string const voltage_scaling = param.short_circuit_voltage_scaling;
-
-    auto const get_default_options = [](CalculationMethod calculation_method, Idx threading) {
+    auto const get_options = [&param](CalculationMethod calculation_method, Idx threading) {
         return MainModel::Options{
-            .calculation_method = calculation_method, .err_tol = 1e-8, .max_iter = 20, .threading = threading};
+            .calculation_type = calculation_type_mapping.at(param.calculation_type),
+            .calculation_symmetry = param.sym ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric,
+            .calculation_method = calculation_method,
+            .optimizer_type = param.tap_changing_strategy == "disabled" ? OptimizerType::no_optimization
+                                                                        : OptimizerType::automatic_tap_adjustment,
+            .optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy),
+            .err_tol = 1e-8,
+            .max_iter = 20,
+            .threading = threading,
+            .short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling)};
     };
 
-    if (calculation_type == "power_flow"s) {
-        return [param, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                            MutableDataset const& dataset, ConstDataset const& update_dataset,
-                                            Idx threading) {
-            auto options = get_default_options(calculation_method, threading);
-            options.optimizer_type = param.tap_changing_strategy == "disabled"
-                                         ? OptimizerType::no_optimization
-                                         : OptimizerType::automatic_tap_adjustment;
-            options.optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy);
-            if (param.sym) {
-                return model.calculate_power_flow<symmetric_t>(options, dataset, update_dataset);
-            }
-            return model.calculate_power_flow<asymmetric_t>(options, dataset, update_dataset);
-        };
-    }
-    if (calculation_type == "state_estimation"s) {
-        return [sym, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                          MutableDataset const& dataset, ConstDataset const& update_dataset,
-                                          Idx threading) {
-            if (sym) {
-                return model.calculate_state_estimation<symmetric_t>(get_default_options(calculation_method, threading),
-                                                                     dataset, update_dataset);
-            }
-            return model.calculate_state_estimation<asymmetric_t>(get_default_options(calculation_method, threading),
-                                                                  dataset, update_dataset);
-        };
-    }
-    if (calculation_type == "short_circuit"s) {
-        return [voltage_scaling, get_default_options](MainModel& model, CalculationMethod calculation_method,
-                                                      MutableDataset const& dataset, ConstDataset const& update_dataset,
-                                                      Idx threading) {
-            auto options = get_default_options(calculation_method, threading);
-            options.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(voltage_scaling);
-            return model.calculate_short_circuit(options, dataset, update_dataset);
-        };
-    }
-    throw UnsupportedValidationCase{calculation_type, sym};
+    return [get_options](MainModel& model, CalculationMethod calculation_method, MutableDataset const& dataset,
+                         ConstDataset const& update_dataset, Idx threading) {
+        auto options = get_options(calculation_method, threading);
+        if (options.optimizer_type != OptimizerType::no_optimization) {
+            REQUIRE(options.calculation_type == CalculationType::power_flow);
+        }
+        return model.calculate(options, dataset, update_dataset);
+    };
 }
 
 std::string get_output_type(std::string const& calculation_type, bool sym) {
@@ -584,7 +565,7 @@ void validate_batch_case(CaseParam const& param) {
             MainModel model_copy{model};
 
             // update and run
-            model_copy.update_component<MainModel::permanent_update_t>(
+            model_copy.update_component<permanent_update_t>(
                 validation_case.update_batch.value().batch_scenarios[scenario]);
             ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
             func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
@@ -628,6 +609,7 @@ TEST_CASE("Validation test single") {
 
 TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+
     for (CaseParam const& param : all_cases) {
         SUBCASE(param.case_name.c_str()) {
             try {

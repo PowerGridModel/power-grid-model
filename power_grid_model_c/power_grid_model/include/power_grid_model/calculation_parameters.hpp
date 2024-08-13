@@ -184,12 +184,25 @@ struct MathModelTopology {
     Idx n_transformer_tap_regulator() const { return tap_regulators_per_branch.element_size(); }
 };
 
+struct SourceCalcParam {
+    DoubleComplex y1;
+    DoubleComplex y0;
+
+    template <symmetry_tag sym> inline ComplexTensor<sym> y_ref() const {
+        if constexpr (is_symmetric_v<sym>) {
+            return y1;
+        } else {
+            return ComplexTensor<asymmetric_t>{(2.0 * y1 + y0) / 3.0, (y0 - y1) / 3.0};
+        }
+    }
+};
+
 template <symmetry_tag sym_type> struct MathModelParam {
     using sym = sym_type;
 
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
-    ComplexTensorVector<sym> source_param;
+    std::vector<SourceCalcParam> source_param;
 };
 
 struct MathModelParamIncrement {

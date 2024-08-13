@@ -37,7 +37,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) {
     call_with_catch(
-        handle, [model, update_dataset] { model->update_component<MainModel::permanent_update_t>(*update_dataset); },
+        handle, [model, update_dataset] { model->update_component<permanent_update_t>(*update_dataset); },
         PGM_regular_error);
 }
 
@@ -73,6 +73,17 @@ void check_calculate_valid_options(PGM_Options const& opt) {
     }
 }
 
+constexpr auto get_calculation_type(PGM_Options const& opt) {
+    return static_cast<CalculationType>(opt.calculation_type);
+}
+
+constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
+    if (opt.symmetric == 0) {
+        return CalculationSymmetry::asymmetric;
+    }
+    return CalculationSymmetry::symmetric;
+}
+
 constexpr auto get_calculation_method(PGM_Options const& opt) {
     return static_cast<CalculationMethod>(opt.calculation_method);
 }
@@ -86,6 +97,7 @@ constexpr auto get_optimizer_type(PGM_Options const& opt) {
     case PGM_tap_changing_strategy_any_valid_tap:
     case PGM_tap_changing_strategy_max_voltage_tap:
     case PGM_tap_changing_strategy_min_voltage_tap:
+    case PGM_tap_changing_strategy_fast_any_tap:
         return automatic_tap_adjustment;
     default:
         throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
@@ -103,6 +115,8 @@ constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
         return global_maximum;
     case PGM_tap_changing_strategy_min_voltage_tap:
         return global_minimum;
+    case PGM_tap_changing_strategy_fast_any_tap:
+        return fast_any;
     default:
         throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
     }
@@ -113,7 +127,9 @@ constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
 }
 
 constexpr auto extract_calculation_options(PGM_Options const& opt) {
-    return MainModel::Options{.calculation_method = get_calculation_method(opt),
+    return MainModel::Options{.calculation_type = get_calculation_type(opt),
+                              .calculation_symmetry = get_calculation_symmetry(opt),
+                              .calculation_method = get_calculation_method(opt),
                               .optimizer_type = get_optimizer_type(opt),
                               .optimizer_strategy = get_optimizer_strategy(opt),
                               .err_tol = opt.err_tol,
@@ -142,33 +158,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         check_calculate_valid_options(*opt);
 
         auto const options = extract_calculation_options(*opt);
-
-        switch (opt->calculation_type) {
-        case PGM_power_flow:
-            if (opt->symmetric != 0) {
-                handle->batch_parameter =
-                    model->calculate_power_flow<symmetric_t>(options, *output_dataset, exported_update_dataset);
-            } else {
-                handle->batch_parameter =
-                    model->calculate_power_flow<asymmetric_t>(options, *output_dataset, exported_update_dataset);
-            }
-            break;
-        case PGM_state_estimation:
-            if (opt->symmetric != 0) {
-                handle->batch_parameter =
-                    model->calculate_state_estimation<symmetric_t>(options, *output_dataset, exported_update_dataset);
-            } else {
-                handle->batch_parameter =
-                    model->calculate_state_estimation<asymmetric_t>(options, *output_dataset, exported_update_dataset);
-            }
-            break;
-        case PGM_short_circuit: {
-            handle->batch_parameter = model->calculate_short_circuit(options, *output_dataset, exported_update_dataset);
-            break;
-        }
-        default:
-            throw MissingCaseForEnumError{"CalculationType", opt->calculation_type};
-        }
+        model->calculate(options, *output_dataset, exported_update_dataset);
     } catch (BatchCalculationError& e) {
         handle->err_code = PGM_batch_error;
         handle->err_msg = e.what();

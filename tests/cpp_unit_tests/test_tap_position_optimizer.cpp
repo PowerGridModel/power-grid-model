@@ -339,8 +339,12 @@ TEST_CASE("Test Transformer ranking") {
 namespace optimizer::tap_position_optimizer::test {
 namespace {
 using power_grid_model::optimizer::test::ConstDatasetUpdate;
+using power_grid_model::optimizer::test::OptStrategyMethodSearch;
+using power_grid_model::optimizer::test::search_methods;
 using power_grid_model::optimizer::test::strategies;
 using power_grid_model::optimizer::test::strategies_and_methods;
+using power_grid_model::optimizer::test::strategies_and_sides;
+using power_grid_model::optimizer::test::strategy_search_and_sides;
 using power_grid_model::optimizer::test::StubTransformer;
 using power_grid_model::optimizer::test::StubTransformerInput;
 using power_grid_model::optimizer::test::StubTransformerUpdate;
@@ -639,12 +643,23 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
-    constexpr auto tap_sides = std::array{ControlSide::side_1, ControlSide::side_2, ControlSide::side_3};
     auto const& meta_data =
         meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
                                 meta_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
 
     MockState state;
+
+    auto strategy_method_searches = [&] {
+        std::array<test::OptStrategyMethodSearch, test::strategies_and_methods.size() * test::search_methods.size()>
+            result;
+        size_t idx{};
+        for (auto strategy_method : test::strategies_and_methods) {
+            for (auto search_method : test::search_methods) {
+                result[idx++] = {strategy_method.strategy, strategy_method.method, search_method}; // NOSONAR
+            }
+        }
+        return result;
+    }();
 
     auto const updater = [&state](ConstDataset const& update_dataset) {
         REQUIRE(!update_dataset.empty());
@@ -677,14 +692,14 @@ TEST_CASE("Test Tap position optimizer") {
         return true;
     };
 
-    auto const get_optimizer = [&](OptimizerStrategy strategy) {
+    auto const get_optimizer = [&](OptimizerStrategy strategy, SearchMethod tap_search) {
         return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
-            test::mock_state_calculator, updater, strategy, meta_data};
+            test::mock_state_calculator, updater, strategy, meta_data, tap_search};
     };
 
     SUBCASE("empty state") {
         state.components.set_construction_complete();
-        auto optimizer = get_optimizer(OptimizerStrategy::any);
+        auto optimizer = get_optimizer(OptimizerStrategy::any, SearchMethod::linear_search);
         auto result = optimizer.optimize(state, CalculationMethod::default_method);
         CHECK(result.solver_output.size() == 1);
         CHECK(result.solver_output[0].method == CalculationMethod::default_method);
@@ -697,15 +712,24 @@ TEST_CASE("Test Tap position optimizer") {
             state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
         state.components.set_construction_complete();
 
-        for (auto strategy_method : test::strategies_and_methods) {
-            CAPTURE(strategy_method.strategy);
-            CAPTURE(strategy_method.method);
+        for (auto strategy_method_search : strategy_method_searches) {
+            auto strategy = strategy_method_search.strategy;
+            auto method = strategy_method_search.method;
+            auto search = strategy_method_search.search;
+            CAPTURE(strategy);
+            CAPTURE(method);
+            CAPTURE(search);
 
-            auto optimizer = get_optimizer(strategy_method.strategy);
-            auto result = optimizer.optimize(state, strategy_method.method);
+            if (strategy == OptimizerStrategy::any && search == SearchMethod::binary_search) {
+                CHECK_THROWS_AS(get_optimizer(strategy, search), TapSearchStrategyIncompatibleError);
 
-            CHECK(result.solver_output.size() == 1);
-            CHECK(result.solver_output[0].method == strategy_method.method);
+            } else {
+                auto optimizer = get_optimizer(strategy, search);
+                auto result = optimizer.optimize(state, method);
+
+                CHECK(result.solver_output.size() == 1);
+                CHECK(result.solver_output[0].method == method);
+            }
         }
     }
 
@@ -810,7 +834,6 @@ TEST_CASE("Test Tap position optimizer") {
                         FAIL("unreachable");
                     }
                 };
-
                 SUBCASE("normal tap range") {
                     state_b.tap_min = 1;
                     state_b.tap_max = 3;
@@ -998,52 +1021,53 @@ TEST_CASE("Test Tap position optimizer") {
             auto const initial_a{transformer_a.tap_pos()};
             auto const initial_b{transformer_b.tap_pos()};
 
-            for (auto strategy : test::strategies) {
+            for (auto strategy_search_side : test::strategy_search_and_sides) {
+                auto strategy = strategy_search_side.strategy;
+                auto search = strategy_search_side.search;
+                auto tap_side = strategy_search_side.side;
                 CAPTURE(strategy);
+                CAPTURE(search);
+                CAPTURE(tap_side);
 
-                for (auto tap_side : tap_sides) {
-                    CAPTURE(tap_side);
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
 
-                    state_b.tap_side = tap_side;
-                    state_a.tap_side = tap_side;
+                auto optimizer = get_optimizer(strategy, search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
 
-                    auto optimizer = get_optimizer(strategy);
-                    auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+                auto const get_state_tap_pos = [&](ID const id) {
+                    REQUIRE(!result.solver_output.empty());
+                    return result.solver_output.front().state_tap_positions.at(id);
+                };
+                auto const get_output_tap_pos = [&](ID const id) {
+                    REQUIRE(!result.optimizer_output.transformer_tap_positions.empty());
+                    auto const it = std::ranges::find_if(result.optimizer_output.transformer_tap_positions,
+                                                         [id](auto const& x) { return x.transformer_id == id; });
+                    REQUIRE(it != std::end(result.optimizer_output.transformer_tap_positions));
+                    CHECK(it->transformer_id == id);
+                    return it->tap_position;
+                };
 
-                    auto const get_state_tap_pos = [&](const ID id) {
-                        REQUIRE(!result.solver_output.empty());
-                        return result.solver_output.front().state_tap_positions.at(id);
-                    };
-                    auto const get_output_tap_pos = [&](const ID id) {
-                        REQUIRE(!result.optimizer_output.transformer_tap_positions.empty());
-                        auto const it = std::ranges::find_if(result.optimizer_output.transformer_tap_positions,
-                                                             [id](auto const& x) { return x.transformer_id == id; });
-                        REQUIRE(it != std::end(result.optimizer_output.transformer_tap_positions));
-                        CHECK(it->transformer_id == id);
-                        return it->tap_position;
-                    };
+                // check optimal state
+                CHECK(result.solver_output.size() == 1);
+                check_a(get_state_tap_pos(state_a.id), strategy);
+                check_b(get_state_tap_pos(state_b.id), strategy);
 
-                    // check optimal state
-                    CHECK(result.solver_output.size() == 1);
-                    check_a(get_state_tap_pos(state_a.id), strategy);
-                    check_b(get_state_tap_pos(state_b.id), strategy);
-
-                    // check optimal output
-                    if (state_a.rank != MockTransformerState::unregulated) {
-                        check_a(get_output_tap_pos(state_a.id), strategy);
-                    }
-                    if (state_b.rank != MockTransformerState::unregulated) {
-                        check_b(get_output_tap_pos(state_b.id), strategy);
-                    }
-
-                    // reset
-                    CHECK(transformer_a.tap_pos() == initial_a);
-                    CHECK(transformer_b.tap_pos() == initial_b);
+                // check optimal output
+                if (state_a.rank != MockTransformerState::unregulated) {
+                    check_a(get_output_tap_pos(state_a.id), strategy);
                 }
+                if (state_b.rank != MockTransformerState::unregulated) {
+                    check_b(get_output_tap_pos(state_b.id), strategy);
+                }
+
+                // reset
+                CHECK(transformer_a.tap_pos() == initial_a);
+                CHECK(transformer_b.tap_pos() == initial_b);
             }
         }
 
-        SUBCASE("Check throw as MaxIterationReached") {
+        SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
             state_b.rank = 0;
             state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                 CHECK(side == regulator_b.control_side());
@@ -1055,27 +1079,26 @@ TEST_CASE("Test Tap position optimizer") {
 
             auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
 
-            // tap pos will jump between 3 and 4
+            // tap pos will jump between 3 and 4 in linear_search method
             state_b.tap_min = 1;
             state_b.tap_max = 5;
             state_b.tap_pos = 5;
 
             regulator_b.update(update_data);
 
-            for (auto strategy : test::strategies) {
+            for (auto strategy_side : test::strategies_and_sides) {
+                auto strategy = strategy_side.strategy;
+                auto tap_side = strategy_side.side;
                 CAPTURE(strategy);
+                CAPTURE(tap_side);
 
-                for (auto tap_side : tap_sides) {
-                    CAPTURE(tap_side);
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
 
-                    state_b.tap_side = tap_side;
-                    state_a.tap_side = tap_side;
-
-                    auto optimizer = get_optimizer(strategy);
-                    auto const cached_state = state; // NOSONAR
-                    CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
-                    CHECK(twoStatesEqual(cached_state, state));
-                }
+                auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
+                auto const cached_state = state; // NOSONAR
+                CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                CHECK(twoStatesEqual(cached_state, state));
             }
         }
     }

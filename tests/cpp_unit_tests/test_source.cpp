@@ -42,7 +42,7 @@ TEST_CASE("Test source") {
     ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
     ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
     ComplexTensor<asymmetric_t> y012;
-    y012 << y1, 0.0, 0.0, 0.0, y1, 0.0, 0.0, 0.0, y0;
+    y012 << y0, 0.0, 0.0, 0.0, y1, 0.0, 0.0, 0.0, y1;
     ComplexTensor<asymmetric_t> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
@@ -75,9 +75,10 @@ TEST_CASE("Test source") {
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         // yref
-        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>();
+        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().template y_ref<symmetric_t>();
         CHECK(cabs(y_ref_sym_cal - y_ref_sym) < numerical_tolerance);
-        ComplexTensor<asymmetric_t> const y_ref_asym_cal = source.math_param<asymmetric_t>();
+        ComplexTensor<asymmetric_t> const y_ref_asym_cal =
+            source.math_param<asymmetric_t>().template y_ref<asymmetric_t>();
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Dict
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
@@ -21,6 +20,7 @@ from power_grid_model.utils import (
     json_serialize_to_file,
     msgpack_deserialize_from_file,
     msgpack_serialize_to_file,
+    self_test,
 )
 
 
@@ -161,3 +161,7 @@ def test_msgpack_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     serialize_mock.assert_called_once_with(data=data, dataset_type=None, use_compact_list=False)
     handle = open_mock()
     handle.write.assert_called_once_with(serialize_mock.return_value)
+
+
+def test_self_test():
+    self_test()

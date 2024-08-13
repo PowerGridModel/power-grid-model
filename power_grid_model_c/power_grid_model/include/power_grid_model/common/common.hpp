@@ -25,7 +25,7 @@ using IntS = int8_t;
 // struct of indexing to sub modules
 struct Idx2D {
     Idx group; // sequence number of outer module/groups
-    Idx pos;   //  sequence number inside the group
+    Idx pos;   // sequence number inside the group
 
     friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
 };
@@ -86,5 +86,8 @@ constexpr double default_source_z01_ratio = 1.0;
 using DoubleVector = std::vector<double>;
 using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
+
+template <class T, class... Ts>
+concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
 
 } // namespace power_grid_model
