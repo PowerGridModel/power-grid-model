@@ -54,7 +54,7 @@ class Model {
     }
 
   private:
-    power_grid_model_cpp::Handle handle_{};
+    Handle handle_{};
     UniquePtr<PGM_PowerGridModel, PGM_destroy_model> model_;
 };
 } // namespace power_grid_model_cpp

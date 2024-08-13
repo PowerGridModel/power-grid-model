@@ -95,7 +95,7 @@ class Dataset {
 
   protected:
     Dataset() = default;
-    power_grid_model_cpp::Handle handle_{};
+    Handle handle_{};
 };
 
 class DatasetConst : public Dataset {
