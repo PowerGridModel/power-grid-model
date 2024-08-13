@@ -16,8 +16,8 @@ from typing import Optional, cast
 
 import numpy as np
 
-from power_grid_model.core.data_handling import OutputType, process_data_filter
-from power_grid_model.core.dataset_definitions import ComponentType
+from power_grid_model.core.data_handling import process_data_filter
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
@@ -291,7 +291,7 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
 def copy_output_to_columnar_dataset(
     output_data: Dataset,
     output_component_types: ComponentAttributeMapping,
-    output_type: OutputType,
+    output_type: DatasetType,
     available_components: list[ComponentType],
 ) -> Dataset:
     """Temporary function to copy row based dataset to a column based dataset as per output_component_types.
@@ -306,13 +306,13 @@ def copy_output_to_columnar_dataset(
     Args:
         output_data (Dataset): dataset to convert
         output_component_types (ComponentAttributeMapping): desired component and attribute mapping
-        output_type (OutputType): output type sym or asym
+        output_type (DatasetType): output type sym or asym
         available_components (list[ComponentType]): available components in model
 
     Returns:
         Dataset: converted dataset
     """
-    processed_output_types = process_data_filter(output_type.value, output_component_types, available_components)
+    processed_output_types = process_data_filter(output_type, output_component_types, available_components)
 
     result_data = {}
     for comp_name, attrs in processed_output_types.items():

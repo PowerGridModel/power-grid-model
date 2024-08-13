@@ -7,7 +7,6 @@ Data handling
 """
 
 
-from enum import Enum
 from typing import Mapping
 
 import numpy as np
@@ -20,20 +19,7 @@ from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
-class OutputType(Enum):
-    """
-    The different supported output types:
-        - DatasetType.sym_output
-        - DatasetType.asym_output
-        - DatasetType.sc_output
-    """
-
-    SYM_OUTPUT = DatasetType.sym_output
-    ASYM_OUTPUT = DatasetType.asym_output
-    SC_OUTPUT = DatasetType.sc_output
-
-
-def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> OutputType:
+def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> DatasetType:
     """
     Get the output type based on the provided arguments.
 
@@ -48,10 +34,10 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Ou
         the output type that fits the format requested by the output type
     """
     if calculation_type in (CalculationType.power_flow, CalculationType.state_estimation):
-        return OutputType.SYM_OUTPUT if symmetric else OutputType.ASYM_OUTPUT
+        return DatasetType.sym_output if symmetric else DatasetType.asym_output
 
     if calculation_type == CalculationType.short_circuit:
-        return OutputType.SC_OUTPUT
+        return DatasetType.sc_output
 
     raise NotImplementedError()
 
@@ -84,7 +70,7 @@ def prepare_update_view(update_data: Mapping[ComponentType, np.ndarray | Mapping
     return CConstDataset(update_data, dataset_type=DatasetType.update)
 
 
-def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_type: OutputType) -> CMutableDataset:
+def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_type: DatasetType) -> CMutableDataset:
     """
     create a view of the output data in a format compatible with the PGM core libary.
 
@@ -97,12 +83,12 @@ def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_
     Returns:
         instance of CMutableDataset ready to be fed into C API
     """
-    return CMutableDataset(output_data, dataset_type=output_type.value)
+    return CMutableDataset(output_data, dataset_type=output_type)
 
 
 def create_output_data(
     output_component_types: ComponentAttributeMapping,
-    output_type: OutputType,
+    output_type: DatasetType,
     all_component_count: dict[ComponentType, int],
     is_batch: bool,
     batch_size: int,
@@ -125,9 +111,7 @@ def create_output_data(
     Returns:
         Dataset: output dataset
     """
-    processed_output_types = process_data_filter(
-        output_type.value, output_component_types, list(all_component_count.keys())
-    )
+    processed_output_types = process_data_filter(output_type, output_component_types, list(all_component_count.keys()))
 
     all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}
 
@@ -140,7 +124,7 @@ def create_output_data(
             shape: tuple[int] | tuple[int, int] = (batch_size, count)
         else:
             shape = (count,)
-        result_dict[name] = initialize_array(output_type.value, name, shape=shape, empty=True)
+        result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
     return result_dict
 
 
@@ -149,7 +133,7 @@ def process_data_filter(
     data_filter: ComponentAttributeMapping,
     available_components: list[ComponentType],
 ) -> _ComponentAttributeMappingDict:
-    """Checks valid type for a mapping of componenet to attributes. 
+    """Checks valid type for a mapping of componenet to attributes.
     The default for `None` is row_based format while Ellipsis (...) is columnar format.
     Also checks for any invalid component names and attribute names
 
