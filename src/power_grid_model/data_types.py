@@ -7,16 +7,16 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file.
 """
 
-from typing import TypeVar, Union
+from typing import TypeAlias, TypeVar, Union
 
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType
 
 ComponentTypeLike = TypeVar("ComponentTypeLike", bound=ComponentType | str)
+ComponentTypeVar: TypeAlias = ComponentTypeLike
 
 SingleArray = Union[np.ndarray]
-
 """
 A single array is a one-dimensional structured containing a list of components of the same type.
 
@@ -27,7 +27,6 @@ A single array is a one-dimensional structured containing a list of components o
 """
 
 DenseBatchArray = Union[np.ndarray]
-
 """
 A dense batch array is a two-dimensional structured numpy array containing a list of components of 
 the same type for each scenario.
