@@ -13,10 +13,10 @@ import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType
 
-ComponentTypeVar = TypeVar("ComponentTypeVar", ComponentType, str)
+ComponentTypeLike = ComponentType | str
+ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentTypeLike)  # helper used for type deduction
 
 SingleArray = Union[np.ndarray]
-
 """
 A single array is a one-dimensional structured numpy array containing a list of components of the same type.
 
@@ -49,7 +49,6 @@ and the values are :class:`SingleColumn`.
 """
 
 DenseBatchArray = Union[np.ndarray]
-
 """
 A dense batch array is a two-dimensional structured numpy array containing a list of components of 
 the same type for each scenario. Otherwise similar to :class:`SingleArray`.
