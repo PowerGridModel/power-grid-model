@@ -43,6 +43,17 @@ class DatasetType(str, Enum, metaclass=_MetaEnum):
     update = "update"
     sc_output = "sc_output"
 
+class OutputType(Enum):
+    """
+    The different supported output types:
+        - DatasetType.sym_output
+        - DatasetType.asym_output
+        - DatasetType.sc_output
+    """
+
+    SYM_OUTPUT = DatasetType.sym_output
+    ASYM_OUTPUT = DatasetType.asym_output
+    SC_OUTPUT = DatasetType.sc_output
 
 class ComponentType(str, Enum, metaclass=_MetaEnum):
     """
