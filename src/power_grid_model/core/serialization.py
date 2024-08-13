@@ -269,7 +269,8 @@ def json_serialize(
         A serialized string containing the dataset.
     """
     data = _map_to_component_types(data)
-    dataset_type = _str_to_datatype(dataset_type)
+    if dataset_type is not None:
+        dataset_type = _str_to_datatype(dataset_type)
     result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
     return result
@@ -318,7 +319,8 @@ def msgpack_serialize(
         A serialized string containing the dataset.
     """
     data = _map_to_component_types(data)
-    dataset_type = _str_to_datatype(dataset_type)
+    if dataset_type is not None:
+        dataset_type = _str_to_datatype(dataset_type)
     result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()
     return result

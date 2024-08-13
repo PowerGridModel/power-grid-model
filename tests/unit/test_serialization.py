@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
+from power_grid_model.core.dataset_definitions import ComponentTypeLike
 from power_grid_model.core.power_grid_dataset import get_dataset_type
-from power_grid_model.data_types import ComponentTypeLike
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
