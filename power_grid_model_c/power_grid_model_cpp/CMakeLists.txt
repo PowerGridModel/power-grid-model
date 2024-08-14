@@ -2,29 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-# C++ API library
+# C++ wrapper library around C API
 add_library(power_grid_model_cpp INTERFACE)
 
 target_include_directories(power_grid_model_cpp INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-)
-
-set(PGM_PUBLIC_HEADERS
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/basics.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/buffer.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/dataset.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/handle.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/meta_data.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/model.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/options.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp/serialization.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/power_grid_model_cpp.hpp"
-)
-
-set_target_properties(power_grid_model_cpp PROPERTIES
-  VERSION ${PGM_VERSION}
-  SOVERSION ${PGM_VERSION}
 )
 
 install(TARGETS power_grid_model_cpp
