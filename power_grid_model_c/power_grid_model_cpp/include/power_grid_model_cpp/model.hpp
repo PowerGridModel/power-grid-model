@@ -49,7 +49,7 @@ class Model {
         get_indexer(handle_, *this, component, size, ids, indexer);
     }
 
-    static void calculate(Handle const& handle, Model model, PGM_Options const* opt,
+    static void calculate(Handle const& handle, Model& model, PGM_Options const* opt,
                           PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
         PGM_calculate(handle.get(), model.get(), opt, output_dataset, batch_dataset);
         handle.check_error();

@@ -14,63 +14,87 @@
 namespace power_grid_model_cpp {
 class Dataset {
   public:
-    static std::string const info_name(Handle const& handle, PGM_DatasetInfo const* info) {
-        auto const name = std::string(PGM_dataset_info_name(handle.get(), info));
-        handle.check_error();
-        return name;
-    }
-    std::string const info_name(PGM_DatasetInfo const* info) const { return info_name(handle_, info); }
+    class Info {
+      public:
+        Info(Dataset const& dataset) : dataset_{dataset} {}
 
-    static Idx info_is_batch(Handle const& handle, PGM_DatasetInfo const* info) {
-        auto const is_batch = PGM_dataset_info_is_batch(handle.get(), info);
-        handle.check_error();
-        return is_batch;
-    }
-    Idx info_is_batch(PGM_DatasetInfo const* info) const { return info_is_batch(handle_, info); }
+        static std::string const name(Handle const& handle, PGM_DatasetInfo const* info) {
+            auto const name = std::string(PGM_dataset_info_name(handle.get(), info));
+            handle.check_error();
+            return name;
+        }
+        std::string const name(PGM_DatasetInfo const* info) const { return name(dataset_.handle_, info); }
 
-    static Idx info_batch_size(Handle const& handle, PGM_DatasetInfo const* info) {
-        auto const batch_size = PGM_dataset_info_batch_size(handle.get(), info);
-        handle.check_error();
-        return batch_size;
-    }
-    Idx info_batch_size(PGM_DatasetInfo const* info) const { return info_batch_size(handle_, info); }
+        static Idx is_batch(Handle const& handle, PGM_DatasetInfo const* info) {
+            auto const is_batch = PGM_dataset_info_is_batch(handle.get(), info);
+            handle.check_error();
+            return is_batch;
+        }
+        Idx is_batch(PGM_DatasetInfo const* info) const { return is_batch(dataset_.handle_, info); }
 
-    static Idx info_n_components(Handle const& handle, PGM_DatasetInfo const* info) {
-        auto const n_components = PGM_dataset_info_n_components(handle.get(), info);
-        handle.check_error();
-        return n_components;
-    }
-    Idx info_n_components(PGM_DatasetInfo const* info) const { return info_n_components(handle_, info); }
+        static Idx batch_size(Handle const& handle, PGM_DatasetInfo const* info) {
+            auto const batch_size = PGM_dataset_info_batch_size(handle.get(), info);
+            handle.check_error();
+            return batch_size;
+        }
+        Idx batch_size(PGM_DatasetInfo const* info) const { return batch_size(dataset_.handle_, info); }
 
-    static std::string const info_component_name(Handle const& handle, PGM_DatasetInfo const* info, Idx component_idx) {
-        auto const component_name = std::string(PGM_dataset_info_component_name(handle.get(), info, component_idx));
-        handle.check_error();
-        return component_name;
-    }
-    std::string const info_component_name(PGM_DatasetInfo const* info, Idx component_idx) const {
-        return info_component_name(handle_, info, component_idx);
-    }
+        static Idx n_components(Handle const& handle, PGM_DatasetInfo const* info) {
+            auto const n_components = PGM_dataset_info_n_components(handle.get(), info);
+            handle.check_error();
+            return n_components;
+        }
+        Idx n_components(PGM_DatasetInfo const* info) const { return n_components(dataset_.handle_, info); }
 
-    static Idx info_elements_per_scenario(Handle const& handle, PGM_DatasetInfo const* info, Idx component_idx) {
-        auto const elements_per_scenario = PGM_dataset_info_elements_per_scenario(handle.get(), info, component_idx);
-        handle.check_error();
-        return elements_per_scenario;
-    }
-    Idx info_elements_per_scenario(PGM_DatasetInfo const* info, Idx component_idx) const {
-        return info_elements_per_scenario(handle_, info, component_idx);
-    }
+      private:
+        friend class Dataset;
 
-    static Idx info_total_elements(Handle const& handle, PGM_DatasetInfo const* info, Idx component_idx) {
-        auto const total_elements = PGM_dataset_info_total_elements(handle.get(), info, component_idx);
-        handle.check_error();
-        return total_elements;
-    }
-    Idx info_total_elements(PGM_DatasetInfo const* info, Idx component_idx) const {
-        info_total_elements(handle_, info, component_idx);
-    }
+        Dataset const& dataset_;
+    };
+
+    class ComponentInfo {
+      public:
+        ComponentInfo(Dataset const& dataset) : dataset_{dataset} {}
+
+        static std::string const name(Handle const& handle, PGM_DatasetInfo const* info, Idx component_idx) {
+            auto const component_name = std::string(PGM_dataset_info_component_name(handle.get(), info, component_idx));
+            handle.check_error();
+            return component_name;
+        }
+        std::string const name(PGM_DatasetInfo const* info, Idx component_idx) const {
+            return name(dataset_.handle_, info, component_idx);
+        }
+
+        static Idx elements_per_scenario(Handle const& handle, PGM_DatasetInfo const* info, Idx component_idx) {
+            auto const elements_per_scenario =
+                PGM_dataset_info_elements_per_scenario(handle.get(), info, component_idx);
+            handle.check_error();
+            return elements_per_scenario;
+        }
+        Idx elements_per_scenario(PGM_DatasetInfo const* info, Idx component_idx) const {
+            return elements_per_scenario(dataset_.handle_, info, component_idx);
+        }
+
+        static Idx total_elements(Handle const& handle, PGM_DatasetInfo const* info, Idx component_idx) {
+            auto const total_elements = PGM_dataset_info_total_elements(handle.get(), info, component_idx);
+            handle.check_error();
+            return total_elements;
+        }
+        Idx total_elements(PGM_DatasetInfo const* info, Idx component_idx) const {
+            total_elements(dataset_.handle_, info, component_idx);
+        }
+
+      private:
+        friend class Dataset;
+
+        Dataset const& dataset_;
+    };
+
+    Info info;
+    ComponentInfo component_info;
 
   protected:
-    Dataset() = default;
+    Dataset() : info{*this}, component_info{*this} {}
     Handle handle_{};
 };
 

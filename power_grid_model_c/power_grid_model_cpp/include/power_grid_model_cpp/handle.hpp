@@ -39,7 +39,7 @@ class PowerGridBatchError : public PowerGridError {
         std::string error_message;
     };
 
-    PowerGridBatchError(std::string const& message, std::vector<FailedScenario>&& failed_scenarios_c)
+    PowerGridBatchError(std::string const& message, std::vector<FailedScenario> failed_scenarios_c)
         : PowerGridError{message}, failed_scenarios_{std::move(failed_scenarios_c)} {}
     static constexpr Idx error_code() { return PGM_batch_error; }
     std::vector<FailedScenario> const& failed_scenarios() const { return failed_scenarios_; }
@@ -51,8 +51,6 @@ class PowerGridBatchError : public PowerGridError {
 class Handle {
   public:
     Handle() : handle_{PGM_create_handle()} {}
-
-    ~Handle() = default;
 
     PGM_Handle* get() const { return handle_.get(); }
 
