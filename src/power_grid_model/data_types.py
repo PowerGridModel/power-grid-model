@@ -11,7 +11,6 @@ from typing import TypeVar, Union
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentTypeLike  # pylint: disable=unused-import
 from power_grid_model.core.dataset_definitions import ComponentTypeVar
 
 SingleArray = Union[np.ndarray]

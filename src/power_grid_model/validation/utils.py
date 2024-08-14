@@ -168,7 +168,7 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: str | ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
+def nan_type(component: ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
