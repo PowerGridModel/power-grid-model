@@ -18,7 +18,7 @@ import numpy as np
 from power_grid_model.core.data_handling import OutputType, process_output_component_types
 from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.data_types import (
-    BatchArray,
+    BatchComponentData,
     BatchDataset,
     BatchList,
     Dataset,
@@ -27,7 +27,7 @@ from power_grid_model.data_types import (
     SingleArray,
     SingleDataset,
     SinglePythonDataset,
-    SparseBatchArray,
+    SparseBatchData,
 )
 from power_grid_model.typing import ComponentAttributeMapping
 
@@ -120,7 +120,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     return n_batch_size
 
 
-def get_batch_size(batch_data: BatchArray) -> int:
+def get_batch_size(batch_data: BatchComponentData) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it.
 
@@ -135,19 +135,21 @@ def get_batch_size(batch_data: BatchArray) -> int:
         # we assume that it is a single batch.
         if batch_data.ndim == 1:
             return 1
-        n_batches = batch_data.shape[0]
-    elif isinstance(batch_data, dict):
+        return batch_data.shape[0]
+
+    if isinstance(batch_data, dict):
         # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
         # invalid dictionary). There is always one indptr more than there are batches.
         if "indptr" not in batch_data:
             raise ValueError("Invalid batch data format, expected 'indptr' and 'data' entries")
-        n_batches = batch_data["indptr"].size - 1
-    else:
-        # If the batch data is not a numpy array and not a dictionary, it is invalid
-        raise ValueError(
-            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
-        )
-    return n_batches
+        indptr = batch_data["indptr"]
+        if isinstance(indptr, np.ndarray):
+            return indptr.size - 1
+
+    # If the batch data is not a numpy array and not a dictionary, it is invalid
+    raise ValueError(
+        "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
+    )
 
 
 def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component: ComponentType) -> list[np.ndarray]:
@@ -177,7 +179,7 @@ def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component:
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: ComponentType) -> list[np.ndarray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: ComponentType) -> list[SingleArray]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 

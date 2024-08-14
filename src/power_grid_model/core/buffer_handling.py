@@ -16,7 +16,7 @@ from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
-from power_grid_model.data_types import BatchComponentData, ComponentData
+from power_grid_model.data_types import ComponentData, DenseBatchData, SparseBatchData
 
 
 @dataclass
@@ -251,7 +251,7 @@ def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Co
     return _create_uniform_buffer(properties=properties, schema=schema)
 
 
-def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaData) -> ComponentData:
+def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaData) -> DenseBatchData:
     """
     Create a uniform buffer with the provided properties and type.
 
@@ -276,7 +276,7 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
     return np.empty(shape=shape, dtype=schema.dtype)
 
 
-def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> BatchComponentData:
+def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> SparseBatchData:
     """
     Create a sparse buffer with the provided properties and type.
 

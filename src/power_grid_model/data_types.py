@@ -7,11 +7,28 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file.
 """
 
-from typing import TypeVar, Union
+from typing import TypeAlias, TypeVar, Union
 
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentTypeVar
+
+AttributeType: TypeAlias = str
+"""
+An attribute type is a string reprenting the attribute type of a specific component.
+
+- Examples:
+
+    - "id"
+    - "u_rated"
+"""
+
+SparseDataComponentType: TypeAlias = str
+"""
+A string representing the component type of sparse data structures.
+
+Must be either "data" or "indptr".
+"""
 
 SingleArray = Union[np.ndarray]
 """
@@ -37,7 +54,7 @@ multiple components of the same type.
         - array([10500.0, 10500.0], dtype=power_grid_meta_data["input"]["node"].dtype.fields["u_rated"][0])
 """
 
-SingleColumnarData = dict[str, SingleColumn]
+SingleColumnarData = dict[AttributeType, SingleColumn]
 """
 Single columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`SingleColumn`.
@@ -57,7 +74,7 @@ A batch column is a two-dimensional structured numpy array containing a list of 
 multiple components of the same type. Otherwise, similar to :class:`SingleColumn`.
 """
 
-DenseBatchColumnarData = dict[str, BatchColumn]
+DenseBatchColumnarData = dict[AttributeType, BatchColumn]
 """
 Batch columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`BatchColumn`.
@@ -75,7 +92,7 @@ of scenarios, representing the start and end indices for each batch scenario as 
     - The first element and last element will therefore be 0 and the size of the data, respectively.
 """
 
-SparseBatchArray = dict[str, IndexPointer | SingleArray]
+SparseBatchArray = dict[SparseDataComponentType, IndexPointer | SingleArray]
 """
 A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
@@ -152,7 +169,7 @@ Single component data is a :class:`SingleArray`.
 # """
 # Batch component data can be :class:`BatchArray` or :class:`BatchColumnarData`.
 # """
-BatchComponentData = Union[BatchArray]
+BatchComponentData = DenseBatchData | SparseBatchData
 """
 Batch component data is a :class:`BatchArray`.
 """
