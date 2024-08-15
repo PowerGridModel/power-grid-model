@@ -100,24 +100,24 @@ class MyBuildExt(build_ext):
             else:
                 cxx = self.compiler.compiler_cxx[0]
             # customize compiler and linker options
-            self.compiler.compiler_so[0] = cxx
-            self.compiler.linker_so[0] = cxx
+            self.compiler.compiler_so_cxx[0] = cxx
+            self.compiler.linker_so_cxx[0] = cxx
             self.compiler.compiler_cxx = [cxx]
             # add link time optimization
             if "clang" in cxx:
                 lto_flag = "-flto=thin"
             else:
                 lto_flag = "-flto"
-            self.compiler.compiler_so += [lto_flag]
-            self.compiler.linker_so += [lto_flag]
+            self.compiler.compiler_so_cxx += [lto_flag]
+            self.compiler.linker_so_cxx += [lto_flag]
             # remove -g and -O2
-            self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
-            self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
+            self.compiler.compiler_so_cxx = [x for x in self.compiler.compiler_so_cxx if x not in ["-g", "-O2"]]
+            self.compiler.linker_so_cxx = [x for x in self.compiler.linker_so_cxx if x not in ["-g", "-O2", "-Wl,-O1"]]
 
             print("-------compiler arguments----------")
-            print(self.compiler.compiler_so)
+            print(self.compiler.compiler_so_cxx)
             print("-------linker arguments----------")
-            print(self.compiler.linker_so)
+            print(self.compiler.linker_so_cxx)
         return super().build_extensions()
 
     def get_export_symbols(self, ext):

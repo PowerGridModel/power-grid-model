@@ -4,7 +4,7 @@
 
 [build-system]
 requires = [
-    "setuptools",
+    "setuptools >= 72.2",
     "wheel",
     "pybuild-header-dependency",
     "msgpack-cxx",
