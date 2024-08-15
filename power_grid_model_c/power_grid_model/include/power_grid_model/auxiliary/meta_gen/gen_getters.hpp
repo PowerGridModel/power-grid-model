@@ -62,9 +62,9 @@ constexpr MetaAttribute get_meta_attribute(size_t offset, char const* attribute_
 };
 
 // getter for meta component
-template <class StructType, auto component_name_getter> struct get_meta_component {
-    static constexpr MetaComponent value{
-        .name = component_name_getter(),
+template <class StructType> constexpr MetaComponent get_meta_component(char const* component_name) {
+    return MetaComponent{
+        .name = component_name,
         .size = sizeof(StructType),
         .alignment = alignof(StructType),
         .attributes = get_attributes_list<StructType>::value,
@@ -84,7 +84,7 @@ template <auto dataset_name_getter, template <class> class struct_getter, class.
 struct get_meta_dataset<dataset_name_getter, struct_getter, ComponentList<ComponentType...>> {
     static constexpr size_t n_components = sizeof...(ComponentType);
     static constexpr std::array<MetaComponent, n_components> components{
-        get_meta_component<typename struct_getter<ComponentType>::type, [] { return ComponentType::name; }>::value...};
+        get_meta_component<typename struct_getter<ComponentType>::type>(ComponentType::name)...};
     static constexpr MetaDataset value{
         .name = dataset_name_getter(),
         .components = components,
