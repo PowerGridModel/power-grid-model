@@ -84,7 +84,7 @@ template <class struct_getter, class... ComponentType>
 struct get_meta_dataset<struct_getter, ComponentList<ComponentType...>> {
     static constexpr size_t n_components = sizeof...(ComponentType);
     static constexpr std::array<MetaComponent, n_components> components{
-        get_meta_component<struct_getter::type<ComponentType>>(ComponentType::name)...};
+        get_meta_component<typename struct_getter::template type<ComponentType>>(ComponentType::name)...};
     static constexpr MetaDataset value{
         .name = struct_getter::name,
         .components = components,

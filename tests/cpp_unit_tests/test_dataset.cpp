@@ -130,18 +130,18 @@ struct B {
 
 constexpr MetaData test_meta_data =
     meta_data_gen::get_meta_data<ComponentList<A, B>, // all components list
-                                 meta_data_gen::dataset_mark<[] { return "input"; }, input_getter_s>,
-                                 meta_data_gen::dataset_mark<[] { return "update"; }, update_getter_s>
+                                 input_getter_s,
+                                 update_getter_s
                                  // end list of all marks
                                  >::value;
 
 constexpr MetaData test_meta_data_all =
     meta_data_gen::get_meta_data<ComponentList<A, B>, // all components list
-                                 meta_data_gen::dataset_mark<[] { return "input"; }, input_getter_s>,
-                                 meta_data_gen::dataset_mark<[] { return "update"; }, update_getter_s>,
-                                 meta_data_gen::dataset_mark<[] { return "sym_output"; }, sym_output_getter_s>,
-                                 meta_data_gen::dataset_mark<[] { return "asym_output"; }, asym_output_getter_s>,
-                                 meta_data_gen::dataset_mark<[] { return "sc_output"; }, sc_output_getter_s>
+                                 input_getter_s,
+                                 update_getter_s,
+                                 sym_output_getter_s,
+                                 asym_output_getter_s,
+                                 sc_output_getter_s
                                  // end list of all marks
                                  >::value;
 } // namespace

@@ -645,7 +645,7 @@ TEST_CASE("Test Tap position optimizer") {
 
     auto const& meta_data =
         meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
-                                meta_gen::dataset_mark<[] { return "update"; }, meta_data::update_getter_s>>::value;
+                                meta_data::update_getter_s>::value;
 
     MockState state;
 

@@ -318,7 +318,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     template <class type_getter, class ComponentType,
-              class StructType = DataStruct<type_getter::template type<ComponentType>>>
+              class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
     RangeObject<StructType> get_columnar_buffer_span(Idx scenario = invalid_index) const {
         assert(scenario < batch_size());
 
@@ -332,7 +332,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
     // get buffer by component type for all scenarios in vector span
     template <class type_getter, class ComponentType,
-              class StructType = DataStruct<type_getter::template type<ComponentType>>>
+              class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
     std::vector<std::span<StructType>> get_buffer_span_all_scenarios() const {
         Idx const idx = find_component(ComponentType::name, false);
         std::vector<std::span<StructType>> result(batch_size());
@@ -343,7 +343,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     template <class type_getter, class ComponentType,
-              class StructType = DataStruct<type_getter::template type<ComponentType>>>
+              class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
     std::vector<RangeObject<StructType>> get_columnar_buffer_span_all_scenarios() const {
         Idx const idx = find_component(ComponentType::name, false);
         std::vector<RangeObject<StructType>> result(batch_size());
