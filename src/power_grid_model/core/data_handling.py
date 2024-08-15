@@ -153,8 +153,8 @@ def process_output_component_types(
 
     Args:
         output_type (OutputType): the type of output that the user will see (as per the calculation options)
-        output_component_types (OutputComponentNamesType):  output_component_types provided by user
-        available_components (list[ComponentType]):  all components available in model instance
+        output_component_types (ComponentAttributeMapping): output_component_types provided by user
+        available_components (list[ComponentType]): all components available in model instance
 
     Raises:
         ValueError: when the type for output_comoponent_types is incorrect
@@ -184,7 +184,8 @@ def process_output_component_types(
     for comp_name, attrs in output_component_types.items():
         if attrs is None:
             continue
-        diff = set(attrs).difference(output_meta[comp_name].dtype.names)
+        attr_names = output_meta[comp_name].dtype.names
+        diff = set(attrs).difference(attr_names) if attr_names is not None else set(attrs)
         if diff != set():
             unknown_attributes[comp_name] = diff
 
