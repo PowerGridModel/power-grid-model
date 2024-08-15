@@ -48,13 +48,13 @@ namespace power_grid_model {
 
 template <solver_output_type SolverOutputType> struct output_type_getter;
 template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
-    template <class T> using type = meta_data::sc_output_getter_s<T>;
+    using type = meta_data::sc_output_getter_s;
 };
 template <> struct output_type_getter<SolverOutput<symmetric_t>> {
-    template <class T> using type = meta_data::sym_output_getter_s<T>;
+    using type = meta_data::sym_output_getter_s;
 };
 template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
-    template <class T> using type = meta_data::asym_output_getter_s<T>;
+    using type = meta_data::asym_output_getter_s;
 };
 
 struct power_flow_t {};
@@ -103,11 +103,11 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
     calculation_type_func_selector(
         calculation_type,
         []<calculation_type_tag calculation_type, typename Functor_, typename... Args_>(
-            CalculationSymmetry calculation_symmetry_, Functor_ && f_, Args_ && ... args_) {
+            CalculationSymmetry calculation_symmetry_, Functor_&& f_, Args_&&... args_) {
             calculation_symmetry_func_selector(
                 calculation_symmetry_,
-                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor && sub_f,
-                                                                               SubArgs && ... sub_args) {
+                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor&& sub_f,
+                                                                               SubArgs&&... sub_args) {
                     std::forward<SubFunctor>(sub_f).template operator()<calculation_type, sym>(
                         std::forward<SubArgs>(sub_args)...);
                 },
@@ -153,7 +153,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         (functor.template operator()<ComponentType>(), ...);
     }
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
-        return std::array{functor.template operator()<ComponentType>()...};
+        return std::array { functor.template operator()<ComponentType>()... };
     }
 
   public:
@@ -795,7 +795,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
             // output
-            auto const span = result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
+            auto const span = result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
             if (span.empty()) {
                 return;
             }
@@ -1096,8 +1096,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <calculation_input_type CalcInputType>
     static auto calculate_param(auto const& c, auto const&... extra_args)
         requires requires {
-                     { c.calc_param(extra_args...) };
-                 }
+            { c.calc_param(extra_args...) };
+        }
     {
         return c.calc_param(extra_args...);
     }
@@ -1105,8 +1105,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <calculation_input_type CalcInputType>
     static auto calculate_param(auto const& c, auto const&... extra_args)
         requires requires {
-                     { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
-                 }
+            { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
+        }
     {
         return c.template calc_param<typename CalcInputType::sym>(extra_args...);
     }
