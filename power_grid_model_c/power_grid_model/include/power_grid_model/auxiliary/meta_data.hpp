@@ -16,12 +16,6 @@
 
 namespace power_grid_model::meta_data {
 
-// pointer to member
-template <class T> struct trait_pointer_to_member;
-template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
-    using value_type = ValueType;
-};
-
 // primary template to get the attribute list of a component
 // the specializations will contain static constexpr "value" field
 //    which is a std::array
@@ -185,20 +179,25 @@ struct MetaData {
 constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
 // list of all dataset names
-template <class T> struct input_getter_s {
-    using type = typename T::InputType;
+struct input_getter_s {
+    static constexpr char const* name = "input";
+    template <class T> using type = typename T::InputType;
 };
-template <class T> struct update_getter_s {
-    using type = typename T::UpdateType;
+struct update_getter_s {
+    static constexpr char const* name = "update";
+    template <class T> using type = typename T::UpdateType;
 };
-template <class T> struct sym_output_getter_s {
-    using type = typename T::template OutputType<symmetric_t>;
+struct sym_output_getter_s {
+    static constexpr char const* name = "sym_output";
+    template <class T> using type = typename T::template OutputType<symmetric_t>;
 };
-template <class T> struct asym_output_getter_s {
-    using type = typename T::template OutputType<asymmetric_t>;
+struct asym_output_getter_s {
+    static constexpr char const* name = "asym_output";
+    template <class T> using type = typename T::template OutputType<asymmetric_t>;
 };
-template <class T> struct sc_output_getter_s {
-    using type = typename T::ShortCircuitOutputType;
+struct sc_output_getter_s {
+    static constexpr char const* name = "sc_output";
+    template <class T> using type = typename T::ShortCircuitOutputType;
 };
 
 } // namespace power_grid_model::meta_data
