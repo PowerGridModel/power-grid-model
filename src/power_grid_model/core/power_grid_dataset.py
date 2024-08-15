@@ -244,7 +244,8 @@ class CMutableDataset:
         return self._buffer_views
 
     def _add_data(
-        self, data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]
+        self,
+        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
     ):
         """
         Add Power Grid Model data to the mutable dataset view.

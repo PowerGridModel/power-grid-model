@@ -11,12 +11,10 @@ from typing import TypeVar, Union
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentType
-
-ComponentTypeVar = TypeVar("ComponentTypeVar", ComponentType, str)
+from power_grid_model.core.dataset_definitions import ComponentTypeLike  # pylint: disable=unused-import
+from power_grid_model.core.dataset_definitions import ComponentTypeVar
 
 SingleArray = Union[np.ndarray]
-
 """
 A single array is a one-dimensional structured containing a list of components of the same type.
 
@@ -27,7 +25,6 @@ A single array is a one-dimensional structured containing a list of components o
 """
 
 DenseBatchArray = Union[np.ndarray]
-
 """
 A dense batch array is a two-dimensional structured numpy array containing a list of components of 
 the same type for each scenario.
@@ -79,7 +76,8 @@ A batch dataset is a dictionary where the keys are the component types and the v
 - Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`}
 """
 
-Dataset = SingleDataset | BatchDataset
+_ComponentData = TypeVar("_ComponentData", SingleArray, BatchArray)  # deduction helper
+Dataset = dict[ComponentTypeVar, _ComponentData]
 """
 A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 

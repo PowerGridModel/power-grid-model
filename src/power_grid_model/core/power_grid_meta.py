@@ -13,8 +13,10 @@ from typing import Any
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import (
-    ComponentType,
+    ComponentTypeLike,
+    ComponentTypeVar,
     DatasetType,
+    DatasetTypeLike,
     _str_to_component_type,
     _str_to_datatype,
 )
@@ -66,7 +68,7 @@ class ComponentMetaData:
         return getattr(self, item)
 
 
-DatasetMetaData = dict[ComponentType, ComponentMetaData]
+DatasetMetaData = dict[ComponentTypeVar, ComponentMetaData]
 PowerGridMetaData = dict[DatasetType, DatasetMetaData]
 
 
@@ -165,8 +167,8 @@ power_grid_meta_data = _generate_meta_data()
 
 
 def initialize_array(
-    data_type: str | DatasetType,
-    component_type: str | ComponentType,
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
     shape: tuple | int,
     empty: bool = False,
 ) -> np.ndarray:
