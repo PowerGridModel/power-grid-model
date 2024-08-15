@@ -10,6 +10,13 @@
 
 namespace power_grid_model::meta_data::meta_data_gen {
 
+// pointer to member
+template <class T> struct trait_pointer_to_member;
+template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
+    using value_type = ValueType;
+    using struct_type = StructType;
+};
+
 // getter for meta attribute
 template <class StructType, auto member_ptr, size_t offset, auto attribute_name_getter> struct get_meta_attribute {
     using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;

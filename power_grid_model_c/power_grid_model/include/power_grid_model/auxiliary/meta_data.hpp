@@ -16,12 +16,6 @@
 
 namespace power_grid_model::meta_data {
 
-// pointer to member
-template <class T> struct trait_pointer_to_member;
-template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
-    using value_type = ValueType;
-};
-
 // primary template to get the attribute list of a component
 // the specializations will contain static constexpr "value" field
 //    which is a std::array
