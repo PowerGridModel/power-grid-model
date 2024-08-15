@@ -23,13 +23,10 @@
 namespace power_grid_model::meta_data::meta_data_gen {
 
 // generate meta data
-constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
-                                             dataset_mark<[] { return "input"; }, input_getter_s>,
-                                             dataset_mark<[] { return "update"; }, update_getter_s>,
-                                             dataset_mark<[] { return "sym_output"; }, sym_output_getter_s>,
-                                             dataset_mark<[] { return "asym_output"; }, asym_output_getter_s>,
-                                             dataset_mark<[] { return "sc_output"; }, sc_output_getter_s>
-                                             // end list of all marks
-                                             >::value;
+constexpr MetaData meta_data =
+    get_meta_data<AllComponents, // all components list
+                  input_getter_s, update_getter_s, sym_output_getter_s, asym_output_getter_s, sc_output_getter_s
+                  // end list of all marks
+                  >::value;
 
 } // namespace power_grid_model::meta_data::meta_data_gen

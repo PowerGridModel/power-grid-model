@@ -179,20 +179,25 @@ struct MetaData {
 constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
 
 // list of all dataset names
-template <class T> struct input_getter_s {
-    using type = typename T::InputType;
+struct input_getter_s {
+    static constexpr char const* value = "input";
+    template <class T> using type = typename T::InputType;
 };
-template <class T> struct update_getter_s {
-    using type = typename T::UpdateType;
+struct update_getter_s {
+    static constexpr char const* value = "update";
+    template <class T> using type = typename T::UpdateType;
 };
-template <class T> struct sym_output_getter_s {
-    using type = typename T::template OutputType<symmetric_t>;
+struct sym_output_getter_s {
+    static constexpr char const* value = "sym_output";
+    template <class T> using type = typename T::template OutputType<symmetric_t>;
 };
-template <class T> struct asym_output_getter_s {
-    using type = typename T::template OutputType<asymmetric_t>;
+struct asym_output_getter_s {
+    static constexpr char const* value = "asym_output";
+    template <class T> using type = typename T::template OutputType<asymmetric_t>;
 };
-template <class T> struct sc_output_getter_s {
-    using type = typename T::ShortCircuitOutputType;
+struct sc_output_getter_s {
+    static constexpr char const* value = "sc_output";
+    template <class T> using type = typename T::ShortCircuitOutputType;
 };
 
 } // namespace power_grid_model::meta_data
