@@ -58,50 +58,40 @@ struct BScOutput {};
 
 template <> struct get_attributes_list<AInput> {
     static constexpr std::array<MetaAttribute, 3> value{
-        meta_data_gen::get_meta_attribute<AInput, &AInput::id, offsetof(AInput, id),
-                                          [] { return AInput::id_name; }>::value,
-        meta_data_gen::get_meta_attribute<AInput, &AInput::a0, offsetof(AInput, a0),
-                                          [] { return AInput::a0_name; }>::value,
-        meta_data_gen::get_meta_attribute<AInput, &AInput::a1, offsetof(AInput, a1),
-                                          [] { return AInput::a1_name; }>::value,
+        meta_data_gen::get_meta_attribute<&AInput::id>(offsetof(AInput, id), AInput::id_name),
+        meta_data_gen::get_meta_attribute<&AInput::a0>(offsetof(AInput, a0), AInput::a0_name),
+        meta_data_gen::get_meta_attribute<&AInput::a1>(offsetof(AInput, a1), AInput::a1_name),
     };
 };
 template <> struct get_attributes_list<AUpdate> {
     static constexpr std::array<MetaAttribute, 2> value{
-        meta_data_gen::get_meta_attribute<AUpdate, &AUpdate::id, offsetof(AUpdate, id),
-                                          [] { return AUpdate::id_name; }>::value,
-        meta_data_gen::get_meta_attribute<AUpdate, &AUpdate::a0, offsetof(AUpdate, a0),
-                                          [] { return AUpdate::a0_name; }>::value,
+        meta_data_gen::get_meta_attribute<&AUpdate::id>(offsetof(AUpdate, id), AUpdate::id_name),
+        meta_data_gen::get_meta_attribute<&AUpdate::a0>(offsetof(AUpdate, a0), AUpdate::a0_name),
     };
 };
 template <> struct get_attributes_list<AOutput<symmetric_t>> {
     static constexpr std::array<MetaAttribute, 3> value{
-        meta_data_gen::get_meta_attribute<AOutput<symmetric_t>, &AOutput<symmetric_t>::id,
-                                          offsetof(AOutput<symmetric_t>, id), [] { return AInput::id_name; }>::value,
-        meta_data_gen::get_meta_attribute<AOutput<symmetric_t>, &AOutput<symmetric_t>::a2,
-                                          offsetof(AOutput<symmetric_t>, a2),
-                                          [] { return AOutput<symmetric_t>::a2_name; }>::value,
-        meta_data_gen::get_meta_attribute<AOutput<symmetric_t>, &AOutput<symmetric_t>::a3,
-                                          offsetof(AOutput<symmetric_t>, a3),
-                                          [] { return AOutput<symmetric_t>::a3_name; }>::value,
+        meta_data_gen::get_meta_attribute<&AOutput<symmetric_t>::id>(offsetof(AOutput<symmetric_t>, id),
+                                                                     AOutput<symmetric_t>::id_name),
+        meta_data_gen::get_meta_attribute<&AOutput<symmetric_t>::a2>(offsetof(AOutput<symmetric_t>, a2),
+                                                                     AOutput<symmetric_t>::a2_name),
+        meta_data_gen::get_meta_attribute<&AOutput<symmetric_t>::a3>(offsetof(AOutput<symmetric_t>, a3),
+                                                                     AOutput<symmetric_t>::a3_name),
     };
 };
 template <> struct get_attributes_list<AOutput<asymmetric_t>> {
     static constexpr std::array<MetaAttribute, 3> value{
-        meta_data_gen::get_meta_attribute<AOutput<asymmetric_t>, &AOutput<asymmetric_t>::id,
-                                          offsetof(AOutput<asymmetric_t>, id), [] { return AInput::id_name; }>::value,
-        meta_data_gen::get_meta_attribute<AOutput<asymmetric_t>, &AOutput<asymmetric_t>::a2,
-                                          offsetof(AOutput<asymmetric_t>, a2),
-                                          [] { return AOutput<asymmetric_t>::a2_name; }>::value,
-        meta_data_gen::get_meta_attribute<AOutput<asymmetric_t>, &AOutput<asymmetric_t>::a3,
-                                          offsetof(AOutput<asymmetric_t>, a3),
-                                          [] { return AOutput<asymmetric_t>::a3_name; }>::value,
+        meta_data_gen::get_meta_attribute<&AOutput<asymmetric_t>::id>(offsetof(AOutput<asymmetric_t>, id),
+                                                                      AOutput<asymmetric_t>::id_name),
+        meta_data_gen::get_meta_attribute<&AOutput<asymmetric_t>::a2>(offsetof(AOutput<asymmetric_t>, a2),
+                                                                      AOutput<asymmetric_t>::a2_name),
+        meta_data_gen::get_meta_attribute<&AOutput<asymmetric_t>::a3>(offsetof(AOutput<asymmetric_t>, a3),
+                                                                      AOutput<asymmetric_t>::a3_name),
     };
 };
 template <> struct get_attributes_list<AScOutput> {
     static constexpr std::array<MetaAttribute, 1> value{
-        meta_data_gen::get_meta_attribute<AScOutput, &AScOutput::id, offsetof(AScOutput, id),
-                                          [] { return AScOutput::id_name; }>::value,
+        meta_data_gen::get_meta_attribute<&AScOutput::id>(offsetof(AScOutput, id), AScOutput::id_name),
     };
 };
 template <> struct get_attributes_list<BInput> {

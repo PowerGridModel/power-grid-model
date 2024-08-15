@@ -18,11 +18,13 @@ template <class StructType, class ValueType> struct trait_pointer_to_member<Valu
 };
 
 // getter for meta attribute
-template <class StructType, auto member_ptr, size_t offset, auto attribute_name_getter> struct get_meta_attribute {
-    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+template <auto member_ptr, class MemberPtr = decltype(member_ptr)>
+constexpr MetaAttribute get_meta_attribute(size_t offset, char const* attribute_name) {
+    using ValueType = typename trait_pointer_to_member<MemberPtr>::value_type;
+    using StructType = typename trait_pointer_to_member<MemberPtr>::struct_type;
 
-    static constexpr MetaAttribute value{
-        .name = attribute_name_getter(),
+    return MetaAttribute{
+        .name = attribute_name,
         .ctype = ctype_v<ValueType>,
         .offset = offset,
         .size = sizeof(ValueType),
