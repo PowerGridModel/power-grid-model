@@ -128,19 +128,14 @@ struct B {
     static constexpr auto name = "B";
 };
 
-constexpr MetaData test_meta_data =
-    meta_data_gen::get_meta_data<ComponentList<A, B>, // all components list
-                                 input_getter_s,
-                                 update_getter_s
-                                 // end list of all marks
-                                 >::value;
+constexpr MetaData test_meta_data = meta_data_gen::get_meta_data<ComponentList<A, B>, // all components list
+                                                                 input_getter_s, update_getter_s
+                                                                 // end list of all marks
+                                                                 >::value;
 
 constexpr MetaData test_meta_data_all =
     meta_data_gen::get_meta_data<ComponentList<A, B>, // all components list
-                                 input_getter_s,
-                                 update_getter_s,
-                                 sym_output_getter_s,
-                                 asym_output_getter_s,
+                                 input_getter_s, update_getter_s, sym_output_getter_s, asym_output_getter_s,
                                  sc_output_getter_s
                                  // end list of all marks
                                  >::value;

@@ -643,9 +643,8 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
-    auto const& meta_data =
-        meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
-                                meta_data::update_getter_s>::value;
+    auto const& meta_data = meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
+                                                    meta_data::update_getter_s>::value;
 
     MockState state;
 
