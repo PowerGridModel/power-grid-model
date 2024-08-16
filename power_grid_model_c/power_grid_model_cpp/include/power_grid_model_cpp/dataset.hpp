@@ -93,6 +93,8 @@ class Dataset {
     Info info;
     ComponentInfo component_info;
 
+    Handle* get_handle() { return &handle_; }
+
   protected:
     Dataset() : info{*this}, component_info{*this} {}
     Handle handle_{};
@@ -107,7 +109,7 @@ class DatasetConst : public Dataset {
     DatasetConst(MutableDataset const* mutable_dataset)
         : Dataset(), dataset_{PGM_create_dataset_const_from_mutable(handle_.get(), mutable_dataset)} {}
 
-    ConstDataset* get() const { return dataset_.get(); }
+    
 
     static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
                            Idx total_elements, Idx const* indptr, RawDataConstPtr data) {
@@ -128,6 +130,8 @@ class DatasetConst : public Dataset {
 
   private:
     detail::UniquePtr<ConstDataset, PGM_destroy_dataset_const> dataset_;
+
+    ConstDataset* get() const { return dataset_.get(); }
 };
 
 class DatasetWritable : public Dataset {
