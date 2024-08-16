@@ -8,9 +8,6 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping
-
-import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
@@ -70,7 +67,7 @@ def prepare_input_view(input_data: SingleDataset) -> CConstDataset:
     return CConstDataset(input_data, dataset_type=DatasetType.input)
 
 
-def prepare_update_view(update_data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> CConstDataset:
+def prepare_update_view(update_data: Dataset) -> CConstDataset:
     """
     Create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary.
 
@@ -84,7 +81,7 @@ def prepare_update_view(update_data: Mapping[ComponentType, np.ndarray | Mapping
     return CConstDataset(update_data, dataset_type=DatasetType.update)
 
 
-def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_type: OutputType) -> CMutableDataset:
+def prepare_output_view(output_data: Dataset, output_type: OutputType) -> CMutableDataset:
     """
     create a view of the output data in a format compatible with the PGM core libary.
 

@@ -8,7 +8,7 @@ Power grid model buffer handler
 
 
 from dataclasses import dataclass
-from typing import Mapping, Optional
+from typing import Optional, cast
 
 import numpy as np
 
@@ -16,7 +16,14 @@ from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
-from power_grid_model.data_types import ComponentData, DenseBatchData, SparseBatchData
+from power_grid_model.data_types import (
+    ComponentData,
+    DenseBatchArray,
+    DenseBatchData,
+    SingleArray,
+    SparseBatchArray,
+    SparseBatchData,
+)
 
 
 @dataclass
@@ -73,12 +80,12 @@ def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
     return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
 
-def _get_uniform_buffer_properties(data: np.ndarray) -> BufferProperties:
+def _get_uniform_buffer_properties(data: SingleArray | DenseBatchArray) -> BufferProperties:
     """
     Extract the properties of the uniform batch dataset component.
 
     Args:
-        data (np.ndarray): the dataset component.
+        data (SingleArray | DenseBatchArray): the dataset component.
 
     Raises:
         KeyError: if the dataset component is not sparse.
@@ -106,12 +113,12 @@ def _get_uniform_buffer_properties(data: np.ndarray) -> BufferProperties:
     )
 
 
-def _get_sparse_buffer_properties(data: Mapping[str, np.ndarray]) -> BufferProperties:
+def _get_sparse_buffer_properties(data: SparseBatchArray) -> BufferProperties:
     """
     Extract the properties of the sparse batch dataset component.
 
     Args:
-        data (Mapping[str, np.ndarray]): the sparse dataset component.
+        data (SparseBatchArray): the sparse dataset component.
 
     Raises:
         KeyError: if the dataset component is not sparse.
@@ -148,12 +155,12 @@ def _get_sparse_buffer_properties(data: Mapping[str, np.ndarray]) -> BufferPrope
     )
 
 
-def get_buffer_properties(data: np.ndarray | Mapping[str, np.ndarray]) -> BufferProperties:
+def get_buffer_properties(data: ComponentData) -> BufferProperties:
     """
     Extract the properties of the dataset component
 
     Args:
-        data (np.ndarray | Mapping[str, np.ndarray]): the dataset component.
+        data (ComponentData): the dataset component.
 
     Raises:
         ValueError: if the dataset component contains conflicting or bad data.
@@ -164,7 +171,10 @@ def get_buffer_properties(data: np.ndarray | Mapping[str, np.ndarray]) -> Buffer
     if isinstance(data, np.ndarray):
         return _get_uniform_buffer_properties(data)
 
-    return _get_sparse_buffer_properties(data)
+    if isinstance(data.get("indptr"), np.ndarray) and isinstance(data.get("data"), np.ndarray):
+        return _get_sparse_buffer_properties(cast(SparseBatchArray, data))
+
+    raise NotImplementedError()  # TODO(mgovers): implement columnar data handling
 
 
 def _get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuffer:
@@ -189,7 +199,7 @@ def _get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBu
     )
 
 
-def _get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMetaData) -> CBuffer:
+def _get_sparse_buffer_view(data: SparseBatchArray, schema: ComponentMetaData) -> CBuffer:
     """
     Get a C API compatible view on a sparse buffer.
 
@@ -214,7 +224,7 @@ def _get_sparse_buffer_view(data: Mapping[str, np.ndarray], schema: ComponentMet
     )
 
 
-def get_buffer_view(data: np.ndarray | Mapping[str, np.ndarray], schema: ComponentMetaData) -> CBuffer:
+def get_buffer_view(data: ComponentData, schema: ComponentMetaData) -> CBuffer:
     """
     Get a C API compatible view on a buffer.
 
@@ -228,7 +238,10 @@ def get_buffer_view(data: np.ndarray | Mapping[str, np.ndarray], schema: Compone
     if isinstance(data, np.ndarray):
         return _get_uniform_buffer_view(data, schema)
 
-    return _get_sparse_buffer_view(data, schema)
+    if isinstance(data.get("indptr"), np.ndarray) and isinstance(data.get("data"), np.ndarray):
+        return _get_sparse_buffer_view(cast(SparseBatchArray, data), schema)
+
+    raise NotImplementedError()  # TODO(mgovers): implement columnar data handling
 
 
 def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> ComponentData:

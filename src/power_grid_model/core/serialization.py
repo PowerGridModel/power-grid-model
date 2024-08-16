@@ -90,16 +90,11 @@ class Serializer(ABC):
     Serializer for the Power grid model
     """
 
-    _data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]
+    _data: Dataset
     _dataset: CConstDataset
     _serializer: SerializerPtr
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        serialization_type: SerializationType,
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, serialization_type: SerializationType, dataset_type: Optional[DatasetType] = None):
         instance = super().__new__(cls)
 
         instance._data = data
@@ -202,11 +197,7 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
     JSON deserializer for the Power grid model
     """
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
 
@@ -215,11 +206,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
     msgpack deserializer for the Power grid model
     """
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
