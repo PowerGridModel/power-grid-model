@@ -30,15 +30,15 @@ using MetaComponent = PGM_MetaComponent;
 using MetaAttribute = PGM_MetaAttribute;
 using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr
-// using ConstDatasetRawPtr = PGM_ConstDataset;
-// using MutableDatasetRawPtr = PGM_MutableDataset; //
-// using WritableDatasetRawPtr = PGM_WritableDataset; //
-// using DatasetInfoRawPtr = PGM_DatasetInfo; //
+using RawConstDataset = PGM_ConstDataset;
+using RawMutableDataset = PGM_MutableDataset;
+using RawWritableDataset = PGM_WritableDataset;
+using RawDatasetInfo = PGM_DatasetInfo;
 using MetaDataset = PGM_MetaDataset;
 using PowerGridModel = PGM_PowerGridModel;
-using OptionsC = PGM_Options;           //
-using DeserializerC = PGM_Deserializer; //
-using SerializerC = PGM_Serializer;     //
+using OptionsC = PGM_Options;
+using RawDeserializer = PGM_Deserializer;
+using RawSerializer = PGM_Serializer;
 
 namespace detail {
 // custom deleter

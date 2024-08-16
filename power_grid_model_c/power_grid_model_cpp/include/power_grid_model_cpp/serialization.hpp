@@ -22,10 +22,10 @@ class Deserializer {
         : deserializer_{PGM_create_deserializer_from_null_terminated_string(handle_.get(), data_string.c_str(),
                                                                             serialization_format)} {}
 
-    DeserializerC* get() const { return deserializer_.get(); }
+    RawDeserializer* get() const { return deserializer_.get(); }
 
     static DatasetWritable get_dataset(Deserializer const& deserializer) {
-        PGM_WritableDataset* dataset = PGM_deserializer_get_dataset(deserializer.handle_.get(), deserializer.get());
+        RawWritableDataset* dataset = PGM_deserializer_get_dataset(deserializer.handle_.get(), deserializer.get());
         deserializer.handle_.check_error();
         return DatasetWritable(dataset);
     }
@@ -40,15 +40,15 @@ class Deserializer {
   private:
     friend class DatasetWritable;
     Handle handle_{};
-    detail::UniquePtr<PGM_Deserializer, PGM_destroy_deserializer> deserializer_;
+    detail::UniquePtr<RawDeserializer, PGM_destroy_deserializer> deserializer_;
 };
 
 class Serializer {
   public:
-    Serializer(PGM_ConstDataset const* dataset, Idx serialization_format)
-        : serializer_{PGM_create_serializer(handle_.get(), dataset, serialization_format)} {}
+    Serializer(DatasetConst const& dataset, Idx serialization_format)
+        : serializer_{PGM_create_serializer(handle_.get(), dataset.get(), serialization_format)} {}
 
-    SerializerC* get() const { return serializer_.get(); }
+    RawSerializer* get() const { return serializer_.get(); }
 
     static void get_to_binary_buffer(Serializer& serializer, Idx use_compact_list, std::vector<std::byte>& data,
                                      Idx* size) {
@@ -77,7 +77,7 @@ class Serializer {
 
   private:
     power_grid_model_cpp::Handle handle_{};
-    detail::UniquePtr<PGM_Serializer, PGM_destroy_serializer> serializer_;
+    detail::UniquePtr<RawSerializer, PGM_destroy_serializer> serializer_;
 };
 } // namespace power_grid_model_cpp
 
