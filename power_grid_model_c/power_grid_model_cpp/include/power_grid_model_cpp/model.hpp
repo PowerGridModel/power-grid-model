@@ -9,14 +9,16 @@
 #include "power_grid_model_c/model.h"
 
 #include "basics.hpp"
+#include "dataset.hpp"
 #include "handle.hpp"
+#include "options.hpp"
 
 namespace power_grid_model_cpp {
 class Model {
   public:
     // constructor
-    Model(double system_frequency, ConstDataset const* input_dataset)
-        : model_{PGM_create_model(handle_.get(), system_frequency, input_dataset)} {}
+    Model(double system_frequency, DatasetConst const& input_dataset)
+        : model_{PGM_create_model(handle_.get(), system_frequency, input_dataset.get())} {}
     // copy constructor
     Model(Model const& other) : model_{PGM_copy_model(handle_.get(), other.model_.get())} {
         other.handle_.check_error();
@@ -34,11 +36,11 @@ class Model {
 
     PowerGridModel* get() const { return model_.get(); }
 
-    static void update_model(Model& model, ConstDataset const* update_dataset) {
-        PGM_update_model(model.handle_.get(), model.get(), update_dataset);
+    static void update_model(Model& model, DatasetConst const& update_dataset) {
+        PGM_update_model(model.handle_.get(), model.get(), update_dataset.get());
         model.handle_.check_error();
     }
-    void update_model(ConstDataset const* update_dataset) { update_model(*this, update_dataset); }
+    void update_model(DatasetConst const& update_dataset) { update_model(*this, update_dataset); }
 
     static void get_indexer(Model const& model, std::string const& component, Idx size, ID const* ids, Idx* indexer) {
         PGM_get_indexer(model.handle_.get(), model.get(), component.c_str(), size, ids, indexer);
@@ -48,12 +50,12 @@ class Model {
         get_indexer(*this, component, size, ids, indexer);
     }
 
-    static void calculate(Model& model, OptionsC const* opt, MutableDataset const* output_dataset,
-                          ConstDataset const* batch_dataset) {
-        PGM_calculate(model.handle_.get(), model.get(), opt, output_dataset, batch_dataset);
+    static void calculate(Model& model, Options const& opt, DatasetMutable const& output_dataset,
+                          DatasetConst const& batch_dataset) {
+        PGM_calculate(model.handle_.get(), model.get(), opt.get(), output_dataset.get(), batch_dataset.get());
         model.handle_.check_error();
     }
-    void calculate(OptionsC const* opt, MutableDataset const* output_dataset, ConstDataset const* batch_dataset) {
+    void calculate(Options const& opt, DatasetMutable const& output_dataset, DatasetConst const& batch_dataset) {
         calculate(*this, opt, output_dataset, batch_dataset);
     }
 
