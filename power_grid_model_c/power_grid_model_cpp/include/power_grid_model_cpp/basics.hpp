@@ -26,6 +26,7 @@ namespace power_grid_model_cpp {
 using Idx = PGM_Idx;
 using ID = PGM_ID;
 
+using RawHandle = PGM_Handle;
 using MetaComponent = PGM_MetaComponent;
 using MetaAttribute = PGM_MetaAttribute;
 using RawDataPtr = void*;            // raw mutable data ptr

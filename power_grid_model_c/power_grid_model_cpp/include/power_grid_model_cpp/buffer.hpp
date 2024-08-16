@@ -17,6 +17,8 @@ class Buffer {
     Buffer(MetaComponent const* component, Idx size)
         : component_{component}, size_{size}, buffer_{PGM_create_buffer(handle_.get(), component, size)} {};
 
+    RawDataPtr get() const { return buffer_.get(); }
+
     static void set_nan(Buffer& buffer, Idx buffer_offset, Idx size) {
         PGM_buffer_set_nan(buffer.handle_.get(), buffer.component_, buffer.buffer_.get(), buffer_offset, size);
         buffer.handle_.check_error();

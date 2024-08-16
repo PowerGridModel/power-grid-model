@@ -52,7 +52,7 @@ class Handle {
   public:
     Handle() : handle_{PGM_create_handle()} {}
 
-    PGM_Handle* get() const { return handle_.get(); }
+    RawHandle* get() const { return handle_.get(); }
 
     void check_error() const {
         Idx error_code = PGM_error_code(handle_.get());
@@ -79,7 +79,7 @@ class Handle {
     }
 
   private:
-    detail::UniquePtr<PGM_Handle, PGM_destroy_handle> handle_;
+    detail::UniquePtr<RawHandle, PGM_destroy_handle> handle_;
 };
 } // namespace power_grid_model_cpp
 
