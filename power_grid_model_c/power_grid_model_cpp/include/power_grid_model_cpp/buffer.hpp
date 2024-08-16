@@ -25,7 +25,8 @@ class Buffer {
 
     static void set_value(MetaAttribute const* attribute, Buffer& buffer, RawDataConstPtr src_ptr, Idx buffer_offset,
                           Idx size, Idx src_stride) {
-        PGM_buffer_set_value(buffer.handle_.get(), attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size, src_stride);
+        PGM_buffer_set_value(buffer.handle_.get(), attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size,
+                             src_stride);
         buffer.handle_.check_error();
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx src_stride) {
@@ -34,7 +35,8 @@ class Buffer {
 
     static void get_value(MetaAttribute const* attribute, Buffer const& buffer, RawDataPtr dest_ptr, Idx buffer_offset,
                           Idx size, Idx dest_stride) {
-        PGM_buffer_get_value(buffer.handle_.get(), attribute, buffer.buffer_.get(), dest_ptr, buffer_offset, size, dest_stride);
+        PGM_buffer_get_value(buffer.handle_.get(), attribute, buffer.buffer_.get(), dest_ptr, buffer_offset, size,
+                             dest_stride);
         buffer.handle_.check_error();
     }
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx buffer_offset, Idx dest_stride) const {

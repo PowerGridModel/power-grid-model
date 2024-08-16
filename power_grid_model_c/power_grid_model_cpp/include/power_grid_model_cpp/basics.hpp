@@ -10,6 +10,10 @@
 #error "Cannot export dynamic targets from the PGM C API wrapper. Please disable PGM_DLL_EXPORT."
 #endif
 
+#ifndef PGM_EXPERIMENTAL_CPP_HEADER
+#error "This is an experimental feature. Please #define PGM_EXPERIMENTAL_CPP_HEADER to use this."
+#endif
+
 #include "power_grid_model_c/basics.h"
 
 #include <exception>
@@ -26,15 +30,15 @@ using MetaComponent = PGM_MetaComponent;
 using MetaAttribute = PGM_MetaAttribute;
 using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr
-//using ConstDataset = PGM_ConstDataset;
-//using MutableDataset = PGM_MutableDataset; //
-//using WritableDataset = PGM_WritableDataset; // 
-//using DatasetInfo = PGM_DatasetInfo; //
+// using ConstDatasetRawPtr = PGM_ConstDataset;
+// using MutableDatasetRawPtr = PGM_MutableDataset; //
+// using WritableDatasetRawPtr = PGM_WritableDataset; //
+// using DatasetInfoRawPtr = PGM_DatasetInfo; //
 using MetaDataset = PGM_MetaDataset;
 using PowerGridModel = PGM_PowerGridModel;
-using OptionsC = PGM_Options; // 
+using OptionsC = PGM_Options;           //
 using DeserializerC = PGM_Deserializer; //
-using SerializerC = PGM_Serializer; //
+using SerializerC = PGM_Serializer;     //
 
 namespace detail {
 // custom deleter
