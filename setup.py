@@ -99,25 +99,37 @@ class MyBuildExt(build_ext):
                 cxx = os.environ["CXX"]
             else:
                 cxx = self.compiler.compiler_cxx[0]
+            # check setuptools has an update change in the version 72.2 about cxx compiler options
+            # to be compatible with both version, we check if compiler_so_cxx exists
+            if not hasattr(self.compiler, "compiler_so_cxx"):
+                compiler_so_cxx = self.compiler.compiler_so
+                linker_so_cxx = self.compiler.linker_so
+            else:
+                compiler_so_cxx = self.compiler.compiler_so_cxx
+                linker_so_cxx = self.compiler.linker_so_cxx
             # customize compiler and linker options
-            self.compiler.compiler_so[0] = cxx
-            self.compiler.linker_so[0] = cxx
+            compiler_so_cxx[0] = cxx
+            linker_so_cxx[0] = cxx
             self.compiler.compiler_cxx = [cxx]
             # add link time optimization
             if "clang" in cxx:
                 lto_flag = "-flto=thin"
             else:
                 lto_flag = "-flto"
-            self.compiler.compiler_so += [lto_flag]
-            self.compiler.linker_so += [lto_flag]
-            # remove -g and -O2
-            self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
-            self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
+            compiler_so_cxx += [lto_flag]
+            linker_so_cxx += [lto_flag]
+            # remove debug and optimization flags
+            for x in compiler_so_cxx.copy():
+                if x in ["-g", "-O2"]:
+                    compiler_so_cxx.remove(x)
+            for x in linker_so_cxx.copy():
+                if x in ["-g", "-O2", "-Wl,-O1"]:
+                    linker_so_cxx.remove(x)
 
             print("-------compiler arguments----------")
-            print(self.compiler.compiler_so)
+            print(compiler_so_cxx)
             print("-------linker arguments----------")
-            print(self.compiler.linker_so)
+            print(linker_so_cxx)
         return super().build_extensions()
 
     def get_export_symbols(self, ext):
