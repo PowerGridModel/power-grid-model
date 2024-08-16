@@ -16,7 +16,7 @@ class Options {
   public:
     Options() : options_{PGM_create_options(handle_.get())} {}
 
-    OptionsC* get() const { return options_.get(); }
+    RawOptions* get() const { return options_.get(); }
 
     static void set_calculation_type(Options& options, Idx type) {
         PGM_set_calculation_type(options.handle_.get(), options.get(), type);
@@ -80,7 +80,7 @@ class Options {
 
   private:
     Handle handle_{};
-    detail::UniquePtr<OptionsC, PGM_destroy_options> options_;
+    detail::UniquePtr<RawOptions, PGM_destroy_options> options_;
 };
 } // namespace power_grid_model_cpp
 
