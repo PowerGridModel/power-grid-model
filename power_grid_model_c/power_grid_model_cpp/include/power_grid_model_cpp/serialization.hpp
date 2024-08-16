@@ -38,6 +38,7 @@ class Deserializer {
     void parse_to_buffer() { return parse_to_buffer(*this); }
 
   private:
+    friend class DatasetWritable;
     Handle handle_{};
     detail::UniquePtr<PGM_Deserializer, PGM_destroy_deserializer> deserializer_;
 };
