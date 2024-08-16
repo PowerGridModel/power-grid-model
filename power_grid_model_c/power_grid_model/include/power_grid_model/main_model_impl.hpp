@@ -48,13 +48,13 @@ namespace power_grid_model {
 
 template <solver_output_type SolverOutputType> struct output_type_getter;
 template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
-    template <class T> using type = meta_data::sc_output_getter_s<T>;
+    using type = meta_data::sc_output_getter_s;
 };
 template <> struct output_type_getter<SolverOutput<symmetric_t>> {
-    template <class T> using type = meta_data::sym_output_getter_s<T>;
+    using type = meta_data::sym_output_getter_s;
 };
 template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
-    template <class T> using type = meta_data::asym_output_getter_s<T>;
+    using type = meta_data::asym_output_getter_s;
 };
 
 struct power_flow_t {};
@@ -795,7 +795,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
             // output
-            auto const span = result_data.get_buffer_span<output_type_getter<SolverOutputType>::template type, CT>(pos);
+            auto const span = result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
             if (span.empty()) {
                 return;
             }

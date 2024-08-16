@@ -10,12 +10,21 @@
 
 namespace power_grid_model::meta_data::meta_data_gen {
 
-// getter for meta attribute
-template <class StructType, auto member_ptr, size_t offset, auto attribute_name_getter> struct get_meta_attribute {
-    using ValueType = typename trait_pointer_to_member<decltype(member_ptr)>::value_type;
+// pointer to member
+template <class T> struct trait_pointer_to_member;
+template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
+    using value_type = ValueType;
+    using struct_type = StructType;
+};
 
-    static constexpr MetaAttribute value{
-        .name = attribute_name_getter(),
+// getter for meta attribute
+template <auto member_ptr, class MemberPtr = decltype(member_ptr)>
+constexpr MetaAttribute get_meta_attribute(size_t offset, char const* attribute_name) {
+    using ValueType = typename trait_pointer_to_member<MemberPtr>::value_type;
+    using StructType = typename trait_pointer_to_member<MemberPtr>::struct_type;
+
+    return MetaAttribute{
+        .name = attribute_name,
         .ctype = ctype_v<ValueType>,
         .offset = offset,
         .size = sizeof(ValueType),
@@ -53,9 +62,9 @@ template <class StructType, auto member_ptr, size_t offset, auto attribute_name_
 };
 
 // getter for meta component
-template <class StructType, auto component_name_getter> struct get_meta_component {
-    static constexpr MetaComponent value{
-        .name = component_name_getter(),
+template <class StructType> constexpr MetaComponent get_meta_component(char const* component_name) {
+    return MetaComponent{
+        .name = component_name,
         .size = sizeof(StructType),
         .alignment = alignof(StructType),
         .attributes = get_attributes_list<StructType>::value,
@@ -70,25 +79,22 @@ template <class StructType, auto component_name_getter> struct get_meta_componen
 };
 
 // getter for meta dataset
-template <auto dataset_name_getter, template <class> class struct_getter, class comp_list> struct get_meta_dataset;
-template <auto dataset_name_getter, template <class> class struct_getter, class... ComponentType>
-struct get_meta_dataset<dataset_name_getter, struct_getter, ComponentList<ComponentType...>> {
+template <class struct_getter, class comp_list> struct get_meta_dataset;
+template <class struct_getter, class... ComponentType>
+struct get_meta_dataset<struct_getter, ComponentList<ComponentType...>> {
     static constexpr size_t n_components = sizeof...(ComponentType);
     static constexpr std::array<MetaComponent, n_components> components{
-        get_meta_component<typename struct_getter<ComponentType>::type, [] { return ComponentType::name; }>::value...};
+        get_meta_component<typename struct_getter::template type<ComponentType>>(ComponentType::name)...};
     static constexpr MetaDataset value{
-        .name = dataset_name_getter(),
+        .name = struct_getter::name,
         .components = components,
     };
 };
 
 // get meta data
-template <auto dataset_name_getter, template <class> class struct_getter> struct dataset_mark;
-template <class comp_list, class... T> struct get_meta_data;
-template <class comp_list, auto... dataset_name_getter, template <class> class... struct_getter>
-struct get_meta_data<comp_list, dataset_mark<dataset_name_getter, struct_getter>...> {
-    static constexpr std::array<MetaDataset, sizeof...(dataset_name_getter)> datasets{
-        get_meta_dataset<dataset_name_getter, struct_getter, comp_list>::value...};
+template <class comp_list, class... struct_getter> struct get_meta_data {
+    static constexpr std::array<MetaDataset, sizeof...(struct_getter)> datasets{
+        get_meta_dataset<struct_getter, comp_list>::value...};
     static constexpr MetaData value{
         .datasets = datasets,
     };
