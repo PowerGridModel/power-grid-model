@@ -109,8 +109,6 @@ class DatasetConst : public Dataset {
     DatasetConst(MutableDataset const* mutable_dataset)
         : Dataset(), dataset_{PGM_create_dataset_const_from_mutable(handle_.get(), mutable_dataset)} {}
 
-    
-
     static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
                            Idx total_elements, Idx const* indptr, RawDataConstPtr data) {
         PGM_dataset_const_add_buffer(dataset.handle_.get(), dataset.get(), component.c_str(), elements_per_scenario,
@@ -136,22 +134,24 @@ class DatasetConst : public Dataset {
 
 class DatasetWritable : public Dataset {
   public:
-    DatasetWritable() : Dataset() {}
+    DatasetWritable(WritableDataset* dataset) : Dataset(), dataset_{dataset} {}
 
-    static DatasetInfo const* get_info(Handle const& handle, WritableDataset const* dataset) {
-        return PGM_dataset_writable_get_info(handle.get(), dataset);
-        handle.check_error();
+    static DatasetInfo const* get_info(DatasetWritable const& dataset) {
+        return PGM_dataset_writable_get_info(dataset.handle_.get(), dataset.dataset_.get());
+        dataset.handle_.check_error();
     }
-    DatasetInfo const* get_info(WritableDataset const* dataset) const { return get_info(handle_, dataset); }
+    DatasetInfo const* get_info() const { return get_info(*this); }
 
-    static void set_buffer(Handle const& handle, WritableDataset* dataset, std::string const& component, Idx* indptr,
-                           RawDataPtr data) {
-        PGM_dataset_writable_set_buffer(handle.get(), dataset, component.c_str(), indptr, data);
-        handle.check_error();
+    static void set_buffer(DatasetWritable const& dataset, std::string const& component, Idx* indptr, RawDataPtr data) {
+        PGM_dataset_writable_set_buffer(dataset.handle_.get(), dataset.dataset_.get(), component.c_str(), indptr, data);
+        dataset.handle_.check_error();
     }
-    void set_buffer(WritableDataset* dataset, std::string const& component, Idx* indptr, RawDataPtr data) {
-        return set_buffer(handle_, dataset, component.c_str(), indptr, data);
+    void set_buffer(std::string const& component, Idx* indptr, RawDataPtr data) {
+        return set_buffer(*this, component.c_str(), indptr, data);
     }
+
+  private:
+    std::unique_ptr<WritableDataset> dataset_;
 };
 
 class DatasetMutable : public Dataset {

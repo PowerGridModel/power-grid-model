@@ -9,6 +9,7 @@
 #include "power_grid_model_c/serialization.h"
 
 #include "basics.hpp"
+#include "dataset.hpp"
 #include "handle.hpp"
 
 namespace power_grid_model_cpp {
@@ -23,12 +24,12 @@ class Deserializer {
 
     DeserializerC* get() const { return deserializer_.get(); }
 
-    static WritableDataset* get_dataset(Deserializer const& deserializer) {
-        auto dataset = PGM_deserializer_get_dataset(deserializer.handle_.get(), deserializer.get());
+    static DatasetWritable get_dataset(Deserializer const& deserializer) {
+        PGM_WritableDataset* dataset = PGM_deserializer_get_dataset(deserializer.handle_.get(), deserializer.get());
         deserializer.handle_.check_error();
-        return dataset;
+        return DatasetWritable(dataset);
     }
-    WritableDataset* get_dataset() const { return get_dataset(*this); }
+    DatasetWritable get_dataset() const { return get_dataset(*this); }
 
     static void parse_to_buffer(Deserializer& deserializer) {
         PGM_deserializer_parse_to_buffer(deserializer.handle_.get(), deserializer.get());
