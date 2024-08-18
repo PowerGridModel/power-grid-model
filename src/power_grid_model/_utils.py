@@ -288,8 +288,8 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     }
 
 
-def copy_to_columnar_dataset(
-    data: dict[ComponentType, np.ndarray],  # TODO handle for Dataset type
+def copy_to_row_or_columnar_dataset(
+    data: Dataset,
     data_filter: ComponentAttributeMapping,
     dataset_type: DatasetType,
     available_components: list[ComponentType] | None = None,
@@ -302,31 +302,41 @@ def copy_to_columnar_dataset(
         component_types (_ComponentAttributeMappingDict):
 
     Returns:
-        Dataset: converted to
+        Dataset: converted dataset
     Args:
-        output_data (Dataset): dataset to convert
+        data (Dataset): dataset to convert
         data_filter (ComponentAttributeMapping): desired component and attribute mapping
-        dataset_type (DatasetType): output type sym or asym
-        available_components (list[ComponentType]): available components in model
+        dataset_type (DatasetType): type of dataset
+        available_components (list[ComponentType] | None): available components in model
 
     Returns:
         Dataset: converted dataset
     """
     if available_components is None:
         available_components = list(data.keys())
+
     processed_data_filter = process_data_filter(dataset_type, data_filter, available_components)
 
     result_data = {}
     for comp_name, attrs in processed_data_filter.items():
-        if attrs is None:
-            result_data[comp_name] = data[comp_name]
-        elif isinstance(attrs, (list, set)) and len(attrs) == 0:
-            result_data[comp_name] = {}
-        elif isinstance(attrs, EllipsisType):
-            result_data[comp_name] = {attr: deepcopy(data[comp_name][attr]) for attr in data[comp_name].dtype.names}
+        if isinstance(data[comp_name], np.ndarray):
+            result_data[comp_name] = _convert_data_array_to_row_or_columnar(arr=data[comp_name], attrs=attrs)
         else:
-            result_data[comp_name] = {attr: deepcopy(data[comp_name][attr]) for attr in attrs}
+            result_data[comp_name]["data"] = _convert_data_array_to_row_or_columnar(
+                arr=data[comp_name]["data"], attrs=attrs
+            )
+            result_data[comp_name]["indptr"] = data[comp_name]["indptr"]
     return result_data
+
+
+def _convert_data_array_to_row_or_columnar(arr: SingleArray, attrs: set[str] | list[str] | None | EllipsisType):
+    if attrs is None:
+        return arr
+    if isinstance(attrs, (list, set)) and len(attrs) == 0:
+        return {}
+    if isinstance(attrs, EllipsisType):
+        return {attr: deepcopy(arr[attr]) for attr in arr.dtype.names}
+    return {attr: deepcopy(arr[attr]) for attr in attrs}
 
 
 def process_data_filter(
