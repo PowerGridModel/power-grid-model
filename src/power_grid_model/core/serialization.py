@@ -108,6 +108,7 @@ class Serializer(ABC):
     ):
         instance = super().__new__(cls)
 
+        # copy_to_row_or_columnar_dataset()
         instance._data = data
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()

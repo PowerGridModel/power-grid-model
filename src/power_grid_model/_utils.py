@@ -17,7 +17,7 @@ from typing import Optional, cast
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
     BatchArray,
     BatchDataset,
@@ -320,23 +320,37 @@ def copy_to_row_or_columnar_dataset(
     result_data = {}
     for comp_name, attrs in processed_data_filter.items():
         if isinstance(data[comp_name], np.ndarray):
-            result_data[comp_name] = _convert_data_array_to_row_or_columnar(arr=data[comp_name], attrs=attrs)
+            result_data[comp_name] = _convert_data_to_row_or_columnar(
+                data=data[comp_name], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
+            )
         else:
-            result_data[comp_name]["data"] = _convert_data_array_to_row_or_columnar(
-                arr=data[comp_name]["data"], attrs=attrs
+            result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
+                data=data[comp_name]["data"], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
             )
             result_data[comp_name]["indptr"] = data[comp_name]["indptr"]
     return result_data
 
 
-def _convert_data_array_to_row_or_columnar(arr: SingleArray, attrs: set[str] | list[str] | None | EllipsisType):
+def _convert_data_to_row_or_columnar(
+    data: SingleArray | dict[str, np.ndarray],
+    comp_name: ComponentType,
+    dataset_type: DatasetType,
+    attrs: set[str] | list[str] | None | EllipsisType,
+):
+    """converts row or columnar component data to row or columnar component data as requested in `attrs`"""
     if attrs is None:
-        return arr
+        if isinstance(data, np.ndarray):
+            return data
+        output_array = initialize_array(comp_name, dataset_type, next(iter(data.values())).shape)
+        for k in data:
+            output_array[k] = data[k]
+        return output_array
     if isinstance(attrs, (list, set)) and len(attrs) == 0:
         return {}
     if isinstance(attrs, EllipsisType):
-        return {attr: deepcopy(arr[attr]) for attr in arr.dtype.names}
-    return {attr: deepcopy(arr[attr]) for attr in attrs}
+        names = data.dtype.names if isinstance(data, np.ndarray) else data.keys()
+        return {attr: deepcopy(data[attr]) for attr in names}
+    return {attr: deepcopy(data[attr]) for attr in attrs}
 
 
 def process_data_filter(
