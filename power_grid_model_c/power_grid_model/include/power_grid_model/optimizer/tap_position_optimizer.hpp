@@ -113,11 +113,14 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
-            Idx2D const regulated_idx = from_node == tap_side_node ? unregulated_idx : trafo3w_idx;
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, {regulated_idx, 1});
+            if (from_node == tap_side_node) {
+                add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, {unregulated_idx, 0});
+            } else {
+                add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, {trafo3w_idx, 1});
+            }
         } else {
-            add_to_edge(state, edges, edge_props, from_node, to_node, {unregulated_idx, 1});
-            add_to_edge(state, edges, edge_props, to_node, from_node, {unregulated_idx, 1});
+            add_to_edge(state, edges, edge_props, from_node, to_node, {unregulated_idx, 0});
+            add_to_edge(state, edges, edge_props, to_node, from_node, {unregulated_idx, 0});
         }
     }
 }
@@ -154,8 +157,8 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
             add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
                         {main_core::get_component_idx_by_id(state, transformer.id()), 1});
         } else {
-            add_to_edge(state, edges, edge_props, from_node, to_node, {unregulated_idx, 1});
-            add_to_edge(state, edges, edge_props, to_node, from_node, {unregulated_idx, 1});
+            add_to_edge(state, edges, edge_props, from_node, to_node, {unregulated_idx, 0});
+            add_to_edge(state, edges, edge_props, to_node, from_node, {unregulated_idx, 0});
         }
     }
 }
