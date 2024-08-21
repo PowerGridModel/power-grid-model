@@ -7,7 +7,7 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file.
 """
 
-from typing import TypeAlias, TypeVar, Union
+from typing import TypeAlias, TypeVar
 
 import numpy as np
 
@@ -30,7 +30,7 @@ A string representing the component type of sparse data structures.
 Must be either "data" or "indptr".
 """
 
-SingleArray = Union[np.ndarray]
+SingleArray: TypeAlias = np.ndarray
 """
 A single array is a one-dimensional structured numpy array containing a list of components of the same type.
 
@@ -40,7 +40,7 @@ A single array is a one-dimensional structured numpy array containing a list of 
     - concrete: array([(0, 10500.0), (0, 10500.0)], dtype=power_grid_meta_data["input"]["node"].dtype)
 """
 
-SingleColumn = Union[np.ndarray]
+SingleColumn: TypeAlias = np.ndarray
 """
 A single column is a one-dimensional structured numpy array containing a list of the same attribute of
 multiple components of the same type.
@@ -59,16 +59,16 @@ SingleColumnarData = dict[AttributeType, SingleColumn]
 Single columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`SingleColumn`.
 
-- Example: {"id": :class:`SingleColumn`, "u_rated": :class:`SingleColumn`}
+- Example: {"id": :class:`AttributeType`, "u_rated": :class:`SingleColumn`}
 """
 
-DenseBatchArray = Union[np.ndarray]
+DenseBatchArray: TypeAlias = np.ndarray
 """
 A dense batch array is a two-dimensional structured numpy array containing a list of components of 
 the same type for each scenario. Otherwise similar to :class:`SingleArray`.
 """
 
-BatchColumn = Union[np.ndarray]
+BatchColumn: TypeAlias = np.ndarray
 """
 A batch column is a two-dimensional structured numpy array containing a list of the same attribute of
 multiple components of the same type. Otherwise, similar to :class:`SingleColumn`.
@@ -79,10 +79,10 @@ DenseBatchColumnarData = dict[AttributeType, BatchColumn]
 Batch columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`BatchColumn`.
 
-- Example: {"id": :class:`BatchColumn`, "from_status": :class:`BatchColumn`}
+- Example: {"id": :class:`AttributeType`, "from_status": :class:`BatchColumn`}
 """
 
-IndexPointer = Union[np.ndarray]
+IndexPointer: TypeAlias = np.ndarray
 """
 An index pointer is a one-dimensional numpy int64 array containing n+1 elements where n is the amount
 of scenarios, representing the start and end indices for each batch scenario as follows:
@@ -160,7 +160,7 @@ Columnar data can be :class:`SingleColumnarData` or :class:`BatchColumnarData`.
 # """
 # Single component data can be :class:`SingleArray` or :class:`SingleColumnarData`.
 # """
-SingleComponentData = Union[SingleArray]
+SingleComponentData: TypeAlias = SingleArray
 """
 Single component data is a :class:`SingleArray`.
 """

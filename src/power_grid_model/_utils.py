@@ -25,6 +25,7 @@ from power_grid_model.data_types import (
     DenseBatchArray,
     PythonDataset,
     SingleArray,
+    SingleComponentData,
     SingleDataset,
     SinglePythonDataset,
     SparseBatchData,
@@ -179,7 +180,7 @@ def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component:
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: ComponentType) -> list[SingleArray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: ComponentType) -> list[SingleComponentData]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
@@ -201,27 +202,36 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: Comp
     data = batch_data["data"]
     indptr = batch_data["indptr"]
 
-    if not isinstance(data, np.ndarray) or data.ndim != 1:
-        raise TypeError(
-            f"Invalid data type {type(data).__name__} in sparse batch data for '{component}' "
-            "(should be a 1D Numpy structured array (i.e. a single 'table'))."
-        )
+    def _split_buffer(buffer: np.ndarray, scenario: int) -> SingleArray:
+        if not isinstance(buffer, np.ndarray) or buffer.ndim != 1:
+            raise TypeError(
+                f"Invalid data type {type(buffer).__name__} in sparse batch data for '{component}' "
+                "(should be a 1D Numpy structured array (i.e. a single 'table'))."
+            )
 
-    if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
-        raise TypeError(
-            f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
-            "(should be a 1D Numpy array (i.e. a single 'list'), "
-            "containing indices (i.e. integers))."
-        )
+        if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
+            raise TypeError(
+                f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
+                "(should be a 1D Numpy array (i.e. a single 'list'), "
+                "containing indices (i.e. integers))."
+            )
 
-    if indptr[0] != 0 or indptr[-1] != len(data) or any(indptr[i] > indptr[i + 1] for i in range(len(indptr) - 1)):
-        raise TypeError(
-            f"Invalid indptr in batch data for '{component}' "
-            f"(should start with 0, end with the number of objects ({len(data)}) "
-            "and be monotonic increasing)."
-        )
+        if indptr[0] != 0 or indptr[-1] != len(buffer) or indptr[scenario] > indptr[scenario + 1]:
+            raise TypeError(
+                f"Invalid indptr in batch data for '{component}' "
+                f"(should start with 0, end with the number of objects ({len(buffer)}) "
+                "and be monotonic increasing)."
+            )
 
-    return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
+        return buffer[indptr[scenario] : indptr[scenario + 1]]
+
+    def _get_scenario(scenario: int) -> SingleComponentData:
+        if isinstance(data, dict):
+            # return {attribute: _split_buffer(attribute_data, scenario) for attribute, attribute_data in data.items()}
+            raise NotImplementedError()  # TODO(mgovers): uncomment when columnar data support is added
+        return _split_buffer(data, scenario)
+
+    return [_get_scenario(i) for i in range(len(indptr) - 1)]
 
 
 def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
