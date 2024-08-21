@@ -6,9 +6,9 @@
 #ifndef POWER_GRID_MODEL_CPP_HANDLE_HPP
 #define POWER_GRID_MODEL_CPP_HANDLE_HPP
 
-#include "power_grid_model_c/handle.h"
-
 #include "basics.hpp"
+
+#include "power_grid_model_c/handle.h"
 
 namespace power_grid_model_cpp {
 class PowerGridError : public std::exception {
@@ -54,19 +54,20 @@ class Handle {
 
     RawHandle* get() const { return handle_.get(); }
 
-    void check_error() const {
-        Idx error_code = PGM_error_code(handle_.get());
-        std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_.get());
+    static void check_error(Handle const& handle) {
+        RawHandle* handle_ptr = handle.get();
+        Idx error_code = PGM_error_code(handle_ptr);
+        std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_ptr);
         switch (error_code) {
-        case 0:
+        case PGM_no_error:
             return;
         case PGM_regular_error:
             throw PowerGridRegularError{error_message};
         case PGM_batch_error: {
-            Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_.get());
+            Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
             std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
-            auto const failed_scenario_seqs = PGM_failed_scenarios(handle_.get());
-            auto const failed_scenario_messages = PGM_batch_errors(handle_.get());
+            auto const failed_scenario_seqs = PGM_failed_scenarios(handle_ptr);
+            auto const failed_scenario_messages = PGM_batch_errors(handle_ptr);
             for (Idx i = 0; i < n_failed_scenarios; ++i) {
                 failed_scenarios[i] =
                     PowerGridBatchError::FailedScenario{failed_scenario_seqs[i], failed_scenario_messages[i]};
@@ -75,7 +76,20 @@ class Handle {
         }
         case PGM_serialization_error:
             throw PowerGridSerializationError{error_message};
+        default:
+            throw PowerGridError{error_message};
         }
+    }
+    void check_error() const { check_error(*this); }
+
+    static void clear_error(Handle& handle) { PGM_clear_error(handle.get()); }
+    void clear_error() { clear_error(*this); }
+
+    template <typename Func, typename... Args> auto call_with(Func&& func, Args&&... args) const {
+        auto result = std::forward<Func>(func)(get(), std::forward<Args>(args)...);
+        check_error();
+        clear_error();
+        return result;
     }
 
   private:

@@ -6,30 +6,28 @@
 #ifndef POWER_GRID_MODEL_CPP_BUFFER_HPP
 #define POWER_GRID_MODEL_CPP_BUFFER_HPP
 
-#include "power_grid_model_c/buffer.h"
-
 #include "basics.hpp"
 #include "handle.hpp"
+
+#include "power_grid_model_c/buffer.h"
 
 namespace power_grid_model_cpp {
 class Buffer {
   public:
     Buffer(MetaComponent const* component, Idx size)
-        : component_{component}, size_{size}, buffer_{PGM_create_buffer(handle_.get(), component, size)} {};
+        : component_{component}, size_{size}, buffer_{handle_.call_with(PGM_create_buffer, component, size)} {};
 
     RawDataPtr get() const { return buffer_.get(); }
 
     static void set_nan(Buffer& buffer, Idx buffer_offset, Idx size) {
-        PGM_buffer_set_nan(buffer.handle_.get(), buffer.component_, buffer.buffer_.get(), buffer_offset, size);
-        buffer.handle_.check_error();
+        buffer.handle_.call_with(PGM_buffer_set_nan, buffer.component_, buffer.buffer_.get(), buffer_offset, size);
     }
     void set_nan(Idx buffer_offset) { set_nan(*this, buffer_offset, size_); }
 
     static void set_value(MetaAttribute const* attribute, Buffer& buffer, RawDataConstPtr src_ptr, Idx buffer_offset,
                           Idx size, Idx src_stride) {
-        PGM_buffer_set_value(buffer.handle_.get(), attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size,
-                             src_stride);
-        buffer.handle_.check_error();
+        buffer.handle_.call_with(PGM_buffer_set_value, attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size,
+                                 src_stride);
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx src_stride) {
         set_value(attribute, *this, src_ptr, buffer_offset, size_, src_stride);
@@ -37,18 +35,17 @@ class Buffer {
 
     static void get_value(MetaAttribute const* attribute, Buffer const& buffer, RawDataPtr dest_ptr, Idx buffer_offset,
                           Idx size, Idx dest_stride) {
-        PGM_buffer_get_value(buffer.handle_.get(), attribute, buffer.buffer_.get(), dest_ptr, buffer_offset, size,
-                             dest_stride);
-        buffer.handle_.check_error();
+        buffer.handle_.call_with(PGM_buffer_get_value, attribute, buffer.buffer_.get(), dest_ptr, buffer_offset, size,
+                                 dest_stride);
     }
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx buffer_offset, Idx dest_stride) const {
         get_value(attribute, *this, dest_ptr, buffer_offset, size_, dest_stride);
     }
 
   private:
+    Handle handle_{};
     MetaComponent const* component_;
     Idx size_;
-    Handle handle_{};
     detail::UniquePtr<void, PGM_destroy_buffer> buffer_;
 };
 } // namespace power_grid_model_cpp

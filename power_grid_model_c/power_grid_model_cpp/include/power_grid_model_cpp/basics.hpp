@@ -10,12 +10,13 @@
 #error "Cannot export dynamic targets from the PGM C API wrapper. Please disable PGM_DLL_EXPORT."
 #endif
 
-#ifndef PGM_EXPERIMENTAL_CPP_HEADER
-#error "This is an experimental feature. Please #define PGM_EXPERIMENTAL_CPP_HEADER to use this."
+#ifndef PGM_ENABLE_EXPERIMENTAL
+#error "This is an experimental feature. Please #define PGM_ENABLE_EXPERIMENTAL to use this."
 #endif
 
 #include "power_grid_model_c/basics.h"
 
+#include <cassert>
 #include <exception>
 #include <memory>
 #include <string>
