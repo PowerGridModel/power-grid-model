@@ -226,6 +226,9 @@ def save_json_data(json_file: str, data: Dataset):
 
 def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: float | dict[str, float]):
     for key, expected_data in expected.items():
+        if not isinstance(expected_data, np.ndarray):
+            raise NotImplementedError()  # TODO(mgovers): Add support for columnar data
+
         for col_name in expected_data.dtype.names:
             actual_col = actual[key][col_name]
             expected_col = expected_data[col_name]
