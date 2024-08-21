@@ -14,88 +14,88 @@
 namespace power_grid_model_cpp {
 class MetaData {
   public:
-    static Idx _n_datasets() {
+    static Idx n_datasets() {
         Handle handle{};
         return handle.call_with(PGM_meta_n_datasets);
     }
 
-    static MetaDataset const* _get_dataset_by_idx(Idx idx) {
+    static MetaDataset const* get_dataset_by_idx(Idx idx) {
         Handle handle{};
         return handle.call_with(PGM_meta_get_dataset_by_idx, idx);
     }
 
-    static MetaDataset const* _get_dataset_by_name(std::string const& dataset) {
+    static MetaDataset const* get_dataset_by_name(std::string const& dataset) {
         Handle handle{};
         return handle.call_with(PGM_meta_get_dataset_by_name, dataset.c_str());
     }
 
-    static std::string _dataset_name(MetaDataset const* dataset) {
+    static std::string dataset_name(MetaDataset const* dataset) {
         Handle handle{};
         return std::string{handle.call_with(PGM_meta_dataset_name, dataset)};
     }
 
-    static Idx _n_components(MetaDataset const* dataset) {
+    static Idx n_components(MetaDataset const* dataset) {
         Handle handle{};
         return handle.call_with(PGM_meta_n_components, dataset);
     }
 
-    static MetaComponent const* _get_component_by_idx(MetaDataset const* dataset, Idx idx) {
+    static MetaComponent const* get_component_by_idx(MetaDataset const* dataset, Idx idx) {
         Handle handle{};
         return handle.call_with(PGM_meta_get_component_by_idx, dataset, idx);
     }
 
-    static MetaComponent const* _get_component_by_name(std::string const& dataset, std::string const& component) {
+    static MetaComponent const* get_component_by_name(std::string const& dataset, std::string const& component) {
         Handle handle{};
         return handle.call_with(PGM_meta_get_component_by_name, dataset.c_str(), component.c_str());
     }
 
-    static std::string _component_name(MetaComponent const* component) {
+    static std::string component_name(MetaComponent const* component) {
         Handle handle{};
         return std::string{handle.call_with(PGM_meta_component_name, component)};
     }
 
-    static size_t _component_size(MetaComponent const* component) {
+    static size_t component_size(MetaComponent const* component) {
         Handle handle{};
         return handle.call_with(PGM_meta_component_size, component);
     }
 
-    static size_t _component_alignment(MetaComponent const* component) {
+    static size_t component_alignment(MetaComponent const* component) {
         Handle handle{};
         return handle.call_with(PGM_meta_component_alignment(handle.get(), component));
     }
 
-    static Idx _n_attributes(MetaComponent const* component) {
+    static Idx n_attributes(MetaComponent const* component) {
         Handle handle{};
         return handle.call_with(PGM_meta_n_attributes, component);
     }
 
-    static MetaAttribute const* _get_attribute_by_idx(MetaComponent const* component, Idx idx) {
+    static MetaAttribute const* get_attribute_by_idx(MetaComponent const* component, Idx idx) {
         Handle handle{};
         return handle.call_with(PGM_meta_get_attribute_by_idx, component, idx);
     }
 
-    static MetaAttribute const* _get_attribute_by_name(std::string const& dataset, std::string const& component,
-                                                       std::string const& attribute) {
+    static MetaAttribute const* get_attribute_by_name(std::string const& dataset, std::string const& component,
+                                                      std::string const& attribute) {
         Handle handle{};
         return handle.call_with(PGM_meta_get_attribute_by_name, dataset.c_str(), component.c_str(), attribute.c_str());
     }
 
-    static std::string _attribute_name(MetaAttribute const* attribute) {
+    static std::string attribute_name(MetaAttribute const* attribute) {
         Handle handle{};
         return std::string{handle.call_with(PGM_meta_attribute_name, attribute)};
     }
 
-    static Idx _attribute_ctype(MetaAttribute const* attribute) {
+    static Idx attribute_ctype(MetaAttribute const* attribute) {
         Handle handle{};
         return handle.call_with(PGM_meta_attribute_ctype, attribute);
     }
 
-    static size_t _attribute_offset(MetaAttribute const* attribute) {
+    static size_t attribute_offset(MetaAttribute const* attribute) {
         Handle handle{};
         return handle.call_with(PGM_meta_attribute_offset, attribute);
     }
 
-    static int _is_little_endian() {
+    static int is_little_endian() {
         Handle handle{};
         return handle.call_with(PGM_is_little_endian);
     }

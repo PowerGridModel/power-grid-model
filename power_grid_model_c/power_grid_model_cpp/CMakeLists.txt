@@ -11,16 +11,11 @@ target_include_directories(power_grid_model_cpp INTERFACE
 )
 
 install(TARGETS power_grid_model_cpp
-  EXPORT power_grid_modelCppTargets
+  EXPORT power_grid_modelTargets
   COMPONENT power_grid_model
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
   DESTINATION include
   FILES_MATCHING PATTERN "*.hpp"
-)
-
-install(EXPORT power_grid_modelCppTargets
-  FILE power_grid_modelCppTargets.cmake
-  DESTINATION lib/cmake/power_grid_modelCpp
 )
