@@ -96,16 +96,11 @@ class Serializer(ABC):
     Serializer for the Power grid model
     """
 
-    _data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]
+    _data: Dataset
     _dataset: CConstDataset
     _serializer: SerializerPtr
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        serialization_type: SerializationType,
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, serialization_type: SerializationType, dataset_type: Optional[DatasetType] = None):
         instance = super().__new__(cls)
 
         # copy_to_row_or_columnar_dataset()
@@ -209,11 +204,7 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
     JSON deserializer for the Power grid model
     """
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
 
@@ -222,11 +213,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
     msgpack deserializer for the Power grid model
     """
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
@@ -279,7 +266,8 @@ def json_serialize(
         A serialized string containing the dataset.
     """
     data = _map_to_component_types(data)
-    dataset_type = _str_to_datatype(dataset_type)
+    if dataset_type is not None:
+        dataset_type = _str_to_datatype(dataset_type)
     result = JsonSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list, indent=indent)
     assert_no_error()
     return result
@@ -328,7 +316,8 @@ def msgpack_serialize(
         A serialized string containing the dataset.
     """
     data = _map_to_component_types(data)
-    dataset_type = _str_to_datatype(dataset_type)
+    if dataset_type is not None:
+        dataset_type = _str_to_datatype(dataset_type)
     result = MsgpackSerializer(data=data, dataset_type=dataset_type).dump(use_compact_list=use_compact_list)
     assert_no_error()
     return result

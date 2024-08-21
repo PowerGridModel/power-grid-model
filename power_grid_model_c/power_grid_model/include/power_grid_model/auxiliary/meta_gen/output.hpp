@@ -26,8 +26,8 @@ struct get_attributes_list<BaseOutput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<BaseOutput, &BaseOutput::id, offsetof(BaseOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<BaseOutput, &BaseOutput::energized, offsetof(BaseOutput, energized), []{ return "energized"; }>::value,
+            meta_data_gen::get_meta_attribute<&BaseOutput::id>(offsetof(BaseOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&BaseOutput::energized>(offsetof(BaseOutput, energized), "energized"),
     };
 };
 
@@ -38,13 +38,13 @@ struct get_attributes_list<NodeOutput<sym_type>> {
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::id, offsetof(NodeOutput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::energized, offsetof(NodeOutput<sym>, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::u_pu, offsetof(NodeOutput<sym>, u_pu), []{ return "u_pu"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::u, offsetof(NodeOutput<sym>, u), []{ return "u"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::u_angle, offsetof(NodeOutput<sym>, u_angle), []{ return "u_angle"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::p, offsetof(NodeOutput<sym>, p), []{ return "p"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeOutput<sym>, &NodeOutput<sym>::q, offsetof(NodeOutput<sym>, q), []{ return "q"; }>::value,
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::id>(offsetof(NodeOutput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::energized>(offsetof(NodeOutput<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::u_pu>(offsetof(NodeOutput<sym>, u_pu), "u_pu"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::u>(offsetof(NodeOutput<sym>, u), "u"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::u_angle>(offsetof(NodeOutput<sym>, u_angle), "u_angle"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::p>(offsetof(NodeOutput<sym>, p), "p"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::q>(offsetof(NodeOutput<sym>, q), "q"),
     };
 };
 
@@ -55,17 +55,17 @@ struct get_attributes_list<BranchOutput<sym_type>> {
     static constexpr std::array<MetaAttribute, 11> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::id, offsetof(BranchOutput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::energized, offsetof(BranchOutput<sym>, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::loading, offsetof(BranchOutput<sym>, loading), []{ return "loading"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::p_from, offsetof(BranchOutput<sym>, p_from), []{ return "p_from"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::q_from, offsetof(BranchOutput<sym>, q_from), []{ return "q_from"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::i_from, offsetof(BranchOutput<sym>, i_from), []{ return "i_from"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::s_from, offsetof(BranchOutput<sym>, s_from), []{ return "s_from"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::p_to, offsetof(BranchOutput<sym>, p_to), []{ return "p_to"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::q_to, offsetof(BranchOutput<sym>, q_to), []{ return "q_to"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::i_to, offsetof(BranchOutput<sym>, i_to), []{ return "i_to"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchOutput<sym>, &BranchOutput<sym>::s_to, offsetof(BranchOutput<sym>, s_to), []{ return "s_to"; }>::value,
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::id>(offsetof(BranchOutput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::energized>(offsetof(BranchOutput<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::loading>(offsetof(BranchOutput<sym>, loading), "loading"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::p_from>(offsetof(BranchOutput<sym>, p_from), "p_from"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::q_from>(offsetof(BranchOutput<sym>, q_from), "q_from"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::i_from>(offsetof(BranchOutput<sym>, i_from), "i_from"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::s_from>(offsetof(BranchOutput<sym>, s_from), "s_from"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::p_to>(offsetof(BranchOutput<sym>, p_to), "p_to"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::q_to>(offsetof(BranchOutput<sym>, q_to), "q_to"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::i_to>(offsetof(BranchOutput<sym>, i_to), "i_to"),
+            meta_data_gen::get_meta_attribute<&BranchOutput<sym>::s_to>(offsetof(BranchOutput<sym>, s_to), "s_to"),
     };
 };
 
@@ -76,21 +76,21 @@ struct get_attributes_list<Branch3Output<sym_type>> {
     static constexpr std::array<MetaAttribute, 15> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::id, offsetof(Branch3Output<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::energized, offsetof(Branch3Output<sym>, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::loading, offsetof(Branch3Output<sym>, loading), []{ return "loading"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::p_1, offsetof(Branch3Output<sym>, p_1), []{ return "p_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::q_1, offsetof(Branch3Output<sym>, q_1), []{ return "q_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::i_1, offsetof(Branch3Output<sym>, i_1), []{ return "i_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::s_1, offsetof(Branch3Output<sym>, s_1), []{ return "s_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::p_2, offsetof(Branch3Output<sym>, p_2), []{ return "p_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::q_2, offsetof(Branch3Output<sym>, q_2), []{ return "q_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::i_2, offsetof(Branch3Output<sym>, i_2), []{ return "i_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::s_2, offsetof(Branch3Output<sym>, s_2), []{ return "s_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::p_3, offsetof(Branch3Output<sym>, p_3), []{ return "p_3"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::q_3, offsetof(Branch3Output<sym>, q_3), []{ return "q_3"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::i_3, offsetof(Branch3Output<sym>, i_3), []{ return "i_3"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Output<sym>, &Branch3Output<sym>::s_3, offsetof(Branch3Output<sym>, s_3), []{ return "s_3"; }>::value,
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::id>(offsetof(Branch3Output<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::energized>(offsetof(Branch3Output<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::loading>(offsetof(Branch3Output<sym>, loading), "loading"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::p_1>(offsetof(Branch3Output<sym>, p_1), "p_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::q_1>(offsetof(Branch3Output<sym>, q_1), "q_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::i_1>(offsetof(Branch3Output<sym>, i_1), "i_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::s_1>(offsetof(Branch3Output<sym>, s_1), "s_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::p_2>(offsetof(Branch3Output<sym>, p_2), "p_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::q_2>(offsetof(Branch3Output<sym>, q_2), "q_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::i_2>(offsetof(Branch3Output<sym>, i_2), "i_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::s_2>(offsetof(Branch3Output<sym>, s_2), "s_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::p_3>(offsetof(Branch3Output<sym>, p_3), "p_3"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::q_3>(offsetof(Branch3Output<sym>, q_3), "q_3"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::i_3>(offsetof(Branch3Output<sym>, i_3), "i_3"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::s_3>(offsetof(Branch3Output<sym>, s_3), "s_3"),
     };
 };
 
@@ -101,13 +101,13 @@ struct get_attributes_list<ApplianceOutput<sym_type>> {
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::id, offsetof(ApplianceOutput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::energized, offsetof(ApplianceOutput<sym>, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::p, offsetof(ApplianceOutput<sym>, p), []{ return "p"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::q, offsetof(ApplianceOutput<sym>, q), []{ return "q"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::i, offsetof(ApplianceOutput<sym>, i), []{ return "i"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::s, offsetof(ApplianceOutput<sym>, s), []{ return "s"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceOutput<sym>, &ApplianceOutput<sym>::pf, offsetof(ApplianceOutput<sym>, pf), []{ return "pf"; }>::value,
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::id>(offsetof(ApplianceOutput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::energized>(offsetof(ApplianceOutput<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::p>(offsetof(ApplianceOutput<sym>, p), "p"),
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::q>(offsetof(ApplianceOutput<sym>, q), "q"),
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::i>(offsetof(ApplianceOutput<sym>, i), "i"),
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::s>(offsetof(ApplianceOutput<sym>, s), "s"),
+            meta_data_gen::get_meta_attribute<&ApplianceOutput<sym>::pf>(offsetof(ApplianceOutput<sym>, pf), "pf"),
     };
 };
 
@@ -118,10 +118,10 @@ struct get_attributes_list<VoltageSensorOutput<sym_type>> {
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::id, offsetof(VoltageSensorOutput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::energized, offsetof(VoltageSensorOutput<sym>, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_residual, offsetof(VoltageSensorOutput<sym>, u_residual), []{ return "u_residual"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorOutput<sym>, &VoltageSensorOutput<sym>::u_angle_residual, offsetof(VoltageSensorOutput<sym>, u_angle_residual), []{ return "u_angle_residual"; }>::value,
+            meta_data_gen::get_meta_attribute<&VoltageSensorOutput<sym>::id>(offsetof(VoltageSensorOutput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorOutput<sym>::energized>(offsetof(VoltageSensorOutput<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorOutput<sym>::u_residual>(offsetof(VoltageSensorOutput<sym>, u_residual), "u_residual"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorOutput<sym>::u_angle_residual>(offsetof(VoltageSensorOutput<sym>, u_angle_residual), "u_angle_residual"),
     };
 };
 
@@ -132,10 +132,10 @@ struct get_attributes_list<PowerSensorOutput<sym_type>> {
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::id, offsetof(PowerSensorOutput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::energized, offsetof(PowerSensorOutput<sym>, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::p_residual, offsetof(PowerSensorOutput<sym>, p_residual), []{ return "p_residual"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorOutput<sym>, &PowerSensorOutput<sym>::q_residual, offsetof(PowerSensorOutput<sym>, q_residual), []{ return "q_residual"; }>::value,
+            meta_data_gen::get_meta_attribute<&PowerSensorOutput<sym>::id>(offsetof(PowerSensorOutput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&PowerSensorOutput<sym>::energized>(offsetof(PowerSensorOutput<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&PowerSensorOutput<sym>::p_residual>(offsetof(PowerSensorOutput<sym>, p_residual), "p_residual"),
+            meta_data_gen::get_meta_attribute<&PowerSensorOutput<sym>::q_residual>(offsetof(PowerSensorOutput<sym>, q_residual), "q_residual"),
     };
 };
 
@@ -144,8 +144,8 @@ struct get_attributes_list<FaultOutput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<FaultOutput, &FaultOutput::id, offsetof(FaultOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultOutput, &FaultOutput::energized, offsetof(FaultOutput, energized), []{ return "energized"; }>::value,
+            meta_data_gen::get_meta_attribute<&FaultOutput::id>(offsetof(FaultOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&FaultOutput::energized>(offsetof(FaultOutput, energized), "energized"),
     };
 };
 
@@ -154,10 +154,10 @@ struct get_attributes_list<FaultShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::id, offsetof(FaultShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::energized, offsetof(FaultShortCircuitOutput, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f, offsetof(FaultShortCircuitOutput, i_f), []{ return "i_f"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultShortCircuitOutput, &FaultShortCircuitOutput::i_f_angle, offsetof(FaultShortCircuitOutput, i_f_angle), []{ return "i_f_angle"; }>::value,
+            meta_data_gen::get_meta_attribute<&FaultShortCircuitOutput::id>(offsetof(FaultShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&FaultShortCircuitOutput::energized>(offsetof(FaultShortCircuitOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&FaultShortCircuitOutput::i_f>(offsetof(FaultShortCircuitOutput, i_f), "i_f"),
+            meta_data_gen::get_meta_attribute<&FaultShortCircuitOutput::i_f_angle>(offsetof(FaultShortCircuitOutput, i_f_angle), "i_f_angle"),
     };
 };
 
@@ -166,11 +166,11 @@ struct get_attributes_list<NodeShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::id, offsetof(NodeShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::energized, offsetof(NodeShortCircuitOutput, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_pu, offsetof(NodeShortCircuitOutput, u_pu), []{ return "u_pu"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u, offsetof(NodeShortCircuitOutput, u), []{ return "u"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeShortCircuitOutput, &NodeShortCircuitOutput::u_angle, offsetof(NodeShortCircuitOutput, u_angle), []{ return "u_angle"; }>::value,
+            meta_data_gen::get_meta_attribute<&NodeShortCircuitOutput::id>(offsetof(NodeShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&NodeShortCircuitOutput::energized>(offsetof(NodeShortCircuitOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&NodeShortCircuitOutput::u_pu>(offsetof(NodeShortCircuitOutput, u_pu), "u_pu"),
+            meta_data_gen::get_meta_attribute<&NodeShortCircuitOutput::u>(offsetof(NodeShortCircuitOutput, u), "u"),
+            meta_data_gen::get_meta_attribute<&NodeShortCircuitOutput::u_angle>(offsetof(NodeShortCircuitOutput, u_angle), "u_angle"),
     };
 };
 
@@ -179,12 +179,12 @@ struct get_attributes_list<BranchShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::id, offsetof(BranchShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::energized, offsetof(BranchShortCircuitOutput, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from, offsetof(BranchShortCircuitOutput, i_from), []{ return "i_from"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_from_angle, offsetof(BranchShortCircuitOutput, i_from_angle), []{ return "i_from_angle"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to, offsetof(BranchShortCircuitOutput, i_to), []{ return "i_to"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchShortCircuitOutput, &BranchShortCircuitOutput::i_to_angle, offsetof(BranchShortCircuitOutput, i_to_angle), []{ return "i_to_angle"; }>::value,
+            meta_data_gen::get_meta_attribute<&BranchShortCircuitOutput::id>(offsetof(BranchShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&BranchShortCircuitOutput::energized>(offsetof(BranchShortCircuitOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&BranchShortCircuitOutput::i_from>(offsetof(BranchShortCircuitOutput, i_from), "i_from"),
+            meta_data_gen::get_meta_attribute<&BranchShortCircuitOutput::i_from_angle>(offsetof(BranchShortCircuitOutput, i_from_angle), "i_from_angle"),
+            meta_data_gen::get_meta_attribute<&BranchShortCircuitOutput::i_to>(offsetof(BranchShortCircuitOutput, i_to), "i_to"),
+            meta_data_gen::get_meta_attribute<&BranchShortCircuitOutput::i_to_angle>(offsetof(BranchShortCircuitOutput, i_to_angle), "i_to_angle"),
     };
 };
 
@@ -193,14 +193,14 @@ struct get_attributes_list<Branch3ShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::id, offsetof(Branch3ShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::energized, offsetof(Branch3ShortCircuitOutput, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1, offsetof(Branch3ShortCircuitOutput, i_1), []{ return "i_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_1_angle, offsetof(Branch3ShortCircuitOutput, i_1_angle), []{ return "i_1_angle"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2, offsetof(Branch3ShortCircuitOutput, i_2), []{ return "i_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_2_angle, offsetof(Branch3ShortCircuitOutput, i_2_angle), []{ return "i_2_angle"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3, offsetof(Branch3ShortCircuitOutput, i_3), []{ return "i_3"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3ShortCircuitOutput, &Branch3ShortCircuitOutput::i_3_angle, offsetof(Branch3ShortCircuitOutput, i_3_angle), []{ return "i_3_angle"; }>::value,
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::id>(offsetof(Branch3ShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::energized>(offsetof(Branch3ShortCircuitOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::i_1>(offsetof(Branch3ShortCircuitOutput, i_1), "i_1"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::i_1_angle>(offsetof(Branch3ShortCircuitOutput, i_1_angle), "i_1_angle"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::i_2>(offsetof(Branch3ShortCircuitOutput, i_2), "i_2"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::i_2_angle>(offsetof(Branch3ShortCircuitOutput, i_2_angle), "i_2_angle"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::i_3>(offsetof(Branch3ShortCircuitOutput, i_3), "i_3"),
+            meta_data_gen::get_meta_attribute<&Branch3ShortCircuitOutput::i_3_angle>(offsetof(Branch3ShortCircuitOutput, i_3_angle), "i_3_angle"),
     };
 };
 
@@ -209,10 +209,10 @@ struct get_attributes_list<ApplianceShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::id, offsetof(ApplianceShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::energized, offsetof(ApplianceShortCircuitOutput, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i, offsetof(ApplianceShortCircuitOutput, i), []{ return "i"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceShortCircuitOutput, &ApplianceShortCircuitOutput::i_angle, offsetof(ApplianceShortCircuitOutput, i_angle), []{ return "i_angle"; }>::value,
+            meta_data_gen::get_meta_attribute<&ApplianceShortCircuitOutput::id>(offsetof(ApplianceShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&ApplianceShortCircuitOutput::energized>(offsetof(ApplianceShortCircuitOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&ApplianceShortCircuitOutput::i>(offsetof(ApplianceShortCircuitOutput, i), "i"),
+            meta_data_gen::get_meta_attribute<&ApplianceShortCircuitOutput::i_angle>(offsetof(ApplianceShortCircuitOutput, i_angle), "i_angle"),
     };
 };
 
@@ -221,8 +221,8 @@ struct get_attributes_list<SensorShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<SensorShortCircuitOutput, &SensorShortCircuitOutput::id, offsetof(SensorShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<SensorShortCircuitOutput, &SensorShortCircuitOutput::energized, offsetof(SensorShortCircuitOutput, energized), []{ return "energized"; }>::value,
+            meta_data_gen::get_meta_attribute<&SensorShortCircuitOutput::id>(offsetof(SensorShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&SensorShortCircuitOutput::energized>(offsetof(SensorShortCircuitOutput, energized), "energized"),
     };
 };
 
@@ -231,9 +231,9 @@ struct get_attributes_list<TransformerTapRegulatorOutput> {
     static constexpr std::array<MetaAttribute, 3> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::id, offsetof(TransformerTapRegulatorOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::energized, offsetof(TransformerTapRegulatorOutput, energized), []{ return "energized"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorOutput, &TransformerTapRegulatorOutput::tap_pos, offsetof(TransformerTapRegulatorOutput, tap_pos), []{ return "tap_pos"; }>::value,
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorOutput::id>(offsetof(TransformerTapRegulatorOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorOutput::energized>(offsetof(TransformerTapRegulatorOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorOutput::tap_pos>(offsetof(TransformerTapRegulatorOutput, tap_pos), "tap_pos"),
     };
 };
 
@@ -242,8 +242,8 @@ struct get_attributes_list<RegulatorShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<RegulatorShortCircuitOutput, &RegulatorShortCircuitOutput::id, offsetof(RegulatorShortCircuitOutput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<RegulatorShortCircuitOutput, &RegulatorShortCircuitOutput::energized, offsetof(RegulatorShortCircuitOutput, energized), []{ return "energized"; }>::value,
+            meta_data_gen::get_meta_attribute<&RegulatorShortCircuitOutput::id>(offsetof(RegulatorShortCircuitOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&RegulatorShortCircuitOutput::energized>(offsetof(RegulatorShortCircuitOutput, energized), "energized"),
     };
 };
 

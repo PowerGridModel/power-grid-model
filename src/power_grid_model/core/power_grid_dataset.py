@@ -28,7 +28,7 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
-from power_grid_model.data_types import Dataset
+from power_grid_model.data_types import ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
 from power_grid_model.typing import ComponentAttributeMapping
 
@@ -188,11 +188,7 @@ class CMutableDataset:
     _mutable_dataset: MutableDatasetPtr
     _buffer_views: list[CBuffer]
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Any = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Any = None):
         instance = super().__new__(cls)
         instance._mutable_dataset = MutableDatasetPtr()
         instance._buffer_views = []
@@ -245,9 +241,7 @@ class CMutableDataset:
         """
         return self._buffer_views
 
-    def _add_data(
-        self, data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]
-    ):
+    def _add_data(self, data: Dataset):
         """
         Add Power Grid Model data to the mutable dataset view.
 
@@ -262,12 +256,7 @@ class CMutableDataset:
         for component, component_data in data.items():
             self._add_component_data(component, component_data, allow_unknown=False)
 
-    def _add_component_data(
-        self,
-        component: ComponentType,
-        data: np.ndarray | Mapping[str, np.ndarray],
-        allow_unknown: bool = False,
-    ):
+    def _add_component_data(self, component: ComponentType, data: ComponentData, allow_unknown: bool = False):
         """
         Add Power Grid Model data for a single component to the mutable dataset view.
 
@@ -302,7 +291,7 @@ class CMutableDataset:
         )
         assert_no_error()
 
-    def _validate_properties(self, data: np.ndarray | Mapping[str, np.ndarray]):
+    def _validate_properties(self, data: ComponentData):
         properties = get_buffer_properties(data)
         if properties.is_batch != self._is_batch:
             raise ValueError(
@@ -329,11 +318,7 @@ class CConstDataset:
     _const_dataset: ConstDatasetPtr
     _buffer_views: list[CBuffer]
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
         instance = super().__new__(cls)
         instance._const_dataset = ConstDatasetPtr()
 
@@ -424,7 +409,7 @@ class CWritableDataset:
         """
         return self._data
 
-    def get_component_data(self, component: ComponentType) -> np.ndarray | Mapping[str, np.ndarray]:
+    def get_component_data(self, component: ComponentType) -> ComponentData:
         """
         Retrieve Power Grid Model data from the dataset for a specific component.
 

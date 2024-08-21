@@ -19,16 +19,17 @@ import numpy as np
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
-    BatchArray,
+    BatchComponentData,
     BatchDataset,
     BatchList,
     Dataset,
     DenseBatchArray,
     PythonDataset,
     SingleArray,
+    SingleComponentData,
     SingleDataset,
     SinglePythonDataset,
-    SparseBatchArray,
+    SparseBatchData,
 )
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -121,7 +122,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     return n_batch_size
 
 
-def get_batch_size(batch_data: BatchArray) -> int:
+def get_batch_size(batch_data: BatchComponentData) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it.
 
@@ -136,19 +137,21 @@ def get_batch_size(batch_data: BatchArray) -> int:
         # we assume that it is a single batch.
         if batch_data.ndim == 1:
             return 1
-        n_batches = batch_data.shape[0]
-    elif isinstance(batch_data, dict):
+        return batch_data.shape[0]
+
+    if isinstance(batch_data, dict):
         # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
         # invalid dictionary). There is always one indptr more than there are batches.
         if "indptr" not in batch_data:
             raise ValueError("Invalid batch data format, expected 'indptr' and 'data' entries")
-        n_batches = batch_data["indptr"].size - 1
-    else:
-        # If the batch data is not a numpy array and not a dictionary, it is invalid
-        raise ValueError(
-            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
-        )
-    return n_batches
+        indptr = batch_data["indptr"]
+        if isinstance(indptr, np.ndarray):
+            return indptr.size - 1
+
+    # If the batch data is not a numpy array and not a dictionary, it is invalid
+    raise ValueError(
+        "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
+    )
 
 
 def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component: ComponentType) -> list[np.ndarray]:
@@ -178,7 +181,7 @@ def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component:
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: ComponentType) -> list[np.ndarray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: ComponentType) -> list[SingleComponentData]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
@@ -200,27 +203,36 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: Com
     data = batch_data["data"]
     indptr = batch_data["indptr"]
 
-    if not isinstance(data, np.ndarray) or data.ndim != 1:
-        raise TypeError(
-            f"Invalid data type {type(data).__name__} in sparse batch data for '{component}' "
-            "(should be a 1D Numpy structured array (i.e. a single 'table'))."
-        )
+    def _split_buffer(buffer: np.ndarray, scenario: int) -> SingleArray:
+        if not isinstance(buffer, np.ndarray) or buffer.ndim != 1:
+            raise TypeError(
+                f"Invalid data type {type(buffer).__name__} in sparse batch data for '{component}' "
+                "(should be a 1D Numpy structured array (i.e. a single 'table'))."
+            )
 
-    if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
-        raise TypeError(
-            f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
-            "(should be a 1D Numpy array (i.e. a single 'list'), "
-            "containing indices (i.e. integers))."
-        )
+        if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
+            raise TypeError(
+                f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
+                "(should be a 1D Numpy array (i.e. a single 'list'), "
+                "containing indices (i.e. integers))."
+            )
 
-    if indptr[0] != 0 or indptr[-1] != len(data) or any(indptr[i] > indptr[i + 1] for i in range(len(indptr) - 1)):
-        raise TypeError(
-            f"Invalid indptr in batch data for '{component}' "
-            f"(should start with 0, end with the number of objects ({len(data)}) "
-            "and be monotonic increasing)."
-        )
+        if indptr[0] != 0 or indptr[-1] != len(buffer) or indptr[scenario] > indptr[scenario + 1]:
+            raise TypeError(
+                f"Invalid indptr in batch data for '{component}' "
+                f"(should start with 0, end with the number of objects ({len(buffer)}) "
+                "and be monotonic increasing)."
+            )
 
-    return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
+        return buffer[indptr[scenario] : indptr[scenario + 1]]
+
+    def _get_scenario(scenario: int) -> SingleComponentData:
+        if isinstance(data, dict):
+            # return {attribute: _split_buffer(attribute_data, scenario) for attribute, attribute_data in data.items()}
+            raise NotImplementedError()  # TODO(mgovers): uncomment when columnar data support is added
+        return _split_buffer(data, scenario)
+
+    return [_get_scenario(i) for i in range(len(indptr) - 1)]
 
 
 def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
@@ -370,11 +382,11 @@ def process_data_filter(
     """
     # limit all component count to user specified component types in output and convert to a dict
     if data_filter is None:
-        data_filter = {k: None for k in available_components}
+        data_filter = {ComponentType[k]: None for k in available_components}
     elif data_filter is Ellipsis:
-        data_filter = {k: ... for k in available_components}
+        data_filter = {ComponentType[k]: ... for k in available_components}
     elif isinstance(data_filter, (list, set)):
-        data_filter = {k: None for k in data_filter}
+        data_filter = {ComponentType[k]: None for k in data_filter}
     elif not isinstance(data_filter, dict) or not all(
         attrs is None or attrs == ... or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
@@ -406,7 +418,8 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
     for comp_name, attrs in data_filter.items():
         if attrs is None or attrs is Ellipsis:
             continue
-        diff = set(attrs).difference(dataset_meta[comp_name].dtype.names)
+        attr_names = dataset_meta[comp_name].dtype.names
+        diff = set(attrs).difference(attr_names) if attr_names is not None else set(attrs)
         if diff != set():
             unknown_attributes[comp_name] = diff
 
