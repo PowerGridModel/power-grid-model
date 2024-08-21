@@ -70,11 +70,11 @@ Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 where = ["src"]
 namespaces = false
 
-[tool.setuptools.package-data]
-"power-grid-model" = ["py.typed"]
-
 [tool.setuptools.dynamic]
 version = {file = "PYPI_VERSION"}
+
+[tool.setuptools.package-data]
+"power_grid_model" = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
