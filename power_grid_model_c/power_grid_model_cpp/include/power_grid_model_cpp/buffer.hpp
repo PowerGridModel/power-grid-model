@@ -19,6 +19,10 @@ class Buffer {
 
     RawDataPtr get() const { return buffer_.get(); }
 
+    static void set_nan(MetaComponent const* component, RawDataPtr buffer, Idx buffer_offset, Idx size) {
+        Handle handle{};
+        handle.call_with(PGM_buffer_set_nan, component, buffer, buffer_offset, size);
+    }
     static void set_nan(Buffer& buffer, Idx buffer_offset, Idx size) {
         buffer.handle_.call_with(PGM_buffer_set_nan, buffer.component_, buffer.buffer_.get(), buffer_offset, size);
     }
