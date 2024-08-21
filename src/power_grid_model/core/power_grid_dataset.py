@@ -30,7 +30,7 @@ from power_grid_model.core.power_grid_core import (
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
 from power_grid_model.data_types import ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -241,6 +241,9 @@ class CMutableDataset:
         """
         return self._buffer_views
 
+    def get_dataset_type(self) -> DatasetType:
+        return self._dataset_type
+
     def _add_data(self, data: Dataset):
         """
         Add Power Grid Model data to the mutable dataset view.
@@ -420,6 +423,9 @@ class CWritableDataset:
             The dataset for the specified component.
         """
         return self._data[component]
+
+    def get_data_filter(self) -> _ComponentAttributeMappingDict:
+        return self._data_filter
 
     def _add_buffers(self):
         for component, buffer_properties in self._component_buffer_properties.items():

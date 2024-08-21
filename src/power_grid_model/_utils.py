@@ -329,17 +329,18 @@ def copy_to_row_or_columnar_dataset(
 
     processed_data_filter = process_data_filter(dataset_type, data_filter, available_components)
 
-    result_data = {}
+    result_data: Dataset = {}
     for comp_name, attrs in processed_data_filter.items():
-        if isinstance(data[comp_name], np.ndarray):
-            result_data[comp_name] = _convert_data_to_row_or_columnar(
-                data=data[comp_name], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
-            )
-        else:
+        if isinstance(data[comp_name], dict) and "indptr" in data[comp_name]:
+            result_data[comp_name] = {}
             result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
                 data=data[comp_name]["data"], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
             )
             result_data[comp_name]["indptr"] = data[comp_name]["indptr"]
+        else:
+            result_data[comp_name] = _convert_data_to_row_or_columnar(
+                data=data[comp_name], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
+            )
     return result_data
 
 
@@ -382,18 +383,19 @@ def process_data_filter(
     """
     # limit all component count to user specified component types in output and convert to a dict
     if data_filter is None:
-        data_filter = {ComponentType[k]: None for k in available_components}
-    elif data_filter is Ellipsis:
-        data_filter = {ComponentType[k]: ... for k in available_components}
-    elif isinstance(data_filter, (list, set)):
-        data_filter = {ComponentType[k]: None for k in data_filter}
-    elif not isinstance(data_filter, dict) or not all(
+        return {ComponentType[k]: None for k in available_components}
+    if data_filter is Ellipsis:
+        return {ComponentType[k]: ... for k in available_components}
+    if isinstance(data_filter, (list, set)):
+        processed_data_filter = {ComponentType[k]: None for k in data_filter}
+        validate_data_filter(data_filter=processed_data_filter, dataset_type=dataset_type)
+        return processed_data_filter
+    if not isinstance(data_filter, dict) or not all(
         attrs is None or attrs == ... or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
         raise ValueError(f"Invalid filter provided: {data_filter}")
 
     validate_data_filter(data_filter, dataset_type)
-
     return data_filter
 
 

@@ -9,16 +9,9 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
-from typing import Mapping, Optional
 
-import numpy as np
-
-from power_grid_model.core.dataset_definitions import (
-    ComponentType,
-    DatasetType,
-    _map_to_component_types,
-    _str_to_datatype,
-)
+from power_grid_model._utils import copy_to_row_or_columnar_dataset
+from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
 from power_grid_model.core.power_grid_core import (
@@ -28,7 +21,7 @@ from power_grid_model.core.power_grid_core import (
     WritableDatasetPtr,
     power_grid_core as pgc,
 )
-from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
+from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset, get_dataset_type
 from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
@@ -88,7 +81,14 @@ class Deserializer:
             A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
-        return self._dataset.get_data()
+        if not self._dataset.get_data():
+            return {}
+        return copy_to_row_or_columnar_dataset(
+            data=self._dataset.get_data(),
+            data_filter=self._dataset.get_data_filter(),
+            dataset_type=get_dataset_type(data=self._dataset.get_data()),
+            available_components=None,
+        )
 
 
 class Serializer(ABC):
@@ -100,11 +100,15 @@ class Serializer(ABC):
     _dataset: CConstDataset
     _serializer: SerializerPtr
 
-    def __new__(cls, data: Dataset, serialization_type: SerializationType, dataset_type: Optional[DatasetType] = None):
+    def __new__(cls, data: Dataset, serialization_type: SerializationType, dataset_type: DatasetType | None = None):
         instance = super().__new__(cls)
 
-        # copy_to_row_or_columnar_dataset()
-        instance._data = data
+        if not data:
+            instance._data = {}
+        else:
+            instance._data = copy_to_row_or_columnar_dataset(
+                data=data, data_filter=None, dataset_type=get_dataset_type(data), available_components=None
+            )
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()
 
@@ -204,7 +208,7 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
     JSON deserializer for the Power grid model
     """
 
-    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
+    def __new__(cls, data: Dataset, dataset_type: DatasetType | None = None):
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
 
@@ -213,7 +217,7 @@ class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-met
     msgpack deserializer for the Power grid model
     """
 
-    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
+    def __new__(cls, data: Dataset, dataset_type: DatasetType | None = None):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
@@ -240,8 +244,8 @@ def json_deserialize(
 
 
 def json_serialize(
-    data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-    dataset_type: Optional[DatasetType] = None,
+    data: Dataset,
+    dataset_type: DatasetType | None = None,
     use_compact_list: bool = False,
     indent: int = 2,
 ) -> str:
@@ -293,8 +297,8 @@ def msgpack_deserialize(data: bytes, data_filter: ComponentAttributeMapping = No
 
 
 def msgpack_serialize(
-    data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-    dataset_type: Optional[DatasetType] = None,
+    data: Dataset,
+    dataset_type: DatasetType | None = None,
     use_compact_list: bool = False,
 ) -> bytes:
     """
