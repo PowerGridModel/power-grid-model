@@ -11,7 +11,7 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
-from typing import Optional, cast
+from typing import Optional, Sequence, cast
 
 import numpy as np
 
@@ -75,6 +75,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     # While the number of batches must be the same for each component, the structure (2d numpy array or indptr/data)
     # doesn't have to be. Therefore, we'll check the structure for each component and copy the data accordingly.
     for component, data in batch_data.items():
+        component_batches: Sequence[SingleComponentData]
         if isinstance(data, np.ndarray):
             component_batches = split_numpy_array_in_batches(data, component)
         elif isinstance(data, dict):
@@ -85,6 +86,8 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
                 "(should be a Numpy structured array or a python dictionary)."
             )
         for i, batch in enumerate(component_batches):
+            if isinstance(batch, dict):
+                raise NotImplementedError()  # TODO(mgovers): Add support for columnar data
             if batch.size > 0:
                 list_data[i][component] = batch
     return list_data
@@ -153,7 +156,7 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
     )
 
 
-def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component: ComponentType) -> list[np.ndarray]:
+def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component: ComponentType) -> list[SingleArray]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -283,20 +286,19 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
         A python dict for single dataset
     """
 
-    # This should be a single data set
-    for component, array in data.items():
-        if not isinstance(array, np.ndarray) or array.ndim != 1:
-            raise ValueError("Invalid data format")
-
     # Convert each numpy array to a list of objects, which contains only the non-NaN attributes:
     # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
-    return {
-        component: [
+    def _convert_component(objects: SingleComponentData):
+        # This should be a single data set
+        if not isinstance(objects, np.ndarray) or objects.ndim != 1:
+            raise ValueError("Invalid data format")
+
+        return [
             {attribute: obj[attribute].tolist() for attribute in objects.dtype.names if not is_nan(obj[attribute])}
             for obj in objects
         ]
-        for component, objects in data.items()
-    }
+
+    return {component: _convert_component(objects) for component, objects in data.items()}
 
 
 def copy_output_to_columnar_dataset(

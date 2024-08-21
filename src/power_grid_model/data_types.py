@@ -156,31 +156,19 @@ ColumnarData = SingleColumnarData | BatchColumnarData
 Columnar data can be :class:`SingleColumnarData` or :class:`BatchColumnarData`.
 """
 
-# SingleComponentData = SingleArray | SingleColumnarData
-# """
-# Single component data can be :class:`SingleArray` or :class:`SingleColumnarData`.
-# """
-SingleComponentData: TypeAlias = SingleArray
+SingleComponentData = SingleArray | SingleColumnarData
 """
-Single component data is a :class:`SingleArray`.
+Single component data can be :class:`SingleArray` or :class:`SingleColumnarData`.
 """
 
-# BatchComponentData = BatchArray | BatchColumnarData
-# """
-# Batch component data can be :class:`BatchArray` or :class:`BatchColumnarData`.
-# """
-BatchComponentData = DenseBatchData | SparseBatchData
+BatchComponentData = BatchArray | BatchColumnarData
 """
-Batch component data is a :class:`BatchArray`.
+Batch component data can be :class:`BatchArray` or :class:`BatchColumnarData`.
 """
 
-# ComponentData = DataArray | ColumnarData
-# """
-# Component data can be :class:`DataArray` or :class:`ColumnarData`.
-# """
-ComponentData = SingleComponentData | BatchComponentData
+ComponentData = DataArray | ColumnarData
 """
-Component data is a :class:`DataArray`.
+Component data can be :class:`DataArray` or :class:`ColumnarData`.
 """
 
 SingleDataset = dict[ComponentTypeVar, SingleComponentData]

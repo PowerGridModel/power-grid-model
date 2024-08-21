@@ -18,7 +18,7 @@ from power_grid_model.core.dataset_definitions import (
     DatasetType,
     _str_to_component_type,
 )
-from power_grid_model.data_types import SingleDataset
+from power_grid_model.data_types import SingleArray, SingleComponentData, SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
 
@@ -103,7 +103,22 @@ def update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     return merged_data
 
 
-def update_component_data(component: ComponentTypeLike, input_data: np.ndarray, update_data: np.ndarray) -> None:
+def update_component_data(
+    component: ComponentTypeLike, input_data: SingleComponentData, update_data: SingleComponentData
+) -> None:
+    """
+    Update the data in a single component data set, with another single component data set,
+    indexed on the "id" field and only non-NaN values are overwritten.
+    """
+    if isinstance(input_data, np.ndarray) and isinstance(update_data, np.ndarray):
+        return _update_component_array_data(component=component, input_data=input_data, update_data=update_data)
+
+    raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+
+
+def _update_component_array_data(
+    component: ComponentTypeLike, input_data: SingleArray, update_data: SingleArray
+) -> None:
     """
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
