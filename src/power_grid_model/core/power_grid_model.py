@@ -29,7 +29,7 @@ from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model.data_types import Dataset
+from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import (
     CalculationMethod,
     CalculationType,
@@ -104,7 +104,7 @@ class PowerGridModel:
         instance._all_component_count = None
         return instance
 
-    def __init__(self, input_data: dict[ComponentTypeVar, np.ndarray], system_frequency: float = 50.0):
+    def __init__(self, input_data: SingleDataset, system_frequency: float = 50.0):
         """
         Initialize the model from an input data set.
 
@@ -112,7 +112,7 @@ class PowerGridModel:
             input_data: Input data dictionary
 
                 - key: Component type
-                - value: 1D numpy structured array for this component input
+                - value: Component data with the correct type :class:`SingleComponentData`
 
             system_frequency: Frequency of the power system, default 50 Hz
         """
@@ -125,7 +125,7 @@ class PowerGridModel:
         assert_no_error()
         self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
-    def update(self, *, update_data: dict[ComponentTypeVar, np.ndarray]):
+    def update(self, *, update_data: Dataset):
         """
         Update the model with changes.
 
@@ -133,7 +133,7 @@ class PowerGridModel:
             update_data: Update data dictionary
 
                 - key: Component type
-                - value: 1D numpy structured array for this component update
+                - value: Component data with the correct type :class:`ComponentData` (single scenario or batch)
 
         Returns:
             None
@@ -144,7 +144,9 @@ class PowerGridModel:
 
     def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
         """
-        Get array of indexers given array of ids for component type
+        Get array of indexers given array of ids for component type.
+
+        This enables syntax like input_data[ComponentType.node][get_indexer(ids)]
 
         Args:
             component_type: Type of component

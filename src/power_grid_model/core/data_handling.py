@@ -8,14 +8,11 @@ Data handling
 
 
 from enum import Enum
-from typing import Mapping
-
-import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model.data_types import Dataset
+from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -56,7 +53,7 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Ou
     raise NotImplementedError()
 
 
-def prepare_input_view(input_data: Mapping[ComponentType, np.ndarray]) -> CConstDataset:
+def prepare_input_view(input_data: SingleDataset) -> CConstDataset:
     """
     Create a view of the input data in a format compatible with the PGM core libary.
 
@@ -70,7 +67,7 @@ def prepare_input_view(input_data: Mapping[ComponentType, np.ndarray]) -> CConst
     return CConstDataset(input_data, dataset_type=DatasetType.input)
 
 
-def prepare_update_view(update_data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> CConstDataset:
+def prepare_update_view(update_data: Dataset) -> CConstDataset:
     """
     Create a view of the update data, or an empty view if not provided, in a format compatible with the PGM core libary.
 
@@ -84,7 +81,7 @@ def prepare_update_view(update_data: Mapping[ComponentType, np.ndarray | Mapping
     return CConstDataset(update_data, dataset_type=DatasetType.update)
 
 
-def prepare_output_view(output_data: Mapping[ComponentType, np.ndarray], output_type: OutputType) -> CMutableDataset:
+def prepare_output_view(output_data: Dataset, output_type: OutputType) -> CMutableDataset:
     """
     create a view of the output data in a format compatible with the PGM core libary.
 
@@ -166,7 +163,7 @@ def process_output_component_types(
     """
     # limit all component count to user specified component types in output and convert to a dict
     if output_component_types is None:
-        output_component_types = {k: None for k in available_components}
+        output_component_types = {ComponentType[k]: None for k in available_components}
     elif isinstance(output_component_types, (list, set)):
         output_component_types = {k: None for k in output_component_types}
     elif not isinstance(output_component_types, dict) or not all(
