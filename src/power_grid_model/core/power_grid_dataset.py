@@ -242,6 +242,11 @@ class CMutableDataset:
         return self._buffer_views
 
     def get_dataset_type(self) -> DatasetType:
+        """Gets the dataset_type
+
+        Returns:
+            DatasetType: dataset type
+        """
         return self._dataset_type
 
     def _add_data(self, data: Dataset):
@@ -425,6 +430,11 @@ class CWritableDataset:
         return self._data[component]
 
     def get_data_filter(self) -> _ComponentAttributeMappingDict:
+        """Gets the data filter requested
+
+        Returns:
+            _ComponentAttributeMappingDict: data filter
+        """
         return self._data_filter
 
     def _add_buffers(self):
