@@ -391,7 +391,7 @@ def process_data_filter(
         validate_data_filter(data_filter=processed_data_filter, dataset_type=dataset_type)
         return processed_data_filter
     if not isinstance(data_filter, dict) or not all(
-        attrs is None or attrs == ... or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
         raise ValueError(f"Invalid filter provided: {data_filter}")
 
@@ -408,7 +408,7 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
 
     Raises:
         ValueError: when the type for data_filter is incorrect
-        KeyError: with "unknown component" for any unknown components
+        KeyError: with "unknown component types" for any unknown components
         KeyError: with "unknown attributes" for unknown attribute(s) for a known component
     """
     dataset_meta = power_grid_meta_data[dataset_type]
