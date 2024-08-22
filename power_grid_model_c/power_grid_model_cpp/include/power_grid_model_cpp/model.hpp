@@ -31,10 +31,10 @@ class Model {
 
     PowerGridModel* get() const { return model_.get(); }
 
-    static void update_model(Model& model, DatasetConst const& update_dataset) {
+    static void update(Model& model, DatasetConst const& update_dataset) {
         model.handle_.call_with(PGM_update_model, model.get(), update_dataset.get());
     }
-    void update_model(DatasetConst const& update_dataset) { update_model(*this, update_dataset); }
+    void update(DatasetConst const& update_dataset) { update(*this, update_dataset); }
 
     static void get_indexer(Model const& model, std::string const& component, Idx size, ID const* ids, Idx* indexer) {
         model.handle_.call_with(PGM_get_indexer, model.get(), component.c_str(), size, ids, indexer);
