@@ -7,10 +7,11 @@ Type hints for PGM. This includes all miscellaneous type hints not under dataset
 """
 
 from types import EllipsisType
+from typing import Mapping
 
 from power_grid_model.core.dataset_definitions import ComponentType, ComponentTypeVar
 
-_ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | EllipsisType]
+_ComponentAttributeMappingDict = Mapping[ComponentType, set[str] | list[str] | None | EllipsisType]
 
 ComponentAttributeMapping = (
     set[ComponentTypeVar] | list[ComponentTypeVar] | EllipsisType | None | _ComponentAttributeMappingDict
