@@ -54,7 +54,10 @@ class Handle {
 
     RawHandle* get() const { return handle_.get(); }
 
-    static void check_error(Handle const& handle) {
+    static void clear_error(Handle& handle) { PGM_clear_error(handle.get()); }
+    void clear_error() { clear_error(*this); }
+
+    static void check_error(Handle& handle) {
         RawHandle* handle_ptr = handle.get();
         Idx error_code = PGM_error_code(handle_ptr);
         std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_ptr);
@@ -62,6 +65,7 @@ class Handle {
         case PGM_no_error:
             return;
         case PGM_regular_error:
+            Handle::clear_error(handle);
             throw PowerGridRegularError{error_message};
         case PGM_batch_error: {
             Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
@@ -72,23 +76,22 @@ class Handle {
                 failed_scenarios[i] =
                     PowerGridBatchError::FailedScenario{failed_scenario_seqs[i], failed_scenario_messages[i]};
             }
+            Handle::clear_error(handle);
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
         }
         case PGM_serialization_error:
+            Handle::clear_error(handle);
             throw PowerGridSerializationError{error_message};
         default:
+            Handle::clear_error(handle);
             throw PowerGridError{error_message};
         }
     }
-    void check_error() const { check_error(*this); }
-
-    static void clear_error(Handle& handle) { PGM_clear_error(handle.get()); }
-    void clear_error() { clear_error(*this); }
+    void check_error() { check_error(*this); }
 
     template <typename Func, typename... Args> auto call_with(Func&& func, Args&&... args) const {
         auto result = std::forward<Func>(func)(get(), std::forward<Args>(args)...);
         check_error();
-        clear_error();
         return result;
     }
 
