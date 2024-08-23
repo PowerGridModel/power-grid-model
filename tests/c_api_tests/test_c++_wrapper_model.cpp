@@ -14,6 +14,9 @@
 
 #include <power_grid_model_c/dataset_definitions.h>
 
+#include <exception>
+#include <string>
+
 /*
 Testing network
 
@@ -31,6 +34,15 @@ update_1:
     q_specified = 300 var (-j3.0A)
 u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 */
+
+namespace {
+void check_exception(std::exception const& e, PGM_ErrorCode const& reference_error,
+                     std::string const& reference_err_msg) {
+    CHECK(e.error_code() == reference_error)
+    std::string const err_msg{e.what()};
+    CHECK(err_msg.find(reference_err_msg) != std::string::npos);
+}
+} // namespace
 
 namespace power_grid_model_cpp {
 TEST_CASE("C API Model") {
@@ -130,11 +142,11 @@ TEST_CASE("C API Model") {
     SUBCASE("Get indexer") {
         std::array<ID, 2> ids{2, 2};
         std::array<Idx, 2> indexer{3, 3};
-        model.get_indexer"sym_load", 2, ids.data(), indexer.data()();
+        model.get_indexer "sym_load", 2, ids.data(), indexer.data()();
         CHECK(indexer[0] == 0);
         CHECK(indexer[1] == 0);
         ids[1] = 6;
-        model.get_indexer"sym_load", 2, ids.data(), indexer.data()();
+        model.get_indexer "sym_load", 2, ids.data(), indexer.data()();
     }
 
     SUBCASE("Batch power flow") {
@@ -156,7 +168,7 @@ TEST_CASE("C API Model") {
         CHECK(u_pu[1] == doctest::Approx(0.7));
         std::array<double, 4> u{};
         Buffer::get_value(PGM_def_sym_output_node_u, sym_node_outputs.data(), u.data(), 0, 2,
-                             2 * sizeof(double)); // stride of two double
+                          2 * sizeof(double)); // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
     }
@@ -164,34 +176,38 @@ TEST_CASE("C API Model") {
     SUBCASE("Input error handling") {
         using namespace std::string_literals;
 
-        std::string expected_error;
-
         SUBCASE("Construction error") {
-            expected_error = "Conflicting id detected:"s;
-
             load_input.id = 0;
-            CHECKS_THROWS_WITH_AS(Model wrong_model{50.0, input_dataset}, expected_error, PowerGridRegularError);
+            try {
+                Model wrong_model{50.0, input_dataset};
+            } catch (PowerGridRegularError const& e) {
+                check_exception(e, PGM_regular_error, "Conflicting id detected:"s);
+            }
         }
 
         SUBCASE("Update error") {
-            expected_error = "The id cannot be found:"s;
-
             source_update.id = 5;
-            CHECKS_THROWS_WITH_AS(model.update(single_update_dataset), expected_error, PowerGridRegularError);
+            try {
+                model.update(single_update_dataset);
+            } catch (PowerGridRegularError const& e) {
+                check_exception(e, PGM_regular_error, "The id cannot be found:"s);
+            }
         }
 
         SUBCASE("Invalid calculation type error") {
-            expected_error = "CalculationType is not implemented for"s;
-
-            CHECKS_THROWS_WITH_AS(options.set_calculation_type(-128), expected_error, PowerGridRegularError);
+            try {
+                options.set_calculation_type(-128);
+            } catch (PowerGridRegularError const& e) {
+                check_exception(e, PGM_regular_error, "CalculationType is not implemented for"s);
+            }
         }
 
         SUBCASE("Invalid tap changing strategy error") {
-            expected_error = "get_optimizer_type is not implemented for"s;
-
-            options = Options{};
-            options.set_tap_changing_strategy(-128);
-            CHECKS_THROWS_WITH_AS(model.calculate(options, single_output_dataset, nullptr), expected_error, PowerGridRegularError);
+            try {
+                options.set_tap_changing_strategy(-128);
+            } catch (PowerGridRegularError const& e) {
+                check_exception(e, PGM_regular_error, "get_optimizer_type is not implemented for"s);
+            }
         }
 
         SUBCASE("Tap changing strategy") {
@@ -207,24 +223,36 @@ TEST_CASE("C API Model") {
             options.set_err_tol(1e-100);
             options.set_symmetric(0);
             options.set_threading(1);
-            CHECKS_THROWS_WITH_AS(model.calculate(options, single_output_dataset, nullptr), "Iteration failed to converge after"s, PowerGridRegularError);
+            try {
+                model.calculate(options, single_output_dataset, nullptr);
+            } catch (PowerGridRegularError const& e) {
+                check_exception(e, PGM_regular_error, "Iteration failed to converge after"s);
+            }
 
             // wrong method
             options.set_calculation_type(PGM_state_estimation);
             options.set_calculation_method(PGM_iterative_current);
-            CHECKS_THROWS_WITH_AS(model.calculate(options, single_output_dataset, nullptr), "The calculation method is invalid for this calculation!"s, PowerGridRegularError);
+            try {
+                model.calculate(options, single_output_dataset, nullptr);
+            } catch (PowerGridRegularError const& e) {
+                check_exception(e, PGM_regular_error, "The calculation method is invalid for this calculation!"s);
+            }
         }
 
-        SUBCASE("Batch calculation error") { // This part still needs work. Also, checking error strings needs to be fixed as well
+        SUBCASE("Batch calculation error") {
             // wrong id
             load_updates[1].id = 5;
-            model.calculate(options, batch_output_dataset, batch_update_dataset);
             // failed in batch 1
-            CHECK(PGM_error_code(hl) == PGM_batch_error);
-            CHECK(PGM_n_failed_scenarios(hl) == 1);
-            CHECK(PGM_failed_scenarios(hl)[0] == 1);
-            std::string const err_msg{PGM_batch_errors(hl)[0]};
-            CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos); //how to deal with this here. the several scenario stuff, specially without a manual try catch
+            try {
+                model.calculate(options, batch_output_dataset, batch_update_dataset);
+            } catch (PowerGridBatchError const& e) {
+                CHECK(e.error_code() == PGM_batch_error)
+                auto const failed_scenarios = e.failed_scenarios();
+                CHECK(failed_scenarios.size() == 1);
+                CHECK(failed_scenarios[0].scenario == 1);
+                std::string const err_msg{failed_scenarios[0].error_message};
+                CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
+            }
             // valid results for batch 0
             CHECK(node_result_0.id == 0);
             CHECK(node_result_0.energized == 1);
