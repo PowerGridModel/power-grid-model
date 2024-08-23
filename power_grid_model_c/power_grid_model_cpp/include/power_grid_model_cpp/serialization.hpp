@@ -15,10 +15,9 @@
 namespace power_grid_model_cpp {
 class Deserializer {
   public:
-    Deserializer(std::vector<std::byte> const& data, Idx serialization_format)
-        : deserializer_{handle_.call_with(PGM_create_deserializer_from_binary_buffer,
-                                          reinterpret_cast<char const*>(data.data()), data.size(),
-                                          serialization_format)} {}
+    Deserializer(std::vector<char> const& data, Idx serialization_format)
+        : deserializer_{handle_.call_with(PGM_create_deserializer_from_binary_buffer, data.data(),
+                                          static_cast<Idx>(data.size()), serialization_format)} {}
     Deserializer(std::string const& data_string, Idx serialization_format)
         : deserializer_{handle_.call_with(PGM_create_deserializer_from_null_terminated_string, data_string.c_str(),
                                           serialization_format)} {}
@@ -47,18 +46,18 @@ class Serializer {
 
     RawSerializer* get() const { return serializer_.get(); }
 
-    static void get_to_binary_buffer(Serializer& serializer, Idx use_compact_list, std::vector<std::byte>& data,
-                                     Idx* size) {
-        char* temp_data = nullptr;
+    static void get_to_binary_buffer(Serializer& serializer, Idx use_compact_list, std::vector<std::byte>& data) {
+        char const* temp_data{};
+        Idx buffer_size{};
         serializer.handle_.call_with(PGM_serializer_get_to_binary_buffer, serializer.get(), use_compact_list,
-                                     &temp_data, size);
+                                     &temp_data, &buffer_size);
         if (temp_data != nullptr) {
-            data.resize(*size);
-            std::memcpy(data.data(), temp_data, *size);
+            data.resize(buffer_size);
+            std::memcpy(data.data(), temp_data, buffer_size);
         }
     }
-    void get_to_binary_buffer(Idx use_compact_list, std::vector<std::byte>& data, Idx* size) {
-        get_to_binary_buffer(*this, use_compact_list, data, size);
+    void get_to_binary_buffer(Idx use_compact_list, std::vector<std::byte>& data) {
+        get_to_binary_buffer(*this, use_compact_list, data);
     }
 
     static std::string get_to_zero_terminated_string(Serializer& serializer, Idx use_compact_list, Idx indent) {

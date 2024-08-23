@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#define PGM_ENABLE_EXPERIMENTAL
+
 #include "power_grid_model_cpp.hpp"
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
@@ -35,99 +37,80 @@ TEST_CASE("C API Serialization and Deserialization") {
 
     SUBCASE("Serializer") {
         DatasetConst dataset{"input", is_batch, batch_size};
-        dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr,
-                                     node.data());
-        dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr,
-                                     source.data());
+        dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr, node.data());
+        dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source.data());
 
-        SUBCASE("JSON") { // currently here.
-            SerializerPtr const json_serializer{
-                PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::json))};
-            auto* const serializer = json_serializer.get();
-            CHECK(PGM_error_code(hl) == PGM_no_error);
+        SUBCASE("JSON") {
+            Serializer json_serializer{dataset, static_cast<Idx>(power_grid_model::SerializationFormat::json)};
 
             SUBCASE("To zero-terminated string") {
-                std::string json_result = PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, -1);
-                CHECK(PGM_error_code(hl) == PGM_no_error);
+                std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
                 CHECK(json_result == json_data);
             }
 
             SUBCASE("To binary buffer") {
-                char const* buffer_data{};
-                Idx buffer_size{};
-                PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &buffer_data, &buffer_size);
-                CHECK(PGM_error_code(hl) == PGM_no_error);
-                std::string const json_string{buffer_data, static_cast<size_t>(buffer_size)};
-                CHECK(json_string == json_data);
+                std::vector<std::byte> buffer_data{};
+                json_serializer.get_to_binary_buffer(0, buffer_data);
+                CHECK(std::string{buffer_data.begin(), buffer_data.end()} == json_data);
             }
         }
 
         SUBCASE("MessagePack") {
-            SerializerPtr const msgpack_serializer{
-                PGM_create_serializer(hl, dataset, static_cast<PGM_Idx>(SerializationFormat::msgpack))};
-            auto* const serializer = msgpack_serializer.get();
+            Serializer msgpack_serializer{dataset, static_cast<Idx>(power_grid_model::SerializationFormat::msgpack)};
 
             SUBCASE("Round trip") {
-                char const* msgpack_data{};
-                Idx msgpack_size{};
-                PGM_serializer_get_to_binary_buffer(hl, serializer, 0, &msgpack_data, &msgpack_size);
-                CHECK(PGM_error_code(hl) == PGM_no_error);
-                auto const json_document =
-                    nlohmann::ordered_json::from_msgpack(msgpack_data, msgpack_data + msgpack_size);
+                std::vector<std::byte> msgpack_data{};
+                msgpack_serializer.get_to_binary_buffer(0, msgpack_data);
+                auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data);
                 auto const json_result = json_document.dump(-1);
                 CHECK(json_result == json_data);
             }
 
             SUBCASE("Cannot serialize msgpack to zero terminated string") {
-                PGM_serializer_get_to_zero_terminated_string(hl, serializer, 0, 0);
-                CHECK(PGM_error_code(hl) == PGM_serialization_error);
+                CHECK_THROWS_AS(msgpack_serializer.get_to_zero_terminated_string(0, 0), PowerGridSerializationError);
             }
         }
 
         SUBCASE("Invalid serialization format") {
-            SerializerPtr const unknown_serializer{PGM_create_serializer(hl, dataset, -1)};
-            CHECK(PGM_error_code(hl) == PGM_serialization_error);
+            CHECK_THROWS_AS(Serializer unknown_serializer{dataset, -1}, PowerGridSerializationError);
         }
     }
 
     SUBCASE("Deserializer") {
         // msgpack data
         auto const json_document = nlohmann::json::parse(json_data);
-        std::vector<char> msgpack_data;
+        std::vector<std::byte> msgpack_data;
         nlohmann::json::to_msgpack(json_document, msgpack_data);
 
-        DeserializerPtr const unique_deserializer_json(PGM_create_deserializer_from_null_terminated_string(
-            hl, json_data, static_cast<PGM_Idx>(SerializationFormat::json)));
-        CHECK(PGM_error_code(hl) == PGM_no_error);
-        DeserializerPtr const unique_deserializer_msgpack(
-            PGM_create_deserializer_from_binary_buffer(hl, msgpack_data.data(), static_cast<Idx>(msgpack_data.size()),
-                                                       static_cast<PGM_Idx>(SerializationFormat::msgpack)));
-        CHECK(PGM_error_code(hl) == PGM_no_error);
+        Deserializer deserializer_json{json_data, static_cast<Idx>(power_grid_model::SerializationFormat::json)};
 
-        for (PGM_Deserializer* const deserializer :
-             {unique_deserializer_json.get(), unique_deserializer_msgpack.get()}) {
+        Deserializer deserializer_msgpack{msgpack_data.data(), static_cast<Idx>(msgpack_data.size()),
+                                          static_cast<Idx>(power_grid_model::SerializationFormat::msgpack)};
+
+        for (Deserializer deserializer :
+             {deserializer_json, deserializer_msgpack}) { // check if needs to be addressed because deserializer might
+                                                          // not be copy or move constructable
             // reset data
             node[0] = {};
             // get dataset
-            auto* const dataset = PGM_deserializer_get_dataset(hl, deserializer);
-            auto const* const info = PGM_dataset_writable_get_info(hl, dataset);
+            auto dataset = deserializer.get_dataset();
+            auto info = dataset.get_info();
             // check meta data
-            CHECK(PGM_dataset_info_name(hl, info) == "input"s);
-            CHECK(PGM_dataset_info_is_batch(hl, info) == is_batch);
-            CHECK(PGM_dataset_info_batch_size(hl, info) == batch_size);
-            CHECK(PGM_dataset_info_n_components(hl, info) == n_components);
-            CHECK(PGM_dataset_info_component_name(hl, info, 0) == "node"s);
-            CHECK(PGM_dataset_info_component_name(hl, info, 1) == "source"s);
+            CHECK(info.name() == "input"s);
+            CHECK(info.is_batch() == is_batch);
+            CHECK(info.batch_size() == batch_size);
+            CHECK(info.n_components() == n_components);
+            CHECK(info.component_name(0) == "node"s);
+            CHECK(info.component_name(1) == "source"s);
             for (Idx const idx : {0, 1}) {
-                CHECK(PGM_dataset_info_elements_per_scenario(hl, info, idx) == elements_per_scenario[idx]);
-                CHECK(PGM_dataset_info_total_elements(hl, info, idx) == total_elements[idx]);
+                CHECK(info.elements_per_scenario(idx) == elements_per_scenario[idx]);
+                CHECK(info.total_elements(idx) == total_elements[idx]);
             }
             // set buffer
-            PGM_dataset_writable_set_buffer(hl, dataset, "node", nullptr, node.data());
-            PGM_dataset_writable_set_buffer(hl, dataset, "source", nullptr, source.data());
-            CHECK(PGM_error_code(hl) == PGM_no_error);
+            dataset.set_buffer("node", nullptr, node.data());
+            dataset.set_buffer("source", nullptr, source.data());
             // parse
-            PGM_deserializer_parse_to_buffer(hl, deserializer);
+            deserializer.parse_to_buffer();
             // check
             CHECK(node[0].id == 5);
             CHECK(is_nan(node[0].u_rated));
@@ -136,7 +119,7 @@ TEST_CASE("C API Serialization and Deserialization") {
         }
     }
 
-    SUBCASE("Use deserialized dataset") {
+    SUBCASE("Use deserialized dataset") { //////// currently here
         DeserializerPtr const unique_deserializer_json(PGM_create_deserializer_from_null_terminated_string(
             hl, complete_json_data, static_cast<PGM_Idx>(SerializationFormat::json)));
         CHECK(PGM_error_code(hl) == PGM_no_error);
