@@ -8,7 +8,6 @@
 
 #include "basics.hpp"
 #include "handle.hpp"
-#include "serialization.hpp"
 
 #include "power_grid_model_c/dataset.h"
 
@@ -57,37 +56,6 @@ class DatasetInfo {
   private:
     Handle handle_{};
     std::unique_ptr<PGM_DatasetInfo const> info_;
-};
-
-class DatasetConst {
-  public:
-    DatasetConst(std::string const& dataset, Idx is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)} {}
-    DatasetConst(DatasetWritable const& writable_dataset)
-        : dataset_{handle_.call_with(PGM_create_dataset_const_from_writable, writable_dataset.get())} {}
-    DatasetConst(DatasetMutable const& mutable_dataset)
-        : dataset_{handle_.call_with(PGM_create_dataset_const_from_mutable, mutable_dataset.get())} {}
-
-    RawConstDataset* get() const { return dataset_.get(); }
-
-    static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
-                           Idx total_elements, Idx const* indptr, RawDataConstPtr data) {
-        dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
-                                  elements_per_scenario, total_elements, indptr, data);
-    }
-    void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    RawDataConstPtr data) {
-        add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
-    }
-
-    static DatasetInfo get_info(DatasetConst const& dataset) {
-        return DatasetInfo{dataset.handle_.call_with(PGM_dataset_const_get_info, dataset.dataset_.get())};
-    }
-    DatasetInfo get_info() const { return get_info(*this); }
-
-  private:
-    Handle handle_{};
-    detail::UniquePtr<RawConstDataset, PGM_destroy_dataset_const> dataset_;
 };
 
 class DatasetWritable {
@@ -139,6 +107,37 @@ class DatasetMutable {
   private:
     Handle handle_{};
     detail::UniquePtr<RawMutableDataset, PGM_destroy_dataset_mutable> dataset_;
+};
+
+class DatasetConst {
+  public:
+    DatasetConst(std::string const& dataset, Idx is_batch, Idx batch_size)
+        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)} {}
+    DatasetConst(DatasetWritable const& writable_dataset)
+        : dataset_{handle_.call_with(PGM_create_dataset_const_from_writable, writable_dataset.get())} {}
+    DatasetConst(DatasetMutable const& mutable_dataset)
+        : dataset_{handle_.call_with(PGM_create_dataset_const_from_mutable, mutable_dataset.get())} {}
+
+    RawConstDataset* get() const { return dataset_.get(); }
+
+    static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
+                           Idx total_elements, Idx const* indptr, RawDataConstPtr data) {
+        dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
+                                  elements_per_scenario, total_elements, indptr, data);
+    }
+    void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
+                    RawDataConstPtr data) {
+        add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
+    }
+
+    static DatasetInfo get_info(DatasetConst const& dataset) {
+        return DatasetInfo{dataset.handle_.call_with(PGM_dataset_const_get_info, dataset.dataset_.get())};
+    }
+    DatasetInfo get_info() const { return get_info(*this); }
+
+  private:
+    Handle handle_{};
+    detail::UniquePtr<RawConstDataset, PGM_destroy_dataset_const> dataset_;
 };
 } // namespace power_grid_model_cpp
 

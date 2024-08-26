@@ -14,7 +14,7 @@
 
 namespace power_grid_model_cpp {
 
-TEST_CASE("C API Meta Data") {
+TEST_CASE("C++ API Meta Data") {
     SUBCASE("Datasets") {
         // check dataset
         CHECK(MetaData::n_datasets() == meta_data_gen::meta_data.n_datasets());

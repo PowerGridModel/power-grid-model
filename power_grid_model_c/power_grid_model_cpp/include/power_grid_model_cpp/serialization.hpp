@@ -15,9 +15,9 @@
 namespace power_grid_model_cpp {
 class Deserializer {
   public:
-    Deserializer(std::vector<char> const& data, Idx serialization_format)
-        : deserializer_{handle_.call_with(PGM_create_deserializer_from_binary_buffer, data.data(),
-                                          static_cast<Idx>(data.size()), serialization_format)} {}
+    Deserializer(std::vector<std::byte> const& data, Idx serialization_format)
+        : deserializer_{handle_.call_with(PGM_create_deserializer_from_binary_buffer,
+                                          reinterpret_cast<const char*>(data.data()), static_cast<Idx>(data.size()), serialization_format)} {}
     Deserializer(std::string const& data_string, Idx serialization_format)
         : deserializer_{handle_.call_with(PGM_create_deserializer_from_null_terminated_string, data_string.c_str(),
                                           serialization_format)} {}
@@ -51,10 +51,8 @@ class Serializer {
         Idx buffer_size{};
         serializer.handle_.call_with(PGM_serializer_get_to_binary_buffer, serializer.get(), use_compact_list,
                                      &temp_data, &buffer_size);
-        if (temp_data != nullptr) {
             data.resize(buffer_size);
             std::memcpy(data.data(), temp_data, buffer_size);
-        }
     }
     void get_to_binary_buffer(Idx use_compact_list, std::vector<std::byte>& data) {
         get_to_binary_buffer(*this, use_compact_list, data);

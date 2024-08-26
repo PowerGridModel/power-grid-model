@@ -51,6 +51,13 @@ class Model {
         calculate(*this, opt, output_dataset, batch_dataset);
     }
 
+    static void calculate(Model& model, Options const& opt, DatasetMutable const& output_dataset) {
+        model.handle_.call_with(PGM_calculate, model.get(), opt.get(), output_dataset.get(), nullptr);
+    }
+    void calculate(Options const& opt, DatasetMutable const& output_dataset) {
+        calculate(*this, opt, output_dataset);
+    }
+
   private:
     Handle handle_{};
     detail::UniquePtr<PowerGridModel, PGM_destroy_model> model_;

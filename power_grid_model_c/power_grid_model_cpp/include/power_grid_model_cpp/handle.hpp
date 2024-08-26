@@ -15,6 +15,7 @@ class PowerGridError : public std::exception {
   public:
     PowerGridError(const std::string& message) : message_(message) {}
     const char* what() const noexcept override { return message_.c_str(); }
+    virtual Idx error_code() const noexcept { return PGM_regular_error; };
 
   private:
     std::string message_;
@@ -23,13 +24,13 @@ class PowerGridError : public std::exception {
 class PowerGridRegularError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
-    static constexpr Idx error_code() { return PGM_regular_error; }
+    Idx error_code() const noexcept override { return PGM_regular_error; }
 };
 
 class PowerGridSerializationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
-    static constexpr Idx error_code() { return PGM_serialization_error; }
+    Idx error_code() const noexcept override { return PGM_serialization_error; }
 };
 
 class PowerGridBatchError : public PowerGridError {
@@ -41,7 +42,7 @@ class PowerGridBatchError : public PowerGridError {
 
     PowerGridBatchError(std::string const& message, std::vector<FailedScenario> failed_scenarios_c)
         : PowerGridError{message}, failed_scenarios_{std::move(failed_scenarios_c)} {}
-    static constexpr Idx error_code() { return PGM_batch_error; }
+    Idx error_code() const noexcept override { return PGM_batch_error; }
     std::vector<FailedScenario> const& failed_scenarios() const { return failed_scenarios_; }
 
   private:
@@ -54,10 +55,10 @@ class Handle {
 
     RawHandle* get() const { return handle_.get(); }
 
-    static void clear_error(Handle& handle) { PGM_clear_error(handle.get()); }
-    void clear_error() { clear_error(*this); }
+    static void clear_error(Handle const& handle) { PGM_clear_error(handle.get()); }
+    void clear_error() const { clear_error(*this); }
 
-    static void check_error(Handle& handle) {
+    static void check_error(Handle const& handle) {
         RawHandle* handle_ptr = handle.get();
         Idx error_code = PGM_error_code(handle_ptr);
         std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_ptr);
@@ -87,12 +88,17 @@ class Handle {
             throw PowerGridError{error_message};
         }
     }
-    void check_error() { check_error(*this); }
+    void check_error() const { check_error(*this); }
 
     template <typename Func, typename... Args> auto call_with(Func&& func, Args&&... args) const {
-        auto result = std::forward<Func>(func)(get(), std::forward<Args>(args)...);
-        check_error();
-        return result;
+        if constexpr (std::is_void_v<decltype(std::forward<Func>(func)(get(), std::forward<Args>(args)...))>) {
+            std::forward<Func>(func)(get(), std::forward<Args>(args)...);
+            check_error();
+        } else {
+            auto result = std::forward<Func>(func)(get(), std::forward<Args>(args)...);
+            check_error();
+            return result;
+        }
     }
 
   private:

@@ -25,7 +25,7 @@ constexpr char const* complete_json_data =
     R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5, "u_rated": 10500}],"source":[{"id":6, "node": 5, "status": 1, "u_ref": 1.0}]}})";
 } // namespace
 
-TEST_CASE("C API Serialization and Deserialization") {
+TEST_CASE("C++ API Serialization and Deserialization") {
     std::vector<NodeInput> node{{5, nan}};
     std::vector<SourceInput> source{{6, na_IntID, na_IntS, nan, nan, nan, nan, nan},
                                     {7, na_IntID, na_IntS, nan, nan, nan, nan, nan}};

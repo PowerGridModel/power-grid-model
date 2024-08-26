@@ -61,7 +61,7 @@ class MetaData {
 
     static size_t component_alignment(MetaComponent const* component) {
         Handle handle{};
-        return handle.call_with(PGM_meta_component_alignment(handle.get(), component));
+        return handle.call_with(PGM_meta_component_alignment, component);
     }
 
     static Idx n_attributes(MetaComponent const* component) {
