@@ -27,9 +27,12 @@ constexpr char const* complete_json_data =
 
 TEST_CASE("C++ API Serialization and Deserialization") {
 
-    std::vector<NodeInput> node{{5, nan}};
-    std::vector<SourceInput> source{{6, na_IntID, na_IntS, nan, nan, nan, nan, nan},
-                                    {7, na_IntID, na_IntS, nan, nan, nan, nan, nan}};
+    std::vector<power_grid_model::NodeInput> node{{5, power_grid_model::nan}};
+    std::vector<power_grid_model::SourceInput> source{
+        {6, power_grid_model::na_IntID, power_grid_model::na_IntS, power_grid_model::nan, power_grid_model::nan,
+         power_grid_model::nan, power_grid_model::nan, power_grid_model::nan},
+        {7, power_grid_model::na_IntID, power_grid_model::na_IntS, power_grid_model::nan, power_grid_model::nan,
+         power_grid_model::nan, power_grid_model::nan, power_grid_model::nan}};
     Idx const n_components = 2;
     Idx const batch_size = 1;
     Idx const is_batch = 0;
@@ -73,24 +76,26 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         }
 
         SUBCASE("Invalid serialization format") {
-            CHECK_THROWS_AS(Serializer unknown_serializer{dataset, -1}, PowerGridSerializationError);
+            try {
+                Serializer unknown_serializer{dataset, -1};
+            } catch (PowerGridSerializationError const& e) {
+                CHECK(e.error_code() == PGM_serialization_error);
+            }
         }
     }
 
     SUBCASE("Deserializer") {
         // msgpack data
         auto const json_document = nlohmann::json::parse(json_data);
-        std::vector<std::byte> msgpack_data;
+        std::vector<char> msgpack_data;
+
         nlohmann::json::to_msgpack(json_document, msgpack_data);
 
-        Deserializer deserializer_json{json_data, static_cast<Idx>(power_grid_model::SerializationFormat::json)};
-
-        Deserializer deserializer_msgpack{msgpack_data.data(), static_cast<Idx>(msgpack_data.size()),
+        Deserializer json_deserializer{json_data, static_cast<Idx>(power_grid_model::SerializationFormat::json)};
+        Deserializer msgpack_deserializer{msgpack_data,
                                           static_cast<Idx>(power_grid_model::SerializationFormat::msgpack)};
 
-        for (Deserializer deserializer :
-             {deserializer_json, deserializer_msgpack}) { // check if needs to be addressed because deserializer might
-                                                          // not be copy or move constructable
+        auto check_deserializer = [&](Deserializer& deserializer) {
             // reset data
             node[0] = {};
             // get dataset
@@ -104,8 +109,8 @@ TEST_CASE("C++ API Serialization and Deserialization") {
             CHECK(info.component_name(0) == "node"s);
             CHECK(info.component_name(1) == "source"s);
             for (Idx const idx : {0, 1}) {
-                CHECK(info.elements_per_scenario(idx) == elements_per_scenario[idx]);
-                CHECK(info.total_elements(idx) == total_elements[idx]);
+                CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario[idx]);
+                CHECK(info.component_total_elements(idx) == total_elements[idx]);
             }
             // set buffer
             dataset.set_buffer("node", nullptr, node.data());
@@ -114,10 +119,13 @@ TEST_CASE("C++ API Serialization and Deserialization") {
             deserializer.parse_to_buffer();
             // check
             CHECK(node[0].id == 5);
-            CHECK(is_nan(node[0].u_rated));
+            CHECK(power_grid_model::is_nan(node[0].u_rated));
             CHECK(source[0].id == 6);
             CHECK(source[1].id == 7);
-        }
+        };
+
+        check_deserializer(json_deserializer);
+        check_deserializer(msgpack_deserializer);
     }
 
     SUBCASE("Use deserialized dataset") { //////// currently here
