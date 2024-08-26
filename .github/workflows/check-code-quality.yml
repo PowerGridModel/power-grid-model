@@ -48,7 +48,7 @@ jobs:
 
       - name: Install and run black
         run: |
-          pip install black
+          pip install black[jupyter]
           black .
 
       - name: Install and run mypy
