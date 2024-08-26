@@ -937,15 +937,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return std::make_pair(node_state, param);
     }
 
-    // template <component_c ComponentType, typename... RegulatedTypes, typename State>
-    //     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-    // inline auto is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...> const& regulator,
-    //                                                State const& state) {
-    //     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
-    //                                                                   regulator.regulator.get().control_side());
-    //     return get_math_id<Node>(state, controlled_node_idx) != Idx2D{-1, -1};
-    // }
-
     bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
                                  ResultType const& solver_output, UpdateBuffer& update_data) {
         bool tap_changed = false;
