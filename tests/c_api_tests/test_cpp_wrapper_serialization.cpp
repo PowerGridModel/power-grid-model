@@ -128,7 +128,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         check_deserializer(msgpack_deserializer);
     }
 
-    SUBCASE("Use deserialized dataset") { //////// currently here
+    SUBCASE("Use deserialized dataset") {
         Deserializer deserializer_json(complete_json_data,
                                        static_cast<PGM_Idx>(power_grid_model::SerializationFormat::json));
 

@@ -10,8 +10,8 @@
 #include "handle.hpp"
 
 #include "power_grid_model_c/dataset.h"
-
 namespace power_grid_model_cpp {
+
 class DatasetInfo {
   public:
     DatasetInfo(RawDatasetInfo const* info) : info_{info} {}
@@ -55,12 +55,12 @@ class DatasetInfo {
 
   private:
     Handle handle_{};
-    std::unique_ptr<PGM_DatasetInfo const> info_;
+    PGM_DatasetInfo const* info_;
 };
 
 class DatasetWritable {
   public:
-    DatasetWritable(RawWritableDataset* dataset) : dataset_{dataset} { assert(dataset != nullptr); }
+    DatasetWritable(RawWritableDataset* dataset) : dataset_{dataset} {}
 
     RawWritableDataset* get() const { return dataset_.get(); }
 
