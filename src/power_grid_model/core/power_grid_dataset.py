@@ -8,9 +8,7 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-import numpy as np
-
-from power_grid_model._utils import process_data_filter
+from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CBuffer,
@@ -126,7 +124,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> DatasetType:
+def get_dataset_type(data: Dataset) -> DatasetType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -146,13 +144,19 @@ def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.n
     """
     candidates = set(power_grid_meta_data.keys())
 
+    if all(is_columnar(v) for v in data.values()):
+        raise ValueError("The dataset type could not be deduced. Atleast one component should have row based data.")
+
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
             if component not in data:
                 continue
 
             component_data = data[component]
-            if isinstance(component_data, np.ndarray):
+            if is_columnar(component_data):
+                continue
+
+            if not is_sparse(component_data):
                 component_dtype = component_data.dtype
             else:
                 component_dtype = component_data["data"].dtype

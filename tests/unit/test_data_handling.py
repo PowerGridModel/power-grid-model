@@ -5,6 +5,7 @@
 import numpy as np
 import pytest
 
+from power_grid_model._utils import is_columnar
 from power_grid_model.core.data_handling import create_output_data
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.core.power_grid_meta import initialize_array
@@ -60,13 +61,11 @@ def test_create_output_data(output_component_types, is_batch, expected):
 
     assert actual.keys() == expected.keys()
     for comp in expected:
-        if isinstance(expected[comp], np.ndarray):
-            # Row based
+        if not is_columnar(expected[comp]):
             assert actual[comp].dtype == expected[comp].dtype
         elif expected[comp] == dict():
-            # Empty atrtibutes
+            # Empty atrtibutes columnar
             assert actual[comp] == expected[comp]
         else:
-            # Columnar data
             assert actual[comp].keys() == expected[comp].keys()
             assert all(actual[comp][attr].dtype == expected[comp][attr].dtype for attr in expected[comp])

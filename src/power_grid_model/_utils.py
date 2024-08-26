@@ -22,6 +22,7 @@ from power_grid_model.data_types import (
     BatchComponentData,
     BatchDataset,
     BatchList,
+    ComponentData,
     Dataset,
     DenseBatchArray,
     PythonDataset,
@@ -331,7 +332,7 @@ def copy_to_row_or_columnar_dataset(
 
     result_data: Dataset = {}
     for comp_name, attrs in processed_data_filter.items():
-        if isinstance(data[comp_name], dict) and "indptr" in data[comp_name]:
+        if is_sparse(data[comp_name]):
             result_data[comp_name] = {}
             result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
                 data=data[comp_name]["data"], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
@@ -427,3 +428,15 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
 
     if unknown_attributes:
         raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")
+
+
+def is_sparse(component_data: ComponentData) -> bool:
+    """Check if component_data is sparse or dense. Only batch data can be sparse."""
+    return isinstance(component_data, dict) and set(component_data.keys()) == {"indptr", "data"}
+
+
+def is_columnar(component_data: ComponentData) -> bool:
+    """Check if component_data is columnar or row based"""
+    if is_sparse(component_data):
+        return not isinstance(component_data["data"], np.ndarray)
+    return not isinstance(component_data, np.ndarray)
