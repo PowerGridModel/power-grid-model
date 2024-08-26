@@ -515,6 +515,16 @@ inline auto u_pu(State const& state, std::vector<SolverOutputType> const& /* sol
     return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.u_pu(side);
 }
 
+template <std::derived_from<MockTransformer> ComponentType, typename State>
+inline auto get_topo_node(State const& /*state*/, Idx /*topology_index*/, ControlSide /*control_side*/) {
+    return 0;
+}
+
+template <typename ComponentType, typename State>
+inline auto get_math_id(State const& /*state*/, Idx /*topology_index*/) {
+    return Idx2D{0, 0};
+}
+
 template <typename ContainerType>
 std::vector<MockSolverOutput<ContainerType>>
 mock_state_calculator(main_core::MainModelState<ContainerType> const& state, CalculationMethod method) {

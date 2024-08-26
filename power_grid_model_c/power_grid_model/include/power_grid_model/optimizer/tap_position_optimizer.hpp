@@ -146,7 +146,6 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
             auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
@@ -542,6 +541,15 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
                                regulator.regulator.get().control_side());
 }
 
+template <component_c ComponentType, typename... RegulatedTypes, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...> const& regulator,
+                                               State const& state) {
+    auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
+                                                                  regulator.regulator.get().control_side());
+    return get_math_id<Node>(state, controlled_node_idx) != Idx2D{-1, -1};
+}
+
 struct VoltageBand {
     double u_set{};
     double u_band{};
@@ -929,12 +937,24 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return std::make_pair(node_state, param);
     }
 
+    // template <component_c ComponentType, typename... RegulatedTypes, typename State>
+    //     requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    // inline auto is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...> const& regulator,
+    //                                                State const& state) {
+    //     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
+    //                                                                   regulator.regulator.get().control_side());
+    //     return get_math_id<Node>(state, controlled_node_idx) != Idx2D{-1, -1};
+    // }
+
     bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
                                  ResultType const& solver_output, UpdateBuffer& update_data) {
         bool tap_changed = false;
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
+            if (!is_regulated_transformer_connected<TransformerType>(regulator, state)) {
+                return;
+            }
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
@@ -967,6 +987,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) { // NOSONAR
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
+            if (!is_regulated_transformer_connected<TransformerType>(regulator, state)) {
+                return;
+            }
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
