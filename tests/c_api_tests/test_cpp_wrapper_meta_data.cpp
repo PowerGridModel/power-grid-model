@@ -17,16 +17,17 @@ namespace power_grid_model_cpp {
 TEST_CASE("C++ API Meta Data") {
     SUBCASE("Datasets") {
         // check dataset
-        CHECK(MetaData::n_datasets() == meta_data_gen::meta_data.n_datasets());
-        for (Idx idx_dataset = 0; idx_dataset != meta_data_gen::meta_data.n_datasets(); ++idx_dataset) {
+        CHECK(MetaData::n_datasets() == power_grid_model::meta_data::meta_data_gen::meta_data.n_datasets());
+        for (Idx idx_dataset = 0; idx_dataset != power_grid_model::meta_data::meta_data_gen::meta_data.n_datasets();
+             ++idx_dataset) {
             MetaDataset const* const dataset = MetaData::get_dataset_by_idx(idx_dataset);
             std::string const dataset_name = MetaData::dataset_name(dataset);
             CHECK(MetaData::get_dataset_by_name(dataset_name) == dataset);
-            CHECK(dataset_name == meta_data_gen::meta_data.datasets[idx_dataset].name);
+            CHECK(dataset_name == power_grid_model::meta_data::meta_data_gen::meta_data.datasets[idx_dataset].name);
 
             // check component
             power_grid_model::meta_data::MetaDataset const& cpp_dataset =
-                meta_data_gen::meta_data.get_dataset(dataset_name);
+                power_grid_model::meta_data::meta_data_gen::meta_data.get_dataset(dataset_name);
             CHECK(MetaData::n_components(dataset) == cpp_dataset.n_components());
             for (Idx idx_component = 0; idx_component != cpp_dataset.n_components(); ++idx_component) {
                 MetaComponent const* const component = MetaData::get_component_by_idx(dataset, idx_component);
@@ -58,7 +59,7 @@ TEST_CASE("C++ API Meta Data") {
 
         SUBCASE("Check error handling for unknown name") {
             using namespace std::string_literals;
-            
+
             try {
                 auto bad_attribute = MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute");
             } catch (PowerGridRegularError const& e) {

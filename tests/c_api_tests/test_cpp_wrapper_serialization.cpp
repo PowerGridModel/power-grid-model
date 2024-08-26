@@ -26,6 +26,7 @@ constexpr char const* complete_json_data =
 } // namespace
 
 TEST_CASE("C++ API Serialization and Deserialization") {
+
     std::vector<NodeInput> node{{5, nan}};
     std::vector<SourceInput> source{{6, na_IntID, na_IntS, nan, nan, nan, nan, nan},
                                     {7, na_IntID, na_IntS, nan, nan, nan, nan, nan}};

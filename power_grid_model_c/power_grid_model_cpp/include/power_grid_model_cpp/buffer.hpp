@@ -42,6 +42,7 @@ class Buffer {
         buffer.handle_.call_with(PGM_buffer_get_value, attribute, buffer.buffer_.get(), dest_ptr, buffer_offset, size,
                                  dest_stride);
     }
+
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx buffer_offset, Idx dest_stride) const {
         get_value(attribute, *this, dest_ptr, buffer_offset, size_, dest_stride);
     }

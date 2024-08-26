@@ -39,7 +39,7 @@ namespace power_grid_model_cpp {
 namespace {
 void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_error,
                      std::string const& reference_err_msg) {
-                        auto error_code_aux = e.error_code();
+    auto error_code_aux = e.error_code();
     CHECK(e.error_code() == reference_error);
     std::string const err_msg{e.what()};
     CHECK(err_msg.find(reference_err_msg) != std::string::npos);
@@ -56,15 +56,21 @@ TEST_CASE("C++ API Model") {
     DatasetConst input_dataset{"input", 0, 1};
     power_grid_model::NodeInput node_input{.id = 0, .u_rated = 100.0};
     power_grid_model::SourceInput source_input{.id = 1,
-                             .node = 0,
-                             .status = 1,
-                             .u_ref = 1.0,
-                             .u_ref_angle = 0.0,
-                             .sk = 1000.0,
-                             .rx_ratio = 0.0,
-                             .z01_ratio = 1.0};
+                                               .node = 0,
+                                               .status = 1,
+                                               .u_ref = 1.0,
+                                               .u_ref_angle = 0.0,
+                                               .sk = 1000.0,
+                                               .rx_ratio = 0.0,
+                                               .z01_ratio = 1.0};
     power_grid_model::SymLoadGenInput load_input{
-        .id = 2, .node = 0, .status = 1, .type = power_grid_model::LoadGenType::const_i, .p_specified = 0.0, .q_specified = 500.0};
+
+        .id = 2,
+        .node = 0,
+        .status = 1,
+        .type = power_grid_model::LoadGenType::const_i,
+        .p_specified = 0.0,
+        .q_specified = 500.0};
 
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     Buffer source_buffer{PGM_def_input_source, 1};
@@ -91,7 +97,8 @@ TEST_CASE("C++ API Model") {
     batch_output_dataset.add_buffer("node", 1, 2, nullptr, sym_node_outputs.data());
 
     // update data
-    power_grid_model::SourceUpdate source_update{.id = 1, .status = power_grid_model::na_IntS, .u_ref = 0.5, .u_ref_angle = power_grid_model::nan};
+    power_grid_model::SourceUpdate source_update{
+        .id = 1, .status = power_grid_model::na_IntS, .u_ref = 0.5, .u_ref_angle = power_grid_model::nan};
     std::array<Idx, 3> source_update_indptr{0, 1, 1};
     std::array<power_grid_model::SymLoadGenUpdate, 2> load_updates{};
     // set nan twice with offset
@@ -172,7 +179,8 @@ TEST_CASE("C++ API Model") {
         CHECK(u_pu[0] == doctest::Approx(0.4));
         CHECK(u_pu[1] == doctest::Approx(0.7));
         std::array<double, 4> u{};
-        sym_node_output_buffer.get_value(PGM_def_sym_output_node_u, u.data(), 0, 2 * sizeof(double)); // stride of two double
+        sym_node_output_buffer.get_value(PGM_def_sym_output_node_u, u.data(), 0,
+                                         2 * sizeof(double)); // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
     }

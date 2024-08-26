@@ -39,6 +39,7 @@ class Model {
     static void get_indexer(Model const& model, std::string const& component, Idx size, ID const* ids, Idx* indexer) {
         model.handle_.call_with(PGM_get_indexer, model.get(), component.c_str(), size, ids, indexer);
     }
+
     void get_indexer(std::string const& component, Idx size, ID const* ids, Idx* indexer) const {
         get_indexer(*this, component, size, ids, indexer);
     }
@@ -54,9 +55,7 @@ class Model {
     static void calculate(Model& model, Options const& opt, DatasetMutable const& output_dataset) {
         model.handle_.call_with(PGM_calculate, model.get(), opt.get(), output_dataset.get(), nullptr);
     }
-    void calculate(Options const& opt, DatasetMutable const& output_dataset) {
-        calculate(*this, opt, output_dataset);
-    }
+    void calculate(Options const& opt, DatasetMutable const& output_dataset) { calculate(*this, opt, output_dataset); }
 
   private:
     Handle handle_{};
