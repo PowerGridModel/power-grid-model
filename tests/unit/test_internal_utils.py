@@ -466,16 +466,12 @@ def sample_output_data():
             id="list/set filter-Component in filter not present in data",
         ),
         pytest.param(
-            {CT.node: [], CT.shunt: ["p"]},
-            {CT.node: dict()},
-            id="dict filter-Component in filter not present in data",
-            marks=pytest.mark.xfail,
+            {CT.node: [], CT.shunt: ["p"]}, {CT.node: dict()}, id="dict filter-Component in filter not present in data"
         ),
         pytest.param(
             {CT.node: [], CT.shunt: []},
             {CT.node: dict()},
             id="dict filter-Component in filter not present in data without attributes",
-            marks=pytest.mark.xfail,
         ),
     ],
 )
