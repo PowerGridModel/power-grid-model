@@ -8,8 +8,7 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-import numpy as np
-
+from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CBuffer,
@@ -29,6 +28,7 @@ from power_grid_model.core.power_grid_core import (
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
 from power_grid_model.data_types import ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -124,7 +124,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> DatasetType:
+def get_dataset_type(data: Dataset) -> DatasetType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -144,13 +144,19 @@ def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.n
     """
     candidates = set(power_grid_meta_data.keys())
 
+    if all(is_columnar(v) for v in data.values()):
+        raise ValueError("The dataset type could not be deduced. Atleast one component should have row based data.")
+
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
             if component not in data:
                 continue
 
             component_data = data[component]
-            if isinstance(component_data, np.ndarray):
+            if is_columnar(component_data):
+                continue
+
+            if not is_sparse(component_data):
                 component_dtype = component_data.dtype
             else:
                 component_dtype = component_data["data"].dtype
@@ -238,6 +244,14 @@ class CMutableDataset:
             list of buffer view
         """
         return self._buffer_views
+
+    def get_dataset_type(self) -> DatasetType:
+        """Gets the dataset_type
+
+        Returns:
+            DatasetType: dataset type
+        """
+        return self._dataset_type
 
     def _add_data(self, data: Dataset):
         """
@@ -360,12 +374,16 @@ class CWritableDataset:
     After writing to the buffers, the data contents can be retrieved.
     """
 
-    def __init__(self, dataset_ptr: WritableDatasetPtr):
+    def __init__(self, dataset_ptr: WritableDatasetPtr, data_filter: ComponentAttributeMapping):
         self._writable_dataset = dataset_ptr
 
         info = self.get_info()
         self._dataset_type = info.dataset_type()
         self._schema = power_grid_meta_data[self._dataset_type]
+
+        self._data_filter = process_data_filter(
+            dataset_type=info.dataset_type(), data_filter=data_filter, available_components=info.components()
+        )
 
         self._component_buffer_properties = self._get_buffer_properties(info)
         self._data: Dataset = {}
@@ -414,6 +432,14 @@ class CWritableDataset:
             The dataset for the specified component.
         """
         return self._data[component]
+
+    def get_data_filter(self) -> _ComponentAttributeMappingDict:
+        """Gets the data filter requested
+
+        Returns:
+            _ComponentAttributeMappingDict: data filter
+        """
+        return self._data_filter
 
     def _add_buffers(self):
         for component, buffer_properties in self._component_buffer_properties.items():
