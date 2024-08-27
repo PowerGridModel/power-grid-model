@@ -7,7 +7,8 @@
 #define POWER_GRID_MODEL_CPP_BASICS_HPP
 
 #ifdef PGM_DLL_EXPORTS
-#error "Cannot export dynamic targets from the PGM C API wrapper. Please disable PGM_DLL_EXPORT."
+#error                                                                                                                 \
+    "Cannot export out-of-line PGM C API symbols from the inline header-only PGM C++ API. Please disable PGM_DLL_EXPORT."
 #endif
 
 #ifndef PGM_ENABLE_EXPERIMENTAL

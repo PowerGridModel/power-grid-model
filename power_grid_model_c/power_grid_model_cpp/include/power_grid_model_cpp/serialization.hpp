@@ -18,20 +18,21 @@ class Deserializer {
     Deserializer(std::vector<std::byte> const& data, Idx serialization_format)
         : deserializer_{handle_.call_with(PGM_create_deserializer_from_binary_buffer,
                                           reinterpret_cast<const char*>(data.data()), static_cast<Idx>(data.size()),
-                                          serialization_format)} {}
+                                          serialization_format)},
+          dataset_{handle_.call_with(PGM_deserializer_get_dataset, get())} {}
     Deserializer(std::vector<char> const& data, Idx serialization_format)
         : deserializer_{handle_.call_with(PGM_create_deserializer_from_binary_buffer, data.data(),
-                                          static_cast<Idx>(data.size()), serialization_format)} {}
+                                          static_cast<Idx>(data.size()), serialization_format)},
+          dataset_{handle_.call_with(PGM_deserializer_get_dataset, get())} {}
     Deserializer(std::string const& data_string, Idx serialization_format)
         : deserializer_{handle_.call_with(PGM_create_deserializer_from_null_terminated_string, data_string.c_str(),
-                                          serialization_format)} {}
+                                          serialization_format)},
+          dataset_{handle_.call_with(PGM_deserializer_get_dataset, get())} {}
 
     RawDeserializer* get() const { return deserializer_.get(); }
 
-    static DatasetWritable get_dataset(Deserializer const& deserializer) {
-        return DatasetWritable{deserializer.handle_.call_with(PGM_deserializer_get_dataset, deserializer.get())};
-    }
-    DatasetWritable get_dataset() const { return get_dataset(*this); }
+    static DatasetWritable const& get_dataset(Deserializer const& deserializer) { return deserializer.dataset_; }
+    DatasetWritable const& get_dataset() { return get_dataset(*this); }
 
     static void parse_to_buffer(Deserializer& deserializer) {
         deserializer.handle_.call_with(PGM_deserializer_parse_to_buffer, deserializer.get());
@@ -41,6 +42,7 @@ class Deserializer {
   private:
     Handle handle_{};
     detail::UniquePtr<RawDeserializer, PGM_destroy_deserializer> deserializer_;
+    DatasetWritable dataset_;
 };
 
 class Serializer {
