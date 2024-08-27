@@ -388,7 +388,7 @@ def process_data_filter(
     if data_filter is Ellipsis:
         return {ComponentType[k]: ... for k in available_components}
     if isinstance(data_filter, (list, set)):
-        processed_data_filter = {ComponentType[k]: None for k in data_filter}
+        processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in data_filter}
         validate_data_filter(data_filter=processed_data_filter, dataset_type=dataset_type)
         return processed_data_filter
     if not isinstance(data_filter, dict) or not all(
