@@ -30,7 +30,6 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
 )
 from power_grid_model.data_types import BatchArray, BatchComponentData, BatchDataset, Dataset, SingleDataset
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
-from power_grid_model.typing import ComponentAttributeMapping
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
@@ -99,10 +98,7 @@ def get_component_batch_size(data_array: BatchArray) -> int:
     return _get_batch_size(data_array)
 
 
-def json_deserialize_from_file(
-    file_path: Path,
-    data_filter: ComponentAttributeMapping = None,
-) -> Dataset:
+def json_deserialize_from_file(file_path: Path) -> Dataset:
     """
     Load and deserialize a JSON file to a new dataset.
 
@@ -117,7 +113,7 @@ def json_deserialize_from_file(
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, encoding="utf-8") as file_pointer:
-        return json_deserialize(file_pointer.read(), data_filter=data_filter)
+        return json_deserialize(file_pointer.read())
 
 
 def json_serialize_to_file(
@@ -148,10 +144,7 @@ def json_serialize_to_file(
         file_pointer.write(result)
 
 
-def msgpack_deserialize_from_file(
-    file_path: Path,
-    data_filter: ComponentAttributeMapping = None,
-) -> Dataset:
+def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
 
@@ -166,7 +159,7 @@ def msgpack_deserialize_from_file(
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, mode="rb") as file_pointer:
-        return msgpack_deserialize(file_pointer.read(), data_filter=data_filter)
+        return msgpack_deserialize(file_pointer.read())
 
 
 def msgpack_serialize_to_file(
