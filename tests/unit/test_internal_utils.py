@@ -483,5 +483,5 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
         available_components=list(sample_output_data().keys()),
     )
     assert actual.keys() == expected.keys()
-    for actual_arr, expected_arr in zip(actual.values(), expected.values()):
-        np.testing.assert_array_equal(actual_arr, expected_arr)
+    for comp_name in expected:
+        np.testing.assert_array_equal(actual[comp_name], expected[comp_name])
