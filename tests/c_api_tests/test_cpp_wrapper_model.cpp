@@ -39,7 +39,6 @@ namespace power_grid_model_cpp {
 namespace {
 void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_error,
                      std::string const& reference_err_msg) {
-    auto error_code_aux = e.error_code();
     CHECK(e.error_code() == reference_error);
     std::string const err_msg{e.what()};
     CHECK(err_msg.find(reference_err_msg) != std::string::npos);

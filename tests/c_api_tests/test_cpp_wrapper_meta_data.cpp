@@ -61,7 +61,7 @@ TEST_CASE("C++ API Meta Data") {
             using namespace std::string_literals;
 
             try {
-                auto bad_attribute = MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute");
+                MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute");
             } catch (PowerGridRegularError const& e) {
                 std::string const err_msg{e.what()};
                 CHECK(err_msg.find("You supplied wrong name and/or index!"s) != std::string::npos);

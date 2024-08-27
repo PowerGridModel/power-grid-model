@@ -12,6 +12,8 @@
 
 #include "power_grid_model_c/serialization.h"
 
+#include <cstring>
+
 namespace power_grid_model_cpp {
 class Deserializer {
   public:
