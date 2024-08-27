@@ -79,7 +79,7 @@ class DatasetWritable {
     static DatasetInfo const& get_info(DatasetWritable const& dataset) { return dataset.info_; }
     DatasetInfo const& get_info() const { return get_info(*this); }
 
-    static void set_buffer(DatasetWritable const& dataset, std::string const& component, Idx* indptr, RawDataPtr data) {
+    static void set_buffer(DatasetWritable& dataset, std::string const& component, Idx* indptr, RawDataPtr data) {
         dataset.handle_.call_with(PGM_dataset_writable_set_buffer, dataset.dataset_, component.c_str(), indptr, data);
     }
     void set_buffer(std::string const& component, Idx* indptr, RawDataPtr data) {

@@ -55,7 +55,10 @@ TEST_CASE("C++ API Serialization and Deserialization") {
             SUBCASE("To binary buffer") {
                 std::vector<std::byte> buffer_data{};
                 json_serializer.get_to_binary_buffer(0, buffer_data);
-                CHECK(std::string{buffer_data.begin(), buffer_data.end()} == json_data);
+                std::string converted_string(buffer_data.size(), '\0');
+                std::ranges::transform(buffer_data, converted_string.begin(),
+                                       [](std::byte b) { return static_cast<char>(b); });
+                CHECK(converted_string == json_data);
             }
         }
 
@@ -99,8 +102,8 @@ TEST_CASE("C++ API Serialization and Deserialization") {
             // reset data
             node[0] = {};
             // get dataset
-            auto dataset = deserializer.get_dataset();
-            auto info = dataset.get_info();
+            auto& dataset = deserializer.get_dataset();
+            auto& info = dataset.get_info();
             // check meta data
             CHECK(info.name() == "input"s);
             CHECK(info.is_batch() == is_batch);
@@ -133,8 +136,8 @@ TEST_CASE("C++ API Serialization and Deserialization") {
                                        static_cast<PGM_Idx>(power_grid_model::SerializationFormat::json));
 
         // get dataset
-        auto dataset = deserializer_json.get_dataset();
-        auto info = dataset.get_info();
+        auto& dataset = deserializer_json.get_dataset();
+        auto& info = dataset.get_info();
         // check meta data
         CHECK(info.name() == "input"s);
         CHECK(info.is_batch() == is_batch);
