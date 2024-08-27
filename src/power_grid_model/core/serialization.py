@@ -106,8 +106,9 @@ class Serializer(ABC):
         if not data:
             instance._data = {}
         else:
+            dataset_type = dataset_type if dataset_type is not None else get_dataset_type(data)
             instance._data = copy_to_row_or_columnar_dataset(
-                data=data, data_filter=None, dataset_type=get_dataset_type(data), available_components=None
+                data=data, data_filter=None, dataset_type=dataset_type, available_components=None
             )
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()

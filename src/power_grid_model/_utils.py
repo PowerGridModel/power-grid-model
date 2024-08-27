@@ -355,7 +355,7 @@ def _convert_data_to_row_or_columnar(
     if attrs is None:
         if isinstance(data, np.ndarray):
             return data
-        output_array = initialize_array(comp_name, dataset_type, next(iter(data.values())).shape)
+        output_array = initialize_array(dataset_type, comp_name, next(iter(data.values())).shape)
         for k in data:
             output_array[k] = data[k]
         return output_array
