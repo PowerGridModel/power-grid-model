@@ -143,6 +143,16 @@ class DatasetConst {
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
+    static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
+                           Idx total_elements, Idx const* indptr, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
+                                  elements_per_scenario, total_elements, indptr, data.get());
+    }
+    void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
+                    Buffer const& data) {
+        add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
+    }
+
     static DatasetInfo const& get_info(DatasetConst const& dataset) { return dataset.info_; }
     DatasetInfo const& get_info() const { return get_info(*this); }
 

@@ -49,9 +49,7 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
 TEST_CASE("C++ API Model") {
     using namespace std::string_literals;
 
-    Handle handle;
-    Options options;
-
+    Options options{};
     // input data
     DatasetConst input_dataset{"input", 0, 1};
     power_grid_model::NodeInput node_input{.id = 0, .u_rated = 100.0};
@@ -63,14 +61,12 @@ TEST_CASE("C++ API Model") {
                                                .sk = 1000.0,
                                                .rx_ratio = 0.0,
                                                .z01_ratio = 1.0};
-    power_grid_model::SymLoadGenInput load_input{
-
-        .id = 2,
-        .node = 0,
-        .status = 1,
-        .type = power_grid_model::LoadGenType::const_i,
-        .p_specified = 0.0,
-        .q_specified = 500.0};
+    power_grid_model::SymLoadGenInput load_input{.id = 2,
+                                                 .node = 0,
+                                                 .status = 1,
+                                                 .type = power_grid_model::LoadGenType::const_i,
+                                                 .p_specified = 0.0,
+                                                 .q_specified = 500.0};
 
     // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
     Buffer source_buffer{PGM_def_input_source, 1};
@@ -85,7 +81,7 @@ TEST_CASE("C++ API Model") {
     // add buffer
     input_dataset.add_buffer("node", 1, 1, nullptr, &node_input);
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, &load_input);
-    input_dataset.add_buffer("source", 1, 1, nullptr, &source_buffer);
+    input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
 
     // output data
     std::array<power_grid_model::NodeOutput<power_grid_model::symmetric_t>, 2> sym_node_outputs{};
@@ -156,7 +152,7 @@ TEST_CASE("C++ API Model") {
         CHECK(indexer[0] == 0);
         CHECK(indexer[1] == 0);
         ids[1] = 6;
-        model.get_indexer("sym_load", 2, ids.data(), indexer.data());
+        CHECK_THROWS_AS(model.get_indexer("sym_load", 2, ids.data(), indexer.data()), PowerGridRegularError);
     }
 
     SUBCASE("Batch power flow") {
@@ -173,14 +169,12 @@ TEST_CASE("C++ API Model") {
         CHECK(node_result_1.u_angle == doctest::Approx(0.0));
         // check via get attribute for u_pu and u
         std::array<double, 2> u_pu{};
-        Buffer sym_node_output_buffer{PGM_def_sym_output_node, 2};
-        sym_node_output_buffer.set_value(PGM_def_sym_output_node_u_pu, sym_node_outputs.data(), 0, -1);
-        sym_node_output_buffer.get_value(PGM_def_sym_output_node_u_pu, u_pu.data(), 0, 2);
+        Buffer::get_value(PGM_def_sym_output_node_u_pu, sym_node_outputs.data(), u_pu.data(), 0, 2, -1);
         CHECK(u_pu[0] == doctest::Approx(0.4));
         CHECK(u_pu[1] == doctest::Approx(0.7));
         std::array<double, 4> u{};
-        sym_node_output_buffer.get_value(PGM_def_sym_output_node_u, u.data(), 0,
-                                         2 * sizeof(double)); // stride of two double
+        Buffer::get_value(PGM_def_sym_output_node_u, sym_node_outputs.data(), u.data(), 0, 2,
+                          2 * sizeof(double)); // stride of two double
         CHECK(u[0] == doctest::Approx(40.0));
         CHECK(u[2] == doctest::Approx(70.0));
     }
