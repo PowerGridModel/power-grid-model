@@ -255,6 +255,8 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
     }
 }
 
+inline bool is_unreachable(EdgeWeight edge_res) { return edge_res == infty; }
+
 inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgeProperties {
     std::vector<EdgeWeight> vertex_distances(boost::num_vertices(graph), infty);
     BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
@@ -269,10 +271,9 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             continue;
         }
         auto edge_res = std::min(vertex_distances[boost::source(e, graph)], vertex_distances[boost::target(e, graph)]);
-        if (edge_res == infty) {
-            continue;
+        if (!is_unreachable(edge_res)) {
+            result.push_back({graph[e].regulated_idx, edge_res});
         }
-        result.push_back({graph[e].regulated_idx, edge_res});
     }
 
     return result;
