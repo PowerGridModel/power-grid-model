@@ -332,6 +332,8 @@ def copy_to_row_or_columnar_dataset(
 
     result_data: Dataset = {}
     for comp_name, attrs in processed_data_filter.items():
+        if comp_name not in data:
+            continue
         if is_sparse(data[comp_name]):
             result_data[comp_name] = {}
             result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
