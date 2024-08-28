@@ -269,6 +269,9 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             continue;
         }
         auto edge_res = std::min(vertex_distances[boost::source(e, graph)], vertex_distances[boost::target(e, graph)]);
+        if (edge_res == infty) {
+            continue;
+        }
         result.push_back({graph[e].regulated_idx, edge_res});
     }
 
