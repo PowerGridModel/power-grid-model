@@ -51,8 +51,6 @@ class PowerGridBatchError : public PowerGridError {
 
 class Handle {
   public:
-    Handle() {}
-
     RawHandle* get() const { return handle_.get(); }
 
     static void clear_error(Handle const& handle) { PGM_clear_error(handle.get()); }
