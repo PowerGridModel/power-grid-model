@@ -976,18 +976,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool tap_changed = false;
         auto& current_bs = binary_search_[options.idx_bs.group][options.idx_bs.pos];
 
-        regulator.transformer.apply([&](transformer_c auto const& transformer) { // NOSONAR
+        auto const adjust_transformer_ = [&](transformer_c auto const& transformer) { // NOSONAR
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
+
             if (!is_regulated_transformer_connected<TransformerType>(regulator, state)) {
                 return;
             }
 
-            auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
-
             if (current_bs.get_end_of_bs() || current_bs.get_inevitable_run()) {
-                tap_changed = false;
                 return;
             }
+
+            auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
             auto const cmp = node_state <=> param;
             if (auto new_tap_pos =
@@ -1014,7 +1014,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             IntS const tap_pos = current_bs.repropose_tap(strategy_max, previous_down, tap_changed);
             add_tap_pos_update(tap_pos, transformer, update_data);
-        });
+        };
+        regulator.transformer.apply(adjust_transformer_);
 
         return tap_changed;
     }
