@@ -38,7 +38,7 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 namespace power_grid_model_cpp {
 namespace {
 void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_error,
-                     std::string const& reference_err_msg) {
+                     std::string_view reference_err_msg) {
     CHECK(e.error_code() == reference_error);
     std::string const err_msg{e.what()};
     CHECK(err_msg.find(reference_err_msg) != std::string::npos);
@@ -250,7 +250,7 @@ TEST_CASE("C++ API Model") {
                 model.calculate(options, batch_output_dataset, batch_update_dataset);
             } catch (PowerGridBatchError const& e) {
                 CHECK(e.error_code() == PGM_batch_error);
-                auto const failed_scenarios = e.failed_scenarios();
+                auto const& failed_scenarios = e.failed_scenarios();
                 CHECK(failed_scenarios.size() == 1);
                 CHECK(failed_scenarios[0].scenario == 1);
                 std::string const err_msg{failed_scenarios[0].error_message};

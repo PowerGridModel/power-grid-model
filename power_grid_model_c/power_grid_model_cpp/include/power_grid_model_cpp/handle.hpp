@@ -51,7 +51,7 @@ class PowerGridBatchError : public PowerGridError {
 
 class Handle {
   public:
-    Handle() : handle_{PGM_create_handle()} {}
+    Handle() {}
 
     RawHandle* get() const { return handle_.get(); }
 
@@ -59,7 +59,7 @@ class Handle {
     void clear_error() const { clear_error(*this); }
 
     static void check_error(Handle const& handle) {
-        RawHandle* handle_ptr = handle.get();
+        RawHandle const* handle_ptr = handle.get();
         Idx error_code = PGM_error_code(handle_ptr);
         std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_ptr);
         switch (error_code) {
@@ -102,7 +102,7 @@ class Handle {
     }
 
   private:
-    detail::UniquePtr<RawHandle, PGM_destroy_handle> handle_;
+    detail::UniquePtr<RawHandle, &PGM_destroy_handle> handle_{PGM_create_handle()};
 };
 } // namespace power_grid_model_cpp
 

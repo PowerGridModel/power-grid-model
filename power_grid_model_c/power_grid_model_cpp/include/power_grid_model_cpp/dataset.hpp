@@ -7,6 +7,7 @@
 #define POWER_GRID_MODEL_CPP_DATASET_HPP
 
 #include "basics.hpp"
+#include "buffer.hpp"
 #include "handle.hpp"
 
 #include "power_grid_model_c/dataset.h"
@@ -21,10 +22,10 @@ class DatasetInfo {
     DatasetInfo& operator=(DatasetInfo&&) = delete;      // No move assignment
     ~DatasetInfo() = default;
 
-    static std::string const name(DatasetInfo const& info) {
+    static std::string name(DatasetInfo const& info) {
         return std::string{info.handle_.call_with(PGM_dataset_info_name, info.info_)};
     }
-    std::string const name() const { return name(*this); }
+    std::string name() const { return name(*this); }
 
     static Idx is_batch(DatasetInfo const& info) {
         return info.handle_.call_with(PGM_dataset_info_is_batch, info.info_);
@@ -100,13 +101,13 @@ class DatasetMutable {
 
     RawMutableDataset* get() const { return dataset_.get(); }
 
-    static void add_buffer(DatasetMutable& dataset, std::string const& component, Idx elements_per_scenario,
+    static void add_buffer(DatasetMutable const& dataset, std::string const& component, Idx elements_per_scenario,
                            Idx total_elements, Idx const* indptr, RawDataPtr data) {
         dataset.handle_.call_with(PGM_dataset_mutable_add_buffer, dataset.dataset_.get(), component.c_str(),
                                   elements_per_scenario, total_elements, indptr, data);
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    RawDataPtr data) {
+                    RawDataPtr data) const {
         add_buffer(*this, component.c_str(), elements_per_scenario, total_elements, indptr, data);
     }
 
@@ -115,7 +116,7 @@ class DatasetMutable {
 
   private:
     Handle handle_{};
-    detail::UniquePtr<RawMutableDataset, PGM_destroy_dataset_mutable> dataset_;
+    detail::UniquePtr<RawMutableDataset, &PGM_destroy_dataset_mutable> dataset_;
     DatasetInfo info_;
 };
 
@@ -133,23 +134,23 @@ class DatasetConst {
 
     RawConstDataset* get() const { return dataset_.get(); }
 
-    static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
+    static void add_buffer(DatasetConst const& dataset, std::string const& component, Idx elements_per_scenario,
                            Idx total_elements, Idx const* indptr, RawDataConstPtr data) {
         dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
                                   elements_per_scenario, total_elements, indptr, data);
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    RawDataConstPtr data) {
+                    RawDataConstPtr data) const {
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
-    static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
+    static void add_buffer(DatasetConst const& dataset, std::string const& component, Idx elements_per_scenario,
                            Idx total_elements, Idx const* indptr, Buffer const& data) {
         dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
                                   elements_per_scenario, total_elements, indptr, data.get());
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    Buffer const& data) {
+                    Buffer const& data) const {
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
@@ -158,7 +159,7 @@ class DatasetConst {
 
   private:
     Handle handle_{};
-    detail::UniquePtr<RawConstDataset, PGM_destroy_dataset_const> dataset_;
+    detail::UniquePtr<RawConstDataset, &PGM_destroy_dataset_const> dataset_;
     DatasetInfo info_;
 };
 } // namespace power_grid_model_cpp

@@ -54,7 +54,7 @@ class Buffer {
     Handle handle_{};
     MetaComponent const* component_;
     Idx size_;
-    detail::UniquePtr<void, PGM_destroy_buffer> buffer_;
+    detail::UniquePtr<void, &PGM_destroy_buffer> buffer_;
 };
 } // namespace power_grid_model_cpp
 

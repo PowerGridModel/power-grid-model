@@ -98,13 +98,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         Deserializer msgpack_deserializer{msgpack_data,
                                           static_cast<Idx>(power_grid_model::SerializationFormat::msgpack)};
 
-        auto check_deserializer = [&](Deserializer& deserializer) {
-            // reset data
-            node[0] = {};
-            // get dataset
-            auto& dataset = deserializer.get_dataset();
-            auto& info = dataset.get_info();
-            // check meta data
+        auto check_metadata = [&](DatasetInfo const& info) {
             CHECK(info.name() == "input"s);
             CHECK(info.is_batch() == is_batch);
             CHECK(info.batch_size() == batch_size);
@@ -115,6 +109,16 @@ TEST_CASE("C++ API Serialization and Deserialization") {
                 CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario[idx]);
                 CHECK(info.component_total_elements(idx) == total_elements[idx]);
             }
+        };
+
+        auto check_deserializer = [&](Deserializer& deserializer) {
+            // reset data
+            node[0] = {};
+            // get dataset
+            auto& dataset = deserializer.get_dataset();
+            auto& info = dataset.get_info();
+            // check meta data
+            check_metadata(info);
             // set buffer
             dataset.set_buffer("node", nullptr, node.data());
             dataset.set_buffer("source", nullptr, source.data());

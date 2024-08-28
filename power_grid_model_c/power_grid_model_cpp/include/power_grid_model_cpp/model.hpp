@@ -31,10 +31,10 @@ class Model {
 
     PowerGridModel* get() const { return model_.get(); }
 
-    static void update(Model& model, DatasetConst const& update_dataset) {
+    static void update(Model const& model, DatasetConst const& update_dataset) {
         model.handle_.call_with(PGM_update_model, model.get(), update_dataset.get());
     }
-    void update(DatasetConst const& update_dataset) { update(*this, update_dataset); }
+    void update(DatasetConst const& update_dataset) const { update(*this, update_dataset); }
 
     static void get_indexer(Model const& model, std::string const& component, Idx size, ID const* ids, Idx* indexer) {
         model.handle_.call_with(PGM_get_indexer, model.get(), component.c_str(), size, ids, indexer);
@@ -44,22 +44,24 @@ class Model {
         get_indexer(*this, component, size, ids, indexer);
     }
 
-    static void calculate(Model& model, Options const& opt, DatasetMutable const& output_dataset,
+    static void calculate(Model const& model, Options const& opt, DatasetMutable const& output_dataset,
                           DatasetConst const& batch_dataset) {
         model.handle_.call_with(PGM_calculate, model.get(), opt.get(), output_dataset.get(), batch_dataset.get());
     }
-    void calculate(Options const& opt, DatasetMutable const& output_dataset, DatasetConst const& batch_dataset) {
+    void calculate(Options const& opt, DatasetMutable const& output_dataset, DatasetConst const& batch_dataset) const {
         calculate(*this, opt, output_dataset, batch_dataset);
     }
 
-    static void calculate(Model& model, Options const& opt, DatasetMutable const& output_dataset) {
+    static void calculate(Model const& model, Options const& opt, DatasetMutable const& output_dataset) {
         model.handle_.call_with(PGM_calculate, model.get(), opt.get(), output_dataset.get(), nullptr);
     }
-    void calculate(Options const& opt, DatasetMutable const& output_dataset) { calculate(*this, opt, output_dataset); }
+    void calculate(Options const& opt, DatasetMutable const& output_dataset) const {
+        calculate(*this, opt, output_dataset);
+    }
 
   private:
     Handle handle_{};
-    detail::UniquePtr<PowerGridModel, PGM_destroy_model> model_;
+    detail::UniquePtr<PowerGridModel, &PGM_destroy_model> model_;
 };
 } // namespace power_grid_model_cpp
 
