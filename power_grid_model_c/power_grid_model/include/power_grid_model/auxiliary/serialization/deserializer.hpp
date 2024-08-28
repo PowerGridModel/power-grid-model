@@ -364,6 +364,8 @@ class Deserializer {
     using DataByteMeta = std::vector<std::vector<ComponentByteMeta>>;
     using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;
 
+    using BufferView = WritableDataset::Buffer;
+
   public:
     // not copyable
     Deserializer(Deserializer const&) = delete;
@@ -685,7 +687,7 @@ class Deserializer {
     }
 
     void parse_component(Idx component_idx) {
-        auto const& buffer = dataset_handler_.get_buffer(component_idx);
+        auto buffer = BufferView{dataset_handler_.get_buffer(component_idx)};
         auto const& info = dataset_handler_.get_component_info(component_idx);
         auto const& msg_data = msg_data_offsets_[component_idx];
         Idx const batch_size = dataset_handler_.batch_size();
@@ -700,7 +702,7 @@ class Deserializer {
                 [](auto const& x) { return x.size; }, Idx{});
         }
         // set nan
-        info.component->set_nan(buffer.data, 0, info.total_elements);
+        set_nan(buffer, info);
         // attributes
         auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
             auto const found = attributes_.find(info.component);
@@ -711,25 +713,24 @@ class Deserializer {
         }();
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
-            Idx const scenario_offset = info.elements_per_scenario < 0 ? buffer.indptr[scenario_number_]
-                                                                       : scenario_number_ * info.elements_per_scenario;
+            Idx const elements_in_scenario = info.elements_per_scenario < 0
+                                                 ? buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_]
+                                                 : info.elements_per_scenario;
 #ifndef NDEBUG
             if (info.elements_per_scenario < 0) {
                 assert(buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_] ==
                        msg_data[scenario_number_].size);
-
             } else {
                 assert(info.elements_per_scenario == msg_data[scenario_number_].size);
             }
 #endif
-            void* scenario_pointer = info.component->advance_ptr(buffer.data, scenario_offset);
-            parse_scenario(*info.component, scenario_pointer, msg_data[scenario_number_], attributes);
+            parse_scenario(*info.component, buffer, msg_data[scenario_number_], attributes);
         }
         scenario_number_ = -1;
         component_key_ = "";
     }
 
-    void parse_scenario(MetaComponent const& component, void* scenario_pointer, ComponentByteMeta const& msg_data,
+    void parse_scenario(MetaComponent const& component, BufferView& buffer, ComponentByteMeta const& msg_data,
                         std::span<MetaAttribute const* const> attributes) {
         // skip for empty scenario
         if (msg_data.size == 0) {
@@ -738,50 +739,64 @@ class Deserializer {
         // set offset and skip array header
         offset_ = msg_data.offset;
         parse_map_array<visit_array_t, move_forward>();
-        for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
-            void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
+        for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_, advance(buffer, component, 1)) {
             // check the element is map or array
             auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
             if (element_visitor.is_map) {
-                parse_map_element(element_pointer, element_visitor.size, component);
+                parse_map_element(buffer, element_visitor.size, component);
             } else {
-                parse_array_element(element_pointer, element_visitor.size, attributes);
+                parse_array_element(buffer, element_visitor.size, attributes);
             }
         }
         element_number_ = -1;
         offset_ = 0;
     }
 
-    void parse_map_element(void* element_pointer, Idx map_size, MetaComponent const& component) {
+    void parse_map_element(BufferView const& buffer, Idx map_size, MetaComponent const& component) {
         while (map_size-- != 0) {
             attribute_key_ = parse_string();
-            Idx const found_idx = component.find_attribute(attribute_key_);
-            if (found_idx < 0) {
+            Idx const component_idx = component.find_attribute(attribute_key_);
+            if (component_idx < 0) {
                 attribute_key_ = {};
                 // allow unknown key for additional user info
                 parse_skip();
                 continue;
             }
-            parse_attribute(element_pointer, component.attributes[found_idx]);
+            parse_attribute(buffer, component.attributes[component_idx]);
         }
         attribute_key_ = "";
     }
 
-    void parse_array_element(void* element_pointer, Idx array_size, std::span<MetaAttribute const* const> attributes) {
+    void parse_array_element(BufferView const& buffer, Idx array_size,
+                             std::span<MetaAttribute const* const> attributes) {
         if (array_size != static_cast<Idx>(attributes.size())) {
             throw SerializationError{
                 "An element of a list should have same length as the list of predefined attributes!\n"};
         }
         for (attribute_number_ = 0; attribute_number_ != array_size; ++attribute_number_) {
-            parse_attribute(element_pointer, *attributes[attribute_number_]);
+            parse_attribute(buffer, *attributes[attribute_number_]);
         }
         attribute_number_ = -1;
     }
 
-    void parse_attribute(void* element_pointer, MetaAttribute const& attribute) {
+    void parse_attribute(BufferView const& buffer, MetaAttribute const& attribute) {
         // call relevant parser
-        ctype_func_selector(attribute.ctype, [element_pointer, &attribute, this]<class T> {
-            ValueVisitor<T> visitor{{}, attribute.get_attribute<T>(element_pointer)};
+        ctype_func_selector(attribute.ctype, [&buffer, &attribute, this]<class T> {
+            T skip_element{};
+            ValueVisitor<T> visitor{{}, [&]() -> T& {
+                                        if (buffer.data != nullptr) {
+                                            return attribute.get_attribute<T>(buffer.data);
+                                        }
+                                        if (auto it = std::ranges::find_if(
+                                                buffer.attributes,
+                                                [attribute_ptr = &attribute](AttributeBuffer<void> const& attr_buf) {
+                                                    return attr_buf.meta_attribute == attribute_ptr;
+                                                });
+                                            it != std::end(buffer.attributes)) {
+                                            return *reinterpret_cast<T*>(it->data);
+                                        }
+                                        return skip_element;
+                                    }()};
             msgpack::parse(data_, size_, offset_, visitor);
         });
     }
@@ -813,6 +828,33 @@ class Deserializer {
             throw SerializationError("Buffer data input not supported for serialization format "s +
                                      std::to_string(static_cast<IntS>(serialization_format)));
         }
+        }
+    }
+
+    void set_nan(BufferView const& buffer, ComponentInfo const& info) {
+        if (buffer.data != nullptr) {
+            info.component->set_nan(buffer.data, 0, info.total_elements);
+        } else {
+            for (auto& attribute_buffer : buffer.attributes) {
+                assert(attribute_buffer.meta_attribute != nullptr);
+                ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<typename T> {
+                    std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data),
+                                                narrow_cast<size_t>(info.total_elements)},
+                                      nan_value<T>);
+                });
+            }
+        }
+    }
+
+    void advance(BufferView& buffer, MetaComponent const& component, Idx offset) {
+        if (buffer.data != nullptr) {
+            buffer.data = component.advance_ptr(buffer.data, offset);
+        } else {
+            for (auto& attribute_buffer : buffer.attributes) {
+                assert(attribute_buffer.meta_attribute != nullptr);
+                attribute_buffer.data = reinterpret_cast<RawDataPtr>(reinterpret_cast<char*>(attribute_buffer.data) +
+                                                                     attribute_buffer.meta_attribute->size * offset);
+            }
         }
     }
 

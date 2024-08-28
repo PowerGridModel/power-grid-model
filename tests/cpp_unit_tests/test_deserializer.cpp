@@ -494,10 +494,12 @@ TEST_CASE("Deserializer") {
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("sym_load", sym_load_indptr.data(), nullptr);
             info.add_attribute_buffer("sym_load", "id", sym_load_id.data());
+            info.add_attribute_buffer("sym_load", "status", sym_load_status.data());
             info.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
             info.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
             info.set_buffer("asym_load", nullptr, nullptr);
             info.add_attribute_buffer("asym_load", "id", asym_load_id.data());
+            info.add_attribute_buffer("asym_load", "status", asym_load_status.data());
             info.add_attribute_buffer("asym_load", "p_specified", asym_load_p_specified.data());
             info.add_attribute_buffer("asym_load", "q_specified", asym_load_q_specified.data());
 
