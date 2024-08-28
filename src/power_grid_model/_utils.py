@@ -352,7 +352,7 @@ def _convert_data_to_row_or_columnar(
     comp_name: ComponentType,
     dataset_type: DatasetType,
     attrs: set[str] | list[str] | None | EllipsisType,
-):
+) -> ComponentData:
     """converts row or columnar component data to row or columnar component data as requested in `attrs`"""
     if attrs is None:
         if isinstance(data, np.ndarray):
@@ -379,35 +379,38 @@ def process_data_filter(
     Args:
         dataset_type (DatasetType): the type of output that the user will see (as per the calculation options)
         data_filter (ComponentAttributeMapping):  data_filter provided by user
-        available_components (list[ComponentType]):  all components available in model instance
+        available_components (list[ComponentType]):  all components available in model instance or data
 
     Returns:
         _ComponentAttributeMappingDict: processed data_filter in a dictionary
     """
     # limit all component count to user specified component types in output and convert to a dict
     if data_filter is None:
-        return {ComponentType[k]: None for k in available_components}
-    if data_filter is Ellipsis:
-        return {ComponentType[k]: ... for k in available_components}
-    if isinstance(data_filter, (list, set)):
-        processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in data_filter}
-        validate_data_filter(data_filter=processed_data_filter, dataset_type=dataset_type)
-        return processed_data_filter
-    if not isinstance(data_filter, dict) or not all(
+        processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
+    elif data_filter is Ellipsis:
+        processed_data_filter = {ComponentType[k]: ... for k in available_components}
+    elif isinstance(data_filter, (list, set)):
+        processed_data_filter = {ComponentType[k]: None for k in data_filter}
+    elif isinstance(data_filter, dict) and all(
         attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
+        processed_data_filter = data_filter
+    else:
         raise ValueError(f"Invalid filter provided: {data_filter}")
 
-    validate_data_filter(data_filter, dataset_type)
-    return data_filter
+    validate_data_filter(processed_data_filter, dataset_type, available_components)
+    return processed_data_filter
 
 
-def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType) -> None:
+def validate_data_filter(
+    data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType, available_components: list[ComponentType]
+) -> None:
     """Raise error if some specified components or attributes are unknown
 
     Args:
-        data_filter (DatasetType): Component to attribtue dictionary
+        data_filter (_ComponentAttributeMappingDict): Processed component to attribtue dictionary
         dataset_type (DatasetType):  Type of dataset
+        available_components (list[ComponentType]):  all components available in model instance or data
 
     Raises:
         ValueError: when the type for data_filter is incorrect
@@ -415,9 +418,11 @@ def validate_data_filter(data_filter: _ComponentAttributeMappingDict, dataset_ty
         KeyError: with "unknown attributes" for unknown attribute(s) for a known component
     """
     dataset_meta = power_grid_meta_data[dataset_type]
-    unknown_components = [x for x in data_filter if x not in dataset_meta]
-    if unknown_components:
-        raise KeyError(f"You have specified some unknown component types: {unknown_components}")
+
+    for source, components in {"data_filter": data_filter.keys(), "data": available_components}.items():
+        unknown_components = [x for x in components if x not in dataset_meta]
+        if unknown_components:
+            raise KeyError(f"You have specified some unknown component types: {unknown_components} in {source}")
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():

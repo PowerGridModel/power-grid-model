@@ -455,22 +455,25 @@ def test_process_data_filter(data_filter, expected):
 
 
 @pytest.mark.parametrize(
-    ("data_filter", "error", "match"),
+    ("data_filter", "available_components", "error", "match"),
     [
-        ({"abc": 3, "def": None}, ValueError, "Invalid filter provided"),
-        ({"abc": None, "def": None}, KeyError, "unknown component"),
-        ({"abc": None, CT.sym_load: None}, KeyError, "unknown component"),
-        ({"abc": ["xyz"], CT.sym_load: None}, KeyError, "unknown component"),
-        ({CT.node: ["xyz"], CT.sym_load: None}, KeyError, "unknown attributes"),
-        ({CT.node: ["xyz1"], CT.sym_load: ["xyz2"]}, KeyError, "unknown attributes"),
+        ({"abc": 3, "def": None}, None, ValueError, "Invalid filter provided"),
+        ({"abc": None, "def": None}, None, KeyError, "unknown component"),
+        ({"abc": None, CT.sym_load: None}, None, KeyError, "unknown component"),
+        ({"abc": ["xyz"], CT.sym_load: None}, None, KeyError, "unknown component"),
+        ({CT.node: ["xyz"], CT.sym_load: None}, None, KeyError, "unknown attributes"),
+        ({CT.node: ["xyz1"], CT.sym_load: ["xyz2"]}, None, KeyError, "unknown attributes"),
+        ({CT.node: None, CT.sym_load: None}, [CT.node, "ghi"], KeyError, "unknown component"),
     ],
 )
-def test_process_data_filter__errors(data_filter, error, match):
+def test_process_data_filter__errors(data_filter, available_components, error, match):
+    if available_components is None:
+        available_components = [CT.node, CT.sym_load, CT.source]
     with pytest.raises(error, match=match):
         process_data_filter(
             dataset_type=DT.sym_output,
             data_filter=data_filter,
-            available_components=[CT.node, CT.sym_load, CT.source],
+            available_components=available_components,
         )
 
 
