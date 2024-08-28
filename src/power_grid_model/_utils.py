@@ -353,7 +353,7 @@ def _convert_data_to_row_or_columnar(
     dataset_type: DatasetType,
     attrs: set[str] | list[str] | None | EllipsisType,
 ) -> ComponentData:
-    """converts row or columnar component data to row or columnar component data as requested in `attrs`"""
+    """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:
         if isinstance(data, np.ndarray):
             return data
@@ -374,7 +374,7 @@ def process_data_filter(
     data_filter: ComponentAttributeMapping,
     available_components: list[ComponentType],
 ) -> _ComponentAttributeMappingDict:
-    """Checks valid type for data_filter. Also checks for any invalid component names and attribute names
+    """Checks valid type for data_filter. Also checks for any invalid component names and attribute names.
 
     Args:
         dataset_type (DatasetType): the type of output that the user will see (as per the calculation options)
@@ -384,7 +384,6 @@ def process_data_filter(
     Returns:
         _ComponentAttributeMappingDict: processed data_filter in a dictionary
     """
-    # limit all component count to user specified component types in output and convert to a dict
     if data_filter is None:
         processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
     elif data_filter is Ellipsis:
@@ -405,7 +404,7 @@ def process_data_filter(
 def validate_data_filter(
     data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType, available_components: list[ComponentType]
 ) -> None:
-    """Raise error if some specified components or attributes are unknown
+    """Raise error if some specified components or attributes are unknown.
 
     Args:
         data_filter (_ComponentAttributeMappingDict): Processed component to attribtue dictionary
