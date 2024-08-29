@@ -846,7 +846,7 @@ class Deserializer {
         }
     }
 
-    void advance(BufferView& buffer, MetaComponent const& component, Idx offset) {
+    void advance(BufferView& buffer, MetaComponent const& component, Idx offset) const {
         if (buffer.data != nullptr) {
             buffer.data = component.advance_ptr(buffer.data, offset);
         } else {

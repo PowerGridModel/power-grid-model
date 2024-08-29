@@ -199,9 +199,14 @@ struct JsonConverter : msgpack::null_visitor {
 class Serializer {
     using RawElementPtr = void const*;
 
+    struct BufferView {
+        ConstDataset::Buffer const* buffer{nullptr};
+        Idx idx{0};
+    };
+
     struct ComponentBuffer {
         MetaComponent const* component;
-        RawElementPtr data;
+        BufferView buffer;
         Idx size;
     };
 
@@ -306,13 +311,13 @@ class Serializer {
             ComponentInfo const& info = dataset_handler_.get_component_info(component);
             ConstDataset::Buffer const& buffer = dataset_handler_.get_buffer(component);
             component_buffer.component = info.component;
+
+            component_buffer.buffer.buffer = &buffer;
             if (info.elements_per_scenario < 0) {
-                component_buffer.data =
-                    component_buffer.component->advance_ptr(buffer.data, buffer.indptr[begin_scenario]);
+                component_buffer.buffer.idx = buffer.indptr[begin_scenario];
                 component_buffer.size = buffer.indptr[end_scenario] - buffer.indptr[begin_scenario];
             } else {
-                component_buffer.data =
-                    component_buffer.component->advance_ptr(buffer.data, info.elements_per_scenario * begin_scenario);
+                component_buffer.buffer.idx = component_buffer.buffer.idx = info.elements_per_scenario * begin_scenario;
                 component_buffer.size = info.elements_per_scenario * (end_scenario - begin_scenario);
             }
             // only store the view if it is non-empty
@@ -330,8 +335,21 @@ class Serializer {
             for (auto const& attribute : buffer.component->attributes) {
                 // if not all the values of an attribute are nan
                 // add this attribute to the list
-                if (!attribute.check_all_nan(buffer.data, buffer.size)) {
-                    attributes.push_back(&attribute);
+                assert(buffer.buffer.buffer != nullptr);
+                if (buffer.buffer.buffer->data != nullptr) {
+                    if (!attribute.check_all_nan(
+                            buffer.component->advance_ptr(buffer.buffer.buffer->data, buffer.buffer.idx),
+                            buffer.size)) {
+                        attributes.push_back(&attribute);
+                    }
+                } else if (auto it = std::ranges::find_if(buffer.buffer.buffer->attributes,
+                                                          [&attribute](auto const& attribute_buffer) {
+                                                              return attribute_buffer.meta_attribute == &attribute;
+                                                          });
+                           it != buffer.buffer.buffer->attributes.end()) {
+                    if (!check_all_nan(*it, 0, buffer.size)) {
+                        attributes.push_back(&attribute);
+                    }
                 }
             }
             attributes_[buffer.component] = attributes;
@@ -431,6 +449,8 @@ class Serializer {
     }
 
     void pack_component(ComponentBuffer const& component_buffer) {
+        assert(component_buffer.buffer.buffer != nullptr);
+
         packer_.pack(component_buffer.component);
         pack_array(component_buffer.size);
         bool const use_compact_list = use_compact_list_;
@@ -443,11 +463,50 @@ class Serializer {
             return found->second;
         }();
         for (Idx element = 0; element != component_buffer.size; ++element) {
-            RawElementPtr element_ptr = component_buffer.component->advance_ptr(component_buffer.data, element);
+            BufferView element_buffer{.buffer = component_buffer.buffer.buffer,
+                                      .idx = component_buffer.buffer.idx + element};
             if (use_compact_list) {
-                pack_element_in_list(element_ptr, attributes);
+                pack_element_in_list(element_buffer, *component_buffer.component, attributes);
             } else {
-                pack_element_in_dict(element_ptr, component_buffer);
+                pack_element_in_dict(element_buffer, component_buffer);
+            }
+            // if (component_buffer.buffer.buffer != nullptr) {
+            //     RawElementPtr element_ptr =
+            //     component_buffer.component->advance_ptr(component_buffer.buffer.buffer->data,
+            //     component_buffer.buffer.idx + element); if (use_compact_list) {
+            //         pack_element_in_list(element_ptr, attributes);
+            //     } else {
+            //         pack_element_in_dict(element_ptr, component_buffer);
+            //     }
+            // } else {
+
+            // }
+        }
+    }
+
+    void pack_element_in_list(BufferView const& element_buffer, MetaComponent const& component,
+                              std::span<MetaAttribute const* const> attributes) {
+        pack_array(attributes.size());
+        for (auto const* const attribute : attributes) {
+            if (check_nan(element_buffer, component, *attribute)) {
+                packer_.pack_nil();
+            } else {
+                pack_attribute(element_buffer, component, *attribute);
+            }
+        }
+    }
+
+    void pack_element_in_dict(BufferView const& element_buffer, ComponentBuffer const& component_buffer) {
+        uint32_t valid_attributes_count = 0;
+        for (auto const& attribute : component_buffer.component->attributes) {
+            valid_attributes_count +=
+                static_cast<uint32_t>(!check_nan(element_buffer, *component_buffer.component, attribute));
+        }
+        pack_map(valid_attributes_count);
+        for (auto const& attribute : component_buffer.component->attributes) {
+            if (!check_nan(element_buffer, *component_buffer.component, attribute)) {
+                packer_.pack(attribute.name);
+                pack_attribute(element_buffer, *component_buffer.component, attribute);
             }
         }
     }
@@ -501,11 +560,80 @@ class Serializer {
         });
     }
 
+    static bool check_nan(BufferView const& element_buffer, MetaComponent const& component,
+                          MetaAttribute const& attribute) {
+        if (element_buffer.buffer->data != nullptr) {
+            RawElementPtr element_ptr = component.advance_ptr(element_buffer.buffer->data, element_buffer.idx);
+            return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
+                return is_nan(attribute.get_attribute<T const>(element_ptr));
+            });
+        } else if (auto it = std::ranges::find_if(element_buffer.buffer->attributes,
+                                                  [&attribute](auto const& attribute_buffer) {
+                                                      return attribute_buffer.meta_attribute == &attribute;
+                                                  });
+                   it != element_buffer.buffer->attributes.end()) {
+            return check_nan(*it, element_buffer.idx);
+        }
+        return true;
+    }
+
+    static bool check_nan(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
+        return check_all_nan(attribute_buffer, idx, 1);
+    }
+
+    static bool check_all_nan(AttributeBuffer<void const> const& attribute_buffer, Idx idx, Idx size) {
+        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<class T> {
+            return std::ranges::all_of(
+                std::span<T const>{reinterpret_cast<T const*>(attribute_buffer.data) + idx, static_cast<size_t>(size)},
+                [](auto const& x) { return is_nan(x); });
+        });
+    }
+
     void pack_attribute(RawElementPtr element_ptr, MetaAttribute const& attribute) {
         ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<class T> {
             packer_.pack(attribute.get_attribute<T const>(element_ptr));
         });
     }
+
+    void pack_attribute(BufferView const& element_buffer, MetaComponent const& component,
+                        MetaAttribute const& attribute) {
+        if (element_buffer.buffer->data != nullptr) {
+            RawElementPtr element_ptr = component.advance_ptr(element_buffer.buffer->data, element_buffer.idx);
+            ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<class T> {
+                packer_.pack(attribute.get_attribute<T const>(element_ptr));
+            });
+        } else if (auto it = std::ranges::find_if(element_buffer.buffer->attributes,
+                                                  [&attribute](auto const& attribute_buffer) {
+                                                      return attribute_buffer.meta_attribute == &attribute;
+                                                  });
+                   it != element_buffer.buffer->attributes.end()) {
+            pack_attribute(*it, element_buffer.idx);
+        } else {
+            packer_.pack_nil();
+        }
+    }
+    void pack_attribute(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
+        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<class T> {
+            packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx));
+        });
+    }
+
+    static BufferView advance(BufferView const& buffer, MetaComponent const& component, Idx offset) {
+        return {.buffer = buffer.buffer, .idx = buffer.idx + offset};
+    }
+
+    // static RawElementPtr get_ptr(BufferView const& buffer, MetaComponent const& component, MetaAttribute const&
+    // attribute) {
+    //     if (buffer.data != nullptr) {
+    //         return buffer.data = component.advance_ptr(buffer.data, offset);
+    //     } else {
+    //         for (auto& attribute_buffer : buffer.attributes) {
+    //             assert(attribute_buffer.meta_attribute != nullptr);
+    //             attribute_buffer.data = reinterpret_cast<RawDataPtr>(reinterpret_cast<char*>(attribute_buffer.data) +
+    //                                                                  attribute_buffer.meta_attribute->size * offset);
+    //         }
+    //     }
+    // }
 };
 
 } // namespace power_grid_model::meta_data

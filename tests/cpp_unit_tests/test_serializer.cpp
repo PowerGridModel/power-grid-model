@@ -240,7 +240,7 @@ TEST_CASE("Serializer") {
         CHECK(serializer.get_string(true, 2) == batch_dataset_list_indent);
     }
 
-    SUBCASE("Batch row-based dataset") {
+    SUBCASE("Batch columnar dataset") {
         ConstDataset handler{true, 2, "update", meta_data_gen::meta_data};
         std::array<Idx, 3> const indptr_gen{0, 0, 1};
         handler.add_buffer("sym_load", 2, 4, nullptr, nullptr);
