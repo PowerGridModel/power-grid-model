@@ -36,6 +36,10 @@ def from_msgpack(data):
     return msgpack.unpackb(data)
 
 
+def is_non_homogenous_data_entry(data_entry):
+    return isinstance(data_entry, dict)
+
+
 def empty_dataset(dataset_type: DatasetType = DatasetType.input):
     return {"version": "1.0", "type": dataset_type, "is_batch": False, "attributes": {}, "data": {}}
 
@@ -327,19 +331,18 @@ def assert_single_dataset_correct(
 
     for component, component_result in deserialized_dataset.items():
         component_input = serialized_dataset["data"][component]
+        assert isinstance(component_input, list)
 
-        is_columnar_data = is_columnar(component_result)
-        if is_columnar_data:
+        if is_columnar(component_result):
             assert isinstance(component_result, dict)
             assert all(len(v) == len(component_input) for v in component_result.values())
 
             for comp_idx, input_entry in enumerate(component_input):
-                if isinstance(input_entry, dict):
+                if is_non_homogenous_data_entry(input_entry):
                     for attr, values in input_entry.items():
                         assert attr in component_result.keys()
                         assert_almost_equal(component_result[attr][comp_idx], values)
                 else:
-                    assert isinstance(component_input, list)
                     assert component in serialized_dataset["attributes"]
                     for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
                         assert attr in component_result.keys()
@@ -349,12 +352,11 @@ def assert_single_dataset_correct(
             assert len(component_result) == len(component_input)
 
             for result_entry, input_entry in zip(component_result, component_input):
-                if isinstance(input_entry, dict):
+                if is_non_homogenous_data_entry(input_entry):
                     for attr, values in input_entry.items():
                         assert attr in result_entry.dtype.names
                         assert_almost_equal(result_entry[attr], values)
                 else:
-                    assert isinstance(component_input, list)
                     assert component in serialized_dataset["attributes"]
                     for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
                         assert attr in result_entry.dtype.names
@@ -388,10 +390,8 @@ def assert_batch_serialization_correct(deserialized_dataset: BatchDataset, seria
                 for attr, attr_value in component_values.items():
                     assert isinstance(attr, str)
                     assert isinstance(attr_value, np.ndarray)
-                    assert len(attr_value.shape) in [
-                        2,
-                        3,
-                    ]  # TODO Are all expected to be 2? for eg p_specified is coming to be 3,1,3
+                    # TODO Are all expected to be 2? for eg p_specified is coming to be 3,1,3
+                    assert len(attr_value.shape) in [2, 3]
                     assert len(attr_value) == len(serialized_dataset["data"])
             else:
                 assert len(component_values.shape) == 2
