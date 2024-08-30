@@ -6,6 +6,7 @@
 
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
+#include "../../common/typing.hpp"
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
 
