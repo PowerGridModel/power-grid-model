@@ -15,11 +15,17 @@ namespace power_grid_model_cpp {
 
 class DatasetInfo {
   public:
-    DatasetInfo(RawDatasetInfo const* info) : info_{info} {}
+    DatasetInfo(RawDatasetInfo const* info) noexcept : info_{info} {}
+    DatasetInfo(DatasetInfo&& other) noexcept : handle_{std::move(other.handle_)}, info_{other.info_} {}
+    DatasetInfo& operator=(DatasetInfo&& other) noexcept {
+        if (this != &other) {
+            handle_ = std::move(other.handle_);
+            info_ = other.info_;
+        }
+        return *this;
+    }
     DatasetInfo(const DatasetInfo&) = delete;            // No copy constructor
-    DatasetInfo(DatasetInfo&&) = delete;                 // No move constructor
     DatasetInfo& operator=(const DatasetInfo&) = delete; // No copy assignment
-    DatasetInfo& operator=(DatasetInfo&&) = delete;      // No move assignment
     ~DatasetInfo() = default;
 
     static std::string name(DatasetInfo const& info) {
@@ -68,11 +74,19 @@ class DatasetWritable {
   public:
     DatasetWritable(RawWritableDataset* dataset)
         : dataset_{dataset}, info_{handle_.call_with(PGM_dataset_writable_get_info, dataset_)} {}
+    DatasetWritable(DatasetWritable&& other) noexcept
+        : handle_{std::move(other.handle_)}, dataset_{other.dataset_}, info_{std::move(other.info_)} {}
+    DatasetWritable& operator=(DatasetWritable&& other) noexcept {
+        if (this != &other) {
+            handle_ = std::move(other.handle_);
+            dataset_ = other.dataset_;
+            info_ = std::move(other.info_);
+        }
+        return *this;
+    }
 
     DatasetWritable(const DatasetWritable&) = delete;            // No copy constructor
-    DatasetWritable(DatasetWritable&&) = delete;                 // No move constructor
     DatasetWritable& operator=(const DatasetWritable&) = delete; // No copy assignment
-    DatasetWritable& operator=(DatasetWritable&&) = delete;      // No move assignment
     ~DatasetWritable() = default;
 
     RawWritableDataset* get() const { return dataset_; }
@@ -97,7 +111,7 @@ class DatasetWritable {
 
   private:
     Handle handle_{};
-    RawWritableDataset* const dataset_;
+    RawWritableDataset* dataset_;
     DatasetInfo info_;
 };
 

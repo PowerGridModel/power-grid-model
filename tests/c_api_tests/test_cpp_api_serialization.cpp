@@ -108,7 +108,10 @@ TEST_CASE("C++ API Serialization and Deserialization") {
 
         nlohmann::json::to_msgpack(json_document, msgpack_data);
 
+        // test move-ability
         Deserializer json_deserializer{json_data, 0};
+        Deserializer json_dummy{std::move(json_deserializer)};
+        json_deserializer = std::move(json_dummy);
         Deserializer msgpack_deserializer{msgpack_data, 1};
 
         auto check_metadata = [&](DatasetInfo const& info) {
