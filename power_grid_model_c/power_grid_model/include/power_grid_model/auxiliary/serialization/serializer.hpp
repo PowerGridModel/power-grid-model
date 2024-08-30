@@ -570,7 +570,7 @@ class Serializer {
         });
     }
 
-    static BufferView advance(BufferView const& buffer, MetaComponent const& component, Idx offset) {
+    static BufferView advance(BufferView const& buffer, Idx offset) {
         return {.buffer = buffer.buffer, .idx = buffer.idx + offset};
     }
 };
