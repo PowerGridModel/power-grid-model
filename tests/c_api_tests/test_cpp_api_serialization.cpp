@@ -6,11 +6,13 @@
 
 #include "power_grid_model_cpp.hpp"
 
-#include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model_c/dataset_definitions.h>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
+#include <cmath>
+#include <limits>
 #include <string>
 
 namespace power_grid_model_cpp {
@@ -27,12 +29,24 @@ constexpr char const* complete_json_data =
 
 TEST_CASE("C++ API Serialization and Deserialization") {
 
-    std::vector<power_grid_model::NodeInput> node{{5, power_grid_model::nan}};
-    std::vector<power_grid_model::SourceInput> source{
-        {6, power_grid_model::na_IntID, power_grid_model::na_IntS, power_grid_model::nan, power_grid_model::nan,
-         power_grid_model::nan, power_grid_model::nan, power_grid_model::nan},
-        {7, power_grid_model::na_IntID, power_grid_model::na_IntS, power_grid_model::nan, power_grid_model::nan,
-         power_grid_model::nan, power_grid_model::nan, power_grid_model::nan}};
+    ID node_id = 5;
+    Buffer node_buffer{PGM_def_input_node, 1};
+    node_buffer.set_nan();
+    node_buffer.set_value(PGM_def_input_node_id, &node_id, -1);
+
+    std::vector<ID> source_id = {6, 7};
+    std::vector<ID> source_node = {std::numeric_limits<ID>::min(), std::numeric_limits<ID>::min()};
+    std::vector<int8_t> source_status = {std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min()};
+    Buffer source_buffer{PGM_def_input_source, 2};
+    source_buffer.set_nan();
+    source_buffer.set_value(PGM_def_input_source_id, source_id.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_node, source_node.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_status, source_status.data(), -1);
+
+    // For deserializer
+    Buffer node_buffer_2{PGM_def_input_node, 1};
+    Buffer source_buffer_2{PGM_def_input_source, 2};
+
     Idx const n_components = 2;
     Idx const batch_size = 1;
     Idx const is_batch = 0;
@@ -41,11 +55,11 @@ TEST_CASE("C++ API Serialization and Deserialization") {
 
     SUBCASE("Serializer") {
         DatasetConst dataset{"input", is_batch, batch_size};
-        dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr, node.data());
-        dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source.data());
+        dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr, node_buffer);
+        dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
         SUBCASE("JSON") {
-            Serializer json_serializer{dataset, static_cast<Idx>(power_grid_model::SerializationFormat::json)};
+            Serializer json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
                 std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
@@ -63,7 +77,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         }
 
         SUBCASE("MessagePack") {
-            Serializer msgpack_serializer{dataset, static_cast<Idx>(power_grid_model::SerializationFormat::msgpack)};
+            Serializer msgpack_serializer{dataset, 1};
 
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
@@ -94,9 +108,8 @@ TEST_CASE("C++ API Serialization and Deserialization") {
 
         nlohmann::json::to_msgpack(json_document, msgpack_data);
 
-        Deserializer json_deserializer{json_data, static_cast<Idx>(power_grid_model::SerializationFormat::json)};
-        Deserializer msgpack_deserializer{msgpack_data,
-                                          static_cast<Idx>(power_grid_model::SerializationFormat::msgpack)};
+        Deserializer json_deserializer{json_data, 0};
+        Deserializer msgpack_deserializer{msgpack_data, 1};
 
         auto check_metadata = [&](DatasetInfo const& info) {
             CHECK(info.name() == "input"s);
@@ -112,23 +125,27 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         };
 
         auto check_deserializer = [&](Deserializer& deserializer) {
-            // reset data
-            node[0] = {};
             // get dataset
             auto& dataset = deserializer.get_dataset();
             auto& info = dataset.get_info();
             // check meta data
             check_metadata(info);
             // set buffer
-            dataset.set_buffer("node", nullptr, node.data());
-            dataset.set_buffer("source", nullptr, source.data());
+            dataset.set_buffer("node", nullptr, node_buffer_2);
+            dataset.set_buffer("source", nullptr, source_buffer_2);
             // parse
             deserializer.parse_to_buffer();
             // check
-            CHECK(node[0].id == 5);
-            CHECK(power_grid_model::is_nan(node[0].u_rated));
-            CHECK(source[0].id == 6);
-            CHECK(source[1].id == 7);
+            ID node_2_id;
+            double node_2_u_rated;
+            ID source_2_id[2];
+            node_buffer_2.get_value(PGM_def_input_node_id, &node_2_id, -1);
+            node_buffer_2.get_value(PGM_def_input_node_u_rated, &node_2_u_rated, -1);
+            source_buffer_2.get_value(PGM_def_input_source_id, &source_2_id, -1);
+            CHECK(node_2_id == 5);
+            CHECK(std::isnan(node_2_u_rated));
+            CHECK(source_2_id[0] == 6);
+            CHECK(source_2_id[1] == 7);
         };
 
         check_deserializer(json_deserializer);
@@ -136,8 +153,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
     }
 
     SUBCASE("Use deserialized dataset") {
-        Deserializer deserializer_json(complete_json_data,
-                                       static_cast<PGM_Idx>(power_grid_model::SerializationFormat::json));
+        Deserializer deserializer_json(complete_json_data, 0);
 
         // get dataset
         auto& dataset = deserializer_json.get_dataset();
@@ -150,8 +166,8 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         CHECK(info.component_name(0) == "node"s);
         CHECK(info.component_name(1) == "source"s);
         // set buffer
-        dataset.set_buffer("node", nullptr, node.data());
-        dataset.set_buffer("source", nullptr, source.data());
+        dataset.set_buffer("node", nullptr, node_buffer_2);
+        dataset.set_buffer("source", nullptr, source_buffer_2);
         // parse
         deserializer_json.parse_to_buffer();
         // create model from deserialized dataset
