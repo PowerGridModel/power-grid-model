@@ -65,10 +65,8 @@ TEST_CASE("C++ API Model") {
     ID source_node = 0;
     int8_t source_status = 1;
     double source_u_ref = 1.0;
-    double source_u_ref_angle = 0.0;
     double source_sk = 1000.0;
     double source_rx_ratio = 0.0;
-    double source_z01_ratio = 1.0;
     Buffer source_buffer{PGM_def_input_source, 1};
     source_buffer.set_nan();
     source_buffer.set_value(PGM_def_input_source_id, &source_id, -1);
