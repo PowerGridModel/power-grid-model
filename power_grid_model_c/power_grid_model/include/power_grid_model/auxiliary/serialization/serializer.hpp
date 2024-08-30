@@ -463,8 +463,8 @@ class Serializer {
             return found->second;
         }();
         for (Idx element = 0; element != component_buffer.size; ++element) {
-            BufferView element_buffer{.buffer = component_buffer.buffer.buffer,
-                                      .idx = component_buffer.buffer.idx + element};
+            BufferView const element_buffer{.buffer = component_buffer.buffer.buffer,
+                                            .idx = component_buffer.buffer.idx + element};
             if (use_compact_list) {
                 pack_element_in_list(element_buffer, *component_buffer.component, attributes);
             } else {
@@ -525,11 +525,11 @@ class Serializer {
             return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
                 return is_nan(attribute.get_attribute<T const>(element_ptr));
             });
-        } else if (auto it = std::ranges::find_if(element_buffer.buffer->attributes,
-                                                  [&attribute](auto const& attribute_buffer) {
-                                                      return attribute_buffer.meta_attribute == &attribute;
-                                                  });
-                   it != element_buffer.buffer->attributes.end()) {
+        }
+        if (auto it = std::ranges::find_if(
+                element_buffer.buffer->attributes,
+                [&attribute](auto const& attribute_buffer) { return attribute_buffer.meta_attribute == &attribute; });
+            it != element_buffer.buffer->attributes.end()) {
             return check_nan(*it, element_buffer.idx);
         }
         return true;

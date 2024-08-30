@@ -76,7 +76,7 @@ template <typename T>
     requires requires(T t) {
                  { set_nan(t) };
              }
-inline T nan_value = [] {
+inline T const nan_value = [] {
     T v{};
     set_nan(v);
     return v;

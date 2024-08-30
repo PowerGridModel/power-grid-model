@@ -745,7 +745,7 @@ class Deserializer {
         offset_ = msg_data.offset;
         parse_map_array<visit_array_t, move_forward>();
         for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
-            BufferView element_buffer = advance(buffer, element_number_);
+            BufferView const element_buffer = advance(buffer, element_number_);
             // check the element is map or array
             auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
             if (element_visitor.is_map) {
@@ -844,7 +844,7 @@ class Deserializer {
         if (buffer.buffer->data != nullptr) {
             info.component->set_nan(buffer.buffer->data, buffer.idx, info.total_elements);
         } else {
-            for (auto& attribute_buffer : buffer.buffer->attributes) {
+            for (auto const& attribute_buffer : buffer.buffer->attributes) {
                 assert(attribute_buffer.meta_attribute != nullptr);
                 ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<typename T> {
                     std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data) + buffer.idx,
