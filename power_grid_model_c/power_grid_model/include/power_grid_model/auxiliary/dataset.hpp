@@ -357,6 +357,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Dataset get_individual_scenario(Idx scenario)
         requires(!is_indptr_mutable_v<dataset_type>)
     {
+        using AdvanceablePtr = std::conditional_t<is_data_mutable_v<dataset_type>, char*, char const*>;
+
         assert(0 <= scenario && scenario < batch_size());
 
         Dataset result{false, 1, dataset().name, meta_data()};
@@ -366,10 +368,17 @@ template <dataset_type_tag dataset_type_> class Dataset {
             Idx size = component_info.elements_per_scenario >= 0
                            ? component_info.elements_per_scenario
                            : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
-            Data* data = component_info.elements_per_scenario >= 0
-                             ? component_info.component->advance_ptr(buffer.data, size * scenario)
-                             : component_info.component->advance_ptr(buffer.data, buffer.indptr[scenario]);
-            result.add_buffer(component_info.component->name, size, size, nullptr, data);
+            Idx offset = component_info.elements_per_scenario >= 0 ? size * scenario : buffer.indptr[scenario];
+            if (is_columnar(buffer)) {
+                result.add_buffer(component_info.component->name, size, size, nullptr, nullptr);
+                for (auto const& attribute_buffer : buffer.attributes) {
+                    result.add_attribute_buffer(component_info.component->name, attribute_buffer.meta_attribute->name,
+                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data)));
+                }
+            } else {
+                Data* data = component_info.component->advance_ptr(buffer.data, offset);
+                result.add_buffer(component_info.component->name, size, size, nullptr, data);
+            }
         }
         return result;
     }
