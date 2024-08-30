@@ -25,8 +25,8 @@ class Model {
         }
         return *this;
     }
-    Model(Model&& other) : handle_{std::move(other.handle_)}, model_{std::move(other.model_)} {}
-    Model& operator=(Model&& other) {
+    Model(Model&& other) noexcept : handle_{std::move(other.handle_)}, model_{std::move(other.model_)} {}
+    Model& operator=(Model&& other) noexcept {
         if (this != &other) {
             handle_ = std::move(other.handle_);
             model_ = std::move(other.model_);

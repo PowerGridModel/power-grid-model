@@ -141,10 +141,10 @@ TEST_CASE("C++ API Serialization and Deserialization") {
             // check
             ID node_2_id;
             double node_2_u_rated;
-            ID source_2_id[2];
+            std::vector<ID> source_2_id(2);
             node_buffer_2.get_value(PGM_def_input_node_id, &node_2_id, -1);
             node_buffer_2.get_value(PGM_def_input_node_u_rated, &node_2_u_rated, -1);
-            source_buffer_2.get_value(PGM_def_input_source_id, &source_2_id, -1);
+            source_buffer_2.get_value(PGM_def_input_source_id, source_2_id.data(), -1);
             CHECK(node_2_id == 5);
             CHECK(std::isnan(node_2_u_rated));
             CHECK(source_2_id[0] == 6);

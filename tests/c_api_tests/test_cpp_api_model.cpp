@@ -117,7 +117,6 @@ TEST_CASE("C++ API Model") {
     int8_t source_update_status = std::numeric_limits<int8_t>::min();
     double source_update_u_ref = 0.5;
     double source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
-    ;
     Buffer source_update_buffer{PGM_def_update_source, 1};
     source_update_buffer.set_nan();
     source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
