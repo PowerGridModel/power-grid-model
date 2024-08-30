@@ -6,15 +6,13 @@
 
 #include "power_grid_model_cpp.hpp"
 
-#include <power_grid_model/auxiliary/input.hpp>
-#include <power_grid_model/auxiliary/output.hpp>
-#include <power_grid_model/auxiliary/update.hpp>
+#include <power_grid_model_c/dataset_definitions.h>
 
 #include <doctest/doctest.h>
 
-#include <power_grid_model_c/dataset_definitions.h>
-
+#include <array>
 #include <exception>
+#include <limits>
 #include <string>
 
 /*
@@ -49,99 +47,150 @@ TEST_CASE("C++ API Model") {
     using namespace std::string_literals;
 
     Options options{};
+
     // input data
     DatasetConst input_dataset{"input", 0, 1};
-    power_grid_model::NodeInput node_input{.id = 0, .u_rated = 100.0};
-    power_grid_model::SourceInput source_input{.id = 1,
-                                               .node = 0,
-                                               .status = 1,
-                                               .u_ref = 1.0,
-                                               .u_ref_angle = 0.0,
-                                               .sk = 1000.0,
-                                               .rx_ratio = 0.0,
-                                               .z01_ratio = 1.0};
-    power_grid_model::SymLoadGenInput load_input{.id = 2,
-                                                 .node = 0,
-                                                 .status = 1,
-                                                 .type = power_grid_model::LoadGenType::const_i,
-                                                 .p_specified = 0.0,
-                                                 .q_specified = 500.0};
 
-    // create one buffer and set attr, leave angle to nan as default zero, leave z01 ratio to nan
+    // node buffer
+    ID node_id = 0;
+    double node_u_rated = 100.0;
+    Buffer node_buffer{PGM_def_input_node, 1};
+    // set nan from offset to size
+    node_buffer.set_nan(0, node_buffer.size());
+    node_buffer.set_value(PGM_def_input_node_id, &node_id, -1);
+    node_buffer.set_value(PGM_def_input_node_u_rated, &node_u_rated, -1);
+
+    // source buffer
+    ID source_id = 1;
+    ID source_node = 0;
+    int8_t source_status = 1;
+    double source_u_ref = 1.0;
+    double source_u_ref_angle = 0.0;
+    double source_sk = 1000.0;
+    double source_rx_ratio = 0.0;
+    double source_z01_ratio = 1.0;
     Buffer source_buffer{PGM_def_input_source, 1};
-    source_buffer.set_nan(0);
-    source_buffer.set_value(PGM_def_input_source_id, &source_input.id, 0, -1);
-    source_buffer.set_value(PGM_def_input_source_node, &source_input.node, 0, sizeof(ID));
-    source_buffer.set_value(PGM_def_input_source_status, &source_input.status, 0, -1);
-    source_buffer.set_value(PGM_def_input_source_u_ref, &source_input.u_ref, 0, -1);
-    source_buffer.set_value(PGM_def_input_source_sk, &source_input.sk, 0, -1);
-    source_buffer.set_value(PGM_def_input_source_rx_ratio, &source_input.rx_ratio, 0, -1);
+    source_buffer.set_nan();
+    source_buffer.set_value(PGM_def_input_source_id, &source_id, -1);
+    source_buffer.set_value(PGM_def_input_source_node, &source_node, 0, sizeof(ID));
+    source_buffer.set_value(PGM_def_input_source_status, &source_status, -1);
+    source_buffer.set_value(PGM_def_input_source_u_ref, &source_u_ref, -1);
+    source_buffer.set_value(PGM_def_input_source_sk, &source_sk, -1);
+    source_buffer.set_value(PGM_def_input_source_rx_ratio, &source_rx_ratio, -1);
 
-    // add buffer
-    input_dataset.add_buffer("node", 1, 1, nullptr, &node_input);
-    input_dataset.add_buffer("sym_load", 1, 1, nullptr, &load_input);
+    // load buffer
+    ID load_id = 2;
+    ID load_node = 0;
+    int8_t load_status = 1;
+    int8_t load_type = 2;
+    double load_p_specified = 0.0;
+    double load_q_specified = 500.0;
+    Buffer load_buffer{PGM_def_input_sym_load, 1};
+    load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
+    load_buffer.set_value(PGM_def_input_sym_load_node, &load_node, -1);
+    load_buffer.set_value(PGM_def_input_sym_load_status, &load_status, -1);
+    load_buffer.set_value(PGM_def_input_sym_load_type, &load_type, -1);
+    load_buffer.set_value(PGM_def_input_sym_load_p_specified, &load_p_specified, -1);
+    load_buffer.set_value(PGM_def_input_sym_load_q_specified, &load_q_specified, -1);
+
+    // add buffers
+    input_dataset.add_buffer("node", 1, 1, nullptr, node_buffer);
+    input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
 
     // output data
-    std::array<power_grid_model::NodeOutput<power_grid_model::symmetric_t>, 2> sym_node_outputs{};
-    power_grid_model::NodeOutput<power_grid_model::symmetric_t>& node_result_0 = sym_node_outputs[0];
-    power_grid_model::NodeOutput<power_grid_model::symmetric_t>& node_result_1 = sym_node_outputs[1];
+    Buffer node_output{PGM_def_sym_output_node, 1};
+    node_output.set_nan();
     DatasetMutable single_output_dataset{"sym_output", 0, 1};
-    single_output_dataset.add_buffer("node", 1, 1, nullptr, sym_node_outputs.data());
+    single_output_dataset.add_buffer("node", 1, 1, nullptr, node_output);
+    Buffer node_batch_output{PGM_def_sym_output_node, 2};
+    node_batch_output.set_nan();
     DatasetMutable batch_output_dataset{"sym_output", 1, 2};
-    batch_output_dataset.add_buffer("node", 1, 2, nullptr, sym_node_outputs.data());
+    batch_output_dataset.add_buffer("node", 1, 2, nullptr, node_batch_output);
+
+    std::vector<ID> node_result_id(2);
+    std::vector<int8_t> node_result_energized(2);
+    std::vector<double> node_result_u(2);
+    std::vector<double> node_result_u_pu(2);
+    std::vector<double> node_result_u_angle(2);
 
     // update data
-    power_grid_model::SourceUpdate source_update{
-        .id = 1, .status = power_grid_model::na_IntS, .u_ref = 0.5, .u_ref_angle = power_grid_model::nan};
+    ID source_update_id = 1;
+    int8_t source_update_status = std::numeric_limits<int8_t>::min();
+    double source_update_u_ref = 0.5;
+    double source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
+    ;
+    Buffer source_update_buffer{PGM_def_update_source, 1};
+    source_update_buffer.set_nan();
+    source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+    source_update_buffer.set_value(PGM_def_update_source_status, &source_update_status, 0, -1);
+    source_update_buffer.set_value(PGM_def_update_source_u_ref, &source_update_u_ref, 0, -1);
+    source_update_buffer.set_value(PGM_def_update_source_u_ref_angle, &source_update_u_ref_angle, 0, -1);
     std::array<Idx, 3> source_update_indptr{0, 1, 1};
-    std::array<power_grid_model::SymLoadGenUpdate, 2> load_updates{};
+
+    std::vector<ID> load_updates_id = {2, 2};
+    std::vector<double> load_updates_q_specified = {100.0, 300.0};
+    Buffer load_updates_buffer{PGM_def_update_sym_load, 2};
     // set nan twice with offset
-    Buffer::set_nan(PGM_def_update_sym_load, load_updates.data(), 0, 1);
-    Buffer::set_nan(PGM_def_update_sym_load, load_updates.data(), 1, 1);
-    // set value
-    load_updates[0].id = 2;
-    load_updates[0].q_specified = 100.0;
-    load_updates[1].id = 2;
-    load_updates[1].q_specified = 300.0;
+    load_updates_buffer.set_nan(0);
+    load_updates_buffer.set_nan(1);
+    load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
+    load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
+    load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
+
     // dataset
     DatasetConst single_update_dataset{"update", 0, 1};
-    single_update_dataset.add_buffer("source", 1, 1, nullptr, &source_update);
-    single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates.data());
+    single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
+    single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
     DatasetConst batch_update_dataset{"update", 1, 2};
-    batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), &source_update);
-    batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates.data());
+    batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
+    batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
 
     // create model
     Model model{50.0, input_dataset};
 
     SUBCASE("Simple power flow") {
         model.calculate(options, single_output_dataset);
-        CHECK(node_result_0.id == 0);
-        CHECK(node_result_0.energized == 1);
-        CHECK(node_result_0.u == doctest::Approx(50.0));
-        CHECK(node_result_0.u_pu == doctest::Approx(0.5));
-        CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+        node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+        node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+        CHECK(node_result_id[0] == 0);
+        CHECK(node_result_energized[0] == 1);
+        CHECK(node_result_u[0] == doctest::Approx(50.0));
+        CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
+        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
     }
 
     SUBCASE("Simple update") {
         model.update(single_update_dataset);
         model.calculate(options, single_output_dataset);
-        CHECK(node_result_0.id == 0);
-        CHECK(node_result_0.energized == 1);
-        CHECK(node_result_0.u == doctest::Approx(40.0));
-        CHECK(node_result_0.u_pu == doctest::Approx(0.4));
-        CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+        node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+        node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+        CHECK(node_result_id[0] == 0);
+        CHECK(node_result_energized[0] == 1);
+        CHECK(node_result_u[0] == doctest::Approx(40.0));
+        CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
+        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
     }
 
     SUBCASE("Copy model") {
         Model model_copy{model};
         model_copy.calculate(options, single_output_dataset);
-        CHECK(node_result_0.id == 0);
-        CHECK(node_result_0.energized == 1);
-        CHECK(node_result_0.u == doctest::Approx(50.0));
-        CHECK(node_result_0.u_pu == doctest::Approx(0.5));
-        CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+        node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+        node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+        CHECK(node_result_id[0] == 0);
+        CHECK(node_result_energized[0] == 1);
+        CHECK(node_result_u[0] == doctest::Approx(50.0));
+        CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
+        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
     }
 
     SUBCASE("Get indexer") {
@@ -156,31 +205,26 @@ TEST_CASE("C++ API Model") {
 
     SUBCASE("Batch power flow") {
         model.calculate(options, batch_output_dataset, batch_update_dataset);
-        CHECK(node_result_0.id == 0);
-        CHECK(node_result_0.energized == 1);
-        CHECK(node_result_0.u == doctest::Approx(40.0));
-        CHECK(node_result_0.u_pu == doctest::Approx(0.4));
-        CHECK(node_result_0.u_angle == doctest::Approx(0.0));
-        CHECK(node_result_1.id == 0);
-        CHECK(node_result_1.energized == 1);
-        CHECK(node_result_1.u == doctest::Approx(70.0));
-        CHECK(node_result_1.u_pu == doctest::Approx(0.7));
-        CHECK(node_result_1.u_angle == doctest::Approx(0.0));
-        // check via get attribute for u_pu and u
-        std::array<double, 2> u_pu{};
-        Buffer::get_value(PGM_def_sym_output_node_u_pu, sym_node_outputs.data(), u_pu.data(), 0, 2, -1);
-        CHECK(u_pu[0] == doctest::Approx(0.4));
-        CHECK(u_pu[1] == doctest::Approx(0.7));
-        std::array<double, 4> u{};
-        Buffer::get_value(PGM_def_sym_output_node_u, sym_node_outputs.data(), u.data(), 0, 2,
-                          2 * sizeof(double)); // stride of two double
-        CHECK(u[0] == doctest::Approx(40.0));
-        CHECK(u[2] == doctest::Approx(70.0));
+        node_batch_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+        CHECK(node_result_id[0] == 0);
+        CHECK(node_result_energized[0] == 1);
+        CHECK(node_result_u[0] == doctest::Approx(40.0));
+        CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
+        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
+        CHECK(node_result_id[1] == 0);
+        CHECK(node_result_energized[1] == 1);
+        CHECK(node_result_u[1] == doctest::Approx(70.0));
+        CHECK(node_result_u_pu[1] == doctest::Approx(0.7));
+        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
     }
 
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
-            load_input.id = 0;
+            load_id = 0;
             try {
                 Model wrong_model{50.0, input_dataset};
             } catch (PowerGridRegularError const& e) {
@@ -189,7 +233,7 @@ TEST_CASE("C++ API Model") {
         }
 
         SUBCASE("Update error") {
-            source_update.id = 5;
+            source_update_id = 5;
             try {
                 model.update(single_update_dataset);
             } catch (PowerGridRegularError const& e) {
@@ -244,7 +288,7 @@ TEST_CASE("C++ API Model") {
 
         SUBCASE("Batch calculation error") {
             // wrong id
-            load_updates[1].id = 5;
+            load_updates_id[1] = 5;
             // failed in batch 1
             try {
                 model.calculate(options, batch_output_dataset, batch_update_dataset);
@@ -257,11 +301,16 @@ TEST_CASE("C++ API Model") {
                 CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
             }
             // valid results for batch 0
-            CHECK(node_result_0.id == 0);
-            CHECK(node_result_0.energized == 1);
-            CHECK(node_result_0.u == doctest::Approx(40.0));
-            CHECK(node_result_0.u_pu == doctest::Approx(0.4));
-            CHECK(node_result_0.u_angle == doctest::Approx(0.0));
+            node_batch_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+            CHECK(node_result_id[0] == 0);
+            CHECK(node_result_energized[0] == 1);
+            CHECK(node_result_u[0] == doctest::Approx(40.0));
+            CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
+            CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
         }
     }
 }
