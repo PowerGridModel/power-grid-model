@@ -327,6 +327,8 @@ def copy_output_to_columnar_dataset(
 
     result_data = {}
     for comp_name, attrs in processed_output_types.items():
+        if comp_name not in output_data:
+            continue
         if attrs is None:
             result_data[comp_name] = output_data[comp_name]
         elif isinstance(attrs, (list, set)) and len(attrs) == 0:

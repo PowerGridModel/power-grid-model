@@ -7,14 +7,17 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
+from power_grid_model import initialize_array
 from power_grid_model._utils import (
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
+    copy_output_to_columnar_dataset,
     get_and_verify_batch_sizes,
     is_nan,
     split_numpy_array_in_batches,
     split_sparse_batches_in_batches,
 )
+from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.data_types import BatchDataset, BatchList
 
 from .utils import convert_python_to_numpy
@@ -424,3 +427,61 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
         r"\(should be a Numpy structured array or a python dictionary\).",
     ):
         convert_batch_dataset_to_batch_list(update_data)
+
+
+def sample_output_data():
+    output_data = {
+        CT.node: initialize_array(DT.sym_output, CT.node, 4),
+        CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
+        CT.source: initialize_array(DT.sym_output, CT.source, 1),
+    }
+    for comp in output_data:
+        for attr in output_data[comp].dtype.names:
+            output_data[comp][attr] = 0
+    return output_data
+
+
+@pytest.mark.parametrize(
+    ("output_component_types", "expected"),
+    [
+        pytest.param(
+            None,
+            sample_output_data(),
+            id="All row default",
+        ),
+        pytest.param(
+            [CT.node, CT.sym_load],
+            {k: v for k, v in sample_output_data().items() if k in [CT.node, CT.sym_load]},
+            id="All row list filter",
+        ),
+        pytest.param(
+            {CT.node, CT.sym_load},
+            {k: v for k, v in sample_output_data().items() if k in [CT.node, CT.sym_load]},
+            id="All row set filter",
+        ),
+        pytest.param([CT.shunt], {}, id="list/set filter-No component in filter present in data"),
+        pytest.param(
+            [CT.node, CT.shunt],
+            {k: v for k, v in sample_output_data().items() if k in [CT.node]},
+            id="list/set filter-Component in filter not present in data",
+        ),
+        pytest.param(
+            {CT.node: [], CT.shunt: ["p"]}, {CT.node: dict()}, id="dict filter-Component in filter not present in data"
+        ),
+        pytest.param(
+            {CT.node: [], CT.shunt: []},
+            {CT.node: dict()},
+            id="dict filter-Component in filter not present in data without attributes",
+        ),
+    ],
+)
+def test_copy_output_to_columnar_dataset(output_component_types, expected):
+    actual = copy_output_to_columnar_dataset(
+        output_data=sample_output_data(),
+        output_component_types=output_component_types,
+        output_type=DT.sym_output,
+        available_components=list(sample_output_data().keys()),
+    )
+    assert actual.keys() == expected.keys()
+    for comp_name in expected:
+        np.testing.assert_array_equal(actual[comp_name], expected[comp_name])
