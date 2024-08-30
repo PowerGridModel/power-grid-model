@@ -149,6 +149,10 @@ TEST_CASE("C++ API Model") {
     // create model
     Model model{50.0, input_dataset};
 
+    // test move-ability
+    Model model_dummy{std::move(model)};
+    model = std::move(model_dummy);
+
     SUBCASE("Simple power flow") {
         model.calculate(options, single_output_dataset);
         node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);

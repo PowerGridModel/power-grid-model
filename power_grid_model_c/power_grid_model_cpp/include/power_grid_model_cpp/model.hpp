@@ -25,9 +25,15 @@ class Model {
         }
         return *this;
     }
-    Model(Model&& other) = default;
-    Model& operator=(Model&& other) = default;
-    ~Model() = default;
+    Model(Model&& other) : handle_{std::move(other.handle_)}, model_{std::move(other.model_)} {}
+    Model& operator=(Model&& other) {
+        if (this != &other) {
+            handle_ = std::move(other.handle_);
+            model_ = std::move(other.model_);
+        }
+        return *this;
+    }
+    ~Model() { model_.reset(); }
 
     PowerGridModel* get() const { return model_.get(); }
 

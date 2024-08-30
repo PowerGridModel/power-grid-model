@@ -84,7 +84,6 @@ class DatasetWritable {
         }
         return *this;
     }
-
     DatasetWritable(const DatasetWritable&) = delete;            // No copy constructor
     DatasetWritable& operator=(const DatasetWritable&) = delete; // No copy assignment
     ~DatasetWritable() = default;
