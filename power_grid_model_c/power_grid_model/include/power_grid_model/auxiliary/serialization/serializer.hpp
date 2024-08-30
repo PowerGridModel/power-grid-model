@@ -470,17 +470,6 @@ class Serializer {
             } else {
                 pack_element_in_dict(element_buffer, component_buffer);
             }
-            // if (component_buffer.buffer.buffer != nullptr) {
-            //     RawElementPtr element_ptr =
-            //     component_buffer.component->advance_ptr(component_buffer.buffer.buffer->data,
-            //     component_buffer.buffer.idx + element); if (use_compact_list) {
-            //         pack_element_in_list(element_ptr, attributes);
-            //     } else {
-            //         pack_element_in_dict(element_ptr, component_buffer);
-            //     }
-            // } else {
-
-            // }
         }
     }
 
@@ -511,31 +500,6 @@ class Serializer {
         }
     }
 
-    void pack_element_in_list(RawElementPtr element_ptr, std::span<MetaAttribute const* const> attributes) {
-        pack_array(attributes.size());
-        for (auto const* const attribute : attributes) {
-            if (check_nan(element_ptr, *attribute)) {
-                packer_.pack_nil();
-            } else {
-                pack_attribute(element_ptr, *attribute);
-            }
-        }
-    }
-
-    void pack_element_in_dict(RawElementPtr element_ptr, ComponentBuffer const& component_buffer) {
-        uint32_t valid_attributes_count = 0;
-        for (auto const& attribute : component_buffer.component->attributes) {
-            valid_attributes_count += static_cast<uint32_t>(!check_nan(element_ptr, attribute));
-        }
-        pack_map(valid_attributes_count);
-        for (auto const& attribute : component_buffer.component->attributes) {
-            if (!check_nan(element_ptr, attribute)) {
-                packer_.pack(attribute.name);
-                pack_attribute(element_ptr, attribute);
-            }
-        }
-    }
-
     void pack_array(std::integral auto count) {
         if (!std::in_range<uint32_t>(count)) {
             using namespace std::string_literals;
@@ -552,12 +516,6 @@ class Serializer {
             throw SerializationError{"Too many objects to pack in map ("s + std::to_string(count) + ")"s};
         }
         packer_.pack_map(static_cast<uint32_t>(count));
-    }
-
-    static bool check_nan(RawElementPtr element_ptr, MetaAttribute const& attribute) {
-        return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
-            return is_nan(attribute.get_attribute<T const>(element_ptr));
-        });
     }
 
     static bool check_nan(BufferView const& element_buffer, MetaComponent const& component,
@@ -589,12 +547,6 @@ class Serializer {
         });
     }
 
-    void pack_attribute(RawElementPtr element_ptr, MetaAttribute const& attribute) {
-        ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<class T> {
-            packer_.pack(attribute.get_attribute<T const>(element_ptr));
-        });
-    }
-
     void pack_attribute(BufferView const& element_buffer, MetaComponent const& component,
                         MetaAttribute const& attribute) {
         if (element_buffer.buffer->data != nullptr) {
@@ -621,19 +573,6 @@ class Serializer {
     static BufferView advance(BufferView const& buffer, MetaComponent const& component, Idx offset) {
         return {.buffer = buffer.buffer, .idx = buffer.idx + offset};
     }
-
-    // static RawElementPtr get_ptr(BufferView const& buffer, MetaComponent const& component, MetaAttribute const&
-    // attribute) {
-    //     if (buffer.data != nullptr) {
-    //         return buffer.data = component.advance_ptr(buffer.data, offset);
-    //     } else {
-    //         for (auto& attribute_buffer : buffer.attributes) {
-    //             assert(attribute_buffer.meta_attribute != nullptr);
-    //             attribute_buffer.data = reinterpret_cast<RawDataPtr>(reinterpret_cast<char*>(attribute_buffer.data) +
-    //                                                                  attribute_buffer.meta_attribute->size * offset);
-    //         }
-    //     }
-    // }
 };
 
 } // namespace power_grid_model::meta_data
