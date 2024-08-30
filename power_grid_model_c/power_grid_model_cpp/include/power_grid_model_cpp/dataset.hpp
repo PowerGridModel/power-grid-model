@@ -84,7 +84,15 @@ class DatasetWritable {
         dataset.handle_.call_with(PGM_dataset_writable_set_buffer, dataset.dataset_, component.c_str(), indptr, data);
     }
     void set_buffer(std::string const& component, Idx* indptr, RawDataPtr data) {
-        set_buffer(*this, component.c_str(), indptr, data);
+        set_buffer(*this, component, indptr, data);
+    }
+
+    static void set_buffer(DatasetWritable& dataset, std::string const& component, Idx* indptr, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_writable_set_buffer, dataset.dataset_, component.c_str(), indptr,
+                                  data.get());
+    }
+    void set_buffer(std::string const& component, Idx* indptr, Buffer const& data) {
+        set_buffer(*this, component, indptr, data);
     }
 
   private:
@@ -109,6 +117,16 @@ class DatasetMutable {
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
                     RawDataPtr data) const {
         add_buffer(*this, component.c_str(), elements_per_scenario, total_elements, indptr, data);
+    }
+
+    static void add_buffer(DatasetMutable const& dataset, std::string const& component, Idx elements_per_scenario,
+                           Idx total_elements, Idx const* indptr, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_mutable_add_buffer, dataset.dataset_.get(), component.c_str(),
+                                  elements_per_scenario, total_elements, indptr, data.get());
+    }
+    void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
+                    Buffer const& data) const {
+        add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
     static DatasetInfo const& get_info(DatasetMutable const& dataset) { return dataset.info_; }
