@@ -317,7 +317,7 @@ class Serializer {
                 component_buffer.buffer.idx = buffer.indptr[begin_scenario];
                 component_buffer.size = buffer.indptr[end_scenario] - buffer.indptr[begin_scenario];
             } else {
-                component_buffer.buffer.idx = component_buffer.buffer.idx = info.elements_per_scenario * begin_scenario;
+                component_buffer.buffer.idx = info.elements_per_scenario * begin_scenario;
                 component_buffer.size = info.elements_per_scenario * (end_scenario - begin_scenario);
             }
             // only store the view if it is non-empty
