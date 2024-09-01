@@ -246,7 +246,7 @@ def serialized_data(request):
         pytest.param(only_first_component_first_column(serialized_data), id="first_column"),
     ]
 )
-def data_filters(request, serialized_data):
+def data_filters(request):
     return request.param
 
 
