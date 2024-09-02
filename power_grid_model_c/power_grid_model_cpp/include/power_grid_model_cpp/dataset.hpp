@@ -16,14 +16,8 @@ namespace power_grid_model_cpp {
 class DatasetInfo {
   public:
     DatasetInfo(RawDatasetInfo const* info) noexcept : info_{info} {}
-    DatasetInfo(DatasetInfo&& other) noexcept : handle_{std::move(other.handle_)}, info_{other.info_} {}
-    DatasetInfo& operator=(DatasetInfo&& other) noexcept {
-        if (this != &other) {
-            handle_ = std::move(other.handle_);
-            info_ = other.info_;
-        }
-        return *this;
-    }
+    DatasetInfo(DatasetInfo&&) = default;
+    DatasetInfo& operator=(DatasetInfo&&) = default;
     DatasetInfo(const DatasetInfo&) = delete;            // No copy constructor
     DatasetInfo& operator=(const DatasetInfo&) = delete; // No copy assignment
     ~DatasetInfo() = default;
@@ -74,16 +68,8 @@ class DatasetWritable {
   public:
     DatasetWritable(RawWritableDataset* dataset)
         : dataset_{dataset}, info_{handle_.call_with(PGM_dataset_writable_get_info, dataset_)} {}
-    DatasetWritable(DatasetWritable&& other) noexcept
-        : handle_{std::move(other.handle_)}, dataset_{other.dataset_}, info_{std::move(other.info_)} {}
-    DatasetWritable& operator=(DatasetWritable&& other) noexcept {
-        if (this != &other) {
-            handle_ = std::move(other.handle_);
-            dataset_ = other.dataset_;
-            info_ = std::move(other.info_);
-        }
-        return *this;
-    }
+    DatasetWritable(DatasetWritable&&) = default;
+    DatasetWritable& operator=(DatasetWritable&&) = default;
     DatasetWritable(const DatasetWritable&) = delete;            // No copy constructor
     DatasetWritable& operator=(const DatasetWritable&) = delete; // No copy assignment
     ~DatasetWritable() = default;

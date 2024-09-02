@@ -33,14 +33,14 @@ class Buffer {
         buffer.handle_.call_with(PGM_buffer_set_value, attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size,
                                  src_stride);
     }
-    void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx src_stride) {
+    void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx src_stride) const {
         set_value(attribute, *this, src_ptr, 0, size_, src_stride);
     }
-    void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx src_stride) {
+    void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx src_stride) const {
         set_value(attribute, *this, src_ptr, buffer_offset, 1, src_stride);
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx size,
-                   Idx src_stride) {
+                   Idx src_stride) const {
         set_value(attribute, *this, src_ptr, buffer_offset, size, src_stride);
     }
 
