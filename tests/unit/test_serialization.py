@@ -596,22 +596,25 @@ def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized
         (msgpack_deserialize, msgpack_serialize, to_msgpack),
     ),
 )
-def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, pack):
+def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, data_filters, pack):
     """
     Repeated deserialization and serialization must result in the same deserialized data and serialization string.
     """
     test_data = pack(serialized_data)
 
-    deserialized_result_a = deserialize(test_data)
+    deserialized_result_a = deserialize(test_data, data_filters)
     serialized_result_a = serialize(deserialized_result_a, dataset_type=serialized_data["type"])
 
-    deserialized_result_b = deserialize(serialized_result_a)
+    deserialized_result_b = deserialize(serialized_result_a, data_filters)
     serialized_result_b = serialize(deserialized_result_b, dataset_type=serialized_data["type"])
 
     assert serialized_result_a == serialized_result_b
     assert list(deserialized_result_b) == list(deserialized_result_a)
 
-    for component_result_a, component_result_b in zip(deserialized_result_a.values(), deserialized_result_b.values()):
+    for (component_a, component_result_a), component_result_b in zip(
+        deserialized_result_a.items(), deserialized_result_b.values()
+    ):
+
         is_non_uniform = is_sparse(component_result_a)
         assert is_non_uniform == is_sparse(component_result_b)
 
@@ -623,9 +626,15 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
             component_data_a = component_result_a["data"]
             component_data_b = component_result_b["data"]
 
-        assert component_data_a.dtype == component_data_b.dtype
+        if is_columnar_filter(data_filters, component_a):
+            assert component_data_a.keys() == component_data_b.keys()
+            assert all(v_a.dtype == v_b.dtype for v_a, v_b in zip(component_data_a.values(), component_data_b.values()))
+            fields_or_keys = component_data_a.keys()
+        else:
+            assert component_data_a.dtype == component_data_b.dtype
+            fields_or_keys = component_data_a.dtype.names
 
-        for field in component_data_a.dtype.names:
+        for field in fields_or_keys:
             field_result_a = component_data_a[field]
             field_result_b = component_data_b[field]
 
