@@ -125,7 +125,7 @@ Both input and output data are dictionaries of structured `numpy` arrays.
 We can use `pandas` to convert them to data frames and print them.
 
 ```python
-import numpy as np
+import pandas as pd
 
 print('Node Input')
 print(pd.DataFrame(input_data['node']))
