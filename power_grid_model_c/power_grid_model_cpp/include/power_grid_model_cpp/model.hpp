@@ -33,7 +33,7 @@ class Model {
         }
         return *this;
     }
-    ~Model() { model_.reset(); }
+    ~Model() = default;
 
     PowerGridModel* get() const { return model_.get(); }
 
