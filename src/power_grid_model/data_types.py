@@ -118,7 +118,7 @@ Sparse batch columnar data is a dictionary containing the keys `indptr` and `dat
 
 - Examples:
 
-    - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleArray`}
+    - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleColumnarData`}
     - concrete example: {"indptr": [0, 2, 2, 3], "data": {"id": [0, 1, 0], "status": [1, 1, 0]}}
 
         - the scenario 0 sets the status of components with ids 0 and 1 to 1 (and keeps defaults for other components)
