@@ -421,7 +421,7 @@ def validate_data_filter(
     for source, components in {"data_filter": data_filter.keys(), "data": available_components}.items():
         unknown_components = [x for x in components if x not in dataset_meta]
         if unknown_components:
-            raise KeyError(f"You have specified some unknown component types: {unknown_components} in {source}")
+            raise KeyError(f"The following specified component types are unknown:{unknown_components} in {source}")
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():
@@ -433,7 +433,7 @@ def validate_data_filter(
             unknown_attributes[comp_name] = diff
 
     if unknown_attributes:
-        raise KeyError(f"You have specified some unknown attributes: {unknown_attributes}")
+        raise KeyError(f"The following specified attributes are unknown: {unknown_attributes} in data_filter")
 
 
 def is_sparse(component_data: ComponentData) -> bool:
