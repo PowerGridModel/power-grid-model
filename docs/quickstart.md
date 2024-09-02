@@ -165,5 +165,5 @@ update_data = {
     "sym_load": sym_load_update
 }
 
-model = PowerGridModel(input_data=input_data, update_data=update_data)
+model.calculate_power_flow(update_data=update_data)
 ```
