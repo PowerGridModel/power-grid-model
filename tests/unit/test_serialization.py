@@ -48,16 +48,47 @@ def is_input_data_type_deducible(serialized_input, data_filter) -> bool:
     if data_filter is None:
         return True
 
-    if isinstance(serialized_input_data, dict):
+    if not serialized_input["is_batch"]:
         components = set(serialized_input_data.keys())
-    elif isinstance(serialized_input_data, list):
+    else:
         components = set()
         for scenario in serialized_input_data:
             components.update(scenario.keys())
-    else:
-        raise ValueError("Invalid Test case provided")
 
     return any(data_filter[comp] is None for comp in components.intersection(data_filter.keys()))
+
+
+def is_columnar_filter(data_filter, component):
+    """A function to find if a data_filter will give out row or columnar format for a component"""
+    if data_filter is None:
+        return False
+    if data_filter is Ellipsis:
+        return True
+    return data_filter[component] is not None
+
+
+def is_sparse_data_input(serialized_input_data, component):
+    """Checks if serialized_input_data will be of sparse format after deserialization.
+    If there are uneven ids for scenarios in the serialized input, that would result in sparse data"""
+    # TODO Check if a homogenous entry can be sparse data or not
+    if not serialized_input_data["is_batch"]:
+        raise ValueError("Checking if a non batch data is sparse")
+
+    all_scenarios_ids: list[set[int]] = list(set())
+    for scenario in serialized_input_data["data"]:
+        scenario_ids = set()
+        if component not in scenario:
+            continue
+        for scenario_comp_name_comp_idx in scenario[component]:
+            if is_non_homogenous_data_entry(scenario_comp_name_comp_idx):
+                scenario_ids.add(scenario_comp_name_comp_idx["id"])
+            else:
+                id_attr_idx = serialized_input_data["attributes"][component].index("id")
+                scenario_ids.add(scenario_comp_name_comp_idx[id_attr_idx])
+        all_scenarios_ids.append(scenario_ids)
+    first_scenario_ids = next(iter(all_scenarios_ids))
+
+    return any(first_scenario_ids != scenario_ids for scenario_ids in all_scenarios_ids)
 
 
 def empty_dataset(dataset_type: DatasetType = DatasetType.input):
@@ -151,6 +182,7 @@ def uniform_batch_update_dataset():
 
 
 def inhomogeneous_batch_update_dataset():
+    # Also a sparse dataset
     return {
         "version": "1.0",
         "type": "update",
@@ -263,6 +295,7 @@ def serialized_data(request):
     ]
 )
 def data_filters(request):
+    """Data filers for deserialization. Note: List / set is not supported for testing since it can be replicated using dict."""
     return request.param
 
 
@@ -340,6 +373,7 @@ def assert_single_dataset_correct(
     data_filter,
 ):
     """Check a SingleDataset"""
+    # TODO Check for filtered out components
     # TODO What is the purpose of this check? Implement without using derserialized_dataset
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset and isinstance(data_filter, dict) and key in data_filter:
@@ -372,7 +406,7 @@ def assert_single_dataset_correct(
                         assert attr in component_result[comp_idx].dtype.names
                         assert_almost_equal(component_result[comp_idx][attr], component_input[comp_idx][attr])
             else:
-                # assert component in serialized_dataset["attributes"]
+                assert component in serialized_dataset["attributes"]
                 for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
                     if is_columnar(component_result):
                         if isinstance(data_filter, dict) and attr not in data_filter[component]:
@@ -392,8 +426,9 @@ def assert_batch_serialization_correct(
 
     # Check structure of the whole BatchDataset
     assert isinstance(serialized_dataset["data"], list)
-    for component_values in deserialized_dataset.values():
-        if is_sparse(component_values):
+    for component, component_values in deserialized_dataset.items():
+        # if is_sparse(component_values):
+        if is_sparse_data_input(serialized_dataset, component):
             component_indptr = component_values["indptr"]
             component_data = component_values["data"]
             assert isinstance(component_indptr, np.ndarray)
