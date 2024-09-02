@@ -20,7 +20,7 @@ TEST_CASE("C++ API Meta Data") {
             std::string const dataset_name = MetaData::dataset_name(dataset);
             CHECK(MetaData::get_dataset_by_name(dataset_name) == dataset);
             CAPTURE(dataset_name);
-            // check a few dataset types 
+            // check a few dataset types
             if (idx_dataset == 0) {
                 CHECK(dataset_name == "input");
             } else if (idx_dataset == 1) {
@@ -33,7 +33,7 @@ TEST_CASE("C++ API Meta Data") {
                 std::string const component_name = MetaData::component_name(component);
                 CHECK(MetaData::get_component_by_name(dataset_name, component_name) == component);
 
-                // check a few known components 
+                // check a few known components
                 if (idx_component == 0 && dataset_name == "input") {
                     CHECK(component_name == "node");
                     CHECK(MetaData::component_size(component) == 16);

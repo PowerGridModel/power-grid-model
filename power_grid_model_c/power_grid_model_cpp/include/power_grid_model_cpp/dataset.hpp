@@ -14,6 +14,7 @@
 namespace power_grid_model_cpp {
 
 class DatasetInfo {
+
   public:
     DatasetInfo(RawDatasetInfo const* info) noexcept : info_{info} {}
     DatasetInfo(DatasetInfo&&) = default;
