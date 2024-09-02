@@ -458,12 +458,12 @@ def test_process_data_filter(data_filter, expected):
     ("data_filter", "available_components", "error", "match"),
     [
         ({"abc": 3, "def": None}, None, ValueError, "Invalid filter provided"),
-        ({"abc": None, "def": None}, None, KeyError, "components are unknown"),
-        ({"abc": None, CT.sym_load: None}, None, KeyError, "components are unknown"),
-        ({"abc": ["xyz"], CT.sym_load: None}, None, KeyError, "unknown component"),
+        ({"abc": None, "def": None}, None, KeyError, "component types are unknown"),
+        ({"abc": None, CT.sym_load: None}, None, KeyError, "component types are unknown"),
+        ({"abc": ["xyz"], CT.sym_load: None}, None, KeyError, "component types are unknown"),
         ({CT.node: ["xyz"], CT.sym_load: None}, None, KeyError, "attributes are unknown"),
         ({CT.node: ["xyz1"], CT.sym_load: ["xyz2"]}, None, KeyError, "attributes are unknown"),
-        ({CT.node: None, CT.sym_load: None}, [CT.node, "ghi"], KeyError, "components are unknown"),
+        ({CT.node: None, CT.sym_load: None}, [CT.node, "ghi"], KeyError, "component types are unknown"),
     ],
 )
 def test_process_data_filter__errors(data_filter, available_components, error, match):
