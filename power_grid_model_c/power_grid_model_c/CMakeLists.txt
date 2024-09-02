@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # C API library
-add_library(power_grid_model_c SHARED 
+add_library(power_grid_model_c SHARED
   "src/buffer.cpp"
   "src/handle.cpp"
   "src/meta_data.cpp"
