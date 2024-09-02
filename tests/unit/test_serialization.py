@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
-from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
+from power_grid_model._utils import is_columnar, is_sparse
 from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
@@ -65,6 +65,16 @@ def is_columnar_filter(data_filter, component):
     if data_filter is Ellipsis:
         return True
     return data_filter[component] is not None
+
+
+def is_filtered_out(data_filter, component, attribute=None):
+    if data_filter is None or data_filter is Ellipsis:
+        return False
+    if attribute is None:
+        return component not in data_filter
+    return not (
+        data_filter[component] is None or data_filter[component] is Ellipsis or attribute in data_filter[component]
+    )
 
 
 def is_sparse_data_input(serialized_input_data, component):
@@ -373,16 +383,18 @@ def assert_single_dataset_correct(
     data_filter,
 ):
     """Check a SingleDataset"""
-    # TODO Check for filtered out components
     # TODO What is the purpose of this check? Implement without using derserialized_dataset
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset and isinstance(data_filter, dict) and key in data_filter:
             assert key in sparse_components
 
-    for component, component_result in deserialized_dataset.items():
+    for component, component_input in serialized_dataset["data"].items():
+        if is_filtered_out(data_filter, component):
+            assert component not in deserialized_dataset
+            continue
 
-        component_input = serialized_dataset["data"][component]
-        assert isinstance(component_input, list)
+        component_result = deserialized_dataset[component]
+        assert isinstance(component_input, list)  # TODO Why?
 
         # Complete component data checks
         if is_columnar(component_result):
@@ -396,9 +408,9 @@ def assert_single_dataset_correct(
         for comp_idx, input_entry in enumerate(component_input):
             if is_non_homogenous_data_entry(input_entry):
                 for attr in input_entry:
-                    if is_columnar(component_result):
-                        if isinstance(data_filter, dict) and attr not in data_filter[component]:
-                            # Filtered out components
+                    if is_columnar_filter(data_filter, component):
+                        if is_filtered_out(data_filter, component, attr):
+                            assert attr not in component_result
                             continue
                         assert attr in component_result.keys()
                         assert_almost_equal(component_result[attr][comp_idx], component_input[comp_idx][attr])
@@ -408,8 +420,9 @@ def assert_single_dataset_correct(
             else:
                 assert component in serialized_dataset["attributes"]
                 for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
-                    if is_columnar(component_result):
-                        if isinstance(data_filter, dict) and attr not in data_filter[component]:
+                    if is_columnar_filter(data_filter, component):
+                        if is_filtered_out(data_filter, component, attr):
+                            assert attr not in component_result
                             continue
                         assert attr in component_result.keys()
                         assert_almost_equal(component_result[attr][comp_idx], component_input[comp_idx][attr_idx])
@@ -427,7 +440,6 @@ def assert_batch_serialization_correct(
     # Check structure of the whole BatchDataset
     assert isinstance(serialized_dataset["data"], list)
     for component, component_values in deserialized_dataset.items():
-        # if is_sparse(component_values):
         if is_sparse_data_input(serialized_dataset, component):
             component_indptr = component_values["indptr"]
             component_data = component_values["data"]
@@ -473,15 +485,23 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
     if serialized_dataset["is_batch"]:
         assert_batch_serialization_correct(deserialized_dataset, serialized_dataset, data_filter=data_filter)
     else:
-        for component_data in deserialized_dataset.values():
-            if is_columnar(component_data):
-                for attr_name, arr in component_data.items():
+        for component in serialized_dataset["data"]:
+            if is_filtered_out(data_filter, component):
+                assert component not in deserialized_dataset
+                continue
+
+            component_result = deserialized_dataset[component]
+            if is_columnar_filter(data_filter, component):
+                for attr_name, arr in component_result.items():
+                    if is_filtered_out(data_filter, component, attr_name):
+                        assert attr_name not in deserialized_dataset[component]
+                        continue
                     assert isinstance(arr, np.ndarray)
                     assert isinstance(attr_name, str)
                     assert len(arr.shape) in [1, 2]
             else:
-                assert isinstance(component_data, np.ndarray)
-                assert component_data.ndim == 1
+                assert isinstance(component_result, np.ndarray)
+                assert component_result.ndim == 1
 
         assert_single_dataset_correct(
             deserialized_dataset,  # type: ignore[arg-type]
