@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "common.hpp"
+
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
 #include "../../common/typing.hpp"
@@ -342,14 +344,6 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
     }
 };
 
-struct row_based_t {};
-struct columnar_t {};
-constexpr row_based_t row_based{};
-constexpr columnar_t columnar{};
-
-template <typename T>
-concept row_based_or_columnar_c = std::derived_from<T, row_based_t> || std::derived_from<T, columnar_t>;
-
 } // namespace detail
 
 class Deserializer {
@@ -376,7 +370,7 @@ class Deserializer {
     struct BufferView {
         WritableDataset::Buffer const* buffer{nullptr};
         Idx idx{0};
-        std::unordered_map<MetaAttribute const*, AttributeBuffer<void> const*> const* attribute_order{nullptr};
+        std::vector<AttributeBuffer<void> const*> const* attribute_order{nullptr};
     };
 
     using row_based_t = detail::row_based_t;
@@ -731,7 +725,7 @@ class Deserializer {
             }
             return found->second;
         }();
-        auto const attribute_buffer_order = get_attribute_buffer_map(*buffer.buffer);
+        auto const attribute_buffer_order = get_attribute_buffer_mapping(*buffer.buffer, attributes);
         buffer.attribute_order = &attribute_buffer_order;
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
@@ -833,11 +827,21 @@ class Deserializer {
         assert(buffer.buffer != nullptr);
         assert(buffer.buffer->data == nullptr);
 
-        assert(buffer.attribute_order != nullptr);
-        if (auto const it = buffer.attribute_order->find(&attribute); it != buffer.attribute_order->end()) {
-            AttributeBuffer<void> const* attribute_buffer = it->second;
-            assert(attribute_buffer != nullptr);
-            parse_attribute(*attribute_buffer, buffer.idx);
+        if (attribute_number_ >= 0 && buffer.attribute_order != nullptr) {
+            assert(attribute_number_ < std::ssize(*buffer.attribute_order));
+
+            if (auto const* const attribute_buffer = (*buffer.attribute_order)[attribute_number_];
+                attribute_buffer != nullptr) {
+                parse_attribute(*attribute_buffer, buffer.idx);
+            } else {
+                parse_skip();
+            }
+        } else if (auto it = std::ranges::find_if(buffer.buffer->attributes,
+                                                  [&attribute](auto const& attribute_buffer) {
+                                                      return attribute_buffer.meta_attribute == &attribute;
+                                                  });
+                   it != buffer.buffer->attributes.end()) {
+            parse_attribute(*it, buffer.idx);
         } else {
             parse_skip();
         }
@@ -903,14 +907,25 @@ class Deserializer {
         return buffer;
     }
 
-    static std::unordered_map<MetaAttribute const*, AttributeBuffer<void> const*>
-    get_attribute_buffer_map(WritableDataset::Buffer const& buffer) {
-        std::unordered_map<MetaAttribute const*, AttributeBuffer<void> const*> result;
-        if (buffer.data == nullptr) {
-            for (auto const& attribute_buffer : buffer.attributes) {
-                result[attribute_buffer.meta_attribute] = &attribute_buffer;
-            }
+    static std::vector<AttributeBuffer<void> const*>
+    get_attribute_buffer_mapping(WritableDataset::Buffer const& buffer,
+                                 std::span<MetaAttribute const* const> attributes) {
+        if (buffer.data != nullptr) {
+            return {};
         }
+
+        std::vector<AttributeBuffer<void> const*> result(attributes.size());
+        std::ranges::transform(
+            attributes, result.begin(), [&buffer](auto const* const attribute) -> AttributeBuffer<void> const* {
+                auto it = std::ranges::find_if(buffer.attributes, [&attribute](auto const& attribute_buffer) {
+                    return attribute_buffer.meta_attribute == attribute;
+                });
+                if (it != buffer.attributes.end()) {
+                    return &*it;
+                } else {
+                    return nullptr;
+                }
+            });
         return result;
     }
 
