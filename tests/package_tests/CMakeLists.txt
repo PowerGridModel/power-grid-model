@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.23)
 
 project(power_grid_model_package_tests)
 
