@@ -300,7 +300,7 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(..., id="All columnar filter"),
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar filter"),
+        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
     ]
 )
@@ -545,7 +545,9 @@ def test_msgpack_deserialize_data(serialized_data, data_filters):
     "dataset_type",
     (DatasetType.input, DatasetType.update, DatasetType.sym_output, DatasetType.asym_output, DatasetType.sc_output),
 )
-@pytest.mark.parametrize("use_compact_list", (True, False))
+@pytest.mark.parametrize(
+    "use_compact_list", (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list"))
+)
 def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
     for indent in (-1, 0, 2, 4):
         reference = to_json(empty_dataset(dataset_type), indent=indent)
@@ -563,13 +565,15 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
     "dataset_type",
     (DatasetType.input, DatasetType.update, DatasetType.sym_output, DatasetType.asym_output, DatasetType.sc_output),
 )
-def test_msgpack_serialize_empty_dataset(dataset_type):
+@pytest.mark.parametrize(
+    "use_compact_list", (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list"))
+)
+def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
-    for use_compact_list in (True, False):
-        assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
+    assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
 
-        with pytest.raises(ValueError):
-            json_serialize({}, use_compact_list=use_compact_list)
+    with pytest.raises(ValueError):
+        json_serialize({}, use_compact_list=use_compact_list)
 
 
 @pytest.mark.parametrize(
