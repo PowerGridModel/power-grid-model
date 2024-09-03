@@ -80,7 +80,7 @@ def is_filtered_out(data_filter, component, attribute=None):
 def is_sparse_data_input(serialized_input_data, component):
     """Checks if serialized_input_data will be of sparse format after deserialization.
     If there are uneven ids for scenarios in the serialized input, that would result in sparse data"""
-    # TODO Check if a homogenous entry can be sparse data or not
+    # TODO Check if a homogenous entry can be sparse data or not because there is no such example
     if not serialized_input_data["is_batch"]:
         raise ValueError("Checking if a non batch data is sparse")
 
@@ -382,11 +382,12 @@ def assert_single_dataset_correct(
     sparse_components: list[ComponentType],
     data_filter,
 ):
-    """Check a SingleDataset"""
+    """Check a SingleDataset's individual components for correctness"""
     # TODO What is the purpose of this check? Implement without using derserialized_dataset
     for key in serialized_dataset["data"]:
         if key not in deserialized_dataset and isinstance(data_filter, dict) and key in data_filter:
             assert key in sparse_components
+            assert False
 
     for component, component_input in serialized_dataset["data"].items():
         if is_filtered_out(data_filter, component):
@@ -397,7 +398,7 @@ def assert_single_dataset_correct(
         assert isinstance(component_input, list)  # TODO Why?
 
         # Complete component data checks
-        if is_columnar(component_result):
+        if is_columnar_filter(data_filter, component):
             assert isinstance(component_result, dict)
             assert all(len(v) == len(component_input) for v in component_result.values())
         else:
@@ -445,7 +446,7 @@ def assert_batch_serialization_correct(
             component_data = component_values["data"]
             assert isinstance(component_indptr, np.ndarray)
             assert len(component_indptr) == len(serialized_dataset["data"]) + 1
-            if is_columnar(component_values):
+            if is_columnar_filter(data_filter, component):
                 assert isinstance(component_data, dict)
                 for attr, attr_value in component_data.items():
                     assert isinstance(attr, str)
@@ -456,7 +457,7 @@ def assert_batch_serialization_correct(
                 assert component_data.ndim == 1
                 assert len(component_data) == component_indptr[-1]
         else:
-            if is_columnar(component_values):
+            if is_columnar_filter(data_filter, component):
                 for attr, attr_value in component_values.items():
                     assert isinstance(attr, str)
                     assert isinstance(attr_value, np.ndarray)
@@ -474,7 +475,9 @@ def assert_batch_serialization_correct(
         serialized_scenario["data"] = scenario
 
         deserialized_scenario = split_deserialized_dataset_into_individual_scenario(scenario_idx, deserialized_dataset)
-        sparse_components = [comp_name for comp_name, comp_data in deserialized_dataset.items() if is_sparse(comp_data)]
+        sparse_components = [
+            comp_name for comp_name, comp_data in deserialized_scenario.items() if is_sparse(comp_data)
+        ]
         assert_single_dataset_correct(
             deserialized_scenario, serialized_scenario, sparse_components, data_filter=data_filter
         )
