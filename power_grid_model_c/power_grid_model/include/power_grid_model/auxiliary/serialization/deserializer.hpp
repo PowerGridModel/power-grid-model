@@ -747,7 +747,7 @@ class Deserializer {
         component_key_ = "";
     }
 
-    void parse_scenario(MetaComponent const& component, BufferView& buffer, ComponentByteMeta const& msg_data,
+    void parse_scenario(MetaComponent const& component, BufferView const& buffer, ComponentByteMeta const& msg_data,
                         std::span<MetaAttribute const* const> attributes) {
         // skip for empty scenario
         if (msg_data.size == 0) {
@@ -814,7 +814,7 @@ class Deserializer {
         assert(buffer.buffer != nullptr);
         assert(buffer.buffer->data != nullptr);
 
-        ctype_func_selector(attribute.ctype, [&]<class T> {
+        ctype_func_selector(attribute.ctype, [&buffer, &component, &attribute, this]<class T> {
             ValueVisitor<T> visitor{{},
                                     attribute.get_attribute<T>(component.advance_ptr(buffer.buffer->data, buffer.idx))};
             msgpack::parse(data_, size_, offset_, visitor);
@@ -851,7 +851,7 @@ class Deserializer {
         assert(buffer.data != nullptr);
         assert(buffer.meta_attribute != nullptr);
 
-        ctype_func_selector(buffer.meta_attribute->ctype, [&]<class T> {
+        ctype_func_selector(buffer.meta_attribute->ctype, [&buffer, &idx, this]<class T> {
             ValueVisitor<T> visitor{{}, *(reinterpret_cast<T*>(buffer.data) + idx)};
             msgpack::parse(data_, size_, offset_, visitor);
         });
@@ -893,11 +893,12 @@ class Deserializer {
         } else {
             for (auto const& attribute_buffer : buffer.buffer->attributes) {
                 assert(attribute_buffer.meta_attribute != nullptr);
-                ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<typename T> {
-                    std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data) + buffer.idx,
-                                                narrow_cast<size_t>(info.total_elements)},
-                                      nan_value<T>);
-                });
+                ctype_func_selector(
+                    attribute_buffer.meta_attribute->ctype, [&attribute_buffer, &buffer, &info]<typename T> {
+                        std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data) + buffer.idx,
+                                                    narrow_cast<size_t>(info.total_elements)},
+                                          nan_value<T>);
+                    });
             }
         }
     }
@@ -922,9 +923,8 @@ class Deserializer {
                 });
                 if (it != buffer.attributes.end()) {
                     return &*it;
-                } else {
-                    return nullptr;
                 }
+                return nullptr;
             });
         return result;
     }
