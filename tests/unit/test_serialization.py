@@ -40,7 +40,7 @@ def is_non_homogenous_data_entry(data_entry):
     return isinstance(data_entry, dict)
 
 
-def is_input_data_type_deducible(serialized_input, data_filter) -> bool:
+def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
     """Find out if deserialization of serialized_input would contain atleast one component with row based data"""
     serialized_input_data = serialized_input["data"]
     if not serialized_input_data or data_filter is Ellipsis:
@@ -298,10 +298,11 @@ def serialized_data(request):
 
 @pytest.fixture(
     params=[
-        pytest.param(None, id="All row"),
-        pytest.param(..., id="All columnar"),
+        pytest.param(None, id="All row filter"),
+        pytest.param(..., id="All columnar filter"),
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
         pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar filter"),
+        pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
     ]
 )
 def data_filters(request):
@@ -376,7 +377,7 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
         np.testing.assert_almost_equal(value, reference)
 
 
-def assert_single_dataset_correct(
+def assert_single_dataset_entries(
     deserialized_dataset: SingleDataset,
     serialized_dataset: Mapping[str, Any],
     sparse_components: list[ComponentType],
@@ -432,7 +433,27 @@ def assert_single_dataset_correct(
                         assert_almost_equal(component_result[comp_idx][attr], component_input[comp_idx][attr_idx])
 
 
-def assert_batch_serialization_correct(
+def assert_single_dataset_structure(deserialized_dataset, serialized_dataset, data_filter):
+    for component in serialized_dataset["data"]:
+        if is_filtered_out(data_filter, component):
+            assert component not in deserialized_dataset
+            continue
+
+        component_result = deserialized_dataset[component]
+        if is_columnar_filter(data_filter, component):
+            for attr_name, arr in component_result.items():
+                if is_filtered_out(data_filter, component, attr_name):
+                    assert attr_name not in deserialized_dataset[component]
+                    continue
+                assert isinstance(arr, np.ndarray)
+                assert isinstance(attr_name, str)
+                assert len(arr.shape) in [1, 2]
+        else:
+            assert isinstance(component_result, np.ndarray)
+            assert component_result.ndim == 1
+
+
+def assert_batch_dataset_structure(
     deserialized_dataset: BatchDataset, serialized_dataset: Mapping[str, Any], data_filter
 ):
     """Checks if the structure of the batch dataset is correct.
@@ -468,45 +489,31 @@ def assert_batch_serialization_correct(
                 assert len(component_values.shape) == 2
                 assert len(component_values) == len(serialized_dataset["data"])
 
-    # Split into individual SingleDataset and check if they all are correct
-    for scenario_idx, scenario in enumerate(serialized_dataset["data"]):
-        serialized_scenario = {k: v for k, v in serialized_dataset.items() if k not in ("data", "is_batch")}
-        serialized_scenario["is_batch"] = False
-        serialized_scenario["data"] = scenario
-
-        deserialized_scenario = split_deserialized_dataset_into_individual_scenario(scenario_idx, deserialized_dataset)
-        sparse_components = [
-            comp_name for comp_name, comp_data in deserialized_scenario.items() if is_sparse(comp_data)
-        ]
-        assert_single_dataset_correct(
-            deserialized_scenario, serialized_scenario, sparse_components, data_filter=data_filter
-        )
-
 
 def assert_serialization_correct(deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter):
     """Assert the dataset correctly reprensents the input data."""
     if serialized_dataset["is_batch"]:
-        assert_batch_serialization_correct(deserialized_dataset, serialized_dataset, data_filter=data_filter)
+        assert_batch_dataset_structure(deserialized_dataset, serialized_dataset, data_filter=data_filter)
+
+        # Split into individual SingleDataset and check if they all are correct
+        for scenario_idx, scenario in enumerate(serialized_dataset["data"]):
+            serialized_scenario = {k: v for k, v in serialized_dataset.items() if k not in ("data", "is_batch")}
+            serialized_scenario["is_batch"] = False
+            serialized_scenario["data"] = scenario
+
+            deserialized_scenario = split_deserialized_dataset_into_individual_scenario(
+                scenario_idx, deserialized_dataset
+            )
+            sparse_components = [
+                comp_name for comp_name, comp_data in deserialized_scenario.items() if is_sparse(comp_data)
+            ]
+            assert_single_dataset_entries(
+                deserialized_scenario, serialized_scenario, sparse_components, data_filter=data_filter
+            )
     else:
-        for component in serialized_dataset["data"]:
-            if is_filtered_out(data_filter, component):
-                assert component not in deserialized_dataset
-                continue
+        assert_single_dataset_structure(deserialized_dataset, serialized_dataset, data_filter)
 
-            component_result = deserialized_dataset[component]
-            if is_columnar_filter(data_filter, component):
-                for attr_name, arr in component_result.items():
-                    if is_filtered_out(data_filter, component, attr_name):
-                        assert attr_name not in deserialized_dataset[component]
-                        continue
-                    assert isinstance(arr, np.ndarray)
-                    assert isinstance(attr_name, str)
-                    assert len(arr.shape) in [1, 2]
-            else:
-                assert isinstance(component_result, np.ndarray)
-                assert component_result.ndim == 1
-
-        assert_single_dataset_correct(
+        assert_single_dataset_entries(
             deserialized_dataset,  # type: ignore[arg-type]
             serialized_dataset,
             [],
@@ -526,7 +533,7 @@ def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data, data_filters)
 
-    if is_input_data_type_deducible(serialized_data, data_filter=data_filters):
+    if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         result_type = get_dataset_type(result)
         assert result_type == serialized_data["type"]
 
@@ -538,7 +545,7 @@ def test_msgpack_deserialize_data(serialized_data, data_filters):
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data, data_filter=data_filters)
 
-    if is_input_data_type_deducible(serialized_data, data_filter=data_filters):
+    if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         result_type = get_dataset_type(result)
         assert result_type == serialized_data["type"]
 
@@ -577,15 +584,15 @@ def test_msgpack_serialize_empty_dataset(dataset_type):
 @pytest.mark.parametrize(
     ("deserialize", "serialize", "pack"),
     (
-        (json_deserialize, json_serialize, to_json),
-        (msgpack_deserialize, msgpack_serialize, to_msgpack),
+        pytest.param(json_deserialize, json_serialize, to_json, id="json"),
+        pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
     ),
 )
 def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, data_filters, pack):
     deserialized_data = deserialize(pack(serialized_data), data_filter=data_filters)
     full_result = serialize(deserialized_data, serialized_data["type"])
 
-    if is_input_data_type_deducible(serialized_data, data_filter=data_filters):
+    if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         assert serialize(deserialized_data) == full_result
     else:
         with pytest.raises(ValueError):
@@ -595,8 +602,8 @@ def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized
 @pytest.mark.parametrize(
     ("deserialize", "serialize", "pack"),
     (
-        (json_deserialize, json_serialize, to_json),
-        (msgpack_deserialize, msgpack_serialize, to_msgpack),
+        pytest.param(json_deserialize, json_serialize, to_json, id="json"),
+        pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
     ),
 )
 def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, data_filters, pack):
