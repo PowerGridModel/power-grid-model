@@ -80,7 +80,6 @@ def is_filtered_out(data_filter, component, attribute=None):
 def is_sparse_data_input(serialized_input_data, component):
     """Checks if serialized_input_data will be of sparse format after deserialization.
     If there are uneven ids for scenarios in the serialized input, that would result in sparse data"""
-    # TODO Check if a homogenous entry can be sparse data or not because there is no such example
     if not serialized_input_data["is_batch"]:
         raise ValueError("Checking if a non batch data is sparse")
 
@@ -385,7 +384,7 @@ def assert_single_dataset_entries(
     """Check a SingleDataset's individual components for correctness"""
     # TODO What is the purpose of this check? Implement without using derserialized_dataset
     for key in serialized_dataset["data"]:
-        if key not in deserialized_dataset and isinstance(data_filter, dict) and key in data_filter:
+        if key not in deserialized_dataset and not is_filtered_out(data_filter, key):
             assert key in sparse_components
             assert False
 
