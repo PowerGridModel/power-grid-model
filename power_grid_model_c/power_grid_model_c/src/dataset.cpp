@@ -79,6 +79,13 @@ void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
         PGM_regular_error);
 }
 
+void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
+                                            char const* attribute, void const* data) {
+    call_with_catch(
+        handle, [dataset, component, attribute, data]() { dataset->add_attribute_buffer(component, attribute, data); },
+        PGM_regular_error);
+}
+
 PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* /*unused*/, PGM_ConstDataset const* dataset) {
     return &dataset->get_description();
 }
@@ -118,6 +125,13 @@ void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* data
         [dataset, component, elements_per_scenario, total_elements, indptr, data]() {
             dataset->add_buffer(component, elements_per_scenario, total_elements, indptr, data);
         },
+        PGM_regular_error);
+}
+
+void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
+                                              char const* attribute, void* data) {
+    call_with_catch(
+        handle, [dataset, component, attribute, data]() { dataset->add_attribute_buffer(component, attribute, data); },
         PGM_regular_error);
 }
 

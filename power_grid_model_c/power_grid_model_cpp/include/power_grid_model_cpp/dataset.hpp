@@ -129,6 +129,24 @@ class DatasetMutable {
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
+    static void add_attribute_buffer(DatasetMutable const& dataset, std::string const& component,
+                                     std::string const& attribute, RawDataPtr data) {
+        dataset.handle_.call_with(PGM_dataset_mutable_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data);
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute, RawDataPtr data) const {
+        add_attribute_buffer(*this, component.c_str(), attribute.c_str(), data);
+    }
+
+    static void add_attribute_buffer(DatasetMutable const& dataset, std::string const& component,
+                                     std::string const& attribute, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_mutable_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data.get());
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute, Buffer const& data) const {
+        add_attribute_buffer(*this, component, attribute, data);
+    }
+
     static DatasetInfo const& get_info(DatasetMutable const& dataset) { return dataset.info_; }
     DatasetInfo const& get_info() const { return get_info(*this); }
 
