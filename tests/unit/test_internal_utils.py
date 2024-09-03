@@ -11,9 +11,10 @@ from power_grid_model import initialize_array
 from power_grid_model._utils import (
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
-    copy_output_to_columnar_dataset,
+    copy_to_row_or_columnar_dataset,
     get_and_verify_batch_sizes,
     is_nan,
+    process_data_filter,
     split_numpy_array_in_batches,
     split_sparse_batches_in_batches,
 )
@@ -429,6 +430,53 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
         convert_batch_dataset_to_batch_list(update_data)
 
 
+@pytest.mark.parametrize(
+    ("data_filter", "expected"),
+    [
+        (None, {CT.node: None, CT.sym_load: None, CT.source: None}),
+        (..., {CT.node: ..., CT.sym_load: ..., CT.source: ...}),
+        ([CT.node, CT.sym_load], {CT.node: None, CT.sym_load: None}),
+        ({CT.node, CT.sym_load}, {CT.node: None, CT.sym_load: None}),
+        ({CT.node: [], CT.sym_load: []}, {CT.node: [], CT.sym_load: []}),
+        ({CT.node: [], CT.sym_load: ["p"]}, {CT.node: [], CT.sym_load: ["p"]}),
+        ({CT.node: None, CT.sym_load: ["p"]}, {CT.node: None, CT.sym_load: ["p"]}),
+        ({CT.node: ..., CT.sym_load: ["p"]}, {CT.node: ..., CT.sym_load: ["p"]}),
+        ({CT.node: ..., CT.sym_load: ...}, {CT.node: ..., CT.sym_load: ...}),
+        ({CT.node: ["u"], CT.sym_load: ["p"]}, {CT.node: ["u"], CT.sym_load: ["p"]}),
+    ],
+)
+def test_process_data_filter(data_filter, expected):
+    actual = process_data_filter(
+        dataset_type=DT.sym_output,
+        data_filter=data_filter,
+        available_components=[CT.node, CT.sym_load, CT.source],
+    )
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("data_filter", "available_components", "error", "match"),
+    [
+        ({"abc": 3, "def": None}, None, ValueError, "Invalid filter provided"),
+        ({"abc": None, "def": None}, None, KeyError, "component types are unknown"),
+        ({"abc": None, CT.sym_load: None}, None, KeyError, "component types are unknown"),
+        ({"abc": ["xyz"], CT.sym_load: None}, None, KeyError, "component types are unknown"),
+        ({CT.node: ["xyz"], CT.sym_load: None}, None, KeyError, "attributes are unknown"),
+        ({CT.node: ["xyz1"], CT.sym_load: ["xyz2"]}, None, KeyError, "attributes are unknown"),
+        ({CT.node: None, CT.sym_load: None}, [CT.node, "ghi"], KeyError, "component types are unknown"),
+    ],
+)
+def test_process_data_filter__errors(data_filter, available_components, error, match):
+    if available_components is None:
+        available_components = [CT.node, CT.sym_load, CT.source]
+    with pytest.raises(error, match=match):
+        process_data_filter(
+            dataset_type=DT.sym_output,
+            data_filter=data_filter,
+            available_components=available_components,
+        )
+
+
 def sample_output_data():
     output_data = {
         CT.node: initialize_array(DT.sym_output, CT.node, 4),
@@ -476,10 +524,10 @@ def sample_output_data():
     ],
 )
 def test_copy_output_to_columnar_dataset(output_component_types, expected):
-    actual = copy_output_to_columnar_dataset(
-        output_data=sample_output_data(),
-        output_component_types=output_component_types,
-        output_type=DT.sym_output,
+    actual = copy_to_row_or_columnar_dataset(
+        data=sample_output_data(),
+        data_filter=output_component_types,
+        dataset_type=DT.sym_output,
         available_components=list(sample_output_data().keys()),
     )
     assert actual.keys() == expected.keys()
