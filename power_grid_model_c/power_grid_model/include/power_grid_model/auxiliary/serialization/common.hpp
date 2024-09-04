@@ -29,7 +29,7 @@ template <typename BufferType>
              }
 std::vector<AttributeBuffer<typename BufferType::Data>>
 reordered_attribute_buffers(BufferType& buffer, std::span<MetaAttribute const* const> attribute_order) {
-    using Data = BufferType::Data;
+    using Data = typename BufferType::Data;
     using AttributeBufferType = AttributeBuffer<Data>;
 
     assert(buffer.data == nullptr);
