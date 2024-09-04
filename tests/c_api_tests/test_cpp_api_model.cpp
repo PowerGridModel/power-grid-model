@@ -91,10 +91,20 @@ TEST_CASE("C++ API Model") {
     load_buffer.set_value(PGM_def_input_sym_load_p_specified, &load_p_specified, -1);
     load_buffer.set_value(PGM_def_input_sym_load_q_specified, &load_q_specified, -1);
 
-    // add buffers
+    // gen buffer (columnar)
+    std::vector<ID> gen_id = {3, 4};
+    std::vector<ID> gen_node = {0, 0};
+    std::vector<int8_t> gen_status = {0, 0};
+
+    // add buffers - row
     input_dataset.add_buffer("node", 1, 1, nullptr, node_buffer);
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
+    // add buffers - columnar 
+    input_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
+    input_dataset.add_attribute_buffer("sym_gen", "id", &gen_id);
+    input_dataset.add_attribute_buffer("sym_gen", "node", &gen_node);
+    input_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // output data
     Buffer node_output{PGM_def_sym_output_node, 1};
@@ -138,11 +148,16 @@ TEST_CASE("C++ API Model") {
     DatasetConst const single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
+    single_update_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
+    single_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
     DatasetConst const batch_update_dataset{"update", 1, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
+    batch_update_dataset.add_buffer("sym_gen", 1, 2, nullptr, nullptr);
+    batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // create model
+    //FAIL("This test will fail here due to columnar data input.");
     Model model{50.0, input_dataset};
 
     // test move-ability
