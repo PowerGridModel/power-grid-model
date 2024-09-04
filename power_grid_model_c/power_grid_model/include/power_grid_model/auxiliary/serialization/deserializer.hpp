@@ -860,26 +860,6 @@ class Deserializer {
         });
     }
 
-    void parse_attribute(columnar_t /*tag*/, BufferView const& buffer_view, MetaComponent const& /*component*/,
-                         MetaAttribute const& attribute) {
-        // call relevant parser
-        assert(buffer_view.buffer != nullptr);
-        assert(buffer_view.buffer->data == nullptr);
-
-        if (attribute_number_ >= 0) {
-            assert(attribute_number_ < std::ssize(buffer_view.buffer->attributes));
-
-            if (auto const& attribute_buffer = buffer_view.buffer->attributes[attribute_number_];
-                attribute_buffer.data != nullptr) {
-                parse_attribute(attribute_buffer, buffer_view.idx);
-            } else {
-                parse_skip();
-            }
-        } else {
-            parse_skip();
-        }
-    }
-
     void parse_attribute(AttributeBuffer<void> const& buffer, Idx idx) {
         assert(buffer.data != nullptr);
         assert(buffer.meta_attribute != nullptr);
