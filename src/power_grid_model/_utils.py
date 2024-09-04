@@ -301,7 +301,7 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     }
 
 
-def copy_to_row_or_columnar_dataset(
+def compatibility_convert_row_columnar_dataset(
     data: Dataset,
     data_filter: ComponentAttributeMapping,
     dataset_type: DatasetType,
@@ -309,6 +309,7 @@ def copy_to_row_or_columnar_dataset(
 ) -> Dataset:
     """Temporary function to copy row based dataset to a column based dataset as per the data_filter.
     The purpose of this function is to mimic columnar data without any memory footprint benefits.
+    Note: If input is row based, same data is being returned without copy.
 
     Args:
         data (Dataset):
@@ -348,14 +349,14 @@ def copy_to_row_or_columnar_dataset(
 
 
 def _convert_data_to_row_or_columnar(
-    data: SingleArray | dict[str, np.ndarray],
+    data: SingleComponentData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
     attrs: set[str] | list[str] | None | EllipsisType,
-) -> ComponentData:
+) -> SingleComponentData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:
-        if isinstance(data, np.ndarray):
+        if not is_columnar(data):
             return data
         output_array = initialize_array(dataset_type, comp_name, next(iter(data.values())).shape)
         for k in data:
@@ -364,7 +365,7 @@ def _convert_data_to_row_or_columnar(
     if isinstance(attrs, (list, set)) and len(attrs) == 0:
         return {}
     if isinstance(attrs, EllipsisType):
-        names = data.dtype.names if isinstance(data, np.ndarray) else data.keys()
+        names = data.dtype.names if not is_columnar(data) else data.keys()
         return {attr: deepcopy(data[attr]) for attr in names}
     return {attr: deepcopy(data[attr]) for attr in attrs}
 

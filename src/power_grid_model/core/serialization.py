@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
 
-from power_grid_model._utils import copy_to_row_or_columnar_dataset
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
@@ -83,7 +83,7 @@ class Deserializer:
         pgc.deserializer_parse_to_buffer(self._deserializer)
         if not self._dataset.get_data():
             return {}
-        return copy_to_row_or_columnar_dataset(
+        return compatibility_convert_row_columnar_dataset(
             data=self._dataset.get_data(),
             data_filter=self._dataset.get_data_filter(),
             dataset_type=get_dataset_type(data=self._dataset.get_data()),
@@ -107,7 +107,7 @@ class Serializer(ABC):
             instance._data = {}
         else:
             dataset_type = dataset_type if dataset_type is not None else get_dataset_type(data)
-            instance._data = copy_to_row_or_columnar_dataset(
+            instance._data = compatibility_convert_row_columnar_dataset(
                 data=data, data_filter=None, dataset_type=dataset_type, available_components=None
             )
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
