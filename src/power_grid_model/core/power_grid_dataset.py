@@ -149,18 +149,11 @@ def get_dataset_type(data: Dataset) -> DatasetType:
 
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
-            if component not in data:
+            if component not in data or is_columnar(data[component]):
                 continue
-
             component_data = data[component]
-            if is_columnar(component_data):
-                continue
 
-            if not is_sparse(component_data):
-                component_dtype = component_data.dtype
-            else:
-                component_dtype = component_data["data"].dtype
-
+            component_dtype = component_data["data"].dtype if is_sparse(component_data) else component_data.dtype
             if component_dtype is not dataset_metadata.dtype:
                 candidates.discard(dataset_type)
                 break
