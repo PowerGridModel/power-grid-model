@@ -371,7 +371,7 @@ class Deserializer {
     struct BufferView {
         Buffer const* buffer{nullptr};
         Idx idx{0};
-        std::vector<AttributeBuffer<void>> reordered_attribute_buffers;
+        std::span<AttributeBuffer<void> const> reordered_attribute_buffers;
     };
 
     using row_based_t = detail::row_based_t;
@@ -735,18 +735,19 @@ class Deserializer {
         }
 
         // attributes
-        std::span<MetaAttribute const* const> attributes = [this, &info]() -> std::span<MetaAttribute const* const> {
+        std::span<MetaAttribute const* const> const attributes = [this,
+                                                                  &info]() -> std::span<MetaAttribute const* const> {
             if (auto const it = attributes_.find(info.component); it != attributes_.cend()) {
                 return it->second;
             }
             return {};
         }();
-        BufferView const buffer_view{.buffer = &buffer,
-                                     .idx = 0,
-                                     .reordered_attribute_buffers =
-                                         detail::is_columnar_v<row_or_column_t>
-                                             ? detail::reordered_attribute_buffers(buffer, attributes)
-                                             : std::vector<AttributeBuffer<void>>{}};
+        auto const reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
+                                                     ? detail::reordered_attribute_buffers(buffer, attributes)
+                                                     : std::vector<AttributeBuffer<void>>{};
+
+        BufferView const buffer_view{
+            .buffer = &buffer, .idx = 0, .reordered_attribute_buffers = reordered_attribute_buffers};
 
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
