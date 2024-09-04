@@ -741,11 +741,12 @@ class Deserializer {
             }
             return {};
         }();
-        BufferView const buffer_view{
-            .buffer = &buffer,
-            .idx = 0,
-            .reordered_attribute_buffer =
-                detail::is_columnar_v<row_or_column_t> ? detail::reordered_attribute_buffers(buffer, attributes) : {}};
+        BufferView const buffer_view{.buffer = &buffer,
+                                     .idx = 0,
+                                     .reordered_attribute_buffers =
+                                         detail::is_columnar_v<row_or_column_t>
+                                             ? detail::reordered_attribute_buffers(buffer, attributes)
+                                             : std::vector<AttributeBuffer<void>>{}};
 
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
