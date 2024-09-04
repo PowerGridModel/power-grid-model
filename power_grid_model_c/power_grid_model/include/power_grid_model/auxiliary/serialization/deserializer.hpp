@@ -734,16 +734,20 @@ class Deserializer {
                 [](auto const& x) { return x.size; }, Idx{});
         }
 
-        BufferView const buffer_view{.buffer = &buffer, .idx = 0};
-
         // attributes
-        std::span<MetaAttribute const* const> attributes{};
-        if (auto const it = attributes_.find(info.component); it != attributes_.cend()) {
-            attributes = it->second;
-            if constexpr (detail::is_columnar_v<row_or_column_t>) {
-                buffer_view.reordered_attribute_buffers = detail::reordered_attribute_buffers(buffer, it->second);
+        std::span<MetaAttribute const* const> attributes = [this, &info]() -> std::span<MetaAttribute const* const> {
+            if (auto const it = attributes_.find(info.component); it != attributes_.cend()) {
+                return it->second;
             }
-        }
+            return {};
+        }();
+        BufferView buffer_view = [&buffer, &attributes]() -> BufferView {
+            BufferView result{.buffer = &buffer, .idx = 0};
+            if constexpr (detail::is_columnar_v<row_or_column_t>) {
+                result.reordered_attribute_buffers = detail::reordered_attribute_buffers(buffer, attributes);
+            }
+            return result;
+        }();
 
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
