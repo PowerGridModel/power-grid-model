@@ -174,6 +174,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // for columnar buffers, Data* data is empty and attributes is filled
     // for uniform buffers, indptr is empty
     struct Buffer {
+        using Data = Dataset::Data;
+
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
@@ -222,15 +224,18 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
-    constexpr bool is_columnar(std::string_view component) const {
+    constexpr bool is_row_based(std::string_view component) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
             return false;
         }
-        return is_columnar(idx);
+        return is_row_based(idx);
     }
-    constexpr bool is_columnar(Idx const i) const { return is_columnar(buffers_[i]); }
-    constexpr bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
+    constexpr bool is_row_based(Idx const i) const { return is_row_based(buffers_[i]); }
+    constexpr bool is_row_based(Buffer const& buffer) const { return buffer.data != nullptr; }
+    constexpr bool is_columnar(std::string_view component) const { return !is_row_based(component); }
+    constexpr bool is_columnar(Idx const i) const { return !is_row_based(i); }
+    constexpr bool is_columnar(Buffer const& buffer) const { return !is_row_based(buffer); }
 
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {

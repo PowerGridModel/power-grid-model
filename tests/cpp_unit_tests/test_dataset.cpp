@@ -987,14 +987,19 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     CHECK(scenario_dataset.get_component_info(B::name).component ==
                           &dataset_type.get_component(B::name));
                     auto const expected_size =
-                        dataset.is_columnar(dataset.get_buffer(B::name))
-                            ? dataset.template get_columnar_buffer_span<input_getter_s, B>(scenario).size()
-                            : dataset.template get_buffer_span<input_getter_s, B>(scenario).size();
+                        dataset.is_row_based(dataset.get_buffer(B::name))
+                            ? dataset.template get_buffer_span<input_getter_s, B>(scenario).size()
+                            : dataset.template get_columnar_buffer_span<input_getter_s, B>(scenario).size();
                     CHECK(scenario_dataset.get_component_info(B::name).elements_per_scenario == expected_size);
                     CHECK(scenario_dataset.get_component_info(B::name).total_elements ==
                           scenario_dataset.get_component_info(B::name).elements_per_scenario);
 
-                    if (dataset.is_columnar(dataset.get_buffer(A::name))) {
+                    if (dataset.is_row_based(dataset.get_buffer(A::name))) {
+                        auto const scenario_span_a = scenario_dataset.template get_buffer_span<input_getter_s, A>();
+                        auto const dataset_span_a = dataset.template get_buffer_span<input_getter_s, A>(scenario);
+                        CHECK(scenario_span_a.data() == dataset_span_a.data());
+                        CHECK(scenario_span_a.size() == dataset_span_a.size());
+                    } else {
                         auto const scenario_span_a =
                             scenario_dataset.template get_columnar_buffer_span<input_getter_s, A>();
                         auto const dataset_span_a =
@@ -1006,23 +1011,18 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             CHECK(scenario_element.id == dataset_element.id);
                             CHECK(scenario_element.a1 == dataset_element.a1);
                         }
-                    } else {
-                        auto const scenario_span_a = scenario_dataset.template get_buffer_span<input_getter_s, A>();
-                        auto const dataset_span_a = dataset.template get_buffer_span<input_getter_s, A>(scenario);
-                        CHECK(scenario_span_a.data() == dataset_span_a.data());
-                        CHECK(scenario_span_a.size() == dataset_span_a.size());
                     }
-                    if (dataset.is_columnar(dataset.get_buffer(B::name))) {
+                    if (dataset.is_row_based(dataset.get_buffer(B::name))) {
+                        auto const scenario_span_b = scenario_dataset.template get_buffer_span<input_getter_s, B>();
+                        auto const dataset_span_b = dataset.template get_buffer_span<input_getter_s, B>(scenario);
+                        CHECK(scenario_span_b.data() == dataset_span_b.data());
+                        CHECK(scenario_span_b.size() == dataset_span_b.size());
+                    } else {
                         auto const scenario_span_b =
                             scenario_dataset.template get_columnar_buffer_span<input_getter_s, B>();
                         auto const dataset_span_b =
                             dataset.template get_columnar_buffer_span<input_getter_s, B>(scenario);
                         CHECK(scenario_span_b.begin() == dataset_span_b.begin());
-                        CHECK(scenario_span_b.size() == dataset_span_b.size());
-                    } else {
-                        auto const scenario_span_b = scenario_dataset.template get_buffer_span<input_getter_s, B>();
-                        auto const dataset_span_b = dataset.template get_buffer_span<input_getter_s, B>(scenario);
-                        CHECK(scenario_span_b.data() == dataset_span_b.data());
                         CHECK(scenario_span_b.size() == dataset_span_b.size());
                     }
                 }
