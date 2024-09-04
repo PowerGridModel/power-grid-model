@@ -58,7 +58,7 @@ def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
     return any(data_filter[comp] is None for comp in components.intersection(data_filter.keys()))
 
 
-def is_columnar_filter(data_filter, component):
+def is_columnar_filter(data_filter, component) -> bool:
     """A function to find if a data_filter will give out row or columnar format for a component"""
     if data_filter is None:
         return False
@@ -67,14 +67,24 @@ def is_columnar_filter(data_filter, component):
     return data_filter[component] is not None
 
 
-def is_filtered_out(data_filter, component, attribute=None):
+def is_attribute_filtered_out(data_filter, component, attribute) -> bool:
+    """Checks if attribute is being filtered out / excluded"""
     if data_filter is None or data_filter is Ellipsis:
         return False
-    if attribute is None:
-        return component not in data_filter
+
+    if component not in data_filter:
+        return True
+
     return not (
         data_filter[component] is None or data_filter[component] is Ellipsis or attribute in data_filter[component]
     )
+
+
+def is_component_filtered_out(data_filter, component) -> bool:
+    """Checks if component is being filtered out / excluded"""
+    if data_filter is None or data_filter is Ellipsis:
+        return False
+    return component not in data_filter
 
 
 def is_sparse_data_input(serialized_input_data, component):
@@ -384,17 +394,17 @@ def assert_single_dataset_entries(
     """Check a SingleDataset's individual components for correctness"""
     # TODO What is the purpose of this check? Implement without using derserialized_dataset
     for key in serialized_dataset["data"]:
-        if key not in deserialized_dataset and not is_filtered_out(data_filter, key):
+        if key not in deserialized_dataset and not is_component_filtered_out(data_filter, key):
             assert key in sparse_components
             assert False
 
     for component, component_input in serialized_dataset["data"].items():
-        if is_filtered_out(data_filter, component):
+        if is_component_filtered_out(data_filter, component):
             assert component not in deserialized_dataset
             continue
 
         component_result = deserialized_dataset[component]
-        assert isinstance(component_input, list)  # TODO Why?
+        assert isinstance(component_input, list)  # TODO Why check input?
 
         # Complete component data checks
         if is_columnar_filter(data_filter, component):
@@ -409,7 +419,7 @@ def assert_single_dataset_entries(
             if is_non_compact_list(input_entry):
                 for attr in input_entry:
                     if is_columnar_filter(data_filter, component):
-                        if is_filtered_out(data_filter, component, attr):
+                        if is_attribute_filtered_out(data_filter, component, attr):
                             assert attr not in component_result
                             continue
                         assert attr in component_result.keys()
@@ -421,7 +431,7 @@ def assert_single_dataset_entries(
                 assert component in serialized_dataset["attributes"]
                 for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
                     if is_columnar_filter(data_filter, component):
-                        if is_filtered_out(data_filter, component, attr):
+                        if is_attribute_filtered_out(data_filter, component, attr):
                             assert attr not in component_result
                             continue
                         assert attr in component_result.keys()

@@ -309,7 +309,7 @@ def compatibility_convert_row_columnar_dataset(
 ) -> Dataset:
     """Temporary function to copy row based dataset to a column based dataset as per the data_filter.
     The purpose of this function is to mimic columnar data without any memory footprint benefits.
-    Note: If input is row based, same data is being returned without copy.
+    Note: If both the input and requested output are row based, the same dataset is returned without a copy.
 
     Args:
         data (Dataset):
