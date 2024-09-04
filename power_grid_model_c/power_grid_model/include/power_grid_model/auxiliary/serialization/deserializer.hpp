@@ -710,7 +710,7 @@ class Deserializer {
 
     template <detail::row_based_or_columnar_c row_or_column_t>
     void parse_component(row_or_column_t row_or_column_tag, Idx component_idx) {
-        auto& buffer = dataset_handler_.get_buffer(component_idx);
+        auto const& buffer = dataset_handler_.get_buffer(component_idx);
 
         assert(dataset_handler_.is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
         assert(dataset_handler_.is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
@@ -734,7 +734,7 @@ class Deserializer {
                 [](auto const& x) { return x.size; }, Idx{});
         }
 
-        BufferView buffer_view{.buffer = &buffer, .idx = 0};
+        BufferView const buffer_view{.buffer = &buffer, .idx = 0};
 
         // attributes
         std::span<MetaAttribute const* const> attributes{};
@@ -759,7 +759,7 @@ class Deserializer {
                 assert(info.elements_per_scenario == msg_data[scenario_number_].size);
             }
 #endif
-            BufferView scenario = advance(buffer_view, scenario_offset);
+            BufferView const scenario = advance(buffer_view, scenario_offset);
             parse_scenario(row_or_column_tag, *info.component, scenario, msg_data[scenario_number_], attributes);
         }
         scenario_number_ = -1;
@@ -805,8 +805,8 @@ class Deserializer {
         attribute_key_ = "";
     }
 
-    void parse_map_element(columnar_t tag, BufferView const& buffer_view, Idx map_size,
-                           MetaComponent const& component) {
+    void parse_map_element(columnar_t /*tag*/, BufferView const& buffer_view, Idx map_size,
+                           MetaComponent const& /*component*/) {
         while (map_size-- != 0) {
             attribute_key_ = parse_string();
             if (auto it = std::ranges::find_if(buffer_view.buffer->attributes,
