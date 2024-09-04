@@ -741,7 +741,8 @@ class Deserializer {
             }
             return {};
         }();
-        BufferView buffer_view = [&buffer, &attributes]() -> BufferView {
+        BufferView const buffer_view = [&buffer, &attributes]() -> BufferView {
+            (void)attributes; // suppress unused-lambda-capture for row-based
             BufferView result{.buffer = &buffer, .idx = 0};
             if constexpr (detail::is_columnar_v<row_or_column_t>) {
                 result.reordered_attribute_buffers = detail::reordered_attribute_buffers(buffer, attributes);
@@ -913,12 +914,11 @@ class Deserializer {
         assert(buffer.data == nullptr);
         for (auto const& attribute_buffer : buffer.attributes) {
             if (attribute_buffer.meta_attribute != nullptr) {
-                ctype_func_selector(attribute_buffer.meta_attribute->ctype,
-                                    [&attribute_buffer, &buffer, &info]<typename T> {
-                                        std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data),
-                                                                    narrow_cast<size_t>(info.total_elements)},
-                                                          nan_value<T>);
-                                    });
+                ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&attribute_buffer, &info]<typename T> {
+                    std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data),
+                                                narrow_cast<size_t>(info.total_elements)},
+                                      nan_value<T>);
+                });
             }
         }
     }
