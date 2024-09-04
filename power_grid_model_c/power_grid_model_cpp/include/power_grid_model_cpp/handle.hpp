@@ -58,8 +58,8 @@ class Handle {
 
     static void check_error(Handle const& handle) {
         RawHandle const* handle_ptr = handle.get();
-        Idx error_code = PGM_error_code(handle_ptr);
-        std::string error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_ptr);
+        Idx const error_code = PGM_error_code(handle_ptr);
+        std::string const error_message = error_code == PGM_no_error ? "" : PGM_error_message(handle_ptr);
         switch (error_code) {
         case PGM_no_error:
             return;
