@@ -860,6 +860,7 @@ class Deserializer {
         });
     }
 
+    // parse a single attribute into an attribute buffer (a single column in a columnar buffer)
     void parse_attribute(AttributeBuffer<void> const& buffer, Idx idx) {
         assert(buffer.data != nullptr);
         assert(buffer.meta_attribute != nullptr);

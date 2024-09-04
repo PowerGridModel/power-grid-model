@@ -34,9 +34,9 @@ reordered_attribute_buffers(BufferType& buffer, std::span<MetaAttribute const* c
 
     assert(buffer.data == nullptr);
 
-    std::vector<AttributeBufferType> result;
+    std::vector<AttributeBufferType> result(attribute_order.size());
     std::ranges::transform(
-        attribute_order, std::back_inserter(result), [&buffer](auto const* const attribute) -> AttributeBufferType {
+        attribute_order, result.begin(), [&buffer](auto const* const attribute) -> AttributeBufferType {
             if (auto it = std::ranges::find_if(buffer.attributes,
                                                [&attribute](auto const& attribute_buffer) {
                                                    return attribute_buffer.meta_attribute == attribute;
