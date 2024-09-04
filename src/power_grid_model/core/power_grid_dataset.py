@@ -8,7 +8,12 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
+from power_grid_model._utils import (
+    compatibility_convert_row_columnar_dataset,
+    is_columnar,
+    is_sparse,
+    process_data_filter,
+)
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CBuffer,
@@ -193,8 +198,14 @@ class CMutableDataset:
         instance._dataset_type = dataset_type if dataset_type in DatasetType else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
-        if data:
-            first_sub_info = get_buffer_properties(next(iter(data.values())))
+        compatibility_converted_data = compatibility_convert_row_columnar_dataset(
+            data=data,
+            data_filter=None,
+            dataset_type=instance._dataset_type,
+            available_components=list(data.keys()),
+        )
+        if compatibility_converted_data:
+            first_sub_info = get_buffer_properties(next(iter(compatibility_converted_data.values())))
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
         else:
@@ -206,7 +217,7 @@ class CMutableDataset:
         )
         assert_no_error()
 
-        instance._add_data(data)
+        instance._add_data(compatibility_converted_data)
         assert_no_error()
 
         return instance
@@ -237,14 +248,6 @@ class CMutableDataset:
             list of buffer view
         """
         return self._buffer_views
-
-    def get_dataset_type(self) -> DatasetType:
-        """Gets the dataset_type
-
-        Returns:
-            DatasetType: dataset type
-        """
-        return self._dataset_type
 
     def _add_data(self, data: Dataset):
         """
@@ -412,7 +415,13 @@ class CWritableDataset:
         Returns:
             The full dataset.
         """
-        return self._data
+        converted_data = compatibility_convert_row_columnar_dataset(
+            data=self._data,
+            data_filter=self.get_data_filter(),
+            dataset_type=self.get_info().dataset_type(),
+            available_components=list(self._data.keys()),
+        )
+        return converted_data
 
     def get_component_data(self, component: ComponentType) -> ComponentData:
         """

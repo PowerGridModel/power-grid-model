@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
 
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
@@ -21,7 +20,7 @@ from power_grid_model.core.power_grid_core import (
     WritableDatasetPtr,
     power_grid_core as pgc,
 )
-from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset, get_dataset_type
+from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
@@ -81,14 +80,7 @@ class Deserializer:
             A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
-        if not self._dataset.get_data():
-            return {}
-        return compatibility_convert_row_columnar_dataset(
-            data=self._dataset.get_data(),
-            data_filter=self._dataset.get_data_filter(),
-            dataset_type=get_dataset_type(data=self._dataset.get_data()),
-            available_components=None,
-        )
+        return self._dataset.get_data()
 
 
 class Serializer(ABC):
@@ -103,13 +95,7 @@ class Serializer(ABC):
     def __new__(cls, data: Dataset, serialization_type: SerializationType, dataset_type: DatasetType | None = None):
         instance = super().__new__(cls)
 
-        if not data:
-            instance._data = {}
-        else:
-            dataset_type = dataset_type if dataset_type is not None else get_dataset_type(data)
-            instance._data = compatibility_convert_row_columnar_dataset(
-                data=data, data_filter=None, dataset_type=dataset_type, available_components=None
-            )
+        instance._data = data
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()
 
