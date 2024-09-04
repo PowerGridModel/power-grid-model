@@ -298,7 +298,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             }) != buffer.attributes.end()) {
             throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
         }
-        AttributeBuffer<Data> attribute_buffer{
+        AttributeBuffer<Data> const attribute_buffer{
             .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
         buffer.attributes.emplace_back(attribute_buffer);
     }

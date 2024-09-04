@@ -130,7 +130,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         auto check_deserializer = [&](Deserializer& deserializer) {
             // get dataset
             auto& dataset = deserializer.get_dataset();
-            auto& info = dataset.get_info();
+            auto const& info = dataset.get_info();
             // check meta data
             check_metadata(info);
             // set buffer
@@ -160,7 +160,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
 
         // get dataset
         auto& dataset = deserializer_json.get_dataset();
-        auto& info = dataset.get_info();
+        auto const& info = dataset.get_info();
         // check meta data
         CHECK(info.name() == "input"s);
         CHECK(info.is_batch() == is_batch);

@@ -134,7 +134,6 @@ TEST_CASE("C++ API Model") {
     load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
-
     // dataset
     DatasetConst single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
@@ -180,7 +179,7 @@ TEST_CASE("C++ API Model") {
     }
 
     SUBCASE("Copy model") {
-        Model model_copy{model};
+        Model const& model_copy{model};
         model_copy.calculate(options, single_output_dataset);
         node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
         node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);

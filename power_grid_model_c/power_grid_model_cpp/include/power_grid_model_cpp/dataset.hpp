@@ -116,7 +116,7 @@ class DatasetMutable {
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
                     RawDataPtr data) const {
-        add_buffer(*this, component.c_str(), elements_per_scenario, total_elements, indptr, data);
+        add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
     static void add_buffer(DatasetMutable const& dataset, std::string const& component, Idx elements_per_scenario,
@@ -135,7 +135,7 @@ class DatasetMutable {
                                   attribute.c_str(), data);
     }
     void add_attribute_buffer(std::string const& component, std::string const& attribute, RawDataPtr data) const {
-        add_attribute_buffer(*this, component.c_str(), attribute.c_str(), data);
+        add_attribute_buffer(*this, component, attribute, data);
     }
 
     static void add_attribute_buffer(DatasetMutable const& dataset, std::string const& component,
@@ -188,6 +188,24 @@ class DatasetConst {
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
                     Buffer const& data) const {
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
+    }
+
+    static void add_attribute_buffer(DatasetConst const& dataset, std::string const& component,
+                                     std::string const& attribute, RawDataConstPtr data) {
+        dataset.handle_.call_with(PGM_dataset_const_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data);
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute, RawDataConstPtr data) const {
+        add_attribute_buffer(*this, component, attribute, data);
+    }
+
+    static void add_attribute_buffer(DatasetConst const& dataset, std::string const& component,
+                                     std::string const& attribute, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_const_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data.get());
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute, Buffer const& data) const {
+        add_attribute_buffer(*this, component, attribute, data);
     }
 
     static DatasetInfo const& get_info(DatasetConst const& dataset) { return dataset.info_; }
