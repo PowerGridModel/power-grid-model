@@ -741,14 +741,11 @@ class Deserializer {
             }
             return {};
         }();
-        BufferView const buffer_view = [&buffer, &attributes]() -> BufferView {
-            (void)attributes; // suppress unused-lambda-capture for row-based
-            BufferView result{.buffer = &buffer, .idx = 0};
-            if constexpr (detail::is_columnar_v<row_or_column_t>) {
-                result.reordered_attribute_buffers = detail::reordered_attribute_buffers(buffer, attributes);
-            }
-            return result;
-        }();
+        BufferView const buffer_view{
+            .buffer = &buffer,
+            .idx = 0,
+            .reordered_attribute_buffer =
+                detail::is_columnar_v<row_or_column_t> ? detail::reordered_attribute_buffers(buffer, attributes) : {}};
 
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
