@@ -103,6 +103,13 @@ void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* da
         PGM_regular_error);
 }
 
+void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
+                                               char const* attribute, void* data) {
+    call_with_catch(
+        handle, [dataset, component, attribute, data]() { dataset->add_attribute_buffer(component, attribute, data); },
+        PGM_regular_error);
+}
+
 // mutable dataset
 
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,

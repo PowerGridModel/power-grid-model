@@ -192,6 +192,18 @@ PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDat
                                              PGM_Idx* indptr, void* data);
 
 /**
+ * @brief Set buffer into the instance PGM_WritableDataset.
+ * @param handle
+ * @param dataset A pointer to the PGM_WritableDataset.
+ * @param component The name of the component.
+ * @param component The name of the attribute.
+ * @param data A void pointer to the buffer data.
+ * @return
+ */
+PGM_API void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset,
+                                                       char const* component, char const* attribute, void* data);
+
+/**
  * @brief Create an instance of PGM_MutableDataset.
  * @param handle
  * @param dataset The name of the dataset.

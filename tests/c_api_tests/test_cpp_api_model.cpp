@@ -100,7 +100,7 @@ TEST_CASE("C++ API Model") {
     input_dataset.add_buffer("node", 1, 1, nullptr, node_buffer);
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
-    // add buffers - columnar 
+    // add buffers - columnar
     input_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
     input_dataset.add_attribute_buffer("sym_gen", "id", &gen_id);
     input_dataset.add_attribute_buffer("sym_gen", "node", &gen_node);
@@ -157,7 +157,7 @@ TEST_CASE("C++ API Model") {
     batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // create model
-    //FAIL("This test will fail here due to columnar data input.");
+    // FAIL("This test will fail here due to columnar data input.");
     Model model{50.0, input_dataset};
 
     // test move-ability
