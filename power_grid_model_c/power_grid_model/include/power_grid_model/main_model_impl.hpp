@@ -229,7 +229,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
+    template <class CompType, cache_type_c CacheType, typename ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
         constexpr auto comp_index = index_of_component<CompType>;
 
@@ -266,6 +266,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
+    template <class CompType, cache_type_c CacheType>
+    void update_component(ConstDataset::RangeObject<typename CompType::UpdateType const> components,
+                          std::vector<Idx2D> const& sequence_idx) {
+        if (!components.empty()) {
+            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
+        }
+    }
 
     // update all components
     template <cache_type_c CacheType>
@@ -273,8 +280,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
         auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            this->update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
-                                                  sequence_idx_map[index_of_component<CT>]);
+            if (update_data.is_columnar(CT::name)) {
+                this->update_component<CT, CacheType>(
+                    update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(pos),
+                    sequence_idx_map[index_of_component<CT>]);
+            } else {
+                this->update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
+                                                      sequence_idx_map[index_of_component<CT>]);
+            }
         };
         run_functor_with_all_types_return_void(update_func);
     }
