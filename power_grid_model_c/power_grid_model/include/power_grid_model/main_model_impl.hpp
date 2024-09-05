@@ -200,11 +200,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
         add_component<CompType>(components.begin(), components.end());
     }
+    template <class CompType>
+    void add_component(ConstDataset::RangeObject<typename CompType::InputType const> components) {
+        add_component<CompType>(components.begin(), components.end());
+    }
 
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
+    template <std::derived_from<Base> CompType, typename ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
@@ -212,7 +216,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
         auto const add_func = [this, pos, &input_data]<typename CT>() {
-            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+            if (input_data.is_columnar(CT::name)) {
+                this->add_component<CT>(input_data.get_columnar_buffer_span<meta_data::input_getter_s, CT>(pos));
+            } else {
+                this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+            }
         };
         run_functor_with_all_types_return_void(add_func);
     }

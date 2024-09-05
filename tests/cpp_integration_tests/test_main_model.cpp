@@ -1229,6 +1229,90 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(sym_node_2[7].u_pu == doctest::Approx(0.67).epsilon(0.005));
         CHECK(sym_node_2[8].u_pu == doctest::Approx(0.67).epsilon(0.005));
     }
+
+    SUBCASE("Columnar buffers in dataset") {
+        auto const options = get_default_options(symmetric, CalculationMethod::newton_raphson);
+
+        SUBCASE("Columnar buffers in input data") {
+            std::vector<ID> node_ids;
+            std::vector<double> node_u_rated;
+            std::ranges::transform(state.node_input, std::back_inserter(node_ids),
+                                   [](auto const& node) { return node.id; });
+            std::ranges::transform(state.node_input, std::back_inserter(node_u_rated),
+                                   [](auto const& node) { return node.u_rated; });
+            REQUIRE(node_ids.size() == node_u_rated.size());
+
+            ConstDataset input_data_with_columns{false, 1, "input", meta_data::meta_data_gen::meta_data};
+            input_data_with_columns.add_buffer("node", state.node_input.size(), state.node_input.size(), nullptr,
+                                               nullptr);
+            input_data_with_columns.add_attribute_buffer("node", "id", node_ids.data());
+            input_data_with_columns.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+            input_data_with_columns.add_buffer("line", state.line_input.size(), state.line_input.size(), nullptr,
+                                               state.line_input.data());
+            input_data_with_columns.add_buffer("link", state.link_input.size(), state.link_input.size(), nullptr,
+                                               state.link_input.data());
+            input_data_with_columns.add_buffer("source", state.source_input.size(), state.source_input.size(), nullptr,
+                                               state.source_input.data());
+            input_data_with_columns.add_buffer("sym_load", state.sym_load_input.size(), state.sym_load_input.size(),
+                                               nullptr, state.sym_load_input.data());
+            input_data_with_columns.add_buffer("asym_load", state.asym_load_input.size(), state.asym_load_input.size(),
+                                               nullptr, state.asym_load_input.data());
+            input_data_with_columns.add_buffer("shunt", state.shunt_input.size(), state.shunt_input.size(), nullptr,
+                                               state.shunt_input.data());
+
+            MainModel row_based_model{50.0, input_data};
+            MainModel columnar_model{50.0, input_data_with_columns};
+
+            std::vector<SymNodeOutput> node_output_from_row_based(state.node_input.size());
+            std::vector<SymNodeOutput> node_output_from_columnar(node_ids.size());
+
+            MutableDataset sym_output_from_row_based{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+            sym_output_from_row_based.add_buffer("node", node_output_from_row_based.size(),
+                                                 node_output_from_row_based.size(), nullptr,
+                                                 node_output_from_row_based.data());
+            MutableDataset sym_output_from_columnar{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+            sym_output_from_columnar.add_buffer("node", node_output_from_columnar.size(),
+                                                node_output_from_columnar.size(), nullptr,
+                                                node_output_from_columnar.data());
+
+            row_based_model.calculate(options, sym_output_from_row_based);
+            columnar_model.calculate(options, sym_output_from_columnar);
+
+            REQUIRE(node_output_from_row_based.size() == node_output_from_columnar.size());
+
+            for (Idx idx = 0; idx < std::ssize(node_output_from_row_based); ++idx) {
+                CHECK(node_output_from_row_based[idx].id == node_output_from_columnar[idx].id);
+                CHECK(node_output_from_row_based[idx].u_pu == node_output_from_columnar[idx].u_pu);
+            }
+        }
+        SUBCASE("Columnar buffers in output data") {
+            MainModel model{50.0, input_data};
+
+            std::vector<SymNodeOutput> row_based_node_output(state.node_input.size());
+            std::vector<ID> columnar_node_output_id(state.node_input.size());
+            std::vector<double> columnar_node_output_u_pu(state.node_input.size());
+
+            MutableDataset row_based_sym_output{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+            row_based_sym_output.add_buffer("node", row_based_node_output.size(), row_based_node_output.size(), nullptr,
+                                            row_based_node_output.data());
+            MutableDataset columnar_sym_output{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+            columnar_sym_output.add_buffer("node", row_based_node_output.size(), row_based_node_output.size(), nullptr,
+                                           nullptr);
+            columnar_sym_output.add_attribute_buffer("node", "id", columnar_node_output_id.data());
+            columnar_sym_output.add_attribute_buffer("node", "u_pu", columnar_node_output_u_pu.data());
+
+            model.calculate(options, row_based_sym_output);
+            model.calculate(options, columnar_sym_output);
+
+            REQUIRE(row_based_node_output.size() == columnar_node_output_id.size());
+            REQUIRE(row_based_node_output.size() == columnar_node_output_u_pu.size());
+
+            for (Idx idx = 0; idx < std::ssize(row_based_node_output); ++idx) {
+                CHECK(row_based_node_output[idx].id == columnar_node_output_id[idx]);
+                CHECK(row_based_node_output[idx].u_pu == columnar_node_output_u_pu[idx]);
+            }
+        }
+    }
 }
 
 namespace {
