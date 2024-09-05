@@ -233,7 +233,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
     constexpr bool is_row_based(Idx const i) const { return is_row_based(buffers_[i]); }
     constexpr bool is_row_based(Buffer const& buffer) const { return buffer.data != nullptr; }
-    constexpr bool is_columnar(std::string_view component) const { return !is_row_based(component); }
+    constexpr bool is_columnar(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_columnar(idx);
+    }
     constexpr bool is_columnar(Idx const i) const { return !is_row_based(i); }
     constexpr bool is_columnar(Buffer const& buffer) const { return !is_row_based(buffer); }
 
