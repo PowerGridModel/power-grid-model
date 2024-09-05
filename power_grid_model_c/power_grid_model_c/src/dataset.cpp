@@ -106,7 +106,7 @@ void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* da
 void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
                                                char const* attribute, void* data) {
     call_with_catch(
-        handle, [dataset, component, attribute, data]() { dataset->add_attribute_buffer(component, attribute, data); },
+        handle, [dataset, component, attribute, data]() { dataset->set_attribute_buffer(component, attribute, data); },
         PGM_regular_error);
 }
 

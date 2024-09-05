@@ -95,6 +95,24 @@ class DatasetWritable {
         set_buffer(*this, component, indptr, data);
     }
 
+    static void set_attribute_buffer(DatasetWritable& dataset, std::string const& component,
+                                     std::string const& attribute, RawDataPtr data) {
+        dataset.handle_.call_with(PGM_dataset_writable_set_attribute_buffer, dataset.dataset_, component.c_str(),
+                                  attribute.c_str(), data);
+    }
+    void set_attribute_buffer(std::string const& component, std::string const& attribute, RawDataPtr data) {
+        set_attribute_buffer(*this, component, attribute, data);
+    }
+
+    static void set_attribute_buffer(DatasetWritable& dataset, std::string const& component,
+                                     std::string const& attribute, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_writable_set_attribute_buffer, dataset.dataset_, component.c_str(),
+                                  attribute.c_str(), data.get());
+    }
+    void set_attribute_buffer(std::string const& component, std::string const& attribute, Buffer const& data) {
+        set_attribute_buffer(*this, component, attribute, data);
+    }
+
   private:
     Handle handle_{};
     RawWritableDataset* dataset_;

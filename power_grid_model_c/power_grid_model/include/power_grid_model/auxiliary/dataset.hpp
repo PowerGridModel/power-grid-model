@@ -303,6 +303,23 @@ template <dataset_type_tag dataset_type_> class Dataset {
         buffer.attributes.emplace_back(attribute_buffer);
     }
 
+    void set_attribute_buffer(std::string_view component, std::string_view attribute, Data* data)
+        requires is_data_mutable_v<dataset_type>
+    {
+        Idx const idx = find_component(component, true);
+        Buffer const& buffer = buffers_[idx];
+        if (!is_columnar(buffer)) {
+            throw DatasetError{"Cannot set attribute buffers for row-based dataset!\n"};
+        }
+        auto it = std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
+            return buffer_attribute.meta_attribute->name == attribute;
+        });
+        if (it == buffer.attributes.end()) {
+            throw DatasetError{"Attribute buffer not found!\n"};
+        }
+        it->data = data;
+    }
+
     // get buffer by component type
     template <class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
