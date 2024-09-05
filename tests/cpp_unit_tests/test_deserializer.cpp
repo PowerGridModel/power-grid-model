@@ -143,6 +143,11 @@ constexpr std::string_view json_single = R"(
         "-inf",
         "+inf"
       ]
+    ],
+    "asym_load": [
+      {
+        "id": 100
+      }
     ]
   }
 }
@@ -269,7 +274,7 @@ TEST_CASE("Deserializer") {
             CHECK(deserializer.get_dataset_info().dataset().name == "input"s);
             CHECK(!deserializer.get_dataset_info().is_batch());
             CHECK(deserializer.get_dataset_info().batch_size() == 1);
-            CHECK(deserializer.get_dataset_info().n_components() == 4);
+            CHECK(deserializer.get_dataset_info().n_components() == 5);
         }
 
         SUBCASE("Check buffer") {

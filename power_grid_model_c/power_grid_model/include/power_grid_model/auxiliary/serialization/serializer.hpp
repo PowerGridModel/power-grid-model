@@ -339,33 +339,34 @@ class Serializer {
 
     void check_attributes() {
         attributes_ = {};
-        for (auto const& buffer : component_buffers_) {
+        for (auto const& component_buffer : component_buffers_) {
             std::vector<MetaAttribute const*> attributes;
             std::vector<AttributeBuffer<void const>> reordered_attribute_buffers;
-            for (auto const& attribute : buffer.component->attributes) {
+            for (auto const& attribute : component_buffer.component->attributes) {
                 // if not all the values of an attribute are nan
                 // add this attribute to the list
-                assert(buffer.buffer_view.buffer != nullptr);
-                if (buffer.buffer_view.buffer->data != nullptr) {
+                assert(is_row_based(component_buffer) || is_columnar(component_buffer));
+                if (is_row_based(component_buffer)) {
                     if (!attribute.check_all_nan(
-                            buffer.component->advance_ptr(buffer.buffer_view.buffer->data, buffer.buffer_view.idx),
-                            buffer.size)) {
+                            component_buffer.component->advance_ptr(component_buffer.buffer_view.buffer->data,
+                                                                    component_buffer.buffer_view.idx),
+                            component_buffer.size)) {
                         attributes.push_back(&attribute);
                     }
-                } else if (auto it = std::ranges::find_if(buffer.buffer_view.buffer->attributes,
+                } else if (auto it = std::ranges::find_if(component_buffer.buffer_view.buffer->attributes,
                                                           [&attribute](auto const& attribute_buffer) {
                                                               return attribute_buffer.meta_attribute == &attribute;
                                                           });
-                           it != buffer.buffer_view.buffer->attributes.end()) {
-                    if (!check_all_nan(*it, 0, buffer.size)) {
+                           it != component_buffer.buffer_view.buffer->attributes.end()) {
+                    if (!check_all_nan(*it, 0, component_buffer.size)) {
                         attributes.push_back(&attribute);
                         reordered_attribute_buffers.push_back(*it);
                     }
                 }
             }
 
-            attributes_[buffer.component] = std::move(attributes);
-            reordered_attribute_buffers_[buffer.component] = std::move(reordered_attribute_buffers);
+            attributes_[component_buffer.component] = std::move(attributes);
+            reordered_attribute_buffers_[component_buffer.component] = std::move(reordered_attribute_buffers);
         }
     }
 
@@ -449,6 +450,8 @@ class Serializer {
     template <detail::row_based_or_columnar_c row_or_column_t>
     void pack_component(row_or_column_t row_or_column_tag, ComponentBuffer const& component_buffer) {
         assert(component_buffer.buffer_view.buffer != nullptr);
+        assert(is_row_based(component_buffer) == detail::is_row_based_v<row_or_column_t>);
+        assert(is_columnar(component_buffer) == detail::is_columnar_v<row_or_column_t>);
         assert(dataset_handler_.is_row_based(*component_buffer.buffer_view.buffer) ==
                detail::is_row_based_v<row_or_column_t>);
         assert(dataset_handler_.is_columnar(*component_buffer.buffer_view.buffer) ==
@@ -490,8 +493,7 @@ class Serializer {
 
     void pack_element_in_list(row_based_t tag, BufferView const& element_buffer, MetaComponent const& component,
                               std::span<MetaAttribute const* const> attributes) {
-        assert(element_buffer.buffer != nullptr);
-        assert(element_buffer.buffer->data != nullptr);
+        assert(is_row_based(element_buffer));
 
         pack_array(attributes.size());
         for (auto const* const attribute : attributes) {
@@ -505,8 +507,7 @@ class Serializer {
 
     void pack_element_in_list(columnar_t /*tag*/, BufferView const& element_buffer, MetaComponent const& /*component*/,
                               std::span<MetaAttribute const* const> attributes) {
-        assert(element_buffer.buffer != nullptr);
-        assert(element_buffer.buffer->data == nullptr);
+        assert(is_columnar(element_buffer));
         assert(element_buffer.reordered_attribute_buffers.size() == attributes.size());
 
         (void)attributes; // suppress unused variable in release mode
@@ -523,8 +524,7 @@ class Serializer {
 
     void pack_element_in_dict(row_based_t tag, BufferView const& element_buffer,
                               ComponentBuffer const& component_buffer) {
-        assert(element_buffer.buffer != nullptr);
-        assert(element_buffer.buffer->data != nullptr);
+        assert(is_row_based(element_buffer));
 
         uint32_t valid_attributes_count = 0;
         for (auto const& attribute : component_buffer.component->attributes) {
@@ -542,8 +542,7 @@ class Serializer {
 
     void pack_element_in_dict(columnar_t /*tag*/, BufferView const& element_buffer,
                               ComponentBuffer const& /*component_buffer*/) {
-        assert(element_buffer.buffer != nullptr);
-        assert(element_buffer.buffer->data == nullptr);
+        assert(is_columnar(element_buffer));
         assert(element_buffer.reordered_attribute_buffers.empty());
 
         uint32_t valid_attributes_count = 0;
@@ -579,7 +578,7 @@ class Serializer {
 
     static bool check_nan(row_based_t /*tag*/, BufferView const& element_buffer, MetaComponent const& component,
                           MetaAttribute const& attribute) {
-        assert(element_buffer.buffer->data != nullptr);
+        assert(is_row_based(element_buffer));
 
         RawElementPtr element_ptr = component.advance_ptr(element_buffer.buffer->data, element_buffer.idx);
         return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
@@ -612,10 +611,27 @@ class Serializer {
         });
     }
 
-    static BufferView advance(BufferView buffer_view, Idx offset) {
+    static constexpr BufferView advance(BufferView buffer_view, Idx offset) {
         buffer_view.idx += offset;
         return buffer_view;
     }
+
+    static constexpr bool is_row_based(ComponentBuffer const& component_buffer) {
+        return is_row_based(component_buffer.buffer_view);
+    }
+    static constexpr bool is_row_based(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_row_based(*buffer_view.buffer);
+    }
+    static constexpr bool is_row_based(ConstDataset::Buffer const& buffer) { return buffer.data != nullptr; }
+    static constexpr bool is_columnar(ComponentBuffer const& component_buffer) {
+        return is_columnar(component_buffer.buffer_view);
+    }
+    static constexpr bool is_columnar(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_columnar(*buffer_view.buffer);
+    }
+    static constexpr bool is_columnar(ConstDataset::Buffer const& buffer) { return buffer.data == nullptr; }
 };
 
 } // namespace power_grid_model::meta_data

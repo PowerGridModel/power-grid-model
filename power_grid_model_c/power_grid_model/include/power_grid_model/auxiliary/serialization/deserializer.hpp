@@ -714,6 +714,8 @@ class Deserializer {
 
         assert(dataset_handler_.is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
         assert(dataset_handler_.is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
+        assert(is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
+        assert(is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
 
         auto const& info = dataset_handler_.get_component_info(component_idx);
         auto const& msg_data = msg_data_offsets_[component_idx];
@@ -854,8 +856,7 @@ class Deserializer {
 
     void parse_attribute(row_based_t /*tag*/, BufferView const& buffer_view, MetaComponent const& component,
                          MetaAttribute const& attribute) { // call relevant parser
-        assert(buffer_view.buffer != nullptr);
-        assert(buffer_view.buffer->data != nullptr);
+        assert(is_row_based(buffer_view));
 
         ctype_func_selector(attribute.ctype, [&buffer_view, &component, &attribute, this]<class T> {
             ValueVisitor<T> visitor{
@@ -906,11 +907,11 @@ class Deserializer {
     }
 
     static void set_nan(row_based_t /*tag*/, Buffer const& buffer, ComponentInfo const& info) {
-        assert(buffer.data != nullptr);
+        assert(is_row_based(buffer));
         info.component->set_nan(buffer.data, 0, info.total_elements);
     }
     static void set_nan(columnar_t /*tag*/, Buffer const& buffer, ComponentInfo const& info) {
-        assert(buffer.data == nullptr);
+        assert(is_columnar(buffer));
         for (auto const& attribute_buffer : buffer.attributes) {
             if (attribute_buffer.meta_attribute != nullptr) {
                 ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&attribute_buffer, &info]<typename T> {
@@ -922,10 +923,20 @@ class Deserializer {
         }
     }
 
-    static BufferView advance(BufferView buffer_view, Idx offset) {
+    static constexpr BufferView advance(BufferView buffer_view, Idx offset) {
         buffer_view.idx += offset;
         return buffer_view;
     }
+    static constexpr bool is_row_based(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_row_based(*buffer_view.buffer);
+    }
+    static constexpr bool is_row_based(WritableDataset::Buffer const& buffer) { return buffer.data != nullptr; }
+    static constexpr bool is_columnar(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_columnar(*buffer_view.buffer);
+    }
+    static constexpr bool is_columnar(WritableDataset::Buffer const& buffer) { return buffer.data == nullptr; }
 
     [[noreturn]] void handle_error(std::exception const& e) {
         std::stringstream ss;
