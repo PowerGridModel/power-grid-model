@@ -63,15 +63,24 @@ template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType
 }
 
 // set nan
-inline void set_nan(double& x) { x = nan; }
-inline void set_nan(IntS& x) { x = na_IntS; }
-inline void set_nan(ID& x) { x = na_IntID; }
+constexpr void set_nan(double& x) { x = nan; }
+constexpr void set_nan(IntS& x) { x = na_IntS; }
+constexpr void set_nan(ID& x) { x = na_IntID; }
 inline void set_nan(RealValue<asymmetric_t>& x) { x = RealValue<asymmetric_t>{nan}; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline void set_nan(Enum& x) {
+constexpr void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }
+template <typename T>
+    requires requires(T t) {
+                 { set_nan(t) };
+             }
+inline T const nan_value = [] {
+    T v{};
+    set_nan(v);
+    return v;
+}();
 
 using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr

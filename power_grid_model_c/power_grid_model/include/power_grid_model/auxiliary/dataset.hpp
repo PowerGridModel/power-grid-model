@@ -174,6 +174,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // for columnar buffers, Data* data is empty and attributes is filled
     // for uniform buffers, indptr is empty
     struct Buffer {
+        using Data = Dataset::Data;
+
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
@@ -222,6 +224,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
 
+    constexpr bool is_row_based(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_row_based(idx);
+    }
+    constexpr bool is_row_based(Idx const i) const { return is_row_based(buffers_[i]); }
+    constexpr bool is_row_based(Buffer const& buffer) const { return buffer.data != nullptr; }
     constexpr bool is_columnar(std::string_view component) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
@@ -229,8 +240,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
         return is_columnar(idx);
     }
-    constexpr bool is_columnar(Idx const i) const { return is_columnar(buffers_[i]); }
-    constexpr bool is_columnar(Buffer const& buffer) const { return buffer.data == nullptr; }
+    constexpr bool is_columnar(Idx const i) const { return !is_row_based(i); }
+    constexpr bool is_columnar(Buffer const& buffer) const { return !is_row_based(buffer); }
 
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
@@ -357,6 +368,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Dataset get_individual_scenario(Idx scenario)
         requires(!is_indptr_mutable_v<dataset_type>)
     {
+        using AdvanceablePtr = std::conditional_t<is_data_mutable_v<dataset_type>, char*, char const*>;
+
         assert(0 <= scenario && scenario < batch_size());
 
         Dataset result{false, 1, dataset().name, meta_data()};
@@ -366,10 +379,17 @@ template <dataset_type_tag dataset_type_> class Dataset {
             Idx size = component_info.elements_per_scenario >= 0
                            ? component_info.elements_per_scenario
                            : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
-            Data* data = component_info.elements_per_scenario >= 0
-                             ? component_info.component->advance_ptr(buffer.data, size * scenario)
-                             : component_info.component->advance_ptr(buffer.data, buffer.indptr[scenario]);
-            result.add_buffer(component_info.component->name, size, size, nullptr, data);
+            Idx offset = component_info.elements_per_scenario >= 0 ? size * scenario : buffer.indptr[scenario];
+            if (is_columnar(buffer)) {
+                result.add_buffer(component_info.component->name, size, size, nullptr, nullptr);
+                for (auto const& attribute_buffer : buffer.attributes) {
+                    result.add_attribute_buffer(component_info.component->name, attribute_buffer.meta_attribute->name,
+                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data)));
+                }
+            } else {
+                Data* data = component_info.component->advance_ptr(buffer.data, offset);
+                result.add_buffer(component_info.component->name, size, size, nullptr, data);
+            }
         }
         return result;
     }
