@@ -360,17 +360,30 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // get sequence idx map of a certain batch scenario
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
-
-        auto const get_seq_idx_func = [&state = this->state_, &update_data,
-                                       scenario_idx]<typename CT>() -> std::vector<Idx2D> {
-            auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+        auto const process_buffer_span = [](auto const& buffer_span, auto const& get_sequence) {
             auto const it_begin = buffer_span.begin();
             auto const it_end = buffer_span.end();
-            return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+            return get_sequence(it_begin, it_end);
         };
+
+        auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx,
+                                       &process_buffer_span]<typename CT>() -> std::vector<Idx2D> {
+            auto const get_sequence = [&state](auto const& it_begin, auto const& it_end) {
+                return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+            };
+
+            if (update_data.is_columnar(CT::name)) {
+                auto const buffer_span =
+                    update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+                return process_buffer_span(buffer_span, get_sequence);
+            } else {
+                auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+                return process_buffer_span(buffer_span, get_sequence);
+            }
+        };
+
         return run_functor_with_all_types_return_array(get_seq_idx_func);
     }
-
     // get sequence idx map of an entire batch for fast caching of component sequences
     // (only applicable for independent update dataset)
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
@@ -791,13 +804,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, options.threading);
     }
 
-    // template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
-    //     requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
-    // ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
-    //     assert(construction_complete_);
-    //     return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
-    // }
-
     template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
@@ -809,23 +815,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
-            // output
+            auto process_output = [this, &math_output](auto const& span) {
+                if (span.empty()) {
+                    return;
+                }
+                this->output_result<CT>(math_output, span.begin());
+            };
+
             if (result_data.is_columnar(CT::name)) {
                 auto const span =
                     result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
-                if (span.empty()) {
-                    return;
-                }
-                this->output_result<CT>(math_output, span.begin());
+                process_output(span);
             } else {
                 auto const span =
                     result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
-                if (span.empty()) {
-                    return;
-                }
-                this->output_result<CT>(math_output, span.begin());
+                process_output(span);
             }
         };
+
         Timer const t_output(calculation_info_, 3000, "Produce output");
         run_functor_with_all_types_return_void(output_func);
     }

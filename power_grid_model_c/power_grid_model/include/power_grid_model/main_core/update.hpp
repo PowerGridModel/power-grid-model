@@ -27,7 +27,7 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
 }
 } // namespace detail
 
-template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
+template <component_c Component, class ComponentContainer, /*std::forward_iterator*/ typename ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
@@ -38,7 +38,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
                    [&state](UpdateType const& update) { return get_component_idx_by_id<Component>(state, update.id); });
 }
 
-template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <component_c Component, class ComponentContainer, /*std::forward_iterator*/ typename ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
                                                  ForwardIterator end) {
