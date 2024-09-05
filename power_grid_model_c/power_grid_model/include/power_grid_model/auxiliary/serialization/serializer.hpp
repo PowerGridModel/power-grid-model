@@ -563,7 +563,7 @@ class Serializer {
         }
     }
 
-    void pack_element_in_dict(columnar_t tag, BufferView const& element_buffer,
+    void pack_element_in_dict(columnar_t /*tag*/, BufferView const& element_buffer,
                               ComponentBuffer const& /*component_buffer*/) {
         assert(element_buffer.buffer != nullptr);
         assert(element_buffer.buffer->data == nullptr);
