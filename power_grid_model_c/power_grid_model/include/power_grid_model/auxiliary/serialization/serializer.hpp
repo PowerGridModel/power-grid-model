@@ -387,30 +387,6 @@ class Serializer {
         return json_buffer_;
     }
 
-    static void json_convert_inf(nlohmann::json& json_document) {
-        switch (json_document.type()) {
-        case nlohmann::json::value_t::object:
-            [[fallthrough]];
-        case nlohmann::json::value_t::array:
-            for (auto& value : json_document) {
-                json_convert_inf(value);
-            }
-            break;
-        case nlohmann::json::value_t::number_float:
-            json_inf_to_string(json_document);
-            break;
-        default:
-            break;
-        }
-    }
-
-    static void json_inf_to_string(nlohmann::json& value) {
-        double const v = value.get<double>();
-        if (std::isinf(v)) {
-            value = v > 0.0 ? "inf" : "-inf";
-        }
-    }
-
     void serialize(bool use_compact_list) {
         msgpack_buffer_.clear();
         use_compact_list_ = use_compact_list;
