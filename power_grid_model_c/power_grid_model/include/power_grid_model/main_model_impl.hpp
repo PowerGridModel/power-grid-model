@@ -791,7 +791,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, options.threading);
     }
 
-    template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
+    // template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
+    //     requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
+    // ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
+    //     assert(construction_complete_);
+    //     return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
+    // }
+
+    template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
         assert(construction_complete_);
@@ -803,11 +810,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
             // output
-            auto const span = result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
-            if (span.empty()) {
-                return;
+            if (result_data.is_columnar(CT::name)) {
+                auto const span =
+                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                if (span.empty()) {
+                    return;
+                }
+                this->output_result<CT>(math_output, span.begin());
+            } else {
+                auto const span =
+                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                if (span.empty()) {
+                    return;
+                }
+                this->output_result<CT>(math_output, span.begin());
             }
-            this->output_result<CT>(math_output, span.begin());
         };
         Timer const t_output(calculation_info_, 3000, "Produce output");
         run_functor_with_all_types_return_void(output_func);
