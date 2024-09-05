@@ -11,9 +11,21 @@ import pytest
 
 from power_grid_model import DatasetType
 from power_grid_model._utils import is_columnar, is_sparse
-from power_grid_model.core.dataset_definitions import ComponentType
+from power_grid_model.core.dataset_definitions import ComponentType, ComponentTypeVar
 from power_grid_model.core.power_grid_dataset import get_dataset_type
-from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import (
+    AttributeType,
+    BatchColumn,
+    BatchDataset,
+    Dataset,
+    DenseBatchArray,
+    IndexPointer,
+    SingleArray,
+    SingleColumn,
+    SingleDataset,
+    SparseDataComponentType,
+)
+from power_grid_model.typing import ComponentAttributeMapping
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -40,7 +52,7 @@ def is_non_compact_list(data_entry):
     return isinstance(data_entry, dict)
 
 
-def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
+def is_serialized_data_type_deducible(serialized_input, data_filter: ComponentAttributeMapping) -> bool:
     """Find out if deserialization of serialized_input would contain atleast one component with row based data"""
     serialized_input_data = serialized_input["data"]
     if not serialized_input_data or data_filter is Ellipsis:
@@ -58,7 +70,7 @@ def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
     return any(data_filter[comp] is None for comp in components.intersection(data_filter.keys()))
 
 
-def is_columnar_filter(data_filter, component) -> bool:
+def is_columnar_filter(data_filter: ComponentAttributeMapping, component: ComponentTypeVar) -> bool:
     """A function to find if a data_filter will give out row or columnar format for a component"""
     if data_filter is None:
         return False
@@ -67,7 +79,9 @@ def is_columnar_filter(data_filter, component) -> bool:
     return data_filter[component] is not None
 
 
-def is_attribute_filtered_out(data_filter, component, attribute) -> bool:
+def is_attribute_filtered_out(
+    data_filter: ComponentAttributeMapping, component: ComponentTypeVar, attribute: AttributeType
+) -> bool:
     """Checks if attribute is being filtered out / excluded"""
     if data_filter is None or data_filter is Ellipsis:
         return False
@@ -80,14 +94,14 @@ def is_attribute_filtered_out(data_filter, component, attribute) -> bool:
     )
 
 
-def is_component_filtered_out(data_filter, component) -> bool:
+def is_component_filtered_out(data_filter: ComponentAttributeMapping, component: ComponentTypeVar) -> bool:
     """Checks if component is being filtered out / excluded"""
     if data_filter is None or data_filter is Ellipsis:
         return False
     return component not in data_filter
 
 
-def is_sparse_data_input(serialized_input_data, component):
+def is_sparse_data_input(serialized_input_data, component: ComponentTypeVar):
     """Checks if serialized_input_data will be of sparse format after deserialization.
     If there are uneven ids for scenarios in the serialized input, that would result in sparse data"""
     if not serialized_input_data["is_batch"]:
@@ -411,7 +425,7 @@ def assert_single_dataset_entries(
             assert isinstance(component_result, dict)
             assert all(len(v) == len(component_input) for v in component_result.values())
         else:
-            assert isinstance(component_result, np.ndarray)
+            assert isinstance(component_result, SingleArray)
             assert len(component_result) == len(component_input)
 
         # Individual data entry checks
@@ -445,11 +459,11 @@ def assert_single_dataset_structure(deserialized_dataset, data_filter):
     for component, component_result in deserialized_dataset.items():
         if is_columnar_filter(data_filter, component):
             for attr_name, arr in component_result.items():
-                assert isinstance(arr, np.ndarray)
-                assert isinstance(attr_name, str)
+                assert isinstance(arr, SingleArray)
+                assert isinstance(attr_name, AttributeType)
                 assert len(arr.shape) in [1, 2]
         else:
-            assert isinstance(component_result, np.ndarray)
+            assert isinstance(component_result, SingleColumn)
             assert component_result.ndim == 1
 
 
@@ -463,29 +477,30 @@ def assert_batch_dataset_structure(
     assert isinstance(serialized_dataset["data"], list)
     for component, component_values in deserialized_dataset.items():
         if is_sparse_data_input(serialized_dataset, component):
+            assert all(isinstance(k, SparseDataComponentType) for k in component_values)
             component_indptr = component_values["indptr"]
             component_data = component_values["data"]
-            assert isinstance(component_indptr, np.ndarray)
+            assert isinstance(component_indptr, IndexPointer)
             assert len(component_indptr) == len(serialized_dataset["data"]) + 1
             if is_columnar_filter(data_filter, component):
                 assert isinstance(component_data, dict)
                 for attr, attr_value in component_data.items():
-                    assert isinstance(attr, str)
-                    assert isinstance(attr_value, np.ndarray)
+                    assert isinstance(attr, AttributeType)
+                    assert isinstance(attr_value, SingleColumn)
                     assert attr_value.ndim == 1
             else:
-                assert isinstance(component_data, np.ndarray)
+                assert isinstance(component_data, SingleArray)
                 assert component_data.ndim == 1
                 assert len(component_data) == component_indptr[-1]
         else:
             if is_columnar_filter(data_filter, component):
                 for attr, attr_value in component_values.items():
-                    assert isinstance(attr, str)
-                    assert isinstance(attr_value, np.ndarray)
+                    assert isinstance(attr, AttributeType)
+                    assert isinstance(attr_value, BatchColumn)
                     assert len(attr_value.shape) in [2, 3]
                     assert len(attr_value) == len(serialized_dataset["data"])
             else:
-                assert isinstance(component_values, np.ndarray)
+                assert isinstance(component_values, DenseBatchArray)
                 assert len(component_values.shape) == 2
                 assert len(component_values) == len(serialized_dataset["data"])
 
