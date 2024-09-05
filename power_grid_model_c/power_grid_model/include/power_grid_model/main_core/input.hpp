@@ -31,7 +31,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
     std::vector<Idx2D> regulated_objects;
     // loop to add component
     for (auto it = begin; it != end; ++it) {
-        ComponentView input = *it;
+        ComponentView const input = *it;
         ID const id = input.id;
         // construct based on type of component
         if constexpr (std::derived_from<Component, Node>) {
