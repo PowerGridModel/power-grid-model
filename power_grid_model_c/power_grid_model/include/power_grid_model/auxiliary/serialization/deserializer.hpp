@@ -771,7 +771,7 @@ class Deserializer {
     }
 
     void parse_scenario(detail::row_based_or_columnar_c auto row_or_column_tag, MetaComponent const& component,
-                        BufferView const& buffer, ComponentByteMeta const& msg_data,
+                        BufferView const& buffer_view, ComponentByteMeta const& msg_data,
                         std::span<MetaAttribute const* const> attributes) {
         // skip for empty scenario
         if (msg_data.size == 0) {
@@ -781,7 +781,7 @@ class Deserializer {
         offset_ = msg_data.offset;
         parse_map_array<visit_array_t, move_forward>();
         for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
-            BufferView const element_buffer = advance(buffer, element_number_);
+            BufferView const element_buffer = advance(buffer_view, element_number_);
             // check the element is map or array
             auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
             if (element_visitor.is_map) {
@@ -852,14 +852,14 @@ class Deserializer {
         attribute_number_ = -1;
     }
 
-    void parse_attribute(row_based_t /*tag*/, BufferView const& buffer, MetaComponent const& component,
+    void parse_attribute(row_based_t /*tag*/, BufferView const& buffer_view, MetaComponent const& component,
                          MetaAttribute const& attribute) { // call relevant parser
-        assert(buffer.buffer != nullptr);
-        assert(buffer.buffer->data != nullptr);
+        assert(buffer_view.buffer != nullptr);
+        assert(buffer_view.buffer->data != nullptr);
 
-        ctype_func_selector(attribute.ctype, [&buffer, &component, &attribute, this]<class T> {
-            ValueVisitor<T> visitor{{},
-                                    attribute.get_attribute<T>(component.advance_ptr(buffer.buffer->data, buffer.idx))};
+        ctype_func_selector(attribute.ctype, [&buffer_view, &component, &attribute, this]<class T> {
+            ValueVisitor<T> visitor{
+                {}, attribute.get_attribute<T>(component.advance_ptr(buffer_view.buffer->data, buffer_view.idx))};
             msgpack::parse(data_, size_, offset_, visitor);
         });
     }
@@ -922,9 +922,9 @@ class Deserializer {
         }
     }
 
-    static BufferView advance(BufferView buffer, Idx offset) {
-        buffer.idx += offset;
-        return buffer;
+    static BufferView advance(BufferView buffer_view, Idx offset) {
+        buffer_view.idx += offset;
+        return buffer_view;
     }
 
     [[noreturn]] void handle_error(std::exception const& e) {
