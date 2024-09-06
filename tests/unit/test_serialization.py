@@ -388,57 +388,53 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
 def assert_single_dataset_entries(
     deserialized_dataset: SingleDataset,
     serialized_dataset: Mapping[str, Any],
-    sparse_components: list[ComponentType],
     data_filter,
 ):
     """Check a SingleDataset's individual components for correctness"""
-    # TODO What is the purpose of this check? Implement without using derserialized_dataset
-    for key in serialized_dataset["data"]:
-        if key not in deserialized_dataset and not is_component_filtered_out(data_filter, key):
-            assert key in sparse_components
-            assert False
-
-    for component, component_input in serialized_dataset["data"].items():
+    for component, serialized_input in serialized_dataset["data"].items():
         if is_component_filtered_out(data_filter, component):
             assert component not in deserialized_dataset
             continue
 
-        component_result = deserialized_dataset[component]
-        assert isinstance(component_input, list)  # TODO Why check input?
+        deserialized_output = deserialized_dataset[component]
 
         # Complete component data checks
         if is_columnar_filter(data_filter, component):
-            assert isinstance(component_result, dict)
-            assert all(len(v) == len(component_input) for v in component_result.values())
+            assert isinstance(deserialized_output, dict)
+            assert all(len(v) == len(serialized_input) for v in deserialized_output.values())
         else:
-            assert isinstance(component_result, np.ndarray)
-            assert len(component_result) == len(component_input)
+            assert isinstance(deserialized_output, np.ndarray)
+            assert len(deserialized_output) == len(serialized_input)
 
-        # Individual data entry checks
-        for comp_idx, input_entry in enumerate(component_input):
-            if is_non_compact_list(input_entry):
-                for attr in input_entry:
-                    if is_columnar_filter(data_filter, component):
-                        if is_attribute_filtered_out(data_filter, component, attr):
-                            assert attr not in component_result
-                            continue
-                        assert attr in component_result.keys()
-                        assert_almost_equal(component_result[attr][comp_idx], component_input[comp_idx][attr])
-                    else:
-                        assert attr in component_result[comp_idx].dtype.names
-                        assert_almost_equal(component_result[comp_idx][attr], component_input[comp_idx][attr])
-            else:
-                assert component in serialized_dataset["attributes"]
-                for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
-                    if is_columnar_filter(data_filter, component):
-                        if is_attribute_filtered_out(data_filter, component, attr):
-                            assert attr not in component_result
-                            continue
-                        assert attr in component_result.keys()
-                        assert_almost_equal(component_result[attr][comp_idx], component_input[comp_idx][attr_idx])
-                    else:
-                        assert attr in component_result[comp_idx].dtype.names
-                        assert_almost_equal(component_result[comp_idx][attr], component_input[comp_idx][attr_idx])
+        assert_individual_data_entry(serialized_dataset, data_filter, component, serialized_input, deserialized_output)
+
+
+def assert_individual_data_entry(serialized_dataset, data_filter, component, serialized_input, deserialized_output):
+    """Checks each data entry of the component for correctness"""
+    for comp_idx, input_entry in enumerate(serialized_input):
+        if is_non_compact_list(input_entry):
+            for attr in input_entry:
+                if is_columnar_filter(data_filter, component):
+                    if is_attribute_filtered_out(data_filter, component, attr):
+                        assert attr not in deserialized_output
+                        continue
+                    assert attr in deserialized_output.keys()
+                    assert_almost_equal(deserialized_output[attr][comp_idx], serialized_input[comp_idx][attr])
+                else:
+                    assert attr in deserialized_output[comp_idx].dtype.names
+                    assert_almost_equal(deserialized_output[comp_idx][attr], serialized_input[comp_idx][attr])
+        else:
+            assert component in serialized_dataset["attributes"]
+            for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
+                if is_columnar_filter(data_filter, component):
+                    if is_attribute_filtered_out(data_filter, component, attr):
+                        assert attr not in deserialized_output
+                        continue
+                    assert attr in deserialized_output.keys()
+                    assert_almost_equal(deserialized_output[attr][comp_idx], serialized_input[comp_idx][attr_idx])
+                else:
+                    assert attr in deserialized_output[comp_idx].dtype.names
+                    assert_almost_equal(deserialized_output[comp_idx][attr], serialized_input[comp_idx][attr_idx])
 
 
 def assert_single_dataset_structure(deserialized_dataset, data_filter):
@@ -504,23 +500,13 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
             deserialized_scenario = split_deserialized_dataset_into_individual_scenario(
                 scenario_idx, deserialized_dataset
             )
-            sparse_components = [
-                comp_name for comp_name, comp_data in deserialized_scenario.items() if is_sparse(comp_data)
-            ]
-            assert_single_dataset_entries(
-                deserialized_scenario, serialized_scenario, sparse_components, data_filter=data_filter
-            )
+            assert_single_dataset_entries(deserialized_scenario, serialized_scenario, data_filter=data_filter)
     else:
         assert_single_dataset_structure(deserialized_dataset, data_filter)
 
         assert_single_dataset_entries(
             deserialized_dataset,  # type: ignore[arg-type]
             serialized_dataset,
-            [],
-            # [
-            #     key for key, value in deserialized_dataset.items() if not isinstance(value, np.ndarray)
-            # ],
-            # # TODO Why check sparse components for non batch scenarios
             data_filter=data_filter,
         )
 
