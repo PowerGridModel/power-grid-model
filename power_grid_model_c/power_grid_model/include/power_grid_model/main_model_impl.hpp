@@ -388,6 +388,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (update_data.is_columnar(CT::name)) {
                 auto const buffer_span =
                     update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+                // [JGUO] ISSUE here: buffer_span .begin() and .end() are 0 away
                 return process_buffer_span(buffer_span, get_sequence);
             } else {
                 auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);

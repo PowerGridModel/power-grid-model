@@ -1313,31 +1313,19 @@ TEST_CASE("Test main model - runtime dispatch") {
             }
         }
         SUBCASE("Columnar buffers in update data") {
-            std::vector<ID> node_ids;
-            std::vector<double> node_u_rated;
-            std::ranges::transform(state.node_input, std::back_inserter(node_ids),
-                                   [](auto const& node) { return node.id; });
-            std::ranges::transform(state.node_input, std::back_inserter(node_u_rated),
-                                   [](auto const& node) { return node.u_rated; });
-            REQUIRE(node_ids.size() == node_u_rated.size());
+            std::vector<ID> source_ids;
+            std::vector<double> source_u_ref;
+            std::ranges::transform(state.source_input, std::back_inserter(source_ids),
+                                   [](auto const& source) { return source.id; });
+            std::ranges::transform(state.source_input, std::back_inserter(source_u_ref),
+                                   [](auto const& source) { return source.u_ref; });
+            REQUIRE(source_ids.size() == source_u_ref.size());
 
             ConstDataset update_data_with_columns{false, 1, "input", meta_data::meta_data_gen::meta_data};
-            update_data_with_columns.add_buffer("node", state.node_input.size(), state.node_input.size(), nullptr,
-                                                nullptr);
-            update_data_with_columns.add_attribute_buffer("node", "id", node_ids.data());
-            update_data_with_columns.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-            update_data_with_columns.add_buffer("line", state.line_input.size(), state.line_input.size(), nullptr,
-                                                state.line_input.data());
-            update_data_with_columns.add_buffer("link", state.link_input.size(), state.link_input.size(), nullptr,
-                                                state.link_input.data());
             update_data_with_columns.add_buffer("source", state.source_input.size(), state.source_input.size(), nullptr,
-                                                state.source_input.data());
-            update_data_with_columns.add_buffer("sym_load", state.sym_load_input.size(), state.sym_load_input.size(),
-                                                nullptr, state.sym_load_input.data());
-            update_data_with_columns.add_buffer("asym_load", state.asym_load_input.size(), state.asym_load_input.size(),
-                                                nullptr, state.asym_load_input.data());
-            update_data_with_columns.add_buffer("shunt", state.shunt_input.size(), state.shunt_input.size(), nullptr,
-                                                state.shunt_input.data());
+                                                nullptr);
+            update_data_with_columns.add_attribute_buffer("source", "id", source_ids.data());
+            update_data_with_columns.add_attribute_buffer("source", "u_ref", source_u_ref.data());
 
             MainModel row_based_model{50.0, input_data};
             row_based_model.update_component<permanent_update_t>(update_data_with_columns);
