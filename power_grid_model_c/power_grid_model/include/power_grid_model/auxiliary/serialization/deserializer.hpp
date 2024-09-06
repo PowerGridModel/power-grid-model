@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include "common.hpp"
+
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
+#include "../../common/typing.hpp"
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
 
@@ -364,6 +367,18 @@ class Deserializer {
     using DataByteMeta = std::vector<std::vector<ComponentByteMeta>>;
     using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;
 
+    using Buffer = WritableDataset::Buffer;
+    struct BufferView {
+        Buffer const* buffer{nullptr};
+        Idx idx{0};
+        std::span<AttributeBuffer<void> const> reordered_attribute_buffers;
+    };
+
+    using row_based_t = detail::row_based_t;
+    using columnar_t = detail::columnar_t;
+    static constexpr auto row_based = detail::row_based;
+    static constexpr auto columnar = detail::columnar;
+
   public:
     // not copyable
     Deserializer(Deserializer const&) = delete;
@@ -433,6 +448,7 @@ class Deserializer {
     std::string version_;
     bool is_batch_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>, std::less<>> attributes_;
+
     // offset of the msgpack bytes, the number of elements,
     //     for the actual data, per component (outer), per batch (inner)
     // if a component has no element for a certain scenario, that offset and size will be zero.
@@ -685,11 +701,31 @@ class Deserializer {
     }
 
     void parse_component(Idx component_idx) {
+        if (dataset_handler_.is_row_based(component_idx)) {
+            parse_component(row_based, component_idx);
+        } else {
+            parse_component(columnar, component_idx);
+        }
+    }
+
+    template <detail::row_based_or_columnar_c row_or_column_t>
+    void parse_component(row_or_column_t row_or_column_tag, Idx component_idx) {
         auto const& buffer = dataset_handler_.get_buffer(component_idx);
+
+        assert(dataset_handler_.is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
+        assert(dataset_handler_.is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
+        assert(is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
+        assert(is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
+
         auto const& info = dataset_handler_.get_component_info(component_idx);
         auto const& msg_data = msg_data_offsets_[component_idx];
+
         Idx const batch_size = dataset_handler_.batch_size();
         component_key_ = info.component->name;
+
+        // set nan
+        set_nan(row_or_column_tag, buffer, info);
+
         // handle indptr
         if (info.elements_per_scenario < 0) {
             // first always zero
@@ -699,37 +735,45 @@ class Deserializer {
                 msg_data.cbegin(), msg_data.cend(), buffer.indptr.begin() + 1, std::plus{},
                 [](auto const& x) { return x.size; }, Idx{});
         }
-        // set nan
-        info.component->set_nan(buffer.data, 0, info.total_elements);
+
         // attributes
-        auto const attributes = [&]() -> std::span<MetaAttribute const* const> {
-            auto const found = attributes_.find(info.component);
-            if (found == attributes_.cend()) {
-                return {};
+        std::span<MetaAttribute const* const> const attributes = [this,
+                                                                  &info]() -> std::span<MetaAttribute const* const> {
+            if (auto const it = attributes_.find(info.component); it != attributes_.cend()) {
+                return it->second;
             }
-            return found->second;
+            return {};
         }();
+        auto const reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
+                                                     ? detail::reordered_attribute_buffers(buffer, attributes)
+                                                     : std::vector<AttributeBuffer<void>>{};
+
+        BufferView const buffer_view{
+            .buffer = &buffer, .idx = 0, .reordered_attribute_buffers = reordered_attribute_buffers};
+
         // all scenarios
         for (scenario_number_ = 0; scenario_number_ != batch_size; ++scenario_number_) {
-            Idx const scenario_offset = info.elements_per_scenario < 0 ? buffer.indptr[scenario_number_]
+            Idx const scenario_offset = info.elements_per_scenario < 0 ? buffer_view.buffer->indptr[scenario_number_]
                                                                        : scenario_number_ * info.elements_per_scenario;
 #ifndef NDEBUG
             if (info.elements_per_scenario < 0) {
-                assert(buffer.indptr[scenario_number_ + 1] - buffer.indptr[scenario_number_] ==
+                assert(buffer_view.buffer->indptr[scenario_number_ + 1] -
+                           buffer_view.buffer->indptr[scenario_number_] ==
                        msg_data[scenario_number_].size);
 
             } else {
                 assert(info.elements_per_scenario == msg_data[scenario_number_].size);
             }
 #endif
-            void* scenario_pointer = info.component->advance_ptr(buffer.data, scenario_offset);
-            parse_scenario(*info.component, scenario_pointer, msg_data[scenario_number_], attributes);
+            BufferView const scenario = advance(buffer_view, scenario_offset);
+            parse_scenario(row_or_column_tag, *info.component, scenario, msg_data[scenario_number_], attributes);
         }
         scenario_number_ = -1;
         component_key_ = "";
     }
 
-    void parse_scenario(MetaComponent const& component, void* scenario_pointer, ComponentByteMeta const& msg_data,
+    void parse_scenario(detail::row_based_or_columnar_c auto row_or_column_tag, MetaComponent const& component,
+                        BufferView const& buffer_view, ComponentByteMeta const& msg_data,
                         std::span<MetaAttribute const* const> attributes) {
         // skip for empty scenario
         if (msg_data.size == 0) {
@@ -739,49 +783,95 @@ class Deserializer {
         offset_ = msg_data.offset;
         parse_map_array<visit_array_t, move_forward>();
         for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
-            void* element_pointer = component.advance_ptr(scenario_pointer, element_number_);
+            BufferView const element_buffer = advance(buffer_view, element_number_);
             // check the element is map or array
             auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
             if (element_visitor.is_map) {
-                parse_map_element(element_pointer, element_visitor.size, component);
+                parse_map_element(row_or_column_tag, element_buffer, element_visitor.size, component);
             } else {
-                parse_array_element(element_pointer, element_visitor.size, attributes);
+                parse_array_element(row_or_column_tag, element_buffer, element_visitor.size, component, attributes);
             }
         }
         element_number_ = -1;
         offset_ = 0;
     }
 
-    void parse_map_element(void* element_pointer, Idx map_size, MetaComponent const& component) {
+    void parse_map_element(row_based_t tag, BufferView const& buffer_view, Idx map_size,
+                           MetaComponent const& component) {
         while (map_size-- != 0) {
             attribute_key_ = parse_string();
-            Idx const found_idx = component.find_attribute(attribute_key_);
-            if (found_idx < 0) {
-                attribute_key_ = {};
-                // allow unknown key for additional user info
+            Idx const component_attribute_idx = component.find_attribute(attribute_key_);
+            if (component_attribute_idx >= 0) {
+                parse_attribute(tag, buffer_view, component, component.attributes[component_attribute_idx]);
+            } else {
+                attribute_key_ = {}; // allow unknown key for additional user info
                 parse_skip();
-                continue;
             }
-            parse_attribute(element_pointer, component.attributes[found_idx]);
         }
         attribute_key_ = "";
     }
 
-    void parse_array_element(void* element_pointer, Idx array_size, std::span<MetaAttribute const* const> attributes) {
+    void parse_map_element(columnar_t /*tag*/, BufferView const& buffer_view, Idx map_size,
+                           MetaComponent const& /*component*/) {
+        while (map_size-- != 0) {
+            attribute_key_ = parse_string();
+            if (auto it = std::ranges::find_if(buffer_view.buffer->attributes,
+                                               [this](auto const& attribute_buffer) {
+                                                   assert(attribute_buffer.meta_attribute != nullptr);
+                                                   return attribute_buffer.meta_attribute->name == attribute_key_;
+                                               });
+                it != buffer_view.buffer->attributes.end()) {
+                parse_attribute(*it, buffer_view.idx);
+            } else {
+                attribute_key_ = {}; // allow unknown key for additional user info
+                parse_skip();
+            }
+        }
+        attribute_key_ = "";
+    }
+
+    template <detail::row_based_or_columnar_c row_or_column_t>
+    void parse_array_element(row_or_column_t row_or_column_tag, BufferView const& buffer_view, Idx array_size,
+                             MetaComponent const& component, std::span<MetaAttribute const* const> attributes) {
         if (array_size != static_cast<Idx>(attributes.size())) {
             throw SerializationError{
                 "An element of a list should have same length as the list of predefined attributes!\n"};
         }
+
         for (attribute_number_ = 0; attribute_number_ != array_size; ++attribute_number_) {
-            parse_attribute(element_pointer, *attributes[attribute_number_]);
+            if constexpr (detail::is_row_based_v<row_or_column_t>) {
+                parse_attribute(row_or_column_tag, buffer_view, component, *attributes[attribute_number_]);
+            } else {
+                static_assert(detail::is_columnar_v<row_or_column_t>);
+                if (auto const& attribute_buffer = buffer_view.reordered_attribute_buffers[attribute_number_];
+                    attribute_buffer.data != nullptr) {
+                    parse_attribute(attribute_buffer, buffer_view.idx);
+                } else {
+                    parse_skip();
+                }
+            }
         }
         attribute_number_ = -1;
     }
 
-    void parse_attribute(void* element_pointer, MetaAttribute const& attribute) {
-        // call relevant parser
-        ctype_func_selector(attribute.ctype, [element_pointer, &attribute, this]<class T> {
-            ValueVisitor<T> visitor{{}, attribute.get_attribute<T>(element_pointer)};
+    void parse_attribute(row_based_t /*tag*/, BufferView const& buffer_view, MetaComponent const& component,
+                         MetaAttribute const& attribute) { // call relevant parser
+        assert(is_row_based(buffer_view));
+
+        ctype_func_selector(attribute.ctype, [&buffer_view, &component, &attribute, this]<class T> {
+            ValueVisitor<T> visitor{
+                {}, attribute.get_attribute<T>(component.advance_ptr(buffer_view.buffer->data, buffer_view.idx))};
+            msgpack::parse(data_, size_, offset_, visitor);
+        });
+    }
+
+    // parse a single attribute into an attribute buffer (a single column in a columnar buffer)
+    void parse_attribute(AttributeBuffer<void> const& buffer, Idx idx) {
+        assert(buffer.data != nullptr);
+        assert(buffer.meta_attribute != nullptr);
+
+        ctype_func_selector(buffer.meta_attribute->ctype, [&buffer, &idx, this]<class T> {
+            ValueVisitor<T> visitor{{}, *(reinterpret_cast<T*>(buffer.data) + idx)};
             msgpack::parse(data_, size_, offset_, visitor);
         });
     }
@@ -815,6 +905,38 @@ class Deserializer {
         }
         }
     }
+
+    static void set_nan(row_based_t /*tag*/, Buffer const& buffer, ComponentInfo const& info) {
+        assert(is_row_based(buffer));
+        info.component->set_nan(buffer.data, 0, info.total_elements);
+    }
+    static void set_nan(columnar_t /*tag*/, Buffer const& buffer, ComponentInfo const& info) {
+        assert(is_columnar(buffer));
+        for (auto const& attribute_buffer : buffer.attributes) {
+            if (attribute_buffer.meta_attribute != nullptr) {
+                ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&attribute_buffer, &info]<typename T> {
+                    std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data),
+                                                narrow_cast<size_t>(info.total_elements)},
+                                      nan_value<T>);
+                });
+            }
+        }
+    }
+
+    static constexpr BufferView advance(BufferView buffer_view, Idx offset) {
+        buffer_view.idx += offset;
+        return buffer_view;
+    }
+    static constexpr bool is_row_based(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_row_based(*buffer_view.buffer);
+    }
+    static constexpr bool is_row_based(WritableDataset::Buffer const& buffer) { return buffer.data != nullptr; }
+    static constexpr bool is_columnar(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_columnar(*buffer_view.buffer);
+    }
+    static constexpr bool is_columnar(WritableDataset::Buffer const& buffer) { return buffer.data == nullptr; }
 
     [[noreturn]] void handle_error(std::exception const& e) {
         std::stringstream ss;
