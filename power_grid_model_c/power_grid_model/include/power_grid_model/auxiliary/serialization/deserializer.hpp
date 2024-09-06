@@ -703,7 +703,7 @@ class Deserializer {
     void parse_component(Idx component_idx) {
         if (dataset_handler_.is_row_based(component_idx)) {
             parse_component(row_based, component_idx);
-        } else {
+        } else if (!dataset_handler_.get_buffer(component_idx).attributes.empty()) {
             parse_component(columnar, component_idx);
         }
     }
