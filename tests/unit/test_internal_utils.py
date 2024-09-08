@@ -9,9 +9,9 @@ import pytest
 
 from power_grid_model import initialize_array
 from power_grid_model._utils import (
+    compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
-    copy_to_row_or_columnar_dataset,
     get_and_verify_batch_sizes,
     is_nan,
     process_data_filter,
@@ -524,7 +524,7 @@ def sample_output_data():
     ],
 )
 def test_copy_output_to_columnar_dataset(output_component_types, expected):
-    actual = copy_to_row_or_columnar_dataset(
+    actual = compatibility_convert_row_columnar_dataset(
         data=sample_output_data(),
         data_filter=output_component_types,
         dataset_type=DT.sym_output,
