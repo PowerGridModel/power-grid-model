@@ -23,6 +23,11 @@ concept row_based_or_columnar_c = std::derived_from<T, row_based_t> || std::deri
 template <row_based_or_columnar_c T> constexpr bool is_row_based_v = std::derived_from<T, row_based_t>;
 template <row_based_or_columnar_c T> constexpr bool is_columnar_v = std::derived_from<T, columnar_t>;
 
+// obtain attribute buffers of a columnar dataset buffer, ordered by the provided meta attributes.
+//
+// If none of the provided meta attributes are present in the provided attribute buffers, the result is empty.
+// Otherwise, returns a list of attribute buffers with the same order as the input attribute order.
+// The attribute buffers are copies of the associated attribute buffers, when provided, and otherwise empty.
 template <typename BufferType>
     requires requires(BufferType const& b) {
                  { b.attributes } -> std::convertible_to<std::vector<AttributeBuffer<typename BufferType::Data>>>;
