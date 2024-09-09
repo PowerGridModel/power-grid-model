@@ -78,7 +78,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                 ctype_func_selector(
                     meta_attribute.ctype, [&value, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
                         AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer.data) + idx_;
-                        AttributeType const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
+                        auto const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
                             reinterpret_cast<RawDataConstPtr>(&value));
                         *buffer_ptr = attribute_ref;
                     });
@@ -95,7 +95,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                     meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
                         AttributeType const* buffer_ptr =
                             reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
-                        AttributeType& attribute_ref =
+                        auto& attribute_ref =
                             meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
                         attribute_ref = *buffer_ptr;
                     });
@@ -233,15 +233,19 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
     constexpr bool is_row_based(Idx const i) const { return is_row_based(buffers_[i]); }
     constexpr bool is_row_based(Buffer const& buffer) const { return buffer.data != nullptr; }
-    constexpr bool is_columnar(std::string_view component) const {
+    constexpr bool is_columnar(std::string_view component, bool with_attribute_buffers = false) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
             return false;
         }
-        return is_columnar(idx);
+        return is_columnar(idx, with_attribute_buffers);
     }
-    constexpr bool is_columnar(Idx const i) const { return !is_row_based(i); }
-    constexpr bool is_columnar(Buffer const& buffer) const { return !is_row_based(buffer); }
+    constexpr bool is_columnar(Idx const i, bool with_attribute_buffers = false) const {
+        return is_columnar(buffers_[i], with_attribute_buffers);
+    }
+    constexpr bool is_columnar(Buffer const& buffer, bool with_attribute_buffers = false) const {
+        return !is_row_based(buffer) && !(with_attribute_buffers && buffer.attributes.empty());
+    }
 
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {

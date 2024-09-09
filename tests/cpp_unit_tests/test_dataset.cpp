@@ -190,6 +190,7 @@ void check_row_span(BufferSpan const& buffer_span, Idx const& total_elements,
     CHECK(std::size(buffer_span) == total_elements);
     CHECK(std::data(buffer_span) == a_buffer.data());
 }
+
 } // namespace
 
 TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::InputType>,
