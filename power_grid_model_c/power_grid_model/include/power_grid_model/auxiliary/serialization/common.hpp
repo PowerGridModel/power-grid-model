@@ -46,6 +46,11 @@ reordered_attribute_buffers(BufferType& buffer, std::span<MetaAttribute const* c
             }
             return AttributeBuffer<void>{};
         });
+
+    if (std::ranges::all_of(result, [](auto const& attribute_buffer) { return attribute_buffer.data == nullptr; })) {
+        result = {};
+    }
+
     return result;
 }
 

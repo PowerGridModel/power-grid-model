@@ -703,7 +703,7 @@ class Deserializer {
     void parse_component(Idx component_idx) {
         if (dataset_handler_.is_row_based(component_idx)) {
             parse_component(row_based, component_idx);
-        } else {
+        } else if (dataset_handler_.is_columnar(component_idx, true)) {
             parse_component(columnar, component_idx);
         }
     }
@@ -713,7 +713,7 @@ class Deserializer {
         auto const& buffer = dataset_handler_.get_buffer(component_idx);
 
         assert(dataset_handler_.is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
-        assert(dataset_handler_.is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
+        assert(dataset_handler_.is_columnar(buffer, true) == detail::is_columnar_v<row_or_column_t>);
         assert(is_row_based(buffer) == detail::is_row_based_v<row_or_column_t>);
         assert(is_columnar(buffer) == detail::is_columnar_v<row_or_column_t>);
 
@@ -744,9 +744,9 @@ class Deserializer {
             }
             return {};
         }();
-        auto const reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
-                                                     ? detail::reordered_attribute_buffers(buffer, attributes)
-                                                     : std::vector<AttributeBuffer<void>>{};
+        auto reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
+                                               ? detail::reordered_attribute_buffers(buffer, attributes)
+                                               : std::vector<AttributeBuffer<void>>{};
 
         BufferView const buffer_view{
             .buffer = &buffer, .idx = 0, .reordered_attribute_buffers = reordered_attribute_buffers};
@@ -779,21 +779,46 @@ class Deserializer {
         if (msg_data.size == 0) {
             return;
         }
+
         // set offset and skip array header
         offset_ = msg_data.offset;
         parse_map_array<visit_array_t, move_forward>();
+
         for (element_number_ = 0; element_number_ != msg_data.size; ++element_number_) {
             BufferView const element_buffer = advance(buffer_view, element_number_);
             // check the element is map or array
-            auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
-            if (element_visitor.is_map) {
-                parse_map_element(row_or_column_tag, element_buffer, element_visitor.size, component);
-            } else {
-                parse_array_element(row_or_column_tag, element_buffer, element_visitor.size, component, attributes);
-            }
+            parse_element(row_or_column_tag, element_buffer, component, attributes);
         }
         element_number_ = -1;
         offset_ = 0;
+    }
+
+    void parse_element(row_based_t tag, BufferView const& buffer_view, MetaComponent const& component,
+                       std::span<MetaAttribute const* const> attributes) {
+        assert(is_row_based(buffer_view));
+
+        auto const element_visitor = parse_map_array<visit_map_array_t, move_forward>();
+        if (element_visitor.is_map) {
+            parse_map_element(tag, buffer_view, element_visitor.size, component);
+        } else {
+            parse_array_element(tag, buffer_view, element_visitor.size, component, attributes);
+        }
+    }
+
+    void parse_element(columnar_t tag, BufferView const& buffer_view, MetaComponent const& component,
+                       std::span<MetaAttribute const* const> attributes) {
+        assert(is_columnar(buffer_view));
+
+        auto const element_visitor = parse_map_array<visit_map_array_t, stay_offset>();
+        if (element_visitor.is_map) {
+            parse_map_array<visit_map_array_t, move_forward>();
+            parse_map_element(tag, buffer_view, element_visitor.size, component);
+        } else if (!buffer_view.reordered_attribute_buffers.empty()) {
+            parse_map_array<visit_map_array_t, move_forward>();
+            parse_array_element(tag, buffer_view, element_visitor.size, component, attributes);
+        } else {
+            parse_skip();
+        }
     }
 
     void parse_map_element(row_based_t tag, BufferView const& buffer_view, Idx map_size,
@@ -813,6 +838,8 @@ class Deserializer {
 
     void parse_map_element(columnar_t /*tag*/, BufferView const& buffer_view, Idx map_size,
                            MetaComponent const& /*component*/) {
+        assert(!buffer_view.buffer->attributes.empty());
+
         while (map_size-- != 0) {
             attribute_key_ = parse_string();
             if (auto it = std::ranges::find_if(buffer_view.buffer->attributes,
@@ -936,7 +963,9 @@ class Deserializer {
         assert(buffer_view.buffer != nullptr);
         return is_columnar(*buffer_view.buffer);
     }
-    static constexpr bool is_columnar(WritableDataset::Buffer const& buffer) { return buffer.data == nullptr; }
+    static constexpr bool is_columnar(WritableDataset::Buffer const& buffer) {
+        return buffer.data == nullptr && !buffer.attributes.empty();
+    }
 
     [[noreturn]] void handle_error(std::exception const& e) {
         std::stringstream ss;
