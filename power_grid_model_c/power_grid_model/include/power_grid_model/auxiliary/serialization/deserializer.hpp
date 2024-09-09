@@ -744,7 +744,7 @@ class Deserializer {
             }
             return {};
         }();
-        auto reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
+        auto const reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
                                                ? detail::reordered_attribute_buffers(buffer, attributes)
                                                : std::vector<AttributeBuffer<void>>{};
 
