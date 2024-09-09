@@ -208,7 +208,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, typename ForwardIterator>
+    template <std::derived_from<Base> CompType, forward_iterator_like<typename CompType::InputType> ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
@@ -229,7 +229,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType, typename ForwardIterator>
+    template <class CompType, cache_type_c CacheType,
+              forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
         constexpr auto comp_index = index_of_component<CompType>;
 
@@ -389,10 +390,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const buffer_span =
                     update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
                 return process_buffer_span(buffer_span, get_sequence);
-            } else {
-                auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
-                return process_buffer_span(buffer_span, get_sequence);
             }
+            auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+            return process_buffer_span(buffer_span, get_sequence);
         };
 
         return run_functor_with_all_types_return_array(get_seq_idx_func);
@@ -829,10 +829,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
             auto process_output = [this, &math_output](auto const& span) {
-                if (span.empty()) {
+                if (std::empty(span)) {
                     return;
                 }
-                this->output_result<CT>(math_output, span.begin());
+                this->output_result<CT>(math_output, std::begin(span));
             };
 
             if (result_data.is_columnar(CT::name)) {
