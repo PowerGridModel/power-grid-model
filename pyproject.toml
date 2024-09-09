@@ -110,8 +110,7 @@ test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
 #    musllinux in aarch64
-#    Python 3.13 (because NumPy is not yet compatible)
-skip = ["pp*", "*-musllinux_aarch64", "cp313-*"]
+skip = ["pp*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
