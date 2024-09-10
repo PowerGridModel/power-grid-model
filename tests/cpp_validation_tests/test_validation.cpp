@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#define PGM_ENABLE_EXPERIMENTAL
+
+#include "power_grid_model_cpp.hpp"
+
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
@@ -40,14 +44,14 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-class UnsupportedValidationCase : public PowerGridError {
+class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
   public:
-    UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
-        using namespace std::string_literals;
-
-        auto const sym_str = sym ? "sym"s : "asym"s;
-        append_msg("Unsupported validation case: "s + sym_str + " "s + calculation_type);
-    };
+    UnsupportedValidationCase(std::string const& calculation_type, bool sym)
+        : power_grid_model_cpp::PowerGridError{[&]() {
+              using namespace std::string_literals;
+              auto const sym_str = sym ? "sym"s : "asym"s;
+              return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
+          }()} {}
 };
 
 // memory buffer

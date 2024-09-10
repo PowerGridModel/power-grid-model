@@ -12,6 +12,8 @@ add_executable(power_grid_model_validation_tests ${PROJECT_SOURCES})
 target_link_libraries(power_grid_model_validation_tests
     PRIVATE
         power_grid_model
+        power_grid_model_c
+        power_grid_model_cpp
         doctest::doctest
         nlohmann_json nlohmann_json::nlohmann_json
 )
