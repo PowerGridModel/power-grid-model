@@ -29,11 +29,6 @@ concept bidirectional_iterator_like = forward_iterator_like<T, ElementType> && r
 template <typename T, typename ElementType>
 concept random_access_iterator_like =
     bidirectional_iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
-                                                                                  { t++ } -> std::same_as<T>;
-                                                                                  { t-- } -> std::same_as<T>;
-                                                                                  { ++t } -> std::same_as<T&>;
-                                                                                  { --t } -> std::same_as<T&>;
-
                                                                                   { t + n } -> std::same_as<T>;
                                                                                   { t - n } -> std::same_as<T>;
                                                                                   { t += n } -> std::same_as<T&>;
