@@ -23,6 +23,7 @@ on:
         options:
           - all
           - power_grid_model_c
+          - power_grid_model_cpp
         required: true
 
 concurrency:
