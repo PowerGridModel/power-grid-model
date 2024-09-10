@@ -302,37 +302,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
     }
 
-    void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data) {
-        Idx const idx = find_component(component, true);
-        Buffer& buffer = buffers_[idx];
-        if (!is_columnar(buffer)) {
-            throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
-        }
-        if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
-                return buffer_attribute.meta_attribute->name == attribute;
-            }) != buffer.attributes.end()) {
-            throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
-        }
-        AttributeBuffer<Data> const attribute_buffer{
-            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
-        buffer.attributes.emplace_back(attribute_buffer);
+    void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data)
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        add_attribute_buffer_impl(component, attribute, data);
     }
 
     void set_attribute_buffer(std::string_view component, std::string_view attribute, Data* data)
-        requires is_data_mutable_v<dataset_type>
+        requires is_indptr_mutable_v<dataset_type>
     {
-        Idx const idx = find_component(component, true);
-        Buffer& buffer = buffers_[idx];
-        if (!is_columnar(buffer)) {
-            throw DatasetError{"Cannot set attribute buffers for row-based dataset!\n"};
-        }
-        auto it = std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
-            return buffer_attribute.meta_attribute->name == attribute;
-        });
-        if (it == buffer.attributes.end()) {
-            throw DatasetError{"Attribute buffer not found!\n"};
-        }
-        it->data = data;
+        add_attribute_buffer_impl(component, attribute, data);
     }
 
     // get buffer by component type
@@ -457,6 +436,22 @@ template <dataset_type_tag dataset_type_> class Dataset {
         dataset_info_.component_info.push_back(
             {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers_.push_back(Buffer{});
+    }
+
+    void add_attribute_buffer_impl(std::string_view component, std::string_view attribute, Data* data) {
+        Idx const idx = find_component(component, true);
+        Buffer& buffer = buffers_[idx];
+        if (!is_columnar(buffer)) {
+            throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
+        }
+        if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
+                return buffer_attribute.meta_attribute->name == attribute;
+            }) != buffer.attributes.end()) {
+            throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
+        }
+        AttributeBuffer<Data> attribute_buffer{
+            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
+        buffer.attributes.emplace_back(attribute_buffer);
     }
 
     template <class RangeType>
