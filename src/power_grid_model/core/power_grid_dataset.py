@@ -150,7 +150,7 @@ def get_dataset_type(data: Dataset) -> DatasetType:
     candidates = set(power_grid_meta_data.keys())
 
     if all(is_columnar(v) for v in data.values()):
-        raise ValueError("The dataset type could not be deduced. Atleast one component should have row based data.")
+        raise ValueError("The dataset type could not be deduced. At least one component should have row based data.")
 
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
