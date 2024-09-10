@@ -13,6 +13,9 @@ namespace power_grid_model::main_core {
 
 namespace detail {
 
+template <typename T, typename U>
+concept assignable_to = std::assignable_from<U, T>;
+
 template <std::same_as<Node> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
@@ -75,12 +78,11 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     return state.comp_topo->regulated_object_idx.cbegin() + get_component_sequence_offset<Regulator, Component>(state);
 }
 
-template <typename Component, typename IndexType, class ComponentContainer, std::forward_iterator ResIt,
-          typename ResFunc>
+template <typename Component, typename IndexType, class ComponentContainer, typename ResIt, typename ResFunc>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&, IndexType> &&
-             std::convertible_to<std::invoke_result_t<ResFunc, Component const&, IndexType>,
-                                 std::iter_value_t<ResIt>> &&
+             assignable_to<std::invoke_result_t<ResFunc, Component const&, IndexType>,
+                           std::add_lvalue_reference_t<std::iter_value_t<ResIt>>> &&
              std::convertible_to<IndexType,
                                  decltype(*comp_base_sequence_cbegin<Component>(MainModelState<ComponentContainer>{}))>
 constexpr ResIt produce_output(MainModelState<ComponentContainer> const& state, ResIt res_it, ResFunc&& func) {
@@ -359,12 +361,12 @@ output_result(Component const& transformer_tap_regulator, MainModelState<Compone
 
 // output base component
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::forward_iterator ResIt>
+          typename ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, solver_output, math_id)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -374,13 +376,13 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::forward_iterator ResIt>
+          typename ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, state, solver_output, math_id)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -390,13 +392,13 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::forward_iterator ResIt>
+          typename ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx obj_seq) {
                  {
                      output_result<Component>(component, state, solver_output, obj_seq)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -406,13 +408,13 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::forward_iterator ResIt>
+          typename ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output,
                       Idx2DBranch3 const& math_id) {
                  {
                      output_result<Component>(component, solver_output, math_id)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -421,14 +423,13 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
             return output_result<Component>(component, math_output.solver_output, math_id);
         });
 }
-template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType,
-          std::forward_iterator ResIt>
+template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType, typename ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       MathOutput<SolverOutputType> const& math_output, Idx const obj_seq) {
                  {
                      output_result<Component>(component, state, math_output, obj_seq)
-                     } -> std::convertible_to<std::iter_value_t<ResIt>>;
+                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<SolverOutputType> const& math_output, ResIt res_it) {
@@ -440,7 +441,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
 
 // output source, load_gen, shunt individually
 template <std::same_as<Appliance> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::forward_iterator ResIt>
+          typename ResIt>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {

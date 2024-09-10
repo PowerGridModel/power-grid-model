@@ -78,7 +78,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                 ctype_func_selector(
                     meta_attribute.ctype, [&value, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
                         AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer.data) + idx_;
-                        AttributeType const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
+                        auto const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
                             reinterpret_cast<RawDataConstPtr>(&value));
                         *buffer_ptr = attribute_ref;
                     });
@@ -95,7 +95,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                     meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
                         AttributeType const* buffer_ptr =
                             reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
-                        AttributeType& attribute_ref =
+                        auto& attribute_ref =
                             meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
                         attribute_ref = *buffer_ptr;
                     });

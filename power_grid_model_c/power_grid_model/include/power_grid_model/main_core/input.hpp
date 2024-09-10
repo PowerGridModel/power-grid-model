@@ -8,6 +8,7 @@
 #include "state_queries.hpp"
 
 #include "../all_components.hpp"
+#include "../common/iterator_like_concepts.hpp"
 
 #include <unordered_set>
 
@@ -19,16 +20,20 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer,
+          forward_iterator_like<typename Component::InputType> ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
                           double system_frequency) {
+    using ComponentView = std::conditional_t<std::same_as<decltype(*begin), typename Component::InputType const&>,
+                                             typename Component::InputType const&, typename Component::InputType>;
+
     reserve_component<Component>(state, std::distance(begin, end));
     // do sanity check on the transformer tap regulator
     std::vector<Idx2D> regulated_objects;
     // loop to add component
     for (auto it = begin; it != end; ++it) {
-        auto const& input = *it;
+        ComponentView const input = *it;
         ID const id = input.id;
         // construct based on type of component
         if constexpr (std::derived_from<Component, Node>) {
