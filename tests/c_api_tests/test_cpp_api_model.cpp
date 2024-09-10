@@ -157,7 +157,7 @@ TEST_CASE("C++ API Model") {
     batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // create model
-    // FAIL("This test will fail here due to columnar data input.");
+    // FIXME(mgovers): This test will fail here due to columnar data input;
     Model model{50.0, input_dataset};
 
     // test move-ability
