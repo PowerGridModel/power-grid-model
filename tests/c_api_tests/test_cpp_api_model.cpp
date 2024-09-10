@@ -194,7 +194,7 @@ TEST_CASE("C++ API Model") {
     }
 
     SUBCASE("Copy model") {
-        Model const& model_copy{model};
+        Model model_copy{model};
         model_copy.calculate(options, single_output_dataset);
         node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
         node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);

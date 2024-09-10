@@ -196,7 +196,7 @@ PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDat
  * @param handle
  * @param dataset A pointer to the PGM_WritableDataset.
  * @param component The name of the component.
- * @param component The name of the attribute.
+ * @param attribute The name of the attribute.
  * @param data A void pointer to the buffer data.
  * @return
  */

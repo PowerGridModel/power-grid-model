@@ -69,8 +69,8 @@ class Handle {
         case PGM_batch_error: {
             Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
             std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
-            const auto* const failed_scenario_seqs = PGM_failed_scenarios(handle_ptr);
-            const auto* const failed_scenario_messages = PGM_batch_errors(handle_ptr);
+            auto const* const failed_scenario_seqs = PGM_failed_scenarios(handle_ptr);
+            auto const* const failed_scenario_messages = PGM_batch_errors(handle_ptr);
             for (Idx i = 0; i < n_failed_scenarios; ++i) {
                 failed_scenarios[i] =
                     PowerGridBatchError::FailedScenario{failed_scenario_seqs[i], failed_scenario_messages[i]};
