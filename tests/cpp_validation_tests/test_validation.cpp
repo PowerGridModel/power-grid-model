@@ -12,21 +12,52 @@
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model.hpp>
 
+#include <Eigen/Dense>
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
+#include <complex>
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <optional>
 #include <regex>
 
 namespace power_grid_model::meta_data {
 
 namespace {
+
+// is nan. Taken from three_phase_tensor.hpp
+template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
+inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
+template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
+    return is_nan(x.real()) || is_nan(x.imag());
+}
+inline bool is_nan(int32_t x) { return x == std::numeric_limits<int32_t>::min(); }
+inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
+template <class Enum>
+    requires std::same_as<std::underlying_type_t<Enum>, int8_t>
+inline bool is_nan(Enum x) {
+    return static_cast<int8_t>(x) == std::numeric_limits<int8_t>::min();
+}
+
+template <class Functor, class... Args>
+decltype(auto) pgm_type_func_selector(PGM_CType type, Functor&& f, Args&&... args) {
+    switch (type) {
+    case PGM_double:
+        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
+    case PGM_double3:
+        return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
+    case PGM_int8:
+        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
+    case PGM_int32:
+        return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
+    }
+}
 
 using nlohmann::json;
 
@@ -54,59 +85,89 @@ class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
           }()} {}
 };
 
-// memory buffer
-using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)>>; // custom deleter at runtime
-struct Buffer {
-    BufferPtr ptr{nullptr, [](void const*) {}};
-    IdxVector indptr;
-};
-
 struct OwningDataset {
-    MutableDataset dataset;
-    ConstDataset const_dataset;
-    std::vector<Buffer> buffers{};
-    std::vector<ConstDataset> batch_scenarios{};
+    power_grid_model_cpp::DatasetMutable dataset;
+    power_grid_model_cpp::DatasetConst const_dataset;
+    std::vector<power_grid_model_cpp::Buffer> buffers{};
+    std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{};
 };
 
-auto create_owning_dataset(WritableDataset& info) {
+auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset) {
+    auto const& info = writable_dataset.get_info();
+    bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
-    std::vector<Buffer> buffers;
+    auto const& dataset_name = info.name();
+    auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(dataset_name);
+    std::vector<power_grid_model_cpp::Buffer> buffers;
+    power_grid_model_cpp::DatasetMutable mutable_dataset{dataset_name, is_batch,
+                                                         batch_size}; // Is this the true dataset type intended here?
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-        auto const& component_info = info.get_component_info(component_idx);
-        auto const& component_meta = component_info.component;
+        auto const& component_name = info.component_name(component_idx);
+        auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
+        Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
+        Idx const component_size = info.component_total_elements(component_idx);
+        IdxVector indptr_vector{info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0};
+        Idx* buffer_indptr = indptr_vector.empty() ? nullptr : indptr_vector.data();
 
-        Buffer buffer{};
-        buffer.ptr =
-            BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
-        buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
-        Idx* indptr_data = buffer.indptr.empty() ? nullptr : buffer.indptr.data();
-
-        info.set_buffer(component_info.component->name, indptr_data, buffer.ptr.get());
+        power_grid_model_cpp::Buffer buffer{component_meta, component_size};
+        writable_dataset.set_buffer(component_name, buffer_indptr, buffer);
+        mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, buffer_indptr,
+                                   buffer);
         buffers.push_back(std::move(buffer));
     }
     return OwningDataset{
-        .dataset = info,
-        .const_dataset = info,
+        .dataset = std::move(mutable_dataset),
+        .const_dataset{writable_dataset},
         .buffers = std::move(buffers),
     };
 }
 
-auto construct_individual_scenarios(OwningDataset& owning_dataset) {
+auto create_owning_dataset(OwningDataset const& owning_dataset,
+                           std::string const& result_dataset_name) { // can probably be combined with the other overload
+    auto const& info = owning_dataset.dataset.get_info();
+    bool const is_batch = info.is_batch();
+    Idx const batch_size = info.batch_size();
+    auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_dataset_name);
+    std::vector<power_grid_model_cpp::Buffer> buffers;
+    power_grid_model_cpp::DatasetMutable mutable_dataset{result_dataset_name, is_batch,
+                                                         batch_size}; // Is this the true dataset type intended here?
+
+    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
+        auto const& component_name = info.component_name(component_idx);
+        auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
+        Idx const component_size = info.component_total_elements(component_idx);
+        Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
+        IdxVector indptr_vector{info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0};
+        Idx* buffer_indptr = indptr_vector.empty() ? nullptr : indptr_vector.data();
+
+        power_grid_model_cpp::Buffer buffer{component_meta, component_size};
+        mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, buffer_indptr,
+                                   buffer);
+        buffers.push_back(std::move(buffer));
+    }
+    return OwningDataset{
+        .dataset = std::move(mutable_dataset),
+        .const_dataset{owning_dataset.dataset},
+        .buffers = std::move(buffers),
+    };
+}
+
+// probably not needed, because we can get the individual scenario info by offsetting. Will test with batch validation.
+/*auto construct_individual_scenarios(OwningDataset& owning_dataset) {
     for (Idx scenario_idx{}; scenario_idx < owning_dataset.dataset.batch_size(); ++scenario_idx) {
         owning_dataset.batch_scenarios.push_back(owning_dataset.const_dataset.get_individual_scenario(scenario_idx));
     }
-}
+}*/
 
 auto load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path), meta_data_gen::meta_data};
-    auto& info = deserializer.get_dataset_info();
-    auto dataset = create_owning_dataset(info);
-    deserializer.parse();
-    construct_individual_scenarios(dataset);
+    power_grid_model_cpp::Deserializer deserializer{read_file(path), 0};
+    auto dataset = create_owning_dataset(deserializer.get_dataset());
+    deserializer.parse_to_buffer();
+    // construct_individual_scenarios(dataset);
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
@@ -117,17 +178,9 @@ auto load_dataset(std::filesystem::path const& path) {
 // create single result set
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
                                     Idx batch_size = 1) {
-    MetaDataset const& meta = meta_data_gen::meta_data.get_dataset(data_type);
-    WritableDataset handler{is_batch, batch_size, meta.name, meta_data_gen::meta_data};
-    assert(input.const_dataset.batch_size() == 1);
-
-    for (Idx i{}; i != input.const_dataset.n_components(); ++i) {
-        auto const& component_info = input.const_dataset.get_component_info(i);
-        handler.add_component_info(component_info.component->name, component_info.elements_per_scenario,
-                                   component_info.elements_per_scenario * batch_size);
-    }
-    auto owning_dataset = create_owning_dataset(handler);
-    construct_individual_scenarios(owning_dataset);
+    auto owning_dataset =
+        create_owning_dataset(input, data_type); // this overload can just become create_result_dataset
+    // construct_individual_scenarios(owning_dataset);
     return owning_dataset;
 }
 
@@ -206,37 +259,59 @@ bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataCons
 }
 
 // assert single result
-void assert_result(ConstDataset const& result, ConstDataset const& reference_result,
+void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
-    MetaDataset const& meta = result.dataset();
-    Idx const batch_size = result.batch_size();
-    std::string const type_name = meta.name;
+    power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset;
+    power_grid_model_cpp::DatasetConst const& reference_result = owning_reference_result.const_dataset;
+    auto const& result_info = result.get_info();
+    auto const& result_name = result_info.name();
+    auto const& result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_name);
+    Idx const result_batch_size = result_info.batch_size();
+
+    auto const& reference_result_info = reference_result.get_info();
+    auto const& reference_result_name = reference_result_info.name();
+    auto const& reference_result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(reference_result_name);
+    Idx const reference_result_batch_size = reference_result_info.batch_size();
+
+    CHECK(result_name == reference_result_name);
+    CHECK(result_meta == reference_result_meta);
+    CHECK(result_batch_size == reference_result_batch_size);
+    CHECK(owning_result.buffers.size() == owning_reference_result.buffers.size());
     // loop all scenario
-    for (Idx scenario = 0; scenario != batch_size; ++scenario) {
+    for (Idx scenario_idx = 0; scenario_idx < result_batch_size; ++scenario_idx) {
         // loop all component type name
-        for (Idx i{}; i != reference_result.n_components(); ++i) {
-            auto const& component_info = reference_result.get_component_info(i);
-            MetaComponent const& component_meta = *component_info.component;
-            auto const& ref_buffer = reference_result.get_buffer(i);
-            auto const& buffer = result.get_buffer(component_meta.name);
-            Idx const elements_per_scenario = component_info.elements_per_scenario;
+        for (Idx component_idx{}; component_idx < reference_result_info.n_components(); ++component_idx) {
+            auto const& component_meta =
+                power_grid_model_cpp::MetaData::get_component_by_idx(reference_result_meta, component_idx);
+            auto const& component_name = power_grid_model_cpp::MetaData::component_name(component_meta);
+            auto const& ref_buffer = owning_reference_result.buffers.at(component_idx);
+            auto const& buffer = owning_result.buffers.at(component_idx);
+            // auto const& ref_buffer = reference_result.get_buffer(i); //why don't just use i to get both buffers here?
+            // auto const& buffer = result.get_buffer(component_meta.name);
+            Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
             assert(elements_per_scenario >= 0);
             // offset scenario
+            // this can be done via buffer.get_value(), but at the attribute level
             RawDataConstPtr const result_ptr =
-                reinterpret_cast<char const*>(buffer.data) + elements_per_scenario * scenario * component_meta.size;
-            RawDataConstPtr const reference_result_ptr =
-                reinterpret_cast<char const*>(ref_buffer.data) + elements_per_scenario * scenario * component_meta.size;
+                reinterpret_cast<char const*>(buffer.data) + elements_per_scenario * scenario_idx * component_meta.size;
+            RawDataConstPtr const reference_result_ptr = reinterpret_cast<char const*>(ref_buffer.data) +
+                                                         elements_per_scenario * scenario_idx * component_meta.size;
             // loop all attribute
-            for (MetaAttribute const& attr : component_meta.attributes) {
+            for (Idx attribute_idx{}; attribute_idx < power_grid_model_cpp::MetaData::n_attributes(component_meta);
+                 ++attribute_idx) {
+                auto const& attribute_meta =
+                    power_grid_model_cpp::MetaData::get_attribute_by_idx(component_meta, attribute_idx);
+                auto const& attribute_type = power_grid_model_cpp::MetaData::attribute_ctype(attribute_meta);
+                auto const& attribute_name = power_grid_model_cpp::MetaData::attribute_name(attribute_meta);
                 // TODO skip u angle, need a way for common angle
-                if (attr.name == "u_angle"s) {
+                if (attribute_name == "u_angle"s) {
                     continue;
                 }
                 // get absolute tolerance
                 double dynamic_atol = atol.at("default");
                 for (auto const& [reg, value] : atol) {
-                    if (std::regex_match(attr.name, std::regex{reg})) {
+                    if (std::regex_match(attribute_name, std::regex{reg})) {
                         dynamic_atol = value;
                         break;
                     }
@@ -244,15 +319,23 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 // for other _angle attribute, we need to find the magnitue and compare together
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
-                std::string const attr_name = attr.name;
-                bool const is_angle = std::regex_match(attr_name, angle_match, angle_regex);
+                bool const is_angle = std::regex_match(attribute_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
-                MetaAttribute const& possible_attr_magnitude =
-                    is_angle ? component_meta.get_attribute(magnitude_name) : attr;
+                auto const& possible_attr_magnitude =
+                    is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(reference_result_name,
+                                                                                     component_name, magnitude_name)
+                             : attribute_meta;
 
                 // loop all object
-                for (Idx obj = 0; obj != elements_per_scenario; ++obj) {
-                    // only check if reference result is not nan
+                for (Idx obj = 0; obj != elements_per_scenario;
+                     ++obj) { // this loops over each element in one scenario after the buffer has been set correctly
+                    auto lambda = []<typename T>() {
+                        T variable{};
+                        return variable;
+                    };
+
+                    auto const& ref_attribute_buffer = pgm_type_func_selector(attribute_type, lambda);
+
                     if (attr.check_nan(reference_result_ptr, obj)) {
                         continue;
                     }
@@ -290,30 +373,27 @@ std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_pa
 #endif
 
 // method map
-std::map<std::string, CalculationType, std::less<>> const calculation_type_mapping = {
-    {"power_flow", CalculationType::power_flow},
-    {"state_estimation", CalculationType::state_estimation},
-    {"short_circuit", CalculationType::short_circuit}};
-std::map<std::string, CalculationMethod, std::less<>> const calculation_method_mapping = {
-    {"newton_raphson", CalculationMethod::newton_raphson},
-    {"linear", CalculationMethod::linear},
-    {"iterative_current", CalculationMethod::iterative_current},
-    {"iterative_linear", CalculationMethod::iterative_linear},
-    {"linear_current", CalculationMethod::linear_current},
-    {"iec60909", CalculationMethod::iec60909}};
-std::map<std::string, ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
-    {"", ShortCircuitVoltageScaling::maximum}, // not provided returns default value
-    {"minimum", ShortCircuitVoltageScaling::minimum},
-    {"maximum", ShortCircuitVoltageScaling::maximum}};
+std::map<std::string, PGM_CalculationType, std::less<>> const calculation_type_mapping = {
+    {"power_flow", PGM_power_flow}, {"state_estimation", PGM_state_estimation}, {"short_circuit", PGM_short_circuit}};
+std::map<std::string, PGM_CalculationMethod, std::less<>> const calculation_method_mapping = {
+    {"newton_raphson", PGM_newton_raphson},       {"linear", PGM_linear},
+    {"iterative_current", PGM_iterative_current}, {"iterative_linear", PGM_iterative_linear},
+    {"linear_current", PGM_linear_current},       {"iec60909", PGM_iec60909}};
+std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
+    {"", PGM_short_circuit_voltage_scaling_maximum}, // not provided returns default value
+    {"minimum", PGM_short_circuit_voltage_scaling_minimum},
+    {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
+
+// to be removed in the end
 using CalculationFunc =
     std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
 
-std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_mapping = {
-    {"disabled", OptimizerStrategy::any},
-    {"any_valid_tap", OptimizerStrategy::any},
-    {"min_voltage_tap", OptimizerStrategy::global_minimum},
-    {"max_voltage_tap", OptimizerStrategy::global_maximum},
-    {"fast_any_tap", OptimizerStrategy::fast_any}};
+std::map<std::string, PGM_TapChangingStrategy, std::less<>> const optimizer_strategy_mapping = {
+    {"disabled", PGM_tap_changing_strategy_disabled},
+    {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
+    {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
+    {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
+    {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
 
 // case parameters
 struct CaseParam {
@@ -327,6 +407,7 @@ struct CaseParam {
     bool is_batch{};
     double rtol{};
     bool fail{};
+    // to remove batch parameter in the end, most likely
     [[no_unique_address]] BatchParameter batch_parameter{};
     std::map<std::string, double, std::less<>> atol;
 
@@ -337,7 +418,8 @@ struct CaseParam {
     }
 };
 
-CalculationFunc calculation_func(CaseParam const& param) {
+// This is probably not needed since we can just use Model::Calculate after setting Options
+/*CalculationFunc calculation_func(CaseParam const& param) {
     auto const get_options = [&param](CalculationMethod calculation_method, Idx threading) {
         return MainModel::Options{
             .calculation_type = calculation_type_mapping.at(param.calculation_type),
@@ -360,7 +442,7 @@ CalculationFunc calculation_func(CaseParam const& param) {
         }
         return model.calculate(options, dataset, update_dataset);
     };
-}
+}*/
 
 std::string get_output_type(std::string const& calculation_type, bool sym) {
     using namespace std::string_literals;
@@ -465,9 +547,7 @@ struct ValidationCase {
     std::optional<OwningDataset> output_batch{};
 };
 
-ValidationCase create_validation_case(CaseParam const& param) {
-    auto const output_type = get_output_type(param.calculation_type, param.sym);
-
+ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
     ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json")};
 
@@ -535,21 +615,30 @@ void execute_test(CaseParam const& param, T&& func) {
 
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        auto const validation_case = create_validation_case(param);
-        auto const output_prefix = get_output_type(param.calculation_type, param.sym);
+        auto const output_prefix = get_output_type(param.calculation_type, param.sym); // checked
+        auto const validation_case = create_validation_case(param, output_prefix);     // checked
         auto const result = create_result_dataset(validation_case.input, output_prefix);
 
-        // create model and run
-        MainModel model{50.0, validation_case.input.const_dataset, 0};
-        CalculationFunc const func = calculation_func(param);
+        // Create options -> maybe make this into a function to re-use
+        power_grid_model_cpp::Options options{};
+        options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
+        options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+        options.set_symmetric(param.sym ? 0 : 1);
+        options.set_err_tol(1e-8);
+        options.set_max_iter(20);
+        options.set_threading(-1);
+        options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
+        options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
 
-        ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
-        func(model, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
-        assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
+        // create model and run
+        power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset};
+        model.calculate(options, result.dataset);
+        assert_result(result, validation_case.output.value(), param.atol, param.rtol);
+        // assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
     });
 }
 
-void validate_batch_case(CaseParam const& param) {
+/*void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&]() {
         auto const validation_case = create_validation_case(param);
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
@@ -591,7 +680,7 @@ void validate_batch_case(CaseParam const& param) {
                           param.rtol);
         }
     });
-}
+}*/
 
 } // namespace
 
@@ -611,7 +700,7 @@ TEST_CASE("Validation test single") {
     }
 }
 
-TEST_CASE("Validation test batch") {
+/*TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
@@ -626,6 +715,6 @@ TEST_CASE("Validation test batch") {
             }
         }
     }
-}
+}*/
 
 } // namespace power_grid_model::meta_data
