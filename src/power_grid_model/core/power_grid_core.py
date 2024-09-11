@@ -453,6 +453,16 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def dataset_mutable_add_attribute_buffer(
+        self,
+        dataset: MutableDatasetPtr,
+        component: str,
+        attribute: str,
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def dataset_mutable_get_info(self, dataset: MutableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
@@ -480,6 +490,16 @@ class PowerGridCore:
         dataset: WritableDatasetPtr,
         component: str,
         indptr: IdxPtr,  # type: ignore[valid-type]
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_writable_set_attribute_buffer(
+        self,
+        dataset: WritableDatasetPtr,
+        component: str,
+        attribute: str,
         data: VoidPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover

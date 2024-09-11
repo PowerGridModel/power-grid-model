@@ -12,21 +12,25 @@ We do not officially support this functionality and may remove features in this 
 
 from copy import deepcopy
 from types import EllipsisType
-from typing import Optional, Sequence, cast
+from typing import Iterable, Optional, Sequence, cast
 
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
+    AttributeType,
+    BatchColumn,
     BatchComponentData,
     BatchDataset,
     BatchList,
     ComponentData,
     Dataset,
     DenseBatchArray,
+    DenseBatchData,
     PythonDataset,
     SingleArray,
+    SingleColumn,
     SingleColumnarData,
     SingleComponentData,
     SingleDataset,
@@ -80,9 +84,9 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     for component, data in batch_data.items():
         component_batches: Sequence[SingleComponentData]
         if isinstance(data, np.ndarray):
-            component_batches = split_numpy_array_in_batches(data, component)
+            component_batches = split_dense_batch_data_in_batches(data, component)
         elif isinstance(data, dict):
-            component_batches = split_sparse_batches_in_batches(data, component)
+            component_batches = split_sparse_batch_data_in_batches(data, component)
         else:
             raise TypeError(
                 f"Invalid data type {type(data).__name__} in batch data for '{component}' "
@@ -90,7 +94,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
             )
         for i, batch in enumerate(component_batches):
             if isinstance(batch, dict):
-                raise NotImplementedError()  # TODO(mgovers): Add support for columnar data
+                list_data[i][component] = []
             if batch.size > 0:
                 list_data[i][component] = batch
     return list_data
@@ -159,7 +163,43 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
     )
 
 
-def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component: ComponentType) -> list[SingleArray]:
+def _split_numpy_array_in_batches(
+    data: DenseBatchArray | SingleArray | SingleColumn | BatchColumn,
+    component: ComponentType,
+    attribute: AttributeType | None = None,
+) -> list[SingleArray] | list[SingleColumn]:
+    """
+    Split a single dense numpy array into one or more batches
+
+    Args:
+        data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
+        component: The name of the component to which the data belongs; only used for errors.
+        attribute [optional]: The name of the attribute to which the data belongs; only used for errors.
+
+    Returns:
+        A list with a single numpy structured array per batch
+    """
+    if isinstance(data, np.ndarray):
+        if data.ndim == 1:
+            return [data]
+        if data.ndim == 2:
+            return [data[i, :] for i in range(data.shape[0])]
+
+        err_str = [f"Invalid data dimension {data.ndim}"]
+    else:
+        err_str = [f"Invalid data type {type(data).__name__}"]
+
+    err_str.append(f"in batch data for '{component}'")
+    if attribute is not None:
+        err_str.append(f"for attribute '{attribute}'")
+    err_str.append("(should be a 1D/2D Numpy structured array).")
+
+    raise TypeError(" ".join(err_str))
+
+
+def split_dense_batch_data_in_batches(
+    data: SingleComponentData | DenseBatchData, component: ComponentType
+) -> list[SingleComponentData]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -169,24 +209,24 @@ def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component:
 
     Returns:
         A list with a single numpy structured array per batch
-
     """
-    if not isinstance(data, np.ndarray):
-        raise TypeError(
-            f"Invalid data type {type(data).__name__} in batch data for '{component}' "
-            "(should be a 1D/2D Numpy structured array)."
-        )
-    if data.ndim == 1:
-        return [data]
-    if data.ndim == 2:
-        return [data[i, :] for i in range(data.shape[0])]
+    if isinstance(data, np.ndarray):
+        return _split_numpy_array_in_batches(data, component)
+    elif isinstance(data, dict):
+        return {
+            attribute: _split_numpy_array_in_batches(attribute_data, component, attribute)
+            for attribute, attribute_data in data.items()
+        }
+
     raise TypeError(
-        f"Invalid data dimension {data.ndim} in batch data for '{component}' "
-        "(should be a 1D/2D Numpy structured array)."
+        f"Invalid data type {type(data).__name__} in batch data for '{component}' "
+        "(should be a 1D/2D Numpy structured array or dictionary of such)."
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: ComponentType) -> list[SingleComponentData]:
+def split_sparse_batch_data_in_batches(
+    batch_data: SparseBatchData, component: ComponentType
+) -> list[SingleComponentData]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
@@ -197,7 +237,6 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: Comp
     Returns:
         A list with a single numpy structured array per batch
     """
-
     for key in ["indptr", "data"]:
         if key not in batch_data:
             raise KeyError(
@@ -233,8 +272,7 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: Comp
 
     def _get_scenario(scenario: int) -> SingleComponentData:
         if isinstance(data, dict):
-            # return {attribute: _split_buffer(attribute_data, scenario) for attribute, attribute_data in data.items()}
-            raise NotImplementedError()  # TODO(mgovers): uncomment when columnar data support is added
+            return {attribute: _split_buffer(attribute_data, scenario) for attribute, attribute_data in data.items()}
         return _split_buffer(data, scenario)
 
     return [_get_scenario(i) for i in range(len(indptr) - 1)]
@@ -366,12 +404,18 @@ def _convert_data_to_row_or_columnar(
         for k in data:
             output_array[k] = data[k]
         return output_array
-    if isinstance(attrs, (list, set)) and len(attrs) == 0:
-        return {}
-    if isinstance(attrs, EllipsisType):
-        names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
-        return {attr: deepcopy(data[attr]) for attr in names}
-    return {attr: deepcopy(data[attr]) for attr in attrs}
+
+    names: list[str] | set[str] = []
+    if isinstance(attrs, (list, set)):
+        names = attrs
+    elif not isinstance(attrs, EllipsisType):
+        raise NotImplementedError()
+    elif is_columnar(data):
+        names = list(cast(SingleColumnarData, data).keys())
+    else:
+        names = list(cast(SingleArray, data).dtype.names)
+
+    return {attr: deepcopy(data[attr]) for attr in names}
 
 
 def process_data_filter(

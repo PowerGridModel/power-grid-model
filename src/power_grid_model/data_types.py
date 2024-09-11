@@ -109,7 +109,7 @@ A sparse batch array is a dictionary containing the keys `indptr` and `data`.
         - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
 """
 
-SparseBatchColumnarData = dict[str, IndexPointer | SingleColumnarData]
+SparseBatchColumnarData = dict[SparseDataComponentType, IndexPointer | SingleColumnarData]
 """
 Sparse batch columnar data is a dictionary containing the keys `indptr` and `data`.
 
@@ -242,7 +242,7 @@ a real value, or a tuple of three real values.
     - asym: (10400.0, 10500.0, 10600.0)
 """
 
-Component = dict[str, AttributeValue | str]
+Component = dict[AttributeType, AttributeValue | str]
 """
 A component, when represented in native python format, is a dictionary, where the keys are the attributes and the values
 are the corresponding values. It is allowed to add extra fields, containing either an AttributeValue or a string.

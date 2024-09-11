@@ -41,7 +41,7 @@ def is_non_compact_list(data_entry):
 
 
 def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
-    """Find out if deserialization of serialized_input would contain atleast one component with row based data"""
+    """Find out if deserialization of serialized_input would contain at least one component with row based data"""
     serialized_input_data = serialized_input["data"]
     if not serialized_input_data or data_filter is Ellipsis:
         return False

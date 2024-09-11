@@ -28,7 +28,14 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchArray, BatchComponentData, BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import (
+    BatchArray,
+    BatchComponentData,
+    BatchDataset,
+    Dataset,
+    IndexPointer,
+    SingleDataset,
+)
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
 
@@ -52,20 +59,29 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
         The dataset for a specific scenario
     """
 
+    def _get_dense_scenario(arr: np.ndarray) -> np.ndarray:
+        return arr[scenario]
+
+    def _get_sparse_scenario(arr: np.ndarray, indptr: IndexPointer) -> np.ndarray:
+        return arr[indptr[scenario] : indptr[scenario + 1]]
+
     def _get_component_scenario(component_scenarios: BatchComponentData) -> np.ndarray:
-        # TODO(mgovers): update this with columnar scenario access
         if isinstance(component_scenarios, np.ndarray):
-            return component_scenarios[scenario]
+            return _get_dense_scenario(component_scenarios)
 
-        indptr = component_scenarios["indptr"]
-        data = component_scenarios["data"]
-        if isinstance(indptr, np.ndarray) and isinstance(data, np.ndarray):
-            return data[indptr[scenario] : indptr[scenario + 1]]
+        if "indptr" in component_scenarios:
+            indptr = component_scenarios["indptr"]
+            data = component_scenarios["data"]
+            if isinstance(indptr, np.ndarray):
+                if isinstance(data, np.ndarray):
+                    return _get_sparse_scenario(data, indptr)
 
-        # If the batch data is not a numpy array and not a dictionary, it is invalid
-        raise ValueError(
-            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
-        )
+                return {
+                    attribute: _get_sparse_scenario(attribute_data, indptr)
+                    for attribute, attribute_data in data.items()
+                }
+
+        return {attribute: _get_dense_scenario(attribute_data) for attribute, attribute_data in data.items()}
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 

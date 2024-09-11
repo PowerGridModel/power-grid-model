@@ -8,6 +8,7 @@ Power grid model buffer handler
 
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, cast
 
 import numpy as np
@@ -17,10 +18,10 @@ from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
 from power_grid_model.core.power_grid_meta import ComponentMetaData
 from power_grid_model.data_types import (
+    AttributeType,
     ComponentData,
-    DenseBatchArray,
     DenseBatchData,
-    SingleArray,
+    SingleComponentData,
     SparseBatchArray,
     SparseBatchData,
 )
@@ -37,23 +38,51 @@ class BufferProperties:
     batch_size: int
     n_elements_per_scenario: int
     n_total_elements: int
+    columns: list[AttributeType] | None
 
 
-# prepared data for c api
+# prepared attribute data for c api
+@dataclass
+class CAttributeBuffer:
+    """
+    Buffer for a single attribute.
+    """
+
+    data: VoidPtr  # type: ignore
+
+
+# prepared component data for c api
 @dataclass
 class CBuffer:
     """
     Buffer for a single component.
     """
 
-    data: VoidPtr
-    indptr: Optional[IdxPtr]  # type: ignore
+    data: VoidPtr | None
+    indptr: IdxPtr | None  # type: ignore
     n_elements_per_scenario: int
     batch_size: int
     total_elements: int
+    attribute_data: dict[AttributeType, CAttributeBuffer]
 
 
-def _get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
+def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
+    """
+    Get a raw view on the data.
+
+    Args:
+        data: the data.
+        dtype: the dtype the raw buffer should obey.
+
+    Returns:
+        a raw view on the data set.
+    """
+    return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
+
+
+def _get_raw_component_data_view(
+    data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
+) -> VoidPtr | None:
     """
     Get a raw view on the data.
 
@@ -64,7 +93,23 @@ def _get_raw_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr:
     Returns:
         a raw view on the data set.
     """
-    return np.ascontiguousarray(data, dtype=schema.dtype).ctypes.data_as(VoidPtr)
+    if isinstance(data, np.ndarray):
+        return _get_raw_data_view(data, dtype=schema.dtype)
+    return None
+
+
+def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, attribute: AttributeType) -> VoidPtr:
+    """
+    Get a raw view on the data.
+
+    Args:
+        data: the data.
+        schema: the schema the raw buffer should obey.
+
+    Returns:
+        a raw view on the data set.
+    """
+    return _get_raw_data_view(data, dtype=schema.dtype[attribute])
 
 
 def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
@@ -80,12 +125,12 @@ def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
     return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
 
-def _get_uniform_buffer_properties(data: SingleArray | DenseBatchArray) -> BufferProperties:
+def _get_uniform_buffer_properties(data: SingleComponentData | DenseBatchData) -> BufferProperties:
     """
     Extract the properties of the uniform batch dataset component.
 
     Args:
-        data (SingleArray | DenseBatchArray): the dataset component.
+        data (SingleComponentData | DenseBatchData): the dataset component.
 
     Raises:
         KeyError: if the dataset component is not sparse.
@@ -96,12 +141,25 @@ def _get_uniform_buffer_properties(data: SingleArray | DenseBatchArray) -> Buffe
     """
     is_sparse = False
 
-    if data.ndim not in (1, 2):
+    if isinstance(data, np.ndarray):
+        first = data
+        columns = None
+    elif data:
+        first = next(iter(data.values()))
+        columns = list(data)
+    else:
+        raise ValueError("Empty columnar buffer is ambiguous")
+
+    for sub_data in [data] if isinstance(data, np.ndarray) else data.values():
+        if sub_data.shape != first.shape:
+            raise ValueError(f"Data array must be consistent. {VALIDATOR_MSG}")
+
+    if first.ndim not in (1, 2):
         raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
 
-    is_batch = data.ndim == 2
-    batch_size = data.shape[0] if is_batch else 1
-    n_elements_per_scenario = data.shape[-1]
+    is_batch = first.ndim == 2
+    batch_size = first.shape[0] if is_batch else 1
+    n_elements_per_scenario = first.shape[-1]
     n_total_elements = batch_size * n_elements_per_scenario
 
     return BufferProperties(
@@ -110,15 +168,16 @@ def _get_uniform_buffer_properties(data: SingleArray | DenseBatchArray) -> Buffe
         batch_size=batch_size,
         n_elements_per_scenario=n_elements_per_scenario,
         n_total_elements=n_total_elements,
+        columns=columns,
     )
 
 
-def _get_sparse_buffer_properties(data: SparseBatchArray) -> BufferProperties:
+def _get_sparse_buffer_properties(data: SparseBatchData) -> BufferProperties:
     """
     Extract the properties of the sparse batch dataset component.
 
     Args:
-        data (SparseBatchArray): the sparse dataset component.
+        data (SparseBatchData): the sparse dataset component.
 
     Raises:
         KeyError: if the dataset component is not sparse.
@@ -132,11 +191,26 @@ def _get_sparse_buffer_properties(data: SparseBatchArray) -> BufferProperties:
     contents = data["data"]
     indptr = data["indptr"]
 
-    if contents.ndim != 1:
-        raise ValueError(f"Data array can only be 1D. {VALIDATOR_MSG}")
+    if not isinstance(indptr, np.ndarray):
+        raise TypeError("indptr must be of type IndexPointer [np.ndarray]")
+
+    contents_size = 0
+    if isinstance(contents, np.ndarray):
+        contents_size = contents.size
+        columns = None
+    elif contents:
+        contents_size = next(iter(contents.values())).size
+        columns = list(contents)
+
+    for sub_data in [contents] if isinstance(contents, np.ndarray) else contents.values():
+        if sub_data.ndim != 1:
+            raise ValueError(f"Data array in sparse data can only be 1D. {VALIDATOR_MSG}")
+        if sub_data.size != contents_size:
+            raise ValueError(f"Data array must be consistent. {VALIDATOR_MSG}")
+
     if indptr.ndim != 1:
         raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
-    if indptr[0] != 0 or indptr[-1] != contents.size:
+    if indptr[0] != 0 or indptr[-1] != contents_size:
         raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
     if np.any(np.diff(indptr) < 0):
         raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
@@ -152,6 +226,7 @@ def _get_sparse_buffer_properties(data: SparseBatchArray) -> BufferProperties:
         batch_size=batch_size,
         n_elements_per_scenario=n_elements_per_scenario,
         n_total_elements=n_total_elements,
+        columns=columns,
     )
 
 
@@ -168,13 +243,34 @@ def get_buffer_properties(data: ComponentData) -> BufferProperties:
     Returns:
         the properties of the dataset component.
     """
-    if isinstance(data, np.ndarray):
+    if isinstance(data, np.ndarray) or "indptr" not in data:
         return _get_uniform_buffer_properties(data)
 
-    if isinstance(data.get("indptr"), np.ndarray) and isinstance(data.get("data"), np.ndarray):
-        return _get_sparse_buffer_properties(cast(SparseBatchArray, data))
+    return _get_sparse_buffer_properties(cast(SparseBatchArray, data))
 
-    raise NotImplementedError()  # TODO(mgovers): implement columnar data handling
+
+def _get_attribute_buffer_views(
+    data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
+) -> dict[AttributeType, CAttributeBuffer]:
+    """
+    Get C API compatible views on attribute buffers.
+
+    Args:
+        data (dict[AttributeType, np.ndarray]): the data.
+        schema (ComponentMetaData): the schema that the data should obey.
+
+    Returns:
+        dict[AttributeType, CAttributeBuffer]: the C API attribute buffer view per attribute.
+    """
+    if isinstance(data, np.ndarray):
+        return {}
+
+    return {
+        attribute: CAttributeBuffer(
+            data=_get_raw_attribute_data_view(data=attribute_data, schema=schema, attribute=attribute)
+        )
+        for attribute, attribute_data in data.items()
+    }
 
 
 def _get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBuffer:
@@ -191,11 +287,12 @@ def _get_uniform_buffer_view(data: np.ndarray, schema: ComponentMetaData) -> CBu
     properties = _get_uniform_buffer_properties(data)
 
     return CBuffer(
-        data=_get_raw_data_view(data, schema),
+        data=_get_raw_component_data_view(data=data, schema=schema),
         indptr=IdxPtr(),
         n_elements_per_scenario=properties.n_elements_per_scenario,
         batch_size=properties.batch_size,
         total_elements=properties.n_total_elements,
+        attribute_data=_get_attribute_buffer_views(data=data, schema=schema),
     )
 
 
@@ -216,11 +313,12 @@ def _get_sparse_buffer_view(data: SparseBatchArray, schema: ComponentMetaData) -
     properties = _get_sparse_buffer_properties(data)
 
     return CBuffer(
-        data=_get_raw_data_view(contents, schema),
+        data=_get_raw_component_data_view(data=contents, schema=schema),
         indptr=_get_indptr_view(indptr),
         n_elements_per_scenario=properties.n_elements_per_scenario,
         batch_size=properties.batch_size,
         total_elements=properties.n_total_elements,
+        attribute_data=_get_attribute_buffer_views(data=contents, schema=schema),
     )
 
 
@@ -235,13 +333,10 @@ def get_buffer_view(data: ComponentData, schema: ComponentMetaData) -> CBuffer:
     Returns:
         the C API buffer view.
     """
-    if isinstance(data, np.ndarray):
+    if isinstance(data, np.ndarray) or "indptr" not in data:
         return _get_uniform_buffer_view(data, schema)
 
-    if isinstance(data.get("indptr"), np.ndarray) and isinstance(data.get("data"), np.ndarray):
-        return _get_sparse_buffer_view(cast(SparseBatchArray, data), schema)
-
-    raise NotImplementedError()  # TODO(mgovers): implement columnar data handling
+    return _get_sparse_buffer_view(cast(SparseBatchArray, data), schema)
 
 
 def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> ComponentData:
@@ -286,7 +381,7 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
         if properties.is_batch
         else properties.n_elements_per_scenario
     )
-    return np.empty(shape=shape, dtype=schema.dtype)
+    return _create_contents_buffer(shape=shape, dtype=schema.dtype, columns=properties.columns)
 
 
 def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> SparseBatchData:
@@ -303,6 +398,13 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
     Returns:
         A sparse buffer with the correct properties.
     """
-    data = np.empty(properties.n_total_elements, dtype=schema.dtype)
+    data = _create_contents_buffer(shape=properties.n_total_elements, dtype=schema.dtype, columns=properties.columns)
     indptr = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
     return {"data": data, "indptr": indptr}
+
+
+def _create_contents_buffer(shape, dtype, columns: list[AttributeType] | None) -> SingleComponentData | DenseBatchData:
+    if columns is None:
+        return np.empty(shape=shape, dtype=dtype)
+
+    return {attribute: np.empty(shape=shape, dtype=dtype[attribute]) for attribute in columns}

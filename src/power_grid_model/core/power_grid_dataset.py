@@ -6,6 +6,7 @@
 Power grid model raw dataset handler
 """
 
+from types import EllipsisType
 from typing import Any, Mapping, Optional
 
 from power_grid_model._utils import (
@@ -16,6 +17,7 @@ from power_grid_model._utils import (
 )
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
+    CAttributeBuffer,
     CBuffer,
     create_buffer,
     get_buffer_properties,
@@ -30,8 +32,8 @@ from power_grid_model.core.power_grid_core import (
     WritableDatasetPtr,
     power_grid_core as pgc,
 )
-from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
-from power_grid_model.data_types import ComponentData, Dataset
+from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
+from power_grid_model.data_types import AttributeType, ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -198,12 +200,13 @@ class CMutableDataset:
         instance._dataset_type = dataset_type if dataset_type in DatasetType else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
-        compatibility_converted_data = compatibility_convert_row_columnar_dataset(
-            data=data,
-            data_filter=None,
-            dataset_type=instance._dataset_type,
-            available_components=list(data.keys()),
-        )
+        compatibility_converted_data = data
+        # compatibility_converted_data = compatibility_convert_row_columnar_dataset(
+        #     data=data,
+        #     data_filter=None,
+        #     dataset_type=instance._dataset_type,
+        #     available_components=list(data.keys()),
+        # )
         if compatibility_converted_data:
             first_sub_info = get_buffer_properties(next(iter(compatibility_converted_data.values())))
             instance._is_batch = first_sub_info.is_batch
@@ -381,9 +384,9 @@ class CWritableDataset:
             dataset_type=info.dataset_type(), data_filter=data_filter, available_components=info.components()
         )
 
-        self._component_buffer_properties = self._get_buffer_properties(info)
         self._data: Dataset = {}
         self._buffers: Mapping[str, CBuffer] = {}
+        self._component_buffer_properties = self._get_buffer_properties(info)
 
         self._add_buffers()
         assert_no_error()
@@ -415,13 +418,14 @@ class CWritableDataset:
         Returns:
             The full dataset.
         """
-        converted_data = compatibility_convert_row_columnar_dataset(
-            data=self._data,
-            data_filter=self.get_data_filter(),
-            dataset_type=self.get_info().dataset_type(),
-            available_components=list(self._data.keys()),
-        )
-        return converted_data
+        # converted_data = compatibility_convert_row_columnar_dataset(
+        #     data=self._data,
+        #     data_filter=self.get_data_filter(),
+        #     dataset_type=self.get_info().dataset_type(),
+        #     available_components=list(self._data.keys()),
+        # )
+        # return converted_data
+        return self._data
 
     def get_component_data(self, component: ComponentType) -> ComponentData:
         """
@@ -458,9 +462,16 @@ class CWritableDataset:
             dataset=self._writable_dataset, component=component, indptr=buffer.indptr, data=buffer.data
         )
         assert_no_error()
+        for attribute, attribute_data in buffer.attribute_data.items():
+            self._register_attribute_buffer(component, attribute, attribute_data)
 
-    @staticmethod
-    def _get_buffer_properties(info: CDatasetInfo) -> Mapping[ComponentType, BufferProperties]:
+    def _register_attribute_buffer(self, component: ComponentType, attribute: AttributeType, buffer: CAttributeBuffer):
+        pgc.dataset_writable_set_attribute_buffer(
+            dataset=self._writable_dataset, component=component, attribute=attribute, data=buffer.data
+        )
+        assert_no_error()
+
+    def _get_buffer_properties(self, info: CDatasetInfo) -> Mapping[ComponentType, BufferProperties]:
         is_batch = info.is_batch()
         batch_size = info.batch_size()
         components = info.components()
@@ -474,6 +485,22 @@ class CWritableDataset:
                 batch_size=batch_size,
                 n_elements_per_scenario=n_elements_per_scenario[component],
                 n_total_elements=n_total_elements[component],
+                columns=_get_filtered_attributes(
+                    schema=self._schema[component], component_data_filter=self._data_filter[component]
+                ),
             )
             for component in components
+            if component in self._data_filter
         }
+
+
+def _get_filtered_attributes(
+    schema: ComponentMetaData, component_data_filter: set[str] | list[str] | None | EllipsisType
+) -> list[str] | None:
+    if component_data_filter is None:
+        return None
+
+    if component_data_filter is Ellipsis:
+        return list(schema.dtype.names)
+
+    return list(component_data_filter)
