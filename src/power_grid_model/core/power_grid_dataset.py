@@ -208,7 +208,10 @@ class CMutableDataset:
         #     available_components=list(data.keys()),
         # )
         if compatibility_converted_data:
-            first_sub_info = get_buffer_properties(next(iter(compatibility_converted_data.values())))
+            first_component, first_component_data = next(iter(compatibility_converted_data.items()))
+            first_sub_info = get_buffer_properties(
+                data=first_component_data, component_meta=instance._schema[first_component]
+            )
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
         else:
