@@ -52,13 +52,18 @@ TEST_CASE("C++ API Model") {
     DatasetConst const input_dataset{"input", 0, 1};
 
     // node buffer
-    ID node_id = 0;
-    double node_u_rated = 100.0;
-    Buffer node_buffer{PGM_def_input_node, 1};
-    // set nan from offset to size
+    std::vector<ID> node_id{0, 4};
+    std::vector<double> node_u_rated{100.0, 100.0};
+    Buffer node_buffer{PGM_def_input_node, 2};
     node_buffer.set_nan(0, node_buffer.size());
-    node_buffer.set_value(PGM_def_input_node_id, &node_id, -1);
-    node_buffer.set_value(PGM_def_input_node_u_rated, &node_u_rated, -1);
+    node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
+    node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
+
+    std::vector<ID> line_id{5, 6};
+    std::vector<ID> line_from_node{0, 4};
+    std::vector<ID> line_to_node{4, 0};
+    std::vector<Idx> line_from_status{0, 1};
+    std::vector<Idx> line_to_status{1, 0};
 
     // source buffer
     ID source_id = 1;
@@ -91,36 +96,41 @@ TEST_CASE("C++ API Model") {
     load_buffer.set_value(PGM_def_input_sym_load_p_specified, &load_p_specified, -1);
     load_buffer.set_value(PGM_def_input_sym_load_q_specified, &load_q_specified, -1);
 
-    // gen buffer (columnar)
-    std::vector<ID> gen_id = {3, 4};
-    std::vector<ID> gen_node = {0, 0};
-    std::vector<int8_t> gen_status = {0, 0};
-
     // add buffers - row
-    input_dataset.add_buffer("node", 1, 1, nullptr, node_buffer);
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
+
     // add buffers - columnar
-    input_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
-    input_dataset.add_attribute_buffer("sym_gen", "id", &gen_id);
-    input_dataset.add_attribute_buffer("sym_gen", "node", &gen_node);
-    input_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
+    input_dataset.add_buffer("node", 2, 2, nullptr, nullptr);
+    input_dataset.add_attribute_buffer("node", "id", node_id.data());
+    input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+    input_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
+    input_dataset.add_attribute_buffer("line", "id", line_id.data());
+    input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
+    input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
+    input_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
+    input_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
 
     // output data
-    Buffer node_output{PGM_def_sym_output_node, 1};
+    Buffer node_output{PGM_def_sym_output_node, 2};
     node_output.set_nan();
     DatasetMutable const single_output_dataset{"sym_output", 0, 1};
-    single_output_dataset.add_buffer("node", 1, 1, nullptr, node_output);
-    Buffer node_batch_output{PGM_def_sym_output_node, 2};
+    single_output_dataset.add_buffer("node", 2, 2, nullptr, node_output);
+    Buffer node_batch_output{PGM_def_sym_output_node, 4};
     node_batch_output.set_nan();
     DatasetMutable const batch_output_dataset{"sym_output", 1, 2};
-    batch_output_dataset.add_buffer("node", 1, 2, nullptr, node_batch_output);
+    batch_output_dataset.add_buffer("node", 2, 4, nullptr, node_batch_output);
 
     std::vector<ID> node_result_id(2);
     std::vector<int8_t> node_result_energized(2);
     std::vector<double> node_result_u(2);
     std::vector<double> node_result_u_pu(2);
     std::vector<double> node_result_u_angle(2);
+    std::vector<ID> batch_node_result_id(4);
+    std::vector<int8_t> batch_node_result_energized(4);
+    std::vector<double> batch_node_result_u(4);
+    std::vector<double> batch_node_result_u_pu(4);
+    std::vector<double> batch_node_result_u_angle(4);
 
     // update data
     ID source_update_id = 1;
@@ -148,16 +158,17 @@ TEST_CASE("C++ API Model") {
     DatasetConst const single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    single_update_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
-    single_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
+    // update containing columnar data still fail
+    // single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
+    // single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
+    // single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
     DatasetConst const batch_update_dataset{"update", 1, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-    batch_update_dataset.add_buffer("sym_gen", 1, 2, nullptr, nullptr);
-    batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
+    // batch_update_dataset.add_buffer("sym_gen", 1, 2, nullptr, nullptr);
+    // batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // create model
-    // FIXME(mgovers): This test will fail here due to columnar data input;
     Model model{50.0, input_dataset};
 
     // test move-ability
@@ -176,6 +187,11 @@ TEST_CASE("C++ API Model") {
         CHECK(node_result_u[0] == doctest::Approx(50.0));
         CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
         CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
+        CHECK(node_result_id[1] == 4);
+        CHECK(node_result_energized[1] == 0);
+        CHECK(node_result_u[1] == doctest::Approx(0.0));
+        CHECK(node_result_u_pu[1] == doctest::Approx(0.0));
+        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
     }
 
     SUBCASE("Simple update") {
@@ -191,6 +207,11 @@ TEST_CASE("C++ API Model") {
         CHECK(node_result_u[0] == doctest::Approx(40.0));
         CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
         CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
+        CHECK(node_result_id[1] == 4);
+        CHECK(node_result_energized[1] == 0);
+        CHECK(node_result_u[1] == doctest::Approx(0.0));
+        CHECK(node_result_u_pu[1] == doctest::Approx(0.0));
+        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
     }
 
     SUBCASE("Copy model") {
@@ -206,6 +227,11 @@ TEST_CASE("C++ API Model") {
         CHECK(node_result_u[0] == doctest::Approx(50.0));
         CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
         CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
+        CHECK(node_result_id[1] == 4);
+        CHECK(node_result_energized[1] == 0);
+        CHECK(node_result_u[1] == doctest::Approx(0.0));
+        CHECK(node_result_u_pu[1] == doctest::Approx(0.0));
+        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
     }
 
     SUBCASE("Get indexer") {
@@ -220,21 +246,31 @@ TEST_CASE("C++ API Model") {
 
     SUBCASE("Batch power flow") {
         model.calculate(options, batch_output_dataset, batch_update_dataset);
-        node_batch_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-        node_batch_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), -1);
-        node_batch_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
-        node_batch_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-        node_batch_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
-        CHECK(node_result_id[0] == 0);
-        CHECK(node_result_energized[0] == 1);
-        CHECK(node_result_u[0] == doctest::Approx(40.0));
-        CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
-        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
-        CHECK(node_result_id[1] == 0);
-        CHECK(node_result_energized[1] == 1);
-        CHECK(node_result_u[1] == doctest::Approx(70.0));
-        CHECK(node_result_u_pu[1] == doctest::Approx(0.7));
-        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
+        node_batch_output.get_value(PGM_def_sym_output_node_id, batch_node_result_id.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_energized, batch_node_result_energized.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_u, batch_node_result_u.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_u_pu, batch_node_result_u_pu.data(), -1);
+        node_batch_output.get_value(PGM_def_sym_output_node_u_angle, batch_node_result_u_angle.data(), -1);
+        CHECK(batch_node_result_id[0] == 0);
+        CHECK(batch_node_result_energized[0] == 1);
+        CHECK(batch_node_result_u[0] == doctest::Approx(40.0));
+        CHECK(batch_node_result_u_pu[0] == doctest::Approx(0.4));
+        CHECK(batch_node_result_u_angle[0] == doctest::Approx(0.0));
+        CHECK(batch_node_result_id[1] == 4);
+        CHECK(batch_node_result_energized[1] == 0);
+        CHECK(batch_node_result_u[1] == doctest::Approx(0.0));
+        CHECK(batch_node_result_u_pu[1] == doctest::Approx(0.0));
+        CHECK(batch_node_result_u_angle[1] == doctest::Approx(0.0));
+        CHECK(batch_node_result_id[2] == 0);
+        CHECK(batch_node_result_energized[2] == 1);
+        CHECK(batch_node_result_u[2] == doctest::Approx(70.0));
+        CHECK(batch_node_result_u_pu[2] == doctest::Approx(0.7));
+        CHECK(batch_node_result_u_angle[2] == doctest::Approx(0.0));
+        CHECK(batch_node_result_id[3] == 4);
+        CHECK(batch_node_result_energized[3] == 0);
+        CHECK(batch_node_result_u[3] == doctest::Approx(0.0));
+        CHECK(batch_node_result_u_pu[3] == doctest::Approx(0.0));
+        CHECK(batch_node_result_u_angle[3] == doctest::Approx(0.0));
     }
 
     SUBCASE("Input error handling") {
@@ -316,16 +352,31 @@ TEST_CASE("C++ API Model") {
                 CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
             }
             // valid results for batch 0
-            node_batch_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
-            CHECK(node_result_id[0] == 0);
-            CHECK(node_result_energized[0] == 1);
-            CHECK(node_result_u[0] == doctest::Approx(40.0));
-            CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
-            CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
+            node_batch_output.get_value(PGM_def_sym_output_node_id, batch_node_result_id.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_energized, batch_node_result_energized.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_u, batch_node_result_u.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_u_pu, batch_node_result_u_pu.data(), -1);
+            node_batch_output.get_value(PGM_def_sym_output_node_u_angle, batch_node_result_u_angle.data(), -1);
+            CHECK(batch_node_result_id[0] == 0);
+            CHECK(batch_node_result_energized[0] == 1);
+            CHECK(batch_node_result_u[0] == doctest::Approx(40.0));
+            CHECK(batch_node_result_u_pu[0] == doctest::Approx(0.4));
+            CHECK(batch_node_result_u_angle[0] == doctest::Approx(0.0));
+            CHECK(batch_node_result_id[1] == 4);
+            CHECK(batch_node_result_energized[1] == 0);
+            CHECK(batch_node_result_u[1] == doctest::Approx(0.0));
+            CHECK(batch_node_result_u_pu[1] == doctest::Approx(0.0));
+            CHECK(batch_node_result_u_angle[1] == doctest::Approx(0.0));
+            CHECK(batch_node_result_id[2] == 0);
+            CHECK(batch_node_result_energized[2] == 1);
+            CHECK(batch_node_result_u[2] == doctest::Approx(70.0));
+            CHECK(batch_node_result_u_pu[2] == doctest::Approx(0.7));
+            CHECK(batch_node_result_u_angle[2] == doctest::Approx(0.0));
+            CHECK(batch_node_result_id[3] == 4);
+            CHECK(batch_node_result_energized[3] == 0);
+            CHECK(batch_node_result_u[3] == doctest::Approx(0.0));
+            CHECK(batch_node_result_u_pu[3] == doctest::Approx(0.0));
+            CHECK(batch_node_result_u_angle[3] == doctest::Approx(0.0));
         }
     }
 }

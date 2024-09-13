@@ -28,7 +28,10 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
     using ComponentView = std::conditional_t<std::same_as<decltype(*begin), typename Component::InputType const&>,
                                              typename Component::InputType const&, typename Component::InputType>;
 
-    reserve_component<Component>(state, std::distance(begin, end));
+    // DEBUG
+    auto dist = std::distance(begin, end);
+    // DEBUG
+    reserve_component<Component>(state, /*std::distance(begin, end)*/ dist);
     // do sanity check on the transformer tap regulator
     std::vector<Idx2D> regulated_objects;
     // loop to add component
