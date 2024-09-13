@@ -64,6 +64,11 @@ TEST_CASE("C++ API Model") {
     std::vector<ID> line_to_node{4, 0};
     std::vector<Idx> line_from_status{0, 1};
     std::vector<Idx> line_to_status{1, 0};
+    std::vector<ID> batch_line_id{5, 6, 5, 6};
+    std::vector<ID> batch_line_from_node{0, 4, 0, 4};
+    std::vector<ID> batch_line_to_node{4, 0, 4, 0};
+    std::vector<Idx> batch_line_from_status{0, 1, 0, 1};
+    std::vector<Idx> batch_line_to_status{1, 0, 1, 0};
 
     // source buffer
     ID source_id = 1;
@@ -159,14 +164,17 @@ TEST_CASE("C++ API Model") {
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
     // update containing columnar data still fail
-    // single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
-    // single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
-    // single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
+    single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
+    single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
+    single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
+    single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
     DatasetConst const batch_update_dataset{"update", 1, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-    // batch_update_dataset.add_buffer("sym_gen", 1, 2, nullptr, nullptr);
-    // batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
+    batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
+    batch_update_dataset.add_attribute_buffer("line", "id", batch_line_id.data());
+    batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
+    batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
 
     // create model
     Model model{50.0, input_dataset};

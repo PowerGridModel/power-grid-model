@@ -720,9 +720,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return true;
         }
 
-        auto const is_component_update_independent = [&update_data]<typename CT>() -> bool {
-            // get span of all the update data
-            auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
+        auto const process_span = []<typename CT>(auto const& all_spans) -> bool {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
             auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
@@ -745,6 +743,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     current_span, first_span,
                     [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
             });
+        };
+
+        auto const is_component_update_independent = [&update_data, &process_span]<typename CT>() -> bool {
+            // get span of all the update data
+            if (update_data.is_columnar(CT::name)) {
+                return process_span.template operator()<CT>(
+                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
+            }
+            return process_span.template operator()<CT>(
+                update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
         };
 
         // check all components
