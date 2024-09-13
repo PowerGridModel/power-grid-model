@@ -20,7 +20,7 @@ void check_nan_preserving_equality(std::floating_point auto actual, std::floatin
 TEST_CASE("Test transformer tap regulator") {
     TransformerTapRegulatorInput const input{.id = 1,
                                              .regulated_object = 2,
-                                             .status = true,
+                                             .status = 1,
                                              .control_side = ControlSide::from,
                                              .u_set = 10.0e3,
                                              .u_band = 1.0e3,
@@ -63,7 +63,7 @@ TEST_CASE("Test transformer tap regulator") {
     SUBCASE("Test update") {
         SUBCASE("Set all values") {
             TransformerTapRegulatorUpdate const update{.id = 1,
-                                                       .status = false,
+                                                       .status = 0,
                                                        .u_set = 11.0e3,
                                                        .u_band = 2.0e3,
                                                        .line_drop_compensation_r = 2.0,
@@ -144,7 +144,7 @@ TEST_CASE("Test transformer tap regulator") {
 
         SUBCASE("multiple") {
             update.id = 1;
-            update.status = false;
+            update.status = 0;
             update.u_set = 11.0e3;
             update.u_band = 2.0e3;
             update.line_drop_compensation_r = 2.0;
@@ -201,7 +201,7 @@ TEST_CASE("Test transformer tap regulator") {
     SUBCASE("Test default line drop compensation") {
         TransformerTapRegulator regulator{{.id = 1,
                                            .regulated_object = 2,
-                                           .status = true,
+                                           .status = 1,
                                            .control_side = ControlSide::from,
                                            .u_set = 10.0e3,
                                            .u_band = 1.0e3},

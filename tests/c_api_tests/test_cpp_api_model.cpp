@@ -46,10 +46,10 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
 TEST_CASE("C++ API Model") {
     using namespace std::string_literals;
 
-    Options options{};
+    Options const options{};
 
     // input data
-    DatasetConst input_dataset{"input", 0, 1};
+    DatasetConst const input_dataset{"input", 0, 1};
 
     // node buffer
     ID node_id = 0;
@@ -83,7 +83,7 @@ TEST_CASE("C++ API Model") {
     int8_t load_type = 2;
     double load_p_specified = 0.0;
     double load_q_specified = 500.0;
-    Buffer load_buffer{PGM_def_input_sym_load, 1};
+    Buffer const load_buffer{PGM_def_input_sym_load, 1};
     load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
     load_buffer.set_value(PGM_def_input_sym_load_node, &load_node, -1);
     load_buffer.set_value(PGM_def_input_sym_load_status, &load_status, -1);
@@ -91,19 +91,29 @@ TEST_CASE("C++ API Model") {
     load_buffer.set_value(PGM_def_input_sym_load_p_specified, &load_p_specified, -1);
     load_buffer.set_value(PGM_def_input_sym_load_q_specified, &load_q_specified, -1);
 
-    // add buffers
+    // gen buffer (columnar)
+    std::vector<ID> gen_id = {3, 4};
+    std::vector<ID> gen_node = {0, 0};
+    std::vector<int8_t> gen_status = {0, 0};
+
+    // add buffers - row
     input_dataset.add_buffer("node", 1, 1, nullptr, node_buffer);
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
+    // add buffers - columnar
+    input_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
+    input_dataset.add_attribute_buffer("sym_gen", "id", &gen_id);
+    input_dataset.add_attribute_buffer("sym_gen", "node", &gen_node);
+    input_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // output data
     Buffer node_output{PGM_def_sym_output_node, 1};
     node_output.set_nan();
-    DatasetMutable single_output_dataset{"sym_output", 0, 1};
+    DatasetMutable const single_output_dataset{"sym_output", 0, 1};
     single_output_dataset.add_buffer("node", 1, 1, nullptr, node_output);
     Buffer node_batch_output{PGM_def_sym_output_node, 2};
     node_batch_output.set_nan();
-    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
+    DatasetMutable const batch_output_dataset{"sym_output", 1, 2};
     batch_output_dataset.add_buffer("node", 1, 2, nullptr, node_batch_output);
 
     std::vector<ID> node_result_id(2);
@@ -134,16 +144,20 @@ TEST_CASE("C++ API Model") {
     load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
-
     // dataset
-    DatasetConst single_update_dataset{"update", 0, 1};
+    DatasetConst const single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    DatasetConst batch_update_dataset{"update", 1, 2};
+    single_update_dataset.add_buffer("sym_gen", 2, 2, nullptr, nullptr);
+    single_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
+    DatasetConst const batch_update_dataset{"update", 1, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
+    batch_update_dataset.add_buffer("sym_gen", 1, 2, nullptr, nullptr);
+    batch_update_dataset.add_attribute_buffer("sym_gen", "status", &gen_status);
 
     // create model
+    // FIXME(mgovers): This test will fail here due to columnar data input;
     Model model{50.0, input_dataset};
 
     // test move-ability
@@ -227,7 +241,7 @@ TEST_CASE("C++ API Model") {
         SUBCASE("Construction error") {
             load_id = 0;
             try {
-                Model wrong_model{50.0, input_dataset};
+                Model const wrong_model{50.0, input_dataset};
             } catch (PowerGridRegularError const& e) {
                 check_exception(e, PGM_regular_error, "Conflicting id detected:"s);
             }

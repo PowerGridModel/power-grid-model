@@ -54,12 +54,12 @@ TEST_CASE("C++ API Serialization and Deserialization") {
     std::vector<Idx> const total_elements = {1, 2};
 
     SUBCASE("Serializer") {
-        DatasetConst dataset{"input", is_batch, batch_size};
+        DatasetConst const dataset{"input", is_batch, batch_size};
         dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr, node_buffer);
         dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
         SUBCASE("JSON") {
-            Serializer json_serializer{dataset, 0};
+            Serializer const json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
                 std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
@@ -77,7 +77,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         }
 
         SUBCASE("MessagePack") {
-            Serializer msgpack_serializer{dataset, 1};
+            Serializer const msgpack_serializer{dataset, 1};
 
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
@@ -94,7 +94,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
 
         SUBCASE("Invalid serialization format") {
             try {
-                Serializer unknown_serializer{dataset, -1};
+                Serializer const unknown_serializer{dataset, -1};
             } catch (PowerGridSerializationError const& e) {
                 CHECK(e.error_code() == PGM_serialization_error);
             }
@@ -130,7 +130,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         auto check_deserializer = [&](Deserializer& deserializer) {
             // get dataset
             auto& dataset = deserializer.get_dataset();
-            auto& info = dataset.get_info();
+            auto const& info = dataset.get_info();
             // check meta data
             check_metadata(info);
             // set buffer
@@ -160,7 +160,7 @@ TEST_CASE("C++ API Serialization and Deserialization") {
 
         // get dataset
         auto& dataset = deserializer_json.get_dataset();
-        auto& info = dataset.get_info();
+        auto const& info = dataset.get_info();
         // check meta data
         CHECK(info.name() == "input"s);
         CHECK(info.is_batch() == is_batch);
@@ -174,8 +174,8 @@ TEST_CASE("C++ API Serialization and Deserialization") {
         // parse
         deserializer_json.parse_to_buffer();
         // create model from deserialized dataset
-        DatasetConst input_dataset{dataset};
-        Model model{50.0, input_dataset};
+        DatasetConst const input_dataset{dataset};
+        Model const model{50.0, input_dataset};
     }
 }
 

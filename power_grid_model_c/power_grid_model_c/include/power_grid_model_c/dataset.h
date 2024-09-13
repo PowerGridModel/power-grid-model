@@ -148,6 +148,18 @@ PGM_API void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* 
                                           void const* data);
 
 /**
+ * @brief Add a attribute buffer to an instance of PGM_ConstDataset/component.
+ * @param handle
+ * @param dataset The pointer to the PGM_ConstDataset.
+ * @param component The name of the component.
+ * @param attribute The name of the attribute.
+ * @param data A void pointer to the buffer data.
+ * @return
+ */
+PGM_API void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
+                                                    char const* component, char const* attribute, void const* data);
+
+/**
  * @brief Get the dataset info of the instance PGM_ConstDataset.
  * @param handle
  * @param dataset A pointer to the PGM_ConstDataset.
@@ -178,6 +190,18 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle,
  */
 PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
                                              PGM_Idx* indptr, void* data);
+
+/**
+ * @brief Set buffer into the instance PGM_WritableDataset.
+ * @param handle
+ * @param dataset A pointer to the PGM_WritableDataset.
+ * @param component The name of the component.
+ * @param attribute The name of the attribute.
+ * @param data A void pointer to the buffer data.
+ * @return
+ */
+PGM_API void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset,
+                                                       char const* component, char const* attribute, void* data);
 
 /**
  * @brief Create an instance of PGM_MutableDataset.
@@ -219,6 +243,18 @@ PGM_API void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset);
 PGM_API void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
                                             PGM_Idx elements_per_scenario, PGM_Idx total_elements,
                                             PGM_Idx const* indptr, void* data);
+
+/**
+ * @brief Add a attribute buffer to an instance of PGM_MutableDataset/component.
+ * @param handle
+ * @param dataset The pointer to the PGM_MutableDataset.
+ * @param component The name of the component.
+ * @param attribute The name of the attribute.
+ * @param data A void pointer to the buffer data.
+ * @return
+ */
+PGM_API void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset,
+                                                      char const* component, char const* attribute, void* data);
 
 /**
  * @brief Get the dataset info of the instance PGM_MutableDataset.

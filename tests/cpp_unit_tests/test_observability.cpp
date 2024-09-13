@@ -11,7 +11,7 @@
 namespace power_grid_model {
 
 namespace {
-void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> param,
+void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> const& param,
                           StateEstimationInput<symmetric_t> const& se_input) {
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
