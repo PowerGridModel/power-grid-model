@@ -9,12 +9,7 @@ Power grid model raw dataset handler
 from types import EllipsisType
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import (
-    compatibility_convert_row_columnar_dataset,
-    is_columnar,
-    is_sparse,
-    process_data_filter,
-)
+from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CAttributeBuffer,
@@ -209,9 +204,7 @@ class CMutableDataset:
         # )
         if compatibility_converted_data:
             first_component, first_component_data = next(iter(compatibility_converted_data.items()))
-            first_sub_info = get_buffer_properties(
-                data=first_component_data, component_meta=instance._schema[first_component]
-            )
+            first_sub_info = get_buffer_properties(data=first_component_data, schema=instance._schema[first_component])
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
         else:
@@ -289,7 +282,7 @@ class CMutableDataset:
                 raise ValueError(f"Unknown component {component} in schema. {VALIDATOR_MSG}")
             return
 
-        self._validate_properties(data)
+        self._validate_properties(data, self._schema[component])
         c_buffer = get_buffer_view(data, self._schema[component])
         self._buffer_views.append(c_buffer)
         self._register_buffer(component, c_buffer)
@@ -305,8 +298,8 @@ class CMutableDataset:
         )
         assert_no_error()
 
-    def _validate_properties(self, data: ComponentData):
-        properties = get_buffer_properties(data)
+    def _validate_properties(self, data: ComponentData, schema: ComponentMetaData):
+        properties = get_buffer_properties(data, schema=schema)
         if properties.is_batch != self._is_batch:
             raise ValueError(
                 f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
