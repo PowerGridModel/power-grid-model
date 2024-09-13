@@ -283,7 +283,7 @@ class CMutableDataset:
             return
 
         self._validate_properties(data, self._schema[component])
-        c_buffer = get_buffer_view(data, self._schema[component])
+        c_buffer = get_buffer_view(data, self._schema[component], self._is_batch, self._batch_size)
         self._buffer_views.append(c_buffer)
         self._register_buffer(component, c_buffer)
 
@@ -299,7 +299,7 @@ class CMutableDataset:
         assert_no_error()
 
     def _validate_properties(self, data: ComponentData, schema: ComponentMetaData):
-        properties = get_buffer_properties(data, schema=schema)
+        properties = get_buffer_properties(data, schema=schema, is_batch=self._is_batch, batch_size=self._batch_size)
         if properties.is_batch != self._is_batch:
             raise ValueError(
                 f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
@@ -377,7 +377,9 @@ class CWritableDataset:
         self._schema = power_grid_meta_data[self._dataset_type]
 
         self._data_filter = process_data_filter(
-            dataset_type=info.dataset_type(), data_filter=data_filter, available_components=info.components()
+            dataset_type=info.dataset_type(),
+            data_filter=data_filter,
+            available_components=info.components(),
         )
 
         self._data: Dataset = {}
@@ -455,15 +457,26 @@ class CWritableDataset:
 
     def _register_buffer(self, component: ComponentType, buffer: CBuffer):
         pgc.dataset_writable_set_buffer(
-            dataset=self._writable_dataset, component=component, indptr=buffer.indptr, data=buffer.data
+            dataset=self._writable_dataset,
+            component=component,
+            indptr=buffer.indptr,
+            data=buffer.data,
         )
         assert_no_error()
         for attribute, attribute_data in buffer.attribute_data.items():
             self._register_attribute_buffer(component, attribute, attribute_data)
 
-    def _register_attribute_buffer(self, component: ComponentType, attribute: AttributeType, buffer: CAttributeBuffer):
+    def _register_attribute_buffer(
+        self,
+        component: ComponentType,
+        attribute: AttributeType,
+        buffer: CAttributeBuffer,
+    ):
         pgc.dataset_writable_set_attribute_buffer(
-            dataset=self._writable_dataset, component=component, attribute=attribute, data=buffer.data
+            dataset=self._writable_dataset,
+            component=component,
+            attribute=attribute,
+            data=buffer.data,
         )
         assert_no_error()
 
@@ -482,7 +495,8 @@ class CWritableDataset:
                 n_elements_per_scenario=n_elements_per_scenario[component],
                 n_total_elements=n_total_elements[component],
                 columns=_get_filtered_attributes(
-                    schema=self._schema[component], component_data_filter=self._data_filter[component]
+                    schema=self._schema[component],
+                    component_data_filter=self._data_filter[component],
                 ),
             )
             for component in components
@@ -491,7 +505,8 @@ class CWritableDataset:
 
 
 def _get_filtered_attributes(
-    schema: ComponentMetaData, component_data_filter: set[str] | list[str] | None | EllipsisType
+    schema: ComponentMetaData,
+    component_data_filter: set[str] | list[str] | None | EllipsisType,
 ) -> list[str] | None:
     if component_data_filter is None:
         return None
