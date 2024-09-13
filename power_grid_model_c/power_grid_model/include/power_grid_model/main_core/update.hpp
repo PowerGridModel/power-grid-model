@@ -46,7 +46,8 @@ template <component_c Component, class ComponentContainer,
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
                                                  ForwardIterator end) {
     std::vector<Idx2D> result;
-    result.reserve(std::distance(begin, end));
+    auto const dist = std::distance(begin, end);
+    result.reserve(/*std::distance(begin, end)*/ dist);
     get_component_sequence<Component>(state, begin, end, std::back_inserter(result));
     return result;
 }
