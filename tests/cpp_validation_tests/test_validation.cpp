@@ -46,15 +46,15 @@ inline bool is_nan(Enum x) {
 }
 
 template <class Functor, class... Args>
-decltype(auto) pgm_type_func_selector(PGM_CType type, Functor&& f, Args&&... args) {
+decltype(auto) pgm_type_func_selector(int type, Functor&& f, Args&&... args) {
     switch (type) {
-    case PGM_double:
+    case 2: //PGM_double
         return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
-    case PGM_double3:
+    case 3: //PGM_double3
         return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
-    case PGM_int8:
+    case 1: //PGM_int8
         return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
-    case PGM_int32:
+    case 0: //PGM_int32
         return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
     }
 }
@@ -302,7 +302,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                  ++attribute_idx) {
                 auto const& attribute_meta =
                     power_grid_model_cpp::MetaData::get_attribute_by_idx(component_meta, attribute_idx);
-                auto const& attribute_type = power_grid_model_cpp::MetaData::attribute_ctype(attribute_meta);
+                auto attribute_type = power_grid_model_cpp::MetaData::attribute_ctype(attribute_meta);
                 auto const& attribute_name = power_grid_model_cpp::MetaData::attribute_name(attribute_meta);
                 // TODO skip u angle, need a way for common angle
                 if (attribute_name == "u_angle"s) {
@@ -333,16 +333,27 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                         T variable{};
                         return variable;
                     };
+                    // double check if the possible attribute thingy is also needed for the non ref types, or for what.
+                    auto const& ref_attribute_value = pgm_type_func_selector(attribute_type, lambda);
+                    decltype(ref_attribute_value) attribute_value{};
+                    auto const& possible_attribute_value = pgm_type_func_selector(power_grid_model_cpp::MetaData::attribute_ctype(possible_attr_magnitude), lambda); // possibly change the name of the possible thing
+                    //Check if this is needed for every single attribute to compare or what.
+                    ref_buffer.get_value(attribute_meta, &ref_attribute_value, elements_per_scenario * scenario_idx + obj, -1);
 
-                    auto const& ref_attribute_buffer = pgm_type_func_selector(attribute_type, lambda);
 
-                    if (attr.check_nan(reference_result_ptr, obj)) {
+                    if (is_nan(ref_attribute_value)) {
+                        continue;
+                    }
+                    // for angle attribute, also check the magnitude available
+                    if (is_angle && is_nan(possible_attribute_value))
+
+                    /*if (attr.check_nan(reference_result_ptr, obj)) {
                         continue;
                     }
                     // for angle attribute, also check the magnitude available
                     if (is_angle && possible_attr_magnitude.check_nan(reference_result_ptr, obj)) {
                         continue;
-                    }
+                    }*/
                     bool const match =
                         is_angle ? check_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
                                                              possible_attr_magnitude, dynamic_atol, rtol, obj)
