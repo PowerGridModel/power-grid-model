@@ -163,7 +163,6 @@ TEST_CASE("C++ API Model") {
     DatasetConst const single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    // update containing columnar data still fail
     single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
     single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
     single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
