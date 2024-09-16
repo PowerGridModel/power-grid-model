@@ -192,15 +192,16 @@ TEST_CASE("API Serialization and Deserialization") {
             ID node_id_2{0};
             double node_u_rated_2;
             // set buffer
+            Buffer source_buffer_columnar{PGM_def_input_source, 1};
             dataset.set_buffer("node", nullptr, nullptr);
             dataset.set_attribute_buffer("node", "id", &node_id_2);
             dataset.set_attribute_buffer("node", "u_rated", &node_u_rated_2);
-            dataset.set_buffer("source", nullptr, source_buffer_2);
+            dataset.set_buffer("source", nullptr, source_buffer_columnar);
             // parse
             deserializer.parse_to_buffer();
             // check
             ID source_2_id;
-            source_buffer_2.get_value(PGM_def_input_source_id, &source_2_id, -1);
+            source_buffer_columnar.get_value(PGM_def_input_source_id, &source_2_id, -1);
             CHECK(node_id_2 == 5);
             CHECK(node_u_rated_2 == doctest::Approx(10.5e3));
             CHECK(source_2_id == 6);
