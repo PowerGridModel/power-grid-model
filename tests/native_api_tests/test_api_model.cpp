@@ -43,7 +43,7 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
 }
 } // namespace
 
-TEST_CASE("C++ API Model") {
+TEST_CASE("API Model") {
     using namespace std::string_literals;
 
     Options const options{};
