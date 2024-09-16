@@ -12,7 +12,7 @@
 
 namespace power_grid_model_cpp {
 
-TEST_CASE("C++ API Meta Data") {
+TEST_CASE("API Meta Data") {
     SUBCASE("Datasets") {
         // check dataset
         for (Idx idx_dataset = 0; idx_dataset != MetaData::n_datasets(); ++idx_dataset) {

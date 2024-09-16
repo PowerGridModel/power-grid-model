@@ -27,7 +27,7 @@ constexpr char const* complete_json_data =
     R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5, "u_rated": 10500}],"source":[{"id":6, "node": 5, "status": 1, "u_ref": 1.0}]}})";
 } // namespace
 
-TEST_CASE("C++ API Serialization and Deserialization") {
+TEST_CASE("API Serialization and Deserialization") {
 
     ID node_id = 5;
     Buffer node_buffer{PGM_def_input_node, 1};
