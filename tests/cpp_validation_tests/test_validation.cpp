@@ -26,10 +26,13 @@
 #include <limits>
 #include <optional>
 #include <regex>
+#include <stdexcept>
 
 namespace power_grid_model::meta_data {
 
 namespace {
+// taken from three_phase_tensor.hpp
+template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
 
 // is nan. Taken from three_phase_tensor.hpp
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
@@ -45,17 +48,19 @@ inline bool is_nan(Enum x) {
     return static_cast<int8_t>(x) == std::numeric_limits<int8_t>::min();
 }
 
-template <class Functor, class... Args>
-decltype(auto) pgm_type_func_selector(int type, Functor&& f, Args&&... args) {
+template <class Functor, class... Args> decltype(auto) pgm_type_func_selector(Idx type, Functor&& f, Args&&... args) {
     switch (type) {
-    case 2: //PGM_double
-        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
-    case 3: //PGM_double3
-        return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
-    case 1: //PGM_int8
-        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
-    case 0: //PGM_int32
+    case Idx{0}: // PGM_int32
         return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
+    case Idx{1}: // PGM_int8
+        throw std::runtime_error("pgm_int8");
+        // return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
+    case Idx{2}: // PGM_double
+        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
+    case Idx{3}: // PGM_double3
+        return std::forward<Functor>(f).template operator()<Eigen3Vector<double>>(std::forward<Args>(args)...);
+    default:
+        throw std::runtime_error("unknown data type");
     }
 }
 
@@ -184,78 +189,43 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
     return owning_dataset;
 }
 
-template <typename T>
-std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
-    // ensure that we don't read outside owned memory
-    REQUIRE(attr.ctype == ctype_v<T>);
-    REQUIRE(attr.size == sizeof(T));
-
-    T value{};
-    attr.get_value(raw_data_ptr, reinterpret_cast<RawDataPtr>(&value), obj);
-
+template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
     sstr << std::setprecision(16);
-    if constexpr (std::same_as<T, RealValue<asymmetric_t>>) {
-        sstr << "(" << value(0) << ", " << value(1) << ", " << value(2) << ")";
+    if constexpr (std::same_as<T, Eigen3Vector<double>>) {
+        sstr << "(" << attribute_value(0) << ", " << attribute_value(1) << ", " << attribute_value(2) << ")";
     } else if constexpr (std::same_as<T, int8_t>) {
-        sstr << std::to_string(value);
+        sstr << std::to_string(attribute_value);
     } else {
-        sstr << value;
+        sstr << attribute_value;
     }
     return sstr.str();
 }
 
-std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
-    using enum CType;
-    using namespace std::string_literals;
-
-    switch (attr.ctype) {
-    case c_int32:
-        return get_as_string<int32_t>(raw_data_ptr, attr, obj);
-    case c_int8:
-        return get_as_string<int8_t>(raw_data_ptr, attr, obj);
-    case c_double:
-        return get_as_string<double>(raw_data_ptr, attr, obj);
-    case c_double3:
-        return get_as_string<RealValue<asymmetric_t>>(raw_data_ptr, attr, obj);
-    default:
-        return "<unknown value type>"s;
+template <typename T>
+bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
+                               double atol, double rtol) {
+    using namespace std::complex_literals;
+    if constexpr (std::same_as<T, double>) {
+        std::complex<double> result{magnitude * exp(1.0i * angle)};
+        std::complex<double> ref_result{ref_magnitude * exp(1.0i * ref_angle)};
+        return std::abs(result - ref_result) < (std::abs(ref_result) * rtol + atol);
+    } else if constexpr (std::same_as<T, Eigen3Vector<double>>) {
+        Eigen3Vector<std::complex<double>> result = magnitude * exp(1.0i * angle);
+        Eigen3Vector<std::complex<double>> ref_result = ref_magnitude * exp(1.0i * ref_angle);
+        return (abs(result - ref_result) < abs(ref_result) * rtol + atol).all();
     }
 }
 
-template <symmetry_tag sym>
-bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
-                               MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol, double rtol,
-                               Idx obj) {
-    RealValue<sym> mag{};
-    RealValue<sym> mag_ref{};
-    RealValue<sym> angle{};
-    RealValue<sym> angle_ref{};
-    mag_attr.get_value(result_ptr, &mag, obj);
-    mag_attr.get_value(reference_result_ptr, &mag_ref, obj);
-    angle_attr.get_value(result_ptr, &angle, obj);
-    angle_attr.get_value(reference_result_ptr, &angle_ref, obj);
-    ComplexValue<sym> const result = mag * exp(1.0i * angle);
-    ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
-    if constexpr (is_symmetric_v<sym>) {
-        return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
+template <typename T>
+bool compare_value(T const& ref_attribute_value, T const& attribute_value, double atol, double rtol) {
+    if constexpr (std::same_as<T, double>) {
+        return std::abs(attribute_value - ref_attribute_value) < (std::abs(ref_attribute_value) * rtol + atol);
+    } else if constexpr (std::same_as<T, Eigen3Vector<double>>) {
+        return (abs(attribute_value - ref_attribute_value) < abs(ref_attribute_value) * rtol + atol).all();
     } else {
-        return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
+        return ref_attribute_value == attribute_value;
     }
-}
-
-bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
-                               MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol, double rtol,
-                               Idx obj) {
-    if (angle_attr.ctype == CType::c_double) {
-        assert(mag_attr.ctype == CType::c_double);
-        return check_angle_and_magnitude<symmetric_t>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol,
-                                                      rtol, obj);
-    }
-    assert(angle_attr.ctype == CType::c_double3);
-    assert(mag_attr.ctype == CType::c_double3);
-    return check_angle_and_magnitude<asymmetric_t>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
-                                                   obj);
 }
 
 // assert single result
@@ -268,12 +238,10 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
     auto const& result_name = result_info.name();
     auto const& result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_name);
     Idx const result_batch_size = result_info.batch_size();
-
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
     auto const& reference_result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(reference_result_name);
     Idx const reference_result_batch_size = reference_result_info.batch_size();
-
     CHECK(result_name == reference_result_name);
     CHECK(result_meta == reference_result_meta);
     CHECK(result_batch_size == reference_result_batch_size);
@@ -285,18 +253,10 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
             auto const& component_meta =
                 power_grid_model_cpp::MetaData::get_component_by_idx(reference_result_meta, component_idx);
             auto const& component_name = power_grid_model_cpp::MetaData::component_name(component_meta);
-            auto const& ref_buffer = owning_reference_result.buffers.at(component_idx);
-            auto const& buffer = owning_result.buffers.at(component_idx);
-            // auto const& ref_buffer = reference_result.get_buffer(i); //why don't just use i to get both buffers here?
-            // auto const& buffer = result.get_buffer(component_meta.name);
+            auto& ref_buffer = owning_reference_result.buffers.at(component_idx);
+            auto& buffer = owning_result.buffers.at(component_idx);
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
             assert(elements_per_scenario >= 0);
-            // offset scenario
-            // this can be done via buffer.get_value(), but at the attribute level
-            RawDataConstPtr const result_ptr =
-                reinterpret_cast<char const*>(buffer.data) + elements_per_scenario * scenario_idx * component_meta.size;
-            RawDataConstPtr const reference_result_ptr = reinterpret_cast<char const*>(ref_buffer.data) +
-                                                         elements_per_scenario * scenario_idx * component_meta.size;
             // loop all attribute
             for (Idx attribute_idx{}; attribute_idx < power_grid_model_cpp::MetaData::n_attributes(component_meta);
                  ++attribute_idx) {
@@ -321,51 +281,55 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 std::smatch angle_match;
                 bool const is_angle = std::regex_match(attribute_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
-                auto const& possible_attr_magnitude =
-                    is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(reference_result_name,
-                                                                                     component_name, magnitude_name)
-                             : attribute_meta;
-
+                auto const& possible_attr_meta = is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(
+                                                                reference_result_name, component_name, magnitude_name)
+                                                          : attribute_meta;
                 // loop all object
-                for (Idx obj = 0; obj != elements_per_scenario;
-                     ++obj) { // this loops over each element in one scenario after the buffer has been set correctly
-                    auto lambda = []<typename T>() {
+                for (Idx obj = 0; obj != elements_per_scenario; ++obj) {
+                    auto create_default_value = []<typename T>() {
                         T variable{};
                         return variable;
                     };
-                    // double check if the possible attribute thingy is also needed for the non ref types, or for what.
-                    auto const& ref_attribute_value = pgm_type_func_selector(attribute_type, lambda);
+                    auto ref_attribute_value =
+                        pgm_type_func_selector(static_cast<Idx>(attribute_type), create_default_value);
                     decltype(ref_attribute_value) attribute_value{};
-                    auto const& possible_attribute_value = pgm_type_func_selector(power_grid_model_cpp::MetaData::attribute_ctype(possible_attr_magnitude), lambda); // possibly change the name of the possible thing
-                    //Check if this is needed for every single attribute to compare or what.
-                    ref_buffer.get_value(attribute_meta, &ref_attribute_value, elements_per_scenario * scenario_idx + obj, -1);
+                    auto const& possible_attr_type =
+                        power_grid_model_cpp::MetaData::attribute_ctype(possible_attr_meta);
+                    decltype(ref_attribute_value) ref_possible_attribute_value =
+                        pgm_type_func_selector(possible_attr_type, create_default_value);
+                    decltype(ref_attribute_value) possible_attribute_value =
+                        pgm_type_func_selector(possible_attr_type, create_default_value);
+                    ref_buffer.get_value(attribute_meta, &ref_attribute_value,
+                                         (elements_per_scenario * scenario_idx) + obj, -1);
+                    buffer.get_value(attribute_meta, &attribute_value, (elements_per_scenario * scenario_idx) + obj,
+                                     -1);
+                    ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value,
+                                         (elements_per_scenario * scenario_idx) + obj, -1);
+                    buffer.get_value(possible_attr_meta, &possible_attribute_value,
+                                     (elements_per_scenario * scenario_idx) + obj, -1);
 
-
+                    // from here is where the checks start
                     if (is_nan(ref_attribute_value)) {
                         continue;
                     }
                     // for angle attribute, also check the magnitude available
-                    if (is_angle && is_nan(possible_attribute_value))
-
-                    /*if (attr.check_nan(reference_result_ptr, obj)) {
+                    if (is_angle && is_nan(ref_possible_attribute_value)) {
                         continue;
                     }
-                    // for angle attribute, also check the magnitude available
-                    if (is_angle && possible_attr_magnitude.check_nan(reference_result_ptr, obj)) {
-                        continue;
-                    }*/
                     bool const match =
-                        is_angle ? check_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
-                                                             possible_attr_magnitude, dynamic_atol, rtol, obj)
-                                 : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
+                        is_angle ? check_angle_and_magnitude<decltype(ref_attribute_value)>(
+                                       ref_attribute_value, attribute_value, ref_possible_attribute_value,
+                                       possible_attribute_value, dynamic_atol, rtol)
+                                 : compare_value<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value,
+                                                                                dynamic_atol, rtol);
                     if (match) {
                         CHECK(match);
                     } else {
                         std::stringstream case_sstr;
-                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << component_meta.name << " #"
-                                  << obj << ", attribute: " << attr.name
-                                  << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
-                                  << get_as_string(reference_result_ptr, attr, obj);
+                        case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name << " #"
+                                  << obj << ", attribute: " << attribute_name << ": actual = "
+                                  << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
+                                  << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
                         CHECK_MESSAGE(match, case_sstr.str());
                     }
                 }
