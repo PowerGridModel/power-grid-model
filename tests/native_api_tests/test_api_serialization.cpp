@@ -54,7 +54,7 @@ TEST_CASE("API Serialization and Deserialization") {
     std::vector<Idx> const total_elements = {1, 2};
 
     SUBCASE("Serializer") {
-        DatasetConst const dataset{"input", is_batch, batch_size};
+        DatasetConst dataset{"input", is_batch, batch_size};
         dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr, node_buffer);
         dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
