@@ -302,20 +302,34 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
     }
 
-    void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data) {
-        Idx const idx = find_component(component, true);
-        Buffer& buffer = buffers_[idx];
-        if (!is_columnar(buffer)) {
-            throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
-        }
-        if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
-                return buffer_attribute.meta_attribute->name == attribute;
-            }) != buffer.attributes.end()) {
-            throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
-        }
-        AttributeBuffer<Data> attribute_buffer{
-            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
-        buffer.attributes.emplace_back(attribute_buffer);
+    void add_attribute_buffer(std::string_view component, std::string_view attribute, Data* data)
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        add_attribute_buffer_impl(component, attribute, data);
+    }
+
+    /*
+    we decided to go with the same behavior between `add_attribute_buffer` and `set_attribute_buffer` (but different
+    entrypoints). The behavior of `set_attribute_buffer` therefore differs from the one of `set_buffer`. The reasoning
+    is as follows:
+
+    For components:
+    - the deserializer tells the user via the dataset info that a certain component is present in the serialized
+    data.
+    - It is possible to efficiently determine whether that is the case.
+    - The user can then only call `set_buffer` for those components that are already present
+    For attributes:
+    - the deserializer would need to go over the entire dataset to look for components with the map serialization
+        representation to determine whether an attribute is present.
+    - this is expensive.
+    - the deserializer therefore cannot let the user know beforehand which attributes are present.
+    - `set_attribute_buffer` therefore should only be called if it has not been set yet.
+    - this is the same behavior as `add_attribute_buffer`.
+    */
+    void set_attribute_buffer(std::string_view component, std::string_view attribute, Data* data)
+        requires is_indptr_mutable_v<dataset_type>
+    {
+        add_attribute_buffer_impl(component, attribute, data);
     }
 
     // get buffer by component type
@@ -440,6 +454,22 @@ template <dataset_type_tag dataset_type_> class Dataset {
         dataset_info_.component_info.push_back(
             {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
         buffers_.push_back(Buffer{});
+    }
+
+    void add_attribute_buffer_impl(std::string_view component, std::string_view attribute, Data* data) {
+        Idx const idx = find_component(component, true);
+        Buffer& buffer = buffers_[idx];
+        if (!is_columnar(buffer)) {
+            throw DatasetError{"Cannot add attribute buffers to row-based dataset!\n"};
+        }
+        if (std::ranges::find_if(buffer.attributes, [&attribute](auto const& buffer_attribute) {
+                return buffer_attribute.meta_attribute->name == attribute;
+            }) != buffer.attributes.end()) {
+            throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
+        }
+        AttributeBuffer<Data> const attribute_buffer{
+            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
+        buffer.attributes.emplace_back(attribute_buffer);
     }
 
     template <class RangeType>

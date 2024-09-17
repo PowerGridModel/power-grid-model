@@ -95,6 +95,24 @@ class DatasetWritable {
         set_buffer(*this, component, indptr, data);
     }
 
+    static void set_attribute_buffer(DatasetWritable& dataset, std::string const& component,
+                                     std::string const& attribute, RawDataPtr data) {
+        dataset.handle_.call_with(PGM_dataset_writable_set_attribute_buffer, dataset.dataset_, component.c_str(),
+                                  attribute.c_str(), data);
+    }
+    void set_attribute_buffer(std::string const& component, std::string const& attribute, RawDataPtr data) {
+        set_attribute_buffer(*this, component, attribute, data);
+    }
+
+    static void set_attribute_buffer(DatasetWritable& dataset, std::string const& component,
+                                     std::string const& attribute, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_writable_set_attribute_buffer, dataset.dataset_, component.c_str(),
+                                  attribute.c_str(), data.get());
+    }
+    void set_attribute_buffer(std::string const& component, std::string const& attribute, Buffer const& data) {
+        set_attribute_buffer(*this, component, attribute, data);
+    }
+
   private:
     Handle handle_{};
     RawWritableDataset* dataset_;
@@ -115,8 +133,8 @@ class DatasetMutable {
                                   elements_per_scenario, total_elements, indptr, data);
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    RawDataPtr data) const {
-        add_buffer(*this, component.c_str(), elements_per_scenario, total_elements, indptr, data);
+                    RawDataPtr data) { // NOSONAR: no const
+        add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
     static void add_buffer(DatasetMutable const& dataset, std::string const& component, Idx elements_per_scenario,
@@ -125,8 +143,28 @@ class DatasetMutable {
                                   elements_per_scenario, total_elements, indptr, data.get());
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    Buffer const& data) const {
+                    Buffer const& data) { // NOSONAR: no const
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
+    }
+
+    static void add_attribute_buffer(DatasetMutable const& dataset, std::string const& component,
+                                     std::string const& attribute, RawDataPtr data) {
+        dataset.handle_.call_with(PGM_dataset_mutable_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data);
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute,
+                              RawDataPtr data) { // NOSONAR: no const
+        add_attribute_buffer(*this, component, attribute, data);
+    }
+
+    static void add_attribute_buffer(DatasetMutable const& dataset, std::string const& component,
+                                     std::string const& attribute, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_mutable_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data.get());
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute,
+                              Buffer const& data) { // NOSONAR: no const: no const
+        add_attribute_buffer(*this, component, attribute, data);
     }
 
     static DatasetInfo const& get_info(DatasetMutable const& dataset) { return dataset.info_; }
@@ -158,7 +196,7 @@ class DatasetConst {
                                   elements_per_scenario, total_elements, indptr, data);
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    RawDataConstPtr data) const {
+                    RawDataConstPtr data) { // NOSONAR: no const
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
     }
 
@@ -168,8 +206,28 @@ class DatasetConst {
                                   elements_per_scenario, total_elements, indptr, data.get());
     }
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    Buffer const& data) const {
+                    Buffer const& data) { // NOSONAR: no const
         add_buffer(*this, component, elements_per_scenario, total_elements, indptr, data);
+    }
+
+    static void add_attribute_buffer(DatasetConst const& dataset, std::string const& component,
+                                     std::string const& attribute, RawDataConstPtr data) {
+        dataset.handle_.call_with(PGM_dataset_const_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data);
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute,
+                              RawDataConstPtr data) { // NOSONAR: no const
+        add_attribute_buffer(*this, component, attribute, data);
+    }
+
+    static void add_attribute_buffer(DatasetConst const& dataset, std::string const& component,
+                                     std::string const& attribute, Buffer const& data) {
+        dataset.handle_.call_with(PGM_dataset_const_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
+                                  attribute.c_str(), data.get());
+    }
+    void add_attribute_buffer(std::string const& component, std::string const& attribute,
+                              Buffer const& data) { // NOSONAR: no const
+        add_attribute_buffer(*this, component, attribute, data);
     }
 
     static DatasetInfo const& get_info(DatasetConst const& dataset) { return dataset.info_; }

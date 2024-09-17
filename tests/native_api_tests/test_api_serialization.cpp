@@ -51,7 +51,9 @@ TEST_CASE("API Serialization and Deserialization") {
     Idx const batch_size = 1;
     Idx const is_batch = 0;
     std::vector<Idx> const elements_per_scenario = {1, 2};
+    std::vector<Idx> const elements_per_scenario_complete = {1, 1};
     std::vector<Idx> const total_elements = {1, 2};
+    std::vector<Idx> const total_elements_complete = {1, 1};
 
     SUBCASE("Serializer") {
         DatasetConst dataset{"input", is_batch, batch_size};
@@ -59,7 +61,7 @@ TEST_CASE("API Serialization and Deserialization") {
         dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
         SUBCASE("JSON") {
-            Serializer json_serializer{dataset, 0};
+            Serializer const json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
                 std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
@@ -77,7 +79,7 @@ TEST_CASE("API Serialization and Deserialization") {
         }
 
         SUBCASE("MessagePack") {
-            Serializer msgpack_serializer{dataset, 1};
+            Serializer const msgpack_serializer{dataset, 1};
 
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
@@ -94,7 +96,7 @@ TEST_CASE("API Serialization and Deserialization") {
 
         SUBCASE("Invalid serialization format") {
             try {
-                Serializer unknown_serializer{dataset, -1};
+                Serializer const unknown_serializer{dataset, -1};
             } catch (PowerGridSerializationError const& e) {
                 CHECK(e.error_code() == PGM_serialization_error);
             }
@@ -130,7 +132,7 @@ TEST_CASE("API Serialization and Deserialization") {
         auto check_deserializer = [&](Deserializer& deserializer) {
             // get dataset
             auto& dataset = deserializer.get_dataset();
-            auto& info = dataset.get_info();
+            auto const& info = dataset.get_info();
             // check meta data
             check_metadata(info);
             // set buffer
@@ -155,12 +157,66 @@ TEST_CASE("API Serialization and Deserialization") {
         check_deserializer(msgpack_deserializer);
     }
 
+    SUBCASE("Deserializer with columnar data") {
+        // msgpack data
+        auto const json_document = nlohmann::json::parse(complete_json_data);
+        std::vector<char> msgpack_data;
+
+        nlohmann::json::to_msgpack(json_document, msgpack_data);
+
+        // test move-ability
+        Deserializer json_deserializer{complete_json_data, 0};
+        Deserializer json_dummy{std::move(json_deserializer)};
+        json_deserializer = std::move(json_dummy);
+        Deserializer msgpack_deserializer{msgpack_data, 1};
+
+        auto check_metadata = [&](DatasetInfo const& info) {
+            CHECK(info.name() == "input"s);
+            CHECK(info.is_batch() == is_batch);
+            CHECK(info.batch_size() == batch_size);
+            CHECK(info.n_components() == n_components);
+            CHECK(info.component_name(0) == "node"s);
+            CHECK(info.component_name(1) == "source"s);
+            for (Idx const idx : {0, 1}) {
+                CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario_complete[idx]);
+                CHECK(info.component_total_elements(idx) == total_elements_complete[idx]);
+            }
+        };
+
+        auto check_deserializer = [&](Deserializer& deserializer) {
+            // get dataset
+            auto& dataset = deserializer.get_dataset();
+            auto const& info = dataset.get_info();
+            // check meta data
+            check_metadata(info);
+            ID node_id_2{0};
+            double node_u_rated_2;
+            // set buffer
+            Buffer source_buffer_columnar{PGM_def_input_source, 1};
+            dataset.set_buffer("node", nullptr, nullptr);
+            dataset.set_attribute_buffer("node", "id", &node_id_2);
+            dataset.set_attribute_buffer("node", "u_rated", &node_u_rated_2);
+            dataset.set_buffer("source", nullptr, source_buffer_columnar);
+            // parse
+            deserializer.parse_to_buffer();
+            // check
+            ID source_2_id;
+            source_buffer_columnar.get_value(PGM_def_input_source_id, &source_2_id, -1);
+            CHECK(node_id_2 == 5);
+            CHECK(node_u_rated_2 == doctest::Approx(10.5e3));
+            CHECK(source_2_id == 6);
+        };
+
+        check_deserializer(json_deserializer);
+        check_deserializer(msgpack_deserializer);
+    }
+
     SUBCASE("Use deserialized dataset") {
         Deserializer deserializer_json(complete_json_data, 0);
 
         // get dataset
         auto& dataset = deserializer_json.get_dataset();
-        auto& info = dataset.get_info();
+        auto const& info = dataset.get_info();
         // check meta data
         CHECK(info.name() == "input"s);
         CHECK(info.is_batch() == is_batch);
@@ -174,8 +230,8 @@ TEST_CASE("API Serialization and Deserialization") {
         // parse
         deserializer_json.parse_to_buffer();
         // create model from deserialized dataset
-        DatasetConst input_dataset{dataset};
-        Model model{50.0, input_dataset};
+        DatasetConst const input_dataset{dataset};
+        Model const model{50.0, input_dataset};
     }
 }
 
