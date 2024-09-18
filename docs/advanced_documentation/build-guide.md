@@ -12,7 +12,7 @@ repository there are three builds:
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
 * A [CMake](https://cmake.org/) project consisting of the C++ header-only calculation core, and the following build targets:
     * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application (enabled by default)
-    * An install target that installs a package that contains the dynamic library (enabled by default)
+    * An install target that installs the package containing the dynamic library (enabled by default)
     * Native C++ unit tests
     * C API tests
     * A performance benchmark program
@@ -97,7 +97,7 @@ The table below shows the Python dependencies
 ## Build Python Package
 
 Once you have prepared the build dependencies, 
-you can install the library from source in develop mode with the development dependency. 
+you can install the library from source in editable mode with the development dependency. 
 Go to the root folder of the repository.
 
 ```shell
@@ -132,13 +132,13 @@ cmake --build build --config Release
 
 ### Developer build
 
-If you are a developer of Power Grid Model, 
+If you opt for a developer build of Power Grid Model, 
 you can use the pre-defined CMake presets to enable developer build, including all the tests, warnings, examples, and benchmark. In the presets the [Ninja](https://ninja-build.org/) generator is used. 
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project.
 It is also possible to use the bare CMake CLI to set up the project. 
 Supported presets for your development platform can be listed using `cmake --list-presets`.
 
-In the developer build the following build targets (folders) are enabled:
+In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
 * `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
