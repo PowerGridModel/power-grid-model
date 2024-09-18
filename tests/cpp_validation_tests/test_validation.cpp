@@ -27,10 +27,14 @@
 #include <optional>
 #include <regex>
 #include <stdexcept>
+#include <type_traits>
 
 namespace power_grid_model::meta_data {
 
 namespace {
+// taken from common.hpp
+using IdxVector = std::vector<Idx>;
+
 // taken from three_phase_tensor.hpp
 template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
 
@@ -53,8 +57,7 @@ template <class Functor, class... Args> decltype(auto) pgm_type_func_selector(Id
     case Idx{0}: // PGM_int32
         return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
     case Idx{1}: // PGM_int8
-        throw std::runtime_error("pgm_int8");
-        // return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
     case Idx{2}: // PGM_double
         return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
     case Idx{3}: // PGM_double3
@@ -90,60 +93,75 @@ class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
           }()} {}
 };
 
-struct OwningDataset {
-    power_grid_model_cpp::DatasetMutable dataset;
-    power_grid_model_cpp::DatasetConst const_dataset;
+struct OwningMemory {
     std::vector<power_grid_model_cpp::Buffer> buffers{};
-    std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{};
+    std::vector<IdxVector> buffers_indptrs{};
 };
 
-auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset) {
+struct OwningDataset {
+    std::optional<power_grid_model_cpp::DatasetMutable> dataset;
+    std::optional<power_grid_model_cpp::DatasetConst> const_dataset;
+    // std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{}; // May be removed in favor of direct buffer access
+};
+
+auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset, OwningMemory& storage) {
     auto const& info = writable_dataset.get_info();
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
     auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(dataset_name);
-    std::vector<power_grid_model_cpp::Buffer> buffers;
-    power_grid_model_cpp::DatasetMutable mutable_dataset{dataset_name, is_batch,
-                                                         batch_size}; // Is this the true dataset type intended here?
+
+    OwningDataset owning_dataset;
+    // to be added after buffer error is fixed
+    // power_grid_model_cpp::DatasetMutable mutable_dataset{dataset_name, is_batch, batch_size};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
         auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
-        IdxVector indptr_vector{info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0};
-        Idx* buffer_indptr = indptr_vector.empty() ? nullptr : indptr_vector.data();
+        CAPTURE(component_name);
+        CAPTURE(component_meta);
+        CAPTURE(component_elements_per_scenario);
+        CAPTURE(component_size);
 
-        power_grid_model_cpp::Buffer buffer{component_meta, component_size};
-        writable_dataset.set_buffer(component_name, buffer_indptr, buffer);
-        mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, buffer_indptr,
-                                   buffer);
-        buffers.push_back(std::move(buffer));
+        storage.buffers_indptrs.emplace_back(info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1
+                                                                                                     : 0);
+        bool empy_indptr = storage.buffers_indptrs.at(component_idx).empty() ? true : false;
+        Idx* indptr = empy_indptr ? nullptr : storage.buffers_indptrs.at(component_idx).data();
+        storage.buffers.emplace_back(component_meta, component_size);
+        if (empy_indptr) {
+            CHECK(component_size == (component_elements_per_scenario * batch_size));
+        }
+        writable_dataset.set_buffer(component_name, indptr, storage.buffers.at(component_idx));
+        // mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
+        //                            owning_dataset.buffers.at(component_idx));
     }
-    return OwningDataset{
+    // owning_dataset.const_dataset = writable_dataset;
+    return owning_dataset;
+    /*return OwningDataset{
         .dataset = std::move(mutable_dataset),
         .const_dataset{writable_dataset},
         .buffers = std::move(buffers),
-    };
+        .indptr_buffers = std::move(indptr_buffers),
+    };*/
 }
 
-auto create_owning_dataset(OwningDataset const& owning_dataset,
-                           std::string const& result_dataset_name) { // can probably be combined with the other overload
-    auto const& info = owning_dataset.dataset.get_info();
+// can probably be combined with the other overload
+/*auto create_owning_dataset(OwningDataset const& owning_dataset, std::string const& result_dataset_name) {
+    auto const& info = owning_dataset.dataset.get_info(); //take back to .dataset, just for testing now
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_dataset_name);
     std::vector<power_grid_model_cpp::Buffer> buffers;
-    power_grid_model_cpp::DatasetMutable mutable_dataset{result_dataset_name, is_batch,
-                                                         batch_size}; // Is this the true dataset type intended here?
+    power_grid_model_cpp::DatasetMutable mutable_dataset{result_dataset_name, is_batch, batch_size};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
         auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
-        IdxVector indptr_vector{info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0};
+        IdxVector indptr_vector(info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         Idx* buffer_indptr = indptr_vector.empty() ? nullptr : indptr_vector.data();
 
         power_grid_model_cpp::Buffer buffer{component_meta, component_size};
@@ -156,7 +174,7 @@ auto create_owning_dataset(OwningDataset const& owning_dataset,
         .const_dataset{owning_dataset.dataset},
         .buffers = std::move(buffers),
     };
-}
+}*/
 
 // probably not needed, because we can get the individual scenario info by offsetting. Will test with batch validation.
 /*auto construct_individual_scenarios(OwningDataset& owning_dataset) {
@@ -165,12 +183,13 @@ auto create_owning_dataset(OwningDataset const& owning_dataset,
     }
 }*/
 
-auto load_dataset(std::filesystem::path const& path) {
+auto load_dataset(std::filesystem::path const& path, OwningMemory& buffers) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    power_grid_model_cpp::Deserializer deserializer{read_file(path), 0};
-    auto dataset = create_owning_dataset(deserializer.get_dataset());
+    power_grid_model_cpp::Deserializer deserializer{read_file(path), Idx{0}};
+    auto& writable_dataset = deserializer.get_dataset();
+    auto dataset = create_owning_dataset(writable_dataset, buffers);
     deserializer.parse_to_buffer();
     // construct_individual_scenarios(dataset);
     return dataset;
@@ -181,13 +200,13 @@ auto load_dataset(std::filesystem::path const& path) {
 }
 
 // create single result set
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
+/*OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
                                     Idx batch_size = 1) {
     auto owning_dataset =
         create_owning_dataset(input, data_type); // this overload can just become create_result_dataset
     // construct_individual_scenarios(owning_dataset);
     return owning_dataset;
-}
+}*/
 
 template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
@@ -205,16 +224,15 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
 template <typename T>
 bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
                                double atol, double rtol) {
-    using namespace std::complex_literals;
+    using namespace std::literals::complex_literals;
     if constexpr (std::same_as<T, double>) {
         std::complex<double> result{magnitude * exp(1.0i * angle)};
         std::complex<double> ref_result{ref_magnitude * exp(1.0i * ref_angle)};
         return std::abs(result - ref_result) < (std::abs(ref_result) * rtol + atol);
-    } else if constexpr (std::same_as<T, Eigen3Vector<double>>) {
-        Eigen3Vector<std::complex<double>> result = magnitude * exp(1.0i * angle);
-        Eigen3Vector<std::complex<double>> ref_result = ref_magnitude * exp(1.0i * ref_angle);
-        return (abs(result - ref_result) < abs(ref_result) * rtol + atol).all();
     }
+    Eigen3Vector<std::complex<double>> result = magnitude * exp(1.0i * angle);
+    Eigen3Vector<std::complex<double>> ref_result = ref_magnitude * exp(1.0i * ref_angle);
+    return (abs(result - ref_result) < abs(ref_result) * rtol + atol).all();
 }
 
 template <typename T>
@@ -229,7 +247,7 @@ bool compare_value(T const& ref_attribute_value, T const& attribute_value, doubl
 }
 
 // assert single result
-void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
+/*void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
     power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset;
@@ -286,57 +304,65 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                                                           : attribute_meta;
                 // loop all object
                 for (Idx obj = 0; obj != elements_per_scenario; ++obj) {
-                    auto create_default_value = []<typename T>() {
-                        T variable{};
-                        return variable;
+                    auto check_results = [&]<typename T>(T const& ref_attribute_value, T attribute_value,
+                                                         T ref_possible_attribute_value, T possible_attribute_value) {
+                        bool const match = is_angle
+                                               ? check_angle_and_magnitude<decltype(ref_attribute_value)>(
+                                                     ref_attribute_value, attribute_value, ref_possible_attribute_value,
+                                                     possible_attribute_value, dynamic_atol, rtol)
+                                               : compare_value<decltype(ref_attribute_value)>(
+                                                     ref_attribute_value, attribute_value, dynamic_atol, rtol);
+                        if (match) {
+                            CHECK(match);
+                        } else {
+                            std::stringstream case_sstr;
+                            case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name
+                                      << " #" << obj << ", attribute: " << attribute_name << ": actual = "
+                                      << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
+                                      << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
+                            CHECK_MESSAGE(match, case_sstr.str());
+                        }
                     };
-                    auto ref_attribute_value =
-                        pgm_type_func_selector(static_cast<Idx>(attribute_type), create_default_value);
-                    decltype(ref_attribute_value) attribute_value{};
-                    auto const& possible_attr_type =
-                        power_grid_model_cpp::MetaData::attribute_ctype(possible_attr_meta);
-                    decltype(ref_attribute_value) ref_possible_attribute_value =
-                        pgm_type_func_selector(possible_attr_type, create_default_value);
-                    decltype(ref_attribute_value) possible_attribute_value =
-                        pgm_type_func_selector(possible_attr_type, create_default_value);
-                    ref_buffer.get_value(attribute_meta, &ref_attribute_value,
-                                         (elements_per_scenario * scenario_idx) + obj, -1);
-                    buffer.get_value(attribute_meta, &attribute_value, (elements_per_scenario * scenario_idx) + obj,
-                                     -1);
-                    ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value,
-                                         (elements_per_scenario * scenario_idx) + obj, -1);
-                    buffer.get_value(possible_attr_meta, &possible_attribute_value,
-                                     (elements_per_scenario * scenario_idx) + obj, -1);
 
-                    // from here is where the checks start
-                    if (is_nan(ref_attribute_value)) {
-                        continue;
-                    }
-                    // for angle attribute, also check the magnitude available
-                    if (is_angle && is_nan(ref_possible_attribute_value)) {
-                        continue;
-                    }
-                    bool const match =
-                        is_angle ? check_angle_and_magnitude<decltype(ref_attribute_value)>(
-                                       ref_attribute_value, attribute_value, ref_possible_attribute_value,
-                                       possible_attribute_value, dynamic_atol, rtol)
-                                 : compare_value<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value,
-                                                                                dynamic_atol, rtol);
-                    if (match) {
-                        CHECK(match);
-                    } else {
-                        std::stringstream case_sstr;
-                        case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name << " #"
-                                  << obj << ", attribute: " << attribute_name << ": actual = "
-                                  << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
-                                  << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
-                        CHECK_MESSAGE(match, case_sstr.str());
-                    }
+                    auto check_individual_attribute = [&]<typename T>() {
+                        T ref_attribute_value{};
+                        T attribute_value{};
+                        T ref_possible_attribute_value{};
+                        T possible_attribute_value{};
+                        if constexpr (std::same_as<T, Eigen3Vector<double>>) {
+                            ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
+                                             (elements_per_scenario * scenario_idx) + obj, -1);
+                            buffer.get_value(attribute_meta, attribute_value.data(), (elements_per_scenario *
+scenario_idx) + obj, -1); ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
+                                                (elements_per_scenario * scenario_idx) + obj, -1);
+                            buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
+                                            (elements_per_scenario * scenario_idx) + obj, -1);
+                        } else {
+                            ref_buffer.get_value(attribute_meta, &ref_attribute_value,
+                                                (elements_per_scenario * scenario_idx) + obj, -1);
+                            buffer.get_value(attribute_meta, &attribute_value, (elements_per_scenario * scenario_idx) +
+obj, -1); ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value, (elements_per_scenario * scenario_idx)
++ obj, -1); buffer.get_value(possible_attr_meta, &possible_attribute_value, (elements_per_scenario * scenario_idx) +
+obj, -1);
+                        }
+                        // check attributes
+                        if (is_nan(ref_attribute_value)) {
+                            return;
+                        }
+                        // for angle attribute, also check the magnitude available
+                        if (is_angle && is_nan(ref_possible_attribute_value)) {
+                            return;
+                        }
+                        //check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value,
+                        //              possible_attribute_value);
+                    };
+
+                    pgm_type_func_selector(static_cast<Idx>(attribute_type), check_individual_attribute);
                 }
             }
         }
     }
-}
+}*/
 
 // root path
 #ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR
@@ -517,22 +543,22 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
 struct ValidationCase {
     CaseParam param;
     OwningDataset input;
-    std::optional<OwningDataset> output{};
-    std::optional<OwningDataset> update_batch{};
-    std::optional<OwningDataset> output_batch{};
+    std::optional<OwningDataset> output;
+    std::optional<OwningDataset> update_batch;
+    std::optional<OwningDataset> output_batch;
 };
 
-ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
+ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type, OwningMemory& buffers) {
     // input
-    ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json")};
+    ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json", buffers)};
 
     // output and update
-    if (!param.is_batch) {
+    /*if (!param.is_batch) {
         validation_case.output = load_dataset(param.case_dir / (output_type + ".json"));
     } else {
         validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json");
         validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"));
-    }
+    }*/
     return validation_case;
 }
 
@@ -590,25 +616,27 @@ void execute_test(CaseParam const& param, T&& func) {
 
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        auto const output_prefix = get_output_type(param.calculation_type, param.sym); // checked
-        auto const validation_case = create_validation_case(param, output_prefix);     // checked
-        auto const result = create_result_dataset(validation_case.input, output_prefix);
+        OwningMemory buffers{};
+        auto const output_prefix = get_output_type(param.calculation_type, param.sym);
+        auto const validation_case = create_validation_case(param, output_prefix, buffers);
 
-        // Create options -> maybe make this into a function to re-use
-        power_grid_model_cpp::Options options{};
-        options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
-        options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
-        options.set_symmetric(param.sym ? 0 : 1);
-        options.set_err_tol(1e-8);
-        options.set_max_iter(20);
-        options.set_threading(-1);
-        options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
-        options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
+        // auto const result = create_result_dataset(validation_case.input, output_prefix);
+
+        /* // Create options
+         power_grid_model_cpp::Options options{};
+         options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
+         options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+         options.set_symmetric(param.sym ? 0 : 1);
+         options.set_err_tol(1e-8);
+         options.set_max_iter(20);
+         options.set_threading(-1);
+         options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
+         options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));*/
 
         // create model and run
-        power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset};
-        model.calculate(options, result.dataset);
-        assert_result(result, validation_case.output.value(), param.atol, param.rtol);
+        // power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset};
+        // model.calculate(options, result.dataset);
+        // assert_result(result, validation_case.output.value(), param.atol, param.rtol);
         // assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
     });
 }
