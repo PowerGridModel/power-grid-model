@@ -11,12 +11,12 @@ repository there are three builds:
 
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
 * A [CMake](https://cmake.org/) project consisting of the C++ header-only calculation core, and the following build targets:
-    * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
+    * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application (enabled by default)
+    * An install target that installs a package that contains the dynamic library (enabled by default)
     * Native C++ unit tests
     * C API tests
     * A performance benchmark program
     * An example C program to call the shared library
-    * An install target that installs a package that contains the dynamic library
 * A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the installable
   package.
 
@@ -65,7 +65,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 ### Build System for CMake Project
 
-This repository uses [CMake](https://cmake.org/) (version 3.23 or later) and [Ninja](https://ninja-build.org/) as C++ build system.
+This repository uses [CMake](https://cmake.org/) (version 3.23 or later) as C++ build system.
 
 ### Build Dependencies
 
@@ -100,24 +100,39 @@ Once you have prepared the build dependencies,
 you can install the library from source in develop mode with the development dependency. 
 Go to the root folder of the repository.
 
-```
+```shell
 pip install -e .[dev]
 ```
 
 Then you can run the tests.
 
-```
+```shell
 pytest
 ```
 
 A basic `self_test` function is provided to check if the installation was successful and ensures there are no build errors, segmentation violations, undefined symbols, etc. It performs multiple C API calls, runs through the main data flow, and verifies the integrity of serialization and deserialization.
 
-```
+```python
 from power_grid_model.utils import self_test
 self_test()
 ```
 
 ## Build CMake Project
+
+### User build
+
+If you are a C-API user of the library, you can build the CMake using all the default settings.
+You can specifiy a standard [CMAKE_BUILD_TYPE](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html).
+This will only build the core C-API library.
+
+```shell
+cmake -DCMAKE_BUILD_TYPE=Release -B build
+cmake --build build --config Release
+```
+
+### Developer build
+
+and [Ninja](https://ninja-build.org/) 
 
 There is a root cmake file in the root folder of the repo `CMakeLists.txt`. It specifies
 dependencies and the build options for the project. The core algorithm is implemented in the header-only
