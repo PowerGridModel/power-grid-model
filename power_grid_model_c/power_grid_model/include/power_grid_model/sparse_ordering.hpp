@@ -120,11 +120,8 @@ inline std::vector<std::pair<IdxVector, IdxVector>> check_indistguishable(Idx co
 }
 
 inline bool in_graph(std::pair<Idx, Idx> const& e, std::map<Idx, IdxVector> const& d) {
-    if (auto edges_it = d.find(e.first);
-        edges_it != d.cend() && std::ranges::find(edges_it->second, e.second) != edges_it->second.cend()) {
-        return true;
-    }
-    return false;
+    auto edges_it = d.find(e.first);
+    return edges_it != d.cend() && std::ranges::find(edges_it->second, e.second) != edges_it->second.cend();
 }
 
 inline IdxVector remove_vertices_update_degrees(Idx const u, std::map<Idx, IdxVector>& d, DegreeLookup& dgd,

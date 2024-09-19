@@ -6,6 +6,7 @@
 
 #include "common.hpp"
 #include "counting_iterator.hpp"
+#include "iterator_like_concepts.hpp"
 #include "typing.hpp"
 
 #include <boost/iterator/iterator_facade.hpp>
@@ -36,6 +37,9 @@ namespace power_grid_model {
 using IdxRange = boost::iterator_range<IdxCount>;
 
 namespace detail {
+// TODO(mgovers): replace the below relevant iterator concepts with the STD equivalent when we have index ranges.
+// boost::counting_iterator does not satisfy all requirements std::*_iterator concepts:
+static_assert(!std::random_access_iterator<IdxCount>);
 
 inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
@@ -54,42 +58,6 @@ inline auto sparse_decode(IdxVector const& indptr) {
     }
     return result;
 }
-
-// TODO(mgovers): replace the below relevant subset here ourselves with the STD equivalent when we have std::ranges.
-// boost::counting_iterator does not satisfy all requirements std::*_iterator concepts:
-static_assert(!std::random_access_iterator<IdxCount>);
-// we have to declare the relevant subset here ourselves.
-template <typename T, typename ElementType>
-concept iterator_like = requires(T const t) {
-                            { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
-                        };
-
-template <typename T, typename ElementType>
-concept random_access_iterator_like =
-    std::regular<T> && iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
-                                                                                       { t++ } -> std::same_as<T>;
-                                                                                       { t-- } -> std::same_as<T>;
-                                                                                       { ++t } -> std::same_as<T&>;
-                                                                                       { --t } -> std::same_as<T&>;
-
-                                                                                       { t + n } -> std::same_as<T>;
-                                                                                       { t - n } -> std::same_as<T>;
-                                                                                       { t += n } -> std::same_as<T&>;
-                                                                                       { t -= n } -> std::same_as<T&>;
-                                                                                   };
-
-template <typename T, typename ElementType>
-concept random_access_iterable_like = requires(T const t) {
-                                          { t.begin() } -> random_access_iterator_like<ElementType>;
-                                          { t.end() } -> random_access_iterator_like<ElementType>;
-                                      };
-
-template <typename T>
-concept index_range_iterator =
-    random_access_iterator_like<T, typename T::iterator> && requires(T const t) {
-                                                                typename T::iterator;
-                                                                { *t } -> random_access_iterable_like<Idx>;
-                                                            };
 
 template <typename T>
 concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {

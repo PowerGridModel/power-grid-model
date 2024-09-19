@@ -358,23 +358,23 @@ TEST_CASE("Deserializer") {
 
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("node", nullptr, nullptr);
-            info.add_attribute_buffer("node", "id", node_id.data());
-            info.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+            info.set_attribute_buffer("node", "id", node_id.data());
+            info.set_attribute_buffer("node", "u_rated", node_u_rated.data());
             info.set_buffer("line", nullptr, nullptr);
-            info.add_attribute_buffer("line", "id", line_id.data());
-            info.add_attribute_buffer("line", "r1", line_r1.data());
-            info.add_attribute_buffer("line", "r0", line_r0.data());
-            info.add_attribute_buffer("line", "x1", line_x1.data());
-            info.add_attribute_buffer("line", "x0", line_x0.data());
+            info.set_attribute_buffer("line", "id", line_id.data());
+            info.set_attribute_buffer("line", "r1", line_r1.data());
+            info.set_attribute_buffer("line", "r0", line_r0.data());
+            info.set_attribute_buffer("line", "x1", line_x1.data());
+            info.set_attribute_buffer("line", "x0", line_x0.data());
             info.set_buffer("source", nullptr, nullptr);
-            info.add_attribute_buffer("source", "id", source_id.data());
-            info.add_attribute_buffer("source", "u_ref", source_u_ref.data());
-            info.add_attribute_buffer("source", "sk", source_sk.data());
-            info.add_attribute_buffer("source", "rx_ratio", source_rx_ratio.data());
+            info.set_attribute_buffer("source", "id", source_id.data());
+            info.set_attribute_buffer("source", "u_ref", source_u_ref.data());
+            info.set_attribute_buffer("source", "sk", source_sk.data());
+            info.set_attribute_buffer("source", "rx_ratio", source_rx_ratio.data());
             info.set_buffer("sym_load", nullptr, nullptr);
-            info.add_attribute_buffer("sym_load", "id", sym_load_id.data());
-            info.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
-            info.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+            info.set_attribute_buffer("sym_load", "id", sym_load_id.data());
+            info.set_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
+            info.set_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
 
             deserializer.parse();
             // check node
@@ -498,15 +498,15 @@ TEST_CASE("Deserializer") {
 
             auto& info = deserializer.get_dataset_info();
             info.set_buffer("sym_load", sym_load_indptr.data(), nullptr);
-            info.add_attribute_buffer("sym_load", "id", sym_load_id.data());
-            info.add_attribute_buffer("sym_load", "status", sym_load_status.data());
-            info.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
-            info.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+            info.set_attribute_buffer("sym_load", "id", sym_load_id.data());
+            info.set_attribute_buffer("sym_load", "status", sym_load_status.data());
+            info.set_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
+            info.set_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
             info.set_buffer("asym_load", nullptr, nullptr);
-            info.add_attribute_buffer("asym_load", "id", asym_load_id.data());
-            info.add_attribute_buffer("asym_load", "status", asym_load_status.data());
-            info.add_attribute_buffer("asym_load", "p_specified", asym_load_p_specified.data());
-            info.add_attribute_buffer("asym_load", "q_specified", asym_load_q_specified.data());
+            info.set_attribute_buffer("asym_load", "id", asym_load_id.data());
+            info.set_attribute_buffer("asym_load", "status", asym_load_status.data());
+            info.set_attribute_buffer("asym_load", "p_specified", asym_load_p_specified.data());
+            info.set_attribute_buffer("asym_load", "q_specified", asym_load_q_specified.data());
 
             deserializer.parse();
 

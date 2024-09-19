@@ -127,7 +127,7 @@ def test_json_deserialize_from_file(deserialize_mock: MagicMock, open_mock: Magi
     deserialize_mock.return_value = {"foo": [{"val": 123}]}  # type: ignore
     assert json_deserialize_from_file(file_path=Path("output.json")) == deserialize_mock.return_value
     handle.read.assert_called_once()
-    deserialize_mock.assert_called_once_with(handle.read.return_value)
+    deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -149,7 +149,7 @@ def test_msgpack_deserialize_from_file(deserialize_mock: MagicMock, open_mock: M
     deserialize_mock.return_value = {"foo": [{"val": 123}]}  # type: ignore
     assert msgpack_deserialize_from_file(file_path=Path("output.msgpack")) == deserialize_mock.return_value
     handle.read.assert_called_once()
-    deserialize_mock.assert_called_once_with(handle.read.return_value)
+    deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
 
 
 @patch("builtins.open", new_callable=mock_open)

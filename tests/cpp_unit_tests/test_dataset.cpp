@@ -190,6 +190,7 @@ void check_row_span(BufferSpan const& buffer_span, Idx const& total_elements,
     CHECK(std::size(buffer_span) == total_elements);
     CHECK(std::data(buffer_span) == a_buffer.data());
 }
+
 } // namespace
 
 TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::InputType>,
@@ -331,7 +332,13 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         }
     };
     auto const add_attribute_buffer = [](DatasetType& dataset, std::string_view name, std::string_view attribute,
-                                         auto* data) { dataset.add_attribute_buffer(name, attribute, data); };
+                                         auto* data) {
+        if constexpr (std::same_as<DatasetType, WritableDataset>) {
+            dataset.set_attribute_buffer(name, attribute, data);
+        } else {
+            dataset.add_attribute_buffer(name, attribute, data);
+        }
+    };
     auto const add_homogeneous_buffer = [&add_buffer](DatasetType& dataset, std::string_view name,
                                                       Idx elements_per_scenario, void* data) {
         add_buffer(dataset, name, elements_per_scenario, elements_per_scenario * dataset.batch_size(), nullptr, data);
