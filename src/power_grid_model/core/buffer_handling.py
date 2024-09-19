@@ -107,7 +107,7 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
     Returns:
         a raw view on the data set.
     """
-    return _get_raw_data_view(data, dtype=schema.dtype[attribute])
+    return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
 
 
 def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
