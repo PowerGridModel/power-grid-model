@@ -11,6 +11,7 @@ from typing import cast
 
 import numpy as np
 
+from power_grid_model._utils import is_sparse
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
@@ -75,6 +76,8 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
     Returns:
         a raw view on the data set.
     """
+    x = np.ascontiguousarray(data, dtype=dtype)
+    assert data is x
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
 
@@ -148,7 +151,7 @@ def _get_uniform_buffer_properties(
     if is_batch is not None and batch_size is not None and batch_size != 1 and not is_batch:
         raise ValueError(f"Inconsistent 'is batch' and 'batch size'. {VALIDATOR_MSG}")
 
-    is_sparse = False
+    is_sparse_property = False
     shape: tuple[int] = ()
 
     if isinstance(data, np.ndarray):
@@ -186,7 +189,7 @@ def _get_uniform_buffer_properties(
         raise ValueError(f"Provided 'batch size' must be equal to actual batch size. {VALIDATOR_MSG}")
 
     return BufferProperties(
-        is_sparse=is_sparse,
+        is_sparse=is_sparse_property,
         is_batch=actual_is_batch,
         batch_size=actual_batch_size,
         n_elements_per_scenario=n_elements_per_scenario,
@@ -215,7 +218,7 @@ def _get_sparse_buffer_properties(
     Returns:
         the properties of the dataset component.
     """
-    is_sparse = True
+    is_sparse_property = True
 
     contents = data["data"]
     indptr = data["indptr"]
@@ -260,7 +263,7 @@ def _get_sparse_buffer_properties(
     n_total_elements = contents_size
 
     return BufferProperties(
-        is_sparse=is_sparse,
+        is_sparse=is_sparse_property,
         is_batch=is_batch,
         batch_size=actual_batch_size,
         n_elements_per_scenario=n_elements_per_scenario,
@@ -402,7 +405,7 @@ def get_buffer_view(
     Returns:
         the C API buffer view.
     """
-    if isinstance(data, np.ndarray) or "indptr" not in data:
+    if not is_sparse(data):
         return _get_uniform_buffer_view(data, schema, is_batch, batch_size)
 
     if is_batch is not None and not is_batch:
