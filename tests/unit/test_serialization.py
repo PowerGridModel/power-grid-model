@@ -14,12 +14,7 @@ from power_grid_model._utils import is_columnar, is_sparse
 from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.utils import (
-    json_deserialize,
-    json_serialize,
-    msgpack_deserialize,
-    msgpack_serialize,
-)
+from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
 def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):
@@ -60,10 +55,7 @@ def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
         for scenario in serialized_input_data:
             components.update(scenario.keys())
 
-    return any(
-        data_filter[comp] is None
-        for comp in components.intersection(data_filter.keys())
-    )
+    return any(data_filter[comp] is None for comp in components.intersection(data_filter.keys()))
 
 
 def is_columnar_filter(data_filter, component) -> bool:
@@ -84,9 +76,7 @@ def is_attribute_filtered_out(data_filter, component, attribute) -> bool:
         return True
 
     return not (
-        data_filter[component] is None
-        or data_filter[component] is Ellipsis
-        or attribute in data_filter[component]
+        data_filter[component] is None or data_filter[component] is Ellipsis or attribute in data_filter[component]
     )
 
 
@@ -134,6 +124,16 @@ def simple_input_dataset():
     return {
         "attributes": {},
         "data": {"node": [{"id": 5}], "source": [{"id": 6}, {"id": 7}]},
+        "is_batch": False,
+        "type": "input",
+        "version": "1.0",
+    }
+
+
+def simple_asym_input_dataset():
+    return {
+        "attributes": {},
+        "data": {"asym_load": [{"id": 5, "p_specified": [10.0, 20.0, 30.0]}]},
         "is_batch": False,
         "type": "input",
         "version": "1.0",
@@ -366,6 +366,7 @@ def single_sc_output_dataset():
         batch_sym_output_dataset,
         single_asym_output_dataset,
         single_sc_output_dataset,
+        simple_asym_input_dataset,
     ]
 )
 def serialized_data(request):
@@ -377,9 +378,7 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(..., id="All columnar filter"),
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param(
-            {"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"
-        ),
+        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
     ]
 )
@@ -388,9 +387,7 @@ def data_filters(request):
     return request.param
 
 
-def split_deserialized_dataset_into_individual_scenario(
-    scenario_idx, deserialized_dataset
-):
+def split_deserialized_dataset_into_individual_scenario(scenario_idx, deserialized_dataset):
     deserialized_scenario = {}
     for component, component_values in deserialized_dataset.items():
         if not is_sparse(component_values):
@@ -410,12 +407,9 @@ def split_deserialized_dataset_into_individual_scenario(
                 component_in_scenario = len(sparse_component_data) > 0
             else:
                 sparse_component_data = {
-                    attr: attr_value[scenario_slice]
-                    for attr, attr_value in component_values["data"].items()
+                    attr: attr_value[scenario_slice] for attr, attr_value in component_values["data"].items()
                 }
-                component_in_scenario = (
-                    len(next(iter(sparse_component_data.values()))) > 0
-                )
+                component_in_scenario = len(next(iter(sparse_component_data.values()))) > 0
 
             if component_in_scenario:
                 deserialized_scenario[component] = sparse_component_data
@@ -477,9 +471,11 @@ def assert_single_dataset_entries(
         # Complete component data checks
         if is_columnar_filter(data_filter, component):
             assert isinstance(deserialized_output, dict)
-            assert all(
-                len(v) == len(serialized_input) for v in deserialized_output.values()
-            )
+            # Assert number of batches are equal for all attributes
+            assert all(len(v) == len(serialized_input) for v in deserialized_output.values())
+            # Assert number of attributes are not more than input for all batches
+            # Discrepencies in equal / less than input captured in individual check
+            # assert all(len(v) >= len(deserialized_output) for v in serialized_input)
         else:
             assert isinstance(deserialized_output, np.ndarray)
             assert len(deserialized_output) == len(serialized_input)
@@ -493,9 +489,7 @@ def assert_single_dataset_entries(
         )
 
 
-def assert_individual_data_entry(
-    serialized_dataset, data_filter, component, serialized_input, deserialized_output
-):
+def assert_individual_data_entry(serialized_dataset, data_filter, component, serialized_input, deserialized_output):
     """Checks each data entry of the component for correctness"""
     for comp_idx, input_entry in enumerate(serialized_input):
         if is_non_compact_list(input_entry):
@@ -517,9 +511,7 @@ def assert_individual_data_entry(
                     )
         else:
             assert component in serialized_dataset["attributes"]
-            for attr_idx, attr in enumerate(
-                serialized_dataset["attributes"][component]
-            ):
+            for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
                 if is_columnar_filter(data_filter, component):
                     if is_attribute_filtered_out(data_filter, component, attr):
                         assert attr not in deserialized_output
@@ -588,31 +580,21 @@ def assert_batch_dataset_structure(
                 assert len(component_values) == len(serialized_dataset["data"])
 
 
-def assert_serialization_correct(
-    deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter
-):
+def assert_serialization_correct(deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter):
     """Assert the dataset correctly reprensents the input data."""
     if serialized_dataset["is_batch"]:
-        assert_batch_dataset_structure(
-            deserialized_dataset, serialized_dataset, data_filter=data_filter
-        )
+        assert_batch_dataset_structure(deserialized_dataset, serialized_dataset, data_filter=data_filter)
 
         # Split into individual SingleDataset and check if they all are correct
         for scenario_idx, scenario in enumerate(serialized_dataset["data"]):
-            serialized_scenario = {
-                k: v
-                for k, v in serialized_dataset.items()
-                if k not in ("data", "is_batch")
-            }
+            serialized_scenario = {k: v for k, v in serialized_dataset.items() if k not in ("data", "is_batch")}
             serialized_scenario["is_batch"] = False
             serialized_scenario["data"] = scenario
 
             deserialized_scenario = split_deserialized_dataset_into_individual_scenario(
                 scenario_idx, deserialized_dataset
             )
-            assert_single_dataset_entries(
-                deserialized_scenario, serialized_scenario, data_filter=data_filter
-            )
+            assert_single_dataset_entries(deserialized_scenario, serialized_scenario, data_filter=data_filter)
     else:
         assert_single_dataset_structure(deserialized_dataset, data_filter)
 
@@ -667,9 +649,7 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
         reference = to_json(empty_dataset(dataset_type), indent=indent)
         assert isinstance(reference, str)
 
-        result = json_serialize(
-            {}, dataset_type, use_compact_list=use_compact_list, indent=indent
-        )
+        result = json_serialize({}, dataset_type, use_compact_list=use_compact_list, indent=indent)
         assert isinstance(result, str)
         assert result == reference
 
@@ -717,12 +697,7 @@ def test_json_serialize_basic_dataset(use_compact_list: bool):
 )
 def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
-    assert (
-        from_msgpack(
-            msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)
-        )
-        == reference
-    )
+    assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
 
     with pytest.raises(ValueError):
         json_serialize({}, use_compact_list=use_compact_list)
@@ -735,9 +710,7 @@ def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
         pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
     ),
 )
-def test_serialize_deserialize_type_deduction(
-    deserialize, serialize, serialized_data, data_filters, pack
-):
+def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, data_filters, pack):
     deserialized_data = deserialize(pack(serialized_data), data_filter=data_filters)
     full_result = serialize(deserialized_data, serialized_data["type"])
 
@@ -755,23 +728,17 @@ def test_serialize_deserialize_type_deduction(
         pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
     ),
 )
-def test_serialize_deserialize_double_round_trip(
-    deserialize, serialize, serialized_data, data_filters, pack
-):
+def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, data_filters, pack):
     """
     Repeated deserialization and serialization must result in the same deserialized data and serialization string.
     """
     test_data = pack(serialized_data)
 
     deserialized_result_a = deserialize(test_data, data_filters)
-    serialized_result_a = serialize(
-        deserialized_result_a, dataset_type=serialized_data["type"]
-    )
+    serialized_result_a = serialize(deserialized_result_a, dataset_type=serialized_data["type"])
 
     deserialized_result_b = deserialize(serialized_result_a, data_filters)
-    serialized_result_b = serialize(
-        deserialized_result_b, dataset_type=serialized_data["type"]
-    )
+    serialized_result_b = serialize(deserialized_result_b, dataset_type=serialized_data["type"])
 
     assert serialized_result_a == serialized_result_b
     assert list(deserialized_result_b) == list(deserialized_result_a)
@@ -786,20 +753,13 @@ def test_serialize_deserialize_double_round_trip(
             component_data_a = component_result_a
             component_data_b = component_result_b
         else:
-            np.testing.assert_array_equal(
-                component_result_a["indptr"], component_result_b["indptr"]
-            )
+            np.testing.assert_array_equal(component_result_a["indptr"], component_result_b["indptr"])
             component_data_a = component_result_a["data"]
             component_data_b = component_result_b["data"]
 
         if is_columnar_filter(data_filters, component_a):
             assert component_data_a.keys() == component_data_b.keys()
-            assert all(
-                v_a.dtype == v_b.dtype
-                for v_a, v_b in zip(
-                    component_data_a.values(), component_data_b.values()
-                )
-            )
+            assert all(v_a.dtype == v_b.dtype for v_a, v_b in zip(component_data_a.values(), component_data_b.values()))
             fields_or_keys = component_data_a.keys()
         else:
             assert component_data_a.dtype == component_data_b.dtype
@@ -813,6 +773,4 @@ def test_serialize_deserialize_double_round_trip(
             nan_b = np.isnan(field_result_b)
 
             np.testing.assert_array_equal(nan_a, nan_b)
-            np.testing.assert_allclose(
-                field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15
-            )
+            np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
