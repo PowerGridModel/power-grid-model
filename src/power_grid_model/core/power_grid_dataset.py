@@ -297,6 +297,17 @@ class CMutableDataset:
             data=buffer.data,
         )
         assert_no_error()
+        for attr, attr_data in buffer.attribute_data.items():
+            self._register_attribute_buffer(component, attr, attr_data)
+
+    def _register_attribute_buffer(self, component, attr, attr_data):
+        pgc.dataset_mutable_add_attribute_buffer(
+            dataset=self._mutable_dataset,
+            component=component.value,
+            attribute=attr,
+            data=attr_data.data,
+        )
+        assert_no_error()
 
     def _validate_properties(self, data: ComponentData, schema: ComponentMetaData):
         properties = get_buffer_properties(data, schema=schema, is_batch=self._is_batch, batch_size=self._batch_size)
