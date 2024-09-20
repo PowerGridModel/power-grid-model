@@ -37,10 +37,7 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import (
-    ComponentAttributeMapping,
-    _ComponentAttributeMappingDict,
-)
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 def is_nan(data) -> bool:
@@ -122,9 +119,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
             if len(checked_components) == 1:
                 checked_components_str = f"'{checked_components.pop()}'"
             else:
-                str_checked_components = [
-                    str(component) for component in checked_components
-                ]
+                str_checked_components = [str(component) for component in checked_components]
                 checked_components_str = "/".join(sorted(str_checked_components))
             raise ValueError(
                 f"Inconsistent number of batches in batch data. "
@@ -146,27 +141,16 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
     Returns:
         The number of batches
     """
-    if isinstance(batch_data, np.ndarray):
-        # We expect the batch data to be a 2d numpy array of n_batches x n_objects. If it is a 1d numpy array instead,
-        # we assume that it is a single batch.
-        if batch_data.ndim == 1:
-            return 1
-        return batch_data.shape[0]
+    validate_component_data(batch_data)
 
-    if isinstance(batch_data, dict):
-        # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
-        # invalid dictionary). There is always one indptr more than there are batches.
-        if "indptr" in batch_data:
-            indptr = batch_data["indptr"]
-            if isinstance(indptr, np.ndarray):
-                return indptr.size - 1
-        else:
-            raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+    if is_sparse(batch_data):
+        indptr = batch_data["indptr"]
+        return indptr.size - 1
 
-    # If the batch data is not a numpy array and not a dictionary, it is invalid
-    raise ValueError(
-        "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
-    )
+    data_to_check = next(iter(batch_data)) if is_columnar(batch_data) else batch_data
+    if data_to_check.ndim == 1:
+        return 1
+    return data_to_check.shape[0]
 
 
 def _split_numpy_array_in_batches(
@@ -217,24 +201,17 @@ def split_dense_batch_data_in_batches(
         A list with a single component data per scenario
     """
     if isinstance(data, np.ndarray):
-        return cast(
-            list[SingleComponentData], _split_numpy_array_in_batches(data, component)
-        )
+        return cast(list[SingleComponentData], _split_numpy_array_in_batches(data, component))
 
     batch_size = get_and_verify_batch_sizes(data)
     if isinstance(data, dict):
         scenarios_per_attribute = {
-            attribute: _split_numpy_array_in_batches(
-                attribute_data, component, attribute
-            )
+            attribute: _split_numpy_array_in_batches(attribute_data, component, attribute)
             for attribute, attribute_data in data.items()
         }
 
         return [
-            {
-                attribute: scenarios_per_attribute[attribute_data][scenario]
-                for attribute, attribute_data in data.items()
-            }
+            {attribute: scenarios_per_attribute[attribute_data][scenario] for attribute, attribute_data in data.items()}
             for scenario in range(batch_size)
         ]
 
@@ -274,22 +251,14 @@ def split_sparse_batch_data_in_batches(
                 "(should be a 1D Numpy structured array (i.e. a single 'table'))."
             )
 
-        if (
-            not isinstance(indptr, np.ndarray)
-            or indptr.ndim != 1
-            or not np.issubdtype(indptr.dtype, np.integer)
-        ):
+        if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
             raise TypeError(
                 f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
                 "(should be a 1D Numpy array (i.e. a single 'list'), "
                 "containing indices (i.e. integers))."
             )
 
-        if (
-            indptr[0] != 0
-            or indptr[-1] != len(buffer)
-            or indptr[scenario] > indptr[scenario + 1]
-        ):
+        if indptr[0] != 0 or indptr[-1] != len(buffer) or indptr[scenario] > indptr[scenario + 1]:
             raise TypeError(
                 f"Invalid indptr in batch data for '{component}' "
                 f"(should start with 0, end with the number of objects ({len(buffer)}) "
@@ -300,10 +269,7 @@ def split_sparse_batch_data_in_batches(
 
     def _get_scenario(scenario: int) -> SingleComponentData:
         if isinstance(data, dict):
-            return {
-                attribute: _split_buffer(attribute_data, scenario)
-                for attribute, attribute_data in data.items()
-            }
+            return {attribute: _split_buffer(attribute_data, scenario) for attribute, attribute_data in data.items()}
         return _split_buffer(data, scenario)
 
     return [_get_scenario(i) for i in range(len(indptr) - 1)]
@@ -326,9 +292,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     is_batch: Optional[bool] = None
     for component, array in data.items():
         is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
-        is_sparse_batch = (
-            isinstance(array, dict) and "indptr" in array and "data" in array
-        )
+        is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
         if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
             raise ValueError(
                 f"Mixed {'' if is_batch else 'non-'}batch data "
@@ -341,9 +305,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
         # We have established that this is batch data, so let's tell the type checker that this is a BatchDataset
         data = cast(BatchDataset, data)
         list_data = convert_batch_dataset_to_batch_list(data)
-        return [
-            convert_single_dataset_to_python_single_dataset(data=x) for x in list_data
-        ]
+        return [convert_single_dataset_to_python_single_dataset(data=x) for x in list_data]
 
     # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
     data = cast(SingleDataset, data)
@@ -372,17 +334,11 @@ def convert_single_dataset_to_python_single_dataset(
             raise ValueError("Invalid data format")
 
         return [
-            {
-                attribute: obj[attribute].tolist()
-                for attribute in objects.dtype.names
-                if not is_nan(obj[attribute])
-            }
+            {attribute: obj[attribute].tolist() for attribute in objects.dtype.names if not is_nan(obj[attribute])}
             for obj in objects
         ]
 
-    return {
-        component: _convert_component(objects) for component, objects in data.items()
-    }
+    return {component: _convert_component(objects) for component, objects in data.items()}
 
 
 def compatibility_convert_row_columnar_dataset(
@@ -413,9 +369,7 @@ def compatibility_convert_row_columnar_dataset(
     if available_components is None:
         available_components = list(data.keys())
 
-    processed_data_filter = process_data_filter(
-        dataset_type, data_filter, available_components
-    )
+    processed_data_filter = process_data_filter(dataset_type, data_filter, available_components)
 
     result_data: Dataset = {}
     for comp_name, attrs in processed_data_filter.items():
@@ -451,9 +405,7 @@ def _convert_data_to_row_or_columnar(
         if not is_columnar(data):
             return data
         data = cast(SingleColumnarData, data)
-        output_array = initialize_array(
-            dataset_type, comp_name, next(iter(data.values())).shape
-        )
+        output_array = initialize_array(dataset_type, comp_name, next(iter(data.values())).shape)
         for k in data:
             output_array[k] = data[k]
         return output_array
@@ -487,16 +439,13 @@ def process_data_filter(
         _ComponentAttributeMappingDict: processed data_filter in a dictionary
     """
     if data_filter is None:
-        processed_data_filter: _ComponentAttributeMappingDict = {
-            ComponentType[k]: None for k in available_components
-        }
+        processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
     elif data_filter is Ellipsis:
         processed_data_filter = {ComponentType[k]: ... for k in available_components}
     elif isinstance(data_filter, (list, set)):
         processed_data_filter = {ComponentType[k]: None for k in data_filter}
     elif isinstance(data_filter, dict) and all(
-        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list))
-        for attrs in data_filter.values()
+        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
     ):
         processed_data_filter = data_filter
     else:
@@ -531,9 +480,7 @@ def validate_data_filter(
     }.items():
         unknown_components = [x for x in components if x not in dataset_meta]
         if unknown_components:
-            raise KeyError(
-                f"The following specified component types are unknown:{unknown_components} in {source}"
-            )
+            raise KeyError(f"The following specified component types are unknown:{unknown_components} in {source}")
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():
@@ -548,9 +495,7 @@ def validate_data_filter(
             unknown_attributes[comp_name] = diff
 
     if unknown_attributes:
-        raise KeyError(
-            f"The following specified attributes are unknown: {unknown_attributes} in data_filter"
-        )
+        raise KeyError(f"The following specified attributes are unknown: {unknown_attributes} in data_filter")
 
 
 def is_sparse(component_data: ComponentData) -> bool:
@@ -566,3 +511,20 @@ def is_columnar(component_data: ComponentData) -> bool:
     if is_sparse(component_data):
         return not isinstance(component_data["data"], np.ndarray)
     return not isinstance(component_data, np.ndarray)
+
+
+def validate_component_data(component_data: ComponentData) -> None:
+    """Checks if component_data is of ComponentData and raises ValueError if its not"""
+    invalid_data_msg = "Invalid batch data format, expected data conforming to 'ComponentData' type"
+    if is_sparse(component_data):
+        if not isinstance(component_data["indptr"], np.ndarray):
+            raise ValueError(invalid_data_msg)
+        sub_data = component_data["data"]
+    else:
+        sub_data = component_data
+
+    if is_columnar(component_data):
+        if not all(isinstance(v, np.ndarray) for v in sub_data.values()):
+            raise ValueError(invalid_data_msg)
+    elif not isinstance(sub_data, np.ndarray):
+        raise ValueError(invalid_data_msg)
