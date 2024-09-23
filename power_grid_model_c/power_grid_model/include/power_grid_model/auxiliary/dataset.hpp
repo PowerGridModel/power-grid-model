@@ -213,8 +213,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             for (auto const& attribute_buffer : buffer.attributes) {
                 AttributeBuffer<Data> const new_attribute_buffer{
                     .data = attribute_buffer.data,
-                    .meta_attribute = &dataset_info_.component_info[i].component->get_attribute(
-                        attribute_buffer.meta_attribute->name)};
+                    .meta_attribute = attribute_buffer.meta_attribute};
                 new_buffer.attributes.emplace_back(new_attribute_buffer);
             }
             buffers_.push_back(new_buffer);
