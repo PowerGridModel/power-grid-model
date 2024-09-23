@@ -322,7 +322,7 @@ class InvalidIdError(SingleFieldValidationError):
     _message = "Field {field} does not contain a valid {ref_components} id for {n} {objects}. {filters}"
     ref_components: list[ComponentType]
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         component: ComponentType,
         field: str,
@@ -330,7 +330,7 @@ class InvalidIdError(SingleFieldValidationError):
         ref_components: ComponentType | list[ComponentType],
         filters: Optional[dict[str, Any]] = None,
     ):
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-positional-arguments
         super().__init__(component=component, field=field, ids=ids)
         self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
         self.filters = filters if filters else None
