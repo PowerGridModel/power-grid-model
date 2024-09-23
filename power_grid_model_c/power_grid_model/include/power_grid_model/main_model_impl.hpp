@@ -720,7 +720,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return true;
         }
 
-        auto const process_span = []<typename CT>(auto const& all_spans) -> bool {
+        auto const process_buffer_span = []<typename CT>(auto const& all_spans) -> bool {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
             auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
@@ -745,13 +745,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
         };
 
-        auto const is_component_update_independent = [&update_data, &process_span]<typename CT>() -> bool {
+        auto const is_component_update_independent = [&update_data, &process_buffer_span]<typename CT>() -> bool {
             // get span of all the update data
             if (update_data.is_columnar(CT::name)) {
-                return process_span.template operator()<CT>(
+                return process_buffer_span.template operator()<CT>(
                     update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
             }
-            return process_span.template operator()<CT>(
+            return process_buffer_span.template operator()<CT>(
                 update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
         };
 
@@ -836,7 +836,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
-            auto process_output = [this, &math_output](auto const& span) {
+            auto process_output_span = [this, &math_output](auto const& span) {
                 if (std::empty(span)) {
                     return;
                 }
@@ -846,11 +846,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (result_data.is_columnar(CT::name)) {
                 auto const span =
                     result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
-                process_output(span);
+                process_output_span(span);
             } else {
                 auto const span =
                     result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
-                process_output(span);
+                process_output_span(span);
             }
         };
 

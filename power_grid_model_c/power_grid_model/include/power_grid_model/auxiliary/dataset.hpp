@@ -209,7 +209,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
         : meta_data_{&other.meta_data()}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
-            buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
+            Buffer new_buffer{.data = buffer.data, .indptr = buffer.indptr};
+            for (auto const& attribute_buffer : buffer.attributes) {
+                AttributeBuffer<Data> const new_attribute_buffer{
+                    .data = attribute_buffer.data,
+                    .meta_attribute = &dataset_info_.component_info[i].component->get_attribute(
+                        attribute_buffer.meta_attribute->name)};
+                new_buffer.attributes.emplace_back(new_attribute_buffer);
+            }
+            buffers_.push_back(new_buffer);
         }
     }
 
@@ -308,6 +316,24 @@ template <dataset_type_tag dataset_type_> class Dataset {
         add_attribute_buffer_impl(component, attribute, data);
     }
 
+    /*
+    we decided to go with the same behavior between `add_attribute_buffer` and `set_attribute_buffer` (but different
+    entrypoints). The behavior of `set_attribute_buffer` therefore differs from the one of `set_buffer`. The reasoning
+    is as follows:
+
+    For components:
+    - the deserializer tells the user via the dataset info that a certain component is present in the serialized
+    data.
+    - It is possible to efficiently determine whether that is the case.
+    - The user can then only call `set_buffer` for those components that are already present
+    For attributes:
+    - the deserializer would need to go over the entire dataset to look for components with the map serialization
+        representation to determine whether an attribute is present.
+    - this is expensive.
+    - the deserializer therefore cannot let the user know beforehand which attributes are present.
+    - `set_attribute_buffer` therefore should only be called if it has not been set yet.
+    - this is the same behavior as `add_attribute_buffer`.
+    */
     void set_attribute_buffer(std::string_view component, std::string_view attribute, Data* data)
         requires is_indptr_mutable_v<dataset_type>
     {

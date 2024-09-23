@@ -43,40 +43,40 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
 }
 } // namespace
 
-TEST_CASE("C++ API Model") {
+TEST_CASE("API Model") {
     using namespace std::string_literals;
 
     Options const options{};
 
     // input data
-    DatasetConst const input_dataset{"input", 0, 1};
+    DatasetConst input_dataset{"input", 0, 1};
 
     // node buffer
-    std::vector<ID> node_id{0, 4};
-    std::vector<double> node_u_rated{100.0, 100.0};
+    std::vector<ID> const node_id{0, 4};
+    std::vector<double> const node_u_rated{100.0, 100.0};
     Buffer node_buffer{PGM_def_input_node, 2};
     node_buffer.set_nan(0, node_buffer.size());
     node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
     node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
 
-    std::vector<ID> line_id{5, 6};
-    std::vector<ID> line_from_node{0, 4};
-    std::vector<ID> line_to_node{4, 0};
-    std::vector<Idx> line_from_status{0, 1};
-    std::vector<Idx> line_to_status{1, 0};
-    std::vector<ID> batch_line_id{5, 6, 5, 6};
-    std::vector<ID> batch_line_from_node{0, 4, 0, 4};
-    std::vector<ID> batch_line_to_node{4, 0, 4, 0};
-    std::vector<Idx> batch_line_from_status{0, 1, 0, 1};
-    std::vector<Idx> batch_line_to_status{1, 0, 1, 0};
+    std::vector<ID> const line_id{5, 6};
+    std::vector<ID> const line_from_node{0, 4};
+    std::vector<ID> const line_to_node{4, 0};
+    std::vector<Idx> const line_from_status{0, 1};
+    std::vector<Idx> const line_to_status{1, 0};
+    std::vector<ID> const batch_line_id{5, 6, 5, 6};
+    std::vector<ID> const batch_line_from_node{0, 4, 0, 4};
+    std::vector<ID> const batch_line_to_node{4, 0, 4, 0};
+    std::vector<Idx> const batch_line_from_status{0, 1, 0, 1};
+    std::vector<Idx> const batch_line_to_status{1, 0, 1, 0};
 
     // source buffer
-    ID source_id = 1;
-    ID source_node = 0;
-    int8_t source_status = 1;
-    double source_u_ref = 1.0;
-    double source_sk = 1000.0;
-    double source_rx_ratio = 0.0;
+    ID const source_id = 1;
+    ID const source_node = 0;
+    int8_t const source_status = 1;
+    double const source_u_ref = 1.0;
+    double const source_sk = 1000.0;
+    double const source_rx_ratio = 0.0;
     Buffer source_buffer{PGM_def_input_source, 1};
     source_buffer.set_nan();
     source_buffer.set_value(PGM_def_input_source_id, &source_id, -1);
@@ -88,12 +88,12 @@ TEST_CASE("C++ API Model") {
 
     // load buffer
     ID load_id = 2;
-    ID load_node = 0;
-    int8_t load_status = 1;
-    int8_t load_type = 2;
-    double load_p_specified = 0.0;
-    double load_q_specified = 500.0;
-    Buffer const load_buffer{PGM_def_input_sym_load, 1};
+    ID const load_node = 0;
+    int8_t const load_status = 1;
+    int8_t const load_type = 2;
+    double const load_p_specified = 0.0;
+    double const load_q_specified = 500.0;
+    Buffer load_buffer{PGM_def_input_sym_load, 1};
     load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
     load_buffer.set_value(PGM_def_input_sym_load_node, &load_node, -1);
     load_buffer.set_value(PGM_def_input_sym_load_status, &load_status, -1);
@@ -119,11 +119,11 @@ TEST_CASE("C++ API Model") {
     // output data
     Buffer node_output{PGM_def_sym_output_node, 2};
     node_output.set_nan();
-    DatasetMutable const single_output_dataset{"sym_output", 0, 1};
+    DatasetMutable single_output_dataset{"sym_output", 0, 1};
     single_output_dataset.add_buffer("node", 2, 2, nullptr, node_output);
     Buffer node_batch_output{PGM_def_sym_output_node, 4};
     node_batch_output.set_nan();
-    DatasetMutable const batch_output_dataset{"sym_output", 1, 2};
+    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
     batch_output_dataset.add_buffer("node", 2, 4, nullptr, node_batch_output);
 
     std::vector<ID> node_result_id(2);
@@ -139,9 +139,9 @@ TEST_CASE("C++ API Model") {
 
     // update data
     ID source_update_id = 1;
-    int8_t source_update_status = std::numeric_limits<int8_t>::min();
-    double source_update_u_ref = 0.5;
-    double source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
+    int8_t const source_update_status = std::numeric_limits<int8_t>::min();
+    double const source_update_u_ref = 0.5;
+    double const source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
     Buffer source_update_buffer{PGM_def_update_source, 1};
     source_update_buffer.set_nan();
     source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
@@ -160,15 +160,14 @@ TEST_CASE("C++ API Model") {
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
     // dataset
-    DatasetConst const single_update_dataset{"update", 0, 1};
+    DatasetConst single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    // update containing columnar data still fail
     single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
     single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
     single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
     single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-    DatasetConst const batch_update_dataset{"update", 1, 2};
+    DatasetConst batch_update_dataset{"update", 1, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
     batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);

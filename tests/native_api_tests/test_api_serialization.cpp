@@ -27,7 +27,7 @@ constexpr char const* complete_json_data =
     R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5, "u_rated": 10500}],"source":[{"id":6, "node": 5, "status": 1, "u_ref": 1.0}]}})";
 } // namespace
 
-TEST_CASE("C++ API Serialization and Deserialization") {
+TEST_CASE("API Serialization and Deserialization") {
 
     ID node_id = 5;
     Buffer node_buffer{PGM_def_input_node, 1};
@@ -51,10 +51,12 @@ TEST_CASE("C++ API Serialization and Deserialization") {
     Idx const batch_size = 1;
     Idx const is_batch = 0;
     std::vector<Idx> const elements_per_scenario = {1, 2};
+    std::vector<Idx> const elements_per_scenario_complete = {1, 1};
     std::vector<Idx> const total_elements = {1, 2};
+    std::vector<Idx> const total_elements_complete = {1, 1};
 
     SUBCASE("Serializer") {
-        DatasetConst const dataset{"input", is_batch, batch_size};
+        DatasetConst dataset{"input", is_batch, batch_size};
         dataset.add_buffer("node", elements_per_scenario[0], total_elements[0], nullptr, node_buffer);
         dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
@@ -149,6 +151,60 @@ TEST_CASE("C++ API Serialization and Deserialization") {
             CHECK(std::isnan(node_2_u_rated));
             CHECK(source_2_id[0] == 6);
             CHECK(source_2_id[1] == 7);
+        };
+
+        check_deserializer(json_deserializer);
+        check_deserializer(msgpack_deserializer);
+    }
+
+    SUBCASE("Deserializer with columnar data") {
+        // msgpack data
+        auto const json_document = nlohmann::json::parse(complete_json_data);
+        std::vector<char> msgpack_data;
+
+        nlohmann::json::to_msgpack(json_document, msgpack_data);
+
+        // test move-ability
+        Deserializer json_deserializer{complete_json_data, 0};
+        Deserializer json_dummy{std::move(json_deserializer)};
+        json_deserializer = std::move(json_dummy);
+        Deserializer msgpack_deserializer{msgpack_data, 1};
+
+        auto check_metadata = [&](DatasetInfo const& info) {
+            CHECK(info.name() == "input"s);
+            CHECK(info.is_batch() == is_batch);
+            CHECK(info.batch_size() == batch_size);
+            CHECK(info.n_components() == n_components);
+            CHECK(info.component_name(0) == "node"s);
+            CHECK(info.component_name(1) == "source"s);
+            for (Idx const idx : {0, 1}) {
+                CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario_complete[idx]);
+                CHECK(info.component_total_elements(idx) == total_elements_complete[idx]);
+            }
+        };
+
+        auto check_deserializer = [&](Deserializer& deserializer) {
+            // get dataset
+            auto& dataset = deserializer.get_dataset();
+            auto const& info = dataset.get_info();
+            // check meta data
+            check_metadata(info);
+            ID node_id_2{0};
+            double node_u_rated_2;
+            // set buffer
+            Buffer source_buffer_columnar{PGM_def_input_source, 1};
+            dataset.set_buffer("node", nullptr, nullptr);
+            dataset.set_attribute_buffer("node", "id", &node_id_2);
+            dataset.set_attribute_buffer("node", "u_rated", &node_u_rated_2);
+            dataset.set_buffer("source", nullptr, source_buffer_columnar);
+            // parse
+            deserializer.parse_to_buffer();
+            // check
+            ID source_2_id;
+            source_buffer_columnar.get_value(PGM_def_input_source_id, &source_2_id, -1);
+            CHECK(node_id_2 == 5);
+            CHECK(node_u_rated_2 == doctest::Approx(10.5e3));
+            CHECK(source_2_id == 6);
         };
 
         check_deserializer(json_deserializer);
