@@ -168,7 +168,7 @@ def test_split_dense_batch_data_in_batches_wrong_data_type():
     with pytest.raises(
         TypeError,
         match="Invalid data for 'foo' component. "
-        "It should be a 1D/2D Numpy structured array or dictionary with attribute types as keys and 1D/2D Numpy structured array as values.",
+        "It should be a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
 
@@ -176,7 +176,7 @@ def test_split_dense_batch_data_in_batches_wrong_data_type():
     with pytest.raises(
         TypeError,
         match="Invalid data for 'foo' component. 'baz' attribute. "
-        "It should be a 1D/2D Numpy structured array or dictionary with attribute types as keys and 1D/2D Numpy structured array as values.",
+        "It should be a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
 
@@ -186,7 +186,7 @@ def test_split_dense_batch_data_in_batches_wrong_data_dim():
     with pytest.raises(
         TypeError,
         match="Invalid data for 'foo' component. Invalid dimension: 3. "
-        "It should be a 1D/2D Numpy structured array or dictionary with attribute types as keys and 1D/2D Numpy structured array as values.",
+        "It should be a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         split_dense_batch_data_in_batches(update_date, "foo")
 

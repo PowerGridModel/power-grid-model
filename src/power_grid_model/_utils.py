@@ -19,7 +19,6 @@ import numpy as np
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
-    AttributeType,
     BatchColumn,
     BatchComponentData,
     BatchDataset,
@@ -168,10 +167,9 @@ def _split_numpy_array_in_batches(
     """
     if data.ndim == 1:
         return [data]
-    elif data.ndim == 2:
+    if data.ndim == 2:
         return [data[i, :] for i in range(data.shape[0])]
-    else:
-        raise ValueError("Invalid dimension present in data")
+    raise ValueError("Dimension of the component data is invalid.")
 
 
 def split_dense_batch_data_in_batches(
@@ -499,7 +497,7 @@ def validate_component_data(component_data: ComponentData, component) -> None:
     err_msg = (
         f"Invalid data for '{component}' component. "
         "{0}"
-        "It should be a 1D/2D Numpy structured array or dictionary with attribute types as keys and 1D/2D Numpy structured array as values."
+        "It should be a 1D/2D Numpy structured array or a dictionary of such."
     )
 
     if is_sparse(component_data):
