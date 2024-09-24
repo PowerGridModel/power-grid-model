@@ -167,8 +167,8 @@ def _split_numpy_array_in_batches(
     """
     if data.ndim == 1:
         return [data]
-    if data.ndim == 2:
-        return [data[i, :] for i in range(data.shape[0])]
+    if data.ndim in [2, 3]:
+        return [data[i, ...] for i in range(data.shape[0])]
     raise ValueError("Dimension of the component data is invalid.")
 
 
