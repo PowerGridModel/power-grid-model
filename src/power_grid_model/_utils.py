@@ -307,16 +307,12 @@ def compatibility_convert_row_columnar_dataset(
     dataset_type: DatasetType,
     available_components: list[ComponentType] | None = None,
 ) -> Dataset:
-    """Temporary function to copy row based dataset to a column based dataset as per the data_filter.
-    The purpose of this function is to mimic columnar data without any memory footprint benefits.
-    Note: If both the input and requested output are row based, the same dataset is returned without a copy.
+    """Temporary function to transform row, column or mixed based datasets to a full row or column based dataset as per
+    the data_filter. The purpose of this function is to mimic columnar data and transform back to row data without any
+    memory footprint benefits.
+    Note: Copies are made in a per-component basis; if a component is row based in both the input and the requested
+    output, that componened is returned without a copy.
 
-    Args:
-        data (Dataset):
-        component_types (_ComponentAttributeMappingDict):
-
-    Returns:
-        Dataset: converted dataset
     Args:
         data (Dataset): dataset to convert
         data_filter (ComponentAttributeMapping): desired component and attribute mapping
