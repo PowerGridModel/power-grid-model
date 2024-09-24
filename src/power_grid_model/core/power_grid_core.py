@@ -376,7 +376,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def get_indexer(
+    def get_indexer(  # pylint: disable=too-many-positional-arguments
         self,
         model: ModelPtr,
         component: str,
@@ -441,7 +441,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def dataset_mutable_add_buffer(  # type: ignore[empty-body]
+    def dataset_mutable_add_buffer(  # type: ignore[empty-body]  # pylint: disable=too-many-positional-arguments
         self,
         dataset: MutableDatasetPtr,
         component: str,

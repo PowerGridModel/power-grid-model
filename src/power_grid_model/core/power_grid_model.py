@@ -192,7 +192,7 @@ class PowerGridModel:
         return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
     # pylint: disable=too-many-arguments
-    def _construct_output(
+    def _construct_output(  # pylint: disable=too-many-positional-arguments
         self,
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
@@ -233,7 +233,7 @@ class PowerGridModel:
         )
 
     # pylint: disable=too-many-arguments
-    def _calculate_impl(
+    def _calculate_impl(  # pylint: disable=too-many-positional-arguments
         self,
         calculation_type: CalculationType,
         symmetric: bool,
