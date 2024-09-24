@@ -209,7 +209,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
         : meta_data_{&other.meta_data()}, dataset_info_{other.get_description()} {
         for (Idx i{}; i != other.n_components(); ++i) {
             auto const& buffer = other.get_buffer(i);
-            buffers_.push_back(Buffer{.data = buffer.data, .indptr = buffer.indptr});
+            Buffer new_buffer{.data = buffer.data, .indptr = buffer.indptr};
+            for (auto const& attribute_buffer : buffer.attributes) {
+
+                AttributeBuffer<Data> const new_attribute_buffer{.data = attribute_buffer.data,
+                                                                 .meta_attribute = attribute_buffer.meta_attribute};
+                new_buffer.attributes.emplace_back(new_attribute_buffer);
+            }
+            buffers_.push_back(new_buffer);
         }
     }
 
