@@ -211,9 +211,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
             auto const& buffer = other.get_buffer(i);
             Buffer new_buffer{.data = buffer.data, .indptr = buffer.indptr};
             for (auto const& attribute_buffer : buffer.attributes) {
-                AttributeBuffer<Data> const new_attribute_buffer{
-                    .data = attribute_buffer.data,
-                    .meta_attribute = attribute_buffer.meta_attribute};
+
+                AttributeBuffer<Data> const new_attribute_buffer{.data = attribute_buffer.data,
+                                                                 .meta_attribute = attribute_buffer.meta_attribute};
                 new_buffer.attributes.emplace_back(new_attribute_buffer);
             }
             buffers_.push_back(new_buffer);

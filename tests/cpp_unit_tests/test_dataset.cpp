@@ -871,7 +871,9 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
 
                     add_inhomogeneous_buffer(dataset, A::name, total_elements, a_indptr.data(), nullptr);
 
-                    auto const check_span = [&]<typename T>(auto const& buffer_span, Idx const& scenario = -1) {
+                    auto const check_span = [&total_elements, &elements_per_scenarios, &a_indptr, &id_buffer,
+                                             &a1_buffer]<typename T>(auto const& buffer_span,
+                                                                     Idx const& scenario = -1) {
                         auto element_number = total_elements;
                         Idx aux_idx = 0;
                         if (scenario != -1) {
@@ -886,19 +888,19 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             CHECK(is_nan(element.a0));
                         }
                     };
-                    auto const check_all_spans = [&check_span, &batch_size]<typename T>(auto& dataset,
+                    auto const check_all_spans = [&check_span, &batch_size]<typename T>(auto& any_dataset,
                                                                                         auto const& scenario) {
                         check_span.template operator()<T>(
-                            dataset.template get_columnar_buffer_span<input_getter_s, A>());
+                            any_dataset.template get_columnar_buffer_span<input_getter_s, A>());
                         check_span.template operator()<T>(
-                            dataset.template get_columnar_buffer_span<input_getter_s, A>(T::invalid_index));
+                            any_dataset.template get_columnar_buffer_span<input_getter_s, A>(T::invalid_index));
 
                         auto const all_scenario_spans =
-                            dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
+                            any_dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
                         CHECK(all_scenario_spans.size() == batch_size);
 
                         auto const scenario_span =
-                            dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
+                            any_dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
                         check_span.template operator()<T>(scenario_span, scenario);
                         CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
                         check_span.template operator()<T>(all_scenario_spans[scenario], scenario);
