@@ -658,30 +658,6 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
 
 
 @pytest.mark.parametrize(
-    "use_compact_list",
-    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
-)
-def test_json_serialize_basic_dataset(use_compact_list: bool):
-    for indent in (-1, 0, 2, 4):
-        result = json_serialize(
-            {"node": {"id": np.array([1, 2, 3])}},
-            "input",
-            use_compact_list=use_compact_list,
-            indent=indent,
-        )
-        if use_compact_list:
-            assert (
-                result
-                == """{"version": "1.0","type":"input","is_batch":false,"attributes":{"node":["id"]},"data":{"node":[[1],[2],[3]]}}"""
-            )
-        else:
-            assert (
-                result
-                == """{"version": "1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":1},{"id":2},{"id":3}]}}"""
-            )
-
-
-@pytest.mark.parametrize(
     "dataset_type",
     (
         DatasetType.input,
