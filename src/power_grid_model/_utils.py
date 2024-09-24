@@ -11,25 +11,28 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
+from types import EllipsisType
 from typing import Optional, cast
 
 import numpy as np
 
-from power_grid_model.core.data_handling import OutputType, process_output_component_types
-from power_grid_model.core.dataset_definitions import ComponentType
+from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
-    BatchArray,
+    BatchComponentData,
     BatchDataset,
     BatchList,
+    ComponentData,
     Dataset,
     DenseBatchArray,
     PythonDataset,
     SingleArray,
+    SingleComponentData,
     SingleDataset,
     SinglePythonDataset,
-    SparseBatchArray,
+    SparseBatchData,
 )
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 def is_nan(data) -> bool:
@@ -120,7 +123,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     return n_batch_size
 
 
-def get_batch_size(batch_data: BatchArray) -> int:
+def get_batch_size(batch_data: BatchComponentData) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it.
 
@@ -135,19 +138,21 @@ def get_batch_size(batch_data: BatchArray) -> int:
         # we assume that it is a single batch.
         if batch_data.ndim == 1:
             return 1
-        n_batches = batch_data.shape[0]
-    elif isinstance(batch_data, dict):
+        return batch_data.shape[0]
+
+    if isinstance(batch_data, dict):
         # If the batch data is a dictionary, we assume that it is an indptr/data structure (otherwise it is an
         # invalid dictionary). There is always one indptr more than there are batches.
         if "indptr" not in batch_data:
             raise ValueError("Invalid batch data format, expected 'indptr' and 'data' entries")
-        n_batches = batch_data["indptr"].size - 1
-    else:
-        # If the batch data is not a numpy array and not a dictionary, it is invalid
-        raise ValueError(
-            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
-        )
-    return n_batches
+        indptr = batch_data["indptr"]
+        if isinstance(indptr, np.ndarray):
+            return indptr.size - 1
+
+    # If the batch data is not a numpy array and not a dictionary, it is invalid
+    raise ValueError(
+        "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
+    )
 
 
 def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component: ComponentType) -> list[np.ndarray]:
@@ -177,7 +182,7 @@ def split_numpy_array_in_batches(data: DenseBatchArray | SingleArray, component:
     )
 
 
-def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: ComponentType) -> list[np.ndarray]:
+def split_sparse_batches_in_batches(batch_data: SparseBatchData, component: ComponentType) -> list[SingleComponentData]:
     """
     Split a single numpy array representing, a compressed sparse structure, into one or more batches
 
@@ -199,27 +204,36 @@ def split_sparse_batches_in_batches(batch_data: SparseBatchArray, component: Com
     data = batch_data["data"]
     indptr = batch_data["indptr"]
 
-    if not isinstance(data, np.ndarray) or data.ndim != 1:
-        raise TypeError(
-            f"Invalid data type {type(data).__name__} in sparse batch data for '{component}' "
-            "(should be a 1D Numpy structured array (i.e. a single 'table'))."
-        )
+    def _split_buffer(buffer: np.ndarray, scenario: int) -> SingleArray:
+        if not isinstance(buffer, np.ndarray) or buffer.ndim != 1:
+            raise TypeError(
+                f"Invalid data type {type(buffer).__name__} in sparse batch data for '{component}' "
+                "(should be a 1D Numpy structured array (i.e. a single 'table'))."
+            )
 
-    if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
-        raise TypeError(
-            f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
-            "(should be a 1D Numpy array (i.e. a single 'list'), "
-            "containing indices (i.e. integers))."
-        )
+        if not isinstance(indptr, np.ndarray) or indptr.ndim != 1 or not np.issubdtype(indptr.dtype, np.integer):
+            raise TypeError(
+                f"Invalid indptr data type {type(indptr).__name__} in batch data for '{component}' "
+                "(should be a 1D Numpy array (i.e. a single 'list'), "
+                "containing indices (i.e. integers))."
+            )
 
-    if indptr[0] != 0 or indptr[-1] != len(data) or any(indptr[i] > indptr[i + 1] for i in range(len(indptr) - 1)):
-        raise TypeError(
-            f"Invalid indptr in batch data for '{component}' "
-            f"(should start with 0, end with the number of objects ({len(data)}) "
-            "and be monotonic increasing)."
-        )
+        if indptr[0] != 0 or indptr[-1] != len(buffer) or indptr[scenario] > indptr[scenario + 1]:
+            raise TypeError(
+                f"Invalid indptr in batch data for '{component}' "
+                f"(should start with 0, end with the number of objects ({len(buffer)}) "
+                "and be monotonic increasing)."
+            )
 
-    return [data[indptr[i] : indptr[i + 1]] for i in range(len(indptr) - 1)]
+        return buffer[indptr[scenario] : indptr[scenario + 1]]
+
+    def _get_scenario(scenario: int) -> SingleComponentData:
+        if isinstance(data, dict):
+            # return {attribute: _split_buffer(attribute_data, scenario) for attribute, attribute_data in data.items()}
+            raise NotImplementedError()  # TODO(mgovers): uncomment when columnar data support is added
+        return _split_buffer(data, scenario)
+
+    return [_get_scenario(i) for i in range(len(indptr) - 1)]
 
 
 def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
@@ -287,38 +301,149 @@ def convert_single_dataset_to_python_single_dataset(data: SingleDataset) -> Sing
     }
 
 
-def copy_output_to_columnar_dataset(
-    output_data: Dataset,
-    output_component_types: ComponentAttributeMapping,
-    output_type: OutputType,
-    available_components: list[ComponentType],
+def compatibility_convert_row_columnar_dataset(
+    data: Dataset,
+    data_filter: ComponentAttributeMapping,
+    dataset_type: DatasetType,
+    available_components: list[ComponentType] | None = None,
 ) -> Dataset:
-    """Temporary function to copy row based dataset to a column based dataset as per output_component_types.
+    """Temporary function to copy row based dataset to a column based dataset as per the data_filter.
     The purpose of this function is to mimic columnar data without any memory footprint benefits.
+    Note: If both the input and requested output are row based, the same dataset is returned without a copy.
 
     Args:
         data (Dataset):
         component_types (_ComponentAttributeMappingDict):
 
     Returns:
-        Dataset: converted to
+        Dataset: converted dataset
     Args:
-        output_data (Dataset): dataset to convert
-        output_component_types (ComponentAttributeMapping): desired component and attribute mapping
-        output_type (OutputType): output type sym or asym
-        available_components (list[ComponentType]): available components in model
+        data (Dataset): dataset to convert
+        data_filter (ComponentAttributeMapping): desired component and attribute mapping
+        dataset_type (DatasetType): type of dataset
+        available_components (list[ComponentType] | None): available components in model
 
     Returns:
         Dataset: converted dataset
     """
-    processed_output_types = process_output_component_types(output_type, output_component_types, available_components)
+    if available_components is None:
+        available_components = list(data.keys())
 
-    result_data = {}
-    for comp_name, attrs in processed_output_types.items():
-        if attrs is None:
-            result_data[comp_name] = output_data[comp_name]
-        elif isinstance(attrs, (list, set)) and len(attrs) == 0:
+    processed_data_filter = process_data_filter(dataset_type, data_filter, available_components)
+
+    result_data: Dataset = {}
+    for comp_name, attrs in processed_data_filter.items():
+        if comp_name not in data:
+            continue
+        if is_sparse(data[comp_name]):
             result_data[comp_name] = {}
+            result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
+                data=data[comp_name]["data"], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
+            )
+            result_data[comp_name]["indptr"] = data[comp_name]["indptr"]
         else:
-            result_data[comp_name] = {attr: deepcopy(output_data[comp_name][attr]) for attr in attrs}
+            result_data[comp_name] = _convert_data_to_row_or_columnar(
+                data=data[comp_name], comp_name=comp_name, dataset_type=dataset_type, attrs=attrs
+            )
     return result_data
+
+
+def _convert_data_to_row_or_columnar(
+    data: SingleComponentData,
+    comp_name: ComponentType,
+    dataset_type: DatasetType,
+    attrs: set[str] | list[str] | None | EllipsisType,
+) -> SingleComponentData:
+    """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
+    if attrs is None:
+        if not is_columnar(data):
+            return data
+        output_array = initialize_array(dataset_type, comp_name, next(iter(data.values())).shape)
+        for k in data:
+            output_array[k] = data[k]
+        return output_array
+    if isinstance(attrs, (list, set)) and len(attrs) == 0:
+        return {}
+    if isinstance(attrs, EllipsisType):
+        names = data.dtype.names if not is_columnar(data) else data.keys()
+        return {attr: deepcopy(data[attr]) for attr in names}
+    return {attr: deepcopy(data[attr]) for attr in attrs}
+
+
+def process_data_filter(
+    dataset_type: DatasetType,
+    data_filter: ComponentAttributeMapping,
+    available_components: list[ComponentType],
+) -> _ComponentAttributeMappingDict:
+    """Checks valid type for data_filter. Also checks for any invalid component names and attribute names.
+
+    Args:
+        dataset_type (DatasetType): the type of output that the user will see (as per the calculation options)
+        data_filter (ComponentAttributeMapping):  data_filter provided by user
+        available_components (list[ComponentType]):  all components available in model instance or data
+
+    Returns:
+        _ComponentAttributeMappingDict: processed data_filter in a dictionary
+    """
+    if data_filter is None:
+        processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
+    elif data_filter is Ellipsis:
+        processed_data_filter = {ComponentType[k]: ... for k in available_components}
+    elif isinstance(data_filter, (list, set)):
+        processed_data_filter = {ComponentType[k]: None for k in data_filter}
+    elif isinstance(data_filter, dict) and all(
+        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+    ):
+        processed_data_filter = data_filter
+    else:
+        raise ValueError(f"Invalid filter provided: {data_filter}")
+
+    validate_data_filter(processed_data_filter, dataset_type, available_components)
+    return processed_data_filter
+
+
+def validate_data_filter(
+    data_filter: _ComponentAttributeMappingDict, dataset_type: DatasetType, available_components: list[ComponentType]
+) -> None:
+    """Raise error if some specified components or attributes are unknown.
+
+    Args:
+        data_filter (_ComponentAttributeMappingDict): Processed component to attribtue dictionary
+        dataset_type (DatasetType):  Type of dataset
+        available_components (list[ComponentType]):  all components available in model instance or data
+
+    Raises:
+        ValueError: when the type for data_filter is incorrect
+        KeyError: with "unknown component types" for any unknown components
+        KeyError: with "unknown attributes" for unknown attribute(s) for a known component
+    """
+    dataset_meta = power_grid_meta_data[dataset_type]
+
+    for source, components in {"data_filter": data_filter.keys(), "data": available_components}.items():
+        unknown_components = [x for x in components if x not in dataset_meta]
+        if unknown_components:
+            raise KeyError(f"The following specified component types are unknown:{unknown_components} in {source}")
+
+    unknown_attributes = {}
+    for comp_name, attrs in data_filter.items():
+        if attrs is None or attrs is Ellipsis:
+            continue
+        attr_names = dataset_meta[comp_name].dtype.names
+        diff = set(attrs).difference(attr_names) if attr_names is not None else set(attrs)
+        if diff != set():
+            unknown_attributes[comp_name] = diff
+
+    if unknown_attributes:
+        raise KeyError(f"The following specified attributes are unknown: {unknown_attributes} in data_filter")
+
+
+def is_sparse(component_data: ComponentData) -> bool:
+    """Check if component_data is sparse or dense. Only batch data can be sparse."""
+    return isinstance(component_data, dict) and set(component_data.keys()) == {"indptr", "data"}
+
+
+def is_columnar(component_data: ComponentData) -> bool:
+    """Check if component_data is columnar or row based"""
+    if is_sparse(component_data):
+        return not isinstance(component_data["data"], np.ndarray)
+    return not isinstance(component_data, np.ndarray)

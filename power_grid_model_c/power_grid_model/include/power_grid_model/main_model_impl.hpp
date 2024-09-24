@@ -200,11 +200,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
         add_component<CompType>(components.begin(), components.end());
     }
+    template <class CompType>
+    void add_component(ConstDataset::RangeObject<typename CompType::InputType const> components) {
+        add_component<CompType>(components.begin(), components.end());
+    }
 
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
+    template <std::derived_from<Base> CompType, forward_iterator_like<typename CompType::InputType> ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
@@ -212,7 +216,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
         auto const add_func = [this, pos, &input_data]<typename CT>() {
-            this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+            if (input_data.is_columnar(CT::name)) {
+                this->add_component<CT>(input_data.get_columnar_buffer_span<meta_data::input_getter_s, CT>(pos));
+            } else {
+                this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
+            }
         };
         run_functor_with_all_types_return_void(add_func);
     }
@@ -221,7 +229,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
+    template <class CompType, cache_type_c CacheType,
+              forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::vector<Idx2D> const& sequence_idx) {
         constexpr auto comp_index = index_of_component<CompType>;
 
@@ -258,6 +267,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
+    template <class CompType, cache_type_c CacheType>
+    void update_component(ConstDataset::RangeObject<typename CompType::UpdateType const> components,
+                          std::vector<Idx2D> const& sequence_idx) {
+        if (!components.empty()) {
+            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
+        }
+    }
 
     // update all components
     template <cache_type_c CacheType>
@@ -265,8 +281,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
         auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            this->update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
-                                                  sequence_idx_map[index_of_component<CT>]);
+            if (update_data.is_columnar(CT::name)) {
+                this->update_component<CT, CacheType>(
+                    update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(pos),
+                    sequence_idx_map[index_of_component<CT>]);
+            } else {
+                this->update_component<CT, CacheType>(update_data.get_buffer_span<meta_data::update_getter_s, CT>(pos),
+                                                      sequence_idx_map[index_of_component<CT>]);
+            }
         };
         run_functor_with_all_types_return_void(update_func);
     }
@@ -352,17 +374,29 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // get sequence idx map of a certain batch scenario
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
-
-        auto const get_seq_idx_func = [&state = this->state_, &update_data,
-                                       scenario_idx]<typename CT>() -> std::vector<Idx2D> {
-            auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+        auto const process_buffer_span = [](auto const& buffer_span, auto const& get_sequence) {
             auto const it_begin = buffer_span.begin();
             auto const it_end = buffer_span.end();
-            return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+            return get_sequence(it_begin, it_end);
         };
+
+        auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx,
+                                       &process_buffer_span]<typename CT>() -> std::vector<Idx2D> {
+            auto const get_sequence = [&state](auto const& it_begin, auto const& it_end) {
+                return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+            };
+
+            if (update_data.is_columnar(CT::name)) {
+                auto const buffer_span =
+                    update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+                return process_buffer_span(buffer_span, get_sequence);
+            }
+            auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
+            return process_buffer_span(buffer_span, get_sequence);
+        };
+
         return run_functor_with_all_types_return_array(get_seq_idx_func);
     }
-
     // get sequence idx map of an entire batch for fast caching of component sequences
     // (only applicable for independent update dataset)
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
@@ -686,9 +720,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return true;
         }
 
-        auto const is_component_update_independent = [&update_data]<typename CT>() -> bool {
-            // get span of all the update data
-            auto const all_spans = update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>();
+        auto const process_buffer_span = []<typename CT>(auto const& all_spans) -> bool {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
             auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
@@ -711,6 +743,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     current_span, first_span,
                     [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
             });
+        };
+
+        auto const is_component_update_independent = [&update_data, &process_buffer_span]<typename CT>() -> bool {
+            // get span of all the update data
+            if (update_data.is_columnar(CT::name)) {
+                return process_buffer_span.template operator()<CT>(
+                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
+            }
+            return process_buffer_span.template operator()<CT>(
+                update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
         };
 
         // check all components
@@ -783,7 +825,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, options.threading);
     }
 
-    template <typename Component, typename MathOutputType, std::forward_iterator ResIt>
+    template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
         assert(construction_complete_);
@@ -794,13 +836,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
                        Idx pos = 0) const {
         auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
-            // output
-            auto const span = result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
-            if (span.empty()) {
-                return;
+            auto process_output_span = [this, &math_output](auto const& span) {
+                if (std::empty(span)) {
+                    return;
+                }
+                this->output_result<CT>(math_output, std::begin(span));
+            };
+
+            if (result_data.is_columnar(CT::name)) {
+                auto const span =
+                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                process_output_span(span);
+            } else {
+                auto const span =
+                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                process_output_span(span);
             }
-            this->output_result<CT>(math_output, span.begin());
         };
+
         Timer const t_output(calculation_info_, 3000, "Produce output");
         run_functor_with_all_types_return_void(output_func);
     }

@@ -149,7 +149,6 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-
         if (regulated_objects.transformers.contains(transformer.id())) {
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
             auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
@@ -259,6 +258,8 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
     }
 }
 
+inline bool is_unreachable(EdgeWeight edge_res) { return edge_res == infty; }
+
 inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgeProperties {
     std::vector<EdgeWeight> vertex_distances(boost::num_vertices(graph), infty);
     BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
@@ -273,7 +274,9 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             continue;
         }
         auto edge_res = std::min(vertex_distances[boost::source(e, graph)], vertex_distances[boost::target(e, graph)]);
-        result.push_back({graph[e].regulated_idx, edge_res});
+        if (!is_unreachable(edge_res)) {
+            result.push_back({graph[e].regulated_idx, edge_res});
+        }
     }
 
     return result;
@@ -543,6 +546,15 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
                                  std::vector<SolverOutputType> const& solver_output) {
     return u_pu<ComponentType>(state, solver_output, regulator.transformer.topology_index(),
                                regulator.regulator.get().control_side());
+}
+
+template <component_c ComponentType, typename... RegulatedTypes, typename State>
+    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...> const& regulator,
+                                               State const& state) {
+    auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
+                                                                  regulator.regulator.get().control_side());
+    return get_math_id<Node>(state, controlled_node_idx) != Idx2D{-1, -1};
 }
 
 struct VoltageBand {
@@ -938,6 +950,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         regulator.transformer.apply([&](transformer_c auto const& transformer) {
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
+            if (!is_regulated_transformer_connected<TransformerType>(regulator, state)) {
+                return;
+            }
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
@@ -968,15 +983,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool tap_changed = false;
         auto& current_bs = binary_search_[options.idx_bs.group][options.idx_bs.pos];
 
-        regulator.transformer.apply([&](transformer_c auto const& transformer) { // NOSONAR
+        auto const adjust_transformer_ = [&](transformer_c auto const& transformer) { // NOSONAR
             using TransformerType = std::remove_cvref_t<decltype(transformer)>;
 
-            auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
-
-            if (current_bs.get_end_of_bs() || current_bs.get_inevitable_run()) {
-                tap_changed = false;
+            if (!is_regulated_transformer_connected<TransformerType>(regulator, state)) {
                 return;
             }
+
+            if (current_bs.get_end_of_bs() || current_bs.get_inevitable_run()) {
+                return;
+            }
+
+            auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
             auto const cmp = node_state <=> param;
             if (auto new_tap_pos =
@@ -1003,7 +1021,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             IntS const tap_pos = current_bs.repropose_tap(strategy_max, previous_down, tap_changed);
             add_tap_pos_update(tap_pos, transformer, update_data);
-        });
+        };
+        regulator.transformer.apply(adjust_transformer_);
 
         return tap_changed;
     }

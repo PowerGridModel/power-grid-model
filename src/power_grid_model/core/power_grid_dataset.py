@@ -8,8 +8,12 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-import numpy as np
-
+from power_grid_model._utils import (
+    compatibility_convert_row_columnar_dataset,
+    is_columnar,
+    is_sparse,
+    process_data_filter,
+)
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CBuffer,
@@ -27,8 +31,9 @@ from power_grid_model.core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
-from power_grid_model.data_types import Dataset
+from power_grid_model.data_types import ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -124,7 +129,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
         }
 
 
-def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]]) -> DatasetType:
+def get_dataset_type(data: Dataset) -> DatasetType:
     """
     Deduce the dataset type from the provided dataset.
 
@@ -144,17 +149,16 @@ def get_dataset_type(data: Mapping[ComponentType, np.ndarray | Mapping[str, np.n
     """
     candidates = set(power_grid_meta_data.keys())
 
+    if all(is_columnar(v) for v in data.values()):
+        raise ValueError("The dataset type could not be deduced. Atleast one component should have row based data.")
+
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
-            if component not in data:
+            if component not in data or is_columnar(data[component]):
                 continue
-
             component_data = data[component]
-            if isinstance(component_data, np.ndarray):
-                component_dtype = component_data.dtype
-            else:
-                component_dtype = component_data["data"].dtype
 
+            component_dtype = component_data["data"].dtype if is_sparse(component_data) else component_data.dtype
             if component_dtype is not dataset_metadata.dtype:
                 candidates.discard(dataset_type)
                 break
@@ -186,11 +190,7 @@ class CMutableDataset:
     _mutable_dataset: MutableDatasetPtr
     _buffer_views: list[CBuffer]
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Any = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Any = None):
         instance = super().__new__(cls)
         instance._mutable_dataset = MutableDatasetPtr()
         instance._buffer_views = []
@@ -198,8 +198,14 @@ class CMutableDataset:
         instance._dataset_type = dataset_type if dataset_type in DatasetType else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
-        if data:
-            first_sub_info = get_buffer_properties(next(iter(data.values())))
+        compatibility_converted_data = compatibility_convert_row_columnar_dataset(
+            data=data,
+            data_filter=None,
+            dataset_type=instance._dataset_type,
+            available_components=list(data.keys()),
+        )
+        if compatibility_converted_data:
+            first_sub_info = get_buffer_properties(next(iter(compatibility_converted_data.values())))
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
         else:
@@ -211,7 +217,7 @@ class CMutableDataset:
         )
         assert_no_error()
 
-        instance._add_data(data)
+        instance._add_data(compatibility_converted_data)
         assert_no_error()
 
         return instance
@@ -243,10 +249,7 @@ class CMutableDataset:
         """
         return self._buffer_views
 
-    def _add_data(
-        self,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-    ):
+    def _add_data(self, data: Dataset):
         """
         Add Power Grid Model data to the mutable dataset view.
 
@@ -261,12 +264,7 @@ class CMutableDataset:
         for component, component_data in data.items():
             self._add_component_data(component, component_data, allow_unknown=False)
 
-    def _add_component_data(
-        self,
-        component: ComponentType,
-        data: np.ndarray | Mapping[str, np.ndarray],
-        allow_unknown: bool = False,
-    ):
+    def _add_component_data(self, component: ComponentType, data: ComponentData, allow_unknown: bool = False):
         """
         Add Power Grid Model data for a single component to the mutable dataset view.
 
@@ -301,7 +299,7 @@ class CMutableDataset:
         )
         assert_no_error()
 
-    def _validate_properties(self, data: np.ndarray | Mapping[str, np.ndarray]):
+    def _validate_properties(self, data: ComponentData):
         properties = get_buffer_properties(data)
         if properties.is_batch != self._is_batch:
             raise ValueError(
@@ -328,11 +326,7 @@ class CConstDataset:
     _const_dataset: ConstDatasetPtr
     _buffer_views: list[CBuffer]
 
-    def __new__(
-        cls,
-        data: Mapping[ComponentType, np.ndarray] | Mapping[ComponentType, np.ndarray | Mapping[str, np.ndarray]],
-        dataset_type: Optional[DatasetType] = None,
-    ):
+    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
         instance = super().__new__(cls)
         instance._const_dataset = ConstDatasetPtr()
 
@@ -376,12 +370,16 @@ class CWritableDataset:
     After writing to the buffers, the data contents can be retrieved.
     """
 
-    def __init__(self, dataset_ptr: WritableDatasetPtr):
+    def __init__(self, dataset_ptr: WritableDatasetPtr, data_filter: ComponentAttributeMapping):
         self._writable_dataset = dataset_ptr
 
         info = self.get_info()
         self._dataset_type = info.dataset_type()
         self._schema = power_grid_meta_data[self._dataset_type]
+
+        self._data_filter = process_data_filter(
+            dataset_type=info.dataset_type(), data_filter=data_filter, available_components=info.components()
+        )
 
         self._component_buffer_properties = self._get_buffer_properties(info)
         self._data: Dataset = {}
@@ -417,9 +415,15 @@ class CWritableDataset:
         Returns:
             The full dataset.
         """
-        return self._data
+        converted_data = compatibility_convert_row_columnar_dataset(
+            data=self._data,
+            data_filter=self.get_data_filter(),
+            dataset_type=self.get_info().dataset_type(),
+            available_components=list(self._data.keys()),
+        )
+        return converted_data
 
-    def get_component_data(self, component: ComponentType) -> np.ndarray | Mapping[str, np.ndarray]:
+    def get_component_data(self, component: ComponentType) -> ComponentData:
         """
         Retrieve Power Grid Model data from the dataset for a specific component.
 
@@ -430,6 +434,14 @@ class CWritableDataset:
             The dataset for the specified component.
         """
         return self._data[component]
+
+    def get_data_filter(self) -> _ComponentAttributeMappingDict:
+        """Gets the data filter requested
+
+        Returns:
+            _ComponentAttributeMappingDict: data filter
+        """
+        return self._data_filter
 
     def _add_buffers(self):
         for component, buffer_properties in self._component_buffer_properties.items():

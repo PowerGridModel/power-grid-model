@@ -190,6 +190,7 @@ void check_row_span(BufferSpan const& buffer_span, Idx const& total_elements,
     CHECK(std::size(buffer_span) == total_elements);
     CHECK(std::data(buffer_span) == a_buffer.data());
 }
+
 } // namespace
 
 TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::InputType>,
@@ -331,7 +332,13 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
         }
     };
     auto const add_attribute_buffer = [](DatasetType& dataset, std::string_view name, std::string_view attribute,
-                                         auto* data) { dataset.add_attribute_buffer(name, attribute, data); };
+                                         auto* data) {
+        if constexpr (std::same_as<DatasetType, WritableDataset>) {
+            dataset.set_attribute_buffer(name, attribute, data);
+        } else {
+            dataset.add_attribute_buffer(name, attribute, data);
+        }
+    };
     auto const add_homogeneous_buffer = [&add_buffer](DatasetType& dataset, std::string_view name,
                                                       Idx elements_per_scenario, void* data) {
         add_buffer(dataset, name, elements_per_scenario, elements_per_scenario * dataset.batch_size(), nullptr, data);
@@ -864,7 +871,9 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
 
                     add_inhomogeneous_buffer(dataset, A::name, total_elements, a_indptr.data(), nullptr);
 
-                    auto const check_span = [&](auto const& buffer_span, Idx const& scenario = -1) {
+                    auto const check_span = [&total_elements, &elements_per_scenarios, &a_indptr, &id_buffer,
+                                             &a1_buffer]<typename T>(auto const& buffer_span,
+                                                                     Idx const& scenario = -1) {
                         auto element_number = total_elements;
                         Idx aux_idx = 0;
                         if (scenario != -1) {
@@ -873,45 +882,50 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                         }
                         CHECK(buffer_span.size() == element_number);
                         for (Idx idx = 0; idx < buffer_span.size(); ++idx) {
-                            auto const element = get_colummnar_element<DatasetType>(buffer_span, idx);
+                            auto const element = get_colummnar_element<T>(buffer_span, idx);
                             CHECK(element.id == id_buffer[aux_idx + idx]);
                             CHECK(element.a1 == a1_buffer[aux_idx + idx]);
                             CHECK(is_nan(element.a0));
                         }
                     };
-                    auto const check_all_spans = [&](auto const& scenario) {
-                        check_span(dataset.template get_columnar_buffer_span<input_getter_s, A>());
-                        check_span(
-                            dataset.template get_columnar_buffer_span<input_getter_s, A>(DatasetType::invalid_index));
+                    auto const check_all_spans = [&check_span, &batch_size]<typename T>(auto& any_dataset,
+                                                                                        auto const& scenario) {
+                        check_span.template operator()<T>(
+                            any_dataset.template get_columnar_buffer_span<input_getter_s, A>());
+                        check_span.template operator()<T>(
+                            any_dataset.template get_columnar_buffer_span<input_getter_s, A>(T::invalid_index));
 
                         auto const all_scenario_spans =
-                            dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
+                            any_dataset.template get_columnar_buffer_span_all_scenarios<input_getter_s, A>();
                         CHECK(all_scenario_spans.size() == batch_size);
 
                         auto const scenario_span =
-                            dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
-                        check_span(scenario_span, scenario);
+                            any_dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
+                        check_span.template operator()<T>(scenario_span, scenario);
                         CHECK(all_scenario_spans[scenario].size() == scenario_span.size());
-                        check_span(all_scenario_spans[scenario], scenario);
+                        check_span.template operator()<T>(all_scenario_spans[scenario], scenario);
                     };
                     add_attribute_buffer(dataset, A::name, A::InputType::a1_name, a1_buffer.data());
                     add_attribute_buffer(dataset, A::name, A::InputType::id_name, id_buffer.data());
                     for (Idx scenario : {0, 1, 2, 3}) {
                         CAPTURE(scenario);
                         if (scenario < batch_size) {
-                            check_all_spans(scenario);
+                            check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
                             std::ranges::fill(id_buffer, 1);
-                            check_all_spans(scenario);
+                            check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
                             std::transform(boost::counting_iterator<ID>{0},
                                            boost::counting_iterator<ID>{static_cast<ID>(total_elements)},
                                            id_buffer.begin(), [](ID value) { return value * 2; });
-                            check_all_spans(scenario);
+                            check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
                             std::ranges::transform(id_buffer, a1_buffer.begin(),
                                                    [](ID value) { return static_cast<double>(value); });
-                            check_all_spans(scenario);
+                            check_all_spans.template operator()<DatasetType>(dataset, scenario);
+
+                            auto dataset_copy = ConstDataset{dataset};
+                            check_all_spans.template operator()<ConstDataset>(dataset_copy, scenario);
 
                             if constexpr (!std::same_as<DatasetType, ConstDataset>) {
                                 auto buffer_span =
@@ -921,7 +935,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                     buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                     CHECK(id_buffer[idx + (a_indptr[scenario])] == -10);
                                     CHECK(a1_buffer[idx + (a_indptr[scenario])] == -2.0);
-                                    check_all_spans(scenario);
+                                    check_all_spans.template operator()<DatasetType>(dataset, scenario);
                                 }
                             }
                         }
@@ -967,41 +981,88 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
 
             auto dataset = create_dataset(true, batch_size, dataset_type);
 
-            auto a_buffer = std::vector<A::InputType>(a_elements_per_scenario * batch_size);
-            auto b_buffer = std::vector<A::InputType>(3);
-            auto b_indptr = std::vector<Idx>{0, 0, narrow_cast<Idx>(b_buffer.size())};
+            auto const check_get_individual_scenario = [&] {
+                for (auto scenario = 0; scenario < batch_size; ++scenario) {
+                    CAPTURE(scenario);
+                    auto const scenario_dataset = dataset.get_individual_scenario(scenario);
 
-            add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, static_cast<void*>(a_buffer.data()));
-            add_inhomogeneous_buffer(dataset, B::name, b_buffer.size(), b_indptr.data(),
-                                     static_cast<void*>(b_buffer.data()));
+                    CHECK(&scenario_dataset.meta_data() == &dataset.meta_data());
+                    CHECK(!scenario_dataset.empty());
+                    CHECK(scenario_dataset.is_batch() == false);
+                    CHECK(scenario_dataset.batch_size() == 1);
+                    CHECK(scenario_dataset.n_components() == dataset.n_components());
 
-            for (auto scenario = 0; scenario < batch_size; ++scenario) {
-                auto const scenario_dataset = dataset.get_individual_scenario(scenario);
+                    CHECK(scenario_dataset.get_component_info(A::name).component ==
+                          &dataset_type.get_component(A::name));
+                    CHECK(scenario_dataset.get_component_info(A::name).elements_per_scenario ==
+                          a_elements_per_scenario);
+                    CHECK(scenario_dataset.get_component_info(A::name).total_elements == a_elements_per_scenario);
 
-                CHECK(&scenario_dataset.meta_data() == &dataset.meta_data());
-                CHECK(!scenario_dataset.empty());
-                CHECK(scenario_dataset.is_batch() == false);
-                CHECK(scenario_dataset.batch_size() == 1);
-                CHECK(scenario_dataset.n_components() == dataset.n_components());
+                    CHECK(scenario_dataset.get_component_info(B::name).component ==
+                          &dataset_type.get_component(B::name));
+                    auto const expected_size =
+                        dataset.is_row_based(dataset.get_buffer(B::name))
+                            ? dataset.template get_buffer_span<input_getter_s, B>(scenario).size()
+                            : dataset.template get_columnar_buffer_span<input_getter_s, B>(scenario).size();
+                    CHECK(scenario_dataset.get_component_info(B::name).elements_per_scenario == expected_size);
+                    CHECK(scenario_dataset.get_component_info(B::name).total_elements ==
+                          scenario_dataset.get_component_info(B::name).elements_per_scenario);
 
-                CHECK(scenario_dataset.get_component_info(A::name).component == &dataset_type.get_component(A::name));
-                CHECK(scenario_dataset.get_component_info(A::name).elements_per_scenario == a_elements_per_scenario);
-                CHECK(scenario_dataset.get_component_info(A::name).total_elements == a_elements_per_scenario);
+                    if (dataset.is_row_based(dataset.get_buffer(A::name))) {
+                        auto const scenario_span_a = scenario_dataset.template get_buffer_span<input_getter_s, A>();
+                        auto const dataset_span_a = dataset.template get_buffer_span<input_getter_s, A>(scenario);
+                        CHECK(scenario_span_a.data() == dataset_span_a.data());
+                        CHECK(scenario_span_a.size() == dataset_span_a.size());
+                    } else {
+                        auto const scenario_span_a =
+                            scenario_dataset.template get_columnar_buffer_span<input_getter_s, A>();
+                        auto const dataset_span_a =
+                            dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
+                        REQUIRE(scenario_span_a.size() == dataset_span_a.size());
+                        for (Idx idx = 0; idx < scenario_span_a.size(); ++idx) {
+                            auto const scenario_element = scenario_span_a[idx].get();
+                            auto const& dataset_element = dataset_span_a[idx].get();
+                            CHECK(scenario_element.id == dataset_element.id);
+                            CHECK(scenario_element.a1 == dataset_element.a1);
+                        }
+                    }
+                    if (dataset.is_row_based(dataset.get_buffer(B::name))) {
+                        auto const scenario_span_b = scenario_dataset.template get_buffer_span<input_getter_s, B>();
+                        auto const dataset_span_b = dataset.template get_buffer_span<input_getter_s, B>(scenario);
+                        CHECK(scenario_span_b.data() == dataset_span_b.data());
+                        CHECK(scenario_span_b.size() == dataset_span_b.size());
+                    } else {
+                        auto const scenario_span_b =
+                            scenario_dataset.template get_columnar_buffer_span<input_getter_s, B>();
+                        auto const dataset_span_b =
+                            dataset.template get_columnar_buffer_span<input_getter_s, B>(scenario);
+                        CHECK(scenario_span_b.begin() == dataset_span_b.begin());
+                        CHECK(scenario_span_b.size() == dataset_span_b.size());
+                    }
+                }
+            };
 
-                CHECK(scenario_dataset.get_component_info(B::name).component == &dataset_type.get_component(B::name));
-                CHECK(scenario_dataset.get_component_info(B::name).elements_per_scenario ==
-                      dataset.template get_buffer_span<input_getter_s, B>(scenario).size());
-                CHECK(scenario_dataset.get_component_info(B::name).total_elements ==
-                      scenario_dataset.get_component_info(B::name).elements_per_scenario);
+            SUBCASE("row-based") {
+                auto a_buffer = std::vector<A::InputType>(a_elements_per_scenario * batch_size);
+                auto b_buffer = std::vector<A::InputType>(3);
+                auto b_indptr = std::vector<Idx>{0, 0, narrow_cast<Idx>(b_buffer.size())};
+                add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, static_cast<void*>(a_buffer.data()));
+                add_inhomogeneous_buffer(dataset, B::name, b_buffer.size(), b_indptr.data(),
+                                         static_cast<void*>(b_buffer.data()));
 
-                auto const scenario_span_a = scenario_dataset.template get_buffer_span<input_getter_s, A>();
-                auto const scenario_span_b = scenario_dataset.template get_buffer_span<input_getter_s, B>();
-                auto const dataset_span_a = dataset.template get_buffer_span<input_getter_s, A>(scenario);
-                auto const dataset_span_b = dataset.template get_buffer_span<input_getter_s, B>(scenario);
-                CHECK(scenario_span_a.data() == dataset_span_a.data());
-                CHECK(scenario_span_a.size() == dataset_span_a.size());
-                CHECK(scenario_span_b.data() == dataset_span_b.data());
-                CHECK(scenario_span_b.size() == dataset_span_b.size());
+                check_get_individual_scenario();
+            }
+            SUBCASE("columnar") {
+                auto a_id_buffer = std::vector<ID>(a_elements_per_scenario * batch_size);
+                auto a_a1_buffer = std::vector<double>(a_elements_per_scenario * batch_size);
+                auto b_indptr = std::vector<Idx>{0, 0, 3};
+
+                add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, nullptr);
+                add_attribute_buffer(dataset, A::name, "id", static_cast<void*>(a_id_buffer.data()));
+                add_attribute_buffer(dataset, A::name, "a1", static_cast<void*>(a_a1_buffer.data()));
+                add_inhomogeneous_buffer(dataset, B::name, b_indptr.back(), b_indptr.data(), nullptr);
+
+                check_get_individual_scenario();
             }
         }
     }

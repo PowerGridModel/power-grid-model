@@ -10,7 +10,7 @@ from typing import Optional, Type
 
 import numpy as np
 
-from power_grid_model._utils import copy_output_to_columnar_dataset
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.core.data_handling import (
     create_output_data,
     get_output_type,
@@ -29,7 +29,7 @@ from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_
 from power_grid_model.core.index_integer import IdNp, IdxNp
 from power_grid_model.core.options import Options
 from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model.data_types import Dataset
+from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import (
     CalculationMethod,
     CalculationType,
@@ -104,7 +104,7 @@ class PowerGridModel:
         instance._all_component_count = None
         return instance
 
-    def __init__(self, input_data: dict[ComponentTypeVar, np.ndarray], system_frequency: float = 50.0):
+    def __init__(self, input_data: SingleDataset, system_frequency: float = 50.0):
         """
         Initialize the model from an input data set.
 
@@ -112,7 +112,7 @@ class PowerGridModel:
             input_data: Input data dictionary
 
                 - key: Component type
-                - value: 1D numpy structured array for this component input
+                - value: Component data with the correct type :class:`SingleComponentData`
 
             system_frequency: Frequency of the power system, default 50 Hz
         """
@@ -125,7 +125,7 @@ class PowerGridModel:
         assert_no_error()
         self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
-    def update(self, *, update_data: dict[ComponentTypeVar, np.ndarray]):
+    def update(self, *, update_data: Dataset):
         """
         Update the model with changes.
 
@@ -133,7 +133,7 @@ class PowerGridModel:
             update_data: Update data dictionary
 
                 - key: Component type
-                - value: 1D numpy structured array for this component update
+                - value: Component data with the correct type :class:`ComponentData` (single scenario or batch)
 
         Returns:
             None
@@ -144,7 +144,9 @@ class PowerGridModel:
 
     def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
         """
-        Get array of indexers given array of ids for component type
+        Get array of indexers given array of ids for component type.
+
+        This enables syntax like input_data[ComponentType.node][get_indexer(ids)]
 
         Args:
             component_type: Type of component
@@ -190,7 +192,7 @@ class PowerGridModel:
         return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
     # pylint: disable=too-many-arguments
-    def _construct_output(
+    def _construct_output(  # pylint: disable=too-many-positional-arguments
         self,
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
@@ -231,7 +233,7 @@ class PowerGridModel:
         )
 
     # pylint: disable=too-many-arguments
-    def _calculate_impl(
+    def _calculate_impl(  # pylint: disable=too-many-positional-arguments
         self,
         calculation_type: CalculationType,
         symmetric: bool,
@@ -300,11 +302,11 @@ class PowerGridModel:
             continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
         )
 
-        output_data = copy_output_to_columnar_dataset(
-            output_data=output_data,
-            output_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
+        output_data = compatibility_convert_row_columnar_dataset(
+            data=output_data,
+            data_filter=output_component_types,
+            dataset_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
             available_components=list(self._get_output_component_count(calculation_type=calculation_type).keys()),
-            output_component_types=output_component_types,
         )
         return output_data
 

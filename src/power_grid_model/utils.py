@@ -28,8 +28,9 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchArray, BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import BatchArray, BatchComponentData, BatchDataset, Dataset, SingleDataset
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
+from power_grid_model.typing import ComponentAttributeMapping
 
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
@@ -51,12 +52,20 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
         The dataset for a specific scenario
     """
 
-    def _get_component_scenario(component_scenarios: BatchArray) -> np.ndarray:
+    def _get_component_scenario(component_scenarios: BatchComponentData) -> np.ndarray:
+        # TODO(mgovers): update this with columnar scenario access
         if isinstance(component_scenarios, np.ndarray):
             return component_scenarios[scenario]
 
         indptr = component_scenarios["indptr"]
-        return component_scenarios["data"][indptr[scenario] : indptr[scenario + 1]]
+        data = component_scenarios["data"]
+        if isinstance(indptr, np.ndarray) and isinstance(data, np.ndarray):
+            return data[indptr[scenario] : indptr[scenario + 1]]
+
+        # If the batch data is not a numpy array and not a dictionary, it is invalid
+        raise ValueError(
+            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
+        )
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 
@@ -90,7 +99,10 @@ def get_component_batch_size(data_array: BatchArray) -> int:
     return _get_batch_size(data_array)
 
 
-def json_deserialize_from_file(file_path: Path) -> Dataset:
+def json_deserialize_from_file(
+    file_path: Path,
+    data_filter: ComponentAttributeMapping = None,
+) -> Dataset:
     """
     Load and deserialize a JSON file to a new dataset.
 
@@ -105,7 +117,7 @@ def json_deserialize_from_file(file_path: Path) -> Dataset:
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, encoding="utf-8") as file_pointer:
-        return json_deserialize(file_pointer.read())
+        return json_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
 def json_serialize_to_file(
@@ -136,7 +148,10 @@ def json_serialize_to_file(
         file_pointer.write(result)
 
 
-def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
+def msgpack_deserialize_from_file(
+    file_path: Path,
+    data_filter: ComponentAttributeMapping = None,
+) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
 
@@ -151,7 +166,7 @@ def msgpack_deserialize_from_file(file_path: Path) -> Dataset:
         The deserialized dataset in Power grid model input format.
     """
     with open(file_path, mode="rb") as file_pointer:
-        return msgpack_deserialize(file_pointer.read())
+        return msgpack_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
 def msgpack_serialize_to_file(
