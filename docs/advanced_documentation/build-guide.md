@@ -138,13 +138,14 @@ cmake --install build --config Release --prefix install
 ```
 
 In the repository there is a package test which consumes the C-API dynamic library.
-We can configure, build, and run the package test.
+We can configure, build, install, and run the package test.
 
 ```shell
 cd tests/package_tests
 cmake -DCMAKE_BUILD_TYPE=Release -Dpower_grid_model_DIR="../../install/lib/cmake/power_grid_model" -B build 
 cmake --build build --config Release
-./build/power_grid_model_package_test
+cmake --install build --config Release --prefix install
+./install/bin/power_grid_model_package_test
 ```
 
 
