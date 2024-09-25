@@ -130,6 +130,24 @@ cmake -DCMAKE_BUILD_TYPE=Release -B build
 cmake --build build --config Release
 ```
 
+You can further install the C-API dynamic library in the default `CMAKE_INSTALL_PREFIX` or a local directory.
+The command below installs the C-API dynamic library in a local directory `install`.
+
+```shell
+cmake --install build --config Release --prefix install
+```
+
+In the repository there is a package test which consumes the C-API dynamic library.
+We can configure, build, and run the package test.
+
+```shell
+cd tests/package_tests
+cmake -DCMAKE_BUILD_TYPE=Release -Dpower_grid_model_DIR="../../install/lib/cmake/power_grid_model" -B build 
+cmake --build build --config Release
+./build/power_grid_model_package_test
+```
+
+
 ### Developer build
 
 If you opt for a developer build of Power Grid Model, 
