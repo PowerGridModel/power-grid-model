@@ -189,7 +189,7 @@ class DatasetConst {
     RawConstDataset* get() const { return dataset_.get(); }
 
     static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
-                           Idx total_elements, Idx const* indptr, RawDataConstPtr data) {
+                           Idx total_elements, Idx const* indptr, RawDataConstPtr data) { // NOSONAR(cpp:S995)
         dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
                                   elements_per_scenario, total_elements, indptr, data);
     }
@@ -199,7 +199,7 @@ class DatasetConst {
     }
 
     static void add_buffer(DatasetConst& dataset, std::string const& component, Idx elements_per_scenario,
-                           Idx total_elements, Idx const* indptr, Buffer const& data) {
+                           Idx total_elements, Idx const* indptr, Buffer const& data) { // NOSONAR(cpp:S995)
         dataset.handle_.call_with(PGM_dataset_const_add_buffer, dataset.dataset_.get(), component.c_str(),
                                   elements_per_scenario, total_elements, indptr, data.get());
     }
@@ -209,7 +209,7 @@ class DatasetConst {
     }
 
     static void add_attribute_buffer(DatasetConst& dataset, std::string const& component, std::string const& attribute,
-                                     RawDataConstPtr data) {
+                                     RawDataConstPtr data) { // NOSONAR(cpp:S995)
         dataset.handle_.call_with(PGM_dataset_const_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
                                   attribute.c_str(), data);
     }
@@ -218,7 +218,7 @@ class DatasetConst {
     }
 
     static void add_attribute_buffer(DatasetConst& dataset, std::string const& component, std::string const& attribute,
-                                     Buffer const& data) {
+                                     Buffer const& data) { // NOSONAR(cpp:S995)
         dataset.handle_.call_with(PGM_dataset_const_add_attribute_buffer, dataset.dataset_.get(), component.c_str(),
                                   attribute.c_str(), data.get());
     }
