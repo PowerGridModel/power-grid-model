@@ -13,6 +13,13 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        description: "The CMake target to run (e.g.: all)"
+        required: true
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -24,7 +31,7 @@ on:
           - all
           - power_grid_model_c
           - power_grid_model_cpp
-          - install power_grid_model_benchmark_cpp
+          - all power_grid_model_benchmark_cpp
         required: true
 
 concurrency:
