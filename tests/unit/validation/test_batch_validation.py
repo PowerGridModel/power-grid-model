@@ -6,8 +6,8 @@
 import numpy as np
 import pytest
 
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model import DatasetType, LoadGenType, initialize_array
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
