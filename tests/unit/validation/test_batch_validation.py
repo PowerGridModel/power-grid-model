@@ -6,7 +6,8 @@
 import numpy as np
 import pytest
 
-from power_grid_model import LoadGenType, initialize_array
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model import DatasetType, LoadGenType, initialize_array
 from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
@@ -41,7 +42,7 @@ def input_data() -> dict[str, np.ndarray]:
 
 
 @pytest.fixture
-def batch_data() -> dict[str, np.ndarray]:
+def original_batch_data() -> dict[str, np.ndarray]:
     line = initialize_array("update", "line", (3, 2))
     line["id"] = [[5, 6], [6, 7], [7, 5]]
     line["from_status"] = [[1, 1], [1, 1], [1, 1]]
@@ -51,6 +52,16 @@ def batch_data() -> dict[str, np.ndarray]:
     asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
     return {"line": line, "asym_load": asym_load}
+
+
+@pytest.fixture
+def original_batch_data_columnar(original_batch_data):
+    return compatibility_convert_row_columnar_dataset(original_batch_data, ..., DatasetType.update)
+
+
+@pytest.fixture(params=["original_batch_data", "original_batch_data_columnar"])
+def batch_data(request):
+    return request.getfixturevalue(request.param)
 
 
 def test_validate_batch_data(input_data, batch_data):
