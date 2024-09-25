@@ -56,7 +56,7 @@ def original_batch_data() -> dict[str, np.ndarray]:
 
 @pytest.fixture
 def original_batch_data_columnar(original_batch_data):
-    return compatibility_convert_row_columnar_dataset(original_batch_data, ..., DatasetType.update)
+    return compatibility_convert_row_columnar_dataset(original_batch_data, Ellipsis, DatasetType.update)
 
 
 @pytest.fixture(params=["original_batch_data", "original_batch_data_columnar"])

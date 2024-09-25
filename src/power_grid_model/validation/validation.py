@@ -136,7 +136,8 @@ def validate_batch_data(
     input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
     # Convert to row based if in columnar format
-    # TODO(figueroa1395): transform to columnar per single batch once the columnar dataset python extension is finished
+    # TODO(figueroa1395): transform to columnar per single batch scenario once the columnar dataset python extension
+    # is finished
     row_update_data = compatibility_convert_row_columnar_dataset(update_data, None, DatasetType.update)
 
     # Splitting update_data_into_batches may raise TypeErrors and ValueErrors

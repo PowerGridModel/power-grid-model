@@ -310,7 +310,7 @@ def compatibility_convert_row_columnar_dataset(
     """Temporary function to transform row, column or mixed based datasets to a full row or column based dataset as per
     the data_filter. The purpose of this function is to mimic columnar data and transform back to row data without any
     memory footprint benefits.
-    Note: Copies are made in a per-component basis; if a component is row based in both the input and the requested
+    Note: Copies are made on a per-component basis; if a component is row based in both the input and the requested
     output, that componened is returned without a copy.
 
     Args:

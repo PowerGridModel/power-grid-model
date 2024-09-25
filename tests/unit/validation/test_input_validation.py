@@ -277,7 +277,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
 
 @pytest.fixture
 def original_data_columnar(original_data):
-    return compatibility_convert_row_columnar_dataset(original_data, ..., DatasetType.input)
+    return compatibility_convert_row_columnar_dataset(original_data, Ellipsis, DatasetType.input)
 
 
 @pytest.fixture(params=["original_data", "original_data_columnar"])
