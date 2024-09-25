@@ -24,6 +24,7 @@ on:
           - all
           - power_grid_model_c
           - power_grid_model_cpp
+          - install power_grid_model_benchmark_cpp
         required: true
 
 concurrency:
