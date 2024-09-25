@@ -26,11 +26,11 @@ on:
       target:
         type: choice
         description: The CMake target to run
-        default: power_grid_model_c
+        default: power_grid_model_api_tests
         options:
           - all
           - power_grid_model_c
-          - power_grid_model_cpp
+          - power_grid_model_api_tests
           - all power_grid_model_benchmark_cpp
         required: true
 
