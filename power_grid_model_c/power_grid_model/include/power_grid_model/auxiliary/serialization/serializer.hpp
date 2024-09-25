@@ -23,7 +23,7 @@
 #include <string_view>
 
 // custom packers
-namespace msgpack {
+namespace msgpack { // NOLINT(modernize-concat-nested-namespaces)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
 

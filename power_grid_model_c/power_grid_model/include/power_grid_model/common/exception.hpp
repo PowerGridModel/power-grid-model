@@ -44,7 +44,9 @@ class InvalidArguments : public PowerGridError {
 
     template <class... Options>
         requires(std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...)
-    InvalidArguments(std::string const& method, Options&&... options)
+    InvalidArguments(
+        std::string const& method,
+        Options&&... options) // NOLINT(cppcoreguidelines-missing-std-forward) // false positive by clang-tidy
         : InvalidArguments{method, "the following combination of options"} {
         (append_msg(" " + std::forward<Options>(options).name + ": " + std::forward<Options>(options).value + "\n"),
          ...);
