@@ -70,7 +70,7 @@ jobs:
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Set build target in case of push
-        if: github.event_name != 'workflow_dispatch' || github.event.event_name != 'workflow_call'
+        if: github.event_name != 'workflow_dispatch' && github.event.event_name != 'workflow_call'
         run: |
           echo "TARGET=power_grid_model_api_tests" >> $GITHUB_ENV
 
