@@ -11,6 +11,8 @@ on:
       - main
   # run pipeline on pull request
   pull_request:
+    paths-ignore:
+      - "./.github/workflows/nightly.yml"
   # run pipeline on merge queue
   merge_group:
   # run pipeline from another workflow
