@@ -6,10 +6,7 @@ name: Nightly build
 
 # Controls when the workflow will run
 on:
-  pull_request:
-    # run pipeline on merge queue
-    paths:
-      - "./.github/workflows/nightly.yml"
+  pull_request:  # TODO: remove
   workflow_dispatch:
   schedule:
     - cron: "0 2 * * *" # Based on UTC time
