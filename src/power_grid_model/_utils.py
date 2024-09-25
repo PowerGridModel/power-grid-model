@@ -132,22 +132,26 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
 
 def get_batch_size(batch_data: BatchComponentData) -> int:
     """
-    Determine the number of batches and verify the data structure while we're at it.
+    Determine the number of batches and verify the data structure while we're at it. Note only batch data is supported.
+    Note: SingleColumnarData would get treated as batch by this function.
 
     Args:
         batch_data: a batch array for power-grid-model
 
+    Raises:
+        ValueError: when the type for data_filter is incorrect
+
     Returns:
         The number of batches
     """
-
+    validate_component_data(batch_data)
     if is_sparse(batch_data):
         indptr = batch_data["indptr"]
         return indptr.size - 1
 
-    data_to_check = next(iter(batch_data)) if is_columnar(batch_data) else batch_data
+    data_to_check = next(iter(batch_data.values())) if is_columnar(batch_data) else batch_data
     if data_to_check.ndim == 1:
-        return 1
+        raise ValueError("get_batch_size is called for non batch data")
     return data_to_check.shape[0]
 
 
@@ -492,10 +496,11 @@ def is_columnar(component_data: ComponentData) -> bool:
     return not isinstance(component_data, np.ndarray)
 
 
-def validate_component_data(component_data: ComponentData, component) -> None:
+def validate_component_data(component_data: ComponentData, component=None) -> None:
     """Checks if component_data is of ComponentData and raises ValueError if its not"""
+    component_name = f"'{component}'" if component is not None else ""
     err_msg = (
-        f"Invalid data for '{component}' component. "
+        f"Invalid data for {component_name} component. "
         "{0}"
         "It should be a 1D/2D Numpy structured array or a dictionary of such."
     )
@@ -517,6 +522,5 @@ def validate_component_data(component_data: ComponentData, component) -> None:
                 raise TypeError(err_msg.format(f"Invalid dimension: {sub_data.ndim }"))
     elif not isinstance(sub_data, np.ndarray):
         raise TypeError(err_msg.format(f"Invalid data type {type(sub_data).__name__} "))
-
-    if sub_data.ndim not in [1, 2]:
+    elif isinstance(sub_data, np.ndarray) and sub_data.ndim not in [1, 2]:
         raise TypeError(err_msg.format(f"Invalid dimension: {sub_data.ndim}. "))

@@ -13,6 +13,7 @@ from power_grid_model._utils import (
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
     get_and_verify_batch_sizes,
+    get_batch_size,
     is_nan,
     process_data_filter,
     split_dense_batch_data_in_batches,
@@ -297,8 +298,8 @@ def test_convert_batch_dataset_to_batch_list_one_batch_dense():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     bar = [("x", "i4"), ("y", "i4"), ("z", "i4")]
     update_data: BatchDataset = {
-        "foo": np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo),
-        "bar": np.array([(211, 221, 231), (212, 222, 232), (213, 223, 233), (214, 224, 234)], dtype=bar),
+        "foo": np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo).reshape(1, -1),
+        "bar": np.array([(211, 221, 231), (212, 222, 232), (213, 223, 233), (214, 224, 234)], dtype=bar).reshape(1, -1),
     }
     expected: BatchList = [
         {
@@ -543,3 +544,29 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
     assert actual.keys() == expected.keys()
     for comp_name in expected:
         np.testing.assert_array_equal(actual[comp_name], expected[comp_name])
+
+
+@pytest.mark.parametrize(
+    ("data", "expected_size"),
+    [
+        pytest.param(np.empty(shape=(3, 2)), 3, id="row based batch"),
+        pytest.param({"u": np.empty(shape=(3, 2))}, 3, id="columnar batch"),
+        pytest.param({"u": np.empty(shape=(4, 2, 3))}, 4, id="columnar asym batch"),
+        pytest.param({"indptr": np.array([0, 1, 4]), "data": np.array([])}, 2, id="sparse data"),
+        pytest.param({"indptr": np.array([0, 1]), "data": np.array([])}, 1, id="sparse data"),
+    ],
+)
+def test_get_batch_size(data, expected_size):
+    assert get_batch_size(data) == expected_size
+
+
+@pytest.mark.parametrize(
+    ("data",),
+    [
+        pytest.param(np.empty(shape=3), id="row based single"),
+        pytest.param({"u": np.empty(shape=3)}, id="columnar single"),
+    ],
+)
+def test_get_batch_size__non_batch(data):
+    with pytest.raises(ValueError):
+        get_batch_size(data)

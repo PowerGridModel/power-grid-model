@@ -229,14 +229,14 @@ def _get_sparse_buffer_properties(
     ndim = 1
     columns: list[AttributeType] | None = None
     if isinstance(contents, np.ndarray):
-        shape = contents.shape
+        shape: tuple[int, ...] = contents.shape
     elif schema is None:
         raise ValueError(f"Schema is required for columnar data. {VALIDATOR_MSG}")
     elif not contents:
         raise ValueError("Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
     else:
         attribute, attribute_data = next(iter(contents.items()))
-        shape: tuple[int, ...] = attribute_data.shape[:ndim]
+        shape = attribute_data.shape[:ndim]
         columns = list(contents)
 
     if isinstance(contents, dict):
