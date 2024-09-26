@@ -138,22 +138,26 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
 // Can probably be combined with create_owning_dataset
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
                                     Idx batch_size = 1) {
-    auto const& info = input.const_dataset.value().get_info();
     OwningDataset owning_dataset{.dataset{power_grid_model_cpp::DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
+    auto const& info_input = input.const_dataset.value().get_info();
+    // auto const& info_result = owning_dataset.dataset.value().get_info();
 
-    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-        auto const& component_name = info.component_name(component_idx);
+    for (Idx component_idx{}; component_idx != info_input.n_components(); ++component_idx) {
+        auto const& component_name = info_input.component_name(component_idx);
         auto const& component_meta =
             power_grid_model_cpp::MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
-        Idx const component_size = info.component_total_elements(component_idx);
+        Idx const component_elements_per_scenario = info_input.component_elements_per_scenario(component_idx);
+        Idx const component_size = info_input.component_total_elements(component_idx);
 
         owning_dataset.storage.indptrs.emplace_back(
-            info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
+            info_input.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
         Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        owning_dataset.storage.buffers.at(component_idx).set_nan();
+        auto& current_buffer = owning_dataset.storage.buffers.at(component_idx);
+        CAPTURE(current_buffer);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, owning_dataset.storage.buffers.at(component_idx));
     }
@@ -599,23 +603,22 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-
         auto const result = create_result_dataset(validation_case.input, output_prefix);
 
-        /* // Create options
-         power_grid_model_cpp::Options options{};
-         options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
-         options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
-         options.set_symmetric(param.sym ? 0 : 1);
-         options.set_err_tol(1e-8);
-         options.set_max_iter(20);
-         options.set_threading(-1);
-         options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
-         options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));*/
+        // Create options
+        power_grid_model_cpp::Options options{};
+        options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
+        options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+        options.set_symmetric(param.sym ? 1 : 0);
+        options.set_err_tol(1e-8);
+        options.set_max_iter(20);
+        options.set_threading(-1);
+        options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
+        options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
 
         // create model and run
-        // power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset};
-        // model.calculate(options, result.dataset);
+        power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
+        model.calculate(options, result.dataset.value());
         // assert_result(result, validation_case.output.value(), param.atol, param.rtol);
         // assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
     });
