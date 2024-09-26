@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#define PGM_ENABLE_EXPERIMENTAL
-
 #include "power_grid_model_cpp.hpp"
 
 #include <power_grid_model_c/dataset_definitions.h>
