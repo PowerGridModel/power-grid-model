@@ -29,7 +29,7 @@ class Buffer {
     void set_nan(Idx buffer_offset, Idx size) { set_nan(*this, buffer_offset, size); }
 
     static void set_value(MetaAttribute const* attribute, Buffer& buffer, RawDataConstPtr src_ptr, Idx buffer_offset,
-                          Idx size, Idx src_stride) { // NOSONAR: no const
+                          Idx size, Idx src_stride) { // NOSONAR: no reference-to-const
         buffer.handle_.call_with(PGM_buffer_set_value, attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size,
                                  src_stride);
     }
