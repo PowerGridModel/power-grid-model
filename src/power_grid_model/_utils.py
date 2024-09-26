@@ -11,7 +11,6 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
-from types import EllipsisType
 from typing import Optional, cast
 
 import numpy as np
@@ -32,7 +31,7 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict, ComponentAttributeFilterOptions
 
 
 def is_nan(data) -> bool:
@@ -348,7 +347,7 @@ def _convert_data_to_row_or_columnar(
     data: SingleComponentData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
-    attrs: set[str] | list[str] | None | EllipsisType,
+    attrs: set[str] | list[str] | None | ComponentAttributeFilterOptions,
 ) -> SingleComponentData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:
@@ -383,8 +382,8 @@ def process_data_filter(
     """
     if data_filter is None:
         processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
-    elif data_filter is Ellipsis:
-        processed_data_filter = {ComponentType[k]: ... for k in available_components}
+    elif isinstance(data_filter, ComponentAttributeFilterOptions):
+        processed_data_filter = {ComponentType[k]: data_filter for k in available_components}
     elif isinstance(data_filter, (list, set)):
         processed_data_filter = {ComponentType[k]: None for k in data_filter}
     elif isinstance(data_filter, dict) and all(
