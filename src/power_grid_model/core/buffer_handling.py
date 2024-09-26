@@ -128,7 +128,7 @@ def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
 
 def _get_uniform_buffer_properties(
     data: SingleComponentData | DenseBatchData,
-    schema: ComponentMetaData | None,
+    schema: ComponentMetaData,
     is_batch: bool | None,
     batch_size: int | None,
 ) -> BufferProperties:
@@ -137,7 +137,7 @@ def _get_uniform_buffer_properties(
 
     Args:
         data (SingleComponentData | DenseBatchData): the dataset component.
-        schema (ComponentMetaData | None): the dataset type.
+        schema (ComponentMetaData): the dataset type.
         is_batch (bool | None): whether the data is a batch dataset.
         batch_size (int | None): the batch size.
 
@@ -152,21 +152,16 @@ def _get_uniform_buffer_properties(
         raise ValueError(f"Inconsistent 'is batch' and 'batch size'. {VALIDATOR_MSG}")
 
     is_sparse_property = False
-    shape: tuple[int] = ()
 
     if isinstance(data, np.ndarray):
         ndim = data.ndim
-        shape = data.shape
+        shape: tuple[int] = data.shape
         columns = None
-    elif schema is None:
-        raise ValueError(f"Schema is required for columnar data. {VALIDATOR_MSG}")
     elif data:
         attribute, attribute_data = next(iter(data.items()))
         ndim = attribute_data.ndim - schema.dtype[attribute].ndim
         shape = attribute_data.shape[:ndim]
         columns = list(data)
-    elif batch_size is not None and (is_batch is not None or batch_size != 1):
-        shape = (batch_size, 0) if is_batch or batch_size > 1 else (0)
     else:
         raise ValueError("Empty columnar buffer is ambiguous.{VALIDATOR_MSG}")
 
@@ -230,11 +225,9 @@ def _get_sparse_buffer_properties(
     columns: list[AttributeType] | None = None
     if isinstance(contents, np.ndarray):
         shape: tuple[int, ...] = contents.shape
-    elif schema is None:
-        raise ValueError(f"Schema is required for columnar data. {VALIDATOR_MSG}")
     elif not contents:
         raise ValueError("Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
-    else:
+    elif isinstance(contents, dict):
         attribute, attribute_data = next(iter(contents.items()))
         shape = attribute_data.shape[:ndim]
         columns = list(contents)
