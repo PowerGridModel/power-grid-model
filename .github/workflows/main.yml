@@ -43,7 +43,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ inputs.cancel_in_progress }}
+  cancel-in-progress: ${{ inputs.cancel_in_progress != 'false' }}
 
 
 jobs:
