@@ -195,7 +195,7 @@ def _get_uniform_buffer_properties(
 
 def _get_sparse_buffer_properties(
     data: SparseBatchData,
-    schema: ComponentMetaData | None,
+    schema: ComponentMetaData,
     batch_size: int | None,
 ) -> BufferProperties:
     """
@@ -247,8 +247,7 @@ def _get_sparse_buffer_properties(
     if np.any(np.diff(indptr) < 0):
         raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
 
-    actual_batch_size = indptr.size - 1
-    if batch_size is not None and batch_size != actual_batch_size:
+    if batch_size is not None and batch_size != indptr.size - 1:
         raise ValueError(f"Provided batch size must be equal to actual batch size. {VALIDATOR_MSG}")
 
     is_batch = True
@@ -258,7 +257,7 @@ def _get_sparse_buffer_properties(
     return BufferProperties(
         is_sparse=is_sparse_property,
         is_batch=is_batch,
-        batch_size=actual_batch_size,
+        batch_size=indptr.size - 1,
         n_elements_per_scenario=n_elements_per_scenario,
         n_total_elements=n_total_elements,
         columns=columns,
@@ -267,7 +266,7 @@ def _get_sparse_buffer_properties(
 
 def get_buffer_properties(
     data: ComponentData,
-    schema: ComponentMetaData | None = None,
+    schema: ComponentMetaData,
     is_batch: bool | None = None,
     batch_size: int | None = None,
 ) -> BufferProperties:

@@ -7,7 +7,7 @@ Many data types are used throughout the power grid model project. In an attempt 
 have been defined and explained in this file.
 """
 
-from typing import TypeAlias, TypeVar
+from typing import TypeAlias, TypedDict, TypeVar
 
 import numpy as np
 
@@ -92,39 +92,50 @@ of scenarios, representing the start and end indices for each batch scenario as 
     - The first element and last element will therefore be 0 and the size of the data, respectively.
 """
 
-SparseBatchArray = dict[SparseDataComponentType, IndexPointer | SingleArray]
-"""
-A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
-- data: a :class:`SingleArray`. The exact dtype depends on the type of component.
-- indptr: an :class:`IndexPointer` representing the start and end indices for each batch scenario.
+class SparseBatchArray(TypedDict):
+    """
+    A sparse batch array is a dictionary containing the keys `indptr` and `data`.
 
-- Examples:
+    - data: a :class:`SingleArray`. The exact dtype depends on the type of component.
+    - indptr: an :class:`IndexPointer` representing the start and end indices for each batch scenario.
 
-    - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleArray`}
-    - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
+    - Examples:
 
-        - the scenario 0 sets the statuses of components with ids 0 and 1 to 1 (and keeps defaults for other components)
-        - scenario 1 keeps the default values for all components
-        - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
-"""
+        - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleArray`}
+        - concrete example: {"indptr": [0, 2, 2, 3], "data": [(0, 1, 1), (1, 1, 1), (0, 0, 0)]}
 
-SparseBatchColumnarData = dict[SparseDataComponentType, IndexPointer | SingleColumnarData]
-"""
-Sparse batch columnar data is a dictionary containing the keys `indptr` and `data`.
+            - the scenario 0 sets the statuses of components with ids 0 and 1 to 1
+              (and keeps defaults for other components)
+            - scenario 1 keeps the default values for all components
+            - scenario 2 sets the statuses of component with id 0 to 0 (and keeps defaults for other components)
+    """
 
-- data: a :class:`SingleColumnarData`. The exact supported attribute columns depend on the component type.
-- indptr: an :class:`IndexPointer` representing the start and end indices for each batch scenario.
+    indptr: IndexPointer
+    data: SingleArray
 
-- Examples:
 
-    - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleColumnarData`}
-    - concrete example: {"indptr": [0, 2, 2, 3], "data": {"id": [0, 1, 0], "status": [1, 1, 0]}}
+class SparseBatchColumnarData(TypedDict):
+    """
+    Sparse batch columnar data is a dictionary containing the keys `indptr` and `data`.
 
-        - the scenario 0 sets the status of components with ids 0 and 1 to 1 (and keeps defaults for other components)
-        - scenario 1 keeps the default values for all components
-        - scenario 2 sets the status of component with id 0 to 0 (and keeps defaults for other components)
-"""
+    - data: a :class:`SingleColumnarData`. The exact supported attribute columns depend on the component type.
+    - indptr: an :class:`IndexPointer` representing the start and end indices for each batch scenario.
+
+    - Examples:
+
+        - structure: {"indptr": :class:`IndexPointer`, "data": :class:`SingleColumnarData`}
+        - concrete example: {"indptr": [0, 2, 2, 3], "data": {"id": [0, 1, 0], "status": [1, 1, 0]}}
+
+            - the scenario 0 sets the status of components with ids 0 and 1 to 1
+              (and keeps defaults for other components)
+            - scenario 1 keeps the default values for all components
+            - scenario 2 sets the status of component with id 0 to 0 (and keeps defaults for other components)
+    """
+
+    indptr: IndexPointer
+    data: SingleColumnarData
+
 
 DenseBatchData = DenseBatchArray | DenseBatchColumnarData
 """

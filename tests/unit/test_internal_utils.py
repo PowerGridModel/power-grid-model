@@ -422,11 +422,7 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
 @patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}  # type: ignore
-    with pytest.raises(
-        KeyError,
-        match="Missing 'indptr' in sparse batch data for 'foo' "
-        r"\(expected a python dictionary containing two keys: 'indptr' and 'data'\).",
-    ):
+    with pytest.raises(KeyError, match="Invalid data for 'foo' component. Missing 'indptr' in sparse batch data. "):
         convert_batch_dataset_to_batch_list(update_data)
 
 
@@ -435,8 +431,8 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
         TypeError,
-        match="Invalid data type str in batch data for 'foo' "
-        r"\(should be a Numpy structured array or a python dictionary\).",
+        match="Invalid data for 'foo' component. "
+        "It should be a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         convert_batch_dataset_to_batch_list(update_data)
 

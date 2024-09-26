@@ -26,6 +26,7 @@ from power_grid_model.data_types import (
     ComponentData,
     Dataset,
     DenseBatchArray,
+    DenseBatchColumnarData,
     DenseBatchData,
     PythonDataset,
     SingleArray,
@@ -81,16 +82,12 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     # While the number of batches must be the same for each component, the structure (2d numpy array or indptr/data)
     # doesn't have to be. Therefore, we'll check the structure for each component and copy the data accordingly.
     for component, data in batch_data.items():
+        validate_component_data(data, component)
         component_batches: Sequence[SingleComponentData]
-        if isinstance(data, np.ndarray):
-            component_batches = split_dense_batch_data_in_batches(data, component)
-        elif isinstance(data, dict):
-            component_batches = split_sparse_batch_data_in_batches(data, component)
+        if is_sparse(data):
+            component_batches = split_sparse_batch_data_in_batches(cast(SparseBatchData, data), component)
         else:
-            raise TypeError(
-                f"Invalid data type {type(data).__name__} in batch data for '{component}' "
-                "(should be a Numpy structured array or a python dictionary)."
-            )
+            component_batches = split_dense_batch_data_in_batches(data, component)
         for i, batch in enumerate(component_batches):
             if isinstance(batch, dict):
                 list_data[i][component] = np.array([])
@@ -149,7 +146,9 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
         indptr = batch_data["indptr"]
         return indptr.size - 1
 
-    data_to_check = next(iter(batch_data.values())) if is_columnar(batch_data) else batch_data
+    data_to_check = (
+        next(iter(cast(DenseBatchColumnarData, batch_data).values())) if is_columnar(batch_data) else batch_data
+    )
     if data_to_check.ndim == 1:
         raise ValueError("get_batch_size is called for non batch data")
     return data_to_check.shape[0]
@@ -499,28 +498,28 @@ def is_columnar(component_data: ComponentData) -> bool:
 def validate_component_data(component_data: ComponentData, component=None) -> None:
     """Checks if component_data is of ComponentData and raises ValueError if its not"""
     component_name = f"'{component}'" if component is not None else ""
-    err_msg = (
-        f"Invalid data for {component_name} component. "
-        "{0}"
-        "It should be a 1D/2D Numpy structured array or a dictionary of such."
-    )
+    err_msg = f"Invalid data for {component_name} component. " "{0}"
+    err_msg_suffixed = err_msg + "It should be a 1D/2D Numpy structured array or a dictionary of such."
 
     if is_sparse(component_data):
         if not isinstance(component_data["indptr"], np.ndarray):
-            raise TypeError(err_msg.format(f"Invalid indptr type {type(component_data["indptr"]).__name__}. "))
+            raise TypeError(err_msg_suffixed.format(f"Invalid indptr type {type(component_data["indptr"]).__name__}. "))
         sub_data = component_data["data"]
+    elif isinstance(component_data, dict) and ("indptr" in component_data or "data" in component_data):
+        missing_element = "indptr" if "indptr" not in component_data else "data"
+        raise KeyError(err_msg.format(f"Missing '{missing_element}' in sparse batch data. "))
     else:
         sub_data = component_data
 
     if is_columnar(component_data):
         if not isinstance(sub_data, dict):
-            raise TypeError(err_msg.format(""))
+            raise TypeError(err_msg_suffixed.format(""))
         for attribute, attribute_array in sub_data.items():
             if not isinstance(attribute_array, np.ndarray):
-                raise TypeError(err_msg.format(f"'{attribute}' attribute. "))
+                raise TypeError(err_msg_suffixed.format(f"'{attribute}' attribute. "))
             if attribute_array.ndim not in [1, 2, 3]:
-                raise TypeError(err_msg.format(f"Invalid dimension: {sub_data.ndim }"))
+                raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {attribute_array.ndim }"))
     elif not isinstance(sub_data, np.ndarray):
-        raise TypeError(err_msg.format(f"Invalid data type {type(sub_data).__name__} "))
+        raise TypeError(err_msg_suffixed.format(f"Invalid data type {type(sub_data).__name__} "))
     elif isinstance(sub_data, np.ndarray) and sub_data.ndim not in [1, 2]:
-        raise TypeError(err_msg.format(f"Invalid dimension: {sub_data.ndim}. "))
+        raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {sub_data.ndim}. "))
