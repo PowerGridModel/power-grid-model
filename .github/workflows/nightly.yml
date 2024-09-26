@@ -27,4 +27,5 @@ jobs:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
       target: power_grid_model_c
-    #   target: "all power_grid_model_benchmark_cpp"  # TODO(mgovers): re-enable when more clang-tidy stuff is fixed
+      #   target: "all power_grid_model_benchmark_cpp"  # TODO(mgovers): re-enable when more clang-tidy stuff is fixed
+      cancel_in_progress: false
