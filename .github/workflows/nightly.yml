@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Nightly build
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # Based on UTC time
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  main:
+    uses: "./.github/workflows/main.yml"
+
+  clang-tidy:
+    uses: "./.github/workflows/clang-tidy.yml"
+    with:
+      target: power_grid_model_c
+    #   target: "all power_grid_model_benchmark_cpp"  # TODO(mgovers): re-enable when more clang-tidy stuff is fixed

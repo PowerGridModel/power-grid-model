@@ -222,7 +222,7 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Copy model") {
-        Model model_copy{model};
+        auto const model_copy = Model{model};
         model_copy.calculate(options, single_output_dataset);
         node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
         node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
