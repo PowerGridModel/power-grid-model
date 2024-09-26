@@ -196,12 +196,6 @@ class CMutableDataset:
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
         compatibility_converted_data = data
-        # compatibility_converted_data = compatibility_convert_row_columnar_dataset(
-        #     data=data,
-        #     data_filter=None,
-        #     dataset_type=instance._dataset_type,
-        #     available_components=list(data.keys()),
-        # )
         if compatibility_converted_data:
             first_component, first_component_data = next(iter(compatibility_converted_data.items()))
             first_sub_info = get_buffer_properties(data=first_component_data, schema=instance._schema[first_component])
@@ -427,13 +421,6 @@ class CWritableDataset:
         Returns:
             The full dataset.
         """
-        # converted_data = compatibility_convert_row_columnar_dataset(
-        #     data=self._data,
-        #     data_filter=self.get_data_filter(),
-        #     dataset_type=self.get_info().dataset_type(),
-        #     available_components=list(self._data.keys()),
-        # )
-        # return converted_data
         return self._data
 
     def get_component_data(self, component: ComponentType) -> ComponentData:

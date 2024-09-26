@@ -502,8 +502,9 @@ def validate_component_data(component_data: ComponentData, component=None) -> No
     err_msg_suffixed = err_msg + "It should be a 1D/2D Numpy structured array or a dictionary of such."
 
     if is_sparse(component_data):
-        if not isinstance(component_data["indptr"], np.ndarray):
-            raise TypeError(err_msg_suffixed.format(f"Invalid indptr type {type(component_data["indptr"]).__name__}. "))
+        indptr = component_data["indptr"]
+        if not isinstance(indptr, np.ndarray):
+            raise TypeError(err_msg_suffixed.format(f"Invalid indptr type {type(indptr).__name__}. "))
         sub_data = component_data["data"]
     elif isinstance(component_data, dict) and ("indptr" in component_data or "data" in component_data):
         missing_element = "indptr" if "indptr" not in component_data else "data"
