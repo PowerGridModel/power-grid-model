@@ -112,7 +112,6 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
     // bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
-    auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(dataset_name);
 
     OwningDataset owning_dataset{};
     // to be added after buffer error is fixed
@@ -120,9 +119,8 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
-        auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
-        auto const& component_size_real = power_grid_model_cpp::MetaData::component_size(component_meta);
-        CAPTURE(component_size_real);
+        auto const& component_meta =
+            power_grid_model_cpp::MetaData::get_component_by_name(dataset_name, component_name);
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
 
@@ -130,18 +128,12 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
             info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
         Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
-        CAPTURE(indptr);
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         if (empty_indptr) {
             CHECK(component_size == (component_elements_per_scenario * batch_size));
         }
         auto& current_buffer = owning_dataset.storage.buffers.at(component_idx);
-        auto* ptr_0 = &current_buffer;
-        auto* ptr_f = ptr_0 + 1;
-        auto* raw_buffer_ptr = current_buffer.get();
-        CAPTURE(raw_buffer_ptr);
-        CHECK(ptr_0 != ptr_f);
-        writable_dataset.set_buffer(component_name, nullptr, current_buffer);
+        writable_dataset.set_buffer(component_name, indptr, current_buffer);
         // mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
         //                            owning_dataset.buffers.at(component_idx));
     }
@@ -701,18 +693,14 @@ void validate_single_case(CaseParam const& param) {
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        auto const& name_case = param.case_name;
-        CAPTURE(name_case);
-        if (param.case_name == "power_flow/multi-source-with-angle-sym-newton_raphson") {
-            SUBCASE(param.case_name.c_str()) {
-                try {
-                    validate_single_case(param);
-                } catch (std::exception& e) {
-                    using namespace std::string_literals;
+        SUBCASE(param.case_name.c_str()) {
+            try {
+                validate_single_case(param);
+            } catch (std::exception& e) {
+                using namespace std::string_literals;
 
-                    auto const msg = "Unexpected exception with message: "s + e.what();
-                    FAIL_CHECK(msg);
-                }
+                auto const msg = "Unexpected exception with message: "s + e.what();
+                FAIL_CHECK(msg);
             }
         }
     }
