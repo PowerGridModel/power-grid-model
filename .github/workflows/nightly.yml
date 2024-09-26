@@ -11,7 +11,7 @@ on:
     - cron: "0 2 * * *" # Based on UTC time
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-root
   cancel-in-progress: true
 
 jobs:
@@ -21,11 +21,9 @@ jobs:
       contents: write
     with:
       create_release: false
-      cancel_in_progress: false
 
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
       target: power_grid_model_c
       #   target: "all power_grid_model_benchmark_cpp"  # TODO(mgovers): re-enable when more clang-tidy stuff is fixed
-      cancel_in_progress: false

@@ -22,11 +22,6 @@ on:
         description: Create a (pre-)release when CI passes
         default: false
         required: false
-      cancel_in_progress:
-        type: boolean
-        description: Cancel this action if a newer one is kicked off
-        default: false  # by default, don't cancel in progress
-        required: false
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -35,15 +30,10 @@ on:
         description: Create a (pre-)release when CI passes
         default: false
         required: true
-      cancel_in_progress:
-        type: boolean
-        description: Cancel this action if a newer one is kicked off
-        default: true
-        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ inputs.cancel_in_progress != 'false' }}
+  cancel-in-progress: true
 
 
 jobs:
