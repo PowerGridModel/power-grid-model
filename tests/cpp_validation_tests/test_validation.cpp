@@ -109,13 +109,11 @@ struct OwningDataset {
 
 auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
-    // bool const is_batch = info.is_batch();
+    bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
-
-    OwningDataset owning_dataset{};
-    // to be added after buffer error is fixed
-    // power_grid_model_cpp::DatasetMutable mutable_dataset{dataset_name, is_batch, batch_size};
+    OwningDataset owning_dataset{.dataset{power_grid_model_cpp::DatasetMutable{dataset_name, is_batch, batch_size}},
+                                 .const_dataset = std::nullopt};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
@@ -129,52 +127,40 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
         bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
         Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
-        if (empty_indptr) {
-            CHECK(component_size == (component_elements_per_scenario * batch_size));
-        }
-        auto& current_buffer = owning_dataset.storage.buffers.at(component_idx);
-        writable_dataset.set_buffer(component_name, indptr, current_buffer);
-        // mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
-        //                            owning_dataset.buffers.at(component_idx));
+        writable_dataset.set_buffer(component_name, indptr, owning_dataset.storage.buffers.at(component_idx));
+        owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
+                                                  indptr, owning_dataset.storage.buffers.at(component_idx));
     }
-    // owning_dataset.const_dataset = writable_dataset;
+    owning_dataset.const_dataset = writable_dataset;
     return owning_dataset;
-    /*return OwningDataset{
-        .dataset = std::move(mutable_dataset),
-        .const_dataset{writable_dataset},
-        .buffers = std::move(buffers),
-        .indptr_buffers = std::move(indptr_buffers),
-    };*/
 }
 
-// can probably be combined with the other overload
-/*auto create_owning_dataset(OwningDataset const& owning_dataset, std::string const& result_dataset_name) {
-    auto const& info = owning_dataset.dataset.get_info(); //take back to .dataset, just for testing now
-    bool const is_batch = info.is_batch();
-    Idx const batch_size = info.batch_size();
-    auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_dataset_name);
-    std::vector<power_grid_model_cpp::Buffer> buffers;
-    power_grid_model_cpp::DatasetMutable mutable_dataset{result_dataset_name, is_batch, batch_size};
+// Can probably be combined with create_owning_dataset
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
+                                    Idx batch_size = 1) {
+    auto const& info = input.const_dataset.value().get_info();
+    OwningDataset owning_dataset{.dataset{power_grid_model_cpp::DatasetMutable{dataset_name, is_batch, batch_size}},
+                                 .const_dataset = std::nullopt};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
-        auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
-        Idx const component_size = info.component_total_elements(component_idx);
+        auto const& component_meta =
+            power_grid_model_cpp::MetaData::get_component_by_name(dataset_name, component_name);
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
-        IdxVector indptr_vector(info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        Idx* buffer_indptr = indptr_vector.empty() ? nullptr : indptr_vector.data();
+        Idx const component_size = info.component_total_elements(component_idx);
 
-        power_grid_model_cpp::Buffer buffer{component_meta, component_size};
-        mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, buffer_indptr,
-                                   buffer);
-        buffers.push_back(std::move(buffer));
+        owning_dataset.storage.indptrs.emplace_back(
+            info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
+        bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
+        Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
+        owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
+                                                  indptr, owning_dataset.storage.buffers.at(component_idx));
     }
-    return OwningDataset{
-        .dataset = std::move(mutable_dataset),
-        .const_dataset{owning_dataset.dataset},
-        .buffers = std::move(buffers),
-    };
-}*/
+    owning_dataset.const_dataset = owning_dataset.dataset.value();
+    // construct_individual_scenarios(owning_dataset); // this may or may not be needed for batch stuff
+    return owning_dataset;
+}
 
 // probably not needed, because we can get the individual scenario info by offsetting. Will test with batch validation.
 /*auto construct_individual_scenarios(OwningDataset& owning_dataset) {
@@ -198,15 +184,6 @@ auto load_dataset(std::filesystem::path const& path) {
     return OwningDataset{}; // fallback for https://github.com/msgpack/msgpack-c/issues/1098
 #endif // __clang_analyzer__ // issue in msgpack
 }
-
-// create single result set
-/*OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
-                                    Idx batch_size = 1) {
-    auto owning_dataset =
-        create_owning_dataset(input, data_type); // this overload can just become create_result_dataset
-    // construct_individual_scenarios(owning_dataset);
-    return owning_dataset;
-}*/
 
 template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
@@ -548,7 +525,7 @@ struct ValidationCase {
     std::optional<OwningDataset> output_batch;
 };
 
-ValidationCase create_validation_case(CaseParam const& param) { //, std::string const& output_type) {
+ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
     ValidationCase validation_case{.param = param,
                                    .input = load_dataset(param.case_dir / "input.json"),
@@ -557,12 +534,12 @@ ValidationCase create_validation_case(CaseParam const& param) { //, std::string 
                                    .output_batch = std::nullopt};
 
     // output and update
-    /*if (!param.is_batch) {
+    if (!param.is_batch) {
         validation_case.output = load_dataset(param.case_dir / (output_type + ".json"));
     } else {
         validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json");
         validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"));
-    }*/
+    }
     return validation_case;
 }
 
@@ -621,9 +598,9 @@ void execute_test(CaseParam const& param, T&& func) {
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
-        auto const validation_case = create_validation_case(param); //, output_prefix);
+        auto const validation_case = create_validation_case(param, output_prefix);
 
-        // auto const result = create_result_dataset(validation_case.input, output_prefix);
+        auto const result = create_result_dataset(validation_case.input, output_prefix);
 
         /* // Create options
          power_grid_model_cpp::Options options{};
