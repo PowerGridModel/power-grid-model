@@ -25,7 +25,7 @@ on:
       cancel_in_progress:
         type: boolean
         description: Cancel this action if a newer one is kicked off
-        default: true
+        default: false  # by default, don't cancel in progress
         required: false
   # run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -43,7 +43,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event.inputs.cancel_in_progress }}
+  cancel-in-progress: ${{ inputs.cancel_in_progress }}
 
 
 jobs:
@@ -321,7 +321,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         run: |
           pip install twine
           echo "Publish to PyPI..."
@@ -329,7 +329,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         with:
           files: |
             ./wheelhouse/*
