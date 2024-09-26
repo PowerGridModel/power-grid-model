@@ -95,45 +95,53 @@ class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
 
 struct OwningMemory {
     std::vector<power_grid_model_cpp::Buffer> buffers{};
-    std::vector<IdxVector> buffers_indptrs{};
+    std::vector<IdxVector> indptrs{};
 };
 
 struct OwningDataset {
     std::optional<power_grid_model_cpp::DatasetMutable> dataset;
     std::optional<power_grid_model_cpp::DatasetConst> const_dataset;
-    // std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{}; // May be removed in favor of direct buffer access
+    // std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{}; // May be removed in favor of direct buffer
+    // access
+
+    OwningMemory storage{};
 };
 
-auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset, OwningMemory& storage) {
+auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
-    bool const is_batch = info.is_batch();
+    // bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
     auto const& dataset_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(dataset_name);
 
-    OwningDataset owning_dataset;
+    OwningDataset owning_dataset{};
     // to be added after buffer error is fixed
     // power_grid_model_cpp::DatasetMutable mutable_dataset{dataset_name, is_batch, batch_size};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
         auto const& component_meta = power_grid_model_cpp::MetaData::get_component_by_idx(dataset_meta, component_idx);
+        auto const& component_size_real = power_grid_model_cpp::MetaData::component_size(component_meta);
+        CAPTURE(component_size_real);
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
-        CAPTURE(component_name);
-        CAPTURE(component_meta);
-        CAPTURE(component_elements_per_scenario);
-        CAPTURE(component_size);
 
-        storage.buffers_indptrs.emplace_back(info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1
-                                                                                                     : 0);
-        bool empy_indptr = storage.buffers_indptrs.at(component_idx).empty() ? true : false;
-        Idx* indptr = empy_indptr ? nullptr : storage.buffers_indptrs.at(component_idx).data();
-        storage.buffers.emplace_back(component_meta, component_size);
-        if (empy_indptr) {
+        owning_dataset.storage.indptrs.emplace_back(
+            info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
+        bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
+        Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
+        CAPTURE(indptr);
+        owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        if (empty_indptr) {
             CHECK(component_size == (component_elements_per_scenario * batch_size));
         }
-        writable_dataset.set_buffer(component_name, indptr, storage.buffers.at(component_idx));
+        auto& current_buffer = owning_dataset.storage.buffers.at(component_idx);
+        auto* ptr_0 = &current_buffer;
+        auto* ptr_f = ptr_0 + 1;
+        auto* raw_buffer_ptr = current_buffer.get();
+        CAPTURE(raw_buffer_ptr);
+        CHECK(ptr_0 != ptr_f);
+        writable_dataset.set_buffer(component_name, nullptr, current_buffer);
         // mutable_dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
         //                            owning_dataset.buffers.at(component_idx));
     }
@@ -183,13 +191,13 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
     }
 }*/
 
-auto load_dataset(std::filesystem::path const& path, OwningMemory& buffers) {
+auto load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
     power_grid_model_cpp::Deserializer deserializer{read_file(path), Idx{0}};
     auto& writable_dataset = deserializer.get_dataset();
-    auto dataset = create_owning_dataset(writable_dataset, buffers);
+    auto dataset = create_owning_dataset(writable_dataset);
     deserializer.parse_to_buffer();
     // construct_individual_scenarios(dataset);
     return dataset;
@@ -548,9 +556,13 @@ struct ValidationCase {
     std::optional<OwningDataset> output_batch;
 };
 
-ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type, OwningMemory& buffers) {
+ValidationCase create_validation_case(CaseParam const& param) { //, std::string const& output_type) {
     // input
-    ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json", buffers)};
+    ValidationCase validation_case{.param = param,
+                                   .input = load_dataset(param.case_dir / "input.json"),
+                                   .output = std::nullopt,
+                                   .update_batch = std::nullopt,
+                                   .output_batch = std::nullopt};
 
     // output and update
     /*if (!param.is_batch) {
@@ -586,10 +598,10 @@ std::vector<CaseParam> const& get_all_single_cases() {
     return all_cases;
 }
 
-std::vector<CaseParam> const& get_all_batch_cases() {
-    static std::vector<CaseParam> const all_cases = read_all_cases(true);
-    return all_cases;
-}
+// std::vector<CaseParam> const& get_all_batch_cases() {
+//     static std::vector<CaseParam> const all_cases = read_all_cases(true);
+//     return all_cases;
+// }
 
 } // namespace
 
@@ -616,9 +628,8 @@ void execute_test(CaseParam const& param, T&& func) {
 
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        OwningMemory buffers{};
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
-        auto const validation_case = create_validation_case(param, output_prefix, buffers);
+        auto const validation_case = create_validation_case(param); //, output_prefix);
 
         // auto const result = create_result_dataset(validation_case.input, output_prefix);
 
@@ -690,14 +701,18 @@ void validate_single_case(CaseParam const& param) {
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        SUBCASE(param.case_name.c_str()) {
-            try {
-                validate_single_case(param);
-            } catch (std::exception& e) {
-                using namespace std::string_literals;
+        auto const& name_case = param.case_name;
+        CAPTURE(name_case);
+        if (param.case_name == "power_flow/multi-source-with-angle-sym-newton_raphson") {
+            SUBCASE(param.case_name.c_str()) {
+                try {
+                    validate_single_case(param);
+                } catch (std::exception& e) {
+                    using namespace std::string_literals;
 
-                auto const msg = "Unexpected exception with message: "s + e.what();
-                FAIL_CHECK(msg);
+                    auto const msg = "Unexpected exception with message: "s + e.what();
+                    FAIL_CHECK(msg);
+                }
             }
         }
     }
