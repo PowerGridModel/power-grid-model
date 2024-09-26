@@ -19,6 +19,9 @@ jobs:
     uses: "./.github/workflows/main.yml"
     permissions:
       contents: write
+    with:
+      create_release: false
+      cancel_in_progress: false
 
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"

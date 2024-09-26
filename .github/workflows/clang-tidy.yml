@@ -20,6 +20,11 @@ on:
         type: string
         description: "The CMake target to run (e.g.: all)"
         required: true
+      cancel_in_progress:
+        type: boolean
+        description: Cancel this action if a newer one is kicked off
+        default: true
+        required: false
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -33,10 +38,15 @@ on:
           - power_grid_model_api_tests
           - all power_grid_model_benchmark_cpp
         required: true
+      cancel_in_progress:
+        type: boolean
+        description: Cancel this action if a newer one is kicked off
+        default: true
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}  # parent workflow dictates concurrency
+  cancel-in-progress: ${{ github.event.inputs.cancel_in_progress }}
 
 jobs:
   clang-tidy:
