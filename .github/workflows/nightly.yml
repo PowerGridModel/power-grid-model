@@ -17,6 +17,8 @@ concurrency:
 jobs:
   main:
     uses: "./.github/workflows/main.yml"
+    permissions:
+      contents: write
 
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
