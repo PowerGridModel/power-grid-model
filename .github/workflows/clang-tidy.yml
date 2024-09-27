@@ -31,7 +31,7 @@ on:
           - all
           - power_grid_model_c
           - power_grid_model_api_tests
-          - power_grid_model_benchmark_cpp power_grid_model_validation_tests
+          - power_grid_model_validation_tests
           - all power_grid_model_benchmark_cpp
         required: true
 
