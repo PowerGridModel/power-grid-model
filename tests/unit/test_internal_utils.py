@@ -561,6 +561,6 @@ def test_get_batch_size(data, expected_size):
         pytest.param({"u": np.empty(shape=3)}, id="columnar single"),
     ],
 )
-def test_get_batch_size__non_batch(data):
+def test_get_batch_size__single_dataset_is_not_supported(data):
     with pytest.raises(ValueError):
         get_batch_size(data)
