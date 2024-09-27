@@ -18,4 +18,10 @@ target_link_libraries(power_grid_model_api_tests
         doctest::doctest
 )
 
+# TODO: remove this when the API becomes stable
+target_compile_definitions(power_grid_model_api_tests
+    PRIVATE
+    PGM_ENABLE_EXPERIMENTAL
+)
+
 doctest_discover_tests(power_grid_model_api_tests)

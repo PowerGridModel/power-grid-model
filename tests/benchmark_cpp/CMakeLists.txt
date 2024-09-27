@@ -6,7 +6,7 @@ set(PROJECT_SOURCES
 	benchmark.cpp
 )
 
-add_executable(power_grid_model_benchmark_cpp ${PROJECT_SOURCES})
+add_executable(power_grid_model_benchmark_cpp EXCLUDE_FROM_ALL ${PROJECT_SOURCES})
 target_link_libraries(power_grid_model_benchmark_cpp 
 	PRIVATE power_grid_model 
 )
