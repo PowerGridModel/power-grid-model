@@ -529,18 +529,15 @@ def component_data_checks(component_data: ComponentData, component=None) -> None
         raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {sub_data.ndim}. "))
 
 
-def _extract_indptr_data(
-    data: ComponentData,
-) -> tuple[IndexPointer, SingleArray | SingleColumnarData]:  # pragma: no cover
+def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
     if not is_sparse(data):
         raise TypeError("Not sparse data")
     indptr = data["indptr"]
-    sub_data = data["data"]
     if not isinstance(indptr, np.ndarray):
         raise TypeError("indptr is not a 1D numpy array")
     if indptr.ndim != 1:
         raise TypeError("indptr is not a 1D numpy array")
-    return indptr, sub_data
+    return indptr
 
 
 def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> ColumnarData:  # pragma: no cover
@@ -549,14 +546,11 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
     else:
         allowed_dims = [1, 2, 3]
 
-    if is_sparse(data):
-        _, sub_data = _extract_indptr_data(data)
-    else:
-        sub_data = data
+    sub_data = data["data"] if is_sparse(data) else data
 
     if not isinstance(sub_data, dict):
         raise TypeError("Expected columnar data")
-    for attribute, attribute_array in sub_data.values():
+    for attribute, attribute_array in sub_data.items():
         if not isinstance(attribute_array, np.ndarray) or not isinstance(attribute, str):
             raise TypeError("Expected columnar data")
         if attribute_array.ndim not in allowed_dims:
@@ -570,12 +564,14 @@ def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -
     else:
         allowed_dims = [1, 2]
 
-    if is_sparse(data):
-        _, sub_data = _extract_indptr_data(data)
-    else:
-        sub_data = data
+    sub_data = data["data"] if is_sparse(data) else data
+
     if not isinstance(sub_data, np.ndarray):
         raise TypeError("Expected row based data")
     if sub_data.ndim not in allowed_dims:
         raise TypeError("Expected row based data")
     return sub_data
+
+
+def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None = None):
+    return _extract_columnar_data(data, is_batch) if is_columnar(data) else _extract_row_based_data(data, is_batch)

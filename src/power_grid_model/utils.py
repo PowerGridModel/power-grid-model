@@ -17,8 +17,12 @@ import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
 from power_grid_model._utils import (
+    _extract_data_from_component_data,
+    _extract_indptr,
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
+    is_columnar,
+    is_sparse,
 )
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
 from power_grid_model.core.power_grid_dataset import get_dataset_type
@@ -66,22 +70,20 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
         return arr[indptr[scenario] : indptr[scenario + 1]]
 
     def _get_component_scenario(component_scenarios: BatchComponentData) -> np.ndarray:
-        if isinstance(component_scenarios, np.ndarray):
-            return _get_dense_scenario(component_scenarios)
+        data = _extract_data_from_component_data(component_scenarios)
 
-        if "indptr" in component_scenarios:
-            indptr = component_scenarios["indptr"]
-            data = component_scenarios["data"]
-            if isinstance(indptr, np.ndarray):
-                if isinstance(data, np.ndarray):
-                    return _get_sparse_scenario(data, indptr)
-
+        if is_sparse(component_scenarios):
+            indptr = _extract_indptr(component_scenarios)
+            if is_columnar(component_scenarios):
                 return {
                     attribute: _get_sparse_scenario(attribute_data, indptr)
                     for attribute, attribute_data in data.items()
                 }
+            return _get_sparse_scenario(data, indptr)
 
-        return {attribute: _get_dense_scenario(attribute_data) for attribute, attribute_data in data.items()}
+        if is_columnar(component_scenarios):
+            return {attribute: _get_dense_scenario(attribute_data) for attribute, attribute_data in data.items()}
+        return _get_dense_scenario(component_scenarios)
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 
