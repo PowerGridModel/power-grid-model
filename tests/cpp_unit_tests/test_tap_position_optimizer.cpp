@@ -512,8 +512,11 @@ inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_outp
     CHECK(solver_output[math_id.group].call_index >= 0);
 
     auto const& state = solver_output[math_id.group].state;
-    CHECK(state.has_value());
-    return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
+    if (state.has_value()) {
+        return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
+    } else {
+        FAIL(); // for clang-tidy
+    }
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State,
