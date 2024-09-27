@@ -31,7 +31,11 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict, ComponentAttributeFilterOptions
+from power_grid_model.typing import (
+    ComponentAttributeFilterOptions,
+    ComponentAttributeMapping,
+    _ComponentAttributeMappingDict,
+)
 
 
 def is_nan(data) -> bool:
@@ -359,7 +363,7 @@ def _convert_data_to_row_or_columnar(
         return output_array
     if isinstance(attrs, (list, set)) and len(attrs) == 0:
         return {}
-    if isinstance(attrs, EllipsisType):
+    if isinstance(attrs, ComponentAttributeFilterOptions):
         names = data.dtype.names if not is_columnar(data) else data.keys()
         return {attr: deepcopy(data[attr]) for attr in names}
     return {attr: deepcopy(data[attr]) for attr in attrs}
@@ -387,7 +391,8 @@ def process_data_filter(
     elif isinstance(data_filter, (list, set)):
         processed_data_filter = {ComponentType[k]: None for k in data_filter}
     elif isinstance(data_filter, dict) and all(
-        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+        attrs is None or isinstance(attrs, (set, list, ComponentAttributeFilterOptions))
+        for attrs in data_filter.values()
     ):
         processed_data_filter = data_filter
     else:
@@ -421,7 +426,7 @@ def validate_data_filter(
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():
-        if attrs is None or attrs is Ellipsis:
+        if attrs is None or isinstance(attrs, ComponentAttributeFilterOptions):
             continue
         attr_names = dataset_meta[comp_name].dtype.names
         diff = set(attrs).difference(attr_names) if attr_names is not None else set(attrs)

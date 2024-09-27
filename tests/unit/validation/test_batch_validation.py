@@ -8,6 +8,7 @@ import pytest
 
 from power_grid_model import DatasetType, LoadGenType, initialize_array
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model.typing import ComponentAttributeFilterOptions
 from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
@@ -56,7 +57,8 @@ def original_batch_data() -> dict[str, np.ndarray]:
 
 @pytest.fixture
 def original_batch_data_columnar(original_batch_data):
-    return compatibility_convert_row_columnar_dataset(original_batch_data, Ellipsis, DatasetType.update)
+    data_filter = ComponentAttributeFilterOptions.ALL
+    return compatibility_convert_row_columnar_dataset(original_batch_data, data_filter, DatasetType.update)
 
 
 @pytest.fixture(params=["original_batch_data", "original_batch_data_columnar"])

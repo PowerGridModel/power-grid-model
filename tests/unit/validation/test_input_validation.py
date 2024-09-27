@@ -18,6 +18,7 @@ from power_grid_model import (
 )
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, FaultPhase, FaultType
+from power_grid_model.typing import ComponentAttributeFilterOptions
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     FaultPhaseError,
@@ -277,7 +278,8 @@ def original_data() -> dict[ComponentType, np.ndarray]:
 
 @pytest.fixture
 def original_data_columnar(original_data):
-    return compatibility_convert_row_columnar_dataset(original_data, Ellipsis, DatasetType.input)
+    data_filter = ComponentAttributeFilterOptions.ALL
+    return compatibility_convert_row_columnar_dataset(original_data, data_filter, DatasetType.input)
 
 
 @pytest.fixture(params=["original_data", "original_data_columnar"])

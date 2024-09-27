@@ -23,5 +23,9 @@ class ComponentAttributeFilterOptions(IntEnum):
 _ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]
 
 ComponentAttributeMapping = (
-    set[ComponentTypeVar] | list[ComponentTypeVar] | ComponentAttributeFilterOptions | None | _ComponentAttributeMappingDict
+    set[ComponentTypeVar]
+    | list[ComponentTypeVar]
+    | ComponentAttributeFilterOptions
+    | None
+    | _ComponentAttributeMappingDict
 )
