@@ -94,7 +94,7 @@ auto construct_individual_scenarios(OwningDataset& owning_dataset) {
     }
 }
 
-auto load_dataset(std::filesystem::path const& path) {
+OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
@@ -107,7 +107,7 @@ auto load_dataset(std::filesystem::path const& path) {
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
     return OwningDataset{
-        .dataset = {false, 0, "", meta_data},
+        .dataset = {false, 0, "", meta_data_gen::meta_data},
         .const_dataset = {false, 0, ""}}; // fallback for https://github.com/msgpack/msgpack-c/issues/1098
 #endif // __clang_analyzer__ // issue in msgpack
 }
