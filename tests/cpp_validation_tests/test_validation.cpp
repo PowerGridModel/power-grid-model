@@ -24,6 +24,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <numeric>
 #include <optional>
 #include <regex>
 #include <stdexcept>
@@ -32,25 +33,28 @@
 namespace power_grid_model::meta_data {
 
 namespace {
-// taken from common.hpp
-using IdxVector = std::vector<Idx>;
-
-// taken from three_phase_tensor.hpp
-template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
-
 // is nan. Taken from three_phase_tensor.hpp
-template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
+// this one has to be changed
+// template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
 template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
     return is_nan(x.real()) || is_nan(x.imag());
 }
 inline bool is_nan(int32_t x) { return x == std::numeric_limits<int32_t>::min(); }
 inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
-template <class Enum>
+template <typename T, std::size_t N> inline bool is_nan(std::array<T, N> const& array) {
+    for (auto const& element : array) {
+        if (is_nan(element))
+            return true;
+    }
+    return false;
+}
+// maybe this one is not needed
+/*template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, int8_t>
 inline bool is_nan(Enum x) {
     return static_cast<int8_t>(x) == std::numeric_limits<int8_t>::min();
-}
+}*/
 
 template <class Functor, class... Args> decltype(auto) pgm_type_func_selector(Idx type, Functor&& f, Args&&... args) {
     switch (type) {
@@ -61,7 +65,7 @@ template <class Functor, class... Args> decltype(auto) pgm_type_func_selector(Id
     case Idx{2}: // PGM_double
         return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
     case Idx{3}: // PGM_double3
-        return std::forward<Functor>(f).template operator()<Eigen3Vector<double>>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
     default:
         throw std::runtime_error("unknown data type");
     }
@@ -95,7 +99,7 @@ class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
 
 struct OwningMemory {
     std::vector<power_grid_model_cpp::Buffer> buffers{};
-    std::vector<IdxVector> indptrs{};
+    std::vector<std::vector<Idx>> indptrs{};
 };
 
 struct OwningDataset {
@@ -192,11 +196,11 @@ auto load_dataset(std::filesystem::path const& path) {
 template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
     sstr << std::setprecision(16);
-    if constexpr (std::same_as<T, Eigen3Vector<double>>) {
-        sstr << "(" << attribute_value(0) << ", " << attribute_value(1) << ", " << attribute_value(2) << ")";
+    if constexpr (std::same_as<T, std::array<double, 3>>) {
+        sstr << "(" << attribute_value[0] << ", " << attribute_value[1] << ", " << attribute_value[2] << ")";
     } else if constexpr (std::same_as<T, int8_t>) {
         sstr << std::to_string(attribute_value);
-    } else {
+    } else if constexpr (requires { sstr << attribute_value; } ) {
         sstr << attribute_value;
     }
     return sstr.str();
@@ -206,57 +210,97 @@ template <typename T>
 bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
                                double atol, double rtol) {
     using namespace std::literals::complex_literals;
+    if constexpr (std::same_as<T, std::array<double, 3>>) {
+        // these two definitions can probably be cleaned up nicely with transform
+        std::array<double, 3> result{magnitude[0] * exp(1.0i * angle[0]), magnitude[1] * exp(1.0i * angle[1]),
+                                     magnitude[2] * exp(1.0i * angle[2])};
+        std::array<double, 3> ref_result{ref_magnitude[0] * exp(1.0i * ref_angle[0]),
+                                         ref_magnitude[1] * exp(1.0i * ref_angle[1]),
+                                         ref_magnitude[2] * exp(1.0i * ref_angle[2])};
+        // std::ranges::all_of make it better, it is not readable
+        return std::transform_reduce(result.begin(), result.end(), ref_result.begin(), Idx{}, std::plus<Idx>{},
+                                     [&](double element, double ref_element) {
+                                         return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol
+                                                    ? Idx{1}
+                                                    : Idx{};
+                                     }) == Idx{3}
+                   ? true
+                   : false;
+    }
     if constexpr (std::same_as<T, double>) {
         std::complex<double> result{magnitude * exp(1.0i * angle)};
         std::complex<double> ref_result{ref_magnitude * exp(1.0i * ref_angle)};
         return std::abs(result - ref_result) < (std::abs(ref_result) * rtol + atol);
+    } else {
+        return ref_angle == angle && ref_magnitude == magnitude;
     }
-    Eigen3Vector<std::complex<double>> result = magnitude * exp(1.0i * angle);
-    Eigen3Vector<std::complex<double>> ref_result = ref_magnitude * exp(1.0i * ref_angle);
-    return (abs(result - ref_result) < abs(ref_result) * rtol + atol).all();
 }
-
+// can probably combine with check_angle_and_magnitude above
 template <typename T>
 bool compare_value(T const& ref_attribute_value, T const& attribute_value, double atol, double rtol) {
-    if constexpr (std::same_as<T, double>) {
+    if constexpr (std::same_as<T, std::array<double, 3>>) {
+        // these two definitions can probably be cleaned up nicely with transform
+        std::array<double, 3> result{attribute_value[0], attribute_value[1], attribute_value[2]};
+        std::array<double, 3> ref_result{ref_attribute_value[0], ref_attribute_value[1], ref_attribute_value[2]};
+        // std::ranges::all_of make it better, it is not readable
+        return std::transform_reduce(ref_attribute_value.begin(), ref_attribute_value.end(), attribute_value.begin(),
+                                     Idx{}, std::plus<Idx>{},
+                                     [&](double element, double ref_element) {
+                                         return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol
+                                                    ? Idx{1}
+                                                    : Idx{};
+                                     }) == Idx{3}
+                   ? true
+                   : false;
+    } else if constexpr (std::same_as<T, double>) {
         return std::abs(attribute_value - ref_attribute_value) < (std::abs(ref_attribute_value) * rtol + atol);
-    } else if constexpr (std::same_as<T, Eigen3Vector<double>>) {
-        return (abs(attribute_value - ref_attribute_value) < abs(ref_attribute_value) * rtol + atol).all();
     } else {
         return ref_attribute_value == attribute_value;
     }
 }
 
 // assert single result
-/*void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
+void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
-    power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset;
-    power_grid_model_cpp::DatasetConst const& reference_result = owning_reference_result.const_dataset;
+
+    power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset.value();
     auto const& result_info = result.get_info();
     auto const& result_name = result_info.name();
     auto const& result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_name);
     Idx const result_batch_size = result_info.batch_size();
+    auto const& storage = owning_result.storage;
+
+    power_grid_model_cpp::DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
     auto const& reference_result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(reference_result_name);
     Idx const reference_result_batch_size = reference_result_info.batch_size();
+    auto const& reference_storage = owning_reference_result.storage;
+
     CHECK(result_name == reference_result_name);
     CHECK(result_meta == reference_result_meta);
     CHECK(result_batch_size == reference_result_batch_size);
-    CHECK(owning_result.buffers.size() == owning_reference_result.buffers.size());
-    // loop all scenario
-    for (Idx scenario_idx = 0; scenario_idx < result_batch_size; ++scenario_idx) {
-        // loop all component type name
+    // this is false in general because the result buffers are created on the input buffers, but this may be an issue
+    // later. CHECK(storage.buffers.size() == reference_storage.buffers.size());
+
+    // loop through all scenarios
+    for (Idx scenario_idx{}; scenario_idx < result_batch_size; ++scenario_idx) {
+        // loop through all components
         for (Idx component_idx{}; component_idx < reference_result_info.n_components(); ++component_idx) {
+            auto const& component_name = reference_result_info.component_name(component_idx);
             auto const& component_meta =
-                power_grid_model_cpp::MetaData::get_component_by_idx(reference_result_meta, component_idx);
-            auto const& component_name = power_grid_model_cpp::MetaData::component_name(component_meta);
-            auto& ref_buffer = owning_reference_result.buffers.at(component_idx);
-            auto& buffer = owning_result.buffers.at(component_idx);
+                power_grid_model_cpp::MetaData::get_component_by_name(reference_result_name, component_name);
+
+            auto& ref_buffer = reference_storage.buffers.at(component_idx);
+            auto& buffer = storage.buffers.at(component_idx);
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
-            assert(elements_per_scenario >= 0);
-            // loop all attribute
+            CHECK(elements_per_scenario >= 0);
+            // to avoid non-used variables;
+            CAPTURE(rtol);
+            CAPTURE(ref_buffer);
+            CAPTURE(buffer);
+            // loop through all attributes
             for (Idx attribute_idx{}; attribute_idx < power_grid_model_cpp::MetaData::n_attributes(component_meta);
                  ++attribute_idx) {
                 auto const& attribute_meta =
@@ -283,10 +327,16 @@ bool compare_value(T const& ref_attribute_value, T const& attribute_value, doubl
                 auto const& possible_attr_meta = is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(
                                                                 reference_result_name, component_name, magnitude_name)
                                                           : attribute_meta;
-                // loop all object
-                for (Idx obj = 0; obj != elements_per_scenario; ++obj) {
-                    auto check_results = [&]<typename T>(T const& ref_attribute_value, T attribute_value,
-                                                         T ref_possible_attribute_value, T possible_attribute_value) {
+                CAPTURE(attribute_type);
+                CAPTURE(dynamic_atol);
+                CAPTURE(possible_attr_meta);
+                // all checked at correct until this part
+                // loop through all objects
+                for (Idx obj{}; obj < elements_per_scenario; ++obj) {
+                    auto check_results = [&is_angle, &scenario_idx, &obj, &component_name, &attribute_name,
+                                          &dynamic_atol, rtol]<typename T>(
+                                             T const& ref_attribute_value, T attribute_value,
+                                             T ref_possible_attribute_value, T possible_attribute_value) {
                         bool const match = is_angle
                                                ? check_angle_and_magnitude<decltype(ref_attribute_value)>(
                                                      ref_attribute_value, attribute_value, ref_possible_attribute_value,
@@ -305,45 +355,51 @@ bool compare_value(T const& ref_attribute_value, T const& attribute_value, doubl
                         }
                     };
 
-                    auto check_individual_attribute = [&]<typename T>() {
-                        T ref_attribute_value{};
-                        T attribute_value{};
-                        T ref_possible_attribute_value{};
-                        T possible_attribute_value{};
-                        if constexpr (std::same_as<T, Eigen3Vector<double>>) {
-                            ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
-                                             (elements_per_scenario * scenario_idx) + obj, -1);
-                            buffer.get_value(attribute_meta, attribute_value.data(), (elements_per_scenario *
-scenario_idx) + obj, -1); ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
-                                                (elements_per_scenario * scenario_idx) + obj, -1);
-                            buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
-                                            (elements_per_scenario * scenario_idx) + obj, -1);
-                        } else {
-                            ref_buffer.get_value(attribute_meta, &ref_attribute_value,
-                                                (elements_per_scenario * scenario_idx) + obj, -1);
-                            buffer.get_value(attribute_meta, &attribute_value, (elements_per_scenario * scenario_idx) +
-obj, -1); ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value, (elements_per_scenario * scenario_idx)
-+ obj, -1); buffer.get_value(possible_attr_meta, &possible_attribute_value, (elements_per_scenario * scenario_idx) +
-obj, -1);
-                        }
-                        // check attributes
-                        if (is_nan(ref_attribute_value)) {
-                            return;
-                        }
-                        // for angle attribute, also check the magnitude available
-                        if (is_angle && is_nan(ref_possible_attribute_value)) {
-                            return;
-                        }
-                        //check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value,
-                        //              possible_attribute_value);
-                    };
+                    [[maybe_unused]] auto check_individual_attribute =
+                        [&check_results, &buffer, &ref_buffer, &attribute_meta, &possible_attr_meta, &is_angle,
+                         &elements_per_scenario, &scenario_idx, &obj]<typename T>() {
+                            T ref_attribute_value{};
+                            T attribute_value{};
+                            T ref_possible_attribute_value{};
+                            T possible_attribute_value{};
+                            // these can probably be cleaned up
+                            if constexpr (std::same_as<T, std::array<double, 3>>) {
+                                ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
+                                                     (elements_per_scenario * scenario_idx) + obj, -1);
+                                buffer.get_value(attribute_meta, attribute_value.data(),
+                                                 (elements_per_scenario * scenario_idx) + obj, -1);
+                                ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
+                                                     (elements_per_scenario * scenario_idx) + obj, -1);
+                                buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
+                                                 (elements_per_scenario * scenario_idx) + obj, -1);
+                            } else {
+                                ref_buffer.get_value(attribute_meta, &ref_attribute_value,
+                                                     (elements_per_scenario * scenario_idx) + obj, -1);
+                                buffer.get_value(attribute_meta, &attribute_value,
+                                                 (elements_per_scenario * scenario_idx) + obj, -1);
+                                ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value,
+                                                     (elements_per_scenario * scenario_idx) + obj, -1);
+                                buffer.get_value(possible_attr_meta, &possible_attribute_value,
+                                                 (elements_per_scenario * scenario_idx) + obj, -1);
+                            }
+                            // check attributes
+                            if (is_nan(ref_attribute_value)) {
+                                return;
+                            }
+                            // for angle attribute, also check the magnitude available
+                            if (is_angle && is_nan(ref_possible_attribute_value)) {
+                                return;
+                            }
+                            check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value,
+                                          possible_attribute_value);
+                        };
 
                     pgm_type_func_selector(static_cast<Idx>(attribute_type), check_individual_attribute);
                 }
             }
         }
     }
-}*/
+}
 
 // root path
 #ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR
@@ -605,7 +661,7 @@ void validate_single_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const result = create_result_dataset(validation_case.input, output_prefix);
 
-        // Create options
+        // create and set options
         power_grid_model_cpp::Options options{};
         options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
         options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
@@ -616,11 +672,12 @@ void validate_single_case(CaseParam const& param) {
         options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
         options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
 
-        // create model and run
+        // create and run model
         power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
         model.calculate(options, result.dataset.value());
-        // assert_result(result, validation_case.output.value(), param.atol, param.rtol);
-        // assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
+
+        // check results
+        assert_result(result, validation_case.output.value(), param.atol, param.rtol);
     });
 }
 
