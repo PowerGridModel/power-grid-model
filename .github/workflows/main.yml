@@ -32,7 +32,7 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.action }}
+  group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
 

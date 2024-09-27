@@ -35,7 +35,7 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.action }}
+  group: ${{ github.workflow }}-${{ github.ref }}-clang-tidy
   cancel-in-progress: true
 
 jobs:

@@ -21,7 +21,7 @@ on:
   merge_group:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.action }}
+  group: ${{ github.workflow }}-${{ github.ref }}-code-quality
   cancel-in-progress: true
 
 jobs:
