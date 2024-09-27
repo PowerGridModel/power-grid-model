@@ -504,8 +504,8 @@ constexpr auto get_math_id(State const& state, Idx topology_index) {
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename ContainerType>
-inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_output, Idx2D const& math_id,
-                 ControlSide side) {
+inline DoubleComplex i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_output, Idx2D const& math_id,
+                          ControlSide side) {
     REQUIRE(math_id.group >= 0);
     REQUIRE(math_id.group < solver_output.size());
 
@@ -517,6 +517,7 @@ inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_outp
         return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
     }
     FAIL("Unreachable");
+    return {};
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State,
