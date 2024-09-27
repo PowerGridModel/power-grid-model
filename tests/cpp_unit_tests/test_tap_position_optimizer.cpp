@@ -512,10 +512,11 @@ inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_outp
     CHECK(solver_output[math_id.group].call_index >= 0);
 
     auto const& state = solver_output[math_id.group].state;
-    if (state.has_value()) {
+    REQUIRE(state.has_value());
+    if (state.has_value()) { // necessary for clang-tidy
         return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
     }
-    FAIL();
+    FAIL("Unreachable");
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State,
