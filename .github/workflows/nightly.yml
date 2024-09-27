@@ -11,12 +11,16 @@ on:
     - cron: "0 2 * * *" # Based on UTC time
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-nightly
   cancel-in-progress: true
 
 jobs:
   main:
     uses: "./.github/workflows/main.yml"
+    permissions:
+      contents: write
+    with:
+      create_release: false
 
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
