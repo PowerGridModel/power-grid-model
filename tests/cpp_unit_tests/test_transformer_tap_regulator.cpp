@@ -199,14 +199,14 @@ TEST_CASE("Test transformer tap regulator") {
     }
 
     SUBCASE("Test default line drop compensation") {
-        TransformerTapRegulator regulator{{.id = 1,
-                                           .regulated_object = 2,
-                                           .status = 1,
-                                           .control_side = ControlSide::from,
-                                           .u_set = 10.0e3,
-                                           .u_band = 1.0e3},
-                                          ComponentType::branch,
-                                          u_rated};
+        TransformerTapRegulator const regulator{{.id = 1,
+                                                 .regulated_object = 2,
+                                                 .status = 1,
+                                                 .control_side = ControlSide::from,
+                                                 .u_set = 10.0e3,
+                                                 .u_band = 1.0e3},
+                                                ComponentType::branch,
+                                                u_rated};
 
         TransformerTapRegulatorCalcParam const param = regulator.calc_param<symmetric_t>();
         CHECK(!is_nan(param.z_compensation));

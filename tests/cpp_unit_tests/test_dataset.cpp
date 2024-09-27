@@ -247,7 +247,7 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
         SUBCASE("Write access") {
             A::InputType const new_values{.id = 20, .a0 = -10.0, .a1 = nan};
             A::InputType const expected{.id = new_values.id, .a0 = nan, .a1 = new_values.a1};
-            Idx size = range_object.size();
+            Idx const size = range_object.size();
             for (Idx idx = 0; idx < size; ++idx) {
                 check_buffer(range_object);
                 range_object[idx] = new_values;
@@ -773,7 +773,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                 if constexpr (!std::same_as<DatasetType, ConstDataset>) {
                                     auto buffer_span =
                                         dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
-                                    Idx size = buffer_span.size();
+                                    Idx const size = buffer_span.size();
                                     for (Idx idx = 0; idx < size; ++idx) {
                                         buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                         CHECK(id_buffer[idx + (scenario * elements_per_scenario)] == -10);
@@ -930,7 +930,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             if constexpr (!std::same_as<DatasetType, ConstDataset>) {
                                 auto buffer_span =
                                     dataset.template get_columnar_buffer_span<input_getter_s, A>(scenario);
-                                Idx size = buffer_span.size();
+                                Idx const size = buffer_span.size();
                                 for (Idx idx = 0; idx < size; ++idx) {
                                     buffer_span[idx] = A::InputType{.id = -10, .a0 = -1.0, .a1 = -2.0};
                                     CHECK(id_buffer[idx + (a_indptr[scenario])] == -10);
@@ -976,8 +976,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
             auto const& dataset_type = test_meta_data_all.datasets.front();
             CAPTURE(std::string_view{dataset_type.name});
 
-            auto const batch_size = 2;
-            auto const a_elements_per_scenario = 3;
+            Idx const batch_size{2};
+            Idx const a_elements_per_scenario{3};
 
             auto dataset = create_dataset(true, batch_size, dataset_type);
 
