@@ -15,7 +15,7 @@ on:
   merge_group:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-sonar
   cancel-in-progress: true
 
 jobs:

@@ -35,7 +35,7 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-clang-tidy
   cancel-in-progress: true
 
 jobs:
@@ -77,7 +77,7 @@ jobs:
       - name: Set build target in case of workflow dispatch
         if: github.event_name == 'workflow_dispatch' || github.event.event_name == 'workflow_call'
         run: |
-          echo "TARGET=${{ github.event.inputs.target }}" >> $GITHUB_ENV
+          echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
 
       - name: Build
         run: |
