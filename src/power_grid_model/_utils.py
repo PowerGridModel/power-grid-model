@@ -23,11 +23,14 @@ from power_grid_model.data_types import (
     BatchComponentData,
     BatchDataset,
     BatchList,
+    ColumnarData,
     ComponentData,
+    DataArray,
     Dataset,
     DenseBatchArray,
     DenseBatchColumnarData,
     DenseBatchData,
+    IndexPointer,
     PythonDataset,
     SingleArray,
     SingleColumn,
@@ -82,7 +85,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     # While the number of batches must be the same for each component, the structure (2d numpy array or indptr/data)
     # doesn't have to be. Therefore, we'll check the structure for each component and copy the data accordingly.
     for component, data in batch_data.items():
-        validate_component_data(data, component)
+        component_data_checks(data, component)
         component_batches: Sequence[SingleComponentData]
         if is_sparse(data):
             component_batches = split_sparse_batch_data_in_batches(cast(SparseBatchData, data), component)
@@ -141,7 +144,7 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
     Returns:
         The number of batches
     """
-    validate_component_data(batch_data)
+    component_data_checks(batch_data)
     if is_sparse(batch_data):
         indptr = batch_data["indptr"]
         return indptr.size - 1
@@ -188,7 +191,7 @@ def split_dense_batch_data_in_batches(
     Returns:
         A list with a single component data per scenario
     """
-    validate_component_data(data, component)
+    component_data_checks(data, component)
     if isinstance(data, np.ndarray):
         return cast(list[SingleComponentData], _split_numpy_array_in_batches(data))
 
@@ -495,11 +498,11 @@ def is_columnar(component_data: ComponentData) -> bool:
     return not isinstance(component_data, np.ndarray)
 
 
-def validate_component_data(component_data: ComponentData, component=None) -> None:
+def component_data_checks(component_data: ComponentData, component=None) -> None:
     """Checks if component_data is of ComponentData and raises ValueError if its not"""
     component_name = f"'{component}'" if component is not None else ""
     err_msg = f"Invalid data for {component_name} component. " "{0}"
-    err_msg_suffixed = err_msg + "It should be a 1D/2D Numpy structured array or a dictionary of such."
+    err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
 
     if is_sparse(component_data):
         indptr = component_data["indptr"]
@@ -524,3 +527,55 @@ def validate_component_data(component_data: ComponentData, component=None) -> No
         raise TypeError(err_msg_suffixed.format(f"Invalid data type {type(sub_data).__name__} "))
     elif isinstance(sub_data, np.ndarray) and sub_data.ndim not in [1, 2]:
         raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {sub_data.ndim}. "))
+
+
+def _extract_indptr_data(
+    data: ComponentData,
+) -> tuple[IndexPointer, SingleArray | SingleColumnarData]:  # pragma: no cover
+    if not is_sparse(data):
+        raise TypeError("Not sparse data")
+    indptr = data["indptr"]
+    sub_data = data["data"]
+    if not isinstance(indptr, np.ndarray):
+        raise TypeError("indptr is not a 1D numpy array")
+    if indptr.ndim != 1:
+        raise TypeError("indptr is not a 1D numpy array")
+    return indptr, sub_data
+
+
+def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> ColumnarData:  # pragma: no cover
+    if is_batch is not None:
+        allowed_dims = [2, 3] if is_batch else [1, 2]
+    else:
+        allowed_dims = [1, 2, 3]
+
+    if is_sparse(data):
+        _, sub_data = _extract_indptr_data(data)
+    else:
+        sub_data = data
+
+    if not isinstance(sub_data, dict):
+        raise TypeError("Expected columnar data")
+    for attribute, attribute_array in sub_data.values():
+        if not isinstance(attribute_array, np.ndarray) or not isinstance(attribute, str):
+            raise TypeError("Expected columnar data")
+        if attribute_array.ndim not in allowed_dims:
+            raise TypeError("Expected columnar data")
+    return sub_data
+
+
+def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> DataArray:  # pragma: no cover
+    if is_batch is not None:
+        allowed_dims = [2] if is_batch else [1]
+    else:
+        allowed_dims = [1, 2]
+
+    if is_sparse(data):
+        _, sub_data = _extract_indptr_data(data)
+    else:
+        sub_data = data
+    if not isinstance(sub_data, np.ndarray):
+        raise TypeError("Expected row based data")
+    if sub_data.ndim not in allowed_dims:
+        raise TypeError("Expected row based data")
+    return sub_data

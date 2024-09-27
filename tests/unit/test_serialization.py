@@ -475,6 +475,7 @@ def assert_single_dataset_entries(
             assert all(len(v) == len(serialized_input) for v in deserialized_output.values())
             # Assert number of attributes are not more than input for all batches
             # Discrepencies in equal / less than input captured in individual check
+            # TODO Test for deserialize only relevant attributes
             # assert all(len(v) >= len(deserialized_output) for v in serialized_input)
         else:
             assert isinstance(deserialized_output, np.ndarray)

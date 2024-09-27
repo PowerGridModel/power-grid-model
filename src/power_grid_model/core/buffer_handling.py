@@ -76,8 +76,6 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
     Returns:
         a raw view on the data set.
     """
-    x = np.ascontiguousarray(data, dtype=dtype)
-    assert data is x
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
 
