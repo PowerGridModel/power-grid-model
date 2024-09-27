@@ -106,9 +106,9 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
-    return OwningDataset{
-        .dataset = {false, 0, "", meta_data_gen::meta_data},
-        .const_dataset = {false, 0, ""}}; // fallback for https://github.com/msgpack/msgpack-c/issues/1098
+    // fallback for https://github.com/msgpack/msgpack-c/issues/1098
+    return OwningDataset{.dataset = {false, 0, "", meta_data_gen::meta_data},
+                         .const_dataset = {false, 0, "", meta_data_gen::meta_data}};
 #endif // __clang_analyzer__ // issue in msgpack
 }
 
