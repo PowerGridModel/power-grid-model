@@ -509,10 +509,10 @@ inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_outp
     REQUIRE(math_id.group >= 0);
     REQUIRE(math_id.group < solver_output.size());
 
-    auto const& state = solver_output[math_id.group].state;
-    REQUIRE(state.has_value());
-
     CHECK(solver_output[math_id.group].call_index >= 0);
+
+    auto const& state = solver_output[math_id.group].state;
+    CHECK(state.has_value());
     return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
 }
 
@@ -854,14 +854,14 @@ TEST_CASE("Test Tap position optimizer") {
                     state_b.tap_max = 3;
                     SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
                     SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                    SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + IntS{1}; }
+                    SUBCASE("start mid range") { state_b.tap_pos = narrow_cast<IntS>(state_b.tap_min + 1); }
                 }
                 SUBCASE("inverted tap range") {
                     state_b.tap_min = 3;
                     state_b.tap_max = 1;
                     SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
                     SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                    SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min - IntS{1}; }
+                    SUBCASE("start mid range") { state_b.tap_pos = narrow_cast<IntS>(state_b.tap_min - 1); }
                 }
                 SUBCASE("extreme tap range") {
                     state_b.tap_min = IntS{0};

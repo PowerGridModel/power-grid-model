@@ -145,7 +145,7 @@ namespace test {
 namespace {
 template <typename DatasetType>
 DatasetType create_dataset(bool const is_batch, Idx const batch_size, MetaDataset const& dataset_type) {
-    auto const dataset = DatasetType{is_batch, batch_size, dataset_type.name, test_meta_data_all};
+    auto dataset = DatasetType{is_batch, batch_size, dataset_type.name, test_meta_data_all};
     CHECK(&dataset.meta_data() == static_cast<MetaData const*>(&test_meta_data_all));
     CHECK(dataset.empty());
     CHECK(dataset.is_batch() == is_batch);

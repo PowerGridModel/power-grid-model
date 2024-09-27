@@ -45,7 +45,7 @@
       "description": "Target Unix platform.",
       "hidden": true,
       "environment": {
-        "PLATFORM_C_FLAGS": "-Wall -Wextra -pedantic -Wno-error -Wno-deprecated-declarations",
+        "PLATFORM_C_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-deprecated-declarations",
         "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS} -Wno-deprecated-copy"
       },
       "condition": {
