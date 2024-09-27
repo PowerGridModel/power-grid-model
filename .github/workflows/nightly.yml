@@ -11,7 +11,7 @@ on:
     - cron: "0 2 * * *" # Based on UTC time
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-root
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.action }}
   cancel-in-progress: true
 
 jobs:
