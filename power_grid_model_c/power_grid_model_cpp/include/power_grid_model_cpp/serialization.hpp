@@ -33,13 +33,9 @@ class Deserializer {
 
     RawDeserializer* get() const { return deserializer_.get(); }
 
-    static DatasetWritable& get_dataset(Deserializer& deserializer) { return deserializer.dataset_; }
-    DatasetWritable& get_dataset() { return get_dataset(*this); }
+    DatasetWritable& get_dataset() { return dataset_; }
 
-    static void parse_to_buffer(Deserializer const& deserializer) {
-        deserializer.handle_.call_with(PGM_deserializer_parse_to_buffer, deserializer.get());
-    }
-    void parse_to_buffer() const { parse_to_buffer(*this); }
+    void parse_to_buffer() const { handle_.call_with(PGM_deserializer_parse_to_buffer, get()); }
 
   private:
     Handle handle_{};
@@ -54,22 +50,18 @@ class Serializer {
 
     RawSerializer* get() const { return serializer_.get(); }
 
-    static std::string_view get_to_binary_buffer(Serializer const& serializer, Idx use_compact_list) {
+    std::string_view get_to_binary_buffer(Idx use_compact_list) const {
         char const* temp_data{};
         Idx buffer_size{};
-        serializer.handle_.call_with(PGM_serializer_get_to_binary_buffer, serializer.get(), use_compact_list,
-                                     &temp_data, &buffer_size);
+        handle_.call_with(PGM_serializer_get_to_binary_buffer, get(), use_compact_list, &temp_data, &buffer_size);
         if (temp_data == nullptr) {
             return std::string_view{};
         } // empty data
         return std::string_view{temp_data, static_cast<size_t>(buffer_size)};
     }
-    std::string_view get_to_binary_buffer(Idx use_compact_list) const {
-        return get_to_binary_buffer(*this, use_compact_list);
-    }
 
-    static void get_to_binary_buffer(Serializer const& serializer, Idx use_compact_list, std::vector<std::byte>& data) {
-        auto temp_data = get_to_binary_buffer(serializer, use_compact_list);
+    void get_to_binary_buffer(Idx use_compact_list, std::vector<std::byte>& data) const {
+        auto temp_data = get_to_binary_buffer(use_compact_list);
         if (!temp_data.empty()) {
             data.resize(temp_data.size());
             std::memcpy(data.data(), temp_data.data(), temp_data.size());
@@ -77,28 +69,19 @@ class Serializer {
             data.resize(0); // empty data
         }
     }
-    void get_to_binary_buffer(Idx use_compact_list, std::vector<std::byte>& data) const {
-        get_to_binary_buffer(*this, use_compact_list, data);
-    }
 
-    static void get_to_binary_buffer(Serializer const& serializer, Idx use_compact_list, std::vector<char>& data) {
-        auto temp_data = get_to_binary_buffer(serializer, use_compact_list);
+    void get_to_binary_buffer(Idx use_compact_list, std::vector<char>& data) const {
+        auto temp_data = get_to_binary_buffer(use_compact_list);
         if (!temp_data.empty()) {
             data.assign(temp_data.begin(), temp_data.end());
         } else {
             data.resize(0); // empty data
         }
     }
-    void get_to_binary_buffer(Idx use_compact_list, std::vector<char>& data) const {
-        get_to_binary_buffer(*this, use_compact_list, data);
-    }
 
-    static std::string get_to_zero_terminated_string(Serializer const& serializer, Idx use_compact_list, Idx indent) {
-        return std::string{serializer.handle_.call_with(PGM_serializer_get_to_zero_terminated_string, serializer.get(),
-                                                        use_compact_list, indent)};
-    }
     std::string get_to_zero_terminated_string(Idx use_compact_list, Idx indent) const {
-        return get_to_zero_terminated_string(*this, use_compact_list, indent);
+        return std::string{
+            handle_.call_with(PGM_serializer_get_to_zero_terminated_string, get(), use_compact_list, indent)};
     }
 
   private:
