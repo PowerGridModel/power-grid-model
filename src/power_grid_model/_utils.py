@@ -319,7 +319,7 @@ def compatibility_convert_row_columnar_dataset(
     Args:
         data (Dataset): dataset to convert
         data_filter (ComponentAttributeMapping): desired component and attribute mapping
-        dataset_type (DatasetType): type of dataset, input, update or (sym | asym | sc)_output
+        dataset_type (DatasetType): type of dataset (e.g., input, update or [sym | asym | sc]_output)
         available_components (list[ComponentType] | None): available components in model
 
     Returns:
