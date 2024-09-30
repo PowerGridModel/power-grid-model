@@ -160,7 +160,6 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         owning_dataset.storage.buffers.at(component_idx).set_nan();
-        auto& current_buffer = owning_dataset.storage.buffers.at(component_idx);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, owning_dataset.storage.buffers.at(component_idx));
     }
@@ -209,16 +208,17 @@ template <typename T>
 bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
                                double atol, double rtol) {
     using namespace std::literals::complex_literals;
-    if constexpr (std::same_as<T, std::array<double, 3>>) {
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
         // these two definitions can probably be cleaned up nicely with transform
-        std::array<double, 3> result{magnitude[0] * exp(1.0i * angle[0]), magnitude[1] * exp(1.0i * angle[1]),
-                                     magnitude[2] * exp(1.0i * angle[2])};
-        std::array<double, 3> ref_result{ref_magnitude[0] * exp(1.0i * ref_angle[0]),
-                                         ref_magnitude[1] * exp(1.0i * ref_angle[1]),
-                                         ref_magnitude[2] * exp(1.0i * ref_angle[2])};
+        std::array<std::complex<double>, 3> result{magnitude[0] * exp(1.0i * angle[0]),
+                                                   magnitude[1] * exp(1.0i * angle[1]),
+                                                   magnitude[2] * exp(1.0i * angle[2])};
+        std::array<std::complex<double>, 3> ref_result{ref_magnitude[0] * exp(1.0i * ref_angle[0]),
+                                                       ref_magnitude[1] * exp(1.0i * ref_angle[1]),
+                                                       ref_magnitude[2] * exp(1.0i * ref_angle[2])};
         // std::ranges::all_of make it better, it is not readable
         return std::transform_reduce(result.begin(), result.end(), ref_result.begin(), Idx{}, std::plus<Idx>{},
-                                     [&](double element, double ref_element) {
+                                     [&](std::complex<double> element, std::complex<double> ref_element) {
                                          return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol
                                                     ? Idx{1}
                                                     : Idx{};
@@ -226,7 +226,7 @@ bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_
                    ? true
                    : false;
     }
-    if constexpr (std::same_as<T, double>) {
+    if constexpr (std::is_same_v<std::decay_t<T>, double>) {
         std::complex<double> result{magnitude * exp(1.0i * angle)};
         std::complex<double> ref_result{ref_magnitude * exp(1.0i * ref_angle)};
         return std::abs(result - ref_result) < (std::abs(ref_result) * rtol + atol);
@@ -237,10 +237,7 @@ bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_
 // can probably combine with check_angle_and_magnitude above
 template <typename T>
 bool compare_value(T const& ref_attribute_value, T const& attribute_value, double atol, double rtol) {
-    if constexpr (std::same_as<T, std::array<double, 3>>) {
-        // these two definitions can probably be cleaned up nicely with transform
-        std::array<double, 3> result{attribute_value[0], attribute_value[1], attribute_value[2]};
-        std::array<double, 3> ref_result{ref_attribute_value[0], ref_attribute_value[1], ref_attribute_value[2]};
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
         // std::ranges::all_of make it better, it is not readable
         return std::transform_reduce(ref_attribute_value.begin(), ref_attribute_value.end(), attribute_value.begin(),
                                      Idx{}, std::plus<Idx>{},
@@ -251,7 +248,7 @@ bool compare_value(T const& ref_attribute_value, T const& attribute_value, doubl
                                      }) == Idx{3}
                    ? true
                    : false;
-    } else if constexpr (std::same_as<T, double>) {
+    } else if constexpr (std::is_same_v<std::decay_t<T>, double>) {
         return std::abs(attribute_value - ref_attribute_value) < (std::abs(ref_attribute_value) * rtol + atol);
     } else {
         return ref_attribute_value == attribute_value;
@@ -351,7 +348,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                         T attribute_value{};
                         T ref_possible_attribute_value{};
                         T possible_attribute_value{};
-                    
+
                         // these can probably be cleaned up
                         // the array version probably has the buffer issue due to stride again.
                         if constexpr (std::same_as<T, std::array<double, 3>>) {
