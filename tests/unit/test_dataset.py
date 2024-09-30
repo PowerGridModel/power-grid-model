@@ -195,5 +195,5 @@ def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr):
             "indptr": bad_indptr,
         },
     }
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         CConstDataset(data, dataset_type)
