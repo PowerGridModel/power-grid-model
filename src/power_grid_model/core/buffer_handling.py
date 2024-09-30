@@ -217,14 +217,14 @@ def _get_sparse_buffer_properties(
     indptr = data["indptr"]
 
     if not isinstance(indptr, np.ndarray):
-        raise TypeError("indptr must be of type IndexPointer [np.ndarray]")
+        raise TypeError(f"indptr must be of type IndexPointer [np.ndarray]. {VALIDATOR_MSG}")
 
     ndim = 1
     columns: list[AttributeType] | None = None
     if isinstance(contents, np.ndarray):
         shape: tuple[int, ...] = contents.shape
     elif not contents:
-        raise ValueError("Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
+        raise ValueError(f"Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
     elif isinstance(contents, dict):
         attribute, attribute_data = next(iter(contents.items()))
         shape = attribute_data.shape[:ndim]
