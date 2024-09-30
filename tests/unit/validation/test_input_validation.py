@@ -435,6 +435,7 @@ def test_validate_input_data_sym_calculation(input_data):
             [
                 "node",
                 "line",
+                "generic_branch",
                 "transformer",
                 "three_winding_transformer",
                 "source",
@@ -453,7 +454,7 @@ def test_validate_input_data_sym_calculation(input_data):
             "sym_power_sensor",
             "measured_object",
             [7, 10],
-            ["line", "transformer"],
+            ["line", "generic_branch", "transformer"],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
@@ -471,6 +472,7 @@ def test_validate_input_data_sym_calculation(input_data):
             [
                 "node",
                 "line",
+                "generic_branch",
                 "transformer",
                 "three_winding_transformer",
                 "source",
@@ -489,7 +491,7 @@ def test_validate_input_data_sym_calculation(input_data):
             "asym_power_sensor",
             "measured_object",
             [7, 10],
-            ["line", "transformer"],
+            ["line", "generic_branch", "transformer"],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors

@@ -14,6 +14,7 @@ set(PROJECT_SOURCES
     "test_three_phase_tensor.cpp"
     "test_node.cpp"
     "test_line.cpp"
+    "test_genericbranch.cpp"
     "test_link.cpp"
     "test_load_gen.cpp"
     "test_source.cpp"

@@ -6,6 +6,7 @@
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/branch3.hpp>
 #include <power_grid_model/component/fault.hpp>
+#include <power_grid_model/component/genericbranch.hpp>
 #include <power_grid_model/component/line.hpp>
 #include <power_grid_model/component/link.hpp>
 #include <power_grid_model/component/load_gen.hpp>
@@ -26,6 +27,7 @@ namespace power_grid_model {
 static_assert(component_c<Node>);
 static_assert(component_c<Line>);
 static_assert(component_c<Link>);
+static_assert(component_c<GenericBranch>);
 static_assert(component_c<Transformer>);
 static_assert(component_c<Source>);
 static_assert(component_c<SymLoad>);
@@ -53,6 +55,10 @@ static_assert(!is_copyable_to<Fault, Base>);
 static_assert(is_copyable_to<Line, Line>);
 static_assert(!is_copyable_to<Line, Branch>);
 static_assert(!is_copyable_to<Line, Base>);
+
+static_assert(is_copyable_to<GenericBranch, GenericBranch>);
+static_assert(!is_copyable_to<GenericBranch, Branch>);
+static_assert(!is_copyable_to<GenericBranch, Base>);
 
 static_assert(is_copyable_to<Link, Link>);
 static_assert(!is_copyable_to<Link, Branch>);
