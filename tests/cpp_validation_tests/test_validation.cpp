@@ -159,7 +159,6 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
         Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
-        owning_dataset.storage.buffers.at(component_idx).set_nan();
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, owning_dataset.storage.buffers.at(component_idx));
     }
@@ -194,11 +193,11 @@ auto load_dataset(std::filesystem::path const& path) {
 template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
     sstr << std::setprecision(16);
-    if constexpr (std::same_as<T, std::array<double, 3>>) {
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
         sstr << "(" << attribute_value[0] << ", " << attribute_value[1] << ", " << attribute_value[2] << ")";
-    } else if constexpr (std::same_as<T, int8_t>) {
+    } else if constexpr (std::is_same_v<std::decay_t<T>, int8_t>) {
         sstr << std::to_string(attribute_value);
-    } else if constexpr (requires { sstr << attribute_value; }) {
+    } else {
         sstr << attribute_value;
     }
     return sstr.str();
@@ -274,7 +273,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
     // Idx const reference_result_batch_size = reference_result_info.batch_size();
     auto const& reference_storage = owning_reference_result.storage;
     // this is false in general because the result buffers are created on the input buffers, but this may be an issue
-    // later. CHECK(storage.buffers.size() == reference_storage.buffers.size());
+    CHECK(storage.buffers.size() == reference_storage.buffers.size());
 
     // loop through all scenarios
     for (Idx scenario_idx{}; scenario_idx < result_batch_size; ++scenario_idx) {
@@ -351,7 +350,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
 
                         // these can probably be cleaned up
                         // the array version probably has the buffer issue due to stride again.
-                        if constexpr (std::same_as<T, std::array<double, 3>>) {
+                        if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
                             ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
                                                  (elements_per_scenario * scenario_idx) + obj, 0);
                             buffer.get_value(attribute_meta, attribute_value.data(),
@@ -647,7 +646,7 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const result = create_result_dataset(validation_case.input, output_prefix);
+        auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
 
         // create and set options
         power_grid_model_cpp::Options options{};
