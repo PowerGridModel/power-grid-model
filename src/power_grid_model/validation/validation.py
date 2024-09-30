@@ -16,7 +16,7 @@ from typing import Optional, cast
 import numpy as np
 
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
-from power_grid_model._utils import convert_batch_dataset_to_batch_list
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset, convert_batch_dataset_to_batch_list
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
     Branch3Side,
@@ -83,8 +83,12 @@ def validate_input_data(
     Raises:
         Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
+    # Convert to row based if in columnar or mixed format format
+    row_input_data = compatibility_convert_row_columnar_dataset(input_data, None, DatasetType.input)
+
     # A deep copy is made of the input data, since default values will be added in the validation process
-    input_data_copy = copy.deepcopy(input_data)
+    input_data_copy = copy.deepcopy(row_input_data)
+
     assert_valid_data_structure(input_data_copy, DatasetType.input)
 
     errors: list[ValidationError] = []
@@ -131,8 +135,13 @@ def validate_batch_data(
 
     input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
+    # Convert to row based if in columnar format
+    # TODO(figueroa1395): transform to columnar per single batch scenario once the columnar dataset python extension
+    # is finished
+    row_update_data = compatibility_convert_row_columnar_dataset(update_data, None, DatasetType.update)
+
     # Splitting update_data_into_batches may raise TypeErrors and ValueErrors
-    batch_data = convert_batch_dataset_to_batch_list(update_data)
+    batch_data = convert_batch_dataset_to_batch_list(row_update_data)
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):

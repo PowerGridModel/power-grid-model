@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#define PGM_ENABLE_EXPERIMENTAL
-
 #include "power_grid_model_cpp.hpp"
 
 #include <power_grid_model_c/dataset_definitions.h>
@@ -192,7 +190,7 @@ TEST_CASE("API Serialization and Deserialization") {
             ID node_id_2{0};
             double node_u_rated_2;
             // set buffer
-            Buffer source_buffer_columnar{PGM_def_input_source, 1};
+            Buffer const source_buffer_columnar{PGM_def_input_source, 1};
             dataset.set_buffer("node", nullptr, nullptr);
             dataset.set_attribute_buffer("node", "id", &node_id_2);
             dataset.set_attribute_buffer("node", "u_rated", &node_u_rated_2);

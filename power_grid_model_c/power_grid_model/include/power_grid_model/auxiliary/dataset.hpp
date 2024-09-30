@@ -401,10 +401,10 @@ template <dataset_type_tag dataset_type_> class Dataset {
         for (Idx i{}; i != n_components(); ++i) {
             auto const& buffer = get_buffer(i);
             auto const& component_info = get_component_info(i);
-            Idx size = component_info.elements_per_scenario >= 0
-                           ? component_info.elements_per_scenario
-                           : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
-            Idx offset = component_info.elements_per_scenario >= 0 ? size * scenario : buffer.indptr[scenario];
+            Idx const size = component_info.elements_per_scenario >= 0
+                                 ? component_info.elements_per_scenario
+                                 : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
+            Idx const offset = component_info.elements_per_scenario >= 0 ? size * scenario : buffer.indptr[scenario];
             if (is_columnar(buffer)) {
                 result.add_buffer(component_info.component->name, size, size, nullptr, nullptr);
                 for (auto const& attribute_buffer : buffer.attributes) {

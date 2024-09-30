@@ -8,7 +8,6 @@
 
 namespace power_grid_model::optimizer::test {
 namespace {
-namespace meta_gen = meta_data::meta_data_gen;
 constexpr auto meta_data = meta_data::meta_data_gen::get_meta_data<
     ComponentList<Line, Link, Node, Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>,
     meta_data::update_getter_s>::value;
