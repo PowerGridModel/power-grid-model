@@ -135,22 +135,17 @@ def validate_batch_data(
 
     input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data))
 
-    # Convert to row based if in columnar format
-    # TODO(figueroa1395): transform to columnar per single batch scenario once the columnar dataset python extension
-    # is finished
-    row_update_data = compatibility_convert_row_columnar_dataset(update_data, None, DatasetType.update)
-
-    # Splitting update_data_into_batches may raise TypeErrors and ValueErrors
-    batch_data = convert_batch_dataset_to_batch_list(row_update_data)
+    batch_data = convert_batch_dataset_to_batch_list(update_data)
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
-        assert_valid_data_structure(batch_update_data, DatasetType.update)
-        id_errors: list[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
+        row_update_data = compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
+        assert_valid_data_structure(row_update_data, DatasetType.update)
+        id_errors: list[ValidationError] = list(validate_ids_exist(row_update_data, input_data))
 
         batch_errors = input_errors + id_errors
         if not id_errors:
-            merged_data = update_input_data(input_data, batch_update_data)
+            merged_data = update_input_data(input_data, row_update_data)
             batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
             batch_errors += validate_values(merged_data, calculation_type)
 
