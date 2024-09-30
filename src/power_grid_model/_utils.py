@@ -92,9 +92,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
         else:
             component_batches = split_dense_batch_data_in_batches(data, component)
         for i, batch in enumerate(component_batches):
-            if isinstance(batch, dict):
-                list_data[i][component] = np.array([])
-            elif batch.size > 0:
+            if (isinstance(batch, dict) and batch) or (isinstance(batch, np.ndarray) and batch.size > 0):
                 list_data[i][component] = batch
     return list_data
 
@@ -195,13 +193,13 @@ def split_dense_batch_data_in_batches(
     if isinstance(data, np.ndarray):
         return cast(list[SingleComponentData], _split_numpy_array_in_batches(data))
 
-    batch_size = get_and_verify_batch_sizes(data)
+    batch_size = get_batch_size(data)
     scenarios_per_attribute = {
         attribute: _split_numpy_array_in_batches(attribute_data) for attribute, attribute_data in data.items()
     }
 
     return [
-        {attribute: scenarios_per_attribute[attribute_data][scenario] for attribute, attribute_data in data.items()}
+        {attribute: scenarios_per_attribute[attribute][scenario] for attribute, attribute_data in data.items()}
         for scenario in range(batch_size)
     ]
 
