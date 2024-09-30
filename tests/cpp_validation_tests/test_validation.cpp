@@ -321,8 +321,8 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
                     auto check_results = [&is_angle, &scenario_idx, &obj, &component_name, &attribute_name,
                                           &dynamic_atol, rtol]<typename T>(
-                                             T const& ref_attribute_value, T attribute_value,
-                                             T ref_possible_attribute_value, T possible_attribute_value) {
+                                             T const& ref_attribute_value, T const& attribute_value,
+                                             T const& ref_possible_attribute_value, T const& possible_attribute_value) {
                         bool const match = is_angle
                                                ? check_angle_and_magnitude<decltype(ref_attribute_value)>(
                                                      ref_attribute_value, attribute_value, ref_possible_attribute_value,
@@ -353,13 +353,13 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                         // the array version probably has the buffer issue due to stride again.
                         if constexpr (std::same_as<T, std::array<double, 3>>) {
                             ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
-                                                 (elements_per_scenario * scenario_idx) + obj, -1);
+                                                 (elements_per_scenario * scenario_idx) + obj, 0);
                             buffer.get_value(attribute_meta, attribute_value.data(),
-                                             (elements_per_scenario * scenario_idx) + obj, -1);
+                                             (elements_per_scenario * scenario_idx) + obj, 0);
                             ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
-                                                 (elements_per_scenario * scenario_idx) + obj, -1);
+                                                 (elements_per_scenario * scenario_idx) + obj, 0);
                             buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
-                                             (elements_per_scenario * scenario_idx) + obj, -1);
+                                             (elements_per_scenario * scenario_idx) + obj, 0);
                         } else {
                             ref_buffer.get_value(attribute_meta, &ref_attribute_value,
                                                  (elements_per_scenario * scenario_idx) + obj, 0);
