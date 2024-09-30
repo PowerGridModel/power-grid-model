@@ -20,6 +20,7 @@ from power_grid_model._utils import (
 )
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.data_types import BatchDataset, BatchList
+from power_grid_model.typing import ComponentAttributeFilterOptions
 
 from .utils import convert_python_to_numpy
 
@@ -430,18 +431,34 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
         convert_batch_dataset_to_batch_list(update_data)
 
 
+DATA_FILTER_ALL = ComponentAttributeFilterOptions.ALL
+DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.RELEVANT
+
+
 @pytest.mark.parametrize(
     ("data_filter", "expected"),
     [
         (None, {CT.node: None, CT.sym_load: None, CT.source: None}),
-        (..., {CT.node: ..., CT.sym_load: ..., CT.source: ...}),
+        (DATA_FILTER_ALL, {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL, CT.source: DATA_FILTER_ALL}),
+        (
+            DATA_FILTER_RELEVANT,
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT, CT.source: DATA_FILTER_RELEVANT},
+        ),
         ([CT.node, CT.sym_load], {CT.node: None, CT.sym_load: None}),
         ({CT.node, CT.sym_load}, {CT.node: None, CT.sym_load: None}),
         ({CT.node: [], CT.sym_load: []}, {CT.node: [], CT.sym_load: []}),
         ({CT.node: [], CT.sym_load: ["p"]}, {CT.node: [], CT.sym_load: ["p"]}),
         ({CT.node: None, CT.sym_load: ["p"]}, {CT.node: None, CT.sym_load: ["p"]}),
-        ({CT.node: ..., CT.sym_load: ["p"]}, {CT.node: ..., CT.sym_load: ["p"]}),
-        ({CT.node: ..., CT.sym_load: ...}, {CT.node: ..., CT.sym_load: ...}),
+        ({CT.node: DATA_FILTER_ALL, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_ALL, CT.sym_load: ["p"]}),
+        ({CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}),
+        (
+            {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL},
+            {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL},
+        ),
+        (
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
+        ),
         ({CT.node: ["u"], CT.sym_load: ["p"]}, {CT.node: ["u"], CT.sym_load: ["p"]}),
     ],
 )
