@@ -56,12 +56,22 @@ def original_batch_data() -> dict[str, np.ndarray]:
 
 
 @pytest.fixture
-def original_batch_data_columnar(original_batch_data):
-    data_filter = ComponentAttributeFilterOptions.ALL
-    return compatibility_convert_row_columnar_dataset(original_batch_data, data_filter, DatasetType.update)
+def original_batch_data_columnar_all(original_batch_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_batch_data, ComponentAttributeFilterOptions.ALL, DatasetType.update
+    )
 
 
-@pytest.fixture(params=["original_batch_data", "original_batch_data_columnar"])
+@pytest.fixture
+def original_batch_data_columnar_relevant(original_batch_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_batch_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update
+    )
+
+
+@pytest.fixture(
+    params=["original_batch_data", "original_batch_data_columnar_all", "original_batch_data_columnar_relevant"]
+)
 def batch_data(request):
     return request.getfixturevalue(request.param)
 

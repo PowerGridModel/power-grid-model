@@ -277,12 +277,20 @@ def original_data() -> dict[ComponentType, np.ndarray]:
 
 
 @pytest.fixture
-def original_data_columnar(original_data):
-    data_filter = ComponentAttributeFilterOptions.ALL
-    return compatibility_convert_row_columnar_dataset(original_data, data_filter, DatasetType.input)
+def original_data_columnar_all(original_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_data, ComponentAttributeFilterOptions.ALL, DatasetType.input
+    )
 
 
-@pytest.fixture(params=["original_data", "original_data_columnar"])
+@pytest.fixture
+def original_data_columnar_relevant(original_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+    )
+
+
+@pytest.fixture(params=["original_data", "original_data_columnar_all", "original_data_columnar_relevant"])
 def input_data(request):
     return request.getfixturevalue(request.param)
 
