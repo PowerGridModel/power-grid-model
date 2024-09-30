@@ -17,7 +17,7 @@ class ComponentAttributeFilterOptions(IntEnum):
     ALL = 0
     """Filter all components/attributes"""
     RELEVANT = 1
-    """Filter only components/attributes that contain non-NaN values"""
+    """Filter only non-empty components/attributes that contain non-NaN values"""
 
 
 _ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]

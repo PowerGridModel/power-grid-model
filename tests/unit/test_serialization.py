@@ -353,7 +353,7 @@ def split_deserialized_dataset_into_individual_scenario(scenario_idx, deserializ
 def assert_not_a_value(value: np.ndarray):
     """Assert value contains only NaN-like values.
 
-    Depending on type, maps to np.nan, -127, na_IntID, ComponentAttributeFilterOptions
+    Depending on type, maps to np.nan, -127, na_IntID, etc.
     """
     if value.dtype.names:
         for key in value.dtype.names:
