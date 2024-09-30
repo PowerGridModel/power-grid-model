@@ -25,6 +25,9 @@ jobs:
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
 
+  reuse-compliance:
+    uses: "./.github/workflows/reuse-compliance.yml"
+
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
