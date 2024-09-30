@@ -530,6 +530,17 @@ def component_data_checks(component_data: ComponentData, component=None) -> None
 
 
 def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
+    """returns indptr and checks if its valid
+
+    Args:
+        data (ComponentData): The component data
+
+    Raises:
+        TypeError: if indptr is invalid or is not available
+
+    Returns:
+        IndexPointer: indptr if present
+    """
     if not is_sparse(data):
         raise TypeError("Not sparse data")
     indptr = data["indptr"]
@@ -541,6 +552,18 @@ def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
 
 
 def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> ColumnarData:  # pragma: no cover
+    """returns the contents of the columnar data.
+
+    Args:
+        data (ComponentData): component data
+        is_batch (bool | None, optional): If given data is batch. Skips batch check if provided None.
+
+    Raises:
+        TypeError: if data is not columnar or invalid data
+
+    Returns:
+        ColumnarData: the contents of columnar data
+    """
     if is_batch is not None:
         allowed_dims = [2, 3] if is_batch else [1, 2]
     else:
@@ -559,6 +582,18 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
 
 
 def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> DataArray:  # pragma: no cover
+    """returns the contents of the row based data
+
+    Args:
+        data (ComponentData): component data
+        is_batch (bool | None, optional): If given data is batch. Skips batch check if provided None.
+
+    Raises:
+        TypeError: if data is not row based or invalid data
+
+    Returns:
+        DataArray: the contents of row based data
+    """
     if is_batch is not None:
         allowed_dims = [2] if is_batch else [1]
     else:
