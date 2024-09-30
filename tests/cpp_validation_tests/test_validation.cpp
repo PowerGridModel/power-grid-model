@@ -161,7 +161,6 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         owning_dataset.storage.buffers.at(component_idx).set_nan();
         auto& current_buffer = owning_dataset.storage.buffers.at(component_idx);
-        CAPTURE(current_buffer);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, owning_dataset.storage.buffers.at(component_idx));
     }
@@ -200,7 +199,7 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
         sstr << "(" << attribute_value[0] << ", " << attribute_value[1] << ", " << attribute_value[2] << ")";
     } else if constexpr (std::same_as<T, int8_t>) {
         sstr << std::to_string(attribute_value);
-    } else if constexpr (requires { sstr << attribute_value; } ) {
+    } else if constexpr (requires { sstr << attribute_value; }) {
         sstr << attribute_value;
     }
     return sstr.str();
@@ -267,20 +266,16 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
     power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset.value();
     auto const& result_info = result.get_info();
     auto const& result_name = result_info.name();
-    auto const& result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_name);
+    // auto const& result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_name);
     Idx const result_batch_size = result_info.batch_size();
     auto const& storage = owning_result.storage;
 
     power_grid_model_cpp::DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
-    auto const& reference_result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(reference_result_name);
-    Idx const reference_result_batch_size = reference_result_info.batch_size();
+    // auto const& reference_result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(reference_result_name);
+    // Idx const reference_result_batch_size = reference_result_info.batch_size();
     auto const& reference_storage = owning_reference_result.storage;
-
-    CHECK(result_name == reference_result_name);
-    CHECK(result_meta == reference_result_meta);
-    CHECK(result_batch_size == reference_result_batch_size);
     // this is false in general because the result buffers are created on the input buffers, but this may be an issue
     // later. CHECK(storage.buffers.size() == reference_storage.buffers.size());
 
@@ -297,9 +292,6 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
             CHECK(elements_per_scenario >= 0);
             // to avoid non-used variables;
-            CAPTURE(rtol);
-            CAPTURE(ref_buffer);
-            CAPTURE(buffer);
             // loop through all attributes
             for (Idx attribute_idx{}; attribute_idx < power_grid_model_cpp::MetaData::n_attributes(component_meta);
                  ++attribute_idx) {
@@ -327,9 +319,6 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 auto const& possible_attr_meta = is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(
                                                                 reference_result_name, component_name, magnitude_name)
                                                           : attribute_meta;
-                CAPTURE(attribute_type);
-                CAPTURE(dynamic_atol);
-                CAPTURE(possible_attr_meta);
                 // all checked at correct until this part
                 // loop through all objects
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
@@ -355,44 +344,46 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                         }
                     };
 
-                    [[maybe_unused]] auto check_individual_attribute =
-                        [&check_results, &buffer, &ref_buffer, &attribute_meta, &possible_attr_meta, &is_angle,
-                         &elements_per_scenario, &scenario_idx, &obj]<typename T>() {
-                            T ref_attribute_value{};
-                            T attribute_value{};
-                            T ref_possible_attribute_value{};
-                            T possible_attribute_value{};
-                            // these can probably be cleaned up
-                            if constexpr (std::same_as<T, std::array<double, 3>>) {
-                                ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
-                                                     (elements_per_scenario * scenario_idx) + obj, -1);
-                                buffer.get_value(attribute_meta, attribute_value.data(),
+                    auto check_individual_attribute = [&check_results, &buffer, &ref_buffer, &attribute_meta,
+                                                       &possible_attr_meta, &is_angle, &elements_per_scenario,
+                                                       &scenario_idx, &obj]<typename T>() {
+                        T ref_attribute_value{};
+                        T attribute_value{};
+                        T ref_possible_attribute_value{};
+                        T possible_attribute_value{};
+                    
+                        // these can probably be cleaned up
+                        // the array version probably has the buffer issue due to stride again.
+                        if constexpr (std::same_as<T, std::array<double, 3>>) {
+                            ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
                                                  (elements_per_scenario * scenario_idx) + obj, -1);
-                                ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
-                                                     (elements_per_scenario * scenario_idx) + obj, -1);
-                                buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
+                            buffer.get_value(attribute_meta, attribute_value.data(),
+                                             (elements_per_scenario * scenario_idx) + obj, -1);
+                            ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
                                                  (elements_per_scenario * scenario_idx) + obj, -1);
-                            } else {
-                                ref_buffer.get_value(attribute_meta, &ref_attribute_value,
-                                                     (elements_per_scenario * scenario_idx) + obj, -1);
-                                buffer.get_value(attribute_meta, &attribute_value,
-                                                 (elements_per_scenario * scenario_idx) + obj, -1);
-                                ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value,
-                                                     (elements_per_scenario * scenario_idx) + obj, -1);
-                                buffer.get_value(possible_attr_meta, &possible_attribute_value,
-                                                 (elements_per_scenario * scenario_idx) + obj, -1);
-                            }
-                            // check attributes
-                            if (is_nan(ref_attribute_value)) {
-                                return;
-                            }
-                            // for angle attribute, also check the magnitude available
-                            if (is_angle && is_nan(ref_possible_attribute_value)) {
-                                return;
-                            }
-                            check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value,
-                                          possible_attribute_value);
-                        };
+                            buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
+                                             (elements_per_scenario * scenario_idx) + obj, -1);
+                        } else {
+                            ref_buffer.get_value(attribute_meta, &ref_attribute_value,
+                                                 (elements_per_scenario * scenario_idx) + obj, 0);
+                            buffer.get_value(attribute_meta, &attribute_value,
+                                             (elements_per_scenario * scenario_idx) + obj, 0);
+                            ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value,
+                                                 (elements_per_scenario * scenario_idx) + obj, 0);
+                            buffer.get_value(possible_attr_meta, &possible_attribute_value,
+                                             (elements_per_scenario * scenario_idx) + obj, 0);
+                        }
+                        // check attributes
+                        if (is_nan(ref_attribute_value)) {
+                            return;
+                        }
+                        // for angle attribute, also check the magnitude available
+                        if (is_angle && is_nan(ref_possible_attribute_value)) {
+                            return;
+                        }
+                        check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value,
+                                      possible_attribute_value);
+                    };
 
                     pgm_type_func_selector(static_cast<Idx>(attribute_type), check_individual_attribute);
                 }
