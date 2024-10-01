@@ -447,3 +447,19 @@ def is_columnar(component_data: ComponentData) -> bool:
     if is_sparse(component_data):
         return not isinstance(component_data["data"], np.ndarray)
     return not isinstance(component_data, np.ndarray)
+
+
+def is_nan_or_equivalent(array):
+    """
+    Check if the array contains only nan values or equivalent nan values for specific data types.
+
+    Args:
+        array: The array to check.
+
+    Returns:
+        bool: True if the array contains only nan or equivalent nan values, False otherwise.
+    """
+    return isinstance(array, np.ndarray) and (
+        (array.dtype == np.float64 and np.isnan(array).all())
+        or (array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min))
+    )

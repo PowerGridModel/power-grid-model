@@ -10,6 +10,9 @@ from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
 
+import numpy as np
+
+from power_grid_model._utils import is_nan_or_equivalent
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
@@ -23,7 +26,7 @@ from power_grid_model.core.power_grid_core import (
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridSerializationError
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model.typing import ComponentAttributeFilterOptions, ComponentAttributeMapping
 
 
 class SerializationType(IntEnum):
@@ -41,6 +44,7 @@ class Deserializer:
     _deserializer: DeserializerPtr
     _dataset_ptr: WritableDatasetPtr
     _dataset: CWritableDataset
+    _data_filter: ComponentAttributeMapping
 
     def __new__(
         cls,
@@ -59,6 +63,7 @@ class Deserializer:
         instance._dataset_ptr = pgc.deserializer_get_dataset(instance._deserializer)
         assert_no_error()
 
+        instance._data_filter = data_filter
         instance._dataset = CWritableDataset(instance._dataset_ptr, data_filter=data_filter)
         assert_no_error()
 
@@ -80,7 +85,20 @@ class Deserializer:
             A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
-        return self._dataset.get_data()
+
+        filtered_data = self._dataset.get_data()
+        if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
+            for _, attributes in filtered_data.items():
+                keys_to_remove = []
+                for attr, array in attributes.items():
+                    if not isinstance(array, np.ndarray):
+                        continue
+                    if is_nan_or_equivalent(array):
+                        keys_to_remove.append(attr)
+                for key in keys_to_remove:
+                    del attributes[key]
+
+        return filtered_data
 
 
 class Serializer(ABC):
