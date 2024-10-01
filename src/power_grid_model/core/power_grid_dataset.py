@@ -6,7 +6,6 @@
 Power grid model raw dataset handler
 """
 
-from types import EllipsisType
 from typing import Any, Mapping, Optional
 
 from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
@@ -30,7 +29,11 @@ from power_grid_model.core.power_grid_core import (
 from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
 from power_grid_model.data_types import AttributeType, ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model.typing import (
+    ComponentAttributeFilterOptions,
+    ComponentAttributeMapping,
+    _ComponentAttributeMappingDict,
+)
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -504,12 +507,12 @@ class CWritableDataset:
 
 def _get_filtered_attributes(
     schema: ComponentMetaData,
-    component_data_filter: set[str] | list[str] | None | EllipsisType,
+    component_data_filter: set[str] | list[str] | None | ComponentAttributeFilterOptions,
 ) -> list[str] | None:
     if component_data_filter is None:
         return None
 
-    if component_data_filter is Ellipsis:
-        return list(schema.dtype.names)
+    if isinstance(component_data_filter, ComponentAttributeFilterOptions):
+        return [] if schema.dtype.names is None else list(schema.dtype.names)
 
     return list(component_data_filter)

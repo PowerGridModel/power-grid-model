@@ -37,7 +37,9 @@ from power_grid_model.data_types import (
     BatchComponentData,
     BatchDataset,
     Dataset,
+    DenseBatchArray,
     IndexPointer,
+    SingleComponentData,
     SingleDataset,
 )
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
@@ -69,7 +71,7 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
     def _get_sparse_scenario(arr: np.ndarray, indptr: IndexPointer) -> np.ndarray:
         return arr[indptr[scenario] : indptr[scenario + 1]]
 
-    def _get_component_scenario(component_scenarios: BatchComponentData) -> np.ndarray:
+    def _get_component_scenario(component_scenarios: BatchComponentData) -> SingleComponentData:
         data = _extract_data_from_component_data(component_scenarios)
 
         if is_sparse(component_scenarios):
@@ -83,7 +85,7 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
 
         if is_columnar(component_scenarios):
             return {attribute: _get_dense_scenario(attribute_data) for attribute, attribute_data in data.items()}
-        return _get_dense_scenario(component_scenarios)
+        return _get_dense_scenario(cast_type(DenseBatchArray, component_scenarios))
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 

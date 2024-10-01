@@ -11,7 +11,6 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
-from types import EllipsisType
 from typing import Optional, Sequence, cast
 
 import numpy as np
@@ -40,7 +39,11 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model.typing import (
+    ComponentAttributeFilterOptions,
+    ComponentAttributeMapping,
+    _ComponentAttributeMappingDict,
+)
 
 
 def is_nan(data) -> bool:
@@ -90,7 +93,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
         if is_sparse(data):
             component_batches = split_sparse_batch_data_in_batches(cast(SparseBatchData, data), component)
         else:
-            component_batches = split_dense_batch_data_in_batches(data, component)
+            component_batches = split_dense_batch_data_in_batches(cast(SingleComponentData, data), component)
         for i, batch in enumerate(component_batches):
             if (isinstance(batch, dict) and batch) or (isinstance(batch, np.ndarray) and batch.size > 0):
                 list_data[i][component] = batch
@@ -148,10 +151,14 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
         return indptr.size - 1
 
     data_to_check = (
-        next(iter(cast(DenseBatchColumnarData, batch_data).values())) if is_columnar(batch_data) else batch_data
+        next(iter(cast(DenseBatchColumnarData, batch_data).values()))
+        if is_columnar(batch_data)
+        else cast(DenseBatchArray, batch_data)
     )
     if data_to_check.ndim == 1:
-        raise ValueError("get_batch_size is called for non batch data")
+        return 1
+    if data_to_check.ndim == 2 and is_columnar(batch_data):
+        raise ValueError("get_batch_size is not supported for columnar data")
     return data_to_check.shape[0]
 
 
@@ -339,7 +346,7 @@ def compatibility_convert_row_columnar_dataset(
     Args:
         data (Dataset): dataset to convert
         data_filter (ComponentAttributeMapping): desired component and attribute mapping
-        dataset_type (DatasetType): type of dataset
+        dataset_type (DatasetType): type of dataset (e.g., input, update or [sym | asym | sc]_output)
         available_components (list[ComponentType] | None): available components in model
 
     Returns:
@@ -377,7 +384,7 @@ def _convert_data_to_row_or_columnar(
     data: SingleComponentData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
-    attrs: set[str] | list[str] | None | EllipsisType,
+    attrs: set[str] | list[str] | None | ComponentAttributeFilterOptions,
 ) -> SingleComponentData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:
@@ -389,17 +396,12 @@ def _convert_data_to_row_or_columnar(
             output_array[k] = data[k]
         return output_array
 
-    names: list[str] | set[str] = []
-    if isinstance(attrs, (list, set)):
-        names = attrs
-    elif not isinstance(attrs, EllipsisType):
-        raise NotImplementedError()
-    elif is_columnar(data):
-        names = list(cast(SingleColumnarData, data).keys())
-    else:
-        names = list(cast(SingleArray, data).dtype.names)
-
-    return {attr: deepcopy(data[attr]) for attr in names}
+    if isinstance(attrs, (list, set)) and len(attrs) == 0:
+        return {}
+    if isinstance(attrs, ComponentAttributeFilterOptions):
+        names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
+        return {attr: deepcopy(data[attr]) for attr in names}
+    return {attr: deepcopy(data[attr]) for attr in attrs}
 
 
 def process_data_filter(
@@ -419,12 +421,13 @@ def process_data_filter(
     """
     if data_filter is None:
         processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
-    elif data_filter is Ellipsis:
-        processed_data_filter = {ComponentType[k]: ... for k in available_components}
+    elif isinstance(data_filter, ComponentAttributeFilterOptions):
+        processed_data_filter = {ComponentType[k]: data_filter for k in available_components}
     elif isinstance(data_filter, (list, set)):
         processed_data_filter = {ComponentType[k]: None for k in data_filter}
     elif isinstance(data_filter, dict) and all(
-        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+        attrs is None or isinstance(attrs, (set, list, ComponentAttributeFilterOptions))
+        for attrs in data_filter.values()
     ):
         processed_data_filter = data_filter
     else:
@@ -463,7 +466,7 @@ def validate_data_filter(
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():
-        if attrs is None or attrs is Ellipsis:
+        if attrs is None or isinstance(attrs, ComponentAttributeFilterOptions):
             continue
 
         attr_names = dataset_meta[comp_name].dtype.names
@@ -558,6 +561,8 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
     Returns:
         ColumnarData: the contents of columnar data
     """
+    not_columnar_data_message = "Expected columnar data"
+
     if is_batch is not None:
         allowed_dims = [2, 3] if is_batch else [1, 2]
     else:
@@ -566,13 +571,13 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
     sub_data = data["data"] if is_sparse(data) else data
 
     if not isinstance(sub_data, dict):
-        raise TypeError("Expected columnar data")
+        raise TypeError(not_columnar_data_message)
     for attribute, attribute_array in sub_data.items():
         if not isinstance(attribute_array, np.ndarray) or not isinstance(attribute, str):
-            raise TypeError("Expected columnar data")
+            raise TypeError(not_columnar_data_message)
         if attribute_array.ndim not in allowed_dims:
-            raise TypeError("Expected columnar data")
-    return sub_data
+            raise TypeError(not_columnar_data_message)
+    return cast(ColumnarData, sub_data)
 
 
 def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> DataArray:  # pragma: no cover

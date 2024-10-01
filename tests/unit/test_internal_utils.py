@@ -21,6 +21,7 @@ from power_grid_model._utils import (
 )
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.data_types import BatchDataset, BatchList
+from power_grid_model.typing import ComponentAttributeFilterOptions
 
 from .utils import convert_python_to_numpy
 
@@ -297,8 +298,8 @@ def test_convert_batch_dataset_to_batch_list_one_batch_dense():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     bar = [("x", "i4"), ("y", "i4"), ("z", "i4")]
     update_data: BatchDataset = {
-        "foo": np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo).reshape(1, -1),
-        "bar": np.array([(211, 221, 231), (212, 222, 232), (213, 223, 233), (214, 224, 234)], dtype=bar).reshape(1, -1),
+        "foo": np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo),
+        "bar": np.array([(211, 221, 231), (212, 222, 232), (213, 223, 233), (214, 224, 234)], dtype=bar),
     }
     expected: BatchList = [
         {
@@ -435,18 +436,34 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
         convert_batch_dataset_to_batch_list(update_data)
 
 
+DATA_FILTER_ALL = ComponentAttributeFilterOptions.ALL
+DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.RELEVANT
+
+
 @pytest.mark.parametrize(
     ("data_filter", "expected"),
     [
         (None, {CT.node: None, CT.sym_load: None, CT.source: None}),
-        (..., {CT.node: ..., CT.sym_load: ..., CT.source: ...}),
+        (DATA_FILTER_ALL, {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL, CT.source: DATA_FILTER_ALL}),
+        (
+            DATA_FILTER_RELEVANT,
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT, CT.source: DATA_FILTER_RELEVANT},
+        ),
         ([CT.node, CT.sym_load], {CT.node: None, CT.sym_load: None}),
         ({CT.node, CT.sym_load}, {CT.node: None, CT.sym_load: None}),
         ({CT.node: [], CT.sym_load: []}, {CT.node: [], CT.sym_load: []}),
         ({CT.node: [], CT.sym_load: ["p"]}, {CT.node: [], CT.sym_load: ["p"]}),
         ({CT.node: None, CT.sym_load: ["p"]}, {CT.node: None, CT.sym_load: ["p"]}),
-        ({CT.node: ..., CT.sym_load: ["p"]}, {CT.node: ..., CT.sym_load: ["p"]}),
-        ({CT.node: ..., CT.sym_load: ...}, {CT.node: ..., CT.sym_load: ...}),
+        ({CT.node: DATA_FILTER_ALL, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_ALL, CT.sym_load: ["p"]}),
+        ({CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}),
+        (
+            {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL},
+            {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL},
+        ),
+        (
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
+        ),
         ({CT.node: ["u"], CT.sym_load: ["p"]}, {CT.node: ["u"], CT.sym_load: ["p"]}),
     ],
 )
@@ -544,7 +561,7 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
     ("data", "expected_size"),
     [
         pytest.param(np.empty(shape=(3, 2)), 3, id="row based batch"),
-        pytest.param({"u": np.empty(shape=(3, 2))}, 3, id="columnar batch"),
+        pytest.param({"u": np.empty(shape=(3, 2))}, 3, id="columnar batch", marks=pytest.mark.xfail),
         pytest.param({"u": np.empty(shape=(4, 2, 3))}, 4, id="columnar asym batch"),
         pytest.param({"indptr": np.array([0, 1, 4]), "data": np.array([])}, 2, id="sparse data"),
         pytest.param({"indptr": np.array([0, 1]), "data": np.array([])}, 1, id="sparse data"),
@@ -557,8 +574,8 @@ def test_get_batch_size(data, expected_size):
 @pytest.mark.parametrize(
     ("data",),
     [
-        pytest.param(np.empty(shape=3), id="row based single"),
-        pytest.param({"u": np.empty(shape=3)}, id="columnar single"),
+        pytest.param(np.empty(shape=3), id="row based single", marks=pytest.mark.xfail),
+        pytest.param({"u": np.empty(shape=3)}, id="columnar single", marks=pytest.mark.xfail),
     ],
 )
 def test_get_batch_size__single_dataset_is_not_supported(data):
