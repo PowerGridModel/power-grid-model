@@ -515,6 +515,21 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         )
 
 
+def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data_filter) -> bool:
+    if data_filter is ComponentAttributeFilterOptions.ALL:
+        return True
+    if data_filter is ComponentAttributeFilterOptions.RELEVANT:
+        for _, component_values in deserialized_dataset.items():
+            for _, array in component_values.items():
+                if not isinstance(array, np.ndarray):
+                    continue
+                if (array.dtype == np.float64 and np.isnan(array).all()) or (
+                    array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min)
+                ):
+                    return False
+    return True
+
+
 @pytest.mark.parametrize("raw_buffer", (True, False))
 def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
@@ -647,3 +662,20 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
             np.testing.assert_array_equal(nan_a, nan_b)
             np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
+
+
+@pytest.mark.parametrize(
+    ("deserialize", "pack", "data_filter"),
+    (
+        pytest.param(json_deserialize, to_json, ComponentAttributeFilterOptions.ALL, id="json.all"),
+        pytest.param(json_deserialize, to_json, ComponentAttributeFilterOptions.RELEVANT, id="json.relevant"),
+        pytest.param(msgpack_deserialize, to_msgpack, ComponentAttributeFilterOptions.ALL, id="msgpack.all"),
+        pytest.param(msgpack_deserialize, to_msgpack, ComponentAttributeFilterOptions.RELEVANT, id="msgpack.relevant"),
+    ),
+)
+def test_deserialize_data_filter(deserialize, serialized_data, data_filter, pack):
+    test_data = pack(serialized_data)
+
+    deserialized_result_a = deserialize(test_data, data_filter)
+
+    assert assert_deserialization_filtering_correct(deserialized_result_a, data_filter)
