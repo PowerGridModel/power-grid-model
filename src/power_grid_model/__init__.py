@@ -20,4 +20,4 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     WindingType,
 )
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model.typing import ComponentAttributeFilterOptions, ComponentAttributeMapping
