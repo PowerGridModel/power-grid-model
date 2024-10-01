@@ -494,7 +494,7 @@ def is_columnar(component_data: ComponentData) -> bool:
         return not isinstance(component_data["data"], np.ndarray)
     return not isinstance(component_data, np.ndarray)
 
-  
+
 def is_nan_or_equivalent(array):
     """
     Check if the array contains only nan values or equivalent nan values for specific data types.
@@ -510,7 +510,7 @@ def is_nan_or_equivalent(array):
         or (array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min))
     )
 
-  
+
 def component_data_checks(component_data: ComponentData, component=None) -> None:
     """Checks if component_data is of ComponentData and raises ValueError if its not"""
     component_name = f"'{component}'" if component is not None else ""
