@@ -21,7 +21,7 @@ SPDX-License-Identifier: MPL-2.0
    :show-inheritance:
 
 .. automodule:: power_grid_model.typing
-   :members: ComponentAttributeFilterOptions
+   :members: ComponentAttributeFilterOptions, ComponentAttributeMapping
    :undoc-members:
    :show-inheritance:
 ```
