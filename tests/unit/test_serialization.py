@@ -14,6 +14,7 @@ from power_grid_model._utils import is_columnar, is_sparse
 from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.typing import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -43,7 +44,7 @@ def is_non_compact_list(data_entry):
 def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
     """Find out if deserialization of serialized_input would contain at least one component with row based data"""
     serialized_input_data = serialized_input["data"]
-    if not serialized_input_data or data_filter is Ellipsis:
+    if not serialized_input_data or isinstance(data_filter, ComponentAttributeFilterOptions):
         return False
     if data_filter is None:
         return True
@@ -62,27 +63,29 @@ def is_columnar_filter(data_filter, component) -> bool:
     """A function to find if a data_filter will give out row or columnar format for a component"""
     if data_filter is None:
         return False
-    if data_filter is Ellipsis:
+    if isinstance(data_filter, ComponentAttributeFilterOptions):
         return True
     return data_filter[component] is not None
 
 
 def is_attribute_filtered_out(data_filter, component, attribute) -> bool:
     """Checks if attribute is being filtered out / excluded"""
-    if data_filter is None or data_filter is Ellipsis:
+    if data_filter is None or isinstance(data_filter, ComponentAttributeFilterOptions):
         return False
 
     if component not in data_filter:
         return True
 
     return not (
-        data_filter[component] is None or data_filter[component] is Ellipsis or attribute in data_filter[component]
+        data_filter[component] is None
+        or isinstance(data_filter[component], ComponentAttributeFilterOptions)
+        or attribute in data_filter[component]
     )
 
 
 def is_component_filtered_out(data_filter, component) -> bool:
     """Checks if component is being filtered out / excluded"""
-    if data_filter is None or data_filter is Ellipsis:
+    if data_filter is None or isinstance(data_filter, ComponentAttributeFilterOptions):
         return False
     return component not in data_filter
 
@@ -376,7 +379,8 @@ def serialized_data(request):
 @pytest.fixture(
     params=[
         pytest.param(None, id="All row filter"),
-        pytest.param(..., id="All columnar filter"),
+        pytest.param(ComponentAttributeFilterOptions.ALL, id="All columnar filter"),
+        pytest.param(ComponentAttributeFilterOptions.RELEVANT, id="All relevant columnar filter"),
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
         pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
@@ -419,7 +423,7 @@ def split_deserialized_dataset_into_individual_scenario(scenario_idx, deserializ
 def assert_not_a_value(value: np.ndarray):
     """Assert value contains only NaN-like values.
 
-    Depending on type, maps to np.nan, -127, na_IntID, ...
+    Depending on type, maps to np.nan, -127, na_IntID, etc.
     """
     if value.dtype.names:
         for key in value.dtype.names:

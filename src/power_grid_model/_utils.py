@@ -11,8 +11,7 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
-from types import EllipsisType
-from typing import Optional, Sequence, cast
+from typing import Optional, cast
 
 import numpy as np
 
@@ -40,7 +39,11 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model.typing import (
+    ComponentAttributeFilterOptions,
+    ComponentAttributeMapping,
+    _ComponentAttributeMappingDict,
+)
 
 
 def is_nan(data) -> bool:
@@ -341,7 +344,7 @@ def compatibility_convert_row_columnar_dataset(
     Args:
         data (Dataset): dataset to convert
         data_filter (ComponentAttributeMapping): desired component and attribute mapping
-        dataset_type (DatasetType): type of dataset
+        dataset_type (DatasetType): type of dataset (e.g., input, update or [sym | asym | sc]_output)
         available_components (list[ComponentType] | None): available components in model
 
     Returns:
@@ -379,7 +382,7 @@ def _convert_data_to_row_or_columnar(
     data: SingleComponentData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
-    attrs: set[str] | list[str] | None | EllipsisType,
+    attrs: set[str] | list[str] | None | ComponentAttributeFilterOptions,
 ) -> SingleComponentData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:
@@ -391,17 +394,12 @@ def _convert_data_to_row_or_columnar(
             output_array[k] = data[k]
         return output_array
 
-    names: list[str] | set[str] = []
-    if isinstance(attrs, (list, set)):
-        names = attrs
-    elif not isinstance(attrs, EllipsisType):
-        raise NotImplementedError()
-    elif is_columnar(data):
-        names = list(cast(SingleColumnarData, data).keys())
-    else:
-        names = list(cast(SingleArray, data).dtype.names)
-
-    return {attr: deepcopy(data[attr]) for attr in names}
+    if isinstance(attrs, (list, set)) and len(attrs) == 0:
+        return {}
+    if isinstance(attrs, ComponentAttributeFilterOptions):
+        names = data.dtype.names if not is_columnar(data) else data.keys()
+        return {attr: deepcopy(data[attr]) for attr in names}
+    return {attr: deepcopy(data[attr]) for attr in attrs}
 
 
 def process_data_filter(
@@ -421,12 +419,13 @@ def process_data_filter(
     """
     if data_filter is None:
         processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
-    elif data_filter is Ellipsis:
-        processed_data_filter = {ComponentType[k]: ... for k in available_components}
+    elif isinstance(data_filter, ComponentAttributeFilterOptions):
+        processed_data_filter = {ComponentType[k]: data_filter for k in available_components}
     elif isinstance(data_filter, (list, set)):
         processed_data_filter = {ComponentType[k]: None for k in data_filter}
     elif isinstance(data_filter, dict) and all(
-        attrs is None or attrs is Ellipsis or isinstance(attrs, (set, list)) for attrs in data_filter.values()
+        attrs is None or isinstance(attrs, (set, list, ComponentAttributeFilterOptions))
+        for attrs in data_filter.values()
     ):
         processed_data_filter = data_filter
     else:
@@ -465,7 +464,7 @@ def validate_data_filter(
 
     unknown_attributes = {}
     for comp_name, attrs in data_filter.items():
-        if attrs is None or attrs is Ellipsis:
+        if attrs is None or isinstance(attrs, ComponentAttributeFilterOptions):
             continue
 
         attr_names = dataset_meta[comp_name].dtype.names

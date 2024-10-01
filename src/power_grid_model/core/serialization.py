@@ -217,6 +217,7 @@ def json_deserialize(
 
     Args:
         data: the data to deserialize.
+        data_filter: the data filter to apply to the dataset.
 
     Raises:
         ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
