@@ -8,13 +8,7 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model.core.power_grid_meta import initialize_array
-from power_grid_model.enum import (
-    CalculationMethod,
-    LoadGenType,
-    MeasuredTerminalType,
-    TapChangingStrategy,
-    _ExperimentalFeatures,
-)
+from power_grid_model.enum import CalculationMethod, LoadGenType, MeasuredTerminalType, TapChangingStrategy
 from power_grid_model.errors import (
     AutomaticTapCalculationError,
     ConflictID,
