@@ -218,6 +218,7 @@ TEST_CASE("Test Transformer ranking") {
         // Subcases
         SUBCASE("Building the graph") {
             using pgm_tap::unregulated_idx;
+            using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
             // reference graph creation
             // Inserted in order of transformer, transformer3w, line and link
@@ -240,7 +241,8 @@ TEST_CASE("Test Transformer ranking") {
             pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
             pgm_tap::TrafoGraphEdgeProperties actual_edges_prop;
 
-            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+            vertex_iterator vi;
+            vertex_iterator vi_end;
             for (boost::tie(vi, vi_end) = vertices(actual_graph); vi != vi_end; ++vi) {
                 CHECK(actual_graph[*vi].is_source == expected_vertex_props[*vi].is_source);
             }
@@ -270,16 +272,19 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         SUBCASE("Process edge weights") {
+            using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
+
             // Dummy graph
-            pgm_tap::TrafoGraphEdges edge_array = {{0, 1}, {0, 2}, {2, 3}};
-            pgm_tap::TrafoGraphEdgeProperties edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
+            pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
                                         edge_prop.cbegin(), 4};
 
             // Vertex properties can not be set during graph creation
-            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi, vi_end;
+            vertex_iterator vi;
+            vertex_iterator vi_end;
             for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
                 g[*vi].is_source = vertex_props[*vi].is_source;
             }
@@ -305,9 +310,11 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         SUBCASE("Multiple source grid") {
+            using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
+
             // Grid with multiple sources and symetric graph
-            pgm_tap::TrafoGraphEdges edge_array = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}};
-            pgm_tap::TrafoGraphEdgeProperties edge_prop{
+            pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{
                 {{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}, {{4, 5}, 1}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {false}, {true}};
 
@@ -315,8 +322,8 @@ TEST_CASE("Test Transformer ranking") {
                                         edge_prop.cbegin(), 6};
 
             // Vertex properties can not be set during graph creation
-            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi;
-            boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator vi_end;
+            vertex_iterator vi;
+            vertex_iterator vi_end;
             for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
                 g[*vi].is_source = vertex_props[*vi].is_source;
             }
@@ -341,7 +348,6 @@ namespace {
 using power_grid_model::optimizer::test::ConstDatasetUpdate;
 using power_grid_model::optimizer::test::OptStrategyMethodSearch;
 using power_grid_model::optimizer::test::search_methods;
-using power_grid_model::optimizer::test::strategies;
 using power_grid_model::optimizer::test::strategies_and_methods;
 using power_grid_model::optimizer::test::strategies_and_sides;
 using power_grid_model::optimizer::test::strategy_search_and_sides;
@@ -444,9 +450,11 @@ struct MockTransformer {
     using SideType = typename MockTransformerState::SideType;
 
     MockTransformer() = default;
-    MockTransformer(MockTransformerState state_) : state{state_} {}
+    MockTransformer(MockTransformerState state_) : state{std::move(state_)} {}
 
     static constexpr auto name = "MockTransformer";
+
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static) // mocks non-static functions
     constexpr auto math_model_type() const { return ComponentType::test; }
 
     constexpr auto id() const { return state.id; }
@@ -496,15 +504,20 @@ constexpr auto get_math_id(State const& state, Idx topology_index) {
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename ContainerType>
-inline auto i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_output, Idx2D const& math_id,
-                 ControlSide side) {
+inline DoubleComplex i_pu(std::vector<MockSolverOutput<ContainerType>> const& solver_output, Idx2D const& math_id,
+                          ControlSide side) {
     REQUIRE(math_id.group >= 0);
     REQUIRE(math_id.group < solver_output.size());
-    REQUIRE(solver_output[math_id.group].state.has_value());
+
     CHECK(solver_output[math_id.group].call_index >= 0);
-    return main_core::get_component_by_sequence<MockTransformer>(solver_output[math_id.group].state.value().get(),
-                                                                 math_id.pos)
-        .state.i_pu(side);
+
+    auto const& state = solver_output[math_id.group].state;
+    REQUIRE(state.has_value());
+    if (state.has_value()) { // necessary for clang-tidy
+        return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
+    }
+    FAIL("Unreachable");
+    return {};
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State,
@@ -539,7 +552,8 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
     template <typename ComponentType> struct Impl<ComponentType> {
         void operator()(State const& state, RankedTransformerGroups& ranking) const {
             if constexpr (std::derived_from<ComponentType, MockTransformer>) {
-                for (Idx idx : boost::counting_range(Idx{0}, main_core::get_component_size<ComponentType>(state))) {
+                for (Idx const idx :
+                     boost::counting_range(Idx{0}, main_core::get_component_size<ComponentType>(state))) {
                     auto const& comp = main_core::get_component_by_sequence<ComponentType>(state, idx);
                     auto const rank = comp.state.rank;
                     if (rank == MockTransformerState::unregulated) {
@@ -643,7 +657,7 @@ void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulato
 
 namespace {
 namespace meta_gen = meta_data::meta_data_gen;
-}
+} // namespace
 
 TEST_CASE("Test Tap position optimizer") {
     using MockTransformerState = test::MockTransformerState;
@@ -653,8 +667,8 @@ TEST_CASE("Test Tap position optimizer") {
     using MockStateCalculator = test::MockStateCalculator<MockContainer>;
     using MockTransformerRanker = test::MockTransformerRanker<MockState>;
 
-    auto const& meta_data = meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
-                                                    meta_data::update_getter_s>::value;
+    auto const meta_data = meta_gen::get_meta_data<ComponentList<MockTransformer, TransformerTapRegulator>,
+                                                   meta_data::update_getter_s>::value;
 
     MockState state;
 
@@ -688,17 +702,13 @@ TEST_CASE("Test Tap position optimizer") {
         std::vector<std::pair<IntS, IntS>> trafo_state_1;
         std::vector<std::pair<IntS, IntS>> trafo_state_2;
         for (auto const& transformer : state1.components.template citer<MockTransformer>()) {
-            trafo_state_1.push_back({transformer.id(), transformer.tap_pos()});
+            trafo_state_1.emplace_back(transformer.id(), transformer.tap_pos());
         }
         for (auto const& transformer : state2.components.template citer<MockTransformer>()) {
-            trafo_state_2.push_back({transformer.id(), transformer.tap_pos()});
+            trafo_state_2.emplace_back(transformer.id(), transformer.tap_pos());
         }
 
-        if (trafo_state_1 != trafo_state_2) {
-            return false;
-        }
-
-        return true;
+        return trafo_state_1 == trafo_state_2;
     };
 
     auto const get_optimizer = [&](OptimizerStrategy strategy, SearchMethod tap_search) {
@@ -848,14 +858,14 @@ TEST_CASE("Test Tap position optimizer") {
                     state_b.tap_max = 3;
                     SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
                     SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                    SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min + 1; }
+                    SUBCASE("start mid range") { state_b.tap_pos = narrow_cast<IntS>(state_b.tap_min + 1); }
                 }
                 SUBCASE("inverted tap range") {
                     state_b.tap_min = 3;
                     state_b.tap_max = 1;
                     SUBCASE("start low in range") { state_b.tap_pos = state_b.tap_min; }
                     SUBCASE("start high in range") { state_b.tap_pos = state_b.tap_max; }
-                    SUBCASE("start mid range") { state_b.tap_pos = state_b.tap_min - 1; }
+                    SUBCASE("start mid range") { state_b.tap_pos = narrow_cast<IntS>(state_b.tap_min - 1); }
                 }
                 SUBCASE("extreme tap range") {
                     state_b.tap_min = IntS{0};
@@ -1105,7 +1115,7 @@ TEST_CASE("Test Tap position optimizer") {
                 state_a.tap_side = tap_side;
 
                 auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
-                auto const cached_state = state; // NOSONAR
+                auto const cached_state = MockState{state}; // explicit copy
                 CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
                 CHECK(twoStatesEqual(cached_state, state));
             }

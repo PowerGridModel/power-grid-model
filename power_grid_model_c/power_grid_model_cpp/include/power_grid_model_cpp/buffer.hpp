@@ -21,43 +21,32 @@ class Buffer {
 
     Idx size() const { return size_; }
 
-    static void set_nan(Buffer& buffer, Idx buffer_offset, Idx size) {
-        buffer.handle_.call_with(PGM_buffer_set_nan, buffer.component_, buffer.buffer_.get(), buffer_offset, size);
+    void set_nan() { set_nan(0, size_); }
+    void set_nan(Idx buffer_offset) { set_nan(buffer_offset, 1); }
+    void set_nan(Idx buffer_offset, Idx size) {
+        handle_.call_with(PGM_buffer_set_nan, component_, buffer_.get(), buffer_offset, size);
     }
-    void set_nan() { set_nan(*this, 0, size_); }
-    void set_nan(Idx buffer_offset) { set_nan(*this, buffer_offset, 1); }
-    void set_nan(Idx buffer_offset, Idx size) { set_nan(*this, buffer_offset, size); }
 
-    static void set_value(MetaAttribute const* attribute, Buffer& buffer, // NOSONAR: no reference-to-const
-                          RawDataConstPtr src_ptr, Idx buffer_offset, Idx size, Idx src_stride) {
-        buffer.handle_.call_with(PGM_buffer_set_value, attribute, buffer.buffer_.get(), src_ptr, buffer_offset, size,
-                                 src_stride);
-    }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx src_stride) {
-        set_value(attribute, *this, src_ptr, 0, size_, src_stride);
+        set_value(attribute, src_ptr, 0, size_, src_stride);
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx src_stride) {
-        set_value(attribute, *this, src_ptr, buffer_offset, 1, src_stride);
+        set_value(attribute, src_ptr, buffer_offset, 1, src_stride);
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx size,
-                   Idx src_stride) {
-        set_value(attribute, *this, src_ptr, buffer_offset, size, src_stride);
+                   Idx src_stride) { // NOSONAR: no-const
+        handle_.call_with(PGM_buffer_set_value, attribute, buffer_.get(), src_ptr, buffer_offset, size, src_stride);
     }
 
-    static void get_value(MetaAttribute const* attribute, Buffer const& buffer, RawDataPtr dest_ptr, Idx buffer_offset,
-                          Idx size, Idx dest_stride) {
-        buffer.handle_.call_with(PGM_buffer_get_value, attribute, buffer.buffer_.get(), dest_ptr, buffer_offset, size,
-                                 dest_stride);
-    }
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx dest_stride) const {
-        get_value(attribute, *this, dest_ptr, 0, size_, dest_stride);
+        get_value(attribute, dest_ptr, 0, size_, dest_stride);
     }
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx buffer_offset, Idx dest_stride) const {
-        get_value(attribute, *this, dest_ptr, buffer_offset, 1, dest_stride);
+        get_value(attribute, dest_ptr, buffer_offset, 1, dest_stride);
     }
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx buffer_offset, Idx size,
                    Idx dest_stride) const {
-        get_value(attribute, *this, dest_ptr, buffer_offset, size, dest_stride);
+        handle_.call_with(PGM_buffer_get_value, attribute, buffer_.get(), dest_ptr, buffer_offset, size, dest_stride);
     }
 
   private:

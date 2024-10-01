@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+version = 1
+SPDX-PackageName = "power-grid-model"
+SPDX-PackageSupplier = "Power Grid Model project <powergridmodel@lfenergy.org>"
+SPDX-PackageDownloadLocation = "https://github.com/PowerGridModel/power-grid-model"
+
+[[annotations]]
+path = "./**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
+SPDX-License-Identifier = "MPL-2.0"

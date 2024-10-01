@@ -19,9 +19,11 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-code-quality
   cancel-in-progress: true
 
 jobs:
