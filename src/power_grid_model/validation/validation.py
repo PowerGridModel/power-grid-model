@@ -213,9 +213,7 @@ def validate_unique_ids_across_components(data: SingleDataset) -> list[MultiComp
     return all_cross_unique(data, [(component, "id") for component in data])
 
 
-def validate_ids_exist(
-    update_data: dict[ComponentType, np.ndarray], input_data: SingleDataset
-) -> list[IdNotInDatasetError]:
+def validate_ids_exist(update_data: SingleDataset, input_data: SingleDataset) -> list[IdNotInDatasetError]:
     """
     Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
     can only update existing components.
