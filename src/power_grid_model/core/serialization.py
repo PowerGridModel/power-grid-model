@@ -106,8 +106,6 @@ class Deserializer:
             for component_type, attributes in filtered_data.items():
                 if component_type in self._data_filter:
                     filter_option = self._data_filter[component_type]
-                    if filter_option is None:
-                        continue
                     if filter_option is ComponentAttributeFilterOptions.RELEVANT:
                         _filter_attributes(attributes)
 
