@@ -20,6 +20,7 @@ from power_grid_model.data_types import (
     AttributeType,
     ComponentData,
     DenseBatchData,
+    IndexPointer,
     SingleComponentData,
     SparseBatchArray,
     SparseBatchData,
@@ -153,7 +154,7 @@ def _get_uniform_buffer_properties(
 
     if isinstance(data, np.ndarray):
         ndim = data.ndim
-        shape: tuple[int] = data.shape
+        shape = data.shape
         columns = None
     elif data:
         attribute, attribute_data = next(iter(data.items()))
@@ -317,7 +318,7 @@ def _get_attribute_buffer_views(
 
 
 def _get_uniform_buffer_view(
-    data: np.ndarray,
+    data: DenseBatchData,
     schema: ComponentMetaData,
     is_batch: bool | None,
     batch_size: int | None,
@@ -396,7 +397,7 @@ def get_buffer_view(
         the C API buffer view.
     """
     if not is_sparse(data):
-        return _get_uniform_buffer_view(data, schema, is_batch, batch_size)
+        return _get_uniform_buffer_view(cast(DenseBatchData, data), schema, is_batch, batch_size)
 
     if is_batch is not None and not is_batch:
         raise ValueError("Sparse data must be batch data")
@@ -463,13 +464,13 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
     Returns:
         A sparse buffer with the correct properties.
     """
-    data = _create_contents_buffer(
+    data: SingleComponentData = _create_contents_buffer(
         shape=properties.n_total_elements,
         dtype=schema.dtype,
         columns=properties.columns,
     )
-    indptr = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
-    return {"data": data, "indptr": indptr}
+    indptr: IndexPointer = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
+    return cast(SparseBatchData, {"data": data, "indptr": indptr})
 
 
 def _create_contents_buffer(shape, dtype, columns: list[AttributeType] | None) -> SingleComponentData | DenseBatchData:

@@ -93,7 +93,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
         if is_sparse(data):
             component_batches = split_sparse_batch_data_in_batches(cast(SparseBatchData, data), component)
         else:
-            component_batches = split_dense_batch_data_in_batches(data, component)
+            component_batches = split_dense_batch_data_in_batches(cast(SingleComponentData, data), component)
         for i, batch in enumerate(component_batches):
             if (isinstance(batch, dict) and batch) or (isinstance(batch, np.ndarray) and batch.size > 0):
                 list_data[i][component] = batch
@@ -151,7 +151,9 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
         return indptr.size - 1
 
     data_to_check = (
-        next(iter(cast(DenseBatchColumnarData, batch_data).values())) if is_columnar(batch_data) else batch_data
+        next(iter(cast(DenseBatchColumnarData, batch_data).values()))
+        if is_columnar(batch_data)
+        else cast(DenseBatchArray, batch_data)
     )
     if data_to_check.ndim == 1:
         return 1
@@ -397,7 +399,7 @@ def _convert_data_to_row_or_columnar(
     if isinstance(attrs, (list, set)) and len(attrs) == 0:
         return {}
     if isinstance(attrs, ComponentAttributeFilterOptions):
-        names = cast(np.ndarray, data).dtype.names if not is_columnar(data) else data.keys()
+        names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
         return {attr: deepcopy(data[attr]) for attr in names}
     return {attr: deepcopy(data[attr]) for attr in attrs}
 
@@ -575,7 +577,7 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
             raise TypeError(not_columnar_data_message)
         if attribute_array.ndim not in allowed_dims:
             raise TypeError(not_columnar_data_message)
-    return sub_data
+    return cast(ColumnarData, sub_data)
 
 
 def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> DataArray:  # pragma: no cover

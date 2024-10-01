@@ -55,7 +55,7 @@ jobs:
 
       - name: Install and run mypy
         run: |
-          pip install mypy
+          pip install mypy numpy
           mypy .
 
       - name: Install and run pylint

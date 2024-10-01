@@ -513,6 +513,6 @@ def _get_filtered_attributes(
         return None
 
     if isinstance(component_data_filter, ComponentAttributeFilterOptions):
-        return list(schema.dtype.names)
+        return [] if schema.dtype.names is None else list(schema.dtype.names)
 
     return list(component_data_filter)
