@@ -561,6 +561,8 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
     Returns:
         ColumnarData: the contents of columnar data
     """
+    not_columnar_data_message = "Expected columnar data"
+
     if is_batch is not None:
         allowed_dims = [2, 3] if is_batch else [1, 2]
     else:
@@ -569,12 +571,12 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
     sub_data = data["data"] if is_sparse(data) else data
 
     if not isinstance(sub_data, dict):
-        raise TypeError("Expected columnar data")
+        raise TypeError(not_columnar_data_message)
     for attribute, attribute_array in sub_data.items():
         if not isinstance(attribute_array, np.ndarray) or not isinstance(attribute, str):
-            raise TypeError("Expected columnar data")
+            raise TypeError(not_columnar_data_message)
         if attribute_array.ndim not in allowed_dims:
-            raise TypeError("Expected columnar data")
+            raise TypeError(not_columnar_data_message)
     return cast(ColumnarData, sub_data)
 
 
