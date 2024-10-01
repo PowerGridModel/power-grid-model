@@ -11,7 +11,7 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
-from typing import Optional, cast
+from typing import Optional, Sequence, cast
 
 import numpy as np
 
@@ -397,7 +397,7 @@ def _convert_data_to_row_or_columnar(
     if isinstance(attrs, (list, set)) and len(attrs) == 0:
         return {}
     if isinstance(attrs, ComponentAttributeFilterOptions):
-        names = data.dtype.names if not is_columnar(data) else data.keys()
+        names = cast(np.ndarray, data).dtype.names if not is_columnar(data) else data.keys()
         return {attr: deepcopy(data[attr]) for attr in names}
     return {attr: deepcopy(data[attr]) for attr in attrs}
 
