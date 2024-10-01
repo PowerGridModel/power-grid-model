@@ -19,6 +19,11 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model.enum
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: power_grid_model.typing
+   :members: ComponentAttributeFilterOptions
+   :undoc-members:
+   :show-inheritance:
 ```
 
 ## data types
