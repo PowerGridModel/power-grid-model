@@ -151,7 +151,9 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
         next(iter(cast(DenseBatchColumnarData, batch_data).values())) if is_columnar(batch_data) else batch_data
     )
     if data_to_check.ndim == 1:
-        raise ValueError("get_batch_size is called for non batch data")
+        return 1
+    if data_to_check.ndim == 2 and is_columnar(batch_data):
+        raise ValueError("get_batch_size is not supported for columnar data")
     return data_to_check.shape[0]
 
 
