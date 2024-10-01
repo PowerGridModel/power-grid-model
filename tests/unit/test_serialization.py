@@ -779,6 +779,28 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
         pytest.param(json_deserialize, to_json, ComponentAttributeFilterOptions.RELEVANT, id="json.relevant"),
         pytest.param(msgpack_deserialize, to_msgpack, ComponentAttributeFilterOptions.ALL, id="msgpack.all"),
         pytest.param(msgpack_deserialize, to_msgpack, ComponentAttributeFilterOptions.RELEVANT, id="msgpack.relevant"),
+        pytest.param(
+            json_deserialize,
+            to_json,
+            {
+                "node": ["id"],
+                "line": ComponentAttributeFilterOptions.ALL,
+                "sym_load": ["id"],
+                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
+            },
+            id="json.mixed_filter",
+        ),
+        pytest.param(
+            msgpack_deserialize,
+            to_msgpack,
+            {
+                "node": ["id"],
+                "line": ComponentAttributeFilterOptions.ALL,
+                "sym_load": ["id"],
+                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
+            },
+            id="msgpack.mixed_filter",
+        ),
     ),
 )
 def test_deserialize_data_filter(deserialize, serialized_data, data_filter, pack):
