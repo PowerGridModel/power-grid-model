@@ -167,22 +167,25 @@ ColumnarData = SingleColumnarData | BatchColumnarData
 Columnar data can be :class:`SingleColumnarData` or :class:`BatchColumnarData`.
 """
 
+_SingleComponentData = TypeVar("_SingleComponentData", SingleArray, SingleColumnarData)  # deduction helper
 SingleComponentData = SingleArray | SingleColumnarData
 """
 Single component data can be :class:`SingleArray` or :class:`SingleColumnarData`.
 """
 
+_BatchComponentData = TypeVar("_BatchComponentData", BatchArray, BatchColumnarData)  # deduction helper
 BatchComponentData = BatchArray | BatchColumnarData
 """
 Batch component data can be :class:`BatchArray` or :class:`BatchColumnarData`.
 """
 
+_ComponentData = TypeVar("_ComponentData", SingleComponentData, BatchComponentData)  # deduction helper
 ComponentData = DataArray | ColumnarData
 """
 Component data can be :class:`DataArray` or :class:`ColumnarData`.
 """
 
-SingleDataset = dict[ComponentTypeVar, SingleComponentData]
+SingleDataset = dict[ComponentTypeVar, _SingleComponentData]
 """
 A single dataset is a dictionary where the keys are the component types and the values are
 :class:`ComponentData`
@@ -190,7 +193,7 @@ A single dataset is a dictionary where the keys are the component types and the 
 - Example: {"node": :class:`SingleArray`, "line": :class:`SingleColumnarData`}
 """
 
-BatchDataset = dict[ComponentTypeVar, BatchComponentData]
+BatchDataset = dict[ComponentTypeVar, _BatchComponentData]
 """
 A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchComponentData`
 
@@ -198,7 +201,6 @@ A batch dataset is a dictionary where the keys are the component types and the v
             "link": :class:`DenseBatchColumnarData`, "transformer": :class:`SparseBatchColumnarData`}
 """
 
-_ComponentData = TypeVar("_ComponentData", SingleComponentData, BatchComponentData)  # deduction helper
 Dataset = dict[ComponentTypeVar, _ComponentData]
 """
 A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
