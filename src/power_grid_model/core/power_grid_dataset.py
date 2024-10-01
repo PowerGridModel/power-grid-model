@@ -8,14 +8,10 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import (
-    compatibility_convert_row_columnar_dataset,
-    is_columnar,
-    is_sparse,
-    process_data_filter,
-)
+from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
+    CAttributeBuffer,
     CBuffer,
     create_buffer,
     get_buffer_properties,
@@ -30,10 +26,14 @@ from power_grid_model.core.power_grid_core import (
     WritableDatasetPtr,
     power_grid_core as pgc,
 )
-from power_grid_model.core.power_grid_meta import DatasetMetaData, power_grid_meta_data
-from power_grid_model.data_types import ComponentData, Dataset
+from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
+from power_grid_model.data_types import AttributeType, ComponentData, Dataset
 from power_grid_model.errors import PowerGridError
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model.typing import (
+    ComponentAttributeFilterOptions,
+    ComponentAttributeMapping,
+    _ComponentAttributeMappingDict,
+)
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -150,7 +150,7 @@ def get_dataset_type(data: Dataset) -> DatasetType:
     candidates = set(power_grid_meta_data.keys())
 
     if all(is_columnar(v) for v in data.values()):
-        raise ValueError("The dataset type could not be deduced. Atleast one component should have row based data.")
+        raise ValueError("The dataset type could not be deduced. At least one component should have row based data.")
 
     for dataset_type, dataset_metadatas in power_grid_meta_data.items():
         for component, dataset_metadata in dataset_metadatas.items():
@@ -198,14 +198,10 @@ class CMutableDataset:
         instance._dataset_type = dataset_type if dataset_type in DatasetType else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
-        compatibility_converted_data = compatibility_convert_row_columnar_dataset(
-            data=data,
-            data_filter=None,
-            dataset_type=instance._dataset_type,
-            available_components=list(data.keys()),
-        )
+        compatibility_converted_data = data
         if compatibility_converted_data:
-            first_sub_info = get_buffer_properties(next(iter(compatibility_converted_data.values())))
+            first_component, first_component_data = next(iter(compatibility_converted_data.items()))
+            first_sub_info = get_buffer_properties(data=first_component_data, schema=instance._schema[first_component])
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
         else:
@@ -283,8 +279,8 @@ class CMutableDataset:
                 raise ValueError(f"Unknown component {component} in schema. {VALIDATOR_MSG}")
             return
 
-        self._validate_properties(data)
-        c_buffer = get_buffer_view(data, self._schema[component])
+        self._validate_properties(data, self._schema[component])
+        c_buffer = get_buffer_view(data, self._schema[component], self._is_batch, self._batch_size)
         self._buffer_views.append(c_buffer)
         self._register_buffer(component, c_buffer)
 
@@ -298,9 +294,20 @@ class CMutableDataset:
             data=buffer.data,
         )
         assert_no_error()
+        for attr, attr_data in buffer.attribute_data.items():
+            self._register_attribute_buffer(component, attr, attr_data)
 
-    def _validate_properties(self, data: ComponentData):
-        properties = get_buffer_properties(data)
+    def _register_attribute_buffer(self, component, attr, attr_data):
+        pgc.dataset_mutable_add_attribute_buffer(
+            dataset=self._mutable_dataset,
+            component=component.value,
+            attribute=attr,
+            data=attr_data.data,
+        )
+        assert_no_error()
+
+    def _validate_properties(self, data: ComponentData, schema: ComponentMetaData):
+        properties = get_buffer_properties(data, schema=schema, is_batch=self._is_batch, batch_size=self._batch_size)
         if properties.is_batch != self._is_batch:
             raise ValueError(
                 f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
@@ -378,12 +385,14 @@ class CWritableDataset:
         self._schema = power_grid_meta_data[self._dataset_type]
 
         self._data_filter = process_data_filter(
-            dataset_type=info.dataset_type(), data_filter=data_filter, available_components=info.components()
+            dataset_type=info.dataset_type(),
+            data_filter=data_filter,
+            available_components=info.components(),
         )
 
-        self._component_buffer_properties = self._get_buffer_properties(info)
         self._data: Dataset = {}
         self._buffers: Mapping[str, CBuffer] = {}
+        self._component_buffer_properties = self._get_buffer_properties(info)
 
         self._add_buffers()
         assert_no_error()
@@ -415,13 +424,7 @@ class CWritableDataset:
         Returns:
             The full dataset.
         """
-        converted_data = compatibility_convert_row_columnar_dataset(
-            data=self._data,
-            data_filter=self.get_data_filter(),
-            dataset_type=self.get_info().dataset_type(),
-            available_components=list(self._data.keys()),
-        )
-        return converted_data
+        return self._data
 
     def get_component_data(self, component: ComponentType) -> ComponentData:
         """
@@ -455,12 +458,30 @@ class CWritableDataset:
 
     def _register_buffer(self, component: ComponentType, buffer: CBuffer):
         pgc.dataset_writable_set_buffer(
-            dataset=self._writable_dataset, component=component, indptr=buffer.indptr, data=buffer.data
+            dataset=self._writable_dataset,
+            component=component,
+            indptr=buffer.indptr,
+            data=buffer.data,
+        )
+        assert_no_error()
+        for attribute, attribute_data in buffer.attribute_data.items():
+            self._register_attribute_buffer(component, attribute, attribute_data)
+
+    def _register_attribute_buffer(
+        self,
+        component: ComponentType,
+        attribute: AttributeType,
+        buffer: CAttributeBuffer,
+    ):
+        pgc.dataset_writable_set_attribute_buffer(
+            dataset=self._writable_dataset,
+            component=component,
+            attribute=attribute,
+            data=buffer.data,
         )
         assert_no_error()
 
-    @staticmethod
-    def _get_buffer_properties(info: CDatasetInfo) -> Mapping[ComponentType, BufferProperties]:
+    def _get_buffer_properties(self, info: CDatasetInfo) -> Mapping[ComponentType, BufferProperties]:
         is_batch = info.is_batch()
         batch_size = info.batch_size()
         components = info.components()
@@ -474,6 +495,24 @@ class CWritableDataset:
                 batch_size=batch_size,
                 n_elements_per_scenario=n_elements_per_scenario[component],
                 n_total_elements=n_total_elements[component],
+                columns=_get_filtered_attributes(
+                    schema=self._schema[component],
+                    component_data_filter=self._data_filter[component],
+                ),
             )
             for component in components
+            if component in self._data_filter
         }
+
+
+def _get_filtered_attributes(
+    schema: ComponentMetaData,
+    component_data_filter: set[str] | list[str] | None | ComponentAttributeFilterOptions,
+) -> list[str] | None:
+    if component_data_filter is None:
+        return None
+
+    if isinstance(component_data_filter, ComponentAttributeFilterOptions):
+        return [] if schema.dtype.names is None else list(schema.dtype.names)
+
+    return list(component_data_filter)

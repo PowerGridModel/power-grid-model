@@ -13,10 +13,11 @@ from power_grid_model._utils import (
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
     get_and_verify_batch_sizes,
+    get_batch_size,
     is_nan,
     process_data_filter,
-    split_numpy_array_in_batches,
-    split_sparse_batches_in_batches,
+    split_dense_batch_data_in_batches,
+    split_sparse_batch_data_in_batches,
 )
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.data_types import BatchDataset, BatchList
@@ -139,15 +140,15 @@ def test_convert_batch_to_list_data__zero_batches():
     assert convert_batch_dataset_to_batch_list({}) == []
 
 
-def test_split_numpy_array_in_batches_n1():
+def test_split_dense_batch_data_in_batches_n1():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     update_data = np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo)
     expected = [np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo)]
-    actual = split_numpy_array_in_batches(update_data, "")
+    actual = split_dense_batch_data_in_batches(update_data, "")
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
-def test_split_numpy_array_in_batches_n2():
+def test_split_dense_batch_data_in_batches_n2():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     update_data = np.array(
         [
@@ -160,26 +161,35 @@ def test_split_numpy_array_in_batches_n2():
         np.array([(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
         np.array([(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
     ]
-    actual = split_numpy_array_in_batches(update_data, "")
+    actual = split_dense_batch_data_in_batches(update_data, "")
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
-def test_split_numpy_array_in_batches_wrong_data_type():
+def test_split_dense_batch_data_in_batches_wrong_data_type():
     update_data = [1, 2, 3]
     with pytest.raises(
         TypeError,
-        match="Invalid data type list in batch data for 'foo' " r"\(should be a 1D/2D Numpy structured array\).",
+        match="Invalid data for 'foo' component. " "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
     ):
-        split_numpy_array_in_batches(update_data, "foo")  # type: ignore
+        split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
+
+    update_data = {"bar": np.array([]), "baz": [1, 2, 3]}
+    with pytest.raises(
+        TypeError,
+        match="Invalid data for 'foo' component. 'baz' attribute. "
+        "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
+    ):
+        split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
 
 
-def test_split_numpy_array_in_batches_wrong_data_dim():
+def test_split_dense_batch_data_in_batches_wrong_data_dim():
     update_date = np.array([[[1, 2, 3]]])
     with pytest.raises(
         TypeError,
-        match="Invalid data dimension 3 in batch data for 'foo' " r"\(should be a 1D/2D Numpy structured array\).",
+        match="Invalid data for 'foo' component. Invalid dimension: 3. "
+        "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
     ):
-        split_numpy_array_in_batches(update_date, "foo")
+        split_dense_batch_data_in_batches(update_date, "foo")
 
 
 def test_normalize_batch_data_structure_n3_sparse():
@@ -203,7 +213,7 @@ def test_normalize_batch_data_structure_n3_sparse():
         np.array([], dtype=foo),
         np.array([(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
     ]
-    actual = split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr}, component="")
+    actual = split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr}, component="")
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
@@ -212,9 +222,9 @@ def test_split_compressed_sparse_structure_in_batches_wrong_data():
     data_2 = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # wrong dimension
     indptr = np.array([0, 4, 4, 8])
     with pytest.raises(TypeError, match="Invalid data type list in sparse batch data for 'foo' "):
-        split_sparse_batches_in_batches(batch_data={"data": data_1, "indptr": indptr}, component="foo")  # type: ignore
+        split_sparse_batch_data_in_batches(batch_data={"data": data_1, "indptr": indptr}, component="foo")  # type: ignore
     with pytest.raises(TypeError, match="Invalid data type ndarray in sparse batch data for 'bar' "):
-        split_sparse_batches_in_batches(batch_data={"data": data_2, "indptr": indptr}, component="bar")
+        split_sparse_batch_data_in_batches(batch_data={"data": data_2, "indptr": indptr}, component="bar")
 
 
 def test_split_compressed_sparse_structure_in_batches_wrong_indptr():
@@ -236,11 +246,11 @@ def test_split_compressed_sparse_structure_in_batches_wrong_indptr():
     indptr_2 = np.array([[0, 4], [4, 8]])  # wrong dimension
     indptr_3 = np.array([0.0, 4.0, 4.0, 8.0])  # wrong dtype
     with pytest.raises(TypeError, match="Invalid indptr data type list in batch data for 'foo' "):
-        split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr_1}, component="foo")  # type: ignore
+        split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr_1}, component="foo")  # type: ignore
     with pytest.raises(TypeError, match="Invalid indptr data type ndarray in batch data for 'foo' "):
-        split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr_2}, component="foo")  # type: ignore
+        split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr_2}, component="foo")  # type: ignore
     with pytest.raises(TypeError, match="Invalid indptr data type ndarray in batch data for 'foo' "):
-        split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr_3}, component="foo")  # type: ignore
+        split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr_3}, component="foo")  # type: ignore
 
 
 def test_split_compressed_sparse_structure_in_batches_wrong_indptr_values():
@@ -267,21 +277,21 @@ def test_split_compressed_sparse_structure_in_batches_wrong_indptr_values():
         r"\(should start with 0, end with the number of objects \(8\) "
         r"and be monotonic increasing\).",
     ):
-        split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr_1}, component="foo")
+        split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr_1}, component="foo")
     with pytest.raises(
         TypeError,
         match="Invalid indptr in batch data for 'foo' "
         r"\(should start with 0, end with the number of objects \(8\) "
         r"and be monotonic increasing\).",
     ):
-        split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr_2}, component="foo")
+        split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr_2}, component="foo")
     with pytest.raises(
         TypeError,
         match="Invalid indptr in batch data for 'foo' "
         r"\(should start with 0, end with the number of objects \(8\) "
         r"and be monotonic increasing\).",
     ):
-        split_sparse_batches_in_batches(batch_data={"data": update_data, "indptr": indptr_3}, component="foo")
+        split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr_3}, component="foo")
 
 
 def test_convert_batch_dataset_to_batch_list_one_batch_dense():
@@ -412,11 +422,7 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
 @patch("power_grid_model._utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}  # type: ignore
-    with pytest.raises(
-        KeyError,
-        match="Missing 'indptr' in sparse batch data for 'foo' "
-        r"\(expected a python dictionary containing two keys: 'indptr' and 'data'\).",
-    ):
+    with pytest.raises(KeyError, match="Invalid data for 'foo' component. Missing 'indptr' in sparse batch data. "):
         convert_batch_dataset_to_batch_list(update_data)
 
 
@@ -425,8 +431,7 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
         TypeError,
-        match="Invalid data type str in batch data for 'foo' "
-        r"\(should be a Numpy structured array or a python dictionary\).",
+        match="Invalid data for 'foo' component. " "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         convert_batch_dataset_to_batch_list(update_data)
 
@@ -550,3 +555,29 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
     assert actual.keys() == expected.keys()
     for comp_name in expected:
         np.testing.assert_array_equal(actual[comp_name], expected[comp_name])
+
+
+@pytest.mark.parametrize(
+    ("data", "expected_size"),
+    [
+        pytest.param(np.empty(shape=(3, 2)), 3, id="row based batch"),
+        pytest.param({"u": np.empty(shape=(3, 2))}, 3, id="columnar batch", marks=pytest.mark.xfail),
+        pytest.param({"u": np.empty(shape=(4, 2, 3))}, 4, id="columnar asym batch"),
+        pytest.param({"indptr": np.array([0, 1, 4]), "data": np.array([])}, 2, id="sparse data"),
+        pytest.param({"indptr": np.array([0, 1]), "data": np.array([])}, 1, id="sparse data"),
+    ],
+)
+def test_get_batch_size(data, expected_size):
+    assert get_batch_size(data) == expected_size
+
+
+@pytest.mark.parametrize(
+    ("data",),
+    [
+        pytest.param(np.empty(shape=3), id="row based single", marks=pytest.mark.xfail),
+        pytest.param({"u": np.empty(shape=3)}, id="columnar single", marks=pytest.mark.xfail),
+    ],
+)
+def test_get_batch_size__single_dataset_is_not_supported(data):
+    with pytest.raises(ValueError):
+        get_batch_size(data)

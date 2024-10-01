@@ -4,7 +4,7 @@
 
 repos:
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v4.0.0
+    rev: v4.0.3
     hooks:
       - id: reuse
   - repo: https://github.com/pycqa/isort
@@ -12,13 +12,15 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 24.8.0
     hooks:
       - id: black-jupyter
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v1.11.2
     hooks:
       - id: mypy
+        additional_dependencies:
+          - numpy
   - repo: local
     hooks:
       - id: pylint
