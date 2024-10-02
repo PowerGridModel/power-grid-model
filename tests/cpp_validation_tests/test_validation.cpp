@@ -162,7 +162,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
     }
 }*/
 
-auto load_dataset(std::filesystem::path const& path) {
+OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
@@ -174,7 +174,9 @@ auto load_dataset(std::filesystem::path const& path) {
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
-    return OwningDataset{}; // fallback for https://github.com/msgpack/msgpack-c/issues/1098
+    // fallback for https://github.com/msgpack/msgpack-c/issues/1098
+    return OwningDataset{.dataset = {false, 0, "", meta_data_gen::meta_data},
+                         .const_dataset = {false, 0, "", meta_data_gen::meta_data}};
 #endif // __clang_analyzer__ // issue in msgpack
 }
 
@@ -648,7 +650,7 @@ void validate_batch_case(CaseParam const& param) {
             // update and run
             model_copy.update_component<permanent_update_t>(
                 validation_case.update_batch.value().batch_scenarios[scenario]);
-            ConstDataset empty{false, 1, "update", meta_data_gen::meta_data};
+            ConstDataset const empty{false, 1, "update", meta_data_gen::meta_data};
             func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
 
             // check

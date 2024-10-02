@@ -376,7 +376,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def get_indexer(
+    def get_indexer(  # pylint: disable=too-many-positional-arguments
         self,
         model: ModelPtr,
         component: str,
@@ -441,7 +441,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def dataset_mutable_add_buffer(  # type: ignore[empty-body]
+    def dataset_mutable_add_buffer(  # type: ignore[empty-body]  # pylint: disable=too-many-positional-arguments
         self,
         dataset: MutableDatasetPtr,
         component: str,
@@ -450,6 +450,16 @@ class PowerGridCore:
         indptr: IdxPtr,  # type: ignore[valid-type]
         data: VoidPtr,  # type: ignore[valid-type]
     ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_mutable_add_attribute_buffer(
+        self,
+        dataset: MutableDatasetPtr,
+        component: str,
+        attribute: str,
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -480,6 +490,16 @@ class PowerGridCore:
         dataset: WritableDatasetPtr,
         component: str,
         indptr: IdxPtr,  # type: ignore[valid-type]
+        data: VoidPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_writable_set_attribute_buffer(
+        self,
+        dataset: WritableDatasetPtr,
+        component: str,
+        attribute: str,
         data: VoidPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover

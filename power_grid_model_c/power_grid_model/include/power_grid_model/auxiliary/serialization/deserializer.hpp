@@ -385,7 +385,7 @@ class Deserializer {
     Deserializer& operator=(Deserializer const&) = delete;
     // movable
     Deserializer(Deserializer&&) = default;
-    Deserializer& operator=(Deserializer&&) = default;
+    Deserializer& operator=(Deserializer&&) noexcept = default;
 
     // destructor
     ~Deserializer() = default;

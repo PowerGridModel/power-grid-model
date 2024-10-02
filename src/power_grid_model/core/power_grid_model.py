@@ -5,6 +5,7 @@
 """
 Main power grid model class
 """
+
 from enum import IntEnum
 from typing import Optional, Type
 
@@ -37,7 +38,6 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     _ExperimentalFeatures,
 )
-from power_grid_model.errors import PowerGridError
 from power_grid_model.typing import ComponentAttributeMapping
 
 
@@ -192,7 +192,7 @@ class PowerGridModel:
         return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
     # pylint: disable=too-many-arguments
-    def _construct_output(
+    def _construct_output(  # pylint: disable=too-many-positional-arguments
         self,
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
@@ -229,11 +229,13 @@ class PowerGridModel:
 
     def _handle_errors(self, continue_on_batch_error: bool, batch_size: int, decode_error: bool):
         self._batch_error = handle_errors(
-            continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
+            continue_on_batch_error=continue_on_batch_error,
+            batch_size=batch_size,
+            decode_error=decode_error,
         )
 
     # pylint: disable=too-many-arguments
-    def _calculate_impl(
+    def _calculate_impl(  # pylint: disable=too-many-positional-arguments
         self,
         calculation_type: CalculationType,
         symmetric: bool,
@@ -242,7 +244,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: _ExperimentalFeatures | str,  # pylint: disable=too-many-arguments
+        experimental_features: _ExperimentalFeatures | str,  # pylint: disable=too-many-arguments,unused-argument
     ):
         """
         Core calculation routine
@@ -269,14 +271,6 @@ class PowerGridModel:
             update_ptr = ConstDatasetPtr()
             batch_size = 1
 
-        if experimental_features in [
-            _ExperimentalFeatures.disabled,
-            _ExperimentalFeatures.disabled.name,
-        ] and isinstance(output_component_types, dict):
-            raise PowerGridError(
-                "Experimental features flag must be enabled when providing a dict for output_component_types"
-            )
-
         output_data = self._construct_output(
             output_component_types=output_component_types,
             calculation_type=calculation_type,
@@ -299,7 +293,9 @@ class PowerGridModel:
         )
 
         self._handle_errors(
-            continue_on_batch_error=continue_on_batch_error, batch_size=batch_size, decode_error=decode_error
+            continue_on_batch_error=continue_on_batch_error,
+            batch_size=batch_size,
+            decode_error=decode_error,
         )
 
         output_data = compatibility_convert_row_columnar_dataset(
