@@ -22,9 +22,14 @@ ComponentAttributeMapping = (
 Type hint for mapping component attributes.
 
 `ComponentAttributeMapping` can be one of the following:
+
 - A set of `ComponentTypeVar`
+
 - A list of `ComponentTypeVar`
+
 - A `ComponentAttributeFilterOptions` value
+
 - `None`
+
 - A dictionary mapping `ComponentType` to a set, list, `None`, or `ComponentAttributeFilterOptions`
 """
