@@ -213,6 +213,68 @@ bool compare_value(T const& ref_attribute_value, T const& attribute_value, doubl
     }
 }
 
+template <typename T>
+void check_results(T const& ref_attribute_value, T const& attribute_value, T const& ref_possible_attribute_value,
+                   T const& possible_attribute_value, bool const& is_angle, Idx scenario_idx, Idx obj,
+                   std::string const& component_name, std::string const& attribute_name, double const& dynamic_atol,
+                   double const& rtol) {
+    bool const match =
+        is_angle
+            ? check_angle_and_magnitude<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value,
+                                                                       ref_possible_attribute_value,
+                                                                       possible_attribute_value, dynamic_atol, rtol)
+            : compare_value<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value, dynamic_atol, rtol);
+    if (match) {
+        CHECK(match);
+    } else {
+        std::stringstream case_sstr;
+        case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name << " #" << obj
+                  << ", attribute: " << attribute_name
+                  << ": actual = " << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
+                  << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
+        CHECK_MESSAGE(match, case_sstr.str());
+    }
+}
+
+template <typename T>
+void check_individual_attribute(Buffer const& buffer, Buffer const& ref_buffer,
+                                MetaAttribute const* const attribute_meta,
+                                MetaAttribute const* const possible_attr_meta, bool const& is_angle,
+                                Idx elements_per_scenario, Idx scenario_idx, Idx obj, std::string const& component_name,
+                                std::string const& attribute_name, double const& dynamic_atol, double const& rtol) {
+    Idx idx = (elements_per_scenario * scenario_idx) + obj;
+    // get attribute values to check
+    T ref_attribute_value{};
+    T attribute_value{};
+    T ref_possible_attribute_value{};
+    T possible_attribute_value{};
+    auto get_values = [&ref_buffer, &buffer, &attribute_meta, &possible_attr_meta,
+                       &idx]<typename U>(U* ref_attribute_value, U* attribute_value, U* ref_possible_attribute_value,
+                                         U* possible_attribute_value) {
+        ref_buffer.get_value(attribute_meta, ref_attribute_value, idx, 0);
+        buffer.get_value(attribute_meta, attribute_value, idx, 0);
+        ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value, idx, 0);
+        buffer.get_value(possible_attr_meta, possible_attribute_value, idx, 0);
+    };
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
+        get_values(ref_attribute_value.data(), attribute_value.data(), ref_possible_attribute_value.data(),
+                   possible_attribute_value.data());
+    } else {
+        get_values(&ref_attribute_value, &attribute_value, &ref_possible_attribute_value, &possible_attribute_value);
+    }
+
+    // check attributes
+    if (is_nan(ref_attribute_value)) {
+        return;
+    }
+    // for angle attribute, also check the magnitude available
+    if (is_angle && is_nan(ref_possible_attribute_value)) {
+        return;
+    }
+    check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value, possible_attribute_value,
+                  is_angle, scenario_idx, obj, component_name, attribute_name, dynamic_atol, rtol);
+}
+
 void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
@@ -234,7 +296,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
         // loop through all components
         for (Idx component_idx{}; component_idx < reference_result_info.n_components(); ++component_idx) {
             auto const& component_name = reference_result_info.component_name(component_idx);
-            auto const& component_meta = MetaData::get_component_by_name(reference_result_name, component_name);
+            auto const* const component_meta = MetaData::get_component_by_name(reference_result_name, component_name);
 
             auto& ref_buffer = reference_storage.buffers.at(component_idx);
             auto& buffer = storage.buffers.at(component_idx);
@@ -242,7 +304,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
             CHECK(elements_per_scenario >= 0);
             // loop through all attributes
             for (Idx attribute_idx{}; attribute_idx < MetaData::n_attributes(component_meta); ++attribute_idx) {
-                auto const& attribute_meta = MetaData::get_attribute_by_idx(component_meta, attribute_idx);
+                auto const* const attribute_meta = MetaData::get_attribute_by_idx(component_meta, attribute_idx);
                 auto attribute_type = MetaData::attribute_ctype(attribute_meta);
                 auto const& attribute_name = MetaData::attribute_name(attribute_meta);
                 // TODO skip u angle, need a way for common angle
@@ -267,67 +329,13 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                              : attribute_meta;
                 // loop through all objects
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
-                    auto check_results = [&is_angle, &scenario_idx, &obj, &component_name, &attribute_name,
-                                          &dynamic_atol, rtol]<typename T>(
-                                             T const& ref_attribute_value, T const& attribute_value,
-                                             T const& ref_possible_attribute_value, T const& possible_attribute_value) {
-                        bool const match = is_angle
-                                               ? check_angle_and_magnitude<decltype(ref_attribute_value)>(
-                                                     ref_attribute_value, attribute_value, ref_possible_attribute_value,
-                                                     possible_attribute_value, dynamic_atol, rtol)
-                                               : compare_value<decltype(ref_attribute_value)>(
-                                                     ref_attribute_value, attribute_value, dynamic_atol, rtol);
-                        if (match) {
-                            CHECK(match);
-                        } else {
-                            std::stringstream case_sstr;
-                            case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name
-                                      << " #" << obj << ", attribute: " << attribute_name << ": actual = "
-                                      << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
-                                      << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
-                            CHECK_MESSAGE(match, case_sstr.str());
-                        }
+                    auto callable_wrapper = [&]<typename T>() {
+                        check_individual_attribute<T>(buffer, ref_buffer, attribute_meta, possible_attr_meta, is_angle,
+                                                      elements_per_scenario, scenario_idx, obj, component_name,
+                                                      attribute_name, dynamic_atol, rtol);
                     };
 
-                    auto const idx = (elements_per_scenario * scenario_idx) + obj;
-
-                    auto check_individual_attribute = [&check_results, &buffer, &ref_buffer, &attribute_meta,
-                                                       &possible_attr_meta, &is_angle, &idx]<typename T>() {
-                        // get attribute values to check
-                        T ref_attribute_value{};
-                        T attribute_value{};
-                        T ref_possible_attribute_value{};
-                        T possible_attribute_value{};
-                        auto get_values = [&ref_buffer, &buffer, &attribute_meta, &possible_attr_meta,
-                                           &idx]<typename U>(U* ref_attribute_value, U* attribute_value,
-                                                             U* ref_possible_attribute_value,
-                                                             U* possible_attribute_value) {
-                            ref_buffer.get_value(attribute_meta, ref_attribute_value, idx, 0);
-                            buffer.get_value(attribute_meta, attribute_value, idx, 0);
-                            ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value, idx, 0);
-                            buffer.get_value(possible_attr_meta, possible_attribute_value, idx, 0);
-                        };
-                        if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
-                            get_values(ref_attribute_value.data(), attribute_value.data(),
-                                       ref_possible_attribute_value.data(), possible_attribute_value.data());
-                        } else {
-                            get_values(&ref_attribute_value, &attribute_value, &ref_possible_attribute_value,
-                                       &possible_attribute_value);
-                        }
-
-                        // check attributes
-                        if (is_nan(ref_attribute_value)) {
-                            return;
-                        }
-                        // for angle attribute, also check the magnitude available
-                        if (is_angle && is_nan(ref_possible_attribute_value)) {
-                            return;
-                        }
-                        check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value,
-                                      possible_attribute_value);
-                    };
-
-                    pgm_type_func_selector(static_cast<PGM_CType>(attribute_type), check_individual_attribute);
+                    pgm_type_func_selector(static_cast<PGM_CType>(attribute_type), callable_wrapper);
                 }
             }
         }
