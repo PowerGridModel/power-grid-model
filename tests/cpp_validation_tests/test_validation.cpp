@@ -4,14 +4,7 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
-#include "power_grid_model_c.h"
 #include "power_grid_model_cpp.hpp"
-
-#include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
-#include <power_grid_model/container.hpp>
-#include <power_grid_model/main_model.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
@@ -30,7 +23,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace power_grid_model::meta_data {
+namespace power_grid_model_cpp {
 
 namespace {
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
@@ -79,10 +72,10 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
+class UnsupportedValidationCase : public PowerGridError {
   public:
     UnsupportedValidationCase(std::string const& calculation_type, bool sym)
-        : power_grid_model_cpp::PowerGridError{[&]() {
+        : PowerGridError{[&]() {
               using namespace std::string_literals;
               auto const sym_str = sym ? "sym"s : "asym"s;
               return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
@@ -90,29 +83,27 @@ class UnsupportedValidationCase : public power_grid_model_cpp::PowerGridError {
 };
 
 struct OwningMemory {
-    std::vector<power_grid_model_cpp::Buffer> buffers{};
+    std::vector<Buffer> buffers{};
     std::vector<std::vector<Idx>> indptrs{};
 };
 
 struct OwningDataset {
-    std::optional<power_grid_model_cpp::DatasetMutable> dataset;
-    std::optional<power_grid_model_cpp::DatasetConst> const_dataset;
-    // std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{};
+    std::optional<DatasetMutable> dataset;
+    std::optional<DatasetConst> const_dataset;
     OwningMemory storage{};
 };
 
-auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_dataset) {
+auto create_owning_dataset(DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
-    OwningDataset owning_dataset{.dataset{power_grid_model_cpp::DatasetMutable{dataset_name, is_batch, batch_size}},
+    OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
-        auto const& component_meta =
-            power_grid_model_cpp::MetaData::get_component_by_name(dataset_name, component_name);
+        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
 
@@ -131,14 +122,13 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
 
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
                                     Idx batch_size = 1) {
-    OwningDataset owning_dataset{.dataset{power_grid_model_cpp::DatasetMutable{dataset_name, is_batch, batch_size}},
+    OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
     auto const& info_input = input.const_dataset.value().get_info();
 
     for (Idx component_idx{}; component_idx != info_input.n_components(); ++component_idx) {
         auto const& component_name = info_input.component_name(component_idx);
-        auto const& component_meta =
-            power_grid_model_cpp::MetaData::get_component_by_name(dataset_name, component_name);
+        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
         Idx const component_elements_per_scenario = info_input.component_elements_per_scenario(component_idx);
         Idx const component_size = info_input.component_total_elements(component_idx);
 
@@ -151,22 +141,14 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
                                                   indptr, owning_dataset.storage.buffers.at(component_idx));
     }
     owning_dataset.const_dataset = owning_dataset.dataset.value();
-    // construct_individual_scenarios(owning_dataset); // this may or may not be needed for batch stuff
     return owning_dataset;
 }
 
-// probably not needed, because we can get the individual scenario info by offsetting. Will test with batch validation.
-/*auto construct_individual_scenarios(OwningDataset& owning_dataset) {
-    for (Idx scenario_idx{}; scenario_idx < owning_dataset.dataset.batch_size(); ++scenario_idx) {
-        owning_dataset.batch_scenarios.push_back(owning_dataset.const_dataset.get_individual_scenario(scenario_idx));
-    }
-}*/
-
-OwningDataset load_dataset(std::filesystem::path const& path) {
+auto load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    power_grid_model_cpp::Deserializer deserializer{read_file(path), Idx{0}};
+    Deserializer deserializer{read_file(path), Idx{0}};
     auto& writable_dataset = deserializer.get_dataset();
     auto dataset = create_owning_dataset(writable_dataset);
     deserializer.parse_to_buffer();
@@ -235,13 +217,13 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
 
-    power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset.value();
+    DatasetConst const& result = owning_result.const_dataset.value();
     auto const& result_info = result.get_info();
     auto const& result_name = result_info.name();
     Idx const result_batch_size = result_info.batch_size();
     auto const& storage = owning_result.storage;
 
-    power_grid_model_cpp::DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
+    DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
     auto const& reference_storage = owning_reference_result.storage;
@@ -252,20 +234,17 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
         // loop through all components
         for (Idx component_idx{}; component_idx < reference_result_info.n_components(); ++component_idx) {
             auto const& component_name = reference_result_info.component_name(component_idx);
-            auto const& component_meta =
-                power_grid_model_cpp::MetaData::get_component_by_name(reference_result_name, component_name);
+            auto const& component_meta = MetaData::get_component_by_name(reference_result_name, component_name);
 
             auto& ref_buffer = reference_storage.buffers.at(component_idx);
             auto& buffer = storage.buffers.at(component_idx);
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
             CHECK(elements_per_scenario >= 0);
             // loop through all attributes
-            for (Idx attribute_idx{}; attribute_idx < power_grid_model_cpp::MetaData::n_attributes(component_meta);
-                 ++attribute_idx) {
-                auto const& attribute_meta =
-                    power_grid_model_cpp::MetaData::get_attribute_by_idx(component_meta, attribute_idx);
-                auto attribute_type = power_grid_model_cpp::MetaData::attribute_ctype(attribute_meta);
-                auto const& attribute_name = power_grid_model_cpp::MetaData::attribute_name(attribute_meta);
+            for (Idx attribute_idx{}; attribute_idx < MetaData::n_attributes(component_meta); ++attribute_idx) {
+                auto const& attribute_meta = MetaData::get_attribute_by_idx(component_meta, attribute_idx);
+                auto attribute_type = MetaData::attribute_ctype(attribute_meta);
+                auto const& attribute_name = MetaData::attribute_name(attribute_meta);
                 // TODO skip u angle, need a way for common angle
                 if (attribute_name == "u_angle"s) {
                     continue;
@@ -283,9 +262,9 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 std::smatch angle_match;
                 bool const is_angle = std::regex_match(attribute_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
-                auto const& possible_attr_meta = is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(
-                                                                reference_result_name, component_name, magnitude_name)
-                                                          : attribute_meta;
+                auto const& possible_attr_meta =
+                    is_angle ? MetaData::get_attribute_by_name(reference_result_name, component_name, magnitude_name)
+                             : attribute_meta;
                 // loop through all objects
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
                     auto check_results = [&is_angle, &scenario_idx, &obj, &component_name, &attribute_name,
@@ -406,8 +385,8 @@ struct CaseParam {
     }
 };
 
-power_grid_model_cpp::Options get_options(CaseParam const& param, Idx threading = -1) {
-    power_grid_model_cpp::Options options{};
+Options get_options(CaseParam const& param, Idx threading = -1) {
+    Options options{};
     options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
     options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
     options.set_symmetric(param.sym ? 1 : 0);
@@ -600,7 +579,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create and run model
         auto const& options = get_options(param);
-        power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.const_dataset.value()};
         model.calculate(options, result.dataset.value());
 
         // check results
@@ -617,7 +596,7 @@ void validate_batch_case(CaseParam const& param) {
         auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, batch_size);
 
         // create model
-        power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.const_dataset.value()};
 
         // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
@@ -628,35 +607,6 @@ void validate_batch_case(CaseParam const& param) {
 
             assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);
         }
-
-        /*// create model
-        // TODO (mgovers): fix false positive of misc-const-correctness
-        // NOLINTNEXTLINE(misc-const-correctness)
-        power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
-
-
-        /////
-        //MainModel model{50.0, validation_case.input.const_dataset, 0};
-        auto const n_scenario = static_cast<Idx>(validation_case.update_batch.value().batch_scenarios.size());
-        CalculationFunc const func = calculation_func(param);
-
-        // first run for individual scenarios and check them all (do one update at the time)
-        // run in loops
-        for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
-            CAPTURE(scenario);
-
-            MainModel model_copy{model};
-
-            // update and run
-            model_copy.update_component<permanent_update_t>(
-                validation_case.update_batch.value().batch_scenarios[scenario]);
-            ConstDataset const empty{false, 1, "update", meta_data_gen::meta_data};
-            func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
-
-            // check
-            assert_result(result.const_dataset, validation_case.output_batch.value().batch_scenarios[scenario],
-                          param.atol, param.rtol);
-        }*/
     });
 }
 
@@ -696,4 +646,4 @@ TEST_CASE("Validation test batch") {
     }
 }
 
-} // namespace power_grid_model::meta_data
+} // namespace power_grid_model_cpp
