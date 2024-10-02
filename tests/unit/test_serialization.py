@@ -610,18 +610,24 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         )
 
 
+def _check_only_relevant_attributes_present(component_values) -> bool:
+    for array in component_values.values():
+        if not isinstance(array, np.ndarray):
+            continue
+        if (array.dtype == np.float64 and np.isnan(array).all()) or (
+            array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min)
+        ):
+            return False
+    return True
+
+
 def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data_filter) -> bool:
     if data_filter is ComponentAttributeFilterOptions.ALL:
         return True
     if data_filter is ComponentAttributeFilterOptions.RELEVANT:
-        for _, component_values in deserialized_dataset.items():
-            for _, array in component_values.items():
-                if not isinstance(array, np.ndarray):
-                    continue
-                if (array.dtype == np.float64 and np.isnan(array).all()) or (
-                    array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min)
-                ):
-                    return False
+        for component_values in deserialized_dataset.values():
+            if not _check_only_relevant_attributes_present(component_values):
+                return False
     return True
 
 
