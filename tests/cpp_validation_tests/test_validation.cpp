@@ -4,6 +4,7 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
+#include "power_grid_model_c.h"
 #include "power_grid_model_cpp.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
@@ -12,7 +13,6 @@
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model.hpp>
 
-#include <Eigen/Dense>
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
@@ -47,15 +47,16 @@ template <typename T, std::size_t N> inline bool is_nan(std::array<T, N> const& 
     return false;
 }
 
-template <class Functor, class... Args> decltype(auto) pgm_type_func_selector(Idx type, Functor&& f, Args&&... args) {
+template <class Functor, class... Args>
+decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&... args) {
     switch (type) {
-    case Idx{0}: // PGM_int32
+    case PGM_int32:
         return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
-    case Idx{1}: // PGM_int8
+    case PGM_int8:
         return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
-    case Idx{2}: // PGM_double
+    case PGM_double:
         return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
-    case Idx{3}: // PGM_double3
+    case PGM_double3:
         return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
     default:
         throw std::runtime_error("unknown data type");
@@ -96,9 +97,7 @@ struct OwningMemory {
 struct OwningDataset {
     std::optional<power_grid_model_cpp::DatasetMutable> dataset;
     std::optional<power_grid_model_cpp::DatasetConst> const_dataset;
-    // std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{}; // May be removed in favor of direct buffer
-    // access
-
+    // std::vector<power_grid_model_cpp::DatasetConst> batch_scenarios{};
     OwningMemory storage{};
 };
 
@@ -130,13 +129,11 @@ auto create_owning_dataset(power_grid_model_cpp::DatasetWritable& writable_datas
     return owning_dataset;
 }
 
-// Can probably be combined with create_owning_dataset
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
                                     Idx batch_size = 1) {
     OwningDataset owning_dataset{.dataset{power_grid_model_cpp::DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
     auto const& info_input = input.const_dataset.value().get_info();
-    // auto const& info_result = owning_dataset.dataset.value().get_info();
 
     for (Idx component_idx{}; component_idx != info_input.n_components(); ++component_idx) {
         auto const& component_name = info_input.component_name(component_idx);
@@ -197,55 +194,41 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
 template <typename T>
 bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
                                double atol, double rtol) {
-    using namespace std::literals::complex_literals;
+    auto to_complex = [](double magnitude, double angle) { return std::polar(magnitude, angle); };
+    auto is_within_tolerance = [&atol, &rtol](std::complex<double> element, std::complex<double> ref_element) {
+        return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol;
+    };
+
     if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
-        // these two definitions can probably be cleaned up nicely with transform
-        std::array<std::complex<double>, 3> result{magnitude[0] * exp(1.0i * angle[0]),
-                                                   magnitude[1] * exp(1.0i * angle[1]),
-                                                   magnitude[2] * exp(1.0i * angle[2])};
-        std::array<std::complex<double>, 3> ref_result{ref_magnitude[0] * exp(1.0i * ref_angle[0]),
-                                                       ref_magnitude[1] * exp(1.0i * ref_angle[1]),
-                                                       ref_magnitude[2] * exp(1.0i * ref_angle[2])};
-        // std::ranges::all_of make it better, it is not readable
-        return std::transform_reduce(result.begin(), result.end(), ref_result.begin(), Idx{}, std::plus<Idx>{},
-                                     [&](std::complex<double> element, std::complex<double> ref_element) {
-                                         return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol
-                                                    ? Idx{1}
-                                                    : Idx{};
-                                     }) == Idx{3}
-                   ? true
-                   : false;
+        std::array<std::complex<double>, 3> result, ref_result;
+        std::ranges::transform(magnitude, angle, result.begin(), to_complex);
+        std::ranges::transform(ref_magnitude, ref_angle, ref_result.begin(), to_complex);
+        return std::ranges::equal(result, ref_result, is_within_tolerance);
     }
     if constexpr (std::is_same_v<std::decay_t<T>, double>) {
-        std::complex<double> result{magnitude * exp(1.0i * angle)};
-        std::complex<double> ref_result{ref_magnitude * exp(1.0i * ref_angle)};
-        return std::abs(result - ref_result) < (std::abs(ref_result) * rtol + atol);
+        std::complex<double> result = to_complex(magnitude, angle);
+        std::complex<double> ref_result = to_complex(ref_magnitude, ref_angle);
+        return is_within_tolerance(result, ref_result);
     } else {
         return ref_angle == angle && ref_magnitude == magnitude;
     }
 }
-// can probably combine with check_angle_and_magnitude above
+
 template <typename T>
 bool compare_value(T const& ref_attribute_value, T const& attribute_value, double atol, double rtol) {
+    auto is_within_tolerance = [&atol, &rtol](std::complex<double> element, std::complex<double> ref_element) {
+        return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol;
+    };
+
     if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
-        // std::ranges::all_of make it better, it is not readable
-        return std::transform_reduce(ref_attribute_value.begin(), ref_attribute_value.end(), attribute_value.begin(),
-                                     Idx{}, std::plus<Idx>{},
-                                     [&](double element, double ref_element) {
-                                         return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol
-                                                    ? Idx{1}
-                                                    : Idx{};
-                                     }) == Idx{3}
-                   ? true
-                   : false;
+        return std::ranges::equal(attribute_value, ref_attribute_value, is_within_tolerance);
     } else if constexpr (std::is_same_v<std::decay_t<T>, double>) {
-        return std::abs(attribute_value - ref_attribute_value) < (std::abs(ref_attribute_value) * rtol + atol);
+        return is_within_tolerance(attribute_value, ref_attribute_value);
     } else {
         return ref_attribute_value == attribute_value;
     }
 }
 
-// assert single result
 void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
@@ -253,17 +236,13 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
     power_grid_model_cpp::DatasetConst const& result = owning_result.const_dataset.value();
     auto const& result_info = result.get_info();
     auto const& result_name = result_info.name();
-    // auto const& result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(result_name);
     Idx const result_batch_size = result_info.batch_size();
     auto const& storage = owning_result.storage;
 
     power_grid_model_cpp::DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
-    // auto const& reference_result_meta = power_grid_model_cpp::MetaData::get_dataset_by_name(reference_result_name);
-    // Idx const reference_result_batch_size = reference_result_info.batch_size();
     auto const& reference_storage = owning_reference_result.storage;
-    // this is false in general because the result buffers are created on the input buffers, but this may be an issue
     CHECK(storage.buffers.size() == reference_storage.buffers.size());
 
     // loop through all scenarios
@@ -278,7 +257,6 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
             auto& buffer = storage.buffers.at(component_idx);
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
             CHECK(elements_per_scenario >= 0);
-            // to avoid non-used variables;
             // loop through all attributes
             for (Idx attribute_idx{}; attribute_idx < power_grid_model_cpp::MetaData::n_attributes(component_meta);
                  ++attribute_idx) {
@@ -306,7 +284,6 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 auto const& possible_attr_meta = is_angle ? power_grid_model_cpp::MetaData::get_attribute_by_name(
                                                                 reference_result_name, component_name, magnitude_name)
                                                           : attribute_meta;
-                // all checked at correct until this part
                 // loop through all objects
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
                     auto check_results = [&is_angle, &scenario_idx, &obj, &component_name, &attribute_name,
@@ -331,35 +308,32 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                         }
                     };
 
+                    auto const idx = (elements_per_scenario * scenario_idx) + obj;
+
                     auto check_individual_attribute = [&check_results, &buffer, &ref_buffer, &attribute_meta,
-                                                       &possible_attr_meta, &is_angle, &elements_per_scenario,
-                                                       &scenario_idx, &obj]<typename T>() {
+                                                       &possible_attr_meta, &is_angle, &idx]<typename T>() {
+                        // get attribute values to check
                         T ref_attribute_value{};
                         T attribute_value{};
                         T ref_possible_attribute_value{};
                         T possible_attribute_value{};
-
-                        // these can probably be cleaned up
-                        // the array version probably has the buffer issue due to stride again.
+                        auto get_values = [&ref_buffer, &buffer, &attribute_meta, &possible_attr_meta,
+                                           &idx]<typename U>(U* ref_attribute_value, U* attribute_value,
+                                                             U* ref_possible_attribute_value,
+                                                             U* possible_attribute_value) {
+                            ref_buffer.get_value(attribute_meta, ref_attribute_value, idx, 0);
+                            buffer.get_value(attribute_meta, attribute_value, idx, 0);
+                            ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value, idx, 0);
+                            buffer.get_value(possible_attr_meta, possible_attribute_value, idx, 0);
+                        };
                         if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
-                            ref_buffer.get_value(attribute_meta, ref_attribute_value.data(),
-                                                 (elements_per_scenario * scenario_idx) + obj, 0);
-                            buffer.get_value(attribute_meta, attribute_value.data(),
-                                             (elements_per_scenario * scenario_idx) + obj, 0);
-                            ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value.data(),
-                                                 (elements_per_scenario * scenario_idx) + obj, 0);
-                            buffer.get_value(possible_attr_meta, possible_attribute_value.data(),
-                                             (elements_per_scenario * scenario_idx) + obj, 0);
+                            get_values(ref_attribute_value.data(), attribute_value.data(),
+                                       ref_possible_attribute_value.data(), possible_attribute_value.data());
                         } else {
-                            ref_buffer.get_value(attribute_meta, &ref_attribute_value,
-                                                 (elements_per_scenario * scenario_idx) + obj, 0);
-                            buffer.get_value(attribute_meta, &attribute_value,
-                                             (elements_per_scenario * scenario_idx) + obj, 0);
-                            ref_buffer.get_value(possible_attr_meta, &ref_possible_attribute_value,
-                                                 (elements_per_scenario * scenario_idx) + obj, 0);
-                            buffer.get_value(possible_attr_meta, &possible_attribute_value,
-                                             (elements_per_scenario * scenario_idx) + obj, 0);
+                            get_values(&ref_attribute_value, &attribute_value, &ref_possible_attribute_value,
+                                       &possible_attribute_value);
                         }
+
                         // check attributes
                         if (is_nan(ref_attribute_value)) {
                             return;
@@ -372,7 +346,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                                       possible_attribute_value);
                     };
 
-                    pgm_type_func_selector(static_cast<Idx>(attribute_type), check_individual_attribute);
+                    pgm_type_func_selector(static_cast<PGM_CType>(attribute_type), check_individual_attribute);
                 }
             }
         }
@@ -399,11 +373,6 @@ std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> const sc_volt
     {"", PGM_short_circuit_voltage_scaling_maximum}, // not provided returns default value
     {"minimum", PGM_short_circuit_voltage_scaling_minimum},
     {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
-
-// to be removed in the end
-using CalculationFunc =
-    std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
-
 std::map<std::string, PGM_TapChangingStrategy, std::less<>> const optimizer_strategy_mapping = {
     {"disabled", PGM_tap_changing_strategy_disabled},
     {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
@@ -419,12 +388,13 @@ struct CaseParam {
     std::string calculation_method;
     std::string short_circuit_voltage_scaling;
     std::string tap_changing_strategy;
+    double err_tol = 1e-8;
+    Idx max_iter = 20;
+    Idx threading = -1;
     bool sym{};
     bool is_batch{};
     double rtol{};
     bool fail{};
-    // to remove batch parameter in the end, most likely
-    [[no_unique_address]] BatchParameter batch_parameter{};
     std::map<std::string, double, std::less<>> atol;
 
     static std::string replace_backslash(std::string const& str) {
@@ -434,31 +404,18 @@ struct CaseParam {
     }
 };
 
-// This is probably not needed since we can just use Model::Calculate after setting Options
-/*CalculationFunc calculation_func(CaseParam const& param) {
-    auto const get_options = [&param](CalculationMethod calculation_method, Idx threading) {
-        return MainModel::Options{
-            .calculation_type = calculation_type_mapping.at(param.calculation_type),
-            .calculation_symmetry = param.sym ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric,
-            .calculation_method = calculation_method,
-            .optimizer_type = param.tap_changing_strategy == "disabled" ? OptimizerType::no_optimization
-                                                                        : OptimizerType::automatic_tap_adjustment,
-            .optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy),
-            .err_tol = 1e-8,
-            .max_iter = 20,
-            .threading = threading,
-            .short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling)};
-    };
-
-    return [get_options](MainModel& model, CalculationMethod calculation_method, MutableDataset const& dataset,
-                         ConstDataset const& update_dataset, Idx threading) {
-        auto options = get_options(calculation_method, threading);
-        if (options.optimizer_type != OptimizerType::no_optimization) {
-            REQUIRE(options.calculation_type == CalculationType::power_flow);
-        }
-        return model.calculate(options, dataset, update_dataset);
-    };
-}*/
+power_grid_model_cpp::Options get_options(CaseParam const& param, Idx threading = -1) {
+    power_grid_model_cpp::Options options{};
+    options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
+    options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+    options.set_symmetric(param.sym ? 1 : 0);
+    options.set_err_tol(1e-8);
+    options.set_max_iter(20);
+    options.set_threading(threading);
+    options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
+    options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
+    return options;
+}
 
 std::string get_output_type(std::string const& calculation_type, bool sym) {
     using namespace std::string_literals;
@@ -639,18 +596,8 @@ void validate_single_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
 
-        // create and set options
-        power_grid_model_cpp::Options options{};
-        options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
-        options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
-        options.set_symmetric(param.sym ? 1 : 0);
-        options.set_err_tol(1e-8);
-        options.set_max_iter(20);
-        options.set_threading(-1);
-        options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
-        options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
-
         // create and run model
+        auto const& options = get_options(param);
         power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
         model.calculate(options, result.dataset.value());
 
@@ -670,21 +617,11 @@ void validate_batch_case(CaseParam const& param) {
         // create model
         power_grid_model_cpp::Model model{50.0, validation_case.input.const_dataset.value()};
 
-        // create and set options
-        power_grid_model_cpp::Options options{};
-        options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
-        options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
-        options.set_symmetric(param.sym ? 1 : 0);
-        options.set_err_tol(1e-8);
-        options.set_max_iter(20);
-        options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
-        options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
-
-        // first do this one and verify it is correct. create model, then set threading in the loop, create options
-        // inside, run model, assert result. run in one-go, with different threading possibility
+        // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
             CAPTURE(threading);
-            options.set_threading(threading);
+            // set options and run
+            auto const& options = get_options(param, threading);
             model.calculate(options, batch_result.dataset.value());
 
             assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);
