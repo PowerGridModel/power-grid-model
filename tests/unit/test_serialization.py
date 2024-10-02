@@ -14,7 +14,7 @@ from power_grid_model._utils import is_columnar, is_sparse
 from power_grid_model.core.dataset_definitions import ComponentType
 from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.typing import ComponentAttributeFilterOptions
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -783,7 +783,7 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
             json_deserialize,
             to_json,
             {
-                "node": ["id"],
+                "node": None,
                 "line": ComponentAttributeFilterOptions.ALL,
                 "sym_load": ["id"],
                 "asym_load": ComponentAttributeFilterOptions.RELEVANT,
@@ -796,7 +796,7 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
             {
                 "node": ["id"],
                 "line": ComponentAttributeFilterOptions.ALL,
-                "sym_load": ["id"],
+                "sym_load": None,
                 "asym_load": ComponentAttributeFilterOptions.RELEVANT,
             },
             id="msgpack.mixed_filter",

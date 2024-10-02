@@ -28,12 +28,9 @@ from power_grid_model.core.power_grid_core import (
 )
 from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
 from power_grid_model.data_types import AttributeType, ComponentData, Dataset
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridError
-from power_grid_model.typing import (
-    ComponentAttributeFilterOptions,
-    ComponentAttributeMapping,
-    _ComponentAttributeMappingDict,
-)
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods

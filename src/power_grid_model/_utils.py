@@ -39,11 +39,8 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import (
-    ComponentAttributeFilterOptions,
-    ComponentAttributeMapping,
-    _ComponentAttributeMappingDict,
-)
+from power_grid_model.enum import ComponentAttributeFilterOptions
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 def is_nan(data) -> bool:
