@@ -514,7 +514,7 @@ class CWritableDataset:
 
     def _filter_with_option(self):
         if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
-            for _, attributes in self._data.items():
+            for attributes in self._data.values():
                 self._filter_attributes(attributes)
 
     def _filter_with_mapping(self):
