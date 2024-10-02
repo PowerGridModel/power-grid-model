@@ -508,12 +508,7 @@ def is_nan_or_equivalent(array):
     )
 
 
-def component_data_checks(component_data: ComponentData, component=None) -> None:
-    """Checks if component_data is of ComponentData and raises ValueError if its not"""
-    component_name = f"'{component}'" if component is not None else ""
-    err_msg = f"Invalid data for {component_name} component. " "{0}"
-    err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
-
+def _check_sparse_dense(component_data: ComponentData, err_msg_suffixed: str) -> ComponentData:
     if is_sparse(component_data):
         indptr = component_data["indptr"]
         if not isinstance(indptr, np.ndarray):
@@ -521,22 +516,35 @@ def component_data_checks(component_data: ComponentData, component=None) -> None
         sub_data = component_data["data"]
     elif isinstance(component_data, dict) and ("indptr" in component_data or "data" in component_data):
         missing_element = "indptr" if "indptr" not in component_data else "data"
-        raise KeyError(err_msg.format(f"Missing '{missing_element}' in sparse batch data. "))
+        raise KeyError(err_msg_suffixed.format(f"Missing '{missing_element}' in sparse batch data. "))
     else:
         sub_data = component_data
+    return sub_data
 
-    if is_columnar(component_data):
+
+def _check_columnar_row(sub_data: ComponentData, err_msg_suffixed: str) -> None:
+    if is_columnar(sub_data):
         if not isinstance(sub_data, dict):
             raise TypeError(err_msg_suffixed.format(""))
         for attribute, attribute_array in sub_data.items():
             if not isinstance(attribute_array, np.ndarray):
                 raise TypeError(err_msg_suffixed.format(f"'{attribute}' attribute. "))
             if attribute_array.ndim not in [1, 2, 3]:
-                raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {attribute_array.ndim }"))
+                raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {attribute_array.ndim}"))
     elif not isinstance(sub_data, np.ndarray):
         raise TypeError(err_msg_suffixed.format(f"Invalid data type {type(sub_data).__name__} "))
     elif isinstance(sub_data, np.ndarray) and sub_data.ndim not in [1, 2]:
         raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {sub_data.ndim}. "))
+
+
+def component_data_checks(component_data: ComponentData, component=None) -> None:
+    """Checks if component_data is of ComponentData and raises ValueError if its not"""
+    component_name = f"'{component}'" if component is not None else ""
+    err_msg = f"Invalid data for {component_name} component. " "{0}"
+    err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
+
+    sub_data = _check_sparse_dense(component_data, err_msg_suffixed)
+    _check_columnar_row(sub_data, err_msg_suffixed)
 
 
 def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover

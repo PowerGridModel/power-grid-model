@@ -10,9 +10,6 @@ from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
 
-import numpy as np
-
-from power_grid_model._utils import is_nan_or_equivalent
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model.core.error_handling import assert_no_error
 from power_grid_model.core.index_integer import IdxC
@@ -25,7 +22,6 @@ from power_grid_model.core.power_grid_core import (
 )
 from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.data_types import Dataset
-from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
 
@@ -86,31 +82,32 @@ class Deserializer:
             A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
         pgc.deserializer_parse_to_buffer(self._deserializer)
+        return self._dataset.get_data()
 
-        filtered_data = self._dataset.get_data()
+        # filtered_data = self._dataset.get_data()
 
-        def _filter_attributes(attributes):
-            keys_to_remove = []
-            for attr, array in attributes.items():
-                if not isinstance(array, np.ndarray):
-                    continue
-                if is_nan_or_equivalent(array):
-                    keys_to_remove.append(attr)
-            for key in keys_to_remove:
-                del attributes[key]
+        # def _filter_attributes(attributes):
+        #     keys_to_remove = []
+        #     for attr, array in attributes.items():
+        #         if not isinstance(array, np.ndarray):
+        #             continue
+        #         if is_nan_or_equivalent(array):
+        #             keys_to_remove.append(attr)
+        #     for key in keys_to_remove:
+        #         del attributes[key]
 
-        if isinstance(self._data_filter, ComponentAttributeFilterOptions):
-            if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
-                for _, attributes in filtered_data.items():
-                    _filter_attributes(attributes)
-        elif isinstance(self._data_filter, dict):
-            for component_type, attributes in filtered_data.items():
-                if component_type in self._data_filter:
-                    filter_option = self._data_filter[component_type]
-                    if filter_option is ComponentAttributeFilterOptions.RELEVANT:
-                        _filter_attributes(attributes)
+        # if isinstance(self._data_filter, ComponentAttributeFilterOptions):
+        #     if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
+        #         for _, attributes in filtered_data.items():
+        #             _filter_attributes(attributes)
+        # elif isinstance(self._data_filter, dict):
+        #     for component_type, attributes in filtered_data.items():
+        #         if component_type in self._data_filter:
+        #             filter_option = self._data_filter[component_type]
+        #             if filter_option is ComponentAttributeFilterOptions.RELEVANT:
+        #                 _filter_attributes(attributes)
 
-        return filtered_data
+        # return filtered_data
 
 
 class Serializer(ABC):
