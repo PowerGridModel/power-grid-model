@@ -384,6 +384,15 @@ def serialized_data(request):
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
         pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param(
+            {
+                "node": ["id"],
+                "line": ComponentAttributeFilterOptions.ALL,
+                "sym_load": None,
+                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
+            },
+            id="mixed filter",
+        ),
     ]
 )
 def data_filters(request):
@@ -744,6 +753,8 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
     assert serialized_result_a == serialized_result_b
     assert list(deserialized_result_b) == list(deserialized_result_a)
+    assert assert_deserialization_filtering_correct(deserialized_result_a, data_filters)
+    assert assert_deserialization_filtering_correct(deserialized_result_b, data_filters)
 
     for (component_a, component_result_a), component_result_b in zip(
         deserialized_result_a.items(), deserialized_result_b.values()
@@ -776,42 +787,3 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
             np.testing.assert_array_equal(nan_a, nan_b)
             np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
-
-
-@pytest.mark.parametrize(
-    ("deserialize", "pack", "data_filter"),
-    (
-        pytest.param(json_deserialize, to_json, ComponentAttributeFilterOptions.ALL, id="json.all"),
-        pytest.param(json_deserialize, to_json, ComponentAttributeFilterOptions.RELEVANT, id="json.relevant"),
-        pytest.param(msgpack_deserialize, to_msgpack, ComponentAttributeFilterOptions.ALL, id="msgpack.all"),
-        pytest.param(msgpack_deserialize, to_msgpack, ComponentAttributeFilterOptions.RELEVANT, id="msgpack.relevant"),
-        pytest.param(
-            json_deserialize,
-            to_json,
-            {
-                "node": None,
-                "line": ComponentAttributeFilterOptions.ALL,
-                "sym_load": ["id"],
-                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
-            },
-            id="json.mixed_filter",
-        ),
-        pytest.param(
-            msgpack_deserialize,
-            to_msgpack,
-            {
-                "node": ["id"],
-                "line": ComponentAttributeFilterOptions.ALL,
-                "sym_load": None,
-                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
-            },
-            id="msgpack.mixed_filter",
-        ),
-    ),
-)
-def test_deserialize_data_filter(deserialize, serialized_data, data_filter, pack):
-    test_data = pack(serialized_data)
-
-    deserialized_result_a = deserialize(test_data, data_filter)
-
-    assert assert_deserialization_filtering_correct(deserialized_result_a, data_filter)
