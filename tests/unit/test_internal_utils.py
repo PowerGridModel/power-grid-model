@@ -758,7 +758,7 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
     ],
 )
 def test_get_batch_size(data, dataset_type, expected_size):
-    assert get_batch_size(data, dataset_type) == expected_size
+    assert get_batch_size(data) == expected_size
 
 
 @pytest.mark.parametrize(

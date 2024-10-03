@@ -480,19 +480,43 @@ def validate_data_filter(
         raise KeyError(f"The following specified attributes are unknown: {unknown_attributes} in data_filter")
 
 
+# def is_sparse(component_data: ComponentData) -> bool:
+#     """Check if component_data is sparse or dense. Only batch data can be sparse."""
+#     return isinstance(component_data, dict) and set(component_data.keys()) == {
+#         "indptr",
+#         "data",
+#     }
+
+
 def is_sparse(component_data: ComponentData) -> bool:
     """Check if component_data is sparse or dense. Only batch data can be sparse."""
-    return isinstance(component_data, dict) and set(component_data.keys()) == {
+    if isinstance(component_data, dict) and set(component_data.keys()) == {
         "indptr",
         "data",
-    }
+    }:
+        return True
+    if isinstance(component_data, np.ndarray) or (
+        isinstance(component_data, dict) and all(isinstance(v, np.ndarray) for v in component_data.values())
+    ):
+        return False
+    raise TypeError("Given data is neither dense or sparse ordered.")
+
+
+# def is_columnar(component_data: ComponentData) -> bool:
+#     """Check if component_data is columnar or row based"""
+#     if is_sparse(component_data):
+#         return not isinstance(component_data["data"], np.ndarray)
+#     return not isinstance(component_data, np.ndarray)
 
 
 def is_columnar(component_data: ComponentData) -> bool:
     """Check if component_data is columnar or row based"""
-    if is_sparse(component_data):
-        return not isinstance(component_data["data"], np.ndarray)
-    return not isinstance(component_data, np.ndarray)
+    sub_data = component_data["data"] if is_sparse(component_data) else component_data
+    if isinstance(sub_data, np.ndarray):
+        return False
+    if isinstance(sub_data, dict) and all(isinstance(v, np.ndarray) for v in sub_data.values()):
+        return True
+    raise TypeError("Given data is neither row  based or columnar.")
 
 
 def component_data_checks(component_data: ComponentData, component=None) -> None:
