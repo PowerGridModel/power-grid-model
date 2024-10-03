@@ -128,6 +128,55 @@
             ]
         },
         {
+            "name": "AsymLineInput",
+            "base": "BranchInput",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "r_aa",
+                        "r_ba",
+                        "r_bb",
+                        "r_ca",
+                        "r_cb",
+                        "r_cc",
+                        "r_na",
+                        "r_nb",
+                        "r_nc",
+                        "r_nn",
+                        "x_aa",
+                        "x_ba",
+                        "x_bb",
+                        "x_ca",
+                        "x_cb",
+                        "x_cc",
+                        "x_na",
+                        "x_nb",
+                        "x_nc",
+                        "x_nn",
+                        "c_aa",
+                        "c_ba",
+                        "c_bb",
+                        "c_ca",
+                        "c_cb",
+                        "c_cc",
+                        "c_na",
+                        "c_nb",
+                        "c_nc",
+                        "c_nn",
+                        "c0",
+                        "c1"
+                    ],
+                    "description": "Lower triangle matrix values for R, X and C matrices"
+                },
+                {
+                    "data_type": "double",
+                    "names": "i_n",
+                    "description": "rated current"
+                }
+            ]
+        },
+        {
             "name": "GenericBranchInput",
             "base": "BranchInput",
             "attributes": [
