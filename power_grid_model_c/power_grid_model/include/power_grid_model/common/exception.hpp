@@ -59,6 +59,17 @@ class MissingCaseForEnumError : public InvalidArguments {
     }
 };
 
+class UnsupportedInputDescriptionAsymLine : public PowerGridError {
+  public:
+    UnsupportedInputDescriptionAsymLine() {
+        append_msg("Invalid or missing parameters supplied for component asym_line. The following input specifications are allowed");
+        append_msg("3 phase x_matrix, 3 phase r_matrix and 3 phase c_matrix");
+        append_msg("3 phase + neutral x_matrix, 3 phase + neutral r_matrix and 3 phase + neutral c_matrix");
+        append_msg("3 phase x_matrix, 3 phase r_matrix and c1, c0");
+        append_msg("3 phase + neutral x_matrix, 3 phase + neutral r_matrix and c1, c0");
+    }
+};
+
 class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
