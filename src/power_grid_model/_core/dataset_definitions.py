@@ -56,6 +56,7 @@ class ComponentType(str, Enum, metaclass=_MetaEnum):
 
     node = "node"
     line = "line"
+    asym_line = "asym_line"
     link = "link"
     generic_branch = "generic_branch"
     transformer = "transformer"
