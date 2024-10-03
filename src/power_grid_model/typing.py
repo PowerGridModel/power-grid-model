@@ -6,19 +6,8 @@
 Type hints for PGM. This includes all miscellaneous type hints not under dataset or dataset_definitions categories
 """
 
-from enum import IntEnum
-
 from power_grid_model.core.dataset_definitions import ComponentType, ComponentTypeVar
-
-
-class ComponentAttributeFilterOptions(IntEnum):
-    """Filter option component or attribute"""
-
-    ALL = 0
-    """Filter all components/attributes"""
-    RELEVANT = 1
-    """Filter only non-empty components/attributes that contain non-NaN values"""
-
+from power_grid_model.enum import ComponentAttributeFilterOptions
 
 _ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]
 
@@ -29,3 +18,18 @@ ComponentAttributeMapping = (
     | None
     | _ComponentAttributeMappingDict
 )
+"""
+Type hint for mapping component attributes.
+
+`ComponentAttributeMapping` can be one of the following:
+
+- A set of `ComponentTypeVar`
+
+- A list of `ComponentTypeVar`
+
+- A `ComponentAttributeFilterOptions` value
+
+- `None`
+
+- A dictionary mapping `ComponentType` to a set, list, `None`, or `ComponentAttributeFilterOptions`
+"""
