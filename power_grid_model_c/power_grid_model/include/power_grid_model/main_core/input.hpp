@@ -41,7 +41,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
             double const u1 = get_component<Node>(state, input.from_node).u_rated();
             double const u2 = get_component<Node>(state, input.to_node).u_rated();
             // set system frequency for line
-            if constexpr (std::same_as<Component, Line>) {
+            if constexpr (std::same_as<Component, Line> || std::same_as<Component, AsymLine>) {
                 emplace_component<Component>(state, id, input, system_frequency, u1, u2);
             } else {
                 emplace_component<Component>(state, id, input, u1, u2);
