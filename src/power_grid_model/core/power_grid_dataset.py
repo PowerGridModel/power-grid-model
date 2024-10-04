@@ -8,7 +8,7 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
+from power_grid_model._utils import is_columnar, is_nan_or_equivalent, is_sparse, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CAttributeBuffer,
@@ -28,12 +28,9 @@ from power_grid_model.core.power_grid_core import (
 )
 from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
 from power_grid_model.data_types import AttributeType, ComponentData, Dataset
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridError
-from power_grid_model.typing import (
-    ComponentAttributeFilterOptions,
-    ComponentAttributeMapping,
-    _ComponentAttributeMappingDict,
-)
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -422,8 +419,9 @@ class CWritableDataset:
         The Power Grid Model may write to these buffers at a later point in time.
 
         Returns:
-            The full dataset.
+            The full dataset with filters applied.
         """
+        self._post_filtering()
         return self._data
 
     def get_component_data(self, component: ComponentType) -> ComponentData:
@@ -503,6 +501,34 @@ class CWritableDataset:
             for component in components
             if component in self._data_filter
         }
+
+    def _filter_attributes(self, attributes):
+        keys_to_remove = []
+        for attr, array in attributes.items():
+            if is_columnar(array):
+                continue
+            if is_nan_or_equivalent(array):
+                keys_to_remove.append(attr)
+        for key in keys_to_remove:
+            del attributes[key]
+
+    def _filter_with_option(self):
+        if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
+            for attributes in self._data.values():
+                self._filter_attributes(attributes)
+
+    def _filter_with_mapping(self):
+        for component_type, attributes in self._data.items():
+            if component_type in self._data_filter:
+                filter_option = self._data_filter[component_type]
+                if filter_option is ComponentAttributeFilterOptions.RELEVANT:
+                    self._filter_attributes(attributes)
+
+    def _post_filtering(self):
+        if isinstance(self._data_filter, ComponentAttributeFilterOptions):
+            self._filter_with_option()
+        elif isinstance(self._data_filter, dict):
+            self._filter_with_mapping()
 
 
 def _get_filtered_attributes(

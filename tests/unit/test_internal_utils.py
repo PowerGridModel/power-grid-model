@@ -21,7 +21,7 @@ from power_grid_model._utils import (
 )
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.data_types import BatchDataset, BatchList
-from power_grid_model.typing import ComponentAttributeFilterOptions
+from power_grid_model.enum import ComponentAttributeFilterOptions
 
 from .utils import convert_python_to_numpy
 
