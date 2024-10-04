@@ -40,6 +40,7 @@ from power_grid_model.data_types import (
     SparseBatchData,
 )
 from power_grid_model.enum import ComponentAttributeFilterOptions
+from power_grid_model.errors import PowerGridError
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
@@ -630,3 +631,48 @@ def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -
 
 def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None = None):
     return _extract_columnar_data(data, is_batch) if is_columnar(data) else _extract_row_based_data(data, is_batch)
+
+
+def get_dataset_type(data: Dataset) -> DatasetType:
+    """
+    Deduce the dataset type from the provided dataset.
+
+    Args:
+        data: the dataset
+
+    Raises:
+        ValueError
+            if the dataset type cannot be deduced because multiple dataset types match the format
+            (probably because the data contained no supported components, e.g. was empty)
+        PowerGridError
+            if no dataset type matches the format of the data
+            (probably because the data contained conflicting data formats)
+
+    Returns:
+        The dataset type.
+    """
+    candidates = set(power_grid_meta_data.keys())
+
+    if all(is_columnar(v) for v in data.values()):
+        raise ValueError("The dataset type could not be deduced. At least one component should have row based data.")
+
+    for dataset_type, dataset_metadatas in power_grid_meta_data.items():
+        for component, dataset_metadata in dataset_metadatas.items():
+            if component not in data or is_columnar(data[component]):
+                continue
+            component_data = data[component]
+
+            component_dtype = component_data["data"].dtype if is_sparse(component_data) else component_data.dtype
+            if component_dtype is not dataset_metadata.dtype:
+                candidates.discard(dataset_type)
+                break
+
+    if not candidates:
+        raise PowerGridError(
+            "The dataset type could not be deduced because no type matches the data. "
+            "This usually means inconsistent data was provided."
+        )
+    if len(candidates) > 1:
+        raise ValueError("The dataset type could not be deduced because multiple dataset types match the data.")
+
+    return next(iter(candidates))
