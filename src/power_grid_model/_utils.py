@@ -16,6 +16,7 @@ from typing import Optional, Sequence, cast
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
     BatchColumn,
@@ -297,7 +298,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
         list_data = convert_batch_dataset_to_batch_list(data)
         return [convert_single_dataset_to_python_single_dataset(data=x) for x in list_data]
 
-    # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
+    # We have established that this is not batch data, so let's tell the type checker that this is a SingleDataset
     data = cast(SingleDataset, data)
     return convert_single_dataset_to_python_single_dataset(data=data)
 
@@ -361,22 +362,19 @@ def compatibility_convert_row_columnar_dataset(
     for comp_name, attrs in processed_data_filter.items():
         if comp_name not in data:
             continue
+
+        sub_data = _extract_data_from_component_data(data)
+        converted_sub_data = _convert_data_to_row_or_columnar(
+            data=sub_data[comp_name],
+            comp_name=comp_name,
+            dataset_type=dataset_type,
+            attrs=attrs,
+        )
+
         if is_sparse(data[comp_name]):
-            result_data[comp_name] = {}
-            result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
-                data=data[comp_name]["data"],
-                comp_name=comp_name,
-                dataset_type=dataset_type,
-                attrs=attrs,
-            )
-            result_data[comp_name]["indptr"] = data[comp_name]["indptr"]
+            result_data[comp_name] = {"indptr": _extract_indptr(data), "data": converted_sub_data}
         else:
-            result_data[comp_name] = _convert_data_to_row_or_columnar(
-                data=data[comp_name],
-                comp_name=comp_name,
-                dataset_type=dataset_type,
-                attrs=attrs,
-            )
+            result_data[comp_name] = converted_sub_data
     return result_data
 
 
@@ -480,26 +478,26 @@ def validate_data_filter(
         raise KeyError(f"The following specified attributes are unknown: {unknown_attributes} in data_filter")
 
 
-# def is_sparse(component_data: ComponentData) -> bool:
-#     """Check if component_data is sparse or dense. Only batch data can be sparse."""
-#     return isinstance(component_data, dict) and set(component_data.keys()) == {
-#         "indptr",
-#         "data",
-#     }
-
-
 def is_sparse(component_data: ComponentData) -> bool:
     """Check if component_data is sparse or dense. Only batch data can be sparse."""
-    if isinstance(component_data, dict) and set(component_data.keys()) == {
+    return isinstance(component_data, dict) and set(component_data.keys()) == {
         "indptr",
         "data",
-    }:
-        return True
-    if isinstance(component_data, np.ndarray) or (
-        isinstance(component_data, dict) and all(isinstance(v, np.ndarray) for v in component_data.values())
-    ):
-        return False
-    raise TypeError("Given data is neither dense or sparse ordered.")
+    }
+
+
+# def is_sparse(component_data: ComponentData) -> bool:
+#     """Check if component_data is sparse or dense. Only batch data can be sparse."""
+#     if isinstance(component_data, dict) and set(component_data.keys()) == {
+#         "indptr",
+#         "data",
+#     }:
+#         return True
+#     if isinstance(component_data, np.ndarray) or (
+#         isinstance(component_data, dict) and all(isinstance(v, np.ndarray) for v in component_data.values())
+#     ):
+#         return False
+#     raise TypeError("Given data is neither dense or sparse ordered.")
 
 
 # def is_columnar(component_data: ComponentData) -> bool:
@@ -572,7 +570,7 @@ def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
     return indptr
 
 
-def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> ColumnarData:  # pragma: no cover
+def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> SingleColumnarData | DenseBatchColumnarData:  # pragma: no cover
     """returns the contents of the columnar data.
 
     Args:
@@ -601,10 +599,10 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
             raise TypeError(not_columnar_data_message)
         if attribute_array.ndim not in allowed_dims:
             raise TypeError(not_columnar_data_message)
-    return cast(ColumnarData, sub_data)
+    return cast(SingleColumnarData | DenseBatchColumnarData, sub_data)
 
 
-def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> DataArray:  # pragma: no cover
+def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> SingleArray | DenseBatchArray:  # pragma: no cover
     """returns the contents of the row based data
 
     Args:
@@ -633,3 +631,24 @@ def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -
 
 def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None = None):
     return _extract_columnar_data(data, is_batch) if is_columnar(data) else _extract_row_based_data(data, is_batch)
+
+def _extract_contents_from_data(data: ComponentData):
+    return data["data"] if is_sparse(data) else data
+
+def check_indptr_consistency(indptr: IndexPointer, batch_size: int | None, contents_size: int):
+    """checks if an indptr is valid. Batch size check is optional.
+
+    Args:
+        indptr (IndexPointer): The indptr array
+        batch_size (int | None): number of scenarios
+        contents_size (int): total number of elements in all scenarios
+
+    Raises:
+        ValueError: If indptr is invalid
+    """
+    if indptr[0] != 0 or indptr[-1] != contents_size:
+        raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
+    if np.any(np.diff(indptr) < 0):
+        raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
+    if batch_size is not None and batch_size != indptr.size - 1:
+        raise ValueError(f"Provided batch size must be equal to actual batch size. {VALIDATOR_MSG}")
