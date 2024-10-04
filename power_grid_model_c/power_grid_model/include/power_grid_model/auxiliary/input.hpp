@@ -98,6 +98,27 @@ struct LineInput {
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
 
+struct AsymLineInput {
+    ID id{na_IntID};  // ID of the object
+    ID from_node{na_IntID};  // node IDs to which this branch is connected at both sides
+    ID to_node{na_IntID};  // node IDs to which this branch is connected at both sides
+    IntS from_status{na_IntS};  // whether the branch is connected at each side
+    IntS to_status{na_IntS};  // whether the branch is connected at each side
+    double c1{nan};  // positive sequence parameters
+    std::array<std::array<double, 3>, 3> r_matrix{static_cast<std::array<std::array<double, 3>, 3>>(na_IntS)};  // 3 x 3 matrix
+    std::array<std::array<double, 3>, 3> x_matrix{static_cast<std::array<std::array<double, 3>, 3>>(na_IntS)};  // 3 x 3 matrix
+    double c0{nan};  // zero sequence parameters
+    double i_n{nan};  // rated current
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to BranchInput
+    operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
+    operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
+};
+
 struct LinkInput {
     ID id{na_IntID};  // ID of the object
     ID from_node{na_IntID};  // node IDs to which this branch is connected at both sides
