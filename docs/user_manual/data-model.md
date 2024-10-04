@@ -20,6 +20,7 @@ graph LR
       branch-->line
       branch-->link
       branch-->transformer
+      branch-->generic_branch
     base-->branch3
       branch3-->three_winding_transformer
     base-->appliance

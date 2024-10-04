@@ -467,7 +467,7 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
         "node": validate_node,
         "line": validate_line,
         "link": lambda d: validate_branch(d, ComponentType.link),
-        "generic_branch": validate_genericbranch,
+        "generic_branch": validate_generic_branch,
         "transformer": validate_transformer,
         "three_winding_transformer": validate_three_winding_transformer,
         "source": validate_source,
@@ -533,9 +533,8 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
     return errors
 
 
-def validate_genericbranch(data: SingleDataset) -> list[ValidationError]:
+def validate_generic_branch(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, ComponentType.generic_branch)
-
     return errors
 
 

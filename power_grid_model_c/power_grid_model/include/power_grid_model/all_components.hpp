@@ -10,7 +10,7 @@
 // component include
 #include "component/appliance.hpp"
 #include "component/fault.hpp"
-#include "component/genericbranch.hpp"
+#include "component/generic_branch.hpp"
 #include "component/line.hpp"
 #include "component/link.hpp"
 #include "component/load_gen.hpp"

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/component/genericbranch.hpp>
+#include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/transformer.hpp>
 
 #include <doctest/doctest.h>

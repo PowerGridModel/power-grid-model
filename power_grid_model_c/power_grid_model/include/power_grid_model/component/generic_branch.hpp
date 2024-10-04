@@ -15,7 +15,7 @@
 #include "../common/three_phase_tensor.hpp"
 
 /*
-    generic Branch: either a line N = 1 or a transformoer N = t*e^(j*theta1)
+    generic Branch: either a line N = 1 or a transformer N = t*e^(j*theta)
     paramaters should be given as r1, x1, ....
 
      -----| |-----------y1_series-------
@@ -24,7 +24,7 @@
           | |   |                 |
           | |   |                 |
      -----| |--------------------------
-          N = k * e^(j*theta1)
+          N = k * e^(j*theta)
 
 */
 
@@ -48,7 +48,6 @@ class GenericBranch final : public Branch {
           base_i_from_{base_power_3p / u1_rated / sqrt3},
           base_i_to_{base_power_3p / u2_rated / sqrt3},
           base_y_{base_i_to_ / (u2_rated / sqrt3)} {
-
         y1_series_ = 1.0 / (r1_ + 1.0i * x1_) / base_y_;
         y1_shunt_ = (g1_ + 1.0i * b1_) / base_y_;
     }

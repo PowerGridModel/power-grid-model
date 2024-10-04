@@ -224,6 +224,46 @@ $$
 where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$. 
 Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
 
+
+### Generic_Branch  
+
+* type name: `gneric_branch`
+
+`generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at different voltage levels. Depending on the choice of parameters, it behaves either as a line or as a transformer. The advantage is that the input parameters are based directly on the electrical equivalent circuit model. The PI model can be used to avoid the need to convert parameters into transformer model data. Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case, the off-nominal ratio must given to adapt the electrical parameters).
+
+
+#### Input
+
+| name    | data type | unit             | description                   | required               | update   |  valid values   |
+| ------- | --------- | ---------------- | ----------------------------- | :--------------------: | :------: | :-------------: |
+| `r1`    | `double`  | ohm              | positive-sequence resistance  | &#10004;               | &#10060; | `>= 0`          |
+| `x1`    | `double`  | ohm              | positive-sequence reactance   | &#10004;               | &#10060; | `>= 0`          |
+| `g1`    | `double`  | siemens          | positive-sequence conductance | &#10004;               | &#10060; | `>= 0`          |
+| `b1`    | `double`  | siemens          | positive-sequence susceptance | &#10004;               | &#10060; | `>= 0`          |
+| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; | `> 0`           |
+| `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |                 |
+| `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; | `>= 0`          |
+
+```{note} 
+The user must ensure that, in the case of a tap changer, the ratio is specified as the off-nominal ratio; it is not automatically calculated from the given voltage levels.
+
+The generical branch parameters are calculated with respect in the to side of the branch
+
+Asymmetric calculation is not supported for `generic_branch`
+```
+
+#### Electric Model
+
+`generic_branch` is described by a $\pi$ model, where 
+
+$$
+   \begin{eqnarray}
+      & Y_{\text{series}} = \frac{1}{r + \mathrm{j}x} \\
+      & Y_{\text{shunt}} =  g + \mathrm{j}b \\
+      & N = k \cdot e^{\mathrm{j} \theta} \\
+   \end{eqnarray}
+$$
+
 ## Branch3
 
 * type name: `branch3`

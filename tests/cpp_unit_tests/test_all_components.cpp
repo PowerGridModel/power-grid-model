@@ -6,7 +6,7 @@
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/branch3.hpp>
 #include <power_grid_model/component/fault.hpp>
-#include <power_grid_model/component/genericbranch.hpp>
+#include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/line.hpp>
 #include <power_grid_model/component/link.hpp>
 #include <power_grid_model/component/load_gen.hpp>

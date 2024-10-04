@@ -139,17 +139,17 @@
                 {
                     "data_type": "double",
                     "names": "k",
-                    "description": "transformer ratio, default = 1.0"
+                    "description": "off-nominal ratio, default = 1.0"
                 },
                 {
                     "data_type": "double",
                     "names": "theta",
-                    "description": "angle shift"
+                    "description": "angle shift in radian"
                 },
                 {
                     "data_type": "double",
                     "names": "sn",
-                    "description": "rated power for calculation of loading (obsolete)"
+                    "description": "rated power for calculation of loading (optional)"
                 }
             ]
         },

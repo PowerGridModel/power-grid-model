@@ -108,9 +108,9 @@ struct GenericBranchInput {
     double x1{nan};  // positive sequence parameters
     double g1{nan};  // positive sequence parameters
     double b1{nan};  // positive sequence parameters
-    double k{nan};  // transformer ratio, default = 1.0
-    double theta{nan};  // angle shift
-    double sn{nan};  // rated power for calculation of loading (obsolete)
+    double k{nan};  // off-nominal ratio, default = 1.0
+    double theta{nan};  // angle shift in radian
+    double sn{nan};  // rated power for calculation of loading (optional)
 
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
