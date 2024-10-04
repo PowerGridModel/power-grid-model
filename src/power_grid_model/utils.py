@@ -21,11 +21,11 @@ from power_grid_model._utils import (
     _extract_indptr,
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
+    get_dataset_type,
     is_columnar,
     is_sparse,
 )
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
-from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
     json_serialize,
