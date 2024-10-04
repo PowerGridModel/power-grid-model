@@ -134,29 +134,37 @@
                 {
                     "data_type": "double",
                     "names": [
-                        "c1"
+                        "r_aa",
+                        "r_ba",
+                        "r_bb",
+                        "r_ca",
+                        "r_cb",
+                        "r_cc",
+                        "r_na",
+                        "r_nb",
+                        "r_nc",
+                        "r_nn",
+                        "x_aa",
+                        "x_ba",
+                        "x_bb",
+                        "x_ca",
+                        "x_cb",
+                        "x_cc",
+                        "x_na",
+                        "x_nb",
+                        "x_nc",
+                        "x_nn",
+                        "c_ba",
+                        "c_bb",
+                        "c_ca",
+                        "c_cb",
+                        "c_cc",
+                        "c_na",
+                        "c_nb",
+                        "c_nc",
+                        "c_nn"
                     ],
-                    "description": "positive sequence parameters"
-                },
-                {
-                    "data_type": "std::array<std::array<double, 3>, 3>",
-                    "names": [
-                        "r_matrix",
-                        "x_matrix"
-                    ],
-                    "description": "3 x 3 matrix"
-                },
-                {
-                    "data_type": "double",
-                    "names": [
-                        "c0"
-                    ],
-                    "description": "zero sequence parameters"
-                },
-                {
-                    "data_type": "double",
-                    "names": "i_n",
-                    "description": "rated current"
+                    "description": "Lower triangle matrix values for R, X and C matrices"
                 }
             ]
         },

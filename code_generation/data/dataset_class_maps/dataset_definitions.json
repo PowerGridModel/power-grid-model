@@ -13,6 +13,10 @@
                     "class_name": "LineInput"
                 },
                 {
+                    "names": ["asym_line"],
+                    "class_name": "AsymLineInput"
+                },
+                {
                     "names": ["link"],
                     "class_name": "LinkInput"
                 },
@@ -63,7 +67,7 @@
                     "class_name": "NodeOutput"
                 },
                 {
-                    "names": ["line", "link", "transformer"],
+                    "names": ["line", "link", "transformer", "asym_line"],
                     "class_name": "BranchOutput"
                 },
                 {
@@ -102,6 +106,10 @@
                 },
                 {
                     "names": ["line"],
+                    "class_name": "BranchUpdate"
+                },
+                {
+                    "names": ["asym_line"],
                     "class_name": "BranchUpdate"
                 },
                 {
@@ -155,7 +163,7 @@
                     "class_name": "NodeShortCircuitOutput"
                 },
                 {
-                    "names": ["line", "link", "transformer"],
+                    "names": ["line", "link", "transformer", "asym_line"],
                     "class_name": "BranchShortCircuitOutput"
                 },
                 {

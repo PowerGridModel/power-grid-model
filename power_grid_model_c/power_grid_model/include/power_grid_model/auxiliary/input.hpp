@@ -104,11 +104,35 @@ struct AsymLineInput {
     ID to_node{na_IntID};  // node IDs to which this branch is connected at both sides
     IntS from_status{na_IntS};  // whether the branch is connected at each side
     IntS to_status{na_IntS};  // whether the branch is connected at each side
-    double c1{nan};  // positive sequence parameters
-    std::array<std::array<double, 3>, 3> r_matrix{static_cast<std::array<std::array<double, 3>, 3>>(na_IntS)};  // 3 x 3 matrix
-    std::array<std::array<double, 3>, 3> x_matrix{static_cast<std::array<std::array<double, 3>, 3>>(na_IntS)};  // 3 x 3 matrix
-    double c0{nan};  // zero sequence parameters
-    double i_n{nan};  // rated current
+    double r_aa{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_ba{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_bb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_ca{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_cb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_cc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_na{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_nb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_nc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_nn{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_aa{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_ba{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_bb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_ca{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_cb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_cc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_na{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_nb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_nc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_nn{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_ba{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_bb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_ca{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_cb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_cc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_na{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_nb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_nc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_nn{nan};  // Lower triangle matrix values for R, X and C matrices
 
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
