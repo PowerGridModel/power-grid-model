@@ -33,11 +33,7 @@ template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
 inline bool is_nan(int32_t x) { return x == std::numeric_limits<int32_t>::min(); }
 inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
 template <typename T, std::size_t N> inline bool is_nan(std::array<T, N> const& array) {
-    for (auto const& element : array) {
-        if (is_nan(element))
-            return true;
-    }
-    return false;
+    return std::ranges::any_of(array, [](T const& element) { return is_nan(element); });
 }
 
 template <class Functor, class... Args>
@@ -82,6 +78,15 @@ class UnsupportedValidationCase : public PowerGridError {
           }()} {}
 };
 
+class UnsupportedPGM_CType : public PowerGridError {
+  public:
+    UnsupportedPGM_CType()
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              return "Unsupported PGM_Ctype"s;
+          }()} {}
+};
+
 struct OwningMemory {
     std::vector<Buffer> buffers{};
     std::vector<std::vector<Idx>> indptrs{};
@@ -108,20 +113,18 @@ auto create_owning_dataset(DatasetWritable& writable_dataset) {
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
 
-        owning_dataset.storage.indptrs.emplace_back(
+        auto& current_intptr = owning_dataset.storage.indptrs.emplace_back(
             info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
+        bool empty_indptr = current_intptr.empty();
         if (!empty_indptr) {
-            owning_dataset.storage.indptrs.at(component_idx).at(0) = 0;
-            owning_dataset.storage.indptrs.at(component_idx).at(batch_size) = component_size;
+            current_intptr.at(0) = 0;
+            current_intptr.at(batch_size) = component_size;
         }
-        Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
-        owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
-        writable_dataset.set_buffer(component_name, indptr, owning_dataset.storage.buffers.at(component_idx));
-        if (!indptr)
-            CHECK(component_size == batch_size * component_elements_per_scenario);
+        Idx* const indptr = empty_indptr ? nullptr : current_intptr.data();
+        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        writable_dataset.set_buffer(component_name, indptr, current_buffer);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
-                                                  indptr, owning_dataset.storage.buffers.at(component_idx));
+                                                  indptr, current_buffer);
     }
     owning_dataset.const_dataset = writable_dataset;
     return owning_dataset;
@@ -139,13 +142,12 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         Idx const component_elements_per_scenario = info_input.component_elements_per_scenario(component_idx);
         Idx const component_size = info_input.component_total_elements(component_idx);
 
-        owning_dataset.storage.indptrs.emplace_back(
+        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
             info_input.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
-        Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
-        owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
+        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
-                                                  indptr, owning_dataset.storage.buffers.at(component_idx));
+                                                  indptr, current_buffer);
     }
     owning_dataset.const_dataset = owning_dataset.dataset.value();
     return owning_dataset;
@@ -184,13 +186,14 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
 template <typename T>
 bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
                                double atol, double rtol) {
-    auto to_complex = [](double magnitude, double angle) { return std::polar(magnitude, angle); };
-    auto is_within_tolerance = [&atol, &rtol](std::complex<double> element, std::complex<double> ref_element) {
+    auto to_complex = [](double r, double theta) { return std::polar(r, theta); };
+    auto is_within_tolerance = [atol, rtol](std::complex<double> element, std::complex<double> ref_element) {
         return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol;
     };
 
     if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
-        std::array<std::complex<double>, 3> result, ref_result;
+        std::array<std::complex<double>, 3> result;
+        std::array<std::complex<double>, 3> ref_result;
         std::ranges::transform(magnitude, angle, result.begin(), to_complex);
         std::ranges::transform(ref_magnitude, ref_angle, ref_result.begin(), to_complex);
         return std::ranges::equal(result, ref_result, is_within_tolerance);
@@ -206,7 +209,7 @@ bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_
 
 template <typename T>
 bool compare_value(T const& ref_attribute_value, T const& attribute_value, double atol, double rtol) {
-    auto is_within_tolerance = [&atol, &rtol](std::complex<double> element, std::complex<double> ref_element) {
+    auto is_within_tolerance = [atol, rtol](std::complex<double> element, std::complex<double> ref_element) {
         return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol;
     };
 
@@ -255,12 +258,11 @@ void check_individual_attribute(Buffer const& buffer, Buffer const& ref_buffer,
     T ref_possible_attribute_value{};
     T possible_attribute_value{};
     auto get_values = [&ref_buffer, &buffer, &attribute_meta, &possible_attr_meta,
-                       &idx]<typename U>(U* ref_attribute_value, U* attribute_value, U* ref_possible_attribute_value,
-                                         U* possible_attribute_value) {
-        ref_buffer.get_value(attribute_meta, ref_attribute_value, idx, 0);
-        buffer.get_value(attribute_meta, attribute_value, idx, 0);
-        ref_buffer.get_value(possible_attr_meta, ref_possible_attribute_value, idx, 0);
-        buffer.get_value(possible_attr_meta, possible_attribute_value, idx, 0);
+                       idx]<typename U>(U* ref_value, U* value, U* ref_possible_value, U* possible_value) {
+        ref_buffer.get_value(attribute_meta, ref_value, idx, 0);
+        buffer.get_value(attribute_meta, value, idx, 0);
+        ref_buffer.get_value(possible_attr_meta, ref_possible_value, idx, 0);
+        buffer.get_value(possible_attr_meta, possible_value, idx, 0);
     };
     if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
         get_values(ref_attribute_value.data(), attribute_value.data(), ref_possible_attribute_value.data(),
@@ -335,7 +337,9 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                              : attribute_meta;
                 // loop through all objects
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
-                    auto callable_wrapper = [&]<typename T>() {
+                    auto callable_wrapper = [&buffer, &ref_buffer, &attribute_meta, &possible_attr_meta, is_angle,
+                                             elements_per_scenario, scenario_idx, obj, &component_name, &attribute_name,
+                                             dynamic_atol, rtol]<typename T>() {
                         check_individual_attribute<T>(buffer, ref_buffer, attribute_meta, possible_attr_meta, is_angle,
                                                       elements_per_scenario, scenario_idx, obj, component_name,
                                                       attribute_name, dynamic_atol, rtol);
@@ -617,10 +621,11 @@ void validate_batch_case(CaseParam const& param) {
         for (Idx const threading : {-1, 0, 1, 2}) {
             CAPTURE(threading);
             // set options and run
-            auto const& options = get_options(param, threading); // back to threading after debugging
+            auto const& options = get_options(param, threading);
             model.calculate(options, batch_result.dataset.value(),
                             validation_case.update_batch.value().const_dataset.value());
 
+            // check results
             assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);
         }
     });
