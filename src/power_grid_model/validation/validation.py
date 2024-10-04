@@ -8,6 +8,9 @@ Power Grid Model Validation Functions.
 Although all functions are 'public', you probably only need validate_input_data() and validate_batch_data().
 
 """
+
+# pylint: disable=too-many-lines
+
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
