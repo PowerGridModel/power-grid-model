@@ -95,7 +95,8 @@ struct OwningDataset {
 
 auto create_owning_dataset(DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
-    bool const is_batch = info.is_batch();
+    auto const is_batch_number = info.is_batch();
+    bool is_batch = is_batch_number == 1;
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
@@ -110,9 +111,15 @@ auto create_owning_dataset(DatasetWritable& writable_dataset) {
         owning_dataset.storage.indptrs.emplace_back(
             info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         bool empty_indptr = owning_dataset.storage.indptrs.at(component_idx).empty() ? true : false;
+        if (!empty_indptr) {
+            owning_dataset.storage.indptrs.at(component_idx).at(0) = 0;
+            owning_dataset.storage.indptrs.at(component_idx).at(batch_size) = component_size;
+        }
         Idx* indptr = empty_indptr ? nullptr : owning_dataset.storage.indptrs.at(component_idx).data();
         owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         writable_dataset.set_buffer(component_name, indptr, owning_dataset.storage.buffers.at(component_idx));
+        if (!indptr)
+            CHECK(component_size == batch_size * component_elements_per_scenario);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, owning_dataset.storage.buffers.at(component_idx));
     }
@@ -152,7 +159,6 @@ auto load_dataset(std::filesystem::path const& path) {
     auto& writable_dataset = deserializer.get_dataset();
     auto dataset = create_owning_dataset(writable_dataset);
     deserializer.parse_to_buffer();
-    // construct_individual_scenarios(dataset);
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
@@ -601,7 +607,8 @@ void validate_batch_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().const_dataset.value().get_info();
         Idx batch_size = info.batch_size();
-        auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, batch_size);
+        auto const batch_result =
+            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
 
         // create model
         Model model{50.0, validation_case.input.const_dataset.value()};
@@ -610,8 +617,9 @@ void validate_batch_case(CaseParam const& param) {
         for (Idx const threading : {-1, 0, 1, 2}) {
             CAPTURE(threading);
             // set options and run
-            auto const& options = get_options(param, threading);
-            model.calculate(options, batch_result.dataset.value());
+            auto const& options = get_options(param, threading); // back to threading after debugging
+            model.calculate(options, batch_result.dataset.value(),
+                            validation_case.update_batch.value().const_dataset.value());
 
             assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);
         }
@@ -641,7 +649,6 @@ TEST_CASE("Validation test batch") {
 
     for (CaseParam const& param : all_cases) {
         SUBCASE(param.case_name.c_str()) {
-            continue;
             try {
                 validate_batch_case(param);
             } catch (std::exception& e) {
