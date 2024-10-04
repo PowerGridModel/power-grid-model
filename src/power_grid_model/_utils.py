@@ -23,9 +23,7 @@ from power_grid_model.data_types import (
     BatchComponentData,
     BatchDataset,
     BatchList,
-    ColumnarData,
     ComponentData,
-    DataArray,
     Dataset,
     DenseBatchArray,
     DenseBatchColumnarData,
@@ -363,9 +361,9 @@ def compatibility_convert_row_columnar_dataset(
         if comp_name not in data:
             continue
 
-        sub_data = _extract_data_from_component_data(data)
+        sub_data = _extract_data_from_component_data(data[comp_name])
         converted_sub_data = _convert_data_to_row_or_columnar(
-            data=sub_data[comp_name],
+            data=sub_data,
             comp_name=comp_name,
             dataset_type=dataset_type,
             attrs=attrs,
@@ -500,21 +498,21 @@ def is_sparse(component_data: ComponentData) -> bool:
 #     raise TypeError("Given data is neither dense or sparse ordered.")
 
 
-# def is_columnar(component_data: ComponentData) -> bool:
-#     """Check if component_data is columnar or row based"""
-#     if is_sparse(component_data):
-#         return not isinstance(component_data["data"], np.ndarray)
-#     return not isinstance(component_data, np.ndarray)
-
-
 def is_columnar(component_data: ComponentData) -> bool:
     """Check if component_data is columnar or row based"""
-    sub_data = component_data["data"] if is_sparse(component_data) else component_data
-    if isinstance(sub_data, np.ndarray):
-        return False
-    if isinstance(sub_data, dict) and all(isinstance(v, np.ndarray) for v in sub_data.values()):
-        return True
-    raise TypeError("Given data is neither row  based or columnar.")
+    if is_sparse(component_data):
+        return not isinstance(component_data["data"], np.ndarray)
+    return not isinstance(component_data, np.ndarray)
+
+
+# def is_columnar(component_data: ComponentData) -> bool:
+#     """Check if component_data is columnar or row based"""
+#     sub_data = component_data["data"] if is_sparse(component_data) else component_data
+#     if isinstance(sub_data, np.ndarray):
+#         return False
+#     if isinstance(sub_data, dict) and all(isinstance(v, np.ndarray) for v in sub_data.values()):
+#         return True
+#     raise TypeError("Given data is neither row  based or columnar.")
 
 
 def component_data_checks(component_data: ComponentData, component=None) -> None:
@@ -570,7 +568,9 @@ def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
     return indptr
 
 
-def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> SingleColumnarData | DenseBatchColumnarData:  # pragma: no cover
+def _extract_columnar_data(
+    data: ComponentData, is_batch: bool | None = None
+) -> SingleColumnarData | DenseBatchColumnarData:  # pragma: no cover
     """returns the contents of the columnar data.
 
     Args:
@@ -602,7 +602,9 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
     return cast(SingleColumnarData | DenseBatchColumnarData, sub_data)
 
 
-def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> SingleArray | DenseBatchArray:  # pragma: no cover
+def _extract_row_based_data(
+    data: ComponentData, is_batch: bool | None = None
+) -> SingleArray | DenseBatchArray:  # pragma: no cover
     """returns the contents of the row based data
 
     Args:
@@ -632,8 +634,10 @@ def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -
 def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None = None):
     return _extract_columnar_data(data, is_batch) if is_columnar(data) else _extract_row_based_data(data, is_batch)
 
+
 def _extract_contents_from_data(data: ComponentData):
     return data["data"] if is_sparse(data) else data
+
 
 def check_indptr_consistency(indptr: IndexPointer, batch_size: int | None, contents_size: int):
     """checks if an indptr is valid. Batch size check is optional.
