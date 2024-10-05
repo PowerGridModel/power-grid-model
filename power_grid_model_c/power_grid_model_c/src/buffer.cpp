@@ -20,10 +20,15 @@ using meta_data::RawDataPtr;
 
 // buffer control
 RawDataPtr PGM_create_buffer(PGM_Handle* /* handle */, PGM_MetaComponent const* component, PGM_Idx size) {
+    // alignment should be minium of alignment of the component and alignment of void*
+    size_t const alignment = std::max(component->alignment, sizeof(void*));
+    // total bytes should be multiple of alignment
+    size_t const requested_bytes = component->size * size;
+    size_t const rounded_bytes = ((requested_bytes + alignment - 1) / alignment) * alignment;
 #ifdef _WIN32
-    return _aligned_malloc(component->size * size, component->alignment);
+    return _aligned_malloc(rounded_bytes, alignment);
 #else
-    return std::aligned_alloc(component->alignment, component->size * size);
+    return std::aligned_alloc(alignment, rounded_bytes);
 #endif
 }
 void PGM_destroy_buffer(RawDataPtr ptr) {
