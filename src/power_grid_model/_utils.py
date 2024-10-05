@@ -38,11 +38,9 @@ from power_grid_model.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model.typing import (
-    ComponentAttributeFilterOptions,
-    ComponentAttributeMapping,
-    _ComponentAttributeMappingDict,
-)
+from power_grid_model.enum import ComponentAttributeFilterOptions
+from power_grid_model.errors import PowerGridError
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 def is_nan(data) -> bool:
@@ -515,12 +513,23 @@ def is_columnar(component_data: ComponentData) -> bool:
 #     raise TypeError("Given data is neither row  based or columnar.")
 
 
-def component_data_checks(component_data: ComponentData, component=None) -> None:
-    """Checks if component_data is of ComponentData and raises ValueError if its not"""
-    component_name = f"'{component}'" if component is not None else ""
-    err_msg = f"Invalid data for {component_name} component. " "{0}"
-    err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
+def is_nan_or_equivalent(array):
+    """
+    Check if the array contains only nan values or equivalent nan values for specific data types.
 
+    Args:
+        array: The array to check.
+
+    Returns:
+        bool: True if the array contains only nan or equivalent nan values, False otherwise.
+    """
+    return isinstance(array, np.ndarray) and (
+        (array.dtype == np.float64 and np.isnan(array).all())
+        or (array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min))
+    )
+
+
+def _check_sparse_dense(component_data: ComponentData, err_msg_suffixed: str) -> ComponentData:
     if is_sparse(component_data):
         indptr = component_data["indptr"]
         if not isinstance(indptr, np.ndarray):
@@ -528,22 +537,35 @@ def component_data_checks(component_data: ComponentData, component=None) -> None
         sub_data = component_data["data"]
     elif isinstance(component_data, dict) and ("indptr" in component_data or "data" in component_data):
         missing_element = "indptr" if "indptr" not in component_data else "data"
-        raise KeyError(err_msg.format(f"Missing '{missing_element}' in sparse batch data. "))
+        raise KeyError(err_msg_suffixed.format(f"Missing '{missing_element}' in sparse batch data. "))
     else:
         sub_data = component_data
+    return sub_data
 
-    if is_columnar(component_data):
+
+def _check_columnar_row(sub_data: ComponentData, err_msg_suffixed: str) -> None:
+    if is_columnar(sub_data):
         if not isinstance(sub_data, dict):
             raise TypeError(err_msg_suffixed.format(""))
         for attribute, attribute_array in sub_data.items():
             if not isinstance(attribute_array, np.ndarray):
                 raise TypeError(err_msg_suffixed.format(f"'{attribute}' attribute. "))
             if attribute_array.ndim not in [1, 2, 3]:
-                raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {attribute_array.ndim }"))
+                raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {attribute_array.ndim}"))
     elif not isinstance(sub_data, np.ndarray):
         raise TypeError(err_msg_suffixed.format(f"Invalid data type {type(sub_data).__name__} "))
     elif isinstance(sub_data, np.ndarray) and sub_data.ndim not in [1, 2]:
         raise TypeError(err_msg_suffixed.format(f"Invalid dimension: {sub_data.ndim}. "))
+
+
+def component_data_checks(component_data: ComponentData, component=None) -> None:
+    """Checks if component_data is of ComponentData and raises ValueError if its not"""
+    component_name = f"'{component}'" if component is not None else ""
+    err_msg = f"Invalid data for {component_name} component. " "{0}"
+    err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
+
+    sub_data = _check_sparse_dense(component_data, err_msg_suffixed)
+    _check_columnar_row(sub_data, err_msg_suffixed)
 
 
 def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
@@ -656,3 +678,48 @@ def check_indptr_consistency(indptr: IndexPointer, batch_size: int | None, conte
         raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
     if batch_size is not None and batch_size != indptr.size - 1:
         raise ValueError(f"Provided batch size must be equal to actual batch size. {VALIDATOR_MSG}")
+
+
+def get_dataset_type(data: Dataset) -> DatasetType:
+    """
+    Deduce the dataset type from the provided dataset.
+
+    Args:
+        data: the dataset
+
+    Raises:
+        ValueError
+            if the dataset type cannot be deduced because multiple dataset types match the format
+            (probably because the data contained no supported components, e.g. was empty)
+        PowerGridError
+            if no dataset type matches the format of the data
+            (probably because the data contained conflicting data formats)
+
+    Returns:
+        The dataset type.
+    """
+    candidates = set(power_grid_meta_data.keys())
+
+    if all(is_columnar(v) for v in data.values()):
+        raise ValueError("The dataset type could not be deduced. At least one component should have row based data.")
+
+    for dataset_type, dataset_metadatas in power_grid_meta_data.items():
+        for component, dataset_metadata in dataset_metadatas.items():
+            if component not in data or is_columnar(data[component]):
+                continue
+            component_data = data[component]
+
+            component_dtype = component_data["data"].dtype if is_sparse(component_data) else component_data.dtype
+            if component_dtype is not dataset_metadata.dtype:
+                candidates.discard(dataset_type)
+                break
+
+    if not candidates:
+        raise PowerGridError(
+            "The dataset type could not be deduced because no type matches the data. "
+            "This usually means inconsistent data was provided."
+        )
+    if len(candidates) > 1:
+        raise ValueError("The dataset type could not be deduced because multiple dataset types match the data.")
+
+    return next(iter(candidates))

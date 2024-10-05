@@ -8,7 +8,7 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import is_columnar, is_sparse, process_data_filter
+from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CAttributeBuffer,
@@ -28,12 +28,8 @@ from power_grid_model.core.power_grid_core import (
 )
 from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
 from power_grid_model.data_types import AttributeType, ComponentData, Dataset
-from power_grid_model.errors import PowerGridError
-from power_grid_model.typing import (
-    ComponentAttributeFilterOptions,
-    ComponentAttributeMapping,
-    _ComponentAttributeMappingDict,
-)
+from power_grid_model.enum import ComponentAttributeFilterOptions
+from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods
@@ -127,51 +123,6 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             component_name: pgc.dataset_info_total_elements(self._info, idx)
             for idx, component_name in enumerate(self.components())
         }
-
-
-def get_dataset_type(data: Dataset) -> DatasetType:
-    """
-    Deduce the dataset type from the provided dataset.
-
-    Args:
-        data: the dataset
-
-    Raises:
-        ValueError
-            if the dataset type cannot be deduced because multiple dataset types match the format
-            (probably because the data contained no supported components, e.g. was empty)
-        PowerGridError
-            if no dataset type matches the format of the data
-            (probably because the data contained conflicting data formats)
-
-    Returns:
-        The dataset type.
-    """
-    candidates = set(power_grid_meta_data.keys())
-
-    if all(is_columnar(v) for v in data.values()):
-        raise ValueError("The dataset type could not be deduced. At least one component should have row based data.")
-
-    for dataset_type, dataset_metadatas in power_grid_meta_data.items():
-        for component, dataset_metadata in dataset_metadatas.items():
-            if component not in data or is_columnar(data[component]):
-                continue
-            component_data = data[component]
-
-            component_dtype = component_data["data"].dtype if is_sparse(component_data) else component_data.dtype
-            if component_dtype is not dataset_metadata.dtype:
-                candidates.discard(dataset_type)
-                break
-
-    if not candidates:
-        raise PowerGridError(
-            "The dataset type could not be deduced because no type matches the data. "
-            "This usually means inconsistent data was provided."
-        )
-    if len(candidates) > 1:
-        raise ValueError("The dataset type could not be deduced because multiple dataset types match the data.")
-
-    return next(iter(candidates))
 
 
 class CMutableDataset:
@@ -422,8 +373,9 @@ class CWritableDataset:
         The Power Grid Model may write to these buffers at a later point in time.
 
         Returns:
-            The full dataset.
+            The full dataset with filters applied.
         """
+        self._post_filtering()
         return self._data
 
     def get_component_data(self, component: ComponentType) -> ComponentData:
@@ -503,6 +455,34 @@ class CWritableDataset:
             for component in components
             if component in self._data_filter
         }
+
+    def _filter_attributes(self, attributes):
+        keys_to_remove = []
+        for attr, array in attributes.items():
+            if is_columnar(array):
+                continue
+            if is_nan_or_equivalent(array):
+                keys_to_remove.append(attr)
+        for key in keys_to_remove:
+            del attributes[key]
+
+    def _filter_with_option(self):
+        if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
+            for attributes in self._data.values():
+                self._filter_attributes(attributes)
+
+    def _filter_with_mapping(self):
+        for component_type, attributes in self._data.items():
+            if component_type in self._data_filter:
+                filter_option = self._data_filter[component_type]
+                if filter_option is ComponentAttributeFilterOptions.RELEVANT:
+                    self._filter_attributes(attributes)
+
+    def _post_filtering(self):
+        if isinstance(self._data_filter, ComponentAttributeFilterOptions):
+            self._filter_with_option()
+        elif isinstance(self._data_filter, dict):
+            self._filter_with_mapping()
 
 
 def _get_filtered_attributes(

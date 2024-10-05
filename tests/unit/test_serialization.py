@@ -10,11 +10,9 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
-from power_grid_model._utils import is_columnar, is_sparse
-from power_grid_model.core.dataset_definitions import ComponentType
-from power_grid_model.core.power_grid_dataset import get_dataset_type
+from power_grid_model._utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
-from power_grid_model.typing import ComponentAttributeFilterOptions
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -384,6 +382,15 @@ def serialized_data(request):
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
         pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param(
+            {
+                "node": ["id"],
+                "line": ComponentAttributeFilterOptions.ALL,
+                "sym_load": None,
+                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
+            },
+            id="mixed filter",
+        ),
     ]
 )
 def data_filters(request):
@@ -610,6 +617,27 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         )
 
 
+def _check_only_relevant_attributes_present(component_values) -> bool:
+    for array in component_values.values():
+        if not isinstance(array, np.ndarray):
+            continue
+        if (array.dtype == np.float64 and np.isnan(array).all()) or (
+            array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min)
+        ):
+            return False
+    return True
+
+
+def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data_filter) -> bool:
+    if data_filter is ComponentAttributeFilterOptions.ALL:
+        return True
+    if data_filter is ComponentAttributeFilterOptions.RELEVANT:
+        for component_values in deserialized_dataset.values():
+            if not _check_only_relevant_attributes_present(component_values):
+                return False
+    return True
+
+
 @pytest.mark.parametrize("raw_buffer", (True, False))
 def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
@@ -723,6 +751,8 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
     assert serialized_result_a == serialized_result_b
     assert list(deserialized_result_b) == list(deserialized_result_a)
+    assert assert_deserialization_filtering_correct(deserialized_result_a, data_filters)
+    assert assert_deserialization_filtering_correct(deserialized_result_b, data_filters)
 
     for (component_a, component_result_a), component_result_b in zip(
         deserialized_result_a.items(), deserialized_result_b.values()
