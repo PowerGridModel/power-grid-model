@@ -227,29 +227,31 @@ Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\te
 
 ### Generic_Branch  
 
-* type name: `gneric_branch`
+* type name: `generic_branch`
 
-`generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at different voltage levels. Depending on the choice of parameters, it behaves either as a line or as a transformer. The advantage is that the input parameters are based directly on the electrical equivalent circuit model. The PI model can be used to avoid the need to convert parameters into transformer model data. Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case, the off-nominal ratio must given to adapt the electrical parameters).
+`generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at different voltage levels. Depending on the choice of parameters, it behaves either as a line or as a transformer. The advantage is that the input parameters are based directly on the electrical equivalent circuit model. The PI model can be used to avoid the need to convert parameters into transformer model data. Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case, the off-nominal ratio must be given to adapt the electrical parameters).
 
 
 #### Input
 
 | name    | data type | unit             | description                   | required               | update   |  valid values   |
 | ------- | --------- | ---------------- | ----------------------------- | :--------------------: | :------: | :-------------: |
-| `r1`    | `double`  | ohm              | positive-sequence resistance  | &#10004;               | &#10060; | `>= 0`          |
-| `x1`    | `double`  | ohm              | positive-sequence reactance   | &#10004;               | &#10060; | `>= 0`          |
-| `g1`    | `double`  | siemens          | positive-sequence conductance | &#10004;               | &#10060; | `>= 0`          |
-| `b1`    | `double`  | siemens          | positive-sequence susceptance | &#10004;               | &#10060; | `>= 0`          |
-| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; | `> 0`           |
+| `r1`    | `double`  | ohm              | positive-sequence resistance  | &#10004;               | &#10060; |                 |
+| `x1`    | `double`  | ohm              | positive-sequence reactance   | &#10004;               | &#10060; |                 |
+| `g1`    | `double`  | siemens          | positive-sequence conductance | &#10004;               | &#10060; |                 |
+| `b1`    | `double`  | siemens          | positive-sequence susceptance | &#10004;               | &#10060; |                 |
+| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; |                 |
 | `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |                 |
 | `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; | `>= 0`          |
 
 ```{note} 
-The user must ensure that, in the case of a tap changer, the ratio is specified as the off-nominal ratio; it is not automatically calculated from the given voltage levels.
+The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the branch.
 
-The generical branch parameters are calculated with respect in the to side of the branch
+The parameter `k` represents the **off-nominal ratio**, not the nominal voltage ratio. This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage transformer. The program does not automatically calculate `k` based on the nominal voltage levels of the connected nodes.
 
-Asymmetric calculation is not supported for `generic_branch`
+Asymmetric calculation is not supported for `generic_branch`.
+
+To model a three-winding transformer using the `generic_branch`, the MVA method must be applied. This means the user needs to calculate three equivalent `generic_branch` components and define an additional node to represent the common winding connection point. In rare cases, this method can result in negative electrical equivalent circuit elements. Therefore, the input parameters are not checked for negative values.
 ```
 
 #### Electric Model
