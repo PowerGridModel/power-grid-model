@@ -517,35 +517,11 @@ def is_sparse(component_data: ComponentData) -> bool:
     }
 
 
-# def is_sparse(component_data: ComponentData) -> bool:
-#     """Check if component_data is sparse or dense. Only batch data can be sparse."""
-#     if isinstance(component_data, dict) and set(component_data.keys()) == {
-#         "indptr",
-#         "data",
-#     }:
-#         return True
-#     if isinstance(component_data, np.ndarray) or (
-#         isinstance(component_data, dict) and all(isinstance(v, np.ndarray) for v in component_data.values())
-#     ):
-#         return False
-#     raise TypeError("Given data is neither dense or sparse ordered.")
-
-
 def is_columnar(component_data: ComponentData) -> bool:
     """Check if component_data is columnar or row based"""
     if is_sparse(component_data):
         return not isinstance(component_data["data"], np.ndarray)
     return not isinstance(component_data, np.ndarray)
-
-
-# def is_columnar(component_data: ComponentData) -> bool:
-#     """Check if component_data is columnar or row based"""
-#     sub_data = component_data["data"] if is_sparse(component_data) else component_data
-#     if isinstance(sub_data, np.ndarray):
-#         return False
-#     if isinstance(sub_data, dict) and all(isinstance(v, np.ndarray) for v in sub_data.values()):
-#         return True
-#     raise TypeError("Given data is neither row  based or columnar.")
 
 
 def is_nan_or_equivalent(array):

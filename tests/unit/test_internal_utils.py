@@ -216,31 +216,13 @@ def test_split_dense_batch_data_in_batches_n2__columnar():
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
-# def test_split_dense_batch_data_in_batches_wrong_data_type():
-#     update_data = [1, 2, 3]
-#     with pytest.raises(
-#         TypeError,
-#         match="Invalid data for 'foo' component. " "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
-#     ):
-#         split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
-
-#     update_data = {"bar": np.array([]), "baz": [1, 2, 3]}
-#     with pytest.raises(
-#         TypeError,
-#         match="Invalid data for 'foo' component. 'baz' attribute. "
-#         "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
-#     ):
-#         split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
-
-
-# def test_split_dense_batch_data_in_batches_wrong_data_dim():
-#     update_date = np.array([[[1, 2, 3]]])
-#     with pytest.raises(
-#         TypeError,
-#         match="Invalid data for 'foo' component. Invalid dimension: 3. "
-#         "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
-#     ):
-#         split_dense_batch_data_in_batches(update_date, "foo")
+def test_split_dense_batch_data_in_batches_wrong_data_dim():
+    update_date = np.array([[[[1, 2, 3]]]])
+    with pytest.raises(
+        ValueError,
+        match="Dimension of the component data is invalid",
+    ):
+        split_dense_batch_data_in_batches(update_date, 1)
 
 
 def test_normalize_batch_data_structure_n3_sparse():
