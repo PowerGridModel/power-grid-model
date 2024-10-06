@@ -61,7 +61,7 @@ def is_nan(data) -> bool:
     return bool(nan_func[data.dtype](data))
 
 
-def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
+def convert_batch_dataset_to_batch_list(batch_data: BatchDataset, dataset_type: DatasetType | None = None) -> BatchList:
     """
     Convert batch datasets to a list of individual batches
 
@@ -76,7 +76,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     if len(batch_data) == 0:
         return []
 
-    n_batches = get_and_verify_batch_sizes(batch_data=batch_data)
+    n_batches = get_and_verify_batch_sizes(batch_data=batch_data, dataset_type=dataset_type)
 
     # Initialize an empty list with dictionaries
     # Note that [{}] * n_batches would result in n copies of the same dict.
@@ -90,14 +90,14 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
         if is_sparse(data):
             component_batches = split_sparse_batch_data_in_batches(cast(SparseBatchData, data), component)
         else:
-            component_batches = split_dense_batch_data_in_batches(cast(SingleComponentData, data), component)
+            component_batches = split_dense_batch_data_in_batches(cast(SingleComponentData, data), batch_size=n_batches)
         for i, batch in enumerate(component_batches):
             if (isinstance(batch, dict) and batch) or (isinstance(batch, np.ndarray) and batch.size > 0):
                 list_data[i][component] = batch
     return list_data
 
 
-def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
+def get_and_verify_batch_sizes(batch_data: BatchDataset, dataset_type: DatasetType | None = None) -> int:
     """
     Determine the number of batches for each component and verify that each component has the same number of batches
 
@@ -108,10 +108,13 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
         The number of batches
     """
 
+    if dataset_type is None and any(is_columnar(v) and not is_sparse(v) for v in batch_data.values()):
+        dataset_type = get_dataset_type(batch_data)
+
     n_batch_size = 0
     checked_components: list[ComponentType] = []
     for component, data in batch_data.items():
-        n_component_batch_size = get_batch_size(data)
+        n_component_batch_size = get_batch_size(data, dataset_type, component)
         if checked_components and n_component_batch_size != n_batch_size:
             if len(checked_components) == 1:
                 checked_components_str = f"'{checked_components.pop()}'"
@@ -128,7 +131,9 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     return n_batch_size
 
 
-def get_batch_size(batch_data: BatchComponentData) -> int:
+def get_batch_size(
+    batch_data: BatchComponentData, dataset_type: DatasetType | None = None, component: ComponentType | None = None
+) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it. Note only batch data is supported.
     Note: SingleColumnarData would get treated as batch by this function.
@@ -147,16 +152,48 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
         indptr = batch_data["indptr"]
         return indptr.size - 1
 
-    data_to_check = (
-        next(iter(cast(DenseBatchColumnarData, batch_data).values()))
-        if is_columnar(batch_data)
-        else cast(DenseBatchArray, batch_data)
-    )
-    if data_to_check.ndim == 1:
+    if not is_columnar(batch_data):
+        sym_array = batch_data
+    else:
+        batch_data = cast(DenseBatchColumnarData, batch_data)
+        if component is None or dataset_type is None:
+            raise ValueError("Cannot deduce batch size for given columnar data without a dataset type or component")
+        sym_attributes, asym_attributes = _get_asym_attributes(dataset_type, component)
+        for attribute, array in batch_data.items():
+            if attribute in sym_attributes:
+                continue
+            if array.ndim == 1:
+                raise TypeError(f"Provided {asym_attributes} is incorrect for the given batch data")
+            if array.ndim == 2:
+                return 1
+            return array.shape[0]
+        sym_array = next(iter(batch_data.values()))
+
+    sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
+    if sym_array.ndim == 3:
+        raise TypeError("Provided dimension is incorrect for the given batch data")
+    if sym_array.ndim == 1:
         return 1
-    if data_to_check.ndim == 2 and is_columnar(batch_data):
-        raise ValueError("get_batch_size is not supported for columnar data")
-    return data_to_check.shape[0]
+    return sym_array.shape[0]
+
+
+def _get_asym_attributes(dataset_type: DatasetType, component: ComponentType):
+    asym_attributes = set()
+    sym_attributes = set()
+    for meta_dataset_type, dataset_meta in power_grid_meta_data.items():
+        if dataset_type != meta_dataset_type:
+            continue
+        for component_name_meta, component_meta in dataset_meta.items():
+            if component != component_name_meta:
+                continue
+            if component_meta.dtype.names is None:
+                raise ValueError("No attributes available in meta")
+            for attribute in component_meta.dtype.names:
+                if component_meta.dtype[attribute].shape == (3,):
+                    asym_attributes.add(attribute)
+                if component_meta.dtype[attribute].shape == ():
+                    sym_attributes.add(attribute)
+    return sym_attributes, asym_attributes
 
 
 def _split_numpy_array_in_batches(
@@ -181,7 +218,7 @@ def _split_numpy_array_in_batches(
 
 
 def split_dense_batch_data_in_batches(
-    data: SingleComponentData | DenseBatchData, component: ComponentType
+    data: SingleComponentData | DenseBatchData, batch_size: int
 ) -> list[SingleComponentData]:
     """
     Split a single dense numpy array into one or more batches
@@ -193,11 +230,9 @@ def split_dense_batch_data_in_batches(
     Returns:
         A list with a single component data per scenario
     """
-    component_data_checks(data, component)
     if isinstance(data, np.ndarray):
         return cast(list[SingleComponentData], _split_numpy_array_in_batches(data))
 
-    batch_size = get_batch_size(data)
     scenarios_per_attribute = {
         attribute: _split_numpy_array_in_batches(attribute_data) for attribute, attribute_data in data.items()
     }
