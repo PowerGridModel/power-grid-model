@@ -87,8 +87,8 @@ auto read_json(std::filesystem::path const& path) {
 }
 
 struct OwningMemory {
-    std::vector<Buffer> buffers{};
-    std::vector<std::vector<Idx>> indptrs{};
+    std::vector<Buffer> buffers;
+    std::vector<std::vector<Idx>> indptrs;
 };
 
 struct OwningDataset {
@@ -97,10 +97,9 @@ struct OwningDataset {
     OwningMemory storage{};
 };
 
-auto create_owning_dataset(DatasetWritable& writable_dataset) {
+OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
-    auto const is_batch_number = info.is_batch();
-    bool is_batch = is_batch_number == 1;
+    Idx const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
@@ -114,7 +113,7 @@ auto create_owning_dataset(DatasetWritable& writable_dataset) {
 
         auto& current_intptr = owning_dataset.storage.indptrs.emplace_back(
             info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        bool empty_indptr = current_intptr.empty();
+        bool const empty_indptr = current_intptr.empty();
         if (!empty_indptr) {
             current_intptr.at(0) = 0;
             current_intptr.at(batch_size) = component_size;
@@ -129,7 +128,7 @@ auto create_owning_dataset(DatasetWritable& writable_dataset) {
     return owning_dataset;
 }
 
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, Idx is_batch = 0,
                                     Idx batch_size = 1) {
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
@@ -152,7 +151,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
     return owning_dataset;
 }
 
-auto load_dataset(std::filesystem::path const& path) {
+OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
@@ -164,8 +163,7 @@ auto load_dataset(std::filesystem::path const& path) {
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
     // fallback for https://github.com/msgpack/msgpack-c/issues/1098
-    return OwningDataset{.dataset = {false, 0, "", meta_data_gen::meta_data},
-                         .const_dataset = {false, 0, "", meta_data_gen::meta_data}};
+    return OwningDataset{};
 #endif // __clang_analyzer__ // issue in msgpack
 }
 
@@ -198,8 +196,8 @@ bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_
         return std::ranges::equal(result, ref_result, is_within_tolerance);
     }
     if constexpr (std::is_same_v<std::decay_t<T>, double>) {
-        std::complex<double> result = to_complex(magnitude, angle);
-        std::complex<double> ref_result = to_complex(ref_magnitude, ref_angle);
+        std::complex<double> const result = to_complex(magnitude, angle);
+        std::complex<double> const ref_result = to_complex(ref_magnitude, ref_angle);
         return is_within_tolerance(result, ref_result);
     } else {
         return ref_angle == angle && ref_magnitude == magnitude;
@@ -305,8 +303,8 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
             auto const& component_name = reference_result_info.component_name(component_idx);
             auto const* const component_meta = MetaData::get_component_by_name(reference_result_name, component_name);
 
-            auto& ref_buffer = reference_storage.buffers.at(component_idx);
-            auto& buffer = storage.buffers.at(component_idx);
+            auto const& ref_buffer = reference_storage.buffers.at(component_idx);
+            auto const& buffer = storage.buffers.at(component_idx);
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
             CHECK(elements_per_scenario >= 0);
             // loop through all attributes
@@ -581,9 +579,9 @@ void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 
     if (should_skip_test(param)) {
-        std::cout << " [skipped]" << std::endl;
+        std::cout << " [skipped]" << '\n';
     } else {
-        std::cout << std::endl;
+        std::cout << '\n';
         func();
     }
 }
@@ -596,7 +594,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create and run model
         auto const& options = get_options(param);
-        Model model{50.0, validation_case.input.const_dataset.value()};
+        Model const model{50.0, validation_case.input.const_dataset.value()};
         model.calculate(options, result.dataset.value());
 
         // check results
@@ -609,12 +607,12 @@ void validate_batch_case(CaseParam const& param) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().const_dataset.value().get_info();
-        Idx batch_size = info.batch_size();
+        Idx const batch_size = info.batch_size();
         auto const batch_result =
-            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
+            create_result_dataset(validation_case.output_batch.value(), output_prefix, Idx{1}, batch_size);
 
         // create model
-        Model model{50.0, validation_case.input.const_dataset.value()};
+        Model const model{50.0, validation_case.input.const_dataset.value()};
 
         // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
