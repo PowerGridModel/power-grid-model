@@ -2,13 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import itertools
-
 import numpy as np
 import pytest
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_dataset import CConstDataset, get_dataset_type
+from power_grid_model.core.power_grid_dataset import CConstDataset
 from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
@@ -32,36 +30,6 @@ def all_dataset_types():
 @pytest.fixture(params=all_dataset_types())
 def dataset_type(request):
     return request.param
-
-
-def test_get_dataset_type(dataset_type):
-    assert (
-        get_dataset_type(
-            data={
-                ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["node"]),
-                ComponentType.sym_load: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
-            }
-        )
-        == dataset_type
-    )
-
-
-def test_get_dataset_type__empty_data():
-    with pytest.raises(ValueError):
-        get_dataset_type(data={})
-
-
-def test_get_dataset_type__conflicting_data():
-    for first, second in itertools.product(all_dataset_types(), all_dataset_types()):
-        data = {
-            "node": np.zeros(1, dtype=power_grid_meta_data[first]["node"]),
-            "sym_load": np.zeros(1, dtype=power_grid_meta_data[second]["sym_load"]),
-        }
-        if first == second:
-            assert get_dataset_type(data=data) == first
-        else:
-            with pytest.raises(PowerGridError):
-                get_dataset_type(data=data)
 
 
 def test_const_dataset__empty_dataset(dataset_type):
