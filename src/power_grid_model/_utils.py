@@ -158,12 +158,12 @@ def get_batch_size(
         batch_data = cast(DenseBatchColumnarData, batch_data)
         if component is None or dataset_type is None:
             raise ValueError("Cannot deduce batch size for given columnar data without a dataset type or component")
-        sym_attributes, asym_attributes = _get_asym_attributes(dataset_type, component)
+        sym_attributes, _ = _get_sym_or_asym_attributes(dataset_type, component)
         for attribute, array in batch_data.items():
             if attribute in sym_attributes:
-                continue
+                break
             if array.ndim == 1:
-                raise TypeError(f"Provided {asym_attributes} is incorrect for the given batch data")
+                raise TypeError("Incorrect dimension present in batch data.")
             if array.ndim == 2:
                 return 1
             return array.shape[0]
@@ -171,13 +171,23 @@ def get_batch_size(
 
     sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
     if sym_array.ndim == 3:
-        raise TypeError("Provided dimension is incorrect for the given batch data")
+        raise TypeError("Incorrect dimension present in batch data.")
     if sym_array.ndim == 1:
         return 1
     return sym_array.shape[0]
 
 
-def _get_asym_attributes(dataset_type: DatasetType, component: ComponentType):
+def _get_sym_or_asym_attributes(dataset_type: DatasetType, component: ComponentType):
+    """Segregate into symmetric of asymmetric attribute.
+    The asymmetric attribute is per phase value and of extra dimension.
+
+    Args:
+        dataset_type (DatasetType): dataset type
+        component (ComponentType): component name
+
+    Returns:
+        symmetrical and asymmetrical attributes
+    """
     asym_attributes = set()
     sym_attributes = set()
     for meta_dataset_type, dataset_meta in power_grid_meta_data.items():
