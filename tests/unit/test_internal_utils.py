@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import itertools
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -14,14 +15,17 @@ from power_grid_model._utils import (
     convert_dataset_to_python_dataset,
     get_and_verify_batch_sizes,
     get_batch_size,
+    get_dataset_type,
     is_nan,
     process_data_filter,
     split_dense_batch_data_in_batches,
     split_sparse_batch_data_in_batches,
 )
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import BatchDataset, BatchList
 from power_grid_model.enum import ComponentAttributeFilterOptions
+from power_grid_model.errors import PowerGridError
 
 from .utils import convert_python_to_numpy
 
@@ -581,3 +585,37 @@ def test_get_batch_size(data, expected_size):
 def test_get_batch_size__single_dataset_is_not_supported(data):
     with pytest.raises(ValueError):
         get_batch_size(data)
+
+
+@pytest.mark.parametrize("dataset_type", [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output])
+def test_get_dataset_type(dataset_type):
+    assert (
+        get_dataset_type(
+            data={
+                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["node"]),
+                CT.sym_load: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
+            }
+        )
+        == dataset_type
+    )
+
+
+def test_get_dataset_type__empty_data():
+    with pytest.raises(ValueError):
+        get_dataset_type(data={})
+
+
+def test_get_dataset_type__conflicting_data():
+    for first, second in itertools.product(
+        [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output],
+        [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output],
+    ):
+        data = {
+            "node": np.zeros(1, dtype=power_grid_meta_data[first]["node"]),
+            "sym_load": np.zeros(1, dtype=power_grid_meta_data[second]["sym_load"]),
+        }
+        if first == second:
+            assert get_dataset_type(data=data) == first
+        else:
+            with pytest.raises(PowerGridError):
+                get_dataset_type(data=data)
