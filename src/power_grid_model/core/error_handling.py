@@ -29,7 +29,7 @@ from power_grid_model.errors import (
     InvalidTransformerClock,
     IterationDiverge,
     MaxIterationReached,
-    MissingCaseForEnumError,    
+    MissingCaseForEnumError,
     NotObservableError,
     PowerGridBatchError,
     PowerGridDatasetError,
