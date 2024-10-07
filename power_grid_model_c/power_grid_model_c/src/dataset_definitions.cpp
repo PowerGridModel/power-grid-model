@@ -44,6 +44,21 @@ PGM_MetaAttribute const* const PGM_def_input_link_from_node = PGM_meta_get_attri
 PGM_MetaAttribute const* const PGM_def_input_link_to_node = PGM_meta_get_attribute_by_name(nullptr, "input", "link", "to_node");
 PGM_MetaAttribute const* const PGM_def_input_link_from_status = PGM_meta_get_attribute_by_name(nullptr, "input", "link", "from_status");
 PGM_MetaAttribute const* const PGM_def_input_link_to_status = PGM_meta_get_attribute_by_name(nullptr, "input", "link", "to_status");
+// component generic_branch
+PGM_MetaComponent const* const PGM_def_input_generic_branch = PGM_meta_get_component_by_name(nullptr, "input", "generic_branch");
+// attributes of input generic_branch
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_id = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "id");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_from_node = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "from_node");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_to_node = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "to_node");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_from_status = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "from_status");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_to_status = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "to_status");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_r1 = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "r1");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_x1 = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "x1");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_g1 = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "g1");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_b1 = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "b1");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_k = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "k");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_theta = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "theta");
+PGM_MetaAttribute const* const PGM_def_input_generic_branch_sn = PGM_meta_get_attribute_by_name(nullptr, "input", "generic_branch", "sn");
 // component transformer
 PGM_MetaComponent const* const PGM_def_input_transformer = PGM_meta_get_component_by_name(nullptr, "input", "transformer");
 // attributes of input transformer
@@ -300,6 +315,20 @@ PGM_MetaAttribute const* const PGM_def_sym_output_transformer_p_to = PGM_meta_ge
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_q_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer", "q_to");
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_i_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer", "i_to");
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_s_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer", "s_to");
+// component generic_branch
+PGM_MetaComponent const* const PGM_def_sym_output_generic_branch = PGM_meta_get_component_by_name(nullptr, "sym_output", "generic_branch");
+// attributes of sym_output generic_branch
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_loading = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "loading");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_p_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "p_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_q_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "q_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_i_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "i_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_s_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "s_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_p_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "p_to");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_q_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "q_to");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_i_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "i_to");
+PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_s_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "generic_branch", "s_to");
 // component transformer_tap_regulator
 PGM_MetaComponent const* const PGM_def_sym_output_transformer_tap_regulator = PGM_meta_get_component_by_name(nullptr, "sym_output", "transformer_tap_regulator");
 // attributes of sym_output transformer_tap_regulator
@@ -472,6 +501,20 @@ PGM_MetaAttribute const* const PGM_def_asym_output_transformer_p_to = PGM_meta_g
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_q_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer", "q_to");
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_i_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer", "i_to");
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_s_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer", "s_to");
+// component generic_branch
+PGM_MetaComponent const* const PGM_def_asym_output_generic_branch = PGM_meta_get_component_by_name(nullptr, "asym_output", "generic_branch");
+// attributes of asym_output generic_branch
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_loading = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "loading");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_p_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "p_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_q_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "q_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_i_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "i_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_s_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "s_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_p_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "p_to");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_q_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "q_to");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_i_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "i_to");
+PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_s_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "generic_branch", "s_to");
 // component transformer_tap_regulator
 PGM_MetaComponent const* const PGM_def_asym_output_transformer_tap_regulator = PGM_meta_get_component_by_name(nullptr, "asym_output", "transformer_tap_regulator");
 // attributes of asym_output transformer_tap_regulator

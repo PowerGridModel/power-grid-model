@@ -98,6 +98,29 @@ struct LineInput {
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
 
+struct GenericBranchInput {
+    ID id{na_IntID};  // ID of the object
+    ID from_node{na_IntID};  // node IDs to which this branch is connected at both sides
+    ID to_node{na_IntID};  // node IDs to which this branch is connected at both sides
+    IntS from_status{na_IntS};  // whether the branch is connected at each side
+    IntS to_status{na_IntS};  // whether the branch is connected at each side
+    double r1{nan};  // positive sequence parameters
+    double x1{nan};  // positive sequence parameters
+    double g1{nan};  // positive sequence parameters
+    double b1{nan};  // positive sequence parameters
+    double k{nan};  // off-nominal ratio, default = 1.0
+    double theta{nan};  // angle shift in radian
+    double sn{nan};  // rated power for calculation of loading (optional)
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to BranchInput
+    operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
+    operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
+};
+
 struct LinkInput {
     ID id{na_IntID};  // ID of the object
     ID from_node{na_IntID};  // node IDs to which this branch is connected at both sides

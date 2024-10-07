@@ -109,6 +109,10 @@ class PowerGridDatasetError(PowerGridError):
     """Error occurs during dataset handling."""
 
 
+class PowerGridNotImplementedError(PowerGridError):
+    """The functionality is either not supported or not yet implemented."""
+
+
 class PowerGridUnreachableHitError(PowerGridError):
     """Supposedly unreachable code was hit.
 
