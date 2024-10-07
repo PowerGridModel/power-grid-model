@@ -109,7 +109,7 @@ class PowerGridDatasetError(PowerGridError):
     """Error occurs during dataset handling."""
 
 
-class NotImplementedError(PowerGridError):
+class PowerGridNotImplementedError(PowerGridError):
     """The functionality is either not supported or not yet implemented."""
 
 
