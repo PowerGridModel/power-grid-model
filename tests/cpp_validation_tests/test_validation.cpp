@@ -24,8 +24,26 @@
 #include <type_traits>
 
 namespace power_grid_model_cpp {
-
 namespace {
+class UnsupportedValidationCase : public PowerGridError {
+  public:
+    UnsupportedValidationCase(std::string const& calculation_type, bool sym)
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              auto const sym_str = sym ? "sym"s : "asym"s;
+              return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
+          }()} {}
+};
+
+class UnsupportedPGM_CType : public PowerGridError {
+  public:
+    UnsupportedPGM_CType()
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              return "Unsupported PGM_Ctype"s;
+          }()} {}
+};
+
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
 template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
     return is_nan(x.real()) || is_nan(x.imag());
@@ -48,7 +66,7 @@ decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&..
     case PGM_double3:
         return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
     default:
-        throw std::runtime_error("unknown data type");
+        throw UnsupportedPGM_CType();
     }
 }
 
@@ -67,25 +85,6 @@ auto read_json(std::filesystem::path const& path) {
     f >> j;
     return j;
 }
-
-class UnsupportedValidationCase : public PowerGridError {
-  public:
-    UnsupportedValidationCase(std::string const& calculation_type, bool sym)
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              auto const sym_str = sym ? "sym"s : "asym"s;
-              return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
-          }()} {}
-};
-
-class UnsupportedPGM_CType : public PowerGridError {
-  public:
-    UnsupportedPGM_CType()
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              return "Unsupported PGM_Ctype"s;
-          }()} {}
-};
 
 struct OwningMemory {
     std::vector<Buffer> buffers{};
@@ -121,7 +120,7 @@ auto create_owning_dataset(DatasetWritable& writable_dataset) {
             current_intptr.at(batch_size) = component_size;
         }
         Idx* const indptr = empty_indptr ? nullptr : current_intptr.data();
-        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        auto const& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         writable_dataset.set_buffer(component_name, indptr, current_buffer);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, current_buffer);
@@ -144,8 +143,8 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
 
         auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
             info_input.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
+        auto const& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, current_buffer);
     }
