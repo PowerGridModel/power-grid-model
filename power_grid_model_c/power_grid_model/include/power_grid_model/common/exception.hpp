@@ -166,11 +166,6 @@ class DuplicativelyRegulatedObject : public PowerGridError {
     }
 };
 
-class NotImplementedError : public PowerGridError {
-  public:
-    NotImplementedError() { append_msg("Function not yet implemented"); }
-};
-
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id) {
@@ -249,6 +244,11 @@ class DatasetError : public PowerGridError {
 
 class ExperimentalFeature : public InvalidArguments {
     using InvalidArguments::InvalidArguments;
+};
+
+class NotImplementedError : public PowerGridError {
+  public:
+    NotImplementedError() { append_msg("Function not yet implemented"); }
 };
 
 class UnreachableHit : public PowerGridError {

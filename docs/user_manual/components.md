@@ -246,17 +246,21 @@ Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\te
 
 ```{note} 
 The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the branch.
-
-The parameter `k` represents the **off-nominal ratio**, not the nominal voltage ratio. This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage transformer. The program does not automatically calculate `k` based on the nominal voltage levels of the connected nodes.
-
-Asymmetric calculation is not supported for `generic_branch`.
-
+```
+```{note} 
 To model a three-winding transformer using the `generic_branch`, the MVA method must be applied. This means the user needs to calculate three equivalent `generic_branch` components and define an additional node to represent the common winding connection point. In rare cases, this method can result in negative electrical equivalent circuit elements. Therefore, the input parameters are not checked for negative values.
 ```
+```{warning} 
+The parameter `k` represents the **off-nominal ratio**, not the nominal voltage ratio. This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage transformer. The program does not automatically calculate `k` based on the nominal voltage levels of the connected nodes.
+```
+```{warning} 
+Asymmetric calculation is not supported for `generic_branch`.
+```
+
 
 #### Electric Model
 
-`generic_branch` is described by a $\pi$ model, where 
+`generic_branch` is described by a PI model, where 
 
 $$
    \begin{eqnarray}
