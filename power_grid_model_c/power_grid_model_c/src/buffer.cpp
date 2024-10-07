@@ -20,7 +20,7 @@ using meta_data::RawDataPtr;
 
 // buffer control
 RawDataPtr PGM_create_buffer(PGM_Handle* /* handle */, PGM_MetaComponent const* component, PGM_Idx size) {
-    // alignment should be minium of alignment of the component and alignment of void*
+    // alignment should be maximum of alignment of the component and alignment of void*
     size_t const alignment = std::max(component->alignment, sizeof(void*));
     // total bytes should be multiple of alignment
     size_t const requested_bytes = component->size * size;
