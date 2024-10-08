@@ -34,9 +34,9 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build clang-15 lcov gcovr
-          sudo ln -s /usr/bin/clang-15 /usr/local/bin/clang
-          sudo ln -s /usr/bin/clang++-15 /usr/local/bin/clang++
+          sudo apt-get install -y ninja-build clang-18 lcov gcovr
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
