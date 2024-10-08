@@ -67,6 +67,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset, dataset_type: 
 
     Args:
         batch_data: a batch dataset for power-grid-model
+        dataset_type: type of dataset
 
     Returns:
         A list of individual batches
@@ -142,6 +143,7 @@ def get_batch_size(
     Args:
         batch_data: a batch array for power-grid-model
         dataset_type: type of dataset
+        component: name of component
 
     Raises:
         ValueError: when the type for data_filter is incorrect
@@ -238,6 +240,7 @@ def split_dense_batch_data_in_batches(
     Args:
         data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
         component: The name of the component to which the data belongs, only used for errors.
+        batch_size: size of batch
 
     Returns:
         A list with a single component data per scenario
@@ -626,7 +629,7 @@ def _extract_columnar_data(
         TypeError: if data is not columnar or invalid data
 
     Returns:
-        ColumnarData: the contents of columnar data
+        SingleColumnarData | DenseBatchColumnarData: the contents of columnar data
     """
     not_columnar_data_message = "Expected columnar data"
 
@@ -660,7 +663,7 @@ def _extract_row_based_data(
         TypeError: if data is not row based or invalid data
 
     Returns:
-        DataArray: the contents of row based data
+        SingleArray | DenseBatchArray: the contents of row based data
     """
     if is_batch is not None:
         allowed_dims = [2] if is_batch else [1]
