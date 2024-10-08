@@ -39,7 +39,6 @@ concurrency:
 jobs:
 
   acquire-python-version-build-sdist:
-    if: false
     name: Build sdist and set version
     runs-on: ubuntu-latest
     steps:
@@ -70,7 +69,6 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -105,7 +103,6 @@ jobs:
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
-    if: false
     runs-on: windows-latest
     strategy:
       matrix:
@@ -169,8 +166,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
@@ -185,7 +180,6 @@ jobs:
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-and-test-python:
-    if: false
     strategy:
       matrix:
         platform: [ linux-x64, linux-aarch64, macos, windows ]
@@ -239,7 +233,6 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build-and-test-conda:
-    if: false
     name: Build and test in Conda
 
     runs-on: ${{ matrix.os }}-latest
