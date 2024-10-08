@@ -103,6 +103,7 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset, dataset_type: DatasetTy
 
     Args:
         batch_data: a batch dataset for power-grid-model
+        dataset_type: type of dataset
 
     Returns:
         The number of batches
@@ -140,6 +141,7 @@ def get_batch_size(
 
     Args:
         batch_data: a batch array for power-grid-model
+        dataset_type: type of dataset
 
     Raises:
         ValueError: when the type for data_filter is incorrect
