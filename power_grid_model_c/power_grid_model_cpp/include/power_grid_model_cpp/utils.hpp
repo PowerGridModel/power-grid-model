@@ -10,13 +10,14 @@
 #include "basics.hpp"
 #include "handle.hpp"
 
+#include <array>
 #include <complex>
 #include <limits>
 
 namespace power_grid_model_cpp {
-inline bool is_nan(IntS x) { return x == std::numeric_limits<IntS>::min(); }
-inline bool is_nan(ID x) { return x == std::numeric_limits<ID>::min(); }
-inline bool is_nan(double x) { return std::isnan(x); }
+inline bool is_nan(IntS const x) { return x == std::numeric_limits<IntS>::min(); }
+inline bool is_nan(ID const x) { return x == std::numeric_limits<ID>::min(); }
+inline bool is_nan(double const x) { return std::isnan(x); }
 inline bool is_nan(std::complex<double> const& x) { return is_nan(x.real()) || is_nan(x.imag()); }
 inline bool is_nan(std::array<double, 3> const& array) {
     return is_nan(array[0]) || is_nan(array[1]) || is_nan(array[2]);
