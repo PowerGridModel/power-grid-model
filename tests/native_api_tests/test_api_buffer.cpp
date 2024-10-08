@@ -20,8 +20,13 @@
 
 namespace power_grid_model_cpp {
 namespace {
-template <typename T, std::convertible_to<T> U> constexpr T as_type(U const& value) { return static_cast<T>(value); }
-template <typename T> constexpr T as_type(T const& value) { return value; }
+template <typename T, std::convertible_to<T> U> constexpr T as_type(U const& value) {
+    if constexpr (std::same_as<T, U>) {
+        return value;
+    } else {
+        return static_cast<T>(value);
+    }
+}
 template <std::same_as<std::array<double, 3>> T> constexpr T as_type(double const& value) {
     return {value, value, value};
 }
