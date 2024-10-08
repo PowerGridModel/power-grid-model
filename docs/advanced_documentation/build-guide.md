@@ -207,11 +207,11 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-18            # or g++-13
-export CC=clang-18               # gcc-13
+export CXX=clang++-15            # or g++-13
+export CC=clang-15               # gcc-13
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
 export LLVM_COV=llvm-cov-15
-export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
+export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
 ```
 
 ### Ubuntu Software Packages
@@ -220,7 +220,7 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-15 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
 ```
 
 ### C++ packages
