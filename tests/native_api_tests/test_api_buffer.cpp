@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_cpp.hpp"
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
+#include <power_grid_model_cpp/utils.hpp>
 
 #include <power_grid_model_c/dataset_definitions.h>
 
@@ -18,28 +20,14 @@
 
 namespace power_grid_model_cpp {
 namespace {
-constexpr double nan = std::numeric_limits<double>::quiet_NaN();
-constexpr int8_t na_IntS = std::numeric_limits<int8_t>::min();
-constexpr ID na_IntID = std::numeric_limits<ID>::min();
-
-template <std::same_as<double> T> constexpr T nan_value() { return nan; }
-template <std::same_as<std::array<double, 3>> T> constexpr T nan_value() { return {nan, nan, nan}; }
-template <std::same_as<ID> T> constexpr T nan_value() { return na_IntID; }
-template <std::same_as<int8_t> T> constexpr T nan_value() { return na_IntS; }
-
 template <typename T, std::convertible_to<T> U> constexpr T as_type(U const& value) { return static_cast<T>(value); }
 template <typename T> constexpr T as_type(T const& value) { return value; }
 template <std::same_as<std::array<double, 3>> T> constexpr T as_type(double const& value) {
     return {value, value, value};
 }
 
-inline bool is_nan(double value) { return std::isnan(value); }
-inline bool is_nan(std::array<double, 3> value) { return is_nan(value[0]) && is_nan(value[1]) && is_nan(value[2]); }
-inline bool is_nan(ID x) { return x == std::numeric_limits<ID>::min(); }
-inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
-
-void check_buffer(MetaComponent const* component, MetaAttribute const* attribute) {
-    auto check_attribute = [component, attribute]<typename T>() {
+void check_array_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
+    pgm_type_func_selector(attribute, [component, attribute]<typename T>() {
         for (Idx size = 0; size < 4; ++size) {
             std::vector<T> source_buffer(size);
             std::vector<T> ref_buffer(size);
@@ -63,10 +51,20 @@ void check_buffer(MetaComponent const* component, MetaAttribute const* attribute
             for (Idx idx = 0; idx < size; ++idx) {
                 REQUIRE(ref_buffer[idx] == as_type<T>(idx));
             }
-            // array set value with fixed size
+        }
+    });
+}
+
+void check_sub_array_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
+    pgm_type_func_selector(attribute, [component, attribute]<typename T>() {
+        for (Idx size = 0; size < 4; ++size) {
             for (Idx sub_size = 0; sub_size < size; ++sub_size) {
                 for (Idx offset = 0; offset < size - sub_size; ++offset) {
-                    std::ranges::fill(ref_buffer, T{});
+                    std::vector<T> source_buffer(size);
+                    std::vector<T> ref_buffer(size);
+
+                    Buffer buffer{component, size};
+
                     // get value
                     buffer.set_nan();
                     buffer.get_value(attribute, ref_buffer.data(), offset, sub_size, sizeof(T));
@@ -94,20 +92,28 @@ void check_buffer(MetaComponent const* component, MetaAttribute const* attribute
                     }
                 }
             }
+        }
+    });
+}
 
-            // single access
+void check_single_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
+    pgm_type_func_selector(attribute, [component, attribute]<typename T>() {
+        for (Idx size = 0; size < 4; ++size) {
+            Buffer buffer{component, size};
+
             T source_value{};
             T ref_value{};
+
             buffer.set_nan();
             for (Idx idx = 0; idx < size; ++idx) {
-                // single get value
+                // get value
                 buffer.get_value(attribute, &ref_value, idx, 0);
                 if (size > 0) {
                     REQUIRE(is_nan(ref_value));
                 } else {
                     REQUIRE(ref_value == T{});
                 }
-                // single set value
+                // set value
                 buffer.set_value(attribute, &source_value, idx, 0);
                 buffer.get_value(attribute, &ref_value, idx, 0);
                 if (size > 0) {
@@ -117,19 +123,7 @@ void check_buffer(MetaComponent const* component, MetaAttribute const* attribute
                 }
             }
         }
-    };
-    switch (MetaData::attribute_ctype(attribute)) {
-    case PGM_int32:
-        return check_attribute.template operator()<PGM_ID>();
-    case PGM_int8:
-        return check_attribute.template operator()<int8_t>();
-    case PGM_double:
-        return check_attribute.template operator()<double>();
-    case PGM_double3:
-        return check_attribute.template operator()<std::array<double, 3>>();
-    default:
-        FAIL("Invalid ctype");
-    }
+    });
 }
 } // namespace
 
@@ -148,7 +142,9 @@ TEST_CASE("API Buffer") {
                 MetaAttribute const* attribute = MetaData::get_attribute_by_idx(component, attribute_idx);
                 CAPTURE(MetaData::attribute_name(attribute));
 
-                check_buffer(component, attribute);
+                check_array_buffer_access(component, attribute);
+                check_sub_array_buffer_access(component, attribute);
+                check_single_buffer_access(component, attribute);
             }
         }
     }
