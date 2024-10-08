@@ -34,7 +34,6 @@ template <std::same_as<std::array<double, 3>> T, std::convertible_to<double> U> 
 
 void check_array_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
     pgm_type_func_selector(attribute, [=]<typename T>() {
-        std::vector<T> source_buffer(size);
         std::vector<T> ref_buffer(size);
 
         Buffer buffer{component, size};
@@ -70,7 +69,6 @@ void check_sub_array_get_value(MetaComponent const* component, MetaAttribute con
     pgm_type_func_selector(attribute, [=]<typename T>() {
         for (Idx sub_size = 0; sub_size < size; ++sub_size) {
             for (Idx offset = 0; offset < size - sub_size; ++offset) {
-                std::vector<T> source_buffer(size);
                 std::vector<T> ref_buffer(size);
 
                 Buffer buffer{component, size};
@@ -118,7 +116,6 @@ void check_sub_array_set_value(MetaComponent const* component, MetaAttribute con
 
 void check_single_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
     pgm_type_func_selector(attribute, [=]<typename T>() {
-        T source_value{};
         T ref_value{};
 
         Buffer buffer{component, size};
