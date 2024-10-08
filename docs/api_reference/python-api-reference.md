@@ -34,6 +34,8 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.data_types.SparseBatchArray
 .. autoclass:: power_grid_model.dataset_definitions.DatasetType
 .. autoclass:: power_grid_model.dataset_definitions.ComponentType
+.. autodata:: power_grid_model.typing.ComponentAttributeMapping
+   :annotation: ComponentAttributeMapping
 ```
 
 ## error types

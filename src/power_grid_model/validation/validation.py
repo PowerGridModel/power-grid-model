@@ -8,6 +8,9 @@ Power Grid Model Validation Functions.
 Although all functions are 'public', you probably only need validate_input_data() and validate_batch_data().
 
 """
+
+# pylint: disable=too-many-lines
+
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
@@ -131,26 +134,26 @@ def validate_batch_data(
     Raises:
         Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
-    assert_valid_data_structure(input_data, DatasetType.input)
+    # Convert to row based if in columnar or mixed format
+    row_input_data = compatibility_convert_row_columnar_dataset(input_data, None, DatasetType.input)
 
-    input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data))
+    # A deep copy is made of the input data, since default values will be added in the validation process
+    input_data_copy = copy.deepcopy(row_input_data)
+    assert_valid_data_structure(input_data_copy, DatasetType.input)
 
-    # Convert to row based if in columnar format
-    # TODO(figueroa1395): transform to columnar per single batch scenario once the columnar dataset python extension
-    # is finished
-    row_update_data = compatibility_convert_row_columnar_dataset(update_data, None, DatasetType.update)
+    input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data_copy))
 
-    # Splitting update_data_into_batches may raise TypeErrors and ValueErrors
-    batch_data = convert_batch_dataset_to_batch_list(row_update_data)
+    batch_data = convert_batch_dataset_to_batch_list(update_data, DatasetType.update)
 
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
-        assert_valid_data_structure(batch_update_data, DatasetType.update)
-        id_errors: list[ValidationError] = list(validate_ids_exist(batch_update_data, input_data))
+        row_update_data = compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
+        assert_valid_data_structure(row_update_data, DatasetType.update)
+        id_errors: list[ValidationError] = list(validate_ids_exist(row_update_data, input_data_copy))
 
         batch_errors = input_errors + id_errors
         if not id_errors:
-            merged_data = update_input_data(input_data, batch_update_data)
+            merged_data = update_input_data(input_data_copy, row_update_data)
             batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
             batch_errors += validate_values(merged_data, calculation_type)
 
@@ -213,9 +216,7 @@ def validate_unique_ids_across_components(data: SingleDataset) -> list[MultiComp
     return all_cross_unique(data, [(component, "id") for component in data])
 
 
-def validate_ids_exist(
-    update_data: dict[ComponentType, np.ndarray], input_data: SingleDataset
-) -> list[IdNotInDatasetError]:
+def validate_ids_exist(update_data: SingleDataset, input_data: SingleDataset) -> list[IdNotInDatasetError]:
     """
     Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
     can only update existing components.
@@ -469,6 +470,7 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
         "node": validate_node,
         "line": validate_line,
         "link": lambda d: validate_branch(d, ComponentType.link),
+        "generic_branch": validate_generic_branch,
         "transformer": validate_transformer,
         "three_winding_transformer": validate_three_winding_transformer,
         "source": validate_source,
@@ -531,6 +533,11 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
     errors += all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
     errors += all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
     errors += all_greater_than_zero(data, ComponentType.line, "i_n")
+    return errors
+
+
+def validate_generic_branch(data: SingleDataset) -> list[ValidationError]:
+    errors = validate_branch(data, ComponentType.generic_branch)
     return errors
 
 
@@ -846,6 +853,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         ref_components=[
             ComponentType.node,
             ComponentType.line,
+            ComponentType.generic_branch,
             ComponentType.transformer,
             ComponentType.three_winding_transformer,
             ComponentType.source,
@@ -860,14 +868,14 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.transformer],
+        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
         measured_terminal_type=MeasuredTerminalType.branch_from,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.transformer],
+        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
         measured_terminal_type=MeasuredTerminalType.branch_to,
     )
     errors += all_valid_ids(

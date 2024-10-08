@@ -27,6 +27,8 @@ struct StubTransformer {
     using SideType = StubTransformerSideType;
 
     static constexpr auto name = "StubTransformer";
+
+    // NOLINTBEGIN(readability-convert-member-functions-to-static) // because it stubs non-static member functions
     constexpr auto math_model_type() const { return ComponentType::test; }
 
     constexpr auto id() const { return ID{}; }
@@ -41,6 +43,7 @@ struct StubTransformer {
 
     constexpr auto update(UpdateType const& /* update */) const { return UpdateChange{}; }
     constexpr auto inverse(UpdateType /* update */) const { return UpdateType{}; }
+    // NOLINTEND(readability-convert-member-functions-to-static)
 };
 struct StubTransformerA : public StubTransformer {};
 struct StubTransformerB : public StubTransformer {};

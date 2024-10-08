@@ -12,16 +12,17 @@ on:
     paths:
       - CITATION.cff
       - .github/workflows/citations.yml
-
   pull_request:
     paths:
       - CITATION.cff
       - .github/workflows/citations.yml
-
+  # run pipeline from another workflow
+  workflow_call:
+  # run this workflow manually from the Actions tab
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-citations
   cancel-in-progress: true
 
 jobs:

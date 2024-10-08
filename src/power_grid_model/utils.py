@@ -17,18 +17,31 @@ import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
 from power_grid_model._utils import (
+    _extract_data_from_component_data,
+    _extract_indptr,
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
     get_batch_size as _get_batch_size,
+    get_dataset_type,
+    is_columnar,
+    is_sparse,
 )
 from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
-from power_grid_model.core.power_grid_dataset import get_dataset_type
 from power_grid_model.core.serialization import (  # pylint: disable=unused-import
     json_deserialize,
     json_serialize,
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model.data_types import BatchArray, BatchComponentData, BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import (
+    BatchArray,
+    BatchComponentData,
+    BatchDataset,
+    Dataset,
+    DenseBatchArray,
+    IndexPointer,
+    SingleComponentData,
+    SingleDataset,
+)
 from power_grid_model.errors import PowerGridError, PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping
 
@@ -52,20 +65,27 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
         The dataset for a specific scenario
     """
 
-    def _get_component_scenario(component_scenarios: BatchComponentData) -> np.ndarray:
-        # TODO(mgovers): update this with columnar scenario access
-        if isinstance(component_scenarios, np.ndarray):
-            return component_scenarios[scenario]
+    def _get_dense_scenario(arr: np.ndarray) -> np.ndarray:
+        return arr[scenario]
 
-        indptr = component_scenarios["indptr"]
-        data = component_scenarios["data"]
-        if isinstance(indptr, np.ndarray) and isinstance(data, np.ndarray):
-            return data[indptr[scenario] : indptr[scenario + 1]]
+    def _get_sparse_scenario(arr: np.ndarray, indptr: IndexPointer) -> np.ndarray:
+        return arr[indptr[scenario] : indptr[scenario + 1]]
 
-        # If the batch data is not a numpy array and not a dictionary, it is invalid
-        raise ValueError(
-            "Invalid batch data format, expected a 2-d numpy array or a dictionary with an 'indptr' and 'data' entry"
-        )
+    def _get_component_scenario(component_scenarios: BatchComponentData) -> SingleComponentData:
+        data = _extract_data_from_component_data(component_scenarios)
+
+        if is_sparse(component_scenarios):
+            indptr = _extract_indptr(component_scenarios)
+            if is_columnar(component_scenarios):
+                return {
+                    attribute: _get_sparse_scenario(attribute_data, indptr)
+                    for attribute, attribute_data in data.items()
+                }
+            return _get_sparse_scenario(data, indptr)
+
+        if is_columnar(component_scenarios):
+            return {attribute: _get_dense_scenario(attribute_data) for attribute, attribute_data in data.items()}
+        return _get_dense_scenario(cast_type(DenseBatchArray, component_scenarios))
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 

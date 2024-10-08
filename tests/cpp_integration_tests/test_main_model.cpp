@@ -1677,7 +1677,7 @@ TEST_CASE("Test main model - incomplete input") {
 
     SUBCASE("Symmetrical - Incomplete") {
         MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-        MutableDataset ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset const ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
 
         std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
         test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr, test_sym_node.data());
@@ -1692,7 +1692,7 @@ TEST_CASE("Test main model - incomplete input") {
                             SparseMatrixError);
         }
         SUBCASE("Empty update dataset") {
-            ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+            ConstDataset const update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
 
             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
                                                   .calculation_symmetry = symmetric,
@@ -1715,7 +1715,7 @@ TEST_CASE("Test main model - incomplete input") {
 
     SUBCASE("Asymmetrical - Incomplete") {
         MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
-        MutableDataset ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+        MutableDataset const ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
 
         std::vector<NodeOutput<asymmetric_t>> test_sym_node(state.sym_node.size());
         test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr, test_sym_node.data());
@@ -1730,7 +1730,7 @@ TEST_CASE("Test main model - incomplete input") {
                             SparseMatrixError);
         }
         SUBCASE("Empty update dataset") {
-            ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+            ConstDataset const update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
 
             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
                                                   .calculation_symmetry = asymmetric,

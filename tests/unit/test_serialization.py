@@ -10,10 +10,9 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
-from power_grid_model._utils import is_columnar, is_sparse
-from power_grid_model.core.dataset_definitions import ComponentType
-from power_grid_model.core.power_grid_dataset import get_dataset_type
+from power_grid_model._utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
@@ -41,9 +40,9 @@ def is_non_compact_list(data_entry):
 
 
 def is_serialized_data_type_deducible(serialized_input, data_filter) -> bool:
-    """Find out if deserialization of serialized_input would contain atleast one component with row based data"""
+    """Find out if deserialization of serialized_input would contain at least one component with row based data"""
     serialized_input_data = serialized_input["data"]
-    if not serialized_input_data or data_filter is Ellipsis:
+    if not serialized_input_data or isinstance(data_filter, ComponentAttributeFilterOptions):
         return False
     if data_filter is None:
         return True
@@ -62,27 +61,29 @@ def is_columnar_filter(data_filter, component) -> bool:
     """A function to find if a data_filter will give out row or columnar format for a component"""
     if data_filter is None:
         return False
-    if data_filter is Ellipsis:
+    if isinstance(data_filter, ComponentAttributeFilterOptions):
         return True
     return data_filter[component] is not None
 
 
 def is_attribute_filtered_out(data_filter, component, attribute) -> bool:
     """Checks if attribute is being filtered out / excluded"""
-    if data_filter is None or data_filter is Ellipsis:
+    if data_filter is None or isinstance(data_filter, ComponentAttributeFilterOptions):
         return False
 
     if component not in data_filter:
         return True
 
     return not (
-        data_filter[component] is None or data_filter[component] is Ellipsis or attribute in data_filter[component]
+        data_filter[component] is None
+        or isinstance(data_filter[component], ComponentAttributeFilterOptions)
+        or attribute in data_filter[component]
     )
 
 
 def is_component_filtered_out(data_filter, component) -> bool:
     """Checks if component is being filtered out / excluded"""
-    if data_filter is None or data_filter is Ellipsis:
+    if data_filter is None or isinstance(data_filter, ComponentAttributeFilterOptions):
         return False
     return component not in data_filter
 
@@ -111,13 +112,29 @@ def is_sparse_data_input(serialized_input_data, component):
 
 
 def empty_dataset(dataset_type: DatasetType = DatasetType.input):
-    return {"version": "1.0", "type": dataset_type, "is_batch": False, "attributes": {}, "data": {}}
+    return {
+        "version": "1.0",
+        "type": dataset_type,
+        "is_batch": False,
+        "attributes": {},
+        "data": {},
+    }
 
 
 def simple_input_dataset():
     return {
         "attributes": {},
         "data": {"node": [{"id": 5}], "source": [{"id": 6}, {"id": 7}]},
+        "is_batch": False,
+        "type": "input",
+        "version": "1.0",
+    }
+
+
+def simple_asym_input_dataset():
+    return {
+        "attributes": {},
+        "data": {"asym_load": [{"id": 5, "p_specified": [10.0, 20.0, 30.0]}]},
         "is_batch": False,
         "type": "input",
         "version": "1.0",
@@ -162,7 +179,14 @@ def full_input_dataset():
         "source": [
             [15, 1, 1, 1.03, 1e20],
             [16, 1, 1, 1.04, None],
-            {"id": 17, "node": 1, "status": 1, "u_ref": 1.03, "sk": 1e10, "rx_ratio": 0.2},
+            {
+                "id": 17,
+                "node": 1,
+                "status": 1,
+                "u_ref": 1.03,
+                "sk": 1e10,
+                "rx_ratio": 0.2,
+            },
         ],
         "sym_load": [[7, 2, 1, 0, 1.01e6, 0.21e6], [8, 3, 1, 0, 1.02e6, 0.22e6]],
     }
@@ -188,7 +212,10 @@ def uniform_batch_update_dataset():
         "version": "1.0",
         "type": "update",
         "is_batch": True,
-        "attributes": {"sym_load": ["id", "p_specified", "q_specified"], "asym_load": ["id", "p_specified"]},
+        "attributes": {
+            "sym_load": ["id", "p_specified", "q_specified"],
+            "asym_load": ["id", "p_specified"],
+        },
         "data": [
             {"sym_load": [[7, 20.0, 50.0]], "asym_load": [[9, [100.0, None, 200.0]]]},
             {"sym_load": [[7, None, None]], "asym_load": [[9, None]]},
@@ -205,7 +232,10 @@ def inhomogeneous_batch_update_dataset():
         "version": "1.0",
         "type": "update",
         "is_batch": True,
-        "attributes": {"sym_load": ["id", "p_specified", "q_specified"], "asym_load": ["id", "p_specified"]},
+        "attributes": {
+            "sym_load": ["id", "p_specified", "q_specified"],
+            "asym_load": ["id", "p_specified"],
+        },
         "data": [
             {"sym_load": [[7, 20.0, 50.0]], "asym_load": [[9, [100.0, None, 200.0]]]},
             {"asym_load": [[9, None]]},
@@ -226,7 +256,12 @@ def sparse_batch_update_dataset():
         "data": [
             {"sym_load": [{"id": 7, "q_specified": 50.0}]},
             {"sym_load": [{"id": 8, "q_specified": 33.333333333333336}]},
-            {"sym_load": [{"id": 7, "q_specified": 10.0}, {"id": 8, "q_specified": 2.5}]},
+            {
+                "sym_load": [
+                    {"id": 7, "q_specified": 10.0},
+                    {"id": 8, "q_specified": 2.5},
+                ]
+            },
         ],
     }
 
@@ -234,7 +269,17 @@ def sparse_batch_update_dataset():
 def single_sym_output_dataset():
     result = empty_dataset("sym_output")
     result["data"] = {
-        "node": [{"id": 1, "energized": 1, "u_pu": 1.01, "u_angle": 0.21, "u": 1.02e3, "p": 1.01e6, "q": 4.1e5}]
+        "node": [
+            {
+                "id": 1,
+                "energized": 1,
+                "u_pu": 1.01,
+                "u_angle": 0.21,
+                "u": 1.02e3,
+                "p": 1.01e6,
+                "q": 4.1e5,
+            }
+        ]
     }
     return result
 
@@ -243,8 +288,32 @@ def batch_sym_output_dataset():
     result = empty_dataset("sym_output")
     result["is_batch"] = True
     result["data"] = [
-        {"node": [{"id": 1, "energized": 1, "u_pu": 1.01, "u_angle": 0.21, "u": 1.02e3, "p": 1.01e6, "q": 4.1e5}]},
-        {"node": [{"id": 1, "energized": 0, "u_pu": 0.0, "u_angle": 0.0, "u": 0.0, "p": 0.0, "q": 0.0}]},
+        {
+            "node": [
+                {
+                    "id": 1,
+                    "energized": 1,
+                    "u_pu": 1.01,
+                    "u_angle": 0.21,
+                    "u": 1.02e3,
+                    "p": 1.01e6,
+                    "q": 4.1e5,
+                }
+            ]
+        },
+        {
+            "node": [
+                {
+                    "id": 1,
+                    "energized": 0,
+                    "u_pu": 0.0,
+                    "u_angle": 0.0,
+                    "u": 0.0,
+                    "p": 0.0,
+                    "q": 0.0,
+                }
+            ]
+        },
     ]
     return result
 
@@ -298,6 +367,7 @@ def single_sc_output_dataset():
         batch_sym_output_dataset,
         single_asym_output_dataset,
         single_sc_output_dataset,
+        simple_asym_input_dataset,
     ]
 )
 def serialized_data(request):
@@ -307,10 +377,20 @@ def serialized_data(request):
 @pytest.fixture(
     params=[
         pytest.param(None, id="All row filter"),
-        pytest.param(..., id="All columnar filter"),
+        pytest.param(ComponentAttributeFilterOptions.ALL, id="All columnar filter"),
+        pytest.param(ComponentAttributeFilterOptions.RELEVANT, id="All relevant columnar filter"),
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
         pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param(
+            {
+                "node": ["id"],
+                "line": ComponentAttributeFilterOptions.ALL,
+                "sym_load": None,
+                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
+            },
+            id="mixed filter",
+        ),
     ]
 )
 def data_filters(request):
@@ -330,7 +410,8 @@ def split_deserialized_dataset_into_individual_scenario(scenario_idx, deserializ
                     deserialized_scenario[component][attr] = attr_values[scenario_idx]
         else:
             scenario_slice = slice(
-                component_values["indptr"][scenario_idx], component_values["indptr"][scenario_idx + 1]
+                component_values["indptr"][scenario_idx],
+                component_values["indptr"][scenario_idx + 1],
             )
             if not is_columnar(component_values):
                 sparse_component_data = component_values["data"][scenario_slice]
@@ -349,7 +430,7 @@ def split_deserialized_dataset_into_individual_scenario(scenario_idx, deserializ
 def assert_not_a_value(value: np.ndarray):
     """Assert value contains only NaN-like values.
 
-    Depending on type, maps to np.nan, -127, na_IntID, ...
+    Depending on type, maps to np.nan, -127, na_IntID, etc.
     """
     if value.dtype.names:
         for key in value.dtype.names:
@@ -401,12 +482,23 @@ def assert_single_dataset_entries(
         # Complete component data checks
         if is_columnar_filter(data_filter, component):
             assert isinstance(deserialized_output, dict)
+            # Assert number of batches are equal for all attributes
             assert all(len(v) == len(serialized_input) for v in deserialized_output.values())
+            # Assert number of attributes are not more than input for all batches
+            # Discrepencies in equal / less than input captured in individual check
+            # TODO Test for deserialize only relevant attributes
+            # assert all(len(v) >= len(deserialized_output) for v in serialized_input)
         else:
             assert isinstance(deserialized_output, np.ndarray)
             assert len(deserialized_output) == len(serialized_input)
 
-        assert_individual_data_entry(serialized_dataset, data_filter, component, serialized_input, deserialized_output)
+        assert_individual_data_entry(
+            serialized_dataset,
+            data_filter,
+            component,
+            serialized_input,
+            deserialized_output,
+        )
 
 
 def assert_individual_data_entry(serialized_dataset, data_filter, component, serialized_input, deserialized_output):
@@ -419,10 +511,16 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                         assert attr not in deserialized_output
                         continue
                     assert attr in deserialized_output.keys()
-                    assert_almost_equal(deserialized_output[attr][comp_idx], serialized_input[comp_idx][attr])
+                    assert_almost_equal(
+                        deserialized_output[attr][comp_idx],
+                        serialized_input[comp_idx][attr],
+                    )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
-                    assert_almost_equal(deserialized_output[comp_idx][attr], serialized_input[comp_idx][attr])
+                    assert_almost_equal(
+                        deserialized_output[comp_idx][attr],
+                        serialized_input[comp_idx][attr],
+                    )
         else:
             assert component in serialized_dataset["attributes"]
             for attr_idx, attr in enumerate(serialized_dataset["attributes"][component]):
@@ -431,10 +529,16 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                         assert attr not in deserialized_output
                         continue
                     assert attr in deserialized_output.keys()
-                    assert_almost_equal(deserialized_output[attr][comp_idx], serialized_input[comp_idx][attr_idx])
+                    assert_almost_equal(
+                        deserialized_output[attr][comp_idx],
+                        serialized_input[comp_idx][attr_idx],
+                    )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
-                    assert_almost_equal(deserialized_output[comp_idx][attr], serialized_input[comp_idx][attr_idx])
+                    assert_almost_equal(
+                        deserialized_output[comp_idx][attr],
+                        serialized_input[comp_idx][attr_idx],
+                    )
 
 
 def assert_single_dataset_structure(deserialized_dataset, data_filter):
@@ -450,7 +554,9 @@ def assert_single_dataset_structure(deserialized_dataset, data_filter):
 
 
 def assert_batch_dataset_structure(
-    deserialized_dataset: BatchDataset, serialized_dataset: Mapping[str, Any], data_filter
+    deserialized_dataset: BatchDataset,
+    serialized_dataset: Mapping[str, Any],
+    data_filter,
 ):
     """Checks if the structure of the batch dataset is correct.
     Then splits into individual scenario's dataset and checks if all of them are correct."""
@@ -511,6 +617,27 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         )
 
 
+def _check_only_relevant_attributes_present(component_values) -> bool:
+    for array in component_values.values():
+        if not isinstance(array, np.ndarray):
+            continue
+        if (array.dtype == np.float64 and np.isnan(array).all()) or (
+            array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min)
+        ):
+            return False
+    return True
+
+
+def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data_filter) -> bool:
+    if data_filter is ComponentAttributeFilterOptions.ALL:
+        return True
+    if data_filter is ComponentAttributeFilterOptions.RELEVANT:
+        for component_values in deserialized_dataset.values():
+            if not _check_only_relevant_attributes_present(component_values):
+                return False
+    return True
+
+
 @pytest.mark.parametrize("raw_buffer", (True, False))
 def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
@@ -538,10 +665,17 @@ def test_msgpack_deserialize_data(serialized_data, data_filters):
 
 @pytest.mark.parametrize(
     "dataset_type",
-    (DatasetType.input, DatasetType.update, DatasetType.sym_output, DatasetType.asym_output, DatasetType.sc_output),
+    (
+        DatasetType.input,
+        DatasetType.update,
+        DatasetType.sym_output,
+        DatasetType.asym_output,
+        DatasetType.sc_output,
+    ),
 )
 @pytest.mark.parametrize(
-    "use_compact_list", (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list"))
+    "use_compact_list",
+    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
 )
 def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
     for indent in (-1, 0, 2, 4):
@@ -558,10 +692,17 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
 
 @pytest.mark.parametrize(
     "dataset_type",
-    (DatasetType.input, DatasetType.update, DatasetType.sym_output, DatasetType.asym_output, DatasetType.sc_output),
+    (
+        DatasetType.input,
+        DatasetType.update,
+        DatasetType.sym_output,
+        DatasetType.asym_output,
+        DatasetType.sc_output,
+    ),
 )
 @pytest.mark.parametrize(
-    "use_compact_list", (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list"))
+    "use_compact_list",
+    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
 )
 def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
@@ -610,11 +751,12 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
     assert serialized_result_a == serialized_result_b
     assert list(deserialized_result_b) == list(deserialized_result_a)
+    assert assert_deserialization_filtering_correct(deserialized_result_a, data_filters)
+    assert assert_deserialization_filtering_correct(deserialized_result_b, data_filters)
 
     for (component_a, component_result_a), component_result_b in zip(
         deserialized_result_a.items(), deserialized_result_b.values()
     ):
-
         is_non_uniform = is_sparse(component_result_a)
         assert is_non_uniform == is_sparse(component_result_b)
 

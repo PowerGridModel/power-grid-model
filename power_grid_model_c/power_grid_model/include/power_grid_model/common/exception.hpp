@@ -246,6 +246,11 @@ class ExperimentalFeature : public InvalidArguments {
     using InvalidArguments::InvalidArguments;
 };
 
+class NotImplementedError : public PowerGridError {
+  public:
+    NotImplementedError() { append_msg("Function not yet implemented"); }
+};
+
 class UnreachableHit : public PowerGridError {
   public:
     UnreachableHit(std::string const& method, std::string const& reason_for_assumption) {
