@@ -69,7 +69,9 @@ class MetaData {
         return std::string{PGM_meta_attribute_name(nullptr, attribute)};
     }
 
-    static Idx attribute_ctype(MetaAttribute const* attribute) { return PGM_meta_attribute_ctype(nullptr, attribute); }
+    static PGM_CType attribute_ctype(MetaAttribute const* attribute) {
+        return static_cast<PGM_CType>(PGM_meta_attribute_ctype(nullptr, attribute));
+    }
 
     static size_t attribute_offset(MetaAttribute const* attribute) {
         return PGM_meta_attribute_offset(nullptr, attribute);

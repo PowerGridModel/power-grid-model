@@ -9,6 +9,7 @@
 
 #include "basics.hpp"
 #include "handle.hpp"
+#include "meta_data.hpp"
 
 #include <array>
 #include <complex>
@@ -25,6 +26,15 @@ inline bool is_nan(std::array<double, 3> const& array) {
 inline bool is_nan(std::array<std::complex<double>, 3> const& array) {
     return is_nan(array[0]) || is_nan(array[1]) || is_nan(array[2]);
 }
+
+constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+constexpr int8_t na_IntS = std::numeric_limits<int8_t>::min();
+constexpr ID na_IntID = std::numeric_limits<ID>::min();
+
+template <std::same_as<double> T> constexpr T nan_value() { return nan; }
+template <std::same_as<std::array<double, 3>> T> constexpr T nan_value() { return {nan, nan, nan}; }
+template <std::same_as<ID> T> constexpr T nan_value() { return na_IntID; }
+template <std::same_as<int8_t> T> constexpr T nan_value() { return na_IntS; }
 
 class UnsupportedPGM_CType : public PowerGridError {
   public:
@@ -49,6 +59,12 @@ decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&..
     default:
         throw UnsupportedPGM_CType();
     }
+}
+
+template <class Functor, class... Args>
+decltype(auto) pgm_type_func_selector(MetaAttribute const* attribute, Functor&& f, Args&&... args) {
+    return pgm_type_func_selector(MetaData::attribute_ctype(attribute), std::forward<Functor>(f),
+                                  std::forward<Args>(args)...);
 }
 
 } // namespace power_grid_model_cpp
