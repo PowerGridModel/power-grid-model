@@ -32,69 +32,56 @@ template <std::same_as<std::array<double, 3>> T, std::convertible_to<double> U> 
     return {d_value, d_value, d_value};
 }
 
-void check_array_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
-    pgm_type_func_selector(attribute, [component, attribute]<typename T>() {
-        for (Idx size = 0; size < 4; ++size) {
-            std::vector<T> source_buffer(size);
-            std::vector<T> ref_buffer(size);
+void check_array_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
+    pgm_type_func_selector(attribute, [=]<typename T>() {
+        std::vector<T> source_buffer(size);
+        std::vector<T> ref_buffer(size);
 
-            Buffer buffer{component, size};
+        Buffer buffer{component, size};
+        buffer.set_nan();
 
-            // array get value
-            buffer.set_nan();
-            buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
-            for (Idx idx = 0; idx < size; ++idx) {
-                REQUIRE(is_nan(ref_buffer[idx]));
-            }
-
-            // array set value
-            buffer.set_nan();
-            for (Idx idx = 0; idx < size; ++idx) {
-                source_buffer[idx] = as_type<T>(idx);
-            }
-            buffer.set_value(attribute, source_buffer.data(), sizeof(T));
-            buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
-            for (Idx idx = 0; idx < size; ++idx) {
-                REQUIRE(ref_buffer[idx] == as_type<T>(idx));
-            }
+        buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
+        for (Idx idx = 0; idx < size; ++idx) {
+            REQUIRE(is_nan(ref_buffer[idx]));
         }
     });
 }
 
-void check_sub_array_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
-    pgm_type_func_selector(attribute, [component, attribute]<typename T>() {
-        for (Idx size = 0; size < 4; ++size) {
-            for (Idx sub_size = 0; sub_size < size; ++sub_size) {
-                for (Idx offset = 0; offset < size - sub_size; ++offset) {
-                    std::vector<T> source_buffer(size);
-                    std::vector<T> ref_buffer(size);
+void check_array_set_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
+    pgm_type_func_selector(attribute, [=]<typename T>() {
+        std::vector<T> source_buffer(size);
+        std::vector<T> ref_buffer(size);
 
-                    Buffer buffer{component, size};
+        Buffer buffer{component, size};
+        buffer.set_nan();
 
-                    // get value
-                    buffer.set_nan();
-                    buffer.get_value(attribute, ref_buffer.data(), offset, sub_size, sizeof(T));
-                    for (Idx idx = 0; idx < size; ++idx) {
-                        if (idx >= offset && idx < offset + sub_size) {
-                            REQUIRE(is_nan(ref_buffer[idx]));
-                        } else {
-                            REQUIRE(ref_buffer[idx] == T{});
-                        }
-                    }
+        for (Idx idx = 0; idx < size; ++idx) {
+            source_buffer[idx] = as_type<T>(idx);
+        }
+        buffer.set_value(attribute, source_buffer.data(), sizeof(T));
+        buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
+        for (Idx idx = 0; idx < size; ++idx) {
+            REQUIRE(ref_buffer[idx] == as_type<T>(idx));
+        }
+    });
+}
 
-                    // set value
-                    buffer.set_nan();
-                    for (Idx idx = 0; idx < size; ++idx) {
-                        source_buffer[idx] = as_type<T>(idx);
-                    }
-                    buffer.set_value(attribute, source_buffer.data(), offset, sub_size, sizeof(T));
-                    buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
-                    for (Idx idx = 0; idx < size; ++idx) {
-                        if (idx >= offset && idx < offset + sub_size) {
-                            REQUIRE(ref_buffer[idx] == as_type<T>(idx));
-                        } else {
-                            REQUIRE(is_nan(ref_buffer[idx]));
-                        }
+void check_sub_array_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
+    pgm_type_func_selector(attribute, [=]<typename T>() {
+        for (Idx sub_size = 0; sub_size < size; ++sub_size) {
+            for (Idx offset = 0; offset < size - sub_size; ++offset) {
+                std::vector<T> source_buffer(size);
+                std::vector<T> ref_buffer(size);
+
+                Buffer buffer{component, size};
+                buffer.set_nan();
+
+                buffer.get_value(attribute, ref_buffer.data(), offset, sub_size, sizeof(T));
+                for (Idx idx = 0; idx < size; ++idx) {
+                    if (idx >= offset && idx < offset + sub_size) {
+                        REQUIRE(is_nan(ref_buffer[idx]));
+                    } else {
+                        REQUIRE(ref_buffer[idx] == T{});
                     }
                 }
             }
@@ -102,31 +89,67 @@ void check_sub_array_buffer_access(MetaComponent const* component, MetaAttribute
     });
 }
 
-void check_single_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
-    pgm_type_func_selector(attribute, [component, attribute]<typename T>() {
-        for (Idx size = 0; size < 4; ++size) {
-            Buffer buffer{component, size};
+void check_sub_array_set_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
+    pgm_type_func_selector(attribute, [=]<typename T>() {
+        for (Idx sub_size = 0; sub_size < size; ++sub_size) {
+            for (Idx offset = 0; offset < size - sub_size; ++offset) {
+                std::vector<T> source_buffer(size);
+                std::vector<T> ref_buffer(size);
 
-            T source_value{};
-            T ref_value{};
+                Buffer buffer{component, size};
+                buffer.set_nan();
 
-            buffer.set_nan();
-            for (Idx idx = 0; idx < size; ++idx) {
-                // get value
-                buffer.get_value(attribute, &ref_value, idx, 0);
-                if (size > 0) {
-                    REQUIRE(is_nan(ref_value));
-                } else {
-                    REQUIRE(ref_value == T{});
+                for (Idx idx = 0; idx < size; ++idx) {
+                    source_buffer[idx] = as_type<T>(idx);
                 }
-                // set value
-                buffer.set_value(attribute, &source_value, idx, 0);
-                buffer.get_value(attribute, &ref_value, idx, 0);
-                if (size > 0) {
-                    REQUIRE(ref_value == source_value);
-                } else {
-                    REQUIRE(ref_value == T{});
+                buffer.set_value(attribute, source_buffer.data(), offset, sub_size, sizeof(T));
+                buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
+                for (Idx idx = 0; idx < size; ++idx) {
+                    if (idx >= offset && idx < offset + sub_size) {
+                        REQUIRE(ref_buffer[idx] == as_type<T>(idx));
+                    } else {
+                        REQUIRE(is_nan(ref_buffer[idx]));
+                    }
                 }
+            }
+        }
+    });
+}
+
+void check_single_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
+    pgm_type_func_selector(attribute, [=]<typename T>() {
+        T source_value{};
+        T ref_value{};
+
+        Buffer buffer{component, size};
+        buffer.set_nan();
+
+        for (Idx idx = 0; idx < size; ++idx) {
+            buffer.get_value(attribute, &ref_value, idx, 0);
+            if (size > 0) {
+                REQUIRE(is_nan(ref_value));
+            } else {
+                REQUIRE(ref_value == T{});
+            }
+        }
+    });
+}
+
+void check_single_set_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
+    pgm_type_func_selector(attribute, [=]<typename T>() {
+        T source_value{};
+        T ref_value{};
+
+        Buffer buffer{component, size};
+        buffer.set_nan();
+
+        for (Idx idx = 0; idx < size; ++idx) {
+            buffer.set_value(attribute, &source_value, idx, 0);
+            buffer.get_value(attribute, &ref_value, idx, 0);
+            if (size > 0) {
+                REQUIRE(ref_value == source_value);
+            } else {
+                REQUIRE(ref_value == T{});
             }
         }
     });
@@ -134,24 +157,73 @@ void check_single_buffer_access(MetaComponent const* component, MetaAttribute co
 } // namespace
 
 TEST_CASE("API Buffer") {
-    for (Idx dataset_idx = 0; dataset_idx < MetaData::n_datasets(); ++dataset_idx) {
-        CAPTURE(dataset_idx);
-        MetaDataset const* dataset = MetaData::get_dataset_by_idx(dataset_idx);
-        CAPTURE(MetaData::dataset_name(dataset));
-        for (Idx component_idx = 0; component_idx < MetaData::n_components(dataset); ++component_idx) {
-            CAPTURE(component_idx);
-            MetaComponent const* component = MetaData::get_component_by_idx(dataset, component_idx);
-            CAPTURE(MetaData::component_name(component));
+    auto const loop_datasets_components_attributes = []<typename Func>(Func func) {
+        for (Idx dataset_idx = 0; dataset_idx < MetaData::n_datasets(); ++dataset_idx) {
+            CAPTURE(dataset_idx);
+            MetaDataset const* dataset = MetaData::get_dataset_by_idx(dataset_idx);
+            CAPTURE(MetaData::dataset_name(dataset));
+            for (Idx component_idx = 0; component_idx < MetaData::n_components(dataset); ++component_idx) {
+                CAPTURE(component_idx);
+                MetaComponent const* component = MetaData::get_component_by_idx(dataset, component_idx);
+                CAPTURE(MetaData::component_name(component));
 
-            for (Idx attribute_idx = 0; attribute_idx < MetaData::n_attributes(component); ++attribute_idx) {
-                CAPTURE(attribute_idx);
-                MetaAttribute const* attribute = MetaData::get_attribute_by_idx(component, attribute_idx);
-                CAPTURE(MetaData::attribute_name(attribute));
+                for (Idx attribute_idx = 0; attribute_idx < MetaData::n_attributes(component); ++attribute_idx) {
+                    CAPTURE(attribute_idx);
+                    MetaAttribute const* attribute = MetaData::get_attribute_by_idx(component, attribute_idx);
+                    CAPTURE(MetaData::attribute_name(attribute));
 
-                check_array_buffer_access(component, attribute);
-                check_sub_array_buffer_access(component, attribute);
-                check_single_buffer_access(component, attribute);
+                    func(component, attribute);
+                }
             }
+        }
+    };
+
+    SUBCASE("Array buffer access") {
+        SUBCASE("get value") {
+            loop_datasets_components_attributes([](MetaComponent const* component, MetaAttribute const* attribute) {
+                for (Idx size = 0; size < 4; ++size) {
+                    check_array_get_value(component, attribute, size);
+                }
+            });
+        }
+        SUBCASE("set value") {
+            loop_datasets_components_attributes([](MetaComponent const* component, MetaAttribute const* attribute) {
+                for (Idx size = 0; size < 4; ++size) {
+                    check_array_set_value(component, attribute, size);
+                }
+            });
+        }
+    }
+    SUBCASE("Sub-array buffer access") {
+        SUBCASE("get value") {
+            loop_datasets_components_attributes([](MetaComponent const* component, MetaAttribute const* attribute) {
+                for (Idx size = 0; size < 4; ++size) {
+                    check_sub_array_get_value(component, attribute, size);
+                }
+            });
+        }
+        SUBCASE("set value") {
+            loop_datasets_components_attributes([](MetaComponent const* component, MetaAttribute const* attribute) {
+                for (Idx size = 0; size < 4; ++size) {
+                    check_sub_array_set_value(component, attribute, size);
+                }
+            });
+        }
+    }
+    SUBCASE("Single buffer access") {
+        SUBCASE("get value") {
+            loop_datasets_components_attributes([](MetaComponent const* component, MetaAttribute const* attribute) {
+                for (Idx size = 0; size < 4; ++size) {
+                    check_single_get_value(component, attribute, size);
+                }
+            });
+        }
+        SUBCASE("set value") {
+            loop_datasets_components_attributes([](MetaComponent const* component, MetaAttribute const* attribute) {
+                for (Idx size = 0; size < 4; ++size) {
+                    check_single_set_value(component, attribute, size);
+                }
+            });
         }
     }
 }
