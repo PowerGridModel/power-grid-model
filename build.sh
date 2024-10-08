@@ -48,6 +48,9 @@ cmake --preset ${PRESET}
 
 # build
 cmake --build --preset ${PRESET} --verbose -j1 --target power_grid_model_api_tests
+ctest --preset ${PRESET} -R "API Buffer" --output-on-failure
+
+
 cmake --build --preset ${PRESET} --verbose -j1
 
 # test
