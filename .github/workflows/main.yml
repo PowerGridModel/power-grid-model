@@ -270,7 +270,6 @@ jobs:
         run: pytest
 
   publish-wheels:
-    if: false
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()

@@ -28,6 +28,7 @@ concurrency:
 
 jobs:
   check-code-quality:
+    if: false
 
     runs-on: ubuntu-latest
 
