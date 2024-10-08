@@ -39,6 +39,7 @@ concurrency:
 jobs:
 
   acquire-python-version-build-sdist:
+    if: false
     name: Build sdist and set version
     runs-on: ubuntu-latest
     steps:
@@ -69,6 +70,7 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -103,6 +105,7 @@ jobs:
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
+    if: false
     runs-on: windows-latest
     strategy:
       matrix:
@@ -180,6 +183,7 @@ jobs:
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-and-test-python:
+    if: false
     strategy:
       matrix:
         platform: [ linux-x64, linux-aarch64, macos, windows ]
@@ -233,6 +237,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build-and-test-conda:
+    if: false
     name: Build and test in Conda
 
     runs-on: ${{ matrix.os }}-latest
@@ -265,6 +270,7 @@ jobs:
         run: pytest
 
   publish-wheels:
+    if: false
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()

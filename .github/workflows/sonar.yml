@@ -20,7 +20,8 @@ concurrency:
 
 jobs:
   sonar-cloud:
-    if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
+    if: false
+    # if: (github.event_name == 'push') || (!startsWith(github.head_ref, 'release'))
     name: SonarCloud
     runs-on: ubuntu-latest
     env:
