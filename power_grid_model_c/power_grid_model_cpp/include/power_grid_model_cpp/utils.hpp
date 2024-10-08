@@ -3,16 +3,15 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
+
 #ifndef POWER_GRID_MODEL_CPP_UTILS_HPP
 #define POWER_GRID_MODEL_CPP_UTILS_HPP
 
 #include "basics.hpp"
 #include "handle.hpp"
 
-#include <algorithm> //all_of
 #include <complex>
 #include <limits>
-#include <type_traits> //enable_if and if_floating_point
 
 namespace power_grid_model_cpp {
 inline bool is_nan(IntS x) { return x == std::numeric_limits<IntS>::min(); }
