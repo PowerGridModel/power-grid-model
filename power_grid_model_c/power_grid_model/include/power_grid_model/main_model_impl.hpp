@@ -145,6 +145,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
+    using UpdateCompIndependence = std::vector<std::tuple<std::string, bool, bool>>;
+
     static constexpr Idx ignore_output{-1};
 
   protected:
@@ -154,6 +156,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
         return std::array{functor.template operator()<ComponentType>()...};
+    }
+    template <class Functor> static constexpr auto run_functor_with_all_types_return_vector(Functor functor) {
+        return std::vector{functor.template operator()<ComponentType>()...};
     }
 
   public:
@@ -295,7 +300,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // update all components
     template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
-        update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
+        auto const sequence_idx_map = get_sequence_idx_map(update_data);
+        update_component<CacheType>(update_data, pos, sequence_idx_map);
+        // update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
     }
 
     template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
@@ -373,7 +380,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // get sequence idx map of a certain batch scenario
-    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
+    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
+                                     UpdateCompIndependence comp_indenpendence = {}) const {
         auto const process_buffer_span = [](auto const& buffer_span, auto const& get_sequence) {
             auto const it_begin = buffer_span.begin();
             auto const it_end = buffer_span.end();
@@ -400,8 +408,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // get sequence idx map of an entire batch for fast caching of component sequences
     // (only applicable for independent update dataset)
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
-        assert(is_update_independent(update_data));
-        return get_sequence_idx_map(update_data, 0);
+        auto update_components_independence = check_components_independence(update_data);
+        assert(
+            std::ranges::all_of(update_components_independence, [](auto const& tuple) { return std::get<2>(tuple); }));
+        return get_sequence_idx_map(update_data, 0, update_components_independence);
     }
 
   private:
@@ -714,50 +724,75 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     template <class Component> using UpdateType = typename Component::UpdateType;
 
-    static bool is_update_independent(ConstDataset const& update_data) {
-        // If the batch size is (0 or) 1, then the update data for this component is 'independent'
+    static UpdateCompIndependence check_components_independence(ConstDataset const& update_data) {
+        auto const fill_in_all_types = []<typename CT>() -> std::tuple<std::string, bool, bool> {
+            return {CT::name, true, true};
+        };
+        // If the batch size is (0 or) 1, then the update data for this component is considered 'independent'
         if (update_data.batch_size() <= 1) {
-            return true;
+            return run_functor_with_all_types_return_vector(fill_in_all_types);
         }
 
-        auto const process_buffer_span = []<typename CT>(auto const& all_spans) -> bool {
+        // TODO: is_columnar might not be needed
+        auto const process_buffer_span = []<typename CT>(auto const& all_spans,
+                                                         bool is_columnar) -> std::pair<bool, bool> {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
+            bool const all_ids_na = std::ranges::all_of(all_spans, [](auto const& span) {
+                return std::ranges::all_of(span, [](UpdateType<CT> const& obj) { return obj.id == na_Idx; });
+            });
+            bool const has_id = !all_ids_na;
             auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
             bool const uniform_batch = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
                 return static_cast<Idx>(span.size()) == elements_per_scenario;
             });
             if (!uniform_batch) {
-                return false;
+                return {has_id, false};
             }
             if (elements_per_scenario == 0) {
-                return true;
+                return {has_id, true};
             }
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
             auto const first_span = all_spans[0];
             // check the subsequent scenarios
             // only return true if all scenarios match the ids of the first batch
-            return std::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                return std::ranges::equal(
-                    current_span, first_span,
-                    [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
-            });
+            bool const ids_match =
+                std::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+                    return std::ranges::equal(
+                        current_span, first_span,
+                        [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
+                });
+            return std::pair<bool, bool>{has_id, ids_match};
         };
 
-        auto const is_component_update_independent = [&update_data, &process_buffer_span]<typename CT>() -> bool {
+        auto const check_each_component = [&update_data,
+                                           &process_buffer_span]<typename CT>() -> std::tuple<std::string, bool, bool> {
             // get span of all the update data
+            std::pair<bool, bool> result;
             if (update_data.is_columnar(CT::name)) {
-                return process_buffer_span.template operator()<CT>(
-                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
+                result = process_buffer_span.template operator()<CT>(
+                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), false);
+            } else {
+                result = process_buffer_span.template operator()<CT>(
+                    update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), true);
             }
-            return process_buffer_span.template operator()<CT>(
-                update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
+            return std::tuple{CT::name, result.first, result.second};
         };
 
-        // check all components
-        auto const update_independent = run_functor_with_all_types_return_array(is_component_update_independent);
-        return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
+        // check and return indenpendence of all components
+        auto const component_independence = run_functor_with_all_types_return_vector(check_each_component);
+        return component_independence;
+    }
+
+    static bool is_update_independent(ConstDataset const& update_data) {
+        // If the batch size is (0 or) 1, then the update data for this component is 'independent'
+        if (update_data.batch_size() <= 1) {
+            return true;
+        }
+        auto const is_component_update_independent = check_components_independence(update_data);
+        return std::ranges::all_of(is_component_update_independent,
+                                   [](auto const& tuple) { return std::get<2>(tuple); });
     }
 
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
@@ -876,6 +911,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_asym_parameter_up_to_date_{false};
     bool is_accumulated_component_updated_{true};
     bool last_updated_calculation_symmetry_mode_{false};
+    // std::vector<std::pair<std::string, bool>> update_component_independence_{};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
