@@ -9,30 +9,21 @@
 #include "basics.hpp"
 #include "handle.hpp"
 
-#include <algorithm>
+#include <algorithm> //all_of
 #include <complex>
 #include <limits>
-#include <type_traits>
+#include <type_traits> //enable_if and if_floating_point
 
 namespace power_grid_model_cpp {
-template <typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value, // NOLINT(modernize-use-constraints,
-                                                                 // modernize-type-traits)
-                               bool>::type
-is_nan(T x) {
-    return std::isnan(x);
+inline bool is_nan(IntS x) { return x == std::numeric_limits<IntS>::min(); }
+inline bool is_nan(ID x) { return x == std::numeric_limits<ID>::min(); }
+inline bool is_nan(double x) { return std::isnan(x); }
+inline bool is_nan(std::complex<double> const& x) { return is_nan(x.real()) || is_nan(x.imag()); }
+inline bool is_nan(std::array<double, 3> const& array) {
+    return is_nan(array[0]) || is_nan(array[1]) || is_nan(array[2]);
 }
-template <typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value, // NOLINT(modernize-use-constraints,
-                                                                 // modernize-type-traits)
-                               bool>::type
-is_nan(std::complex<T> const& x) {
-    return is_nan(x.real()) || is_nan(x.imag());
-}
-inline bool is_nan(int32_t x) { return x == std::numeric_limits<int32_t>::min(); }
-inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
-template <typename T, std::size_t N> inline bool is_nan(std::array<T, N> const& array) {
-    return std::any_of(array.begin(), array.end(), [](T const& element) { return is_nan(element); });
+inline bool is_nan(std::array<std::complex<double>, 3> const& array) {
+    return is_nan(array[0]) || is_nan(array[1]) || is_nan(array[2]);
 }
 
 class UnsupportedPGM_CType : public PowerGridError {
@@ -48,9 +39,9 @@ template <class Functor, class... Args>
 decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&... args) {
     switch (type) {
     case PGM_int32:
-        return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<ID>(std::forward<Args>(args)...);
     case PGM_int8:
-        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<IntS>(std::forward<Args>(args)...);
     case PGM_double:
         return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
     case PGM_double3:

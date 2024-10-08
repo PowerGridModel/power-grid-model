@@ -149,7 +149,7 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
     sstr << std::setprecision(16);
     if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
         sstr << "(" << attribute_value[0] << ", " << attribute_value[1] << ", " << attribute_value[2] << ")";
-    } else if constexpr (std::is_same_v<std::decay_t<T>, int8_t>) {
+    } else if constexpr (std::is_same_v<std::decay_t<T>, IntS>) {
         sstr << std::to_string(attribute_value);
     } else {
         sstr << attribute_value;
