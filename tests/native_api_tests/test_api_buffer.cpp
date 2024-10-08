@@ -27,8 +27,9 @@ template <typename T, std::convertible_to<T> U> constexpr T as_type(U const& val
         return static_cast<T>(value);
     }
 }
-template <std::same_as<std::array<double, 3>> T> constexpr T as_type(double const& value) {
-    return {value, value, value};
+template <std::same_as<std::array<double, 3>> T, std::convertible_to<double> U> constexpr T as_type(U const& value) {
+    auto const d_value = as_type<double>(value);
+    return {d_value, d_value, d_value};
 }
 
 void check_array_buffer_access(MetaComponent const* component, MetaAttribute const* attribute) {
