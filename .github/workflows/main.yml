@@ -169,6 +169,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
