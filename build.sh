@@ -76,7 +76,6 @@ if [[ "${COVERAGE}" ]];  then
     -d ${BUILD_DIR}/tests/cpp_validation_tests/CMakeFiles/power_grid_model_validation_tests.dir \
     -d ${BUILD_DIR}/tests/native_api_tests/CMakeFiles/power_grid_model_api_tests.dir \
     -d ${BUILD_DIR}/power_grid_model_c/power_grid_model_c/CMakeFiles/power_grid_model_c.dir \
-    -d ${BUILD_DIR}/power_grid_model_c_example/CMakeFiles/power_grid_model_c_example.dir \
     -b . \
     --no-external \
     --output-file cpp_coverage.info \
