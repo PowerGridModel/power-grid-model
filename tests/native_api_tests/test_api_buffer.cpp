@@ -36,20 +36,24 @@ template <std::same_as<std::array<double, 3>> T> constexpr T as_type(double cons
 inline bool is_nan(double value) { return std::isnan(value); }
 inline bool is_nan(std::array<double, 3> value) { return is_nan(value[0]) && is_nan(value[1]) && is_nan(value[2]); }
 inline bool is_nan(ID x) { return x == std::numeric_limits<ID>::min(); }
-inline bool is_nan(Idx x) { return x == std::numeric_limits<Idx>::min(); }
 inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
 
 void check_buffer(MetaComponent const* component, MetaAttribute const* attribute) {
     auto check_attribute = [component, attribute]<typename T>() {
         for (Idx size = 0; size < 4; ++size) {
-            Buffer buffer{component, size};
             T ref_value{};
             std::vector<T> ref_buffer(size);
             std::vector<T> source_buffer(size);
+
+            Buffer buffer{component, size};
             buffer.set_nan();
 
             buffer.get_value(attribute, &ref_value, 0);
-            CHECK(is_nan(ref_value));
+            if (size > 0) {
+                CHECK(is_nan(ref_value));
+            } else {
+                CHECK(ref_value == T{});
+            }
 
             buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
             for (Idx idx = 0; idx < size; ++idx) {
@@ -95,6 +99,8 @@ TEST_CASE("API Buffer") {
                 CAPTURE(attribute_idx);
                 MetaAttribute const* attribute = MetaData::get_attribute_by_idx(component, attribute_idx);
                 CAPTURE(MetaData::attribute_name(attribute));
+
+                check_buffer(component, attribute);
             }
         }
     }
