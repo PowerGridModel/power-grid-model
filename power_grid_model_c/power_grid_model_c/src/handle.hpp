@@ -40,7 +40,7 @@ auto call_with_catch(PGM_Handle* handle, Functor func, PGM_Idx error_code, std::
     } catch (Exception const& e) {
         if (handle) {
             handle->err_code = error_code;
-            handle->err_msg = std::string(e.what()) + std::string(extra_msg);
+            handle->err_msg = std::string{e.what()} + std::string{extra_msg};
         }
         return static_cast<ReturnValueType>(empty);
     }

@@ -4,7 +4,6 @@
 
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
-#include "handle.hpp"
 
 #include "power_grid_model_c/buffer.h"
 
@@ -17,8 +16,10 @@ using namespace power_grid_model;
 
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
+} // namespace
 
-RawDataPtr create_buffer(PGM_MetaComponent const* component, PGM_Idx size) {
+// buffer control
+RawDataPtr PGM_create_buffer(PGM_Handle* /* handle */, PGM_MetaComponent const* component, PGM_Idx size) {
     // alignment should be maximum of alignment of the component and alignment of void*
     size_t const alignment = std::max(component->alignment, sizeof(void*));
     // total bytes should be multiple of alignment
@@ -29,20 +30,6 @@ RawDataPtr create_buffer(PGM_MetaComponent const* component, PGM_Idx size) {
 #else
     return std::aligned_alloc(alignment, rounded_bytes);
 #endif
-}
-} // namespace
-
-// buffer control
-RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) {
-    return call_with_catch(
-        handle,
-        [component, size] {
-            if (RawDataPtr result = create_buffer(component, size); result != nullptr || size == 0) {
-                return result;
-            }
-            throw std::bad_alloc{};
-        },
-        PGM_regular_error);
 }
 void PGM_destroy_buffer(RawDataPtr ptr) {
 #ifdef _WIN32
