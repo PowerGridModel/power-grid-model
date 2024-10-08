@@ -2,27 +2,82 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
-#include <power_grid_model/container.hpp>
-#include <power_grid_model/main_model.hpp>
+#define PGM_ENABLE_EXPERIMENTAL
+
+#include "power_grid_model_cpp.hpp"
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
+#include <complex>
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <numeric>
 #include <optional>
 #include <regex>
+#include <stdexcept>
+#include <type_traits>
 
-namespace power_grid_model::meta_data {
-
+namespace power_grid_model_cpp {
 namespace {
+class UnsupportedValidationCase : public PowerGridError {
+  public:
+    UnsupportedValidationCase(std::string const& calculation_type, bool sym)
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              auto const sym_str = sym ? "sym"s : "asym"s;
+              return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
+          }()} {}
+};
+
+class UnsupportedPGM_CType : public PowerGridError {
+  public:
+    UnsupportedPGM_CType()
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              return "Unsupported PGM_Ctype"s;
+          }()} {}
+};
+
+class OptionalNotInitialized : public PowerGridError {
+  public:
+    OptionalNotInitialized(std::string const& object)
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              return "Optional "s + object + " object not initialized"s;
+          }()} {}
+};
+
+inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
+template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
+    return is_nan(x.real()) || is_nan(x.imag());
+}
+inline bool is_nan(int32_t x) { return x == std::numeric_limits<int32_t>::min(); }
+inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
+template <typename T, std::size_t N> inline bool is_nan(std::array<T, N> const& array) {
+    return std::ranges::any_of(array, [](T const& element) { return is_nan(element); });
+}
+
+template <class Functor, class... Args>
+decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&... args) {
+    switch (type) {
+    case PGM_int32:
+        return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
+    case PGM_int8:
+        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
+    case PGM_double:
+        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
+    case PGM_double3:
+        return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
+    default:
+        throw UnsupportedPGM_CType();
+    }
+}
 
 using nlohmann::json;
 
@@ -40,201 +95,247 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-class UnsupportedValidationCase : public PowerGridError {
-  public:
-    UnsupportedValidationCase(std::string const& calculation_type, bool sym) {
-        using namespace std::string_literals;
-
-        auto const sym_str = sym ? "sym"s : "asym"s;
-        append_msg("Unsupported validation case: "s + sym_str + " "s + calculation_type);
-    };
-};
-
-// memory buffer
-using BufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)>>; // custom deleter at runtime
-struct Buffer {
-    BufferPtr ptr{nullptr, [](void const*) {}};
-    IdxVector indptr;
+struct OwningMemory {
+    std::vector<Buffer> buffers;
+    std::vector<std::vector<Idx>> indptrs;
 };
 
 struct OwningDataset {
-    MutableDataset dataset;
-    ConstDataset const_dataset;
-    std::vector<Buffer> buffers{};
-    std::vector<ConstDataset> batch_scenarios{};
+    std::optional<DatasetMutable> dataset;
+    std::optional<DatasetConst> const_dataset;
+    OwningMemory storage{};
 };
 
-auto create_owning_dataset(WritableDataset& info) {
+OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
+    auto const& info = writable_dataset.get_info();
+    Idx const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
-    std::vector<Buffer> buffers;
+    auto const& dataset_name = info.name();
+    OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
+                                 .const_dataset = std::nullopt};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-        auto const& component_info = info.get_component_info(component_idx);
-        auto const& component_meta = component_info.component;
+        auto const& component_name = info.component_name(component_idx);
+        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+        Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
+        Idx const component_size = info.component_total_elements(component_idx);
 
-        Buffer buffer{};
-        buffer.ptr =
-            BufferPtr{component_meta->create_buffer(component_info.total_elements), component_meta->destroy_buffer};
-        buffer.indptr = IdxVector(component_info.elements_per_scenario < 0 ? batch_size + 1 : 0);
-        Idx* indptr_data = buffer.indptr.empty() ? nullptr : buffer.indptr.data();
-
-        info.set_buffer(component_info.component->name, indptr_data, buffer.ptr.get());
-        buffers.push_back(std::move(buffer));
+        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
+            info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
+        if (!current_indptr.empty()) {
+            current_indptr.at(0) = 0;
+            current_indptr.at(batch_size) = component_size;
+        }
+        Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
+        auto const& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        writable_dataset.set_buffer(component_name, indptr, current_buffer);
+        owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
+                                                  indptr, current_buffer);
     }
-    return OwningDataset{
-        .dataset = info,
-        .const_dataset = info,
-        .buffers = std::move(buffers),
-    };
+    owning_dataset.const_dataset = writable_dataset;
+    return owning_dataset;
 }
 
-auto construct_individual_scenarios(OwningDataset& owning_dataset) {
-    for (Idx scenario_idx{}; scenario_idx < owning_dataset.dataset.batch_size(); ++scenario_idx) {
-        owning_dataset.batch_scenarios.push_back(owning_dataset.const_dataset.get_individual_scenario(scenario_idx));
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, Idx is_batch = 0,
+                                    Idx batch_size = 1) {
+    OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
+                                 .const_dataset = std::nullopt};
+
+    if (!input.const_dataset.has_value()) {
+        throw OptionalNotInitialized("DatasetConst");
     }
+    DatasetInfo const& input_info = input.const_dataset.value().get_info();
+
+    for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
+        auto const& component_name = input_info.component_name(component_idx);
+        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+        Idx const component_elements_per_scenario = input_info.component_elements_per_scenario(component_idx);
+        Idx const component_size = input_info.component_total_elements(component_idx);
+
+        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
+            input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
+        Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
+        auto const& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
+                                                  indptr, current_buffer);
+    }
+    owning_dataset.const_dataset = owning_dataset.dataset.value();
+    return owning_dataset;
 }
 
 OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    auto deserializer = Deserializer{power_grid_model::meta_data::from_json, read_file(path), meta_data_gen::meta_data};
-    auto& info = deserializer.get_dataset_info();
-    auto dataset = create_owning_dataset(info);
-    deserializer.parse();
-    construct_individual_scenarios(dataset);
+    Deserializer deserializer{read_file(path), Idx{0}};
+    auto& writable_dataset = deserializer.get_dataset();
+    auto dataset = create_owning_dataset(writable_dataset);
+    deserializer.parse_to_buffer();
     return dataset;
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
     // fallback for https://github.com/msgpack/msgpack-c/issues/1098
-    return OwningDataset{.dataset = {false, 0, "", meta_data_gen::meta_data},
-                         .const_dataset = {false, 0, "", meta_data_gen::meta_data}};
+    return OwningDataset{};
 #endif // __clang_analyzer__ // issue in msgpack
 }
 
-// create single result set
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& data_type, bool is_batch = false,
-                                    Idx batch_size = 1) {
-    MetaDataset const& meta = meta_data_gen::meta_data.get_dataset(data_type);
-    WritableDataset handler{is_batch, batch_size, meta.name, meta_data_gen::meta_data};
-    assert(input.const_dataset.batch_size() == 1);
-
-    for (Idx i{}; i != input.const_dataset.n_components(); ++i) {
-        auto const& component_info = input.const_dataset.get_component_info(i);
-        handler.add_component_info(component_info.component->name, component_info.elements_per_scenario,
-                                   component_info.elements_per_scenario * batch_size);
-    }
-    auto owning_dataset = create_owning_dataset(handler);
-    construct_individual_scenarios(owning_dataset);
-    return owning_dataset;
-}
-
-template <typename T>
-std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
-    // ensure that we don't read outside owned memory
-    REQUIRE(attr.ctype == ctype_v<T>);
-    REQUIRE(attr.size == sizeof(T));
-
-    T value{};
-    attr.get_value(raw_data_ptr, reinterpret_cast<RawDataPtr>(&value), obj);
-
+template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
     sstr << std::setprecision(16);
-    if constexpr (std::same_as<T, RealValue<asymmetric_t>>) {
-        sstr << "(" << value(0) << ", " << value(1) << ", " << value(2) << ")";
-    } else if constexpr (std::same_as<T, int8_t>) {
-        sstr << std::to_string(value);
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
+        sstr << "(" << attribute_value[0] << ", " << attribute_value[1] << ", " << attribute_value[2] << ")";
+    } else if constexpr (std::is_same_v<std::decay_t<T>, int8_t>) {
+        sstr << std::to_string(attribute_value);
     } else {
-        sstr << value;
+        sstr << attribute_value;
     }
     return sstr.str();
 }
 
-std::string get_as_string(RawDataConstPtr const& raw_data_ptr, MetaAttribute const& attr, Idx obj) {
-    using enum CType;
-    using namespace std::string_literals;
+template <typename T>
+bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
+                               double atol, double rtol) {
+    auto to_complex = [](double r, double theta) { return std::polar(r, theta); };
+    auto is_within_tolerance = [atol, rtol](std::complex<double> element, std::complex<double> ref_element) {
+        return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol;
+    };
 
-    switch (attr.ctype) {
-    case c_int32:
-        return get_as_string<int32_t>(raw_data_ptr, attr, obj);
-    case c_int8:
-        return get_as_string<int8_t>(raw_data_ptr, attr, obj);
-    case c_double:
-        return get_as_string<double>(raw_data_ptr, attr, obj);
-    case c_double3:
-        return get_as_string<RealValue<asymmetric_t>>(raw_data_ptr, attr, obj);
-    default:
-        return "<unknown value type>"s;
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
+        std::array<std::complex<double>, 3> result;
+        std::array<std::complex<double>, 3> ref_result;
+        std::ranges::transform(magnitude, angle, result.begin(), to_complex);
+        std::ranges::transform(ref_magnitude, ref_angle, ref_result.begin(), to_complex);
+        return std::ranges::equal(result, ref_result, is_within_tolerance);
     }
-}
-
-template <symmetry_tag sym>
-bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
-                               MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol, double rtol,
-                               Idx obj) {
-    RealValue<sym> mag{};
-    RealValue<sym> mag_ref{};
-    RealValue<sym> angle{};
-    RealValue<sym> angle_ref{};
-    mag_attr.get_value(result_ptr, &mag, obj);
-    mag_attr.get_value(reference_result_ptr, &mag_ref, obj);
-    angle_attr.get_value(result_ptr, &angle, obj);
-    angle_attr.get_value(reference_result_ptr, &angle_ref, obj);
-    ComplexValue<sym> const result = mag * exp(1.0i * angle);
-    ComplexValue<sym> const result_ref = mag_ref * exp(1.0i * angle_ref);
-    if constexpr (is_symmetric_v<sym>) {
-        return cabs(result - result_ref) < (cabs(result_ref) * rtol + atol);
+    if constexpr (std::is_same_v<std::decay_t<T>, double>) {
+        std::complex<double> const result = to_complex(magnitude, angle);
+        std::complex<double> const ref_result = to_complex(ref_magnitude, ref_angle);
+        return is_within_tolerance(result, ref_result);
     } else {
-        return (cabs(result - result_ref) < (cabs(result_ref) * rtol + atol)).all();
+        return ref_angle == angle && ref_magnitude == magnitude;
     }
 }
 
-bool check_angle_and_magnitude(RawDataConstPtr reference_result_ptr, RawDataConstPtr result_ptr,
-                               MetaAttribute const& angle_attr, MetaAttribute const& mag_attr, double atol, double rtol,
-                               Idx obj) {
-    if (angle_attr.ctype == CType::c_double) {
-        assert(mag_attr.ctype == CType::c_double);
-        return check_angle_and_magnitude<symmetric_t>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol,
-                                                      rtol, obj);
+template <typename T>
+bool compare_value(T const& ref_attribute_value, T const& attribute_value, double atol, double rtol) {
+    auto is_within_tolerance = [atol, rtol](std::complex<double> element, std::complex<double> ref_element) {
+        return std::abs(element - ref_element) < std::abs(ref_element) * rtol + atol;
+    };
+
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
+        return std::ranges::equal(attribute_value, ref_attribute_value, is_within_tolerance);
+    } else if constexpr (std::is_same_v<std::decay_t<T>, double>) {
+        return is_within_tolerance(attribute_value, ref_attribute_value);
+    } else {
+        return ref_attribute_value == attribute_value;
     }
-    assert(angle_attr.ctype == CType::c_double3);
-    assert(mag_attr.ctype == CType::c_double3);
-    return check_angle_and_magnitude<asymmetric_t>(reference_result_ptr, result_ptr, angle_attr, mag_attr, atol, rtol,
-                                                   obj);
 }
 
-// assert single result
-void assert_result(ConstDataset const& result, ConstDataset const& reference_result,
+template <typename T>
+void check_results(T const& ref_attribute_value, T const& attribute_value, T const& ref_possible_attribute_value,
+                   T const& possible_attribute_value, bool const& is_angle, Idx scenario_idx, Idx obj,
+                   std::string const& component_name, std::string const& attribute_name, double const& dynamic_atol,
+                   double const& rtol) {
+    bool const match =
+        is_angle
+            ? check_angle_and_magnitude<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value,
+                                                                       ref_possible_attribute_value,
+                                                                       possible_attribute_value, dynamic_atol, rtol)
+            : compare_value<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value, dynamic_atol, rtol);
+    if (!match) {
+        std::stringstream case_sstr;
+        case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name << " #" << obj
+                  << ", attribute: " << attribute_name
+                  << ": actual = " << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
+                  << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
+        CHECK_MESSAGE(match, case_sstr.str());
+    }
+}
+
+template <typename T>
+bool skip_check(T const& ref_attribute_value, bool const is_angle, T const& ref_possible_attribute_value) {
+    // check attributes. For angle attribute, also check magnitude available
+    return is_nan(ref_attribute_value) || (is_angle && is_nan(ref_possible_attribute_value));
+}
+
+template <typename T>
+void check_individual_attribute(Buffer const& buffer, Buffer const& ref_buffer,
+                                MetaAttribute const* const attribute_meta,
+                                MetaAttribute const* const possible_attr_meta, bool const& is_angle,
+                                Idx elements_per_scenario, Idx scenario_idx, Idx obj, std::string const& component_name,
+                                std::string const& attribute_name, double const& dynamic_atol, double const& rtol) {
+    Idx idx = (elements_per_scenario * scenario_idx) + obj;
+    // get attribute values to check
+    T ref_attribute_value{};
+    T attribute_value{};
+    T ref_possible_attribute_value{};
+    T possible_attribute_value{};
+    auto get_values = [&ref_buffer, &buffer, &attribute_meta, &possible_attr_meta,
+                       idx]<typename U>(U* ref_value, U* value, U* ref_possible_value, U* possible_value) {
+        ref_buffer.get_value(attribute_meta, ref_value, idx, 0);
+        buffer.get_value(attribute_meta, value, idx, 0);
+        ref_buffer.get_value(possible_attr_meta, ref_possible_value, idx, 0);
+        buffer.get_value(possible_attr_meta, possible_value, idx, 0);
+    };
+    if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
+        get_values(ref_attribute_value.data(), attribute_value.data(), ref_possible_attribute_value.data(),
+                   possible_attribute_value.data());
+    } else {
+        get_values(&ref_attribute_value, &attribute_value, &ref_possible_attribute_value, &possible_attribute_value);
+    }
+
+    if (!skip_check(ref_attribute_value, is_angle, ref_possible_attribute_value)) {
+        check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value, possible_attribute_value,
+                      is_angle, scenario_idx, obj, component_name, attribute_name, dynamic_atol, rtol);
+    }
+}
+
+void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
-    MetaDataset const& meta = result.dataset();
-    Idx const batch_size = result.batch_size();
-    std::string const type_name = meta.name;
-    // loop all scenario
-    for (Idx scenario = 0; scenario != batch_size; ++scenario) {
-        // loop all component type name
-        for (Idx i{}; i != reference_result.n_components(); ++i) {
-            auto const& component_info = reference_result.get_component_info(i);
-            MetaComponent const& component_meta = *component_info.component;
-            auto const& ref_buffer = reference_result.get_buffer(i);
-            auto const& buffer = result.get_buffer(component_meta.name);
-            Idx const elements_per_scenario = component_info.elements_per_scenario;
-            assert(elements_per_scenario >= 0);
-            // offset scenario
-            RawDataConstPtr const result_ptr =
-                reinterpret_cast<char const*>(buffer.data) + elements_per_scenario * scenario * component_meta.size;
-            RawDataConstPtr const reference_result_ptr =
-                reinterpret_cast<char const*>(ref_buffer.data) + elements_per_scenario * scenario * component_meta.size;
-            // loop all attribute
-            for (MetaAttribute const& attr : component_meta.attributes) {
-                // TODO skip u angle, need a way for common angle
-                if (attr.name == "u_angle"s) {
+
+    if (!owning_result.const_dataset.has_value()) {
+        throw OptionalNotInitialized("DatasetConst");
+    }
+    DatasetConst const& result = owning_result.const_dataset.value();
+    auto const& result_info = result.get_info();
+    auto const& result_name = result_info.name();
+    Idx const result_batch_size = result_info.batch_size();
+    auto const& storage = owning_result.storage;
+
+    if (!owning_reference_result.const_dataset.has_value()) {
+        throw OptionalNotInitialized("DatasetConst");
+    }
+    DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
+    auto const& reference_result_info = reference_result.get_info();
+    auto const& reference_result_name = reference_result_info.name();
+    auto const& reference_storage = owning_reference_result.storage;
+    CHECK(storage.buffers.size() == reference_storage.buffers.size());
+
+    // loop through all scenarios
+    for (Idx scenario_idx{}; scenario_idx < result_batch_size; ++scenario_idx) {
+        // loop through all components
+        for (Idx component_idx{}; component_idx < reference_result_info.n_components(); ++component_idx) {
+            auto const& component_name = reference_result_info.component_name(component_idx);
+            auto const* const component_meta = MetaData::get_component_by_name(reference_result_name, component_name);
+
+            auto const& ref_buffer = reference_storage.buffers.at(component_idx);
+            auto const& buffer = storage.buffers.at(component_idx);
+            Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
+            CHECK(elements_per_scenario >= 0);
+            // loop through all attributes
+            for (Idx attribute_idx{}; attribute_idx < MetaData::n_attributes(component_meta); ++attribute_idx) {
+                auto const* const attribute_meta = MetaData::get_attribute_by_idx(component_meta, attribute_idx);
+                auto attribute_type = MetaData::attribute_ctype(attribute_meta);
+                auto const& attribute_name = MetaData::attribute_name(attribute_meta);
+                // TODO need a way for common angle: u angle skipped for now
+                if (attribute_name == "u_angle"s) {
                     continue;
                 }
                 // get absolute tolerance
                 double dynamic_atol = atol.at("default");
                 for (auto const& [reg, value] : atol) {
-                    if (std::regex_match(attr.name, std::regex{reg})) {
+                    if (std::regex_match(attribute_name, std::regex{reg})) {
                         dynamic_atol = value;
                         break;
                     }
@@ -242,36 +343,22 @@ void assert_result(ConstDataset const& result, ConstDataset const& reference_res
                 // for other _angle attribute, we need to find the magnitue and compare together
                 std::regex const angle_regex("(.*)(_angle)");
                 std::smatch angle_match;
-                std::string const attr_name = attr.name;
-                bool const is_angle = std::regex_match(attr_name, angle_match, angle_regex);
+                bool const is_angle = std::regex_match(attribute_name, angle_match, angle_regex);
                 std::string const magnitude_name = angle_match[1];
-                MetaAttribute const& possible_attr_magnitude =
-                    is_angle ? component_meta.get_attribute(magnitude_name) : attr;
+                auto const& possible_attr_meta =
+                    is_angle ? MetaData::get_attribute_by_name(reference_result_name, component_name, magnitude_name)
+                             : attribute_meta;
+                // loop through all objects
+                for (Idx obj{}; obj < elements_per_scenario; ++obj) {
+                    auto callable_wrapper = [&buffer, &ref_buffer, &attribute_meta, &possible_attr_meta, is_angle,
+                                             elements_per_scenario, scenario_idx, obj, &component_name, &attribute_name,
+                                             dynamic_atol, rtol]<typename T>() {
+                        check_individual_attribute<T>(buffer, ref_buffer, attribute_meta, possible_attr_meta, is_angle,
+                                                      elements_per_scenario, scenario_idx, obj, component_name,
+                                                      attribute_name, dynamic_atol, rtol);
+                    };
 
-                // loop all object
-                for (Idx obj = 0; obj != elements_per_scenario; ++obj) {
-                    // only check if reference result is not nan
-                    if (attr.check_nan(reference_result_ptr, obj)) {
-                        continue;
-                    }
-                    // for angle attribute, also check the magnitude available
-                    if (is_angle && possible_attr_magnitude.check_nan(reference_result_ptr, obj)) {
-                        continue;
-                    }
-                    bool const match =
-                        is_angle ? check_angle_and_magnitude(reference_result_ptr, result_ptr, attr,
-                                                             possible_attr_magnitude, dynamic_atol, rtol, obj)
-                                 : attr.compare_value(reference_result_ptr, result_ptr, dynamic_atol, rtol, obj);
-                    if (match) {
-                        CHECK(match);
-                    } else {
-                        std::stringstream case_sstr;
-                        case_sstr << "dataset scenario: #" << scenario << ", Component: " << component_meta.name << " #"
-                                  << obj << ", attribute: " << attr.name
-                                  << ": actual = " << get_as_string(result_ptr, attr, obj) + " vs. expected = "
-                                  << get_as_string(reference_result_ptr, attr, obj);
-                        CHECK_MESSAGE(match, case_sstr.str());
-                    }
+                    pgm_type_func_selector(static_cast<PGM_CType>(attribute_type), callable_wrapper);
                 }
             }
         }
@@ -288,30 +375,22 @@ std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_pa
 #endif
 
 // method map
-std::map<std::string, CalculationType, std::less<>> const calculation_type_mapping = {
-    {"power_flow", CalculationType::power_flow},
-    {"state_estimation", CalculationType::state_estimation},
-    {"short_circuit", CalculationType::short_circuit}};
-std::map<std::string, CalculationMethod, std::less<>> const calculation_method_mapping = {
-    {"newton_raphson", CalculationMethod::newton_raphson},
-    {"linear", CalculationMethod::linear},
-    {"iterative_current", CalculationMethod::iterative_current},
-    {"iterative_linear", CalculationMethod::iterative_linear},
-    {"linear_current", CalculationMethod::linear_current},
-    {"iec60909", CalculationMethod::iec60909}};
-std::map<std::string, ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
-    {"", ShortCircuitVoltageScaling::maximum}, // not provided returns default value
-    {"minimum", ShortCircuitVoltageScaling::minimum},
-    {"maximum", ShortCircuitVoltageScaling::maximum}};
-using CalculationFunc =
-    std::function<BatchParameter(MainModel&, CalculationMethod, MutableDataset const&, ConstDataset const&, Idx)>;
-
-std::map<std::string, OptimizerStrategy, std::less<>> const optimizer_strategy_mapping = {
-    {"disabled", OptimizerStrategy::any},
-    {"any_valid_tap", OptimizerStrategy::any},
-    {"min_voltage_tap", OptimizerStrategy::global_minimum},
-    {"max_voltage_tap", OptimizerStrategy::global_maximum},
-    {"fast_any_tap", OptimizerStrategy::fast_any}};
+std::map<std::string, PGM_CalculationType, std::less<>> const calculation_type_mapping = {
+    {"power_flow", PGM_power_flow}, {"state_estimation", PGM_state_estimation}, {"short_circuit", PGM_short_circuit}};
+std::map<std::string, PGM_CalculationMethod, std::less<>> const calculation_method_mapping = {
+    {"newton_raphson", PGM_newton_raphson},       {"linear", PGM_linear},
+    {"iterative_current", PGM_iterative_current}, {"iterative_linear", PGM_iterative_linear},
+    {"linear_current", PGM_linear_current},       {"iec60909", PGM_iec60909}};
+std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
+    {"", PGM_short_circuit_voltage_scaling_maximum}, // not provided returns default value
+    {"minimum", PGM_short_circuit_voltage_scaling_minimum},
+    {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
+std::map<std::string, PGM_TapChangingStrategy, std::less<>> const optimizer_strategy_mapping = {
+    {"disabled", PGM_tap_changing_strategy_disabled},
+    {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
+    {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
+    {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
+    {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
 
 // case parameters
 struct CaseParam {
@@ -321,11 +400,12 @@ struct CaseParam {
     std::string calculation_method;
     std::string short_circuit_voltage_scaling;
     std::string tap_changing_strategy;
+    double err_tol = 1e-8;
+    Idx max_iter = 20;
     bool sym{};
     bool is_batch{};
     double rtol{};
     bool fail{};
-    [[no_unique_address]] BatchParameter batch_parameter{};
     std::map<std::string, double, std::less<>> atol;
 
     static std::string replace_backslash(std::string const& str) {
@@ -335,29 +415,17 @@ struct CaseParam {
     }
 };
 
-CalculationFunc calculation_func(CaseParam const& param) {
-    auto const get_options = [&param](CalculationMethod calculation_method, Idx threading) {
-        return MainModel::Options{
-            .calculation_type = calculation_type_mapping.at(param.calculation_type),
-            .calculation_symmetry = param.sym ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric,
-            .calculation_method = calculation_method,
-            .optimizer_type = param.tap_changing_strategy == "disabled" ? OptimizerType::no_optimization
-                                                                        : OptimizerType::automatic_tap_adjustment,
-            .optimizer_strategy = optimizer_strategy_mapping.at(param.tap_changing_strategy),
-            .err_tol = 1e-8,
-            .max_iter = 20,
-            .threading = threading,
-            .short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling)};
-    };
-
-    return [get_options](MainModel& model, CalculationMethod calculation_method, MutableDataset const& dataset,
-                         ConstDataset const& update_dataset, Idx threading) {
-        auto options = get_options(calculation_method, threading);
-        if (options.optimizer_type != OptimizerType::no_optimization) {
-            REQUIRE(options.calculation_type == CalculationType::power_flow);
-        }
-        return model.calculate(options, dataset, update_dataset);
-    };
+Options get_options(CaseParam const& param, Idx threading = -1) {
+    Options options{};
+    options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
+    options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+    options.set_symmetric(param.sym ? 1 : 0);
+    options.set_err_tol(param.err_tol);
+    options.set_max_iter(param.max_iter);
+    options.set_threading(threading);
+    options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
+    options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
+    return options;
 }
 
 std::string get_output_type(std::string const& calculation_type, bool sym) {
@@ -458,16 +526,18 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
 struct ValidationCase {
     CaseParam param;
     OwningDataset input;
-    std::optional<OwningDataset> output{};
-    std::optional<OwningDataset> update_batch{};
-    std::optional<OwningDataset> output_batch{};
+    std::optional<OwningDataset> output;
+    std::optional<OwningDataset> update_batch;
+    std::optional<OwningDataset> output_batch;
 };
 
-ValidationCase create_validation_case(CaseParam const& param) {
-    auto const output_type = get_output_type(param.calculation_type, param.sym);
-
+ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
-    ValidationCase validation_case{.param = param, .input = load_dataset(param.case_dir / "input.json")};
+    ValidationCase validation_case{.param = param,
+                                   .input = load_dataset(param.case_dir / "input.json"),
+                                   .output = std::nullopt,
+                                   .update_batch = std::nullopt,
+                                   .output_batch = std::nullopt};
 
     // output and update
     if (!param.is_batch) {
@@ -524,69 +594,51 @@ void execute_test(CaseParam const& param, T&& func) {
     std::cout << "Validation test: " << param.case_name;
 
     if (should_skip_test(param)) {
-        std::cout << " [skipped]" << std::endl;
+        std::cout << " [skipped]" << '\n';
     } else {
-        std::cout << std::endl;
-        func();
+        std::cout << '\n';
+        std::forward<T>(func)();
     }
 }
 
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        auto const validation_case = create_validation_case(param);
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
-        auto const result = create_result_dataset(validation_case.input, output_prefix);
+        auto const validation_case = create_validation_case(param, output_prefix);
+        auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
 
-        // create model and run
-        MainModel model{50.0, validation_case.input.const_dataset, 0};
-        CalculationFunc const func = calculation_func(param);
+        // create and run model
+        auto const& options = get_options(param);
+        Model const model{50.0, validation_case.input.const_dataset.value()};
+        model.calculate(options, result.dataset.value());
 
-        ConstDataset const empty{false, 1, "update", meta_data_gen::meta_data};
-        func(model, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
-        assert_result(result.const_dataset, validation_case.output.value().const_dataset, param.atol, param.rtol);
+        // check results
+        assert_result(result, validation_case.output.value(), param.atol, param.rtol);
     });
 }
 
 void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&]() {
-        auto const validation_case = create_validation_case(param);
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
-        auto const result = create_result_dataset(validation_case.input, output_prefix);
+        auto const validation_case = create_validation_case(param, output_prefix);
+        auto const& info = validation_case.update_batch.value().const_dataset.value().get_info();
+        Idx const batch_size = info.batch_size();
+        auto const batch_result =
+            create_result_dataset(validation_case.output_batch.value(), output_prefix, Idx{1}, batch_size);
 
         // create model
-        // TODO (mgovers): fix false positive of misc-const-correctness
-        // NOLINTNEXTLINE(misc-const-correctness)
-        MainModel model{50.0, validation_case.input.const_dataset, 0};
-        auto const n_scenario = static_cast<Idx>(validation_case.update_batch.value().batch_scenarios.size());
-        CalculationFunc const func = calculation_func(param);
+        Model const model{50.0, validation_case.input.const_dataset.value()};
 
-        // run in loops
-        for (Idx scenario = 0; scenario != n_scenario; ++scenario) {
-            CAPTURE(scenario);
-
-            MainModel model_copy{model};
-
-            // update and run
-            model_copy.update_component<permanent_update_t>(
-                validation_case.update_batch.value().batch_scenarios[scenario]);
-            ConstDataset const empty{false, 1, "update", meta_data_gen::meta_data};
-            func(model_copy, calculation_method_mapping.at(param.calculation_method), result.dataset, empty, -1);
-
-            // check
-            assert_result(result.const_dataset, validation_case.output_batch.value().batch_scenarios[scenario],
-                          param.atol, param.rtol);
-        }
-
-        // run in one-go, with different threading possibility
-        auto const batch_result = create_result_dataset(validation_case.input, output_prefix, true, n_scenario);
+        // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
             CAPTURE(threading);
+            // set options and run
+            auto const& options = get_options(param, threading);
+            model.calculate(options, batch_result.dataset.value(),
+                            validation_case.update_batch.value().const_dataset.value());
 
-            func(model, calculation_method_mapping.at(param.calculation_method), batch_result.dataset,
-                 validation_case.update_batch.value().const_dataset, threading);
-
-            assert_result(batch_result.const_dataset, validation_case.output_batch.value().const_dataset, param.atol,
-                          param.rtol);
+            // check results
+            assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);
         }
     });
 }
@@ -626,4 +678,4 @@ TEST_CASE("Validation test batch") {
     }
 }
 
-} // namespace power_grid_model::meta_data
+} // namespace power_grid_model_cpp

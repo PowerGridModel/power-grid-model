@@ -57,6 +57,7 @@ class ComponentType(str, Enum, metaclass=_MetaEnum):
     node = "node"
     line = "line"
     link = "link"
+    generic_branch = "generic_branch"
     transformer = "transformer"
     transformer_tap_regulator = "transformer_tap_regulator"
     three_winding_transformer = "three_winding_transformer"
