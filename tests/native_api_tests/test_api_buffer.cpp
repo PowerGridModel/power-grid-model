@@ -33,7 +33,7 @@ template <std::same_as<std::array<double, 3>> T, std::convertible_to<double> U> 
 }
 
 void check_array_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
-    pgm_type_func_selector(attribute, [=]<typename T>() {
+    pgm_type_func_selector(attribute, [component, attribute, size]<typename T>() {
         std::vector<T> ref_buffer(size);
 
         Buffer buffer{component, size};
@@ -47,16 +47,16 @@ void check_array_get_value(MetaComponent const* component, MetaAttribute const* 
 }
 
 void check_array_set_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
-    pgm_type_func_selector(attribute, [=]<typename T>() {
+    pgm_type_func_selector(attribute, [component, attribute, size]<typename T>() {
         std::vector<T> source_buffer(size);
         std::vector<T> ref_buffer(size);
+        for (Idx idx = 0; idx < size; ++idx) {
+            source_buffer[idx] = as_type<T>(idx);
+        }
 
         Buffer buffer{component, size};
         buffer.set_nan();
 
-        for (Idx idx = 0; idx < size; ++idx) {
-            source_buffer[idx] = as_type<T>(idx);
-        }
         buffer.set_value(attribute, source_buffer.data(), sizeof(T));
         buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
         for (Idx idx = 0; idx < size; ++idx) {
@@ -66,56 +66,61 @@ void check_array_set_value(MetaComponent const* component, MetaAttribute const* 
 }
 
 void check_sub_array_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
-    pgm_type_func_selector(attribute, [=]<typename T>() {
-        for (Idx sub_size = 0; sub_size < size; ++sub_size) {
-            for (Idx offset = 0; offset < size - sub_size; ++offset) {
-                std::vector<T> ref_buffer(size);
+    auto const check_sub_offset_size = [component, attribute, size]<typename T>(Idx offset, Idx sub_size) {
+        std::vector<T> ref_buffer(size);
 
-                Buffer buffer{component, size};
-                buffer.set_nan();
+        Buffer buffer{component, size};
+        buffer.set_nan();
 
-                buffer.get_value(attribute, ref_buffer.data(), offset, sub_size, sizeof(T));
-                for (Idx idx = 0; idx < size; ++idx) {
-                    if (idx >= offset && idx < offset + sub_size) {
-                        REQUIRE(is_nan(ref_buffer[idx]));
-                    } else {
-                        REQUIRE(ref_buffer[idx] == T{});
-                    }
-                }
+        buffer.get_value(attribute, ref_buffer.data(), offset, sub_size, sizeof(T));
+        for (Idx idx = 0; idx < size; ++idx) {
+            if (idx >= offset && idx < offset + sub_size) {
+                REQUIRE(is_nan(ref_buffer[idx]));
+            } else {
+                REQUIRE(ref_buffer[idx] == T{});
             }
         }
-    });
+    };
+    for (Idx sub_size = 0; sub_size < size; ++sub_size) {
+        CAPTURE(sub_size);
+        for (Idx offset = 0; offset < size - sub_size; ++offset) {
+            CAPTURE(offset);
+            pgm_type_func_selector(attribute, check_sub_offset_size, offset, sub_size);
+        }
+    }
 }
 
 void check_sub_array_set_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
-    pgm_type_func_selector(attribute, [=]<typename T>() {
-        for (Idx sub_size = 0; sub_size < size; ++sub_size) {
-            for (Idx offset = 0; offset < size - sub_size; ++offset) {
-                std::vector<T> source_buffer(size);
-                std::vector<T> ref_buffer(size);
+    auto const check_sub_offset_size = [component, attribute, size]<typename T>(Idx offset, Idx sub_size) {
+        std::vector<T> ref_buffer(size);
+        std::vector<T> source_buffer(size);
+        for (Idx idx = 0; idx < size; ++idx) {
+            source_buffer[idx] = as_type<T>(idx);
+        }
 
-                Buffer buffer{component, size};
-                buffer.set_nan();
-
-                for (Idx idx = 0; idx < size; ++idx) {
-                    source_buffer[idx] = as_type<T>(idx);
-                }
-                buffer.set_value(attribute, source_buffer.data(), offset, sub_size, sizeof(T));
-                buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
-                for (Idx idx = 0; idx < size; ++idx) {
-                    if (idx >= offset && idx < offset + sub_size) {
-                        REQUIRE(ref_buffer[idx] == as_type<T>(idx));
-                    } else {
-                        REQUIRE(is_nan(ref_buffer[idx]));
-                    }
-                }
+        Buffer buffer{component, size};
+        buffer.set_nan();
+        buffer.set_value(attribute, source_buffer.data(), offset, sub_size, sizeof(T));
+        buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
+        for (Idx idx = 0; idx < size; ++idx) {
+            if (idx >= offset && idx < offset + sub_size) {
+                REQUIRE(ref_buffer[idx] == as_type<T>(idx));
+            } else {
+                REQUIRE(is_nan(ref_buffer[idx]));
             }
         }
-    });
+    };
+    for (Idx sub_size = 0; sub_size < size; ++sub_size) {
+        CAPTURE(sub_size);
+        for (Idx offset = 0; offset < size - sub_size; ++offset) {
+            CAPTURE(offset);
+            pgm_type_func_selector(attribute, check_sub_offset_size, offset, sub_size);
+        }
+    }
 }
 
 void check_single_get_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
-    pgm_type_func_selector(attribute, [=]<typename T>() {
+    pgm_type_func_selector(attribute, [component, attribute, size]<typename T>() {
         T ref_value{};
 
         Buffer buffer{component, size};
@@ -133,8 +138,8 @@ void check_single_get_value(MetaComponent const* component, MetaAttribute const*
 }
 
 void check_single_set_value(MetaComponent const* component, MetaAttribute const* attribute, Idx size) {
-    pgm_type_func_selector(attribute, [=]<typename T>() {
-        T source_value{};
+    pgm_type_func_selector(attribute, [component, attribute, size]<typename T>() {
+        T const source_value{1};
         T ref_value{};
 
         Buffer buffer{component, size};
