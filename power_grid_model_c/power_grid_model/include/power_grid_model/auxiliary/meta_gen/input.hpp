@@ -112,6 +112,26 @@ struct get_attributes_list<LineInput> {
 };
 
 template<>
+struct get_attributes_list<GenericBranchInput> {
+    static constexpr std::array<MetaAttribute, 12> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::id>(offsetof(GenericBranchInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::from_node>(offsetof(GenericBranchInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::to_node>(offsetof(GenericBranchInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::from_status>(offsetof(GenericBranchInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::to_status>(offsetof(GenericBranchInput, to_status), "to_status"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::r1>(offsetof(GenericBranchInput, r1), "r1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::x1>(offsetof(GenericBranchInput, x1), "x1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::g1>(offsetof(GenericBranchInput, g1), "g1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::b1>(offsetof(GenericBranchInput, b1), "b1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::k>(offsetof(GenericBranchInput, k), "k"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::theta>(offsetof(GenericBranchInput, theta), "theta"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::sn>(offsetof(GenericBranchInput, sn), "sn"),
+    };
+};
+
+template<>
 struct get_attributes_list<LinkInput> {
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class

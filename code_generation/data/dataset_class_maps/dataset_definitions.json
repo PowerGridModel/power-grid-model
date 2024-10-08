@@ -17,6 +17,10 @@
                     "class_name": "LinkInput"
                 },
                 {
+                    "names": ["generic_branch"],
+                    "class_name": "GenericBranchInput"
+                },
+                {
                     "names": ["transformer"],
                     "class_name": "TransformerInput"
                 },
@@ -63,7 +67,7 @@
                     "class_name": "NodeOutput"
                 },
                 {
-                    "names": ["line", "link", "transformer"],
+                    "names": ["line", "link", "transformer", "generic_branch"],
                     "class_name": "BranchOutput"
                 },
                 {

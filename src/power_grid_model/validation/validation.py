@@ -8,6 +8,9 @@ Power Grid Model Validation Functions.
 Although all functions are 'public', you probably only need validate_input_data() and validate_batch_data().
 
 """
+
+# pylint: disable=too-many-lines
+
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
@@ -467,6 +470,7 @@ def validate_values(data: SingleDataset, calculation_type: Optional[CalculationT
         "node": validate_node,
         "line": validate_line,
         "link": lambda d: validate_branch(d, ComponentType.link),
+        "generic_branch": validate_generic_branch,
         "transformer": validate_transformer,
         "three_winding_transformer": validate_three_winding_transformer,
         "source": validate_source,
@@ -529,6 +533,11 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
     errors += all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
     errors += all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
     errors += all_greater_than_zero(data, ComponentType.line, "i_n")
+    return errors
+
+
+def validate_generic_branch(data: SingleDataset) -> list[ValidationError]:
+    errors = validate_branch(data, ComponentType.generic_branch)
     return errors
 
 
@@ -844,6 +853,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         ref_components=[
             ComponentType.node,
             ComponentType.line,
+            ComponentType.generic_branch,
             ComponentType.transformer,
             ComponentType.three_winding_transformer,
             ComponentType.source,
@@ -858,14 +868,14 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.transformer],
+        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
         measured_terminal_type=MeasuredTerminalType.branch_from,
     )
     errors += all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.transformer],
+        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
         measured_terminal_type=MeasuredTerminalType.branch_to,
     )
     errors += all_valid_ids(

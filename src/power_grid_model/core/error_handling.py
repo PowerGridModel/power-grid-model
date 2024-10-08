@@ -34,6 +34,7 @@ from power_grid_model.errors import (
     PowerGridBatchError,
     PowerGridDatasetError,
     PowerGridError,
+    PowerGridNotImplementedError,
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,
@@ -77,6 +78,7 @@ _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # m
 _POWER_GRID_DATASET_ERROR_RE = re.compile(r"Dataset error: ")  # multiple different flavors
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
 _POWER_GRID_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
+_POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
 
 _ERROR_MESSAGE_PATTERNS = {
     _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
@@ -100,6 +102,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _POWER_GRID_DATASET_ERROR_RE: PowerGridDatasetError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
     _POWER_GRID_SEARCH_OPT_INCMPT_RE: PowerGridUnreachableHitError,
+    _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
 }
 
 
