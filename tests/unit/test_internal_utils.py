@@ -84,12 +84,21 @@ def two_nodes_two_lines_fixture():
     }
 
 
+def np_array_int(data):
+    return np.array(data, dtype="i4")
+
+
 def assert_list_of_numpy_arrays_equal(expected, actual):
     assert type(actual) is type(expected)
     assert len(actual) == len(expected)
     for i in range(len(expected)):
         assert isinstance(expected[i], type(actual[i]))
-        np.testing.assert_array_equal(expected[i], actual[i])
+        if isinstance(expected[i], dict):
+            assert actual[i].keys() == expected[i].keys()
+            for attribute in expected[i]:
+                np.testing.assert_array_equal(expected[i][attribute], actual[i][attribute])
+        else:
+            np.testing.assert_array_equal(expected[i], actual[i])
 
 
 def assert_list_of_dicts_of_numpy_arrays_equal(expected, actual):
@@ -98,8 +107,13 @@ def assert_list_of_dicts_of_numpy_arrays_equal(expected, actual):
     for i in range(len(expected)):
         assert isinstance(expected[i], type(actual[i]))
         assert actual[i].keys() == expected[i].keys()
-        for key in expected[i]:
-            np.testing.assert_array_equal(expected[i][key], actual[i][key])
+        for comp in expected[i]:
+            if isinstance(expected[i][comp], dict):
+                assert actual[i][comp].keys() == expected[i][comp].keys()
+                for attribute in expected[i][comp]:
+                    np.testing.assert_array_equal(expected[i][comp][attribute], actual[i][comp][attribute])
+            else:
+                np.testing.assert_array_equal(expected[i][comp], actual[i][comp])
 
 
 def test_is_nan():
@@ -147,8 +161,19 @@ def test_convert_batch_to_list_data__zero_batches():
 def test_split_dense_batch_data_in_batches_n1():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     update_data = np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo)
-    expected = [np.array([(111, 121, 131), (112, 122, 132), (113, 123, 133), (114, 124, 134)], dtype=foo)]
-    actual = split_dense_batch_data_in_batches(update_data, "")
+    expected = [update_data]
+    actual = split_dense_batch_data_in_batches(update_data, 3)
+    assert_list_of_numpy_arrays_equal(expected, actual)
+
+
+def test_split_dense_batch_data_in_batches_n1__columnar():
+    update_data = {
+        "a": np_array_int([111, 121, 131]),
+        "b": np_array_int([112, 122, 132]),
+        "c": np_array_int([114, 124, 134]),
+    }
+    expected = [update_data]
+    actual = split_dense_batch_data_in_batches(update_data, 1)
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
@@ -156,44 +181,48 @@ def test_split_dense_batch_data_in_batches_n2():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     update_data = np.array(
         [
-            [(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)],
-            [(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)],
+            [(1111, 1121, 1131), (1112, 1122, 1132), (1113, 1123, 1133), (1114, 1124, 1134)],
+            [(2111, 2121, 2131), (2112, 2122, 2132), (2113, 2123, 2133), (2114, 2124, 2134)],
         ],
         dtype=foo,
     )
     expected = [
-        np.array([(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
-        np.array([(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
+        np.array([(1111, 1121, 1131), (1112, 1122, 1132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
+        np.array([(2111, 2121, 2131), (2112, 2122, 2132), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
     ]
-    actual = split_dense_batch_data_in_batches(update_data, "")
+    actual = split_dense_batch_data_in_batches(update_data, 1)
     assert_list_of_numpy_arrays_equal(expected, actual)
 
 
-def test_split_dense_batch_data_in_batches_wrong_data_type():
-    update_data = [1, 2, 3]
-    with pytest.raises(
-        TypeError,
-        match="Invalid data for 'foo' component. " "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
-    ):
-        split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
-
-    update_data = {"bar": np.array([]), "baz": [1, 2, 3]}
-    with pytest.raises(
-        TypeError,
-        match="Invalid data for 'foo' component. 'baz' attribute. "
-        "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
-    ):
-        split_dense_batch_data_in_batches(update_data, "foo")  # type: ignore
+def test_split_dense_batch_data_in_batches_n2__columnar():
+    update_data = {
+        "a": np_array_int([[1111, 1112, 1113, 1114], [2111, 2112, 2113, 2114]]),
+        "b": np_array_int([[1121, 1122, 1123, 1124], [2121, 2122, 2123, 2124]]),
+        "c": np_array_int([[1131, 1132, 1133, 1134], [2131, 2132, 2133, 2134]]),
+    }
+    expected = [
+        {
+            "a": np_array_int([1111, 1112, 1113, 1114]),
+            "b": np_array_int([1121, 1122, 1123, 1124]),
+            "c": np_array_int([1131, 1132, 1133, 1134]),
+        },
+        {
+            "a": np_array_int([2111, 2112, 2113, 2114]),
+            "b": np_array_int([2121, 2122, 2123, 2124]),
+            "c": np_array_int([2131, 2132, 2133, 2134]),
+        },
+    ]
+    actual = split_dense_batch_data_in_batches(update_data, 2)
+    assert_list_of_numpy_arrays_equal(expected, actual)
 
 
 def test_split_dense_batch_data_in_batches_wrong_data_dim():
-    update_date = np.array([[[1, 2, 3]]])
+    update_date = np.array([[[[1, 2, 3]]]])
     with pytest.raises(
-        TypeError,
-        match="Invalid data for 'foo' component. Invalid dimension: 3. "
-        "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
+        ValueError,
+        match="Dimension of the component data is invalid",
     ):
-        split_dense_batch_data_in_batches(update_date, "foo")
+        split_dense_batch_data_in_batches(update_date, 1)
 
 
 def test_normalize_batch_data_structure_n3_sparse():
@@ -201,11 +230,11 @@ def test_normalize_batch_data_structure_n3_sparse():
     update_data = np.array(
         [
             (1111, 1121, 1131),
-            (1112, 1122, 132),
+            (1112, 1122, 1132),
             (1113, 1123, 1133),
             (1114, 1124, 1134),
             (2111, 2121, 2131),
-            (2112, 2122, 232),
+            (2112, 2122, 2132),
             (2113, 2123, 2133),
             (2114, 2124, 2134),
         ],
@@ -213,9 +242,33 @@ def test_normalize_batch_data_structure_n3_sparse():
     )
     indptr = np.array([0, 4, 4, 8])
     expected = [
-        np.array([(1111, 1121, 1131), (1112, 1122, 132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
+        np.array([(1111, 1121, 1131), (1112, 1122, 1132), (1113, 1123, 1133), (1114, 1124, 1134)], dtype=foo),
         np.array([], dtype=foo),
-        np.array([(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
+        np.array([(2111, 2121, 2131), (2112, 2122, 2132), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
+    ]
+    actual = split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr}, component="")
+    assert_list_of_numpy_arrays_equal(expected, actual)
+
+
+def test_normalize_batch_data_structure_n3_sparse__columnar():
+    update_data = {
+        "a": np_array_int([1111, 1112, 1113, 1114, 2111, 2112, 2113, 2114]),
+        "b": np_array_int([1121, 1122, 1123, 1124, 2121, 2122, 2123, 2124]),
+        "c": np_array_int([1131, 1132, 1133, 1134, 2131, 2132, 2133, 2134]),
+    }
+    indptr = np.array([0, 4, 4, 8])
+    expected = [
+        {
+            "a": np_array_int([1111, 1112, 1113, 1114]),
+            "b": np_array_int([1121, 1122, 1123, 1124]),
+            "c": np_array_int([1131, 1132, 1133, 1134]),
+        },
+        {"a": np_array_int([]), "b": np_array_int([]), "c": np_array_int([])},
+        {
+            "a": np_array_int([2111, 2112, 2113, 2114]),
+            "b": np_array_int([2121, 2122, 2123, 2124]),
+            "c": np_array_int([2131, 2132, 2133, 2134]),
+        },
     ]
     actual = split_sparse_batch_data_in_batches(batch_data={"data": update_data, "indptr": indptr}, component="")
     assert_list_of_numpy_arrays_equal(expected, actual)
@@ -315,6 +368,26 @@ def test_convert_batch_dataset_to_batch_list_one_batch_dense():
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
 
 
+@patch("power_grid_model._utils.get_batch_size")
+def test_convert_batch_dataset_to_batch_list_one_batch_dense_columnar(get_batch_size: MagicMock):
+    get_batch_size.return_value = 1
+    update_data: BatchDataset = {
+        "foo": {
+            "a": np_array_int([111, 112, 113, 114]),
+            "b": np_array_int([121, 122, 123, 124]),
+            "c": np_array_int([131, 132, 133, 134]),
+        },
+        "bar": {
+            "a": np_array_int([211, 212, 213, 214]),
+            "b": np_array_int([221, 222, 223, 224]),
+            "c": np_array_int([231, 232, 233, 234]),
+        },
+    }
+    expected: BatchList = [update_data]
+    actual = convert_batch_dataset_to_batch_list(update_data, DT.sym_output)
+    assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
+
+
 def test_convert_batch_dataset_to_batch_list_two_batches_dense():
     foo = [("a", "i4"), ("b", "i4"), ("c", "i4")]
     bar = [("x", "i4"), ("y", "i4"), ("z", "i4")]
@@ -345,6 +418,51 @@ def test_convert_batch_dataset_to_batch_list_two_batches_dense():
         },
     ]
     actual = convert_batch_dataset_to_batch_list(update_data)
+    assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
+
+
+@patch("power_grid_model._utils.get_batch_size")
+def test_convert_batch_dataset_to_batch_list_two_batches_dense__columnar(get_batch_size: MagicMock):
+    get_batch_size.return_value = 2
+    update_data: BatchDataset = {
+        "foo": {
+            "a": np_array_int([[1111, 1112, 1113, 1114], [2111, 2112, 2113, 2114]]),
+            "b": np_array_int([[1121, 1122, 1123, 1124], [2121, 2122, 2123, 2124]]),
+            "c": np_array_int([[1131, 1132, 1133, 1134], [2131, 2132, 2133, 2134]]),
+        },
+        "bar": {
+            "x": np_array_int([[1211, 1212, 1213, 1214], [2211, 2212, 2213, 2214]]),
+            "y": np_array_int([[1221, 1222, 1223, 1224], [2221, 2222, 2223, 2224]]),
+            "z": np_array_int([[1231, 1232, 1233, 1234], [2231, 2232, 2233, 2234]]),
+        },
+    }
+    expected: BatchList = [
+        {
+            "foo": {
+                "a": np_array_int([1111, 1112, 1113, 1114]),
+                "b": np_array_int([1121, 1122, 1123, 1124]),
+                "c": np_array_int([1131, 1132, 1133, 1134]),
+            },
+            "bar": {
+                "x": np_array_int([1211, 1212, 1213, 1214]),
+                "y": np_array_int([1221, 1222, 1223, 1224]),
+                "z": np_array_int([1231, 1232, 1233, 1234]),
+            },
+        },
+        {
+            "foo": {
+                "a": np_array_int([2111, 2112, 2113, 2114]),
+                "b": np_array_int([2121, 2122, 2123, 2124]),
+                "c": np_array_int([2131, 2132, 2133, 2134]),
+            },
+            "bar": {
+                "x": np_array_int([2211, 2212, 2213, 2214]),
+                "y": np_array_int([2221, 2222, 2223, 2224]),
+                "z": np_array_int([2231, 2232, 2233, 2234]),
+            },
+        },
+    ]
+    actual = convert_batch_dataset_to_batch_list(update_data, DT.sym_output)
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
 
 
@@ -394,6 +512,59 @@ def test_convert_batch_dataset_to_batch_list_three_batches_sparse():
             "foo": np.array([(2111, 2121, 2131), (2112, 2122, 232), (2113, 2123, 2133), (2114, 2124, 2134)], dtype=foo),
         },
         {"bar": np.array([(3211, 3221, 3231), (3212, 3222, 332), (3213, 3223, 3233), (3214, 3224, 3234)], dtype=bar)},
+    ]
+    actual = convert_batch_dataset_to_batch_list(update_data)
+    assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
+
+
+def test_convert_batch_dataset_to_batch_list_three_batches_sparse__columnar():
+    update_data: BatchDataset = {
+        "foo": {
+            "indptr": np.array([0, 4, 8, 8]),
+            "data": {
+                "a": np_array_int([1111, 1112, 1113, 1114, 2111, 2112, 2113, 2114]),
+                "b": np_array_int([1121, 1122, 1123, 1124, 2121, 2122, 2123, 2124]),
+                "c": np_array_int([1131, 1132, 1133, 1134, 2131, 2132, 2133, 2134]),
+            },
+        },
+        "bar": {
+            "indptr": np.array([0, 4, 4, 8]),
+            "data": {
+                "x": np_array_int([1211, 1212, 1213, 1214, 2211, 2212, 2213, 2214]),
+                "y": np_array_int([1221, 1222, 1223, 1224, 2221, 2222, 2223, 2224]),
+                "z": np_array_int([1231, 1232, 1233, 1234, 2231, 2232, 2233, 2234]),
+            },
+        },
+    }
+    expected: BatchList = [
+        {
+            "foo": {
+                "a": np_array_int([1111, 1112, 1113, 1114]),
+                "b": np_array_int([1121, 1122, 1123, 1124]),
+                "c": np_array_int([1131, 1132, 1133, 1134]),
+            },
+            "bar": {
+                "x": np_array_int([1211, 1212, 1213, 1214]),
+                "y": np_array_int([1221, 1222, 1223, 1224]),
+                "z": np_array_int([1231, 1232, 1233, 1234]),
+            },
+        },
+        {
+            "foo": {
+                "a": np_array_int([2111, 2112, 2113, 2114]),
+                "b": np_array_int([2121, 2122, 2123, 2124]),
+                "c": np_array_int([2131, 2132, 2133, 2134]),
+            },
+            "bar": {"x": np_array_int([]), "y": np_array_int([]), "z": np_array_int([])},
+        },
+        {
+            "foo": {"a": np_array_int([]), "b": np_array_int([]), "c": np_array_int([])},
+            "bar": {
+                "x": np_array_int([2211, 2212, 2213, 2214]),
+                "y": np_array_int([2221, 2222, 2223, 2224]),
+                "z": np_array_int([2231, 2232, 2233, 2234]),
+            },
+        },
     ]
     actual = convert_batch_dataset_to_batch_list(update_data)
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
@@ -562,29 +733,42 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
 
 
 @pytest.mark.parametrize(
-    ("data", "expected_size"),
+    ("data", "dataset_type", "expected_size"),
     [
-        pytest.param(np.empty(shape=(3, 2)), 3, id="row based batch"),
-        pytest.param({"u": np.empty(shape=(3, 2))}, 3, id="columnar batch", marks=pytest.mark.xfail),
-        pytest.param({"u": np.empty(shape=(4, 2, 3))}, 4, id="columnar asym batch"),
-        pytest.param({"indptr": np.array([0, 1, 4]), "data": np.array([])}, 2, id="sparse data"),
-        pytest.param({"indptr": np.array([0, 1]), "data": np.array([])}, 1, id="sparse data"),
+        pytest.param(np.empty(shape=(1,)), None, 1, id="row based single"),
+        pytest.param(np.empty(shape=(3, 2)), None, 3, id="row based batch"),
+        pytest.param({"u": np.empty(shape=(3,))}, DT.sym_output, 1, id="columnar single"),
+        pytest.param({"u": np.empty(shape=(3, 2))}, DT.sym_output, 3, id="columnar batch"),
+        pytest.param({"u": np.empty(shape=(4, 2, 3))}, DT.asym_output, 4, id="columnar asym batch"),
+        pytest.param({"indptr": np.array([0, 1, 4]), "data": np.array([])}, None, 2, id="sparse data batch"),
+        pytest.param({"indptr": np.array([0, 1]), "data": np.array([])}, None, 1, id="sparse data single"),
     ],
 )
-def test_get_batch_size(data, expected_size):
-    assert get_batch_size(data) == expected_size
+def test_get_batch_size(data, dataset_type, expected_size):
+    assert get_batch_size(data, dataset_type, CT.node) == expected_size
 
 
 @pytest.mark.parametrize(
-    ("data",),
+    ("data", "dataset_type", "component", "error"),
     [
-        pytest.param(np.empty(shape=3), id="row based single", marks=pytest.mark.xfail),
-        pytest.param({"u": np.empty(shape=3)}, id="columnar single", marks=pytest.mark.xfail),
+        pytest.param({"u": np.empty(shape=3)}, None, None, ValueError, id="No dataset type"),
+        pytest.param({"u": np.empty(shape=3)}, DT.asym_output, None, ValueError, id="No component"),
+        pytest.param(np.empty(shape=(1, 2, 3)), None, None, TypeError, id="Incorrect dimension for row based sym"),
+        pytest.param(
+            {"u": np.empty(shape=3)}, DT.asym_output, CT.node, TypeError, id="Incorrect dimension for columnar asym"
+        ),
+        pytest.param(
+            {"u": np.empty(shape=(1, 2, 3))},
+            DT.sym_output,
+            CT.node,
+            TypeError,
+            id="Incorrect dimension for columnar sym",
+        ),
     ],
 )
-def test_get_batch_size__single_dataset_is_not_supported(data):
-    with pytest.raises(ValueError):
-        get_batch_size(data)
+def test_get_batch_size__errors(data, dataset_type, component, error):
+    with pytest.raises(error):
+        get_batch_size(data, dataset_type, component)
 
 
 @pytest.mark.parametrize("dataset_type", [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output])

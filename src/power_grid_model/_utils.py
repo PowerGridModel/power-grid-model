@@ -16,15 +16,14 @@ from typing import Optional, Sequence, cast
 import numpy as np
 
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
     BatchColumn,
     BatchComponentData,
     BatchDataset,
     BatchList,
-    ColumnarData,
     ComponentData,
-    DataArray,
     Dataset,
     DenseBatchArray,
     DenseBatchColumnarData,
@@ -62,12 +61,13 @@ def is_nan(data) -> bool:
     return bool(nan_func[data.dtype](data))
 
 
-def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
+def convert_batch_dataset_to_batch_list(batch_data: BatchDataset, dataset_type: DatasetType | None = None) -> BatchList:
     """
     Convert batch datasets to a list of individual batches
 
     Args:
         batch_data: a batch dataset for power-grid-model
+        dataset_type: type of dataset
 
     Returns:
         A list of individual batches
@@ -77,7 +77,7 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
     if len(batch_data) == 0:
         return []
 
-    n_batches = get_and_verify_batch_sizes(batch_data=batch_data)
+    n_batches = get_and_verify_batch_sizes(batch_data=batch_data, dataset_type=dataset_type)
 
     # Initialize an empty list with dictionaries
     # Note that [{}] * n_batches would result in n copies of the same dict.
@@ -91,28 +91,32 @@ def convert_batch_dataset_to_batch_list(batch_data: BatchDataset) -> BatchList:
         if is_sparse(data):
             component_batches = split_sparse_batch_data_in_batches(cast(SparseBatchData, data), component)
         else:
-            component_batches = split_dense_batch_data_in_batches(cast(SingleComponentData, data), component)
+            component_batches = split_dense_batch_data_in_batches(cast(SingleComponentData, data), batch_size=n_batches)
         for i, batch in enumerate(component_batches):
             if (isinstance(batch, dict) and batch) or (isinstance(batch, np.ndarray) and batch.size > 0):
                 list_data[i][component] = batch
     return list_data
 
 
-def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
+def get_and_verify_batch_sizes(batch_data: BatchDataset, dataset_type: DatasetType | None = None) -> int:
     """
     Determine the number of batches for each component and verify that each component has the same number of batches
 
     Args:
         batch_data: a batch dataset for power-grid-model
+        dataset_type: type of dataset
 
     Returns:
         The number of batches
     """
 
+    if dataset_type is None and any(is_columnar(v) and not is_sparse(v) for v in batch_data.values()):
+        dataset_type = get_dataset_type(batch_data)
+
     n_batch_size = 0
     checked_components: list[ComponentType] = []
     for component, data in batch_data.items():
-        n_component_batch_size = get_batch_size(data)
+        n_component_batch_size = get_batch_size(data, dataset_type, component)
         if checked_components and n_component_batch_size != n_batch_size:
             if len(checked_components) == 1:
                 checked_components_str = f"'{checked_components.pop()}'"
@@ -129,13 +133,17 @@ def get_and_verify_batch_sizes(batch_data: BatchDataset) -> int:
     return n_batch_size
 
 
-def get_batch_size(batch_data: BatchComponentData) -> int:
+def get_batch_size(
+    batch_data: BatchComponentData, dataset_type: DatasetType | None = None, component: ComponentType | None = None
+) -> int:
     """
     Determine the number of batches and verify the data structure while we're at it. Note only batch data is supported.
     Note: SingleColumnarData would get treated as batch by this function.
 
     Args:
         batch_data: a batch array for power-grid-model
+        dataset_type: type of dataset
+        component: name of component
 
     Raises:
         ValueError: when the type for data_filter is incorrect
@@ -148,16 +156,58 @@ def get_batch_size(batch_data: BatchComponentData) -> int:
         indptr = batch_data["indptr"]
         return indptr.size - 1
 
-    data_to_check = (
-        next(iter(cast(DenseBatchColumnarData, batch_data).values()))
-        if is_columnar(batch_data)
-        else cast(DenseBatchArray, batch_data)
-    )
-    if data_to_check.ndim == 1:
+    if not is_columnar(batch_data):
+        sym_array = batch_data
+    else:
+        batch_data = cast(DenseBatchColumnarData, batch_data)
+        if component is None or dataset_type is None:
+            raise ValueError("Cannot deduce batch size for given columnar data without a dataset type or component")
+        sym_attributes, _ = _get_sym_or_asym_attributes(dataset_type, component)
+        for attribute, array in batch_data.items():
+            if attribute in sym_attributes:
+                break
+            if array.ndim == 1:
+                raise TypeError("Incorrect dimension present in batch data.")
+            if array.ndim == 2:
+                return 1
+            return array.shape[0]
+        sym_array = next(iter(batch_data.values()))
+
+    sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
+    if sym_array.ndim == 3:
+        raise TypeError("Incorrect dimension present in batch data.")
+    if sym_array.ndim == 1:
         return 1
-    if data_to_check.ndim == 2 and is_columnar(batch_data):
-        raise ValueError("get_batch_size is not supported for columnar data")
-    return data_to_check.shape[0]
+    return sym_array.shape[0]
+
+
+def _get_sym_or_asym_attributes(dataset_type: DatasetType, component: ComponentType):
+    """Segregate into symmetric of asymmetric attribute.
+    The asymmetric attribute is per phase value and of extra dimension.
+
+    Args:
+        dataset_type (DatasetType): dataset type
+        component (ComponentType): component name
+
+    Returns:
+        symmetrical and asymmetrical attributes
+    """
+    asym_attributes = set()
+    sym_attributes = set()
+    for meta_dataset_type, dataset_meta in power_grid_meta_data.items():
+        if dataset_type != meta_dataset_type:
+            continue
+        for component_name_meta, component_meta in dataset_meta.items():
+            if component != component_name_meta:
+                continue
+            if component_meta.dtype.names is None:
+                raise ValueError("No attributes available in meta")
+            for attribute in component_meta.dtype.names:
+                if component_meta.dtype[attribute].shape == (3,):
+                    asym_attributes.add(attribute)
+                if component_meta.dtype[attribute].shape == ():
+                    sym_attributes.add(attribute)
+    return sym_attributes, asym_attributes
 
 
 def _split_numpy_array_in_batches(
@@ -182,7 +232,7 @@ def _split_numpy_array_in_batches(
 
 
 def split_dense_batch_data_in_batches(
-    data: SingleComponentData | DenseBatchData, component: ComponentType
+    data: SingleComponentData | DenseBatchData, batch_size: int
 ) -> list[SingleComponentData]:
     """
     Split a single dense numpy array into one or more batches
@@ -190,15 +240,14 @@ def split_dense_batch_data_in_batches(
     Args:
         data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
         component: The name of the component to which the data belongs, only used for errors.
+        batch_size: size of batch
 
     Returns:
         A list with a single component data per scenario
     """
-    component_data_checks(data, component)
     if isinstance(data, np.ndarray):
         return cast(list[SingleComponentData], _split_numpy_array_in_batches(data))
 
-    batch_size = get_batch_size(data)
     scenarios_per_attribute = {
         attribute: _split_numpy_array_in_batches(attribute_data) for attribute, attribute_data in data.items()
     }
@@ -295,7 +344,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
         list_data = convert_batch_dataset_to_batch_list(data)
         return [convert_single_dataset_to_python_single_dataset(data=x) for x in list_data]
 
-    # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
+    # We have established that this is not batch data, so let's tell the type checker that this is a SingleDataset
     data = cast(SingleDataset, data)
     return convert_single_dataset_to_python_single_dataset(data=data)
 
@@ -359,22 +408,19 @@ def compatibility_convert_row_columnar_dataset(
     for comp_name, attrs in processed_data_filter.items():
         if comp_name not in data:
             continue
+
+        sub_data = _extract_data_from_component_data(data[comp_name])
+        converted_sub_data = _convert_data_to_row_or_columnar(
+            data=sub_data,
+            comp_name=comp_name,
+            dataset_type=dataset_type,
+            attrs=attrs,
+        )
+
         if is_sparse(data[comp_name]):
-            result_data[comp_name] = {}
-            result_data[comp_name]["data"] = _convert_data_to_row_or_columnar(
-                data=data[comp_name]["data"],
-                comp_name=comp_name,
-                dataset_type=dataset_type,
-                attrs=attrs,
-            )
-            result_data[comp_name]["indptr"] = data[comp_name]["indptr"]
+            result_data[comp_name] = {"indptr": _extract_indptr(data), "data": converted_sub_data}
         else:
-            result_data[comp_name] = _convert_data_to_row_or_columnar(
-                data=data[comp_name],
-                comp_name=comp_name,
-                dataset_type=dataset_type,
-                attrs=attrs,
-            )
+            result_data[comp_name] = converted_sub_data
     return result_data
 
 
@@ -570,7 +616,9 @@ def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
     return indptr
 
 
-def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) -> ColumnarData:  # pragma: no cover
+def _extract_columnar_data(
+    data: ComponentData, is_batch: bool | None = None
+) -> SingleColumnarData | DenseBatchColumnarData:  # pragma: no cover
     """returns the contents of the columnar data.
 
     Args:
@@ -581,7 +629,7 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
         TypeError: if data is not columnar or invalid data
 
     Returns:
-        ColumnarData: the contents of columnar data
+        SingleColumnarData | DenseBatchColumnarData: the contents of columnar data
     """
     not_columnar_data_message = "Expected columnar data"
 
@@ -599,10 +647,12 @@ def _extract_columnar_data(data: ComponentData, is_batch: bool | None = None) ->
             raise TypeError(not_columnar_data_message)
         if attribute_array.ndim not in allowed_dims:
             raise TypeError(not_columnar_data_message)
-    return cast(ColumnarData, sub_data)
+    return cast(SingleColumnarData | DenseBatchColumnarData, sub_data)
 
 
-def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -> DataArray:  # pragma: no cover
+def _extract_row_based_data(
+    data: ComponentData, is_batch: bool | None = None
+) -> SingleArray | DenseBatchArray:  # pragma: no cover
     """returns the contents of the row based data
 
     Args:
@@ -613,7 +663,7 @@ def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -
         TypeError: if data is not row based or invalid data
 
     Returns:
-        DataArray: the contents of row based data
+        SingleArray | DenseBatchArray: the contents of row based data
     """
     if is_batch is not None:
         allowed_dims = [2] if is_batch else [1]
@@ -631,6 +681,29 @@ def _extract_row_based_data(data: ComponentData, is_batch: bool | None = None) -
 
 def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None = None):
     return _extract_columnar_data(data, is_batch) if is_columnar(data) else _extract_row_based_data(data, is_batch)
+
+
+def _extract_contents_from_data(data: ComponentData):
+    return data["data"] if is_sparse(data) else data
+
+
+def check_indptr_consistency(indptr: IndexPointer, batch_size: int | None, contents_size: int):
+    """checks if an indptr is valid. Batch size check is optional.
+
+    Args:
+        indptr (IndexPointer): The indptr array
+        batch_size (int | None): number of scenarios
+        contents_size (int): total number of elements in all scenarios
+
+    Raises:
+        ValueError: If indptr is invalid
+    """
+    if indptr[0] != 0 or indptr[-1] != contents_size:
+        raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
+    if np.any(np.diff(indptr) < 0):
+        raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
+    if batch_size is not None and batch_size != indptr.size - 1:
+        raise ValueError(f"Provided batch size must be equal to actual batch size. {VALIDATOR_MSG}")
 
 
 def get_dataset_type(data: Dataset) -> DatasetType:

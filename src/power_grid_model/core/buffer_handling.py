@@ -11,7 +11,13 @@ from typing import cast
 
 import numpy as np
 
-from power_grid_model._utils import is_sparse
+from power_grid_model._utils import (
+    _extract_data_from_component_data,
+    _extract_indptr,
+    check_indptr_consistency,
+    is_columnar,
+    is_sparse,
+)
 from power_grid_model.core.error_handling import VALIDATOR_MSG
 from power_grid_model.core.index_integer import IdxC, IdxNp
 from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
@@ -126,7 +132,7 @@ def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
 
 
 def _get_uniform_buffer_properties(
-    data: SingleComponentData | DenseBatchData,
+    data: ComponentData,
     schema: ComponentMetaData,
     is_batch: bool | None,
     batch_size: int | None,
@@ -135,7 +141,7 @@ def _get_uniform_buffer_properties(
     Extract the properties of the uniform batch dataset component.
 
     Args:
-        data (SingleComponentData | DenseBatchData): the dataset component.
+        data (ComponentData): the dataset component.
         schema (ComponentMetaData): the dataset type.
         is_batch (bool | None): whether the data is a batch dataset.
         batch_size (int | None): the batch size.
@@ -152,35 +158,38 @@ def _get_uniform_buffer_properties(
 
     is_sparse_property = False
 
-    if isinstance(data, np.ndarray):
-        ndim = data.ndim
-        shape = data.shape
+    sub_data = _extract_data_from_component_data(data)
+    if not is_columnar(data):
+        actual_ndim = sub_data.ndim
+        shape: tuple[int] = sub_data.shape
         columns = None
-    elif data:
-        attribute, attribute_data = next(iter(data.items()))
-        ndim = attribute_data.ndim - schema.dtype[attribute].ndim
-        shape = attribute_data.shape[:ndim]
-        columns = list(data)
     else:
-        raise ValueError("Empty columnar buffer is ambiguous.{VALIDATOR_MSG}")
+        if not sub_data:
+            raise ValueError("Empty columnar buffer is ambiguous.{VALIDATOR_MSG}")
+        attribute, attribute_data = next(iter(sub_data.items()))
+        actual_ndim = attribute_data.ndim - schema.dtype[attribute].ndim
+        shape = attribute_data.shape[:actual_ndim]
+        columns = list(sub_data)
 
-    if isinstance(data, dict) and schema is not None:
-        for attribute, attribute_data in data.items():
-            if attribute_data.ndim != ndim + schema.dtype[attribute].ndim or attribute_data.shape[:ndim] != shape:
+        for attribute, attribute_data in sub_data.items():
+            if (
+                attribute_data.ndim != actual_ndim + schema.dtype[attribute].ndim
+                or attribute_data.shape[:actual_ndim] != shape
+            ):
                 raise ValueError(f"Data buffers must be consistent. {VALIDATOR_MSG}")
 
-    if ndim not in (1, 2):
+    if actual_ndim not in (1, 2):
         raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
 
-    actual_is_batch = ndim == 2
+    actual_is_batch = actual_ndim == 2
     actual_batch_size = shape[0] if actual_is_batch else 1
     n_elements_per_scenario = shape[-1]
     n_total_elements = actual_batch_size * n_elements_per_scenario
 
     if is_batch is not None and is_batch != actual_is_batch:
-        raise ValueError(f"Provided 'is batch' must be equal to actual 'is batch'. {VALIDATOR_MSG}")
+        raise ValueError(f"Provided 'is batch' is incorrect for the provided data. {VALIDATOR_MSG}")
     if batch_size is not None and batch_size != actual_batch_size:
-        raise ValueError(f"Provided 'batch size' must be equal to actual batch size. {VALIDATOR_MSG}")
+        raise ValueError(f"Provided 'batch size' is incorrect for the provided data. {VALIDATOR_MSG}")
 
     return BufferProperties(
         is_sparse=is_sparse_property,
@@ -193,7 +202,7 @@ def _get_uniform_buffer_properties(
 
 
 def _get_sparse_buffer_properties(
-    data: SparseBatchData,
+    data: ComponentData,
     schema: ComponentMetaData,
     batch_size: int | None,
 ) -> BufferProperties:
@@ -201,7 +210,7 @@ def _get_sparse_buffer_properties(
     Extract the properties of the sparse batch dataset component.
 
     Args:
-        data (SparseBatchData): the sparse dataset component.
+        data (ComponentData): the sparse dataset component.
         schema (ComponentMetaData | None): the dataset type.
         batch_size (int | None): the batch size.
 
@@ -214,40 +223,25 @@ def _get_sparse_buffer_properties(
     """
     is_sparse_property = True
 
-    contents = data["data"]
-    indptr = data["indptr"]
-
-    if not isinstance(indptr, np.ndarray):
-        raise TypeError(f"indptr must be of type IndexPointer [np.ndarray]. {VALIDATOR_MSG}")
+    contents = _extract_data_from_component_data(data)
+    indptr = _extract_indptr(data)
 
     ndim = 1
     columns: list[AttributeType] | None = None
-    if isinstance(contents, np.ndarray):
+    if not is_columnar(data):
         shape: tuple[int, ...] = contents.shape
-    elif not contents:
-        raise ValueError(f"Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
-    elif isinstance(contents, dict):
-        attribute, attribute_data = next(iter(contents.items()))
+    else:
+        if not contents:
+            raise ValueError("Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
+        attribute_data = next(iter(contents.values()))
         shape = attribute_data.shape[:ndim]
         columns = list(contents)
-
-    if isinstance(contents, dict):
         for attribute, attribute_data in contents.items():
             if attribute_data.ndim != ndim + schema.dtype[attribute].ndim or attribute_data.shape[:ndim] != shape:
                 raise ValueError(f"Data buffers must be consistent. {VALIDATOR_MSG}")
 
     contents_size = sum(shape)
-    if ndim != 1:
-        raise ValueError(f"Data array in sparse data can only be 1D. {VALIDATOR_MSG}")
-    if indptr.ndim != 1:
-        raise ValueError(f"indptr can only be 1D. {VALIDATOR_MSG}")
-    if indptr[0] != 0 or indptr[-1] != contents_size:
-        raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
-    if np.any(np.diff(indptr) < 0):
-        raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-
-    if batch_size is not None and batch_size != indptr.size - 1:
-        raise ValueError(f"Provided batch size must be equal to actual batch size. {VALIDATOR_MSG}")
+    check_indptr_consistency(indptr, batch_size, contents_size)
 
     is_batch = True
     n_elements_per_scenario = -1
@@ -284,7 +278,7 @@ def get_buffer_properties(
     Returns:
         the properties of the dataset component.
     """
-    if isinstance(data, np.ndarray) or "indptr" not in data:
+    if not is_sparse(data):
         return _get_uniform_buffer_properties(data=data, schema=schema, is_batch=is_batch, batch_size=batch_size)
 
     if is_batch is not None and not is_batch:

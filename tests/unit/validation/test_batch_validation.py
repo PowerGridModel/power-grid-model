@@ -7,14 +7,14 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType, LoadGenType, initialize_array
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset, is_columnar
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBooleanError
 
 
 @pytest.fixture
-def input_data() -> dict[str, np.ndarray]:
+def original_input_data() -> dict[str, np.ndarray]:
     node = initialize_array("input", "node", 4)
     node["id"] = [1, 2, 3, 4]
     node["u_rated"] = 10.5e3
@@ -40,6 +40,27 @@ def input_data() -> dict[str, np.ndarray]:
     asym_load["q_specified"] = [[11e5, 12e5, 13e5], [21e5, 22e5, 23e5]]
 
     return {"node": node, "line": line, "asym_load": asym_load}
+
+
+@pytest.fixture
+def original_input_data_columnar_all(original_input_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_input_data, ComponentAttributeFilterOptions.ALL, DatasetType.input
+    )
+
+
+@pytest.fixture
+def original_input_data_columnar_relevant(original_input_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_input_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+    )
+
+
+@pytest.fixture(
+    params=["original_input_data", "original_input_data_columnar_all", "original_input_data_columnar_relevant"]
+)
+def input_data(request):
+    return request.getfixturevalue(request.param)
 
 
 @pytest.fixture
@@ -82,8 +103,12 @@ def test_validate_batch_data(input_data, batch_data):
 
 
 def test_validate_batch_data_input_error(input_data, batch_data):
-    input_data["node"][-1]["id"] = 123
-    input_data["line"][-1]["id"] = 123
+    if is_columnar(input_data):
+        input_data["node"]["id"][-1] = 123
+        input_data["line"]["id"][-1] = 123
+    else:
+        input_data["node"][-1]["id"] = 123
+        input_data["line"][-1]["id"] = 123
     errors = validate_batch_data(input_data, batch_data)
     assert len(errors) == 3
     assert [MultiComponentNotUniqueError([("line", "id"), ("node", "id")], [("line", 123), ("node", 123)])] == errors[0]
@@ -92,7 +117,7 @@ def test_validate_batch_data_input_error(input_data, batch_data):
 
 
 def test_validate_batch_data_update_error(input_data, batch_data):
-    batch_data["line"]["from_status"] = [[12, 34], [0, -128], [56, 78]]
+    batch_data["line"]["from_status"] = np.array([[12, 34], [0, -128], [56, 78]])
     errors = validate_batch_data(input_data, batch_data)
     assert len(errors) == 2
     assert [NotBooleanError("line", "from_status", [5, 6])] == errors[0]
