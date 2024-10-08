@@ -10,9 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
-from power_grid_model._utils import is_columnar, is_sparse
-from power_grid_model.core.dataset_definitions import ComponentType
-from power_grid_model.core.power_grid_dataset import get_dataset_type
+from power_grid_model._utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
