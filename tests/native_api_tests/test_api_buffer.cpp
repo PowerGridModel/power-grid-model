@@ -41,32 +41,80 @@ inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
 void check_buffer(MetaComponent const* component, MetaAttribute const* attribute) {
     auto check_attribute = [component, attribute]<typename T>() {
         for (Idx size = 0; size < 4; ++size) {
-            T ref_value{};
-            std::vector<T> ref_buffer(size);
             std::vector<T> source_buffer(size);
+            std::vector<T> ref_buffer(size);
 
             Buffer buffer{component, size};
+
+            // array get value
             buffer.set_nan();
-
-            buffer.get_value(attribute, &ref_value, 0);
-            if (size > 0) {
-                CHECK(is_nan(ref_value));
-            } else {
-                CHECK(ref_value == T{});
-            }
-
             buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
             for (Idx idx = 0; idx < size; ++idx) {
-                CHECK(is_nan(ref_buffer[idx]));
+                REQUIRE(is_nan(ref_buffer[idx]));
             }
 
+            // array set value
+            buffer.set_nan();
             for (Idx idx = 0; idx < size; ++idx) {
                 source_buffer[idx] = as_type<T>(idx);
             }
             buffer.set_value(attribute, source_buffer.data(), sizeof(T));
             buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
             for (Idx idx = 0; idx < size; ++idx) {
-                CHECK(ref_buffer[idx] == as_type<T>(idx));
+                REQUIRE(ref_buffer[idx] == as_type<T>(idx));
+            }
+            // array set value with fixed size
+            for (Idx sub_size = 0; sub_size < size; ++sub_size) {
+                for (Idx offset = 0; offset < size - sub_size; ++offset) {
+                    std::ranges::fill(ref_buffer, T{});
+                    // get value
+                    buffer.set_nan();
+                    buffer.get_value(attribute, ref_buffer.data(), offset, sub_size, sizeof(T));
+                    for (Idx idx = 0; idx < size; ++idx) {
+                        if (idx >= offset && idx < offset + sub_size) {
+                            REQUIRE(is_nan(ref_buffer[idx]));
+                        } else {
+                            REQUIRE(ref_buffer[idx] == T{});
+                        }
+                    }
+
+                    // set value
+                    buffer.set_nan();
+                    for (Idx idx = 0; idx < size; ++idx) {
+                        source_buffer[idx] = as_type<T>(idx);
+                    }
+                    buffer.set_value(attribute, source_buffer.data(), offset, sub_size, sizeof(T));
+                    buffer.get_value(attribute, ref_buffer.data(), sizeof(T));
+                    for (Idx idx = 0; idx < size; ++idx) {
+                        if (idx >= offset && idx < offset + sub_size) {
+                            REQUIRE(ref_buffer[idx] == as_type<T>(idx));
+                        } else {
+                            REQUIRE(is_nan(ref_buffer[idx]));
+                        }
+                    }
+                }
+            }
+
+            // single access
+            T source_value{};
+            T ref_value{};
+            buffer.set_nan();
+            for (Idx idx = 0; idx < size; ++idx) {
+                // single get value
+                buffer.get_value(attribute, &ref_value, idx, 0);
+                if (size > 0) {
+                    REQUIRE(is_nan(ref_value));
+                } else {
+                    REQUIRE(ref_value == T{});
+                }
+                // single set value
+                buffer.set_value(attribute, &source_value, idx, 0);
+                buffer.get_value(attribute, &ref_value, idx, 0);
+                if (size > 0) {
+                    REQUIRE(ref_value == source_value);
+                } else {
+                    REQUIRE(ref_value == T{});
+                }
             }
         }
     };
