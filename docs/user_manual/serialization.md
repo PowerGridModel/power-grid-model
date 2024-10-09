@@ -28,7 +28,7 @@ The format consists of a [`PowerGridModelRoot`](#json-schema-root-object) JSON o
 
 - [`PowerGridModelRoot`](#json-schema-root-object): `Object`
   - `version`: `string` containing the schema version (required, current version is `"1.0"`)
-  - `type`: `string` containing the dataset type, e.g. `"input"`, `"update"`, ...
+  - `type`: `string` containing the dataset type, e.g. `"input"`, `"update"`, etc.
   - `is_batch`: `boolean` flag that describes whether the dataset is a batch or not.
   - `attributes`: [`Attributes`](#json-schema-attributes-object) containing specified attributes per component type (e.g.: `"node"`).
   - `data`: [`Dataset`](#json-schema-dataset-object) containing the actual dataset.

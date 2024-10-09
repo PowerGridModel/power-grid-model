@@ -14,17 +14,25 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: false
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
-        default: true
+        default: false
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
 
@@ -211,7 +219,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.1
+        uses: pypa/cibuildwheel@v2.21.2
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -303,7 +311,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         run: |
           pip install twine
           echo "Publish to PyPI..."
@@ -311,7 +319,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         with:
           files: |
             ./wheelhouse/*

@@ -14,10 +14,7 @@
 namespace power_grid_model_cpp {
 class MetaData {
   public:
-    static Idx n_datasets() {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_n_datasets);
-    }
+    static Idx n_datasets() { return PGM_meta_n_datasets(nullptr); }
 
     static MetaDataset const* get_dataset_by_idx(Idx idx) {
         Handle const handle{};
@@ -30,14 +27,10 @@ class MetaData {
     }
 
     static std::string dataset_name(MetaDataset const* dataset) {
-        Handle const handle{};
-        return std::string{handle.call_with(PGM_meta_dataset_name, dataset)};
+        return std::string{PGM_meta_dataset_name(nullptr, dataset)};
     }
 
-    static Idx n_components(MetaDataset const* dataset) {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_n_components, dataset);
-    }
+    static Idx n_components(MetaDataset const* dataset) { return PGM_meta_n_components(nullptr, dataset); }
 
     static MetaComponent const* get_component_by_idx(MetaDataset const* dataset, Idx idx) {
         Handle const handle{};
@@ -50,24 +43,16 @@ class MetaData {
     }
 
     static std::string component_name(MetaComponent const* component) {
-        Handle const handle{};
-        return std::string{handle.call_with(PGM_meta_component_name, component)};
+        return std::string{PGM_meta_component_name(nullptr, component)};
     }
 
-    static size_t component_size(MetaComponent const* component) {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_component_size, component);
-    }
+    static size_t component_size(MetaComponent const* component) { return PGM_meta_component_size(nullptr, component); }
 
     static size_t component_alignment(MetaComponent const* component) {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_component_alignment, component);
+        return PGM_meta_component_alignment(nullptr, component);
     }
 
-    static Idx n_attributes(MetaComponent const* component) {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_n_attributes, component);
-    }
+    static Idx n_attributes(MetaComponent const* component) { return PGM_meta_n_attributes(nullptr, component); }
 
     static MetaAttribute const* get_attribute_by_idx(MetaComponent const* component, Idx idx) {
         Handle const handle{};
@@ -81,24 +66,18 @@ class MetaData {
     }
 
     static std::string attribute_name(MetaAttribute const* attribute) {
-        Handle const handle{};
-        return std::string{handle.call_with(PGM_meta_attribute_name, attribute)};
+        return std::string{PGM_meta_attribute_name(nullptr, attribute)};
     }
 
-    static Idx attribute_ctype(MetaAttribute const* attribute) {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_attribute_ctype, attribute);
+    static PGM_CType attribute_ctype(MetaAttribute const* attribute) {
+        return static_cast<PGM_CType>(PGM_meta_attribute_ctype(nullptr, attribute));
     }
 
     static size_t attribute_offset(MetaAttribute const* attribute) {
-        Handle const handle{};
-        return handle.call_with(PGM_meta_attribute_offset, attribute);
+        return PGM_meta_attribute_offset(nullptr, attribute);
     }
 
-    static int is_little_endian() {
-        Handle const handle{};
-        return handle.call_with(PGM_is_little_endian);
-    }
+    static int is_little_endian() { return PGM_is_little_endian(nullptr); }
 };
 } // namespace power_grid_model_cpp
 

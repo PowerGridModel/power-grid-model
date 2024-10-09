@@ -373,6 +373,9 @@ def none_match_comparison(  # pylint: disable=too-many-arguments
     if default_value_2 is not None:
         set_default_value(data=data, component=component, field=field, default_value=default_value_2)
     component_data = data[component]
+    if not isinstance(component_data, np.ndarray):
+        raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+
     if isinstance(ref_value, tuple):
         ref = tuple(eval_expression(component_data, v) for v in ref_value)
     else:
@@ -690,9 +693,14 @@ def all_ids_exist_in_data_set(
         A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not
         exist in the reference data set.
     """
-    invalid = np.isin(data[component]["id"], ref_data[component]["id"], invert=True)
+    component_data = data[component]
+    component_ref_data = ref_data[component]
+    if not isinstance(component_data, np.ndarray) or not isinstance(component_ref_data, np.ndarray):
+        raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+
+    invalid = np.isin(component_data["id"], component_ref_data["id"], invert=True)
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = component_data["id"][invalid].flatten().tolist()
         return [IdNotInDatasetError(component, ids, ref_name)]
     return []
 
@@ -715,6 +723,9 @@ def all_finite(data: SingleDataset, exceptions: Optional[dict[ComponentType, lis
     """
     errors = []
     for component, array in data.items():
+        if not isinstance(array, np.ndarray):
+            raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+
         for field, (dtype, _) in array.dtype.fields.items():
             if not np.issubdtype(dtype, np.floating):
                 continue

@@ -13,6 +13,13 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        description: "The CMake target to run (e.g.: all)"
+        required: true
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -23,11 +30,16 @@ on:
         options:
           - all
           - power_grid_model_c
-          - power_grid_model_cpp
+          - all power_grid_model_benchmark_cpp
+          - power_grid_model_unit_tests
+          - power_grid_model_api_tests
+          - power_grid_model_validation_tests
+          - power_grid_model_benchmark_cpp
+          - power_grid_model_c_example
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-clang-tidy
   cancel-in-progress: true
 
 jobs:
@@ -62,14 +74,14 @@ jobs:
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Set build target in case of push
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' && github.event.event_name != 'workflow_call'
         run: |
-          echo "TARGET=power_grid_model_c" >> $GITHUB_ENV
+          echo "TARGET=power_grid_model_api_tests" >> $GITHUB_ENV
 
       - name: Set build target in case of workflow dispatch
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.event.event_name == 'workflow_call'
         run: |
-          echo "TARGET=${{ github.event.inputs.target }}" >> $GITHUB_ENV
+          echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
 
       - name: Build
         run: |

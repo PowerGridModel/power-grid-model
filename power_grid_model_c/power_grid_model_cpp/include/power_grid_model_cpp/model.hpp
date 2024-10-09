@@ -37,32 +37,20 @@ class Model {
 
     PowerGridModel* get() const { return model_.get(); }
 
-    static void update(Model const& model, DatasetConst const& update_dataset) {
-        model.handle_.call_with(PGM_update_model, model.get(), update_dataset.get());
-    }
-    void update(DatasetConst const& update_dataset) const { update(*this, update_dataset); }
-
-    static void get_indexer(Model const& model, std::string const& component, Idx size, ID const* ids, Idx* indexer) {
-        model.handle_.call_with(PGM_get_indexer, model.get(), component.c_str(), size, ids, indexer);
+    void update(DatasetConst const& update_dataset) const {
+        handle_.call_with(PGM_update_model, model_.get(), update_dataset.get());
     }
 
     void get_indexer(std::string const& component, Idx size, ID const* ids, Idx* indexer) const {
-        get_indexer(*this, component, size, ids, indexer);
+        handle_.call_with(PGM_get_indexer, model_.get(), component.c_str(), size, ids, indexer);
     }
 
-    static void calculate(Model const& model, Options const& opt, DatasetMutable const& output_dataset,
-                          DatasetConst const& batch_dataset) {
-        model.handle_.call_with(PGM_calculate, model.get(), opt.get(), output_dataset.get(), batch_dataset.get());
-    }
     void calculate(Options const& opt, DatasetMutable const& output_dataset, DatasetConst const& batch_dataset) const {
-        calculate(*this, opt, output_dataset, batch_dataset);
+        handle_.call_with(PGM_calculate, model_.get(), opt.get(), output_dataset.get(), batch_dataset.get());
     }
 
-    static void calculate(Model const& model, Options const& opt, DatasetMutable const& output_dataset) {
-        model.handle_.call_with(PGM_calculate, model.get(), opt.get(), output_dataset.get(), nullptr);
-    }
     void calculate(Options const& opt, DatasetMutable const& output_dataset) const {
-        calculate(*this, opt, output_dataset);
+        handle_.call_with(PGM_calculate, model_.get(), opt.get(), output_dataset.get(), nullptr);
     }
 
   private:

@@ -203,3 +203,12 @@ class _ExperimentalFeatures(IntEnum):
 
     disabled = 0
     enabled = 1
+
+
+class ComponentAttributeFilterOptions(IntEnum):
+    """Filter option component or attribute"""
+
+    ALL = 0
+    """Filter all components/attributes"""
+    RELEVANT = 1
+    """Filter only non-empty components/attributes that contain non-NaN values"""

@@ -27,6 +27,7 @@ namespace power_grid_model_cpp {
 
 using Idx = PGM_Idx;
 using ID = PGM_ID;
+using IntS = int8_t;
 
 using PowerGridModel = PGM_PowerGridModel;
 using MetaDataset = PGM_MetaDataset;

@@ -7,13 +7,14 @@ SPDX-License-Identifier: MPL-2.0
 [![PyPI version](https://badge.fury.io/py/power-grid-model.svg?no-cache)](https://badge.fury.io/py/power-grid-model)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model)
 [![License: MPL2.0](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
+[![Downloads](https://static.pepy.tech/badge/power-grid-model)](https://pepy.tech/project/power-grid-model)
+[![Downloads](https://static.pepy.tech/badge/power-grid-model/month)](https://pepy.tech/project/power-grid-model)
+
 [![Build and Test C++ and Python](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/main.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml)
 [![Clang Tidy](https://github.com/PowerGridModel/power-grid-model/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/clang-tidy.yml)
 [![REUSE Compliance Check](https://github.com/PowerGridModel/power-grid-model/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/reuse-compliance.yml)
 [![docs](https://readthedocs.org/projects/power-grid-model/badge/)](https://power-grid-model.readthedocs.io/en/stable/)
-[![Downloads](https://static.pepy.tech/badge/power-grid-model)](https://pepy.tech/project/power-grid-model)
-[![Downloads](https://static.pepy.tech/badge/power-grid-model/month)](https://pepy.tech/project/power-grid-model)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
@@ -21,6 +22,8 @@ SPDX-License-Identifier: MPL-2.0
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
+
+[![Nightly build](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
@@ -115,4 +118,4 @@ If you are using Power Grid Model in your research work, please consider citing 
 
 ## Contact
 
-Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.
+Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Grid Model project.

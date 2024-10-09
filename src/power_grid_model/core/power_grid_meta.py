@@ -21,6 +21,7 @@ from power_grid_model.core.dataset_definitions import (
     _str_to_datatype,
 )
 from power_grid_model.core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
+from power_grid_model.data_types import DenseBatchArray, SingleArray
 
 
 # constant enum for ctype
@@ -171,7 +172,7 @@ def initialize_array(
     component_type: ComponentTypeLike,
     shape: tuple | int,
     empty: bool = False,
-) -> np.ndarray:
+) -> SingleArray | DenseBatchArray:
     """
     Initializes an array for use in Power Grid Model calculations
 

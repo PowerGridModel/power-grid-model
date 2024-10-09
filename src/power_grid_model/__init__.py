@@ -12,6 +12,7 @@ from power_grid_model.enum import (
     BranchSide,
     CalculationMethod,
     CalculationType,
+    ComponentAttributeFilterOptions,
     FaultPhase,
     FaultType,
     LoadGenType,
@@ -20,3 +21,4 @@ from power_grid_model.enum import (
     TapChangingStrategy,
     WindingType,
 )
+from power_grid_model.typing import ComponentAttributeMapping

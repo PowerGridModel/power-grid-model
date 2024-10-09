@@ -16,7 +16,8 @@ from power_grid_model import (
     WindingType,
     initialize_array,
 )
-from power_grid_model.enum import CalculationType, FaultPhase, FaultType
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     FaultPhaseError,
@@ -39,7 +40,7 @@ from power_grid_model.validation.utils import nan_type
 
 
 @pytest.fixture
-def input_data() -> dict[ComponentType, np.ndarray]:
+def original_data() -> dict[ComponentType, np.ndarray]:
     node = initialize_array(DatasetType.input, ComponentType.node, 4)
     node["id"] = [0, 2, 1, 2]
     node["u_rated"] = [10.5e3, 10.5e3, 0, 10.5e3]
@@ -274,6 +275,25 @@ def input_data() -> dict[ComponentType, np.ndarray]:
     return data
 
 
+@pytest.fixture
+def original_data_columnar_all(original_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_data, ComponentAttributeFilterOptions.ALL, DatasetType.input
+    )
+
+
+@pytest.fixture
+def original_data_columnar_relevant(original_data):
+    return compatibility_convert_row_columnar_dataset(
+        original_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+    )
+
+
+@pytest.fixture(params=["original_data", "original_data_columnar_all", "original_data_columnar_relevant"])
+def input_data(request):
+    return request.getfixturevalue(request.param)
+
+
 def test_validate_input_data_sym_calculation(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
 
@@ -415,6 +435,7 @@ def test_validate_input_data_sym_calculation(input_data):
             [
                 "node",
                 "line",
+                "generic_branch",
                 "transformer",
                 "three_winding_transformer",
                 "source",
@@ -433,7 +454,7 @@ def test_validate_input_data_sym_calculation(input_data):
             "sym_power_sensor",
             "measured_object",
             [7, 10],
-            ["line", "transformer"],
+            ["line", "generic_branch", "transformer"],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
@@ -451,6 +472,7 @@ def test_validate_input_data_sym_calculation(input_data):
             [
                 "node",
                 "line",
+                "generic_branch",
                 "transformer",
                 "three_winding_transformer",
                 "source",
@@ -469,7 +491,7 @@ def test_validate_input_data_sym_calculation(input_data):
             "asym_power_sensor",
             "measured_object",
             [7, 10],
-            ["line", "transformer"],
+            ["line", "generic_branch", "transformer"],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors

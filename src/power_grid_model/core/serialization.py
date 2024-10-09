@@ -41,6 +41,7 @@ class Deserializer:
     _deserializer: DeserializerPtr
     _dataset_ptr: WritableDatasetPtr
     _dataset: CWritableDataset
+    _data_filter: ComponentAttributeMapping
 
     def __new__(
         cls,
@@ -59,6 +60,7 @@ class Deserializer:
         instance._dataset_ptr = pgc.deserializer_get_dataset(instance._deserializer)
         assert_no_error()
 
+        instance._data_filter = data_filter
         instance._dataset = CWritableDataset(instance._dataset_ptr, data_filter=data_filter)
         assert_no_error()
 
@@ -217,6 +219,7 @@ def json_deserialize(
 
     Args:
         data: the data to deserialize.
+        data_filter: the data filter to apply to the dataset.
 
     Raises:
         ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
