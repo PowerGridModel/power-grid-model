@@ -26,7 +26,7 @@ jobs:
     env:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      LLVM_COV: llvm-cov-15
+      LLVM_COV: llvm-cov-18
     steps:
       - uses: actions/checkout@v4
         with:
