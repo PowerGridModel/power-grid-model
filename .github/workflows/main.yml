@@ -87,8 +87,8 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gcc-12 g++-12 clang-15
-          sudo ln -s /usr/bin/clang-15 /usr/local/bin/clang
+          sudo apt-get install -y ninja-build gcc-12 g++-12 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
           sudo ln -s /usr/bin/clang++-15 /usr/local/bin/clang++
           sudo ln -s /usr/bin/gcc-12 /usr/local/bin/gcc
           sudo ln -s /usr/bin/g++-12 /usr/local/bin/g++
