@@ -7,7 +7,7 @@ from copy import copy
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, PowerGridModel, initialize_array
+from power_grid_model import ComponentType, DatasetType, PowerGridModel, initialize_array
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.validation import assert_valid_input_data
 
@@ -34,31 +34,31 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 
 # test data
 INPUT = {
-    "node": [{"id": 0, "u_rated": 100.0}],
-    "source": [{"id": 1, "node": 0, "status": 1, "u_ref": 1.0, "sk": 1000.0, "rx_ratio": 0.0}],
-    "sym_load": [{"id": 2, "node": 0, "status": 1, "type": 2, "p_specified": 0.0, "q_specified": 500.0}],
+    ComponentType.node: [{"id": 0, "u_rated": 100.0}],
+    ComponentType.source: [{"id": 1, "node": 0, "status": 1, "u_ref": 1.0, "sk": 1000.0, "rx_ratio": 0.0}],
+    ComponentType.sym_load: [{"id": 2, "node": 0, "status": 1, "type": 2, "p_specified": 0.0, "q_specified": 500.0}],
 }
 
-SYM_OUTPUT = {"node": [{"id": 0, "u": 50.0, "u_pu": 0.5, "u_angle": 0.0}]}
+SYM_OUTPUT = {ComponentType.node: [{"id": 0, "u": 50.0, "u_pu": 0.5, "u_angle": 0.0}]}
 
 SYM_OUTPUT_BATCH = [
-    {"node": [{"id": 0, "u": 40.0, "u_pu": 0.4, "u_angle": 0.0}]},
-    {"node": [{"id": 0, "u": 70.0, "u_pu": 0.7, "u_angle": 0.0}]},
+    {ComponentType.node: [{"id": 0, "u": 40.0, "u_pu": 0.4, "u_angle": 0.0}]},
+    {ComponentType.node: [{"id": 0, "u": 70.0, "u_pu": 0.7, "u_angle": 0.0}]},
 ]
 
 UPDATE_BATCH = [
-    {"source": [{"id": 1, "u_ref": 0.5}], "sym_load": [{"id": 2, "q_specified": 100.0}]},
-    {"sym_load": [{"id": 2, "q_specified": 300.0}]},
+    {ComponentType.source: [{"id": 1, "u_ref": 0.5}], ComponentType.sym_load: [{"id": 2, "q_specified": 100.0}]},
+    {ComponentType.sym_load: [{"id": 2, "q_specified": 300.0}]},
 ]
 
 
 @pytest.fixture
 def case_data():
     return {
-        "input": convert_python_to_numpy(INPUT, "input"),
-        "output": convert_python_to_numpy(SYM_OUTPUT, "sym_output"),
-        "update_batch": convert_python_to_numpy(UPDATE_BATCH, "update"),
-        "output_batch": convert_python_to_numpy(SYM_OUTPUT_BATCH, "sym_output"),
+        "input": convert_python_to_numpy(INPUT, DatasetType.input),
+        "output": convert_python_to_numpy(SYM_OUTPUT, DatasetType.sym_output),
+        "update_batch": convert_python_to_numpy(UPDATE_BATCH, DatasetType.update),
+        "output_batch": convert_python_to_numpy(SYM_OUTPUT_BATCH, DatasetType.sym_output),
     }
 
 
@@ -74,22 +74,22 @@ def test_simple_power_flow(model: PowerGridModel, case_data):
 
 def test_simple_update(model: PowerGridModel, case_data):
     update_batch = case_data["update_batch"]
-    source_indptr = update_batch["source"]["indptr"]
-    source_update = update_batch["source"]["data"]
+    source_indptr = update_batch[ComponentType.source]["indptr"]
+    source_update = update_batch[ComponentType.source]["data"]
     update_data = {
-        "source": source_update[source_indptr[0] : source_indptr[1]],
-        "sym_load": update_batch["sym_load"][0, :],
+        ComponentType.source: source_update[source_indptr[0] : source_indptr[1]],
+        ComponentType.sym_load: update_batch[ComponentType.sym_load][0, :],
     }
     model.update(update_data=update_data)
-    expected_result = {ComponentType.node: case_data["output_batch"]["node"][0, :]}
+    expected_result = {ComponentType.node: case_data["output_batch"][ComponentType.node][0, :]}
     result = model.calculate_power_flow()
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
 
 
 def test_update_error(model: PowerGridModel):
-    load_update = initialize_array("update", "sym_load", 1)
+    load_update = initialize_array(DatasetType.update, ComponentType.sym_load, 1)
     load_update["id"] = 5
-    update_data = {"sym_load": load_update}
+    update_data = {ComponentType.sym_load: load_update}
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
 
@@ -103,7 +103,7 @@ def test_copy_model(model: PowerGridModel, case_data):
 def test_get_indexer(model: PowerGridModel):
     ids = np.array([2, 2])
     expected_indexer = np.array([0, 0])
-    indexer = model.get_indexer("sym_load", ids)
+    indexer = model.get_indexer(ComponentType.sym_load, ids)
     assert np.allclose(expected_indexer, indexer)
 
 
@@ -113,7 +113,7 @@ def test_batch_power_flow(model: PowerGridModel, case_data):
 
 
 def test_construction_error(case_data):
-    case_data["input"]["sym_load"]["id"] = 0
+    case_data["input"][ComponentType.sym_load]["id"] = 0
     with pytest.raises(PowerGridError, match="Conflicting id detected:"):
         PowerGridModel(case_data["input"])
 
@@ -131,7 +131,7 @@ def test_single_calculation_error(model: PowerGridModel):
 
 def test_batch_calculation_error(model: PowerGridModel, case_data):
     # wrong id
-    case_data["update_batch"]["sym_load"]["id"][1, 0] = 5
+    case_data["update_batch"][ComponentType.sym_load]["id"][1, 0] = 5
     # with error
     with pytest.raises(PowerGridBatchError) as e:
         model.calculate_power_flow(update_data=case_data["update_batch"])
@@ -143,7 +143,7 @@ def test_batch_calculation_error(model: PowerGridModel, case_data):
 
 def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     # wrong id
-    case_data["update_batch"]["sym_load"]["id"][1, 0] = 5
+    case_data["update_batch"][ComponentType.sym_load]["id"][1, 0] = 5
     result = model.calculate_power_flow(update_data=case_data["update_batch"], continue_on_batch_error=True)
     # assert error
     error = model.batch_error
@@ -159,18 +159,25 @@ def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
         model.calculate_state_estimation(
             calculation_method="iterative_current",
-            update_data={"source": initialize_array("update", "source", shape=(5, 0))},
+            update_data={
+                ComponentType.source: initialize_array(DatasetType.update, ComponentType.source, shape=(5, 0))
+            },
             continue_on_batch_error=True,
         )
 
 
 def test_empty_input():
-    node = initialize_array("input", "node", 0)
-    line = initialize_array("input", "line", 0)
-    sym_load = initialize_array("input", "sym_load", 0)
-    source = initialize_array("input", "source", 0)
+    node = initialize_array(DatasetType.input, ComponentType.node, 0)
+    line = initialize_array(DatasetType.input, ComponentType.line, 0)
+    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 0)
+    source = initialize_array(DatasetType.input, ComponentType.source, 0)
 
-    input_data = {"node": node, "line": line, "sym_load": sym_load, "source": source}
+    input_data = {
+        ComponentType.node: node,
+        ComponentType.line: line,
+        ComponentType.sym_load: sym_load,
+        ComponentType.source: source,
+    }
 
     assert_valid_input_data(input_data)
     model = PowerGridModel(input_data, system_frequency=50.0)
