@@ -725,32 +725,40 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class Component> using UpdateType = typename Component::UpdateType;
 
     static UpdateCompIndependence check_components_independence(ConstDataset const& update_data) {
-        auto const fill_in_all_types = []<typename CT>() -> std::tuple<std::string, bool, bool> {
-            return {CT::name, true, true};
-        };
-        // If the batch size is (0 or) 1, then the update data for this component is considered 'independent'
-        if (update_data.batch_size() <= 1) {
-            return run_functor_with_all_types_return_vector(fill_in_all_types);
-        }
-
         // TODO: is_columnar might not be needed
-        auto const process_buffer_span = []<typename CT>(auto const& all_spans,
-                                                         bool is_columnar) -> std::pair<bool, bool> {
+        auto check_ids_na = [](auto const& all_spans) {
+            std::vector<std::vector<bool>> ids_na{};
+            for (const auto& span : all_spans) {
+                for (const auto& obj : span) {
+                    std::vector<bool> id_na{};
+                    if constexpr (requires { obj.id; }) {
+                        id_na.push_back(obj.id == na_Idx);
+                    }
+                    ids_na.push_back(id_na);
+                }
+            }
+            return ids_na;
+        };
+
+        auto const process_buffer_span = [check_ids_na]<typename CT>(auto const& all_spans,
+                                                                     bool is_columnar) -> std::pair<bool, bool> {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            bool const all_ids_na = std::ranges::all_of(all_spans, [](auto const& span) {
-                return std::ranges::all_of(span, [](UpdateType<CT> const& obj) { return obj.id == na_Idx; });
+            std::string const comp_name = CT::name;
+            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
+            bool const no_id = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
+                return vec.empty() || std::ranges::all_of(vec, [](bool const& obj) { return obj == true; });
             });
-            bool const has_id = !all_ids_na;
+
             auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
             bool const uniform_batch = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
                 return static_cast<Idx>(span.size()) == elements_per_scenario;
             });
             if (!uniform_batch) {
-                return {has_id, false};
+                return {!no_id, false};
             }
             if (elements_per_scenario == 0) {
-                return {has_id, true};
+                return {!no_id, true};
             }
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
@@ -763,7 +771,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         current_span, first_span,
                         [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
                 });
-            return std::pair<bool, bool>{has_id, ids_match};
+            return std::pair<bool, bool>{!no_id, ids_match};
         };
 
         auto const check_each_component = [&update_data,
