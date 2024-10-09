@@ -323,7 +323,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                                                       attribute_name, dynamic_atol, rtol);
                     };
 
-                    pgm_type_func_selector(static_cast<PGM_CType>(attribute_type), callable_wrapper);
+                    pgm_type_func_selector(attribute_type, callable_wrapper);
                 }
             }
         }

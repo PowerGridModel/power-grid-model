@@ -5,8 +5,10 @@
 set(PROJECT_SOURCES
     "test_entry_point.cpp"
     "test_api_meta_data.cpp"
+    "test_api_buffer.cpp"
     "test_api_model.cpp"
     "test_api_serialization.cpp"
+    "test_api_utils.cpp"
 )
 
 add_executable(power_grid_model_api_tests ${PROJECT_SOURCES})
