@@ -30,8 +30,8 @@ template <row_based_or_columnar_c T> constexpr bool is_columnar_v = std::derived
 // The attribute buffers are copies of the associated attribute buffers, when provided, and otherwise empty.
 template <typename BufferType>
     requires requires(BufferType const& b) {
-                 { b.attributes } -> std::convertible_to<std::vector<AttributeBuffer<typename BufferType::Data>>>;
-             }
+        { b.attributes } -> std::convertible_to<std::vector<AttributeBuffer<typename BufferType::Data>>>;
+    }
 std::vector<AttributeBuffer<typename BufferType::Data>>
 reordered_attribute_buffers(BufferType& buffer, std::span<MetaAttribute const* const> attribute_order) {
     using Data = typename BufferType::Data;
