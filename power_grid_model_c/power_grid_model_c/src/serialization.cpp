@@ -46,8 +46,7 @@ PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* /*unused*/, PGM_De
 }
 
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) {
-    call_with_catch(
-        handle, [deserializer] { deserializer->parse(); }, PGM_serialization_error);
+    call_with_catch(handle, [deserializer] { deserializer->parse(); }, PGM_serialization_error);
 }
 
 // false warning from clang-tidy

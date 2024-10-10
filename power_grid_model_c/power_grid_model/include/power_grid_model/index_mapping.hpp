@@ -58,9 +58,7 @@ inline SparseIndexMapping build_sparse_mapping(IdxVector const& idx_B_in_A, Idx 
 
     std::vector<SparseEntry> entries(n_A);
     std::ranges::transform(idx_B_in_A, boost::counting_range(Idx{0}, static_cast<Idx>(idx_B_in_A.size())),
-                           entries.begin(), [](Idx j_B, Idx i_A) {
-                               return SparseEntry{i_A, j_B};
-                           });
+                           entries.begin(), [](Idx j_B, Idx i_A) { return SparseEntry{i_A, j_B}; });
 
     SparseIndexMapping sparse_mapping;
     sparse_mapping.indptr.resize(n_B + 1);
@@ -97,9 +95,8 @@ inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx
     std::vector<DenseEntry> mapping_to_from;
     mapping_to_from.reserve(idx_B_in_A.size());
     std::ranges::transform(idx_B_in_A, boost::counting_range(Idx{0}, static_cast<Idx>(idx_B_in_A.size())),
-                           std::back_inserter(mapping_to_from), [](Idx value, Idx orig_idx) {
-                               return std::pair{value, orig_idx};
-                           });
+                           std::back_inserter(mapping_to_from),
+                           [](Idx value, Idx orig_idx) { return std::pair{value, orig_idx}; });
 
     std::ranges::sort(mapping_to_from);
 
