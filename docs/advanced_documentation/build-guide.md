@@ -46,8 +46,8 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
   * Version 12.x tested using the musllinux build with custom compiler
   * Version 13.x tested in CI
 * Clang >= 15.0
-  * Version 15.x tested in CI
-  * Version 15.x tested in CI with code quality checks
+  * Version 18.x tested in CI
+  * Version 18.x tested in CI with code quality checks
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
