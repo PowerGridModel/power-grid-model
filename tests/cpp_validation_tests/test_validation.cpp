@@ -35,15 +35,6 @@ class UnsupportedValidationCase : public PowerGridError {
           }()} {}
 };
 
-class UnsupportedPGM_CType : public PowerGridError {
-  public:
-    UnsupportedPGM_CType()
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              return "Unsupported PGM_Ctype"s;
-          }()} {}
-};
-
 class OptionalNotInitialized : public PowerGridError {
   public:
     OptionalNotInitialized(std::string const& object)
@@ -52,32 +43,6 @@ class OptionalNotInitialized : public PowerGridError {
               return "Optional "s + object + " object not initialized"s;
           }()} {}
 };
-
-inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
-template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
-    return is_nan(x.real()) || is_nan(x.imag());
-}
-inline bool is_nan(int32_t x) { return x == std::numeric_limits<int32_t>::min(); }
-inline bool is_nan(int8_t x) { return x == std::numeric_limits<int8_t>::min(); }
-template <typename T, std::size_t N> inline bool is_nan(std::array<T, N> const& array) {
-    return std::ranges::any_of(array, [](T const& element) { return is_nan(element); });
-}
-
-template <class Functor, class... Args>
-decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&... args) {
-    switch (type) {
-    case PGM_int32:
-        return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
-    case PGM_int8:
-        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
-    case PGM_double:
-        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
-    case PGM_double3:
-        return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
-    default:
-        throw UnsupportedPGM_CType();
-    }
-}
 
 using nlohmann::json;
 
@@ -184,7 +149,7 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
     sstr << std::setprecision(16);
     if constexpr (std::is_same_v<std::decay_t<T>, std::array<double, 3>>) {
         sstr << "(" << attribute_value[0] << ", " << attribute_value[1] << ", " << attribute_value[2] << ")";
-    } else if constexpr (std::is_same_v<std::decay_t<T>, int8_t>) {
+    } else if constexpr (std::is_same_v<std::decay_t<T>, IntS>) {
         sstr << std::to_string(attribute_value);
     } else {
         sstr << attribute_value;
@@ -358,7 +323,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                                                       attribute_name, dynamic_atol, rtol);
                     };
 
-                    pgm_type_func_selector(static_cast<PGM_CType>(attribute_type), callable_wrapper);
+                    pgm_type_func_selector(attribute_type, callable_wrapper);
                 }
             }
         }
