@@ -61,19 +61,17 @@ inline auto sparse_decode(IdxVector const& indptr) {
 
 template <typename T>
 concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {
-                                                                         typename T::iterator;
+    typename T::iterator;
 
-                                                                         { t.size() } -> std::same_as<Idx>;
+    { t.size() } -> std::same_as<Idx>;
 
-                                                                         { t.begin() } -> index_range_iterator;
-                                                                         { t.end() } -> index_range_iterator;
-                                                                         {
-                                                                             t.get_element_range(idx)
-                                                                             } -> random_access_iterable_like<Idx>;
+    { t.begin() } -> index_range_iterator;
+    { t.end() } -> index_range_iterator;
+    { t.get_element_range(idx) } -> random_access_iterable_like<Idx>;
 
-                                                                         { t.element_size() } -> std::same_as<Idx>;
-                                                                         { t.get_group(idx) } -> std::same_as<Idx>;
-                                                                     };
+    { t.element_size() } -> std::same_as<Idx>;
+    { t.get_group(idx) } -> std::same_as<Idx>;
+};
 } // namespace detail
 
 template <typename T>
