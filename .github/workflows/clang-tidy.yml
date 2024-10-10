@@ -26,11 +26,11 @@ on:
       target:
         type: choice
         description: The CMake target to run
-        default: power_grid_model_c
+        default: all power_grid_model_benchmark_cpp
         options:
           - all
-          - power_grid_model_c
           - all power_grid_model_benchmark_cpp
+          - power_grid_model_c
           - power_grid_model_unit_tests
           - power_grid_model_api_tests
           - power_grid_model_validation_tests
@@ -74,12 +74,12 @@ jobs:
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Set build target in case of push
-        if: github.event_name != 'workflow_dispatch' && github.event.event_name != 'workflow_call'
+        if: inputs.target == null
         run: |
           echo "TARGET=power_grid_model_api_tests" >> $GITHUB_ENV
 
       - name: Set build target in case of workflow dispatch
-        if: github.event_name == 'workflow_dispatch' || github.event.event_name == 'workflow_call'
+        if: inputs.target != null
         run: |
           echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
 

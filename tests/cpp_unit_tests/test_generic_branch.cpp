@@ -30,7 +30,7 @@ TEST_CASE("Test generic_branch") {
                                    .theta = 0.0,
                                    .sn = 30e6};
 
-    GenericBranch branch{input, u1, u2};
+    GenericBranch const branch{input, u1, u2};
     double const base_y = base_i_to * base_i_to / base_power_1p;
 
     DoubleComplex const y1_series = 1.0 / (input.r1 + 1.0i * input.x1) / base_y;
@@ -96,7 +96,7 @@ TEST_CASE("Test compare_generic_branch") {
                                         .theta = 0.0,
                                         .sn = 1e5};
 
-    GenericBranch gen_branch{genb_input, u1_rated, u2_rated};
+    GenericBranch const gen_branch{genb_input, u1_rated, u2_rated};
 
     double const theta{gen_branch.phase_shift()};
 
@@ -120,7 +120,7 @@ TEST_CASE("Test compare_generic_branch") {
         CHECK(cabs(param1.yft() - yft1) < numerical_tolerance);
     }
 
-    TransformerInput trans_input{
+    TransformerInput const trans_input{
         .id = 1,
         .from_node = 2,
         .to_node = 3,
@@ -159,10 +159,10 @@ TEST_CASE("Test compare_generic_branch") {
     double const k{(trans_input.u1 / trans_input.u2) / nominal_ratio};
     double const i0{trans_input.i0};
 
-    Transformer transformer(trans_input, u1_rated, u2_rated);
+    Transformer const transformer(trans_input, u1_rated, u2_rated);
 
     DoubleComplex const trafo_ratio = k * std::exp(1.0i * (transformer.phase_shift()));
-    double ratio_abs = std::abs(trafo_ratio);
+    double const ratio_abs = std::abs(trafo_ratio);
 
     // y_series:
     double const z_series_abs = uk * u2 * u2 / sn;
