@@ -7,13 +7,19 @@ from copy import copy
 import numpy as np
 import pytest
 
+from power_grid_model import (
+    ComponentAttributeFilterOptions,
+    ComponentType,
+    DatasetType,
+    PowerGridModel,
+    initialize_array,
+)
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
-from power_grid_model import ComponentAttributeFilterOptions, ComponentType, DatasetType, PowerGridModel, initialize_array
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.utils import get_dataset_scenario
 from power_grid_model.validation import assert_valid_input_data
 
-from .utils import compare_result, convert_python_to_numpy
+from .utils import compare_result
 
 """
 Testing network
@@ -65,7 +71,9 @@ def input_row():
 
 @pytest.fixture
 def input_col(input_row):
-    return compatibility_convert_row_columnar_dataset(input_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input)
+    return compatibility_convert_row_columnar_dataset(
+        input_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+    )
 
 
 @pytest.fixture(params=["input_row", "input_col"])
@@ -82,7 +90,7 @@ def sym_output():
     node["u_angle"] = 0.0
 
     return {ComponentType.node: node}
-    
+
 
 @pytest.fixture
 def update_batch_row():
@@ -102,13 +110,15 @@ def update_batch_row():
         ComponentType.sym_load: {
             "data": sym_load,
             "indptr": np.array([0, 1, 2]),
-        }
+        },
     }
 
 
 @pytest.fixture
 def update_batch_col(update_batch_row):
-    return compatibility_convert_row_columnar_dataset(update_batch_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update)
+    return compatibility_convert_row_columnar_dataset(
+        update_batch_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update
+    )
 
 
 @pytest.fixture(params=["update_batch_row", "update_batch_col"])
@@ -124,7 +134,9 @@ def sym_output_batch():
     node["u_pu"] = [[0.4], [0.7]]
     node["u_angle"] = [[0.0], [0.0]]
 
-    return { ComponentType.node: node, }
+    return {
+        ComponentType.node: node,
+    }
 
 
 @pytest.fixture
@@ -137,8 +149,10 @@ def test_simple_power_flow(model: PowerGridModel, sym_output):
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
-def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output_batch): # error if permanent update is not single scenario
-    model.update(update_data=update_batch) # single permanent model update
+def test_simple_permanent_update(
+    model: PowerGridModel, update_batch, sym_output_batch
+):  # error if permanent update is not single scenario
+    model.update(update_data=update_batch)  # single permanent model update
     result = model.calculate_power_flow()
     expected_result = get_dataset_scenario(sym_output_batch, 0)
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
@@ -150,7 +164,9 @@ def test_update_error(model: PowerGridModel):
     update_data = {ComponentType.sym_load: load_update}
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
-    update_data_col = compatibility_convert_row_columnar_dataset(update_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update)
+    update_data_col = compatibility_convert_row_columnar_dataset(
+        update_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update
+    )
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data_col)
 
