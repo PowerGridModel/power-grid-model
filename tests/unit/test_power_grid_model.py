@@ -7,8 +7,10 @@ from copy import copy
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, DatasetType, PowerGridModel, initialize_array
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model import ComponentAttributeFilterOptions, ComponentType, DatasetType, PowerGridModel, initialize_array
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
+from power_grid_model.utils import get_dataset_scenario
 from power_grid_model.validation import assert_valid_input_data
 
 from .utils import compare_result, convert_python_to_numpy
@@ -32,57 +34,113 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 """
 
 
-# test data
-INPUT = {
-    ComponentType.node: [{"id": 0, "u_rated": 100.0}],
-    ComponentType.source: [{"id": 1, "node": 0, "status": 1, "u_ref": 1.0, "sk": 1000.0, "rx_ratio": 0.0}],
-    ComponentType.sym_load: [{"id": 2, "node": 0, "status": 1, "type": 2, "p_specified": 0.0, "q_specified": 500.0}],
-}
-
-SYM_OUTPUT = {ComponentType.node: [{"id": 0, "u": 50.0, "u_pu": 0.5, "u_angle": 0.0}]}
-
-SYM_OUTPUT_BATCH = [
-    {ComponentType.node: [{"id": 0, "u": 40.0, "u_pu": 0.4, "u_angle": 0.0}]},
-    {ComponentType.node: [{"id": 0, "u": 70.0, "u_pu": 0.7, "u_angle": 0.0}]},
-]
-
-UPDATE_BATCH = [
-    {ComponentType.source: [{"id": 1, "u_ref": 0.5}], ComponentType.sym_load: [{"id": 2, "q_specified": 100.0}]},
-    {ComponentType.sym_load: [{"id": 2, "q_specified": 300.0}]},
-]
-
-
 @pytest.fixture
-def case_data():
+def input_row():
+    node = initialize_array(DatasetType.input, ComponentType.node, 1)
+    node["id"] = 0
+    node["u_rated"] = 100.0
+
+    source = initialize_array(DatasetType.input, ComponentType.source, 1)
+    source["id"] = 1
+    source["node"] = 0
+    source["status"] = 1
+    source["u_ref"] = 1.0
+    source["sk"] = 1000.0
+    source["rx_ratio"] = 0.0
+
+    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
+    sym_load["id"] = 2
+    sym_load["node"] = 0
+    sym_load["status"] = 1
+    sym_load["type"] = 2
+    sym_load["p_specified"] = 0.0
+    sym_load["q_specified"] = 500.0
+
     return {
-        "input": convert_python_to_numpy(INPUT, DatasetType.input),
-        "output": convert_python_to_numpy(SYM_OUTPUT, DatasetType.sym_output),
-        "update_batch": convert_python_to_numpy(UPDATE_BATCH, DatasetType.update),
-        "output_batch": convert_python_to_numpy(SYM_OUTPUT_BATCH, DatasetType.sym_output),
+        ComponentType.node: node,
+        ComponentType.source: source,
+        ComponentType.sym_load: sym_load,
     }
 
 
 @pytest.fixture
-def model(case_data):
-    return PowerGridModel(input_data=case_data["input"])
+def input_col(input_row):
+    return compatibility_convert_row_columnar_dataset(input_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input)
 
 
-def test_simple_power_flow(model: PowerGridModel, case_data):
-    result = model.calculate_power_flow()
-    compare_result(result, case_data["output"], rtol=0.0, atol=1e-8)
+@pytest.fixture(params=["input_row", "input_col"])
+def input(request):
+    return request.getfixturevalue(request.param)
 
 
-def test_simple_update(model: PowerGridModel, case_data):
-    update_batch = case_data["update_batch"]
-    source_indptr = update_batch[ComponentType.source]["indptr"]
-    source_update = update_batch[ComponentType.source]["data"]
-    update_data = {
-        ComponentType.source: source_update[source_indptr[0] : source_indptr[1]],
-        ComponentType.sym_load: update_batch[ComponentType.sym_load][0, :],
+@pytest.fixture
+def sym_output():
+    node = initialize_array(DatasetType.sym_output, ComponentType.node, 1)
+    node["id"] = 0
+    node["u"] = 50.0
+    node["u_pu"] = 0.5
+    node["u_angle"] = 0.0
+
+    return {ComponentType.node: node}
+    
+
+@pytest.fixture
+def update_batch_row():
+    source = initialize_array(DatasetType.update, ComponentType.source, 1)
+    source["id"] = 1
+    source["u_ref"] = 0.5
+
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, 2)
+    sym_load["id"] = [2, 2]
+    sym_load["q_specified"] = [100.0, 300.0]
+
+    return {
+        ComponentType.source: {
+            "data": source,
+            "indptr": np.array([0, 1, 1]),
+        },
+        ComponentType.sym_load: {
+            "data": sym_load,
+            "indptr": np.array([0, 1, 2]),
+        }
     }
-    model.update(update_data=update_data)
-    expected_result = {ComponentType.node: case_data["output_batch"][ComponentType.node][0, :]}
+
+
+@pytest.fixture
+def update_batch_col(update_batch_row):
+    return compatibility_convert_row_columnar_dataset(update_batch_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update)
+
+
+@pytest.fixture(params=["update_batch_row", "update_batch_col"])
+def update_batch(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture
+def sym_output_batch():
+    node = initialize_array(DatasetType.sym_output, ComponentType.node, (2, 1))
+    node["id"] = [[0], [0]]
+    node["u"] = [[40.0], [70.0]]
+    node["u_pu"] = [[0.4], [0.7]]
+    node["u_angle"] = [[0.0], [0.0]]
+
+    return { ComponentType.node: node, }
+
+
+@pytest.fixture
+def model(input):
+    return PowerGridModel(input)
+
+
+def test_simple_power_flow(model: PowerGridModel, sym_output):
     result = model.calculate_power_flow()
+    compare_result(result, sym_output, rtol=0.0, atol=1e-8)
+
+
+def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output_batch): # error if permanent update is not single scenario
+    model.update(update_data=update_batch) # single permanent model update
+    result = model.calculate_power_flow()
+    expected_result = get_dataset_scenario(sym_output_batch, 0)
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
 
 
@@ -92,12 +150,15 @@ def test_update_error(model: PowerGridModel):
     update_data = {ComponentType.sym_load: load_update}
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
+    update_data_col = compatibility_convert_row_columnar_dataset(update_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update)
+    with pytest.raises(PowerGridError, match="The id cannot be found:"):
+        model.update(update_data=update_data_col)
 
 
-def test_copy_model(model: PowerGridModel, case_data):
+def test_copy_model(model: PowerGridModel, sym_output):
     model_2 = copy(model)
     result = model_2.calculate_power_flow()
-    compare_result(result, case_data["output"], rtol=0.0, atol=1e-8)
+    compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
 def test_get_indexer(model: PowerGridModel):
@@ -107,15 +168,15 @@ def test_get_indexer(model: PowerGridModel):
     assert np.allclose(expected_indexer, indexer)
 
 
-def test_batch_power_flow(model: PowerGridModel, case_data):
-    result = model.calculate_power_flow(update_data=case_data["update_batch"])
-    compare_result(result, case_data["output_batch"], rtol=0.0, atol=1e-8)
+def test_batch_power_flow(model: PowerGridModel, update_batch, sym_output_batch):
+    result = model.calculate_power_flow(update_data=update_batch)
+    compare_result(result, sym_output_batch, rtol=0.0, atol=1e-8)
 
 
-def test_construction_error(case_data):
-    case_data["input"][ComponentType.sym_load]["id"] = 0
+def test_construction_error(input):
+    input[ComponentType.sym_load]["id"][0] = 0
     with pytest.raises(PowerGridError, match="Conflicting id detected:"):
-        PowerGridModel(case_data["input"])
+        PowerGridModel(input)
 
 
 def test_single_calculation_error(model: PowerGridModel):
@@ -129,31 +190,31 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-def test_batch_calculation_error(model: PowerGridModel, case_data):
+def test_batch_calculation_error(model: PowerGridModel, update_batch):
     # wrong id
-    case_data["update_batch"][ComponentType.sym_load]["id"][1, 0] = 5
+    update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
     # with error
     with pytest.raises(PowerGridBatchError) as e:
-        model.calculate_power_flow(update_data=case_data["update_batch"])
+        model.calculate_power_flow(update_data=update_batch)
     error = e.value
-    np.allclose(error.failed_scenarios, [1])
-    np.allclose(error.succeeded_scenarios, [0])
+    assert np.allclose(error.failed_scenarios, [1])
+    assert np.allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
 
 
-def test_batch_calculation_error_continue(model: PowerGridModel, case_data):
+def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, sym_output_batch):
     # wrong id
-    case_data["update_batch"][ComponentType.sym_load]["id"][1, 0] = 5
-    result = model.calculate_power_flow(update_data=case_data["update_batch"], continue_on_batch_error=True)
+    update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
+    result = model.calculate_power_flow(update_data=update_batch, continue_on_batch_error=True)
     # assert error
     error = model.batch_error
     assert error is not None
-    np.allclose(error.failed_scenarios, [1])
-    np.allclose(error.succeeded_scenarios, [0])
+    assert np.allclose(error.failed_scenarios, [1])
+    assert np.allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
     # assert value result for scenario 0
     result = {ComponentType.node: result[ComponentType.node][error.succeeded_scenarios, :]}
-    expected_result = {ComponentType.node: case_data["output_batch"][ComponentType.node][error.succeeded_scenarios, :]}
+    expected_result = {ComponentType.node: sym_output_batch[ComponentType.node][error.succeeded_scenarios, :]}
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
     # general error before the batch
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
