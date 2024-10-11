@@ -40,13 +40,13 @@ jobs:
 
   acquire-python-version-build-sdist:
     name: Build sdist and set version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Set PyPI Version
         run: |
@@ -69,7 +69,7 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         build-option: [ debug, release ]
@@ -87,11 +87,11 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gcc-12 g++-12 clang-15
-          sudo ln -s /usr/bin/clang-15 /usr/local/bin/clang
-          sudo ln -s /usr/bin/clang++-15 /usr/local/bin/clang++
-          sudo ln -s /usr/bin/gcc-12 /usr/local/bin/gcc
-          sudo ln -s /usr/bin/g++-12 /usr/local/bin/g++
+          sudo apt-get install -y ninja-build gcc-13 g++-13 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-13 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-13 /usr/local/bin/g++
 
       - name: Enable brew
         run: |
@@ -185,10 +185,10 @@ jobs:
         platform: [ linux-x64, linux-aarch64, macos, windows ]
         include:
           - platform: linux-x64
-            os: ubuntu-latest
+            os: ubuntu-24.04
             cibw_build: "*_x86_64"
           - platform: linux-aarch64
-            os: ubuntu-latest
+            os: ubuntu-24.04
             cibw_build: "*_aarch64"
           - platform: macos
             os: macos-14
@@ -209,7 +209,7 @@ jobs:
           path: .
 
       - name: Set up QEMU
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-24.04'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up XCode
@@ -268,7 +268,7 @@ jobs:
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
@@ -287,7 +287,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
           architecture: x64
 
       - uses: actions/download-artifact@v4
