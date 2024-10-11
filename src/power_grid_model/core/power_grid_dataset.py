@@ -288,8 +288,7 @@ class CMutableDataset:
                     warnings.warn(
                         f"Data type for attribute {attr} does not match schema. {VALIDATOR_MSG}", DeprecationWarning
                     )
-        else:
-            if sub_data.dtype != schema.dtype:
+        elif sub_data.dtype != schema.dtype:
                 warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
 
     def __del__(self):
