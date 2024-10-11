@@ -418,7 +418,7 @@ def compatibility_convert_row_columnar_dataset(
         )
 
         if is_sparse(data[comp_name]):
-            result_data[comp_name] = {"indptr": _extract_indptr(data), "data": converted_sub_data}
+            result_data[comp_name] = {"indptr": _extract_indptr(data[comp_name]), "data": converted_sub_data}
         else:
             result_data[comp_name] = converted_sub_data
     return result_data

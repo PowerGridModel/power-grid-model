@@ -103,7 +103,7 @@ def test_validate_batch_data(input_data, batch_data):
 
 
 def test_validate_batch_data_input_error(input_data, batch_data):
-    if is_columnar(input_data):
+    if is_columnar(input_data["node"]):
         input_data["node"]["id"][-1] = 123
         input_data["line"]["id"][-1] = 123
     else:
