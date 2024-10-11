@@ -289,7 +289,7 @@ class CMutableDataset:
                         f"Data type for attribute {attr} does not match schema. {VALIDATOR_MSG}", DeprecationWarning
                     )
         elif sub_data.dtype != schema.dtype:
-                warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
+            warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
 
     def __del__(self):
         pgc.destroy_dataset_mutable(self._mutable_dataset)

@@ -11,6 +11,7 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.PowerGridModel
    :show-inheritance:
 .. autofunction:: power_grid_model.initialize_array
+.. autoclass:: power_grid_model.power_grid_meta_data
 ```
 
 ## enum
