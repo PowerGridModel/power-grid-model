@@ -828,9 +828,9 @@ def row_sparse_data():
     transformer["id"] = 1
     transformer["tap_pos"] = 3
 
-    sym_gen = initialize_array(DatasetType.update, ComponentType.sym_gen, (2, 4))
-    sym_gen["id"] = [[5, 6, 7, 8], [5, 6, 7, 8]]
-    sym_gen["q_specified"] = [[1.1, 2.2, 3.3, 4.4], [4.4, 3.3, 2.2, 1.1]]
+    sym_gen = initialize_array(DatasetType.update, ComponentType.sym_gen, 8)
+    sym_gen["id"] = [5, 6, 7, 8, 5, 6, 7, 8]
+    sym_gen["q_specified"] = [1.1, 2.2, 3.3, 4.4, 4.4, 3.3, 2.2, 1.1]
 
     return {
         ComponentType.transformer: {
@@ -839,7 +839,7 @@ def row_sparse_data():
         },
         ComponentType.sym_gen: {
             "data": sym_gen,
-            "indptr": np.array([0, 1, 2]),
+            "indptr": np.array([0, 4, 8]),
         },
     }
 
@@ -851,6 +851,7 @@ def row_data(request):
 
 def compare_row_data(actual_row_data, desired_row_data):
     assert actual_row_data.keys() == desired_row_data.keys()
+
     for comp_name in actual_row_data.keys():
         actual_component = actual_row_data[comp_name]
         desired_component = desired_row_data[comp_name]
@@ -863,10 +864,12 @@ def compare_row_data(actual_row_data, desired_row_data):
         assert actual_component.shape == desired_component.shape
 
         for field in actual_component.dtype.names:
-            assert np.all(
-                (np.isnan(actual_component[field]) & np.isnan(desired_component[field]))
-                | (actual_component[field] == desired_component[field])
-            )
+            actual_attr = actual_component[field]
+            desired_attr = desired_component[field]
+            nan_a = np.isnan(actual_attr)
+            nan_b = np.isnan(desired_attr)
+            np.testing.assert_array_equal(nan_a, nan_b)
+            np.testing.assert_allclose(actual_attr[~nan_a], desired_attr[~nan_b], rtol=1e-15)
 
 
 def test_dense_row_data_to_from_col_data(row_data):
