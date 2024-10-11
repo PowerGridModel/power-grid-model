@@ -6,6 +6,7 @@
 Power grid model raw dataset handler
 """
 
+import warnings
 from typing import Any, Mapping, Optional
 
 from power_grid_model._utils import (
@@ -277,13 +278,19 @@ class CMutableDataset:
         sub_data = _extract_data_from_component_data(data)
         if is_columnar(data):
             for attr, array in sub_data.items():
-                if schema.dtype.names is None or attr not in schema.dtype.names:
-                    raise Warning(f"Attribute {attr} is not in schema. {VALIDATOR_MSG}")
-                if array.dtype != schema.dtype[attr]:
-                    raise Warning(f"Data type for attribute {attr} does not match schema. {VALIDATOR_MSG}")
+                if (
+                    schema.dtype.names is None
+                    or attr not in schema.dtype.names
+                    or (schema.dtype[attr].shape == (3,) and array.shape[-1] != 3)
+                ):
+                    raise TypeError("Given data has a different schema than supported.")
+                if array.dtype.base != schema.dtype[attr].base:
+                    warnings.warn(
+                        f"Data type for attribute {attr} does not match schema. {VALIDATOR_MSG}", DeprecationWarning
+                    )
         else:
             if sub_data.dtype != schema.dtype:
-                raise Warning("Data type does not match schema. {VALIDATOR_MSG}")
+                warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
 
     def __del__(self):
         pgc.destroy_dataset_mutable(self._mutable_dataset)
