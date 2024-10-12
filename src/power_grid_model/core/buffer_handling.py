@@ -6,6 +6,7 @@
 Power grid model buffer handler
 """
 
+import warnings
 from dataclasses import dataclass
 from typing import cast
 
@@ -83,6 +84,8 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
     Returns:
         a raw view on the data set.
     """
+    if data.dtype != dtype:
+        warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
 
@@ -115,6 +118,8 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
     Returns:
         a raw view on the data set.
     """
+    if schema.dtype[attribute].shape == (3,) and data.shape[-1] != 3:
+        raise TypeError("Given data has a different schema than supported.")
     return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
 
 

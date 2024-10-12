@@ -6,16 +6,9 @@
 Power grid model raw dataset handler
 """
 
-import warnings
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import (
-    _extract_data_from_component_data,
-    get_dataset_type,
-    is_columnar,
-    is_nan_or_equivalent,
-    process_data_filter,
-)
+from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, process_data_filter
 from power_grid_model.core.buffer_handling import (
     BufferProperties,
     CAttributeBuffer,
@@ -238,7 +231,6 @@ class CMutableDataset:
             return
 
         self._validate_properties(data, self._schema[component])
-        self._validate_dtypes_compatibility(data, self._schema[component])
         c_buffer = get_buffer_view(data, self._schema[component], self._is_batch, self._batch_size)
         self._buffer_views.append(c_buffer)
         self._register_buffer(component, c_buffer)
@@ -273,23 +265,6 @@ class CMutableDataset:
             )
         if properties.batch_size != self._batch_size:
             raise ValueError(f"Dataset must have a consistent batch size across all components. {VALIDATOR_MSG}")
-
-    def _validate_dtypes_compatibility(self, data: ComponentData, schema: ComponentMetaData):
-        sub_data = _extract_data_from_component_data(data)
-        if is_columnar(data):
-            for attr, array in sub_data.items():
-                if (
-                    schema.dtype.names is None
-                    or attr not in schema.dtype.names
-                    or (schema.dtype[attr].shape == (3,) and array.shape[-1] != 3)
-                ):
-                    raise TypeError("Given data has a different schema than supported.")
-                if array.dtype.base != schema.dtype[attr].base:
-                    warnings.warn(
-                        f"Data type for attribute {attr} does not match schema. {VALIDATOR_MSG}", DeprecationWarning
-                    )
-        elif sub_data.dtype != schema.dtype:
-            warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
 
     def __del__(self):
         pgc.destroy_dataset_mutable(self._mutable_dataset)
