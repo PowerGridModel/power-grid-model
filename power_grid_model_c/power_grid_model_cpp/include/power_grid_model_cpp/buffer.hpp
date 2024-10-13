@@ -25,7 +25,7 @@ class Buffer {
     void set_nan() { set_nan(0, size_); }
     void set_nan(Idx buffer_offset) { set_nan(buffer_offset, 1); }
     void set_nan(Idx buffer_offset, Idx size) {
-        handle_.call_with(PGM_buffer_set_nan, component_, buffer_.get(), buffer_offset, size);
+        handle_.call_with(PGM_buffer_set_nan, component_, get(), buffer_offset, size);
     }
 
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx src_stride) {
@@ -36,7 +36,7 @@ class Buffer {
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx size,
                    Idx src_stride) { // NOSONAR: no-const
-        handle_.call_with(PGM_buffer_set_value, attribute, buffer_.get(), src_ptr, buffer_offset, size, src_stride);
+        handle_.call_with(PGM_buffer_set_value, attribute, get(), src_ptr, buffer_offset, size, src_stride);
     }
 
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx dest_stride) const {
@@ -47,7 +47,7 @@ class Buffer {
     }
     void get_value(MetaAttribute const* attribute, RawDataPtr dest_ptr, Idx buffer_offset, Idx size,
                    Idx dest_stride) const {
-        handle_.call_with(PGM_buffer_get_value, attribute, buffer_.get(), dest_ptr, buffer_offset, size, dest_stride);
+        handle_.call_with(PGM_buffer_get_value, attribute, get(), dest_ptr, buffer_offset, size, dest_stride);
     }
 
   private:
