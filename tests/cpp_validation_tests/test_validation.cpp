@@ -574,7 +574,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create and run model
         auto const& options = get_options(param);
-        Model const model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.const_dataset.value()};
         model.calculate(options, result.dataset.value());
 
         // check results
@@ -592,7 +592,7 @@ void validate_batch_case(CaseParam const& param) {
             create_result_dataset(validation_case.output_batch.value(), output_prefix, Idx{1}, batch_size);
 
         // create model
-        Model const model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.const_dataset.value()};
 
         // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
