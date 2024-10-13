@@ -66,7 +66,7 @@ class DatasetWritable {
         handle_.call_with(PGM_dataset_writable_set_buffer, dataset_, component.c_str(), indptr, data);
     }
 
-    void set_buffer(std::string const& component, Idx* indptr, Buffer const& data) {
+    void set_buffer(std::string const& component, Idx* indptr, Buffer& data) {
         handle_.call_with(PGM_dataset_writable_set_buffer, dataset_, component.c_str(), indptr, data.get());
     }
 
@@ -75,7 +75,7 @@ class DatasetWritable {
                           data);
     }
 
-    void set_attribute_buffer(std::string const& component, std::string const& attribute, Buffer const& data) {
+    void set_attribute_buffer(std::string const& component, std::string const& attribute, Buffer& data) {
         handle_.call_with(PGM_dataset_writable_set_attribute_buffer, dataset_, component.c_str(), attribute.c_str(),
                           data.get());
     }
@@ -101,7 +101,7 @@ class DatasetMutable {
     }
 
     void add_buffer(std::string const& component, Idx elements_per_scenario, Idx total_elements, Idx const* indptr,
-                    Buffer const& data) { // NOSONAR: no-const
+                    Buffer& data) { // NOSONAR: no-const
         handle_.call_with(PGM_dataset_mutable_add_buffer, dataset_.get(), component.c_str(), elements_per_scenario,
                           total_elements, indptr, data.get());
     }
@@ -113,7 +113,7 @@ class DatasetMutable {
     }
 
     void add_attribute_buffer(std::string const& component, std::string const& attribute,
-                              Buffer const& data) { // NOSONAR: no-const
+                              Buffer& data) { // NOSONAR: no-const
         handle_.call_with(PGM_dataset_mutable_add_attribute_buffer, dataset_.get(), component.c_str(),
                           attribute.c_str(), data.get());
     }
