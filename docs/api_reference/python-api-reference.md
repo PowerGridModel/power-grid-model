@@ -12,11 +12,12 @@ This is the Python API reference for the `power-grid-model` library
 .. autoclass:: power_grid_model.PowerGridModel
    :show-inheritance:
 .. autofunction:: power_grid_model.initialize_array
-.. autodata:: power_grid_model.power_grid_meta_data
 .. autoclass:: power_grid_model.DatasetType
 .. autoclass:: power_grid_model.ComponentType
+.. autodata:: power_grid_model.power_grid_meta_data
+   :no-value:
 .. autodata:: power_grid_model.ComponentAttributeMapping
-   :annotation: ComponentAttributeMapping
+   :no-value:
 ```
 
 ## enum
@@ -33,6 +34,10 @@ This is the Python API reference for the `power-grid-model` library
 .. autoclass:: power_grid_model.data_types.Dataset
 .. autoclass:: power_grid_model.data_types.SingleDataset
 .. autoclass:: power_grid_model.data_types.BatchDataset
+.. autoclass:: power_grid_model.data_types.ComponentData
+.. autoclass:: power_grid_model.data_types.SingleComponentData
+.. autoclass:: power_grid_model.data_types.BatchComponentData
+.. autoclass:: power_grid_model.data_types.DataArray
 .. autoclass:: power_grid_model.data_types.DataArray
 .. autoclass:: power_grid_model.data_types.SingleArray
 .. autoclass:: power_grid_model.data_types.BatchArray
