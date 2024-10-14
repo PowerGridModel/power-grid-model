@@ -431,7 +431,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (it != all_comp_count_in_base.end()) {
                 comp.elements_ps_in_base = it->second;
             }
-            auto const aaa = comp.name;
+            validate_update_data_independence(comp);
         }
 
         return get_sequence_idx_map(update_data, 0, update_components_independence);
@@ -774,17 +774,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return std::ranges::any_of(vec, [](bool const& obj) { return obj == true; }) &&
                        std::ranges::any_of(vec, [](bool const& obj) { return obj == false; });
             });
-            auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
-            result.elements_ps_in_update = elements_per_scenario;
-            result.uniform = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
-                return static_cast<Idx>(span.size()) == elements_per_scenario;
-            });
-            if (!result.uniform) {
-                return;
-            }
-            if (result.elements_ps_in_update == 0) {
-                return;
-            }
+            result.uniform =
+                std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
+                    return static_cast<Idx>(span.size()) == n_elements;
+                });
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
             auto const first_span = all_spans[0];
@@ -833,6 +826,35 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const all_comp_update_independence = check_components_independence(update_data);
         return std::ranges::all_of(all_comp_update_independence,
                                    [](auto const& comp) { return !comp.has_id || comp.ids_match; });
+    }
+
+    void validate_update_data_independence(UpdateCompProperties const& comp) const {
+        if (comp.elements_ps_in_base < comp.elements_ps_in_update) {
+            throw DatasetError("Update data has more elements per scenario than base data for component " + comp.name +
+                               "!");
+        }
+        if (comp.ids_part_na) {
+            throw DatasetError("Part of the IDs are not valid for component " + comp.name + " in update data!");
+        }
+        if (!comp.uniform) {
+            if (comp.is_columnar && !comp.has_id) {
+                throw DatasetError("Columnar input data without IDs for component " + comp.name + " is not uniform!");
+            }
+            if (!comp.is_columnar && comp.ids_all_na) {
+                throw DatasetError("Row based input data with all NA IDs for component " + comp.name +
+                                   " is not uniform!");
+            }
+        }
+        if (comp.elements_ps_in_base != comp.elements_ps_in_update) {
+            if (comp.is_columnar && !comp.has_id) {
+                throw DatasetError("Columnar input data for component " + comp.name +
+                                   " has different number of elements per scenario in update and base data!");
+            }
+            if (!comp.is_columnar && comp.uniform && (comp.has_id && comp.ids_all_na)) {
+                throw DatasetError("Row based input data for component " + comp.name +
+                                   " has different number of elements per scenario in update and base data!");
+            }
+        }
     }
 
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {

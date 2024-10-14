@@ -33,14 +33,14 @@ template <component_c Component, class ComponentContainer,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                   ForwardIterator end, OutputIterator destination, Idx n_comp) {
+                                   ForwardIterator end, OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
-    auto idx_getter_func = [&state, n_comp](UpdateType const& update, auto index) {
-        if (n_comp == na_Idx) {
+    auto idx_getter_func = [&state, n_comp_elements](UpdateType const& update, auto index) {
+        if (n_comp_elements == na_Idx) {
             return get_component_idx_by_id<Component>(state, update.id);
         } else {
-            return get_component_idx_by_id<Component>(state, index % n_comp);
+            return get_component_idx_by_id<Component>(state, index % n_comp_elements);
         }
     };
 
@@ -52,10 +52,10 @@ template <component_c Component, class ComponentContainer,
           forward_iterator_like<typename Component::UpdateType> ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                                 ForwardIterator end, Idx n_comp = na_Idx) {
+                                                 ForwardIterator end, Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::distance(begin, end));
-    get_component_sequence<Component>(state, begin, end, std::back_inserter(result), n_comp);
+    get_component_sequence<Component>(state, begin, end, std::back_inserter(result), n_comp_elements);
     return result;
 }
 
