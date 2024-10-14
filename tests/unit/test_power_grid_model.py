@@ -181,7 +181,7 @@ def test_get_indexer(model: PowerGridModel):
     ids = np.array([2, 2])
     expected_indexer = np.array([0, 0])
     indexer = model.get_indexer(ComponentType.sym_load, ids)
-    assert np.allclose(expected_indexer, indexer)
+    np.testing.assert_allclose(expected_indexer, indexer)
 
 
 def test_batch_power_flow(model: PowerGridModel, update_batch, sym_output_batch):
@@ -213,8 +213,8 @@ def test_batch_calculation_error(model: PowerGridModel, update_batch):
     with pytest.raises(PowerGridBatchError) as e:
         model.calculate_power_flow(update_data=update_batch)
     error = e.value
-    assert np.allclose(error.failed_scenarios, [1])
-    assert np.allclose(error.succeeded_scenarios, [0])
+    np.testing.assert_allclose(error.failed_scenarios, [1])
+    np.testing.assert_allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
 
 
@@ -225,8 +225,8 @@ def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, s
     # assert error
     error = model.batch_error
     assert error is not None
-    assert np.allclose(error.failed_scenarios, [1])
-    assert np.allclose(error.succeeded_scenarios, [0])
+    np.testing.assert_allclose(error.failed_scenarios, [1])
+    np.testing.assert_allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
     # assert value result for scenario 0
     result = {ComponentType.node: result[ComponentType.node][error.succeeded_scenarios, :]}
