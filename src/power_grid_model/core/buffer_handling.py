@@ -119,7 +119,7 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
         a raw view on the data set.
     """
     if schema.dtype[attribute].shape == (3,) and data.shape[-1] != 3:
-        raise TypeError("Given data has a different schema than supported.")
+        raise ValueError("Given data has a different schema than supported.")
     return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
 
 
