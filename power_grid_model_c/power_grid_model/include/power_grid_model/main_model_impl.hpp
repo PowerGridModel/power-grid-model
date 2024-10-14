@@ -419,7 +419,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // (only applicable for independent update dataset)
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
         auto update_components_independence = check_components_independence(update_data);
-        assert(std::ranges::all_of(update_components_independence, [](auto const& comp) { return comp.ids_match; }));
+        assert(std::ranges::all_of(update_components_independence, [](auto const& comp) { return !comp.has_id || comp.ids_match; }));
         return get_sequence_idx_map(update_data, 0, update_components_independence);
     }
 
@@ -735,7 +735,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static UpdateCompIndependence check_components_independence(ConstDataset const& update_data) {
         // update_data.get_component_info("node").elements_per_scenario;
-        //  TODO: is_columnar might not be needed
         auto check_ids_na = [](auto const& all_spans) {
             std::vector<std::vector<bool>> ids_na{};
             for (const auto& span : all_spans) {
@@ -784,6 +783,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto const check_each_component = [&update_data, &process_buffer_span]<typename CT>() -> UpdateCompProperties {
             // get span of all the update data
+            auto const n_comp = update_data.n_components();
+            assert(n_comp == n_comp);
             UpdateCompProperties result;
             result.name = CT::name;
             result.is_columnar = update_data.is_columnar(result.name);
