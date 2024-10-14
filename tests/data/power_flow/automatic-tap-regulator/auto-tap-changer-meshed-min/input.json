@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 0, "u_rated": 10000},
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000},
+      {"id": 3, "u_rated": 10000},
+      {"id": 4, "u_rated": 10000},
+      {"id": 5, "u_rated": 10000},
+      {"id": 6, "u_rated": 10000},
+      {"id": 7, "u_rated": 400},
+      {"id": 8, "u_rated": 400},
+      {"id": 9, "u_rated": 400},
+      {"id": 10, "u_rated": 400}
+    ],
+    "line": [
+      {"id": 11, "from_node": 0, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.005, "x1": 0.5, "c1": 0, "tan1": 0},
+      {"id": 12, "from_node": 0, "to_node": 2, "from_status": 1, "to_status": 1, "r1": 0.1, "x1": 0.6, "c1": 0, "tan1": 0},
+      {"id": 13, "from_node": 3, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 0.005, "x1": 0.5, "c1": 0, "tan1": 0},
+      {"id": 14, "from_node": 4, "to_node": 6, "from_status": 1, "to_status": 1, "r1": 0.003, "x1": 0.3, "c1": 0, "tan1": 0},
+      {"id": 15, "from_node": 7, "to_node": 9, "from_status": 1, "to_status": 1, "r1": 0.005, "x1": 0.5, "c1": 0, "tan1": 0},
+      {"id": 16, "from_node": 8, "to_node": 9, "from_status": 1, "to_status": 1, "r1": 0.005, "x1": 0.6, "c1": 0, "tan1": 0}
+    ],
+    "transformer": [
+      {"id": 17, "from_node": 1, "to_node": 3, "from_status": 1, "to_status": 1, "u1": 10000, "u2": 10000, "sn": 300000, "uk": 0.0005, "pk": 1000, "i0": 0, "p0": 0, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -10, "tap_max": 10, "tap_size": 100},
+      {"id": 18, "from_node": 2, "to_node": 4, "from_status": 1, "to_status": 1, "u1": 10000, "u2": 10000, "sn": 300000, "uk": 0.0005, "pk": 1000, "i0": 0, "p0": 0, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -10, "tap_max": 10, "tap_size": 100},
+      {"id": 19, "from_node": 5, "to_node": 7, "from_status": 1, "to_status": 1, "u1": 10000, "u2": 400, "sn": 300000, "uk": 0.0005, "pk": 1000, "i0": 0, "p0": 0, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -10, "tap_max": 10, "tap_size": 20},
+      {"id": 20, "from_node": 6, "to_node": 8, "from_status": 1, "to_status": 1, "u1": 10000, "u2": 400, "sn": 300000, "uk": 0.0005, "pk": 1000, "i0": 0, "p0": 0, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -10, "tap_max": 10, "tap_size": 20},
+      {"id": 21, "from_node": 9, "to_node": 10, "from_status": 1, "to_status": 1, "u1": 400, "u2": 400, "sn": 300000, "uk": 0.0005, "pk": 1000, "i0": 0, "p0": 0, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -10, "tap_max": 10, "tap_size": 20}
+    ],
+    "source": [
+      {"id": 22, "node": 0, "status": 1, "u_ref": 1}
+    ],
+    "sym_load": [
+      {"id": 23, "node": 0, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 24, "node": 1, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 25, "node": 2, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 26, "node": 3, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 27, "node": 4, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 28, "node": 5, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 29, "node": 6, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 30, "node": 7, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 31, "node": 8, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 32, "node": 9, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000},
+      {"id": 33, "node": 10, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 10000}
+    ],
+    "transformer_tap_regulator": [
+      {"id": 34, "regulated_object": 17, "status": 1, "control_side": 1, "u_set": 10000, "u_band": 300},
+      {"id": 35, "regulated_object": 18, "status": 1, "control_side": 1, "u_set": 10000, "u_band": 300},
+      {"id": 36, "regulated_object": 19, "status": 1, "control_side": 1, "u_set": 400, "u_band": 60},
+      {"id": 37, "regulated_object": 20, "status": 1, "control_side": 1, "u_set": 400, "u_band": 60},
+      {"id": 38, "regulated_object": 21, "status": 1, "control_side": 1, "u_set": 400, "u_band": 60}
+    ]
+  }
+}
