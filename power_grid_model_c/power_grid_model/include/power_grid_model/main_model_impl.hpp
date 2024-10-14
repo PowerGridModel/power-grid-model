@@ -400,12 +400,31 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return get_sequence(it_begin, it_end);
         };
 
-        auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx,
-                                       &process_buffer_span]<typename CT>() -> std::vector<Idx2D> {
-            auto const get_sequence = [&state](auto const& it_begin, auto const& it_end) {
-                return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+        auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx, &process_buffer_span,
+                                       &comp_indenpendence]<typename CT>() -> std::vector<Idx2D> {
+            auto const get_n_comp_elements = [&comp_indenpendence]() {
+                if (!comp_indenpendence.empty()) {
+                    auto const comp_idx = std::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
+                                                       [](auto const& comp) { return comp.name == CT::name; });
+                    if (comp_idx == comp_indenpendence.end()) {
+                        return na_Idx;
+                    }
+                    auto const& comp = *comp_idx;
+                    if (comp.is_columnar && (!comp.has_id || comp.ids_all_na)) {
+                        return comp.elements_ps_in_update;
+                    }
+                    if (!comp.is_columnar && (!comp.has_id && comp.ids_all_na)) {
+                        return comp.elements_ps_in_update;
+                    }
+                }
+                return na_Idx;
             };
 
+            Idx n_comp_elements = get_n_comp_elements();
+
+            auto const get_sequence = [&state, &n_comp_elements](auto const& it_begin, auto const& it_end) {
+                return main_core::get_component_sequence<CT>(state, it_begin, it_end, n_comp_elements);
+            };
             if (update_data.is_columnar(CT::name)) {
                 auto const buffer_span =
                     update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);

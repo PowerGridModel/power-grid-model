@@ -40,7 +40,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
         if (n_comp_elements == na_Idx) {
             return get_component_idx_by_id<Component>(state, update.id);
         } else {
-            return get_component_idx_by_id<Component>(state, index % n_comp_elements);
+            return Idx2D{get_component_group_idx<Component>(state), index % n_comp_elements};
         }
     };
 
