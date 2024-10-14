@@ -4,13 +4,19 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-# power_grid_model
+# power_grid_model (Python API)
 
+This is the Python API reference for the `power-grid-model` library
 
  ```{eval-rst}
 .. autoclass:: power_grid_model.PowerGridModel
    :show-inheritance:
 .. autofunction:: power_grid_model.initialize_array
+.. autodata:: power_grid_model.power_grid_meta_data
+.. autoclass:: power_grid_model.DatasetType
+.. autoclass:: power_grid_model.ComponentType
+.. autodata:: power_grid_model.ComponentAttributeMapping
+   :annotation: ComponentAttributeMapping
 ```
 
 ## enum
@@ -32,10 +38,6 @@ SPDX-License-Identifier: MPL-2.0
 .. autoclass:: power_grid_model.data_types.BatchArray
 .. autoclass:: power_grid_model.data_types.DenseBatchArray
 .. autoclass:: power_grid_model.data_types.SparseBatchArray
-.. autoclass:: power_grid_model.dataset_definitions.DatasetType
-.. autoclass:: power_grid_model.dataset_definitions.ComponentType
-.. autodata:: power_grid_model.typing.ComponentAttributeMapping
-   :annotation: ComponentAttributeMapping
 ```
 
 ## error types
@@ -54,7 +56,7 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.validation.errors_to_string
 ```
 
-### errors
+### validation errors
 
 ```{eval-rst}
 .. autoclass:: power_grid_model.validation.errors.ValidationError
@@ -75,6 +77,6 @@ SPDX-License-Identifier: MPL-2.0
 .. autofunction:: power_grid_model.utils.msgpack_serialize_to_file
 .. autofunction:: power_grid_model.utils.import_json_data
 .. autofunction:: power_grid_model.utils.export_json_data
-.. autofunction:: power_grid_model._utils.get_and_verify_batch_sizes
-.. autofunction:: power_grid_model._utils.get_batch_size
+.. autofunction:: power_grid_model.utils.get_and_verify_batch_sizes
+.. autofunction:: power_grid_model.utils.get_batch_size
 ```
