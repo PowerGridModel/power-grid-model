@@ -15,9 +15,10 @@ This is the Python API reference for the `power-grid-model` library
 .. autoclass:: power_grid_model.DatasetType
 .. autoclass:: power_grid_model.ComponentType
 .. autodata:: power_grid_model.power_grid_meta_data
-   :no-value:
+   :no-index:
+   :annotation: power_grid_model.core.power_grid_meta.power_grid_meta_data
 .. autodata:: power_grid_model.ComponentAttributeMapping
-   :no-value:
+   :annotation: power_grid_model.typing.ComponentAttributeMapping
 ```
 
 ## enum
@@ -38,9 +39,11 @@ This is the Python API reference for the `power-grid-model` library
 .. autoclass:: power_grid_model.data_types.SingleComponentData
 .. autoclass:: power_grid_model.data_types.BatchComponentData
 .. autoclass:: power_grid_model.data_types.DataArray
-.. autoclass:: power_grid_model.data_types.DataArray
+.. autoclass:: power_grid_model.data_types.ColumnarData
 .. autoclass:: power_grid_model.data_types.SingleArray
+.. autoclass:: power_grid_model.data_types.SingleColumnarData
 .. autoclass:: power_grid_model.data_types.BatchArray
+.. autoclass:: power_grid_model.data_types.BatchColumnarData
 .. autoclass:: power_grid_model.data_types.DenseBatchArray
 .. autoclass:: power_grid_model.data_types.SparseBatchArray
 ```
