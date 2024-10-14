@@ -8,17 +8,17 @@ SPDX-License-Identifier: MPL-2.0
 
 This is the Python API reference for the `power-grid-model` library
 
- ```{eval-rst}
-.. autoclass:: power_grid_model.PowerGridModel
+```{eval-rst}
+.. py:module:: power_grid_model
+
+.. autoclass:: PowerGridModel
    :show-inheritance:
-.. autofunction:: power_grid_model.initialize_array
-.. autoclass:: power_grid_model.DatasetType
-.. autoclass:: power_grid_model.ComponentType
-.. autodata:: power_grid_model.power_grid_meta_data
-   :no-index:
-   :annotation: power_grid_model.core.power_grid_meta.power_grid_meta_data
-.. autodata:: power_grid_model.ComponentAttributeMapping
-   :annotation: power_grid_model.typing.ComponentAttributeMapping
+.. autofunction:: initialize_array
+
+.. py:data:: power_grid_meta_data
+   :type: typing.PowerGridMetaData
+
+   The data types for all dataset types and components used by the Power Grid Model.
 ```
 
 ## enum
@@ -32,26 +32,35 @@ This is the Python API reference for the `power-grid-model` library
 ## data types
 
 ```{eval-rst}
-.. autoclass:: power_grid_model.data_types.Dataset
-.. autoclass:: power_grid_model.data_types.SingleDataset
-.. autoclass:: power_grid_model.data_types.BatchDataset
-.. autoclass:: power_grid_model.data_types.ComponentData
-.. autoclass:: power_grid_model.data_types.SingleComponentData
-.. autoclass:: power_grid_model.data_types.BatchComponentData
-.. autoclass:: power_grid_model.data_types.DataArray
-.. autoclass:: power_grid_model.data_types.ColumnarData
-.. autoclass:: power_grid_model.data_types.SingleArray
-.. autoclass:: power_grid_model.data_types.SingleColumnarData
-.. autoclass:: power_grid_model.data_types.BatchArray
-.. autoclass:: power_grid_model.data_types.BatchColumnarData
-.. autoclass:: power_grid_model.data_types.DenseBatchArray
-.. autoclass:: power_grid_model.data_types.SparseBatchArray
+.. automodule:: power_grid_model.data_types
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: BatchList,NominalValue,RealValue,AsymValue,AttributeValue,Component,ComponentList,SinglePythonDataset,BatchPythonDataset,PythonDataset
 ```
 
 ## error types
 
 ```{eval-rst}
 .. automodule:: power_grid_model.errors
+```
+
+## typing
+
+Type hints for the power-grid-model library.
+
+This includes all miscellaneous type hints not under dataset or categories.
+
+```{eval-rst}
+.. py:module:: power_grid_model.typing
+.. autoclass:: power_grid_model.typing.DatasetType
+.. autoclass:: power_grid_model.typing.DatasetTypeVar
+.. autoclass:: power_grid_model.typing.ComponentType
+.. autoclass:: power_grid_model.typing.ComponentTypeVar
+.. autoclass:: power_grid_model.typing.ComponentMetaData
+.. autoclass:: power_grid_model.typing.DatasetMetaData
+.. autoclass:: power_grid_model.typing.PowerGridMetaData
+.. autodata:: power_grid_model.typing.ComponentAttributeMapping
+   :annotation: ComponentAttributeMapping
 ```
 
 ## validation
@@ -75,6 +84,8 @@ This is the Python API reference for the `power-grid-model` library
 ```{eval-rst}
 .. autofunction:: power_grid_model.utils.get_dataset_type
 .. autofunction:: power_grid_model.utils.get_dataset_scenario
+.. autofunction:: power_grid_model.utils.get_dataset_batch_size
+.. autofunction:: power_grid_model.utils.get_component_batch_size
 .. autofunction:: power_grid_model.utils.json_deserialize
 .. autofunction:: power_grid_model.utils.json_serialize
 .. autofunction:: power_grid_model.utils.msgpack_deserialize
@@ -85,6 +96,5 @@ This is the Python API reference for the `power-grid-model` library
 .. autofunction:: power_grid_model.utils.msgpack_serialize_to_file
 .. autofunction:: power_grid_model.utils.import_json_data
 .. autofunction:: power_grid_model.utils.export_json_data
-.. autofunction:: power_grid_model.utils.get_and_verify_batch_sizes
-.. autofunction:: power_grid_model.utils.get_batch_size
+.. autofunction:: power_grid_model.utils.self_test
 ```
