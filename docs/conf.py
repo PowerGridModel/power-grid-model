@@ -61,7 +61,7 @@ exclude_patterns = [
 # label references for depth of headers: label name in anchor slug structure
 myst_heading_anchors = 4
 # execute jupter notebooks output before building webpage
-jupyter_execute_notebooks = "off"
+nb_execution_mode = "off"
 # Extentions in myst
 myst_enable_extensions = [
     "dollarmath",
