@@ -39,27 +39,48 @@ graph TD
     SingleColumn
     BatchColumn
     end
+
+    click Dataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.Dataset"
+    click SingleDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleDataset"
+    click BatchDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchDataset"
+
+    click ComponentData href "../api_reference/python-api-reference.html#power_grid_model.data_types.ComponentData"
+    click DataArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.DataArray"
+    click ColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.ColumnarData"
+    click SingleArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleArray"
+    click BatchArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchArray"
+    click DenseBatchArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.DenseBatchArray"
+    click SparseBatchArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.SparseBatchArray"
+    click SingleColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleColumnarData"
+    click BatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumnarData"
+    click DenseColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.DenseColumnarData"
+    click SparseColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.SparseColumnarData"
+
+    click Indexpointer href "../api_reference/python-api-reference.html#power_grid_model.data_types.Indexpointer"
+    click SingleColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleColumn"
+    click BatchColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumn"
+
 ```
 
-- **Dataset:** Either a single or a batch dataset. it is a dictionary with keys as the component types (eg. `line`, `node`, etc) and values as **ComponnentData**
-  - **SingleDataset:** A data type storing input data (i.e. all elements of all components) for a single scenario.
-  - **BatchDataset:** A data type storing update and or output data for one or more scenarios. A batch dataset can contain sparse or dense data, depending on the component.
+- **{py:class}`Dataset <power_grid_model.data_types.Dataset>`:** Either a single or a batch dataset. it is a dictionary with keys as the component types (eg. `line`, `node`, etc) and values as **ComponentData**
+  - **{py:class}`SingleDataset <power_grid_model.data_types.SingleDataset>`:** A data type storing input data (i.e. all elements of all components) for a single scenario.
+  - **{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`:** A data type storing update and or output data for one or more scenarios. A batch dataset can contain sparse or dense data, depending on the component.
 
-- **ComponentData** The data corresponding to the component.
-  - **DataArray** A data array can be a single or a batch array. It is a numpy structured array.
-    - **SingleArray** A 1D numpy structured array corresponding to a single dataset.
-    - **BatchArray:** Multiple batches of data can be represend in sparse or dense forms.
-      - **DenseBatchArray:** A 2D structured numpy array containing a list of components of the same type for each scenario.
-      - **SparseBatchArray:** A typed dictionary with a 1D numpy array of `Indptr` type under `indptr` key and `SingleArray` under `data` key  which is all components flattened over all batches.
-  - **ColumnarData** A dictionary of attributes as keys and individiual numpy arrays as values.
-    - **SingleColumnarData** A dictionary of attributes as keys and `SingleColumn` as values in a single dataset.
-    - **BatchColumnarData:** Multiple batches of data can be represend in sparse or dense forms.
-      - **DenseColumnarData:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
-      - **SparseColumnarData:** A typed dictionary with a 1D numpy array of `Indptr` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
+- **{py:class}`ComponentData <power_grid_model.data_types.ComponentData>`:** The data corresponding to the component.
+  - **{py:class}`DataArray <power_grid_model.data_types.DataArray>`:** A data array can be a single or a batch array. It is a numpy structured array.
+    - **{py:class}`SingleArray <power_grid_model.data_types.SingleArray>`:** A 1D numpy structured array corresponding to a single dataset.
+    - **{py:class}`BatchArray <power_grid_model.data_types.BatchArray>`:** Multiple batches of data can be represented in sparse or dense forms.
+      - **{py:class}`DenseBatchArray <power_grid_model.data_types.DenseBatchArray>`:** A 2D structured numpy array containing a list of components of the same type for each scenario.
+      - **{py:class}`SparseBatchArray <power_grid_model.data_types.SparseBatchArray>`:** A typed dictionary with a 1D numpy array of `Indexpointer` type under `indptr` key and `SingleArray` under `data` key which is all components flattened over all batches.
+  - **{py:class}`ColumnarData <power_grid_model.data_types.ColumnarData>`:** A dictionary of attributes as keys and individual numpy arrays as values.
+    - **{py:class}`SingleColumnarData <power_grid_model.data_types.SingleColumnarData>`:** A dictionary of attributes as keys and `SingleColumn` as values in a single dataset.
+    - **{py:class}`BatchColumnarData <power_grid_model.data_types.BatchColumnarData>`:** Multiple batches of data can be represented in sparse or dense forms.
+      - **{py:class}`DenseColumnarData <power_grid_model.data_types.DenseColumnarData>`:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
+      - **{py:class}`SparseColumnarData <power_grid_model.data_types.SparseColumnarData>`:** A typed dictionary with a 1D numpy array of `Indexpointer` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
 
-- **Indptr** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For eg. and indptr of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
-- **SingleColumn** A 1D/2D numpy array of values corresponding to a specific attribute.
-- **BatchColumn** A 2D/3D numpy array of values corresponding to a specific attribute.
+- **{py:class}`Indexpointer <power_grid_model.data_types.Indexpointer>`:** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For example, an indptr of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
+- **{py:class}`SingleColumn <power_grid_model.data_types.SingleColumn>`:** A 1D/2D numpy array of values corresponding to a specific attribute.
+- **{py:class}`BatchColumn <power_grid_model.data_types.BatchColumn>`:** A 2D/3D numpy array of values corresponding to a specific attribute.
 
 ### Dimensions of numpy arrays
 
@@ -69,11 +90,11 @@ The dimensions of numpy arrays and the interpretation of each dimension is as fo
 |--------------------------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 | **SingleArray**          | Corresponds to a single dataset.                                                             | ❌                                                                                                               | ❌                                                                                                               |
 | **DenseBatchArray**      | ❌                                                                                            | Batch number $\times$ Component within that batch                                                                       | ❌                                                                                                               |
-| **SingleColumn**   | Component within that batch.                                                                 | Component within that batch $\times$ Phases &#10024                                                                            | ❌                                                                                                               |
-| **BatchColumn**    | ❌                                                                                            | Batch number $\times$ Component within that batch                                                                       | Batch number $\times$ Component within that batch $\times$ Phases &#10024                                                            |
+| **SingleColumn**   | Component within that batch.                                                                 | Component within that batch $\times$ Phases &#10024;                                                                            | ❌                                                                                                               |
+| **BatchColumn**    | ❌                                                                                            | Batch number $\times$ Component within that batch                                                                       | Batch number $\times$ Component within that batch $\times$ Phases &#10024;                                                            |
 
 ```{note}
-&#10024: The "Phases" dimension is optional and is available only when the attributes are asymmetric.
+&#10024; The "Phases" dimension is optional and is available only when the attributes are asymmetric.
 ```
 
 ### Type of Dataset
