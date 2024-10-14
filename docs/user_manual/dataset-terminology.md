@@ -10,23 +10,80 @@ Some terms regarding the data structures are explained here, including the defin
 
 ## Data structures
 
-- **Dataset:** Either a single or a batch dataset.
-    - **SingleDataset:** A data type storing input data (i.e. all elements of all components) for a single scenario.
-    - **BatchDataset:** A data type storing update and or output data for one or more scenarios. A batch dataset can contain sparse or dense data, depending on the component.
-- **DataArray** A data array can be a single or a batch array. It is a numpy structured array.     
-    - **SingleArray** A dictionary where the keys are the component types and the values are one-dimensional structured numpy arrays.
-    - **BatchArray:** An array of dictionaries where the keys are the component types and the values are two-dimensional structured numpy arrays.
-        - **DenseBatchArray:** A two-dimensional structured numpy array containing a list of components of the same type for each scenario.
-        - **SparseBatchArray:** A dictionary with a one-dimensional numpy int64 array and a one-dimensional structured numpy arrays. 
+```{mermaid}
+graph TD
+    subgraph Datasets
+    Dataset --> SingleDataset
+    Dataset --> BatchDataset
+    end
 
-### Type of Dataset 
+    subgraph Dataset values
+    ComponentData --> DataArray
+    ComponentData --> ColumnarData
+
+    DataArray --> SingleArray
+    DataArray --> BatchArray
+
+    BatchArray --> DenseBatchArray
+    BatchArray --> SparseBatchArray
+
+    ColumnarData --> SingleColumnarData
+    ColumnarData --> BatchColumnarData
+
+    BatchColumnarData --> DenseColumnarData
+    BatchColumnarData --> SparseColumnarData
+    end
+
+    subgraph Other numpy arrays
+    Indptr
+    SingleColumn
+    BatchColumn
+    end
+```
+
+- **Dataset:** Either a single or a batch dataset. it is a dictionary with keys as the component types (eg. `line`, `node`, etc) and values as **ComponnentData**
+  - **SingleDataset:** A data type storing input data (i.e. all elements of all components) for a single scenario.
+  - **BatchDataset:** A data type storing update and or output data for one or more scenarios. A batch dataset can contain sparse or dense data, depending on the component.
+
+- **ComponentData** The data corresponding to the component.
+  - **DataArray** A data array can be a single or a batch array. It is a numpy structured array.
+    - **SingleArray** A 1D numpy structured array corresponding to a single dataset.
+    - **BatchArray:** Multiple batches of data can be represend in sparse or dense forms.
+      - **DenseBatchArray:** A 2D structured numpy array containing a list of components of the same type for each scenario.
+      - **SparseBatchArray:** A typed dictionary with a 1D numpy array of `Indptr` type under `indptr` key and `SingleArray` under `data` key  which is all components flattened over all batches.
+  - **ColumnarData** A dictionary of attributes as keys and individiual numpy arrays as values.
+    - **SingleColumnarData** A dictionary of attributes as keys and `SingleColumn` as values in a single dataset.
+    - **BatchColumnarData:** Multiple batches of data can be represend in sparse or dense forms.
+      - **DenseColumnarData:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
+      - **SparseColumnarData:** A typed dictionary with a 1D numpy array of `Indptr` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
+
+- **Indptr** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For eg. and indptr of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
+- **SingleColumn** A 1D/2D numpy array of values corresponding to a specific attribute.
+- **BatchColumn** A 2D/3D numpy array of values corresponding to a specific attribute.
+
+### Dimensions of numpy arrays
+
+The dimensions of numpy arrays and the interpretation of each dimension is as follows.
+
+| **Data Type**            | **1D**                                                                                       | **2D**                                                                                                           | **3D**                                                                                                           |
+|--------------------------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| **SingleArray**          | Corresponds to a single dataset.                                                             | ❌                                                                                                               | ❌                                                                                                               |
+| **DenseBatchArray**      | ❌                                                                                            | Batch number $\times$ Component within that batch                                                                       | ❌                                                                                                               |
+| **SingleColumn**   | Component within that batch.                                                                 | Component within that batch $\times$ Phases &#10024                                                                            | ❌                                                                                                               |
+| **BatchColumn**    | ❌                                                                                            | Batch number $\times$ Component within that batch                                                                       | Batch number $\times$ Component within that batch $\times$ Phases &#10024                                                            |
+
+```{note}
+&#10024: The "Phases" dimension is optional and is available only when the attributes are asymmetric.
+```
+
+### Type of Dataset
 
 The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`:
 Exemplery datasets attributes are given in a dataset containing a `line` component.
 
-- **input:** Contains attributes relevant to configuration of grid. 
+- **input:** Contains attributes relevant to configuration of grid.
   - Example: `id`, `from_node`, `from_status`
-- **update:** Contains attributes relevant to multiple scenarios. 
+- **update:** Contains attributes relevant to multiple scenarios.
   - Example: `from_status`,`to_status`
 - **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation calculation.
   - Example: `p_from`, `p_to`
