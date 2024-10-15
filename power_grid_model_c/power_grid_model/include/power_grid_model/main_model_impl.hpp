@@ -813,15 +813,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const check_each_component = [&update_data, &process_buffer_span]<typename CT>() -> UpdateCompProperties {
             // get span of all the update data
             auto const comp_index = update_data.find_component(CT::name, false);
-            auto const n_comp = update_data.n_components();
-            assert(n_comp == n_comp);
             UpdateCompProperties result;
             result.name = CT::name;
             result.is_columnar = update_data.is_columnar(result.name);
             if (comp_index >= 0) {
                 result.elements_ps_in_update = update_data.get_component_info(comp_index).elements_per_scenario;
-            } else {
-                result.elements_ps_in_update = 0;
             }
             if (result.is_columnar) {
                 process_buffer_span.template operator()<CT>(
@@ -848,6 +844,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     void validate_update_data_independence(UpdateCompProperties const& comp) const {
+        if (!comp.has_id && comp.ids_all_na) {
+            return; // empty dataset is still supported
+        }
         if (comp.elements_ps_in_base < comp.elements_ps_in_update) {
             throw DatasetError("Update data has more elements per scenario than base data for component " + comp.name +
                                "!");
