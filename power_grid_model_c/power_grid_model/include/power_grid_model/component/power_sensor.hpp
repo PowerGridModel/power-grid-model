@@ -99,8 +99,6 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
     }
 
     PowerSensorUpdate<power_sensor_symmetry> inverse(PowerSensorUpdate<power_sensor_symmetry> update_data) const {
-        assert(update_data.id == this->id());
-
         auto const scalar = convert_direction() * base_power<power_sensor_symmetry>;
 
         set_if_not_nan(update_data.p_measured, real(s_measured_) * scalar);

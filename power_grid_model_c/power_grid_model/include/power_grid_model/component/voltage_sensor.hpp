@@ -80,8 +80,6 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
           u_angle_measured_{voltage_sensor_input.u_angle_measured} {};
 
     UpdateChange update(VoltageSensorUpdate<sym> const& update_data) {
-        assert(update_data.id == this->id());
-
         double const scalar = 1 / (u_rated_ * u_scale<sym>);
 
         update_real_value<sym>(update_data.u_measured, u_measured_, scalar);
@@ -95,8 +93,6 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
     }
 
     VoltageSensorUpdate<sym> inverse(VoltageSensorUpdate<sym> update_data) const {
-        assert(update_data.id == this->id());
-
         double const scalar = u_rated_ * u_scale<sym>;
 
         set_if_not_nan(update_data.u_measured, u_measured_ * scalar);
