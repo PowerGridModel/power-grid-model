@@ -37,7 +37,7 @@ Type hint for mapping component attributes.
 
 - A set of :class:`ComponentType` or `str`
 
-- A list of :class:`ComponentType`
+- A list of :class:`ComponentType` or `str`
 
 - A :class:`ComponentAttributeFilterOptions <power_grid_model.enum.ComponentAttributeFilterOptions>` value
 
