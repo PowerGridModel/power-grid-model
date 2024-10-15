@@ -125,13 +125,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         return result;
     }
-    Idx get_group_idx() const { return map_.find(0)->second.group; }
-    template <supported_type_c<GettableTypes...> Gettable> Idx get_group_idx() const {
-        auto const result = get_group_idx();
-        if (!is_base<Gettable>[result]) {
-            throw IDWrongType{0};
-        }
-        return result;
+    template <supported_type_c<StorageableTypes...> Storageable> Idx get_group_idx() const {
+        return static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
     }
 
     // get item based on ID

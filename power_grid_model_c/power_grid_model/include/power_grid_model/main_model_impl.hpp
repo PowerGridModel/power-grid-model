@@ -312,9 +312,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // update all components
     template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
-        auto const sequence_idx_map = get_sequence_idx_map(update_data);
-        update_component<CacheType>(update_data, pos, sequence_idx_map);
-        // update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
+        update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
     }
 
     template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
@@ -402,6 +400,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx, &process_buffer_span,
                                        &comp_indenpendence]<typename CT>() -> std::vector<Idx2D> {
+            // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
             auto const get_n_comp_elements = [&comp_indenpendence]() {
                 if (!comp_indenpendence.empty()) {
                     auto const comp_idx = std::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
@@ -443,6 +442,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(std::ranges::all_of(update_components_independence,
                                    [](auto const& comp) { return !comp.has_id || comp.ids_match; }));
 
+        // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
         auto const all_comp_count_in_base = this->all_component_count();
         for (auto& comp : update_components_independence) {
             auto it = std::find_if(all_comp_count_in_base.begin(), all_comp_count_in_base.end(),
