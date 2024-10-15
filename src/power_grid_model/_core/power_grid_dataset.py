@@ -8,8 +8,7 @@ Power grid model raw dataset handler
 
 from typing import Any, Mapping, Optional
 
-from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, process_data_filter
-from power_grid_model.core.buffer_handling import (
+from power_grid_model._core.buffer_handling import (
     BufferProperties,
     CAttributeBuffer,
     CBuffer,
@@ -17,16 +16,17 @@ from power_grid_model.core.buffer_handling import (
     get_buffer_properties,
     get_buffer_view,
 )
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
-from power_grid_model.core.error_handling import VALIDATOR_MSG, assert_no_error
-from power_grid_model.core.power_grid_core import (
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
+from power_grid_model._core.error_handling import VALIDATOR_MSG, assert_no_error
+from power_grid_model._core.power_grid_core import (
     ConstDatasetPtr,
     DatasetInfoPtr,
     MutableDatasetPtr,
     WritableDatasetPtr,
     power_grid_core as pgc,
 )
-from power_grid_model.core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
+from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
+from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, process_data_filter
 from power_grid_model.data_types import AttributeType, ComponentData, Dataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict

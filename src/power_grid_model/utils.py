@@ -16,6 +16,13 @@ from typing import Optional, cast as cast_type
 import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
+from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types
+from power_grid_model._core.serialization import (  # pylint: disable=unused-import
+    json_deserialize,
+    json_serialize,
+    msgpack_deserialize,
+    msgpack_serialize,
+)
 from power_grid_model._utils import (
     _extract_data_from_component_data,
     _extract_indptr,
@@ -24,13 +31,6 @@ from power_grid_model._utils import (
     get_dataset_type,
     is_columnar,
     is_sparse,
-)
-from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types
-from power_grid_model.core.serialization import (  # pylint: disable=unused-import
-    json_deserialize,
-    json_serialize,
-    msgpack_deserialize,
-    msgpack_serialize,
 )
 from power_grid_model.data_types import (
     BatchArray,

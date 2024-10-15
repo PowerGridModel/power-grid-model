@@ -7,10 +7,10 @@ Data handling
 """
 
 
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.power_grid_dataset import CConstDataset, CMutableDataset
+from power_grid_model._core.power_grid_meta import initialize_array
 from power_grid_model._utils import process_data_filter
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
-from power_grid_model.core.power_grid_meta import initialize_array
 from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.typing import ComponentAttributeMapping
