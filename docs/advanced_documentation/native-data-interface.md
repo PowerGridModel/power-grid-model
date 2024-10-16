@@ -55,7 +55,6 @@ node_dtype = np.dtype(
 To recreate the same node input dataset, we just create a `numpy` array using this special defined `dtype`.
 The `numpy` array has exactly the same data layout as the `std::vector<NodeInput>` above.
 
-
 ```python
 node = np.empty(shape=2, dtype=node_dtype)
 node['id'] = [1, 2]
@@ -75,6 +74,7 @@ In a similar example we create attribute data with `u_rated` of two nodes of 150
 using NodeInputURated = double;
 std::vector<NodeInputURated> node_u_rated_input{ 150.0e3 , 10.0e3 };
 ```
+
 Similar would be the case for `NodeInputId` and `std::vector<NodeNodeInputId>`
 
 To recreate this in Python using NumPy arrays, we should create it with the correct dtype - as mentioned in [Structured Array](#structured-array) - for each attribute.
@@ -93,10 +93,13 @@ With other types of components, the dictionary is a valid input dataset for the 
 see [Python API Reference](../api_reference/python-api-reference.md).
 
 For a row based data format,
+
 ```python
 input_data = {'node': node}
 ```
-or for columnar data format, 
+
+or for columnar data format,
+
 ```python
 input_data_columnar = {'node': {"id": node_id, "u_rated": node_u_rated}}
 ```
