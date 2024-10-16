@@ -12,9 +12,11 @@ Some terms regarding the data structures are explained here, including the defin
 
 ```{mermaid}
 graph TD
-    subgraph Datasets
-    Dataset --> SingleDataset
-    Dataset --> BatchDataset
+    subgraph Other numpy arrays
+    direction LR 
+    IndexPointer
+    SingleColumn
+    BatchColumn
     end
 
     subgraph Dataset values
@@ -34,11 +36,11 @@ graph TD
     BatchColumnarData --> SparseBatchColumnarData
     end
 
-    subgraph Other numpy arrays
-    IndexPointer
-    SingleColumn
-    BatchColumn
+    subgraph Datasets
+    Dataset --> SingleDataset
+    Dataset --> BatchDataset
     end
+
 
     click Dataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.Dataset"
     click SingleDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleDataset"
@@ -100,7 +102,7 @@ The dimensions of numpy arrays and the interpretation of each dimension is as fo
 ### Type of Dataset
 
 The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`. They are included under the enum {py:class}`DatasetType <power_grid_model.typing.DatasetType>`.
-Exemplery datasets attributes are given in a dataset containing a `line` component.
+Exemplary datasets attributes are given in a dataset containing a `line` component.
 
 - **input:** Contains attributes relevant to configuration of grid.
   - Example: `id`, `from_node`, `from_status`
