@@ -469,15 +469,19 @@ built and installed, e.g. using `cmake --build --preset <preset> --target instal
 
 ## Documentation
 
-The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[docs]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned in the [above](#build-python-package). After that, the documentation specific packages can be installed via:
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[docs]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
 
 ```shell
 pip install -e .[docs]
 ```
 
+```{note}
+The `pip install .` part of the command installs the complete package from scratch.
+```
+
 The C API documentation is generated using [Doxygen](https://www.doxygen.nl). If you do not have Doxygen installed, it can also be temporarily bypassed by commenting out the `breathe` settings in  `docs/conf.py`.
 
-The documentation can be built by following which gives out the html in `docs/_build/html` directory.
+The documentation can be built with the following commands, resulting in html files of the webpages which can be found in `docs/_build/html` directory.
 
 ```shell
 cd docs/doxygen
