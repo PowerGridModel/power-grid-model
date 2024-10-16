@@ -15,7 +15,7 @@ build:
   jobs:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
-      - pip install --verbose --editable .[doc]
+      - pip install --verbose --editable .[docs]
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
