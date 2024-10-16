@@ -175,7 +175,9 @@ The code below creates an array which is compatible with transformer input datas
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
 transformer_dtype = power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype
+# Array for row based data
 transformer = np.empty(shape=5, dtype=transformer_dtype)
+# Array for columnar data
 transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype["tap_pos"])
 
 # direct string access is supported as well:
