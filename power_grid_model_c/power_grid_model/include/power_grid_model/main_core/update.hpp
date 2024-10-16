@@ -45,8 +45,9 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
         }
     };
 
-    std::transform(begin, end, destination,
-                   [&, index = 0](UpdateType const& update) mutable { return idx_getter_func(update, index++); });
+    std::ranges::transform(begin, end, destination, [&, index = 0](UpdateType const& update) mutable {
+        return idx_getter_func(update, index++);
+    });
 }
 
 template <component_c Component, class ComponentContainer,

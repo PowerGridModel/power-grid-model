@@ -445,8 +445,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
         auto const all_comp_count_in_base = this->all_component_count();
         for (auto& comp : update_components_independence) {
-            auto it = std::find_if(all_comp_count_in_base.begin(), all_comp_count_in_base.end(),
-                                   [&comp](const ComponentCountInBase& pair) { return pair.first == comp.name; });
+            auto it =
+                std::ranges::find_if(all_comp_count_in_base.begin(), all_comp_count_in_base.end(),
+                                     [&comp](const ComponentCountInBase& pair) { return pair.first == comp.name; });
             if (it != all_comp_count_in_base.end()) {
                 comp.elements_ps_in_base = it->second;
             }
@@ -773,7 +774,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 for (const auto& obj : span) {
                     std::vector<bool> id_na{};
                     if constexpr (requires { obj.id; }) {
-                        id_na.push_back(obj.id == na_Idx);
+                        id_na.push_back(is_nan(obj.id));
                     }
                     ids_na.push_back(id_na);
                 }
@@ -787,11 +788,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
             result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
             result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
-                return std::ranges::all_of(vec, [](bool const& obj) { return obj == true; });
+                return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
             });
             result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
-                return std::ranges::any_of(vec, [](bool const& obj) { return obj == true; }) &&
-                       std::ranges::any_of(vec, [](bool const& obj) { return obj == false; });
+                return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
+                       std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
             });
             result.uniform =
                 std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {

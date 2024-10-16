@@ -102,6 +102,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
     // update for load_gen
     UpdateChange update(LoadGenUpdate<loadgen_symmetry> const& update_data) {
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         this->set_status(update_data.status);
         set_power(update_data.p_specified, update_data.q_specified);
         // change load connection and/or value will not change topology or parameters
@@ -109,6 +110,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
     }
 
     LoadGenUpdate<loadgen_symmetry> inverse(LoadGenUpdate<loadgen_symmetry> update_data) const {
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         double const scalar = direction_ * base_power<loadgen_symmetry>;
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
