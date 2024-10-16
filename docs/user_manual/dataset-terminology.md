@@ -78,7 +78,7 @@ graph TD
       - **{py:class}`DenseBatchColumnarData <power_grid_model.data_types.DenseBatchColumnarData>`:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
       - **{py:class}`SparseBatchColumnarData <power_grid_model.data_types.SparseBatchColumnarData>`:** A typed dictionary with a 1D numpy array of `Indexpointer` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
 
-- **{py:class}`Indexpointer <power_grid_model.data_types.Indexpointer>`:** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For example, an Index pointer  of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
+- **{py:class}`IndexPointer <power_grid_model.data_types.IndexPointer>`:** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For example, an Index pointer  of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
 - **{py:class}`SingleColumn <power_grid_model.data_types.SingleColumn>`:** A 1D/2D numpy array of values corresponding to a specific attribute.
 - **{py:class}`BatchColumn <power_grid_model.data_types.BatchColumn>`:** A 2D/3D numpy array of values corresponding to a specific attribute.
 
@@ -99,7 +99,7 @@ The dimensions of numpy arrays and the interpretation of each dimension is as fo
 
 ### Type of Dataset
 
-The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`. They are included under the enum {py:class}`DatasetType <power_grid_model.DatasetType>`.
+The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`. They are included under the enum {py:class}`DatasetType <power_grid_model.typing.DatasetType>`.
 Exemplery datasets attributes are given in a dataset containing a `line` component.
 
 - **input:** Contains attributes relevant to configuration of grid.
