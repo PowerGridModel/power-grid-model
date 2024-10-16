@@ -62,13 +62,45 @@ node['id'] = [1, 2]
 node['u_rated'] = [150e3, 10e3]
 ```
 
+## Columnar data format
+
+We can also represent the contents mentioned `NodeInput` struct in [Structured Array](#structured-array) for only specific attributes.
+This is especially useful when the component in question is for example a transformer which has many default attributes in which case the user can save on a significant amount of memory. Hence we can term it into `NodeInputUrated` which is of `double` type. 
+(Note again, its representation in C++ is not similar to that of `NodeInputUrated`). 
+
+One can create a `std::vector<NodeInputUrated>` to hold input for multiple nodes.
+In a similar example we create attribute data with `u_rated` of two nodes of 150 kV and 10 kV.
+
+```c++
+std::vector<NodeInputUrated> node_u_rated_input{ 150e3 , 10e3 };
+```
+Similar would be the case for `NodeInputId` and `std::vector<NodeNodeInputId>`
+
+To recreate this in numpy array, we should create it with the specific dtype as  mentioned in [Structured Array](#structured-array) for each attribute.
+
+```python
+node_id = np.empty(shape=2, dtype=node_dtype["id"])
+node_id['id'] = [1, 2]
+node_u_rated = np.empty(shape=2, dtype=node_dtype["u_rated"])
+node_u_rated['u_rated'] = [150e3, 10e3]
+```
+
+## Creating Dataset
+
 We further save this array into a dictionary.
 With other types of components, the dictionary is a valid input dataset for the constructor of `PowerGridModel`,
 see [Python API Reference](../api_reference/python-api-reference.md).
 
+For a row based data format,
 ```python
 input_data = {'node': node}
 ```
+or for columnar data format, 
+```python
+input_data_columnar = {'node': {"id": node_id, "u_rated": node_u_rated}}
+```
+
+There can also be a combination of both row based and columnar data format in a dataset.
 
 In the `ctypes` wrapper the pointers to all the array data will be retrieved and passed to the C++ code.
 This is also true for result dataset.
@@ -141,7 +173,10 @@ The code below creates an array which is compatible with transformer input datas
 ```python
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
-transformer = np.empty(shape=5, dtype=power_grid_meta_data[DatasetType.input][ComponentType.transformer]['dtype'])
+transformer_dtype = power_grid_meta_data[DatasetType.input][ComponentType.transformer]['dtype']
+transformer = np.empty(shape=5, dtype=transformer_dtype)
+transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype["tap_pos"])
+
 # direct string access is supported as well:
 # transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer']['dtype'])
 ```
