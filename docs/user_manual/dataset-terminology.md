@@ -13,12 +13,28 @@ Some terms regarding the data structures are explained here, including the defin
 ```{mermaid}
 graph TD
     subgraph Other numpy arrays
-    direction LR 
     IndexPointer
     SingleColumn
     BatchColumn
     end
 
+    subgraph Datasets
+    Dataset --> SingleDataset
+    Dataset --> BatchDataset
+    end
+
+
+    click Dataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.Dataset"
+    click SingleDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleDataset"
+    click BatchDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchDataset"
+
+    click IndexPointer href "../api_reference/python-api-reference.html#power_grid_model.data_types.IndexPointer"
+    click SingleColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleColumn"
+    click BatchColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumn"
+```
+
+```{mermaid}
+graph TD
     subgraph Dataset values
     ComponentData --> DataArray
     ComponentData --> ColumnarData
@@ -36,16 +52,6 @@ graph TD
     BatchColumnarData --> SparseBatchColumnarData
     end
 
-    subgraph Datasets
-    Dataset --> SingleDataset
-    Dataset --> BatchDataset
-    end
-
-
-    click Dataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.Dataset"
-    click SingleDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleDataset"
-    click BatchDataset href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchDataset"
-
     click ComponentData href "../api_reference/python-api-reference.html#power_grid_model.data_types.ComponentData"
     click DataArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.DataArray"
     click ColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.ColumnarData"
@@ -57,10 +63,6 @@ graph TD
     click BatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumnarData"
     click DenseBatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.DenseBatchColumnarData"
     click SparseBatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.SparseBatchColumnarData"
-
-    click IndexPointer href "../api_reference/python-api-reference.html#power_grid_model.data_types.IndexPointer"
-    click SingleColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleColumn"
-    click BatchColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumn"
 
 ```
 
