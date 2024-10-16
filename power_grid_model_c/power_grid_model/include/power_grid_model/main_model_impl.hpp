@@ -152,9 +152,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool ids_part_na{false};      // if some ids are NA but some are not
         bool uniform{false};          // if the component is uniform
         bool is_columnar{false};      // if the component is columnar
-        bool ids_match{false};        // if the ids match, i.e., independent update
+        bool ids_match{false};        // if the ids match
         Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
-        Idx elements_ps_in_base{0};   // count of elements for this component per scenario in base
+        Idx elements_ps_in_base{0};   // count of elements for this component per scenario in input
     };
     using UpdateCompIndependence = std::vector<UpdateCompProperties>;
     using ComponentCountInBase = std::pair<std::string, Idx>;
@@ -848,7 +848,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return; // empty dataset is still supported
         }
         if (comp.elements_ps_in_base < comp.elements_ps_in_update) {
-            throw DatasetError("Update data has more elements per scenario than base data for component " + comp.name +
+            throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
                                "!");
         }
         if (comp.ids_part_na) {
@@ -866,11 +866,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (comp.elements_ps_in_base != comp.elements_ps_in_update) {
             if (comp.is_columnar && !comp.has_id) {
                 throw DatasetError("Columnar input data for component " + comp.name +
-                                   " has different number of elements per scenario in update and base data!");
+                                   " has different number of elements per scenario in update and input data!");
             }
             if (!comp.is_columnar && comp.uniform && (comp.has_id && comp.ids_all_na)) {
                 throw DatasetError("Row based input data for component " + comp.name +
-                                   " has different number of elements per scenario in update and base data!");
+                                   " has different number of elements per scenario in update and input data!");
             }
         }
     }
@@ -991,7 +991,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     bool is_asym_parameter_up_to_date_{false};
     bool is_accumulated_component_updated_{true};
     bool last_updated_calculation_symmetry_mode_{false};
-    // std::vector<std::pair<std::string, bool>> update_component_independence_{};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
