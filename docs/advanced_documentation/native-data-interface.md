@@ -65,18 +65,19 @@ node['u_rated'] = [150e3, 10e3]
 ## Columnar data format
 
 We can also represent the contents mentioned `NodeInput` struct in [Structured Array](#structured-array) for only specific attributes.
-This is especially useful when the component in question is for example a transformer which has many default attributes in which case the user can save on a significant amount of memory. Hence we can term it into `NodeInputUrated` which is of `double` type. 
-(Note again, its representation in C++ is not similar to that of `NodeInputUrated`). 
+This is especially useful when the component in question, e.g., a transformer, has many default attributes. In that case, the user can save significantly on memory usage. Hence, we can term it into `NodeInputURated` which is of `double` type. 
+(Note again, its representation in C++ is not similar to that of `NodeInputURated`). 
 
 One can create a `std::vector<NodeInputUrated>` to hold input for multiple nodes.
 In a similar example we create attribute data with `u_rated` of two nodes of 150 kV and 10 kV.
 
 ```c++
-std::vector<NodeInputUrated> node_u_rated_input{ 150e3 , 10e3 };
+using NodeInputURated = double;
+std::vector<NodeInputURated> node_u_rated_input{ 150.0e3 , 10.0e3 };
 ```
 Similar would be the case for `NodeInputId` and `std::vector<NodeNodeInputId>`
 
-To recreate this in numpy array, we should create it with the specific dtype as  mentioned in [Structured Array](#structured-array) for each attribute.
+To recreate this in Python using NumPy arrays, we should create it with the correct dtype - as mentioned in [Structured Array](#structured-array) - for each attribute.
 
 ```python
 node_id = np.empty(shape=2, dtype=node_dtype["id"])
@@ -173,12 +174,12 @@ The code below creates an array which is compatible with transformer input datas
 ```python
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
-transformer_dtype = power_grid_meta_data[DatasetType.input][ComponentType.transformer]['dtype']
+transformer_dtype = power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype
 transformer = np.empty(shape=5, dtype=transformer_dtype)
 transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype["tap_pos"])
 
 # direct string access is supported as well:
-# transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer']['dtype'])
+# transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer'].dtype)
 ```
 
 Furthermore, there is an even more convenient function `initialize_array`
