@@ -64,11 +64,11 @@ node['u_rated'] = [150e3, 10e3]
 
 ## Columnar data format
 
-We can also represent the contents mentioned `NodeInput` struct in [Structured Array](#structured-array) for only specific attributes.
-This is especially useful when the component in question, e.g., a transformer, has many default attributes. In that case, the user can save significantly on memory usage. Hence, we can term it into `NodeInputURated` which is of `double` type. 
-(Note again, its representation in C++ is not similar to that of `NodeInputURated`). 
+Additionally, we can represent the contents mentioned `NodeInput` struct in [Structured Array](#structured-array) for only specific attributes.
+This is especially useful when the component in question, e.g., a transformer, has many default attributes. In that case, the user can save significantly on memory usage. Hence, we can term it into `NodeInputURated` which is of `double` type.
+(note again, its representation in C++ core might be different than that of `NodeInputURated`).
 
-One can create a `std::vector<NodeInputUrated>` to hold input for multiple nodes.
+One can create a `std::vector<NodeInputURated>` to hold input for multiple nodes.
 In a similar example we create attribute data with `u_rated` of two nodes of 150 kV and 10 kV.
 
 ```c++
