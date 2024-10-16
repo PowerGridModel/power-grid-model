@@ -149,10 +149,8 @@ def test_simple_power_flow(model: PowerGridModel, sym_output):
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
-def test_simple_permanent_update(
-    model: PowerGridModel, update_batch, sym_output_batch
-):  # error if permanent update is not single scenario
-    model.update(update_data=update_batch)  # single permanent model update
+def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output_batch):
+    model.update(update_data=get_dataset_scenario(update_batch, 0))  # single permanent model update
     result = model.calculate_power_flow()
     expected_result = get_dataset_scenario(sym_output_batch, 0)
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
