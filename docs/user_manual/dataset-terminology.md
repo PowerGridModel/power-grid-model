@@ -30,8 +30,8 @@ graph TD
     ColumnarData --> SingleColumnarData
     ColumnarData --> BatchColumnarData
 
-    BatchColumnarData --> DenseColumnarData
-    BatchColumnarData --> SparseColumnarData
+    BatchColumnarData --> DenseBatchColumnarData
+    BatchColumnarData --> SparseBatchColumnarData
     end
 
     subgraph Other numpy arrays
@@ -53,10 +53,10 @@ graph TD
     click SparseBatchArray href "../api_reference/python-api-reference.html#power_grid_model.data_types.SparseBatchArray"
     click SingleColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleColumnarData"
     click BatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumnarData"
-    click DenseColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.DenseColumnarData"
-    click SparseColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.SparseColumnarData"
+    click DenseBatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.DenseBatchColumnarData"
+    click SparseBatchColumnarData href "../api_reference/python-api-reference.html#power_grid_model.data_types.SparseBatchColumnarData"
 
-    click Indexpointer href "../api_reference/python-api-reference.html#power_grid_model.data_types.Indexpointer"
+    click IndexPointer href "../api_reference/python-api-reference.html#power_grid_model.data_types.IndexPointer"
     click SingleColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.SingleColumn"
     click BatchColumn href "../api_reference/python-api-reference.html#power_grid_model.data_types.BatchColumn"
 
@@ -75,8 +75,8 @@ graph TD
   - **{py:class}`ColumnarData <power_grid_model.data_types.ColumnarData>`:** A dictionary of attributes as keys and individual numpy arrays as values.
     - **{py:class}`SingleColumnarData <power_grid_model.data_types.SingleColumnarData>`:** A dictionary of attributes as keys and `SingleColumn` as values in a single dataset.
     - **{py:class}`BatchColumnarData <power_grid_model.data_types.BatchColumnarData>`:** Multiple batches of data can be represented in sparse or dense forms.
-      - **{py:class}`DenseColumnarData <power_grid_model.data_types.DenseColumnarData>`:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
-      - **{py:class}`SparseColumnarData <power_grid_model.data_types.SparseColumnarData>`:** A typed dictionary with a 1D numpy array of `Indexpointer` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
+      - **{py:class}`DenseBatchColumnarData <power_grid_model.data_types.DenseBatchColumnarData>`:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
+      - **{py:class}`SparseBatchColumnarData <power_grid_model.data_types.SparseBatchColumnarData>`:** A typed dictionary with a 1D numpy array of `Indexpointer` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
 
 - **{py:class}`Indexpointer <power_grid_model.data_types.Indexpointer>`:** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For example, an Index pointer  of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
 - **{py:class}`SingleColumn <power_grid_model.data_types.SingleColumn>`:** A 1D/2D numpy array of values corresponding to a specific attribute.
