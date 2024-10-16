@@ -466,3 +466,20 @@ the {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blo
 This project has the main project as a required dependency. Configuration will fail if the main project has not been
 built and installed, e.g. using `cmake --build --preset <preset> --target install` for the current preset.
 ```
+
+## Documentation
+
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in python environment. The packages required for building it can be found under [docs]. The steps required for building the python package needs to be carried out first as per (#build-python-package). Then the documentation specific packages can be installed via:
+```shell
+pip install -e .[doc]
+```
+[Doxygen](https://www.doxygen.nl/) needs to be installed to generate C API documentation. (Building C API documentation can be manually disabled by commenting out `breathe` settings in  `docs/conf.py` if required.)
+
+The documentation can be built by following which gives out the html in `docs/_build/html` directory.
+
+```shell
+cd docs/doxygen
+doxygen
+cd ..
+sphinx-build -b html . _build/html
+```
