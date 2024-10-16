@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
+Data types involving PGM datasets.
+
 Many data types are used throughout the power grid model project. In an attempt to clarify type hints, some types
 have been defined and explained in this file.
 """
