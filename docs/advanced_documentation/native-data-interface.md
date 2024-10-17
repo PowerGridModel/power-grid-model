@@ -184,7 +184,7 @@ transformer = np.empty(shape=5, dtype=transformer_dtype)
 transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype["tap_pos"])
 
 # direct string access is supported as well:
-# transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer'].dtype)
+# transformer = np.empty(shape=5, dtype=power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype)
 ```
 
 Furthermore, there is an even more convenient function `initialize_array`
