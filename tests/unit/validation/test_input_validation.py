@@ -278,14 +278,14 @@ def original_data() -> dict[ComponentType, np.ndarray]:
 @pytest.fixture
 def original_data_columnar_all(original_data):
     return compatibility_convert_row_columnar_dataset(
-        original_data, ComponentAttributeFilterOptions.ALL, DatasetType.input
+        original_data, ComponentAttributeFilterOptions.everything, DatasetType.input
     )
 
 
 @pytest.fixture
 def original_data_columnar_relevant(original_data):
     return compatibility_convert_row_columnar_dataset(
-        original_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+        original_data, ComponentAttributeFilterOptions.relevant, DatasetType.input
     )
 
 

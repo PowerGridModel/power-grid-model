@@ -612,15 +612,18 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
         convert_batch_dataset_to_batch_list(update_data)
 
 
-DATA_FILTER_ALL = ComponentAttributeFilterOptions.ALL
-DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.RELEVANT
+DATA_FILTER_EVERYTHING = ComponentAttributeFilterOptions.everything
+DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.relevant
 
 
 @pytest.mark.parametrize(
     ("data_filter", "expected"),
     [
         (None, {CT.node: None, CT.sym_load: None, CT.source: None}),
-        (DATA_FILTER_ALL, {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL, CT.source: DATA_FILTER_ALL}),
+        (
+            DATA_FILTER_EVERYTHING,
+            {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: DATA_FILTER_EVERYTHING, CT.source: DATA_FILTER_EVERYTHING},
+        ),
         (
             DATA_FILTER_RELEVANT,
             {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT, CT.source: DATA_FILTER_RELEVANT},
@@ -630,11 +633,11 @@ DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.RELEVANT
         ({CT.node: [], CT.sym_load: []}, {CT.node: [], CT.sym_load: []}),
         ({CT.node: [], CT.sym_load: ["p"]}, {CT.node: [], CT.sym_load: ["p"]}),
         ({CT.node: None, CT.sym_load: ["p"]}, {CT.node: None, CT.sym_load: ["p"]}),
-        ({CT.node: DATA_FILTER_ALL, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_ALL, CT.sym_load: ["p"]}),
+        ({CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: ["p"]}),
         ({CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}),
         (
-            {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL},
-            {CT.node: DATA_FILTER_ALL, CT.sym_load: DATA_FILTER_ALL},
+            {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: DATA_FILTER_EVERYTHING},
+            {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: DATA_FILTER_EVERYTHING},
         ),
         (
             {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
@@ -875,7 +878,7 @@ def compare_row_data(actual_row_data, desired_row_data):
 def test_dense_row_data_to_from_col_data(row_data):
     # row data to columnar data and back
     col_data = compatibility_convert_row_columnar_dataset(
-        row_data, ComponentAttributeFilterOptions.ALL, DatasetType.update
+        row_data, ComponentAttributeFilterOptions.everything, DatasetType.update
     )
     new_row_data = compatibility_convert_row_columnar_dataset(col_data, None, DatasetType.update)
     compare_row_data(row_data, new_row_data)
