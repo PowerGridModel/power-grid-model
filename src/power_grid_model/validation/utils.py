@@ -11,7 +11,7 @@ from typing import Any, Optional, cast
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
-from power_grid_model.core.dataset_definitions import (
+from power_grid_model._core.dataset_definitions import (
     ComponentType,
     ComponentTypeLike,
     ComponentTypeVar,

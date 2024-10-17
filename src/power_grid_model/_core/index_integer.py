@@ -4,8 +4,6 @@
 
 """
 Definition of integers used by the calculation core
-
-[deprecated]
 """
 
 # define internal index integer
