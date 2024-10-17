@@ -74,8 +74,8 @@ constexpr void set_nan(Enum& x) {
 }
 template <typename T>
     requires requires(T t) {
-                 { set_nan(t) };
-             }
+        { set_nan(t) };
+    }
 inline T const nan_value = [] {
     T v{};
     set_nan(v);

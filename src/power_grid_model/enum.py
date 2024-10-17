@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
-Common Enumerations
+Common enumerations used by the power-grid-model library.
 
 Note: these enumeration match the C++ arithmetic core, so don't change the values unless you change them in C++ as well
 

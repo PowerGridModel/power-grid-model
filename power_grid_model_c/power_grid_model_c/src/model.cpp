@@ -28,9 +28,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
                                      PGM_ConstDataset const* input_dataset) {
     return call_with_catch(
         handle,
-        [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, *input_dataset, 0};
-        },
+        [system_frequency, input_dataset] { return new PGM_PowerGridModel{system_frequency, *input_dataset, 0}; },
         PGM_regular_error);
 }
 
@@ -43,8 +41,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
-    return call_with_catch(
-        handle, [model] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
+    return call_with_catch(handle, [model] { return new PGM_PowerGridModel{*model}; }, PGM_regular_error);
 }
 
 // get indexer

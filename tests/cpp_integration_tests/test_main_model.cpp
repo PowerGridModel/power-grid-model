@@ -172,6 +172,16 @@ struct State {
     std::vector<SourceUpdate> source_update{{10, 1, test::u1, nan}};
     std::vector<BranchUpdate> link_update{{5, 1, 0}};
     std::vector<FaultUpdate> fault_update{{30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
+
+    // batch update vector
+    std::vector<SymLoadGenUpdate> batch_sym_load_update{{7, 1, 1.0e6, nan}, {7}, {7}, {7}, {7}};
+    std::vector<AsymLoadGenUpdate> batch_asym_load_update{
+        {8, 0, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}}, {8}, {8}, {8}, {8}};
+    std::vector<ShuntUpdate> batch_shunt_update{{9, 0, nan, 0.02, nan, 0.02}, {9}, {9}, {9}, {9}};
+    std::vector<SourceUpdate> batch_source_update{{10, 1, test::u1, nan}, {10}, {10}, {10}, {10}};
+    std::vector<BranchUpdate> batch_link_update{{5, 1, 0}, {5}, {5}, {5}, {5}};
+    std::vector<FaultUpdate> batch_fault_update{
+        {30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}, {30}, {30}, {30}, {30}};
 };
 
 auto default_model(State const& state) -> MainModel {
@@ -912,6 +922,57 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
                            state.link_update.data());
     update_data.add_buffer("fault", state.fault_update.size(), state.fault_update.size(), nullptr,
                            state.fault_update.data());
+
+    main_model.update_component<typename settings::update_type>(update_data);
+
+    SUBCASE("Symmetrical") {
+        auto const solver_output =
+            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
+        main_model.output_result<Node>(solver_output, state.sym_node);
+        main_model.output_result<Branch>(solver_output, state.sym_branch);
+        main_model.output_result<Appliance>(solver_output, state.sym_appliance);
+        CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
+        CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
+        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
+        CHECK(state.sym_branch[0].i_from == doctest::Approx(0.0).epsilon(1e-6));
+        CHECK(state.sym_appliance[0].i == doctest::Approx(0.0).epsilon(1e-6));
+        CHECK(state.sym_appliance[1].i == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i));
+        CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
+        CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
+    }
+    SUBCASE("Asymmetrical") {
+        auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
+            get_default_options(asymmetric, CalculationMethod::linear));
+        main_model.output_result<Node>(solver_output, state.asym_node);
+        main_model.output_result<Branch>(solver_output, state.asym_branch);
+        main_model.output_result<Appliance>(solver_output, state.asym_appliance);
+        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
+        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
+        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
+        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(0.0).epsilon(1e-6));
+        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(0.0).epsilon(1e-6));
+        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i));
+        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
+        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
+    }
+}
+
+TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", settings, regular_update, cached_update) {
+    State state;
+    auto main_model = default_model(state);
+
+    state.batch_sym_load_update[0].p_specified = 2.5e6;
+    ConstDataset update_data{true, 5, "update", meta_data::meta_data_gen::meta_data};
+    update_data.add_buffer("sym_load", 1, state.batch_sym_load_update.size(), nullptr,
+                           state.batch_sym_load_update.data());
+    update_data.add_buffer("asym_load", 1, state.batch_asym_load_update.size(), nullptr,
+                           state.batch_asym_load_update.data());
+    update_data.add_buffer("shunt", 1, state.batch_shunt_update.size(), nullptr, state.batch_shunt_update.data());
+    update_data.add_buffer("source", 1, state.batch_source_update.size(), nullptr, state.batch_source_update.data());
+    update_data.add_buffer("link", 1, state.batch_link_update.size(), nullptr, state.batch_link_update.data());
+    update_data.add_buffer("fault", 1, state.batch_fault_update.size(), nullptr, state.batch_fault_update.data());
 
     main_model.update_component<typename settings::update_type>(update_data);
 

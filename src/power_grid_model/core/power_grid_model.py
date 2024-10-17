@@ -69,7 +69,7 @@ class PowerGridModel:
     @property
     def all_component_count(self) -> dict[ComponentType, int]:
         """
-        Get count of number of elements per component type.
+        Get amount of elements per component type.
         If the count for a component type is zero, it will not be in the returned dictionary.
 
         Returns:

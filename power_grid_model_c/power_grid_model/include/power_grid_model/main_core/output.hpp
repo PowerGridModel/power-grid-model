@@ -366,7 +366,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, solver_output, math_id)
-                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -382,7 +382,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                       std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, state, solver_output, math_id)
-                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -398,7 +398,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                       std::vector<SolverOutputType> const& solver_output, Idx obj_seq) {
                  {
                      output_result<Component>(component, state, solver_output, obj_seq)
-                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -414,7 +414,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                       Idx2DBranch3 const& math_id) {
                  {
                      output_result<Component>(component, solver_output, math_id)
-                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
@@ -429,7 +429,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, typename 
                       MathOutput<SolverOutputType> const& math_output, Idx const obj_seq) {
                  {
                      output_result<Component>(component, state, math_output, obj_seq)
-                     } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<SolverOutputType> const& math_output, ResIt res_it) {

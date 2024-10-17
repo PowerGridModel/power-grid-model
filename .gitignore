@@ -513,6 +513,7 @@ PYPI_VERSION
 # docs builds
 docs/make.bat
 docs/Makefile
+docs/jupyter_execute/
 
 # VSCode configurations
 # it is ignored by default so the user does not accidentally change the configuration

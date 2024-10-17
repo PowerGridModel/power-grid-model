@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
-This file contains all the helper functions for testing purpose
+This module contains functions that may be useful when working with the power-grid-model library.
 """
 
 import json
@@ -33,7 +33,6 @@ from power_grid_model.core.serialization import (  # pylint: disable=unused-impo
     msgpack_serialize,
 )
 from power_grid_model.data_types import (
-    BatchArray,
     BatchComponentData,
     BatchDataset,
     Dataset,
@@ -106,15 +105,15 @@ def get_dataset_batch_size(dataset: BatchDataset) -> int:
     return _get_and_verify_batch_sizes(dataset)
 
 
-def get_component_batch_size(data_array: BatchArray) -> int:
+def get_component_batch_size(data_array: BatchComponentData) -> int:
     """
-    Determine the number of batches and verify the data structure
+    Determine the number of batch scenarios and verify the data structure
 
     Args:
-        data_array: a batch array for power-grid-model
+        data_array: batch data for power-grid-model
 
     Returns:
-        The number of batches in data_array
+        The number of batch scenarios in data_array
     """
     return _get_batch_size(data_array)
 
@@ -215,7 +214,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
     """
     [deprecated] Import json data.
 
-    This function is deprecated. Please use json_deserialize_from_file instead.
+    **WARNING:** This function is deprecated. Please use json_deserialize_from_file instead.
 
     Args:
         json_file: path to the json file.
