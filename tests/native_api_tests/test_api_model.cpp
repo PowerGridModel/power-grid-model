@@ -281,6 +281,9 @@ TEST_CASE("API Model") {
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
             load_id = 0;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
+            source_update_id = 1;
+            source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
             try {
                 Model const wrong_model{50.0, input_dataset};
             } catch (PowerGridRegularError const& e) {
@@ -289,11 +292,14 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error") {
+            load_id = 2;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 5;
+            source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
             try {
                 model.update(single_update_dataset);
             } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "The id cannot be found:"s);
+                check_exception(e, PGM_regular_error, "Wrong type for object with id "s);
             }
         }
 
