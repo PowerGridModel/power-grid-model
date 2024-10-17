@@ -469,10 +469,10 @@ built and installed, e.g. using `cmake --build --preset <preset> --target instal
 
 ## Documentation
 
-The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[docs]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[doc]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
 
 ```shell
-pip install -e .[docs]
+pip install -e .[doc]
 ```
 
 ```{note}

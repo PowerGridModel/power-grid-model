@@ -40,7 +40,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov"]
-docs = [
+doc = [
     "sphinx",
     "breathe",
     "myst_nb",
