@@ -467,7 +467,7 @@ class CWritableDataset:
             del attributes[key]
 
     def _filter_with_option(self):
-        if self._data_filter is ComponentAttributeFilterOptions.RELEVANT:
+        if self._data_filter is ComponentAttributeFilterOptions.relevant:
             for attributes in self._data.values():
                 self._filter_attributes(attributes)
 
@@ -475,7 +475,7 @@ class CWritableDataset:
         for component_type, attributes in self._data.items():
             if component_type in self._data_filter:
                 filter_option = self._data_filter[component_type]
-                if filter_option is ComponentAttributeFilterOptions.RELEVANT:
+                if filter_option is ComponentAttributeFilterOptions.relevant:
                     self._filter_attributes(attributes)
 
     def _post_filtering(self):
