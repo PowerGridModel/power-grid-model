@@ -145,6 +145,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
+    struct UpdateCompProperties {
+        std::string name{""};
+        bool has_id{false};           // if the component has id
+        bool ids_all_na{false};       // if all ids are all NA
+        bool ids_part_na{false};      // if some ids are NA but some are not
+        bool uniform{false};          // if the component is uniform
+        bool is_columnar{false};      // if the component is columnar
+        bool ids_match{false};        // if the ids match
+        Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
+        Idx elements_ps_in_base{0};   // count of elements for this component per scenario in input
+    };
+    using UpdateCompIndependence = std::vector<UpdateCompProperties>;
+    using ComponentCountInBase = std::pair<std::string, Idx>;
+
     static constexpr Idx ignore_output{-1};
 
   protected:
@@ -154,6 +168,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
         return std::array { functor.template operator()<ComponentType>()... };
+    }
+    template <class Functor> static constexpr auto run_functor_with_all_types_return_vector(Functor functor) {
+        return std::vector{functor.template operator()<ComponentType>()...};
     }
 
   public:
@@ -179,7 +196,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // all component count
     std::map<std::string, Idx, std::less<>> all_component_count() const {
-        auto const get_comp_count = [this]<typename CT>() -> std::pair<std::string, Idx> {
+        auto const get_comp_count = [this]<typename CT>() -> ComponentCountInBase {
             return make_pair(std::string{CT::name}, this->component_count<CT>());
         };
         auto const all_count = run_functor_with_all_types_return_array(get_comp_count);
@@ -373,19 +390,40 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // get sequence idx map of a certain batch scenario
-    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx) const {
+    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
+                                     UpdateCompIndependence comp_indenpendence = {}) const {
         auto const process_buffer_span = [](auto const& buffer_span, auto const& get_sequence) {
             auto const it_begin = buffer_span.begin();
             auto const it_end = buffer_span.end();
             return get_sequence(it_begin, it_end);
         };
 
-        auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx,
-                                       &process_buffer_span]<typename CT>() -> std::vector<Idx2D> {
-            auto const get_sequence = [&state](auto const& it_begin, auto const& it_end) {
-                return main_core::get_component_sequence<CT>(state, it_begin, it_end);
+        auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx, &process_buffer_span,
+                                       &comp_indenpendence]<typename CT>() -> std::vector<Idx2D> {
+            // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
+            auto const get_n_comp_elements = [&comp_indenpendence]() {
+                if (!comp_indenpendence.empty()) {
+                    auto const comp_idx = std::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
+                                                       [](auto const& comp) { return comp.name == CT::name; });
+                    if (comp_idx == comp_indenpendence.end()) {
+                        return na_Idx;
+                    }
+                    auto const& comp = *comp_idx;
+                    if (comp.is_columnar && (!comp.has_id || comp.ids_all_na)) {
+                        return comp.elements_ps_in_update;
+                    }
+                    if (!comp.is_columnar && (!comp.has_id && comp.ids_all_na)) {
+                        return comp.elements_ps_in_update;
+                    }
+                }
+                return na_Idx;
             };
 
+            Idx n_comp_elements = get_n_comp_elements();
+
+            auto const get_sequence = [&state, &n_comp_elements](auto const& it_begin, auto const& it_end) {
+                return main_core::get_component_sequence<CT>(state, it_begin, it_end, n_comp_elements);
+            };
             if (update_data.is_columnar(CT::name)) {
                 auto const buffer_span =
                     update_data.get_columnar_buffer_span<meta_data::update_getter_s, CT>(scenario_idx);
@@ -400,8 +438,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // get sequence idx map of an entire batch for fast caching of component sequences
     // (only applicable for independent update dataset)
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
-        assert(is_update_independent(update_data));
-        return get_sequence_idx_map(update_data, 0);
+        auto update_components_independence = check_components_independence(update_data);
+        assert(std::ranges::all_of(update_components_independence,
+                                   [](auto const& comp) { return !comp.has_id || comp.ids_match; }));
+
+        // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
+        auto const all_comp_count_in_base = this->all_component_count();
+        for (auto& comp : update_components_independence) {
+            auto it =
+                std::ranges::find_if(all_comp_count_in_base.begin(), all_comp_count_in_base.end(),
+                                     [&comp](const ComponentCountInBase& pair) { return pair.first == comp.name; });
+            if (it != all_comp_count_in_base.end()) {
+                comp.elements_ps_in_base = it->second;
+            }
+            validate_update_data_independence(comp);
+        }
+
+        return get_sequence_idx_map(update_data, 0, update_components_independence);
     }
 
   private:
@@ -714,50 +767,113 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     template <class Component> using UpdateType = typename Component::UpdateType;
 
-    static bool is_update_independent(ConstDataset const& update_data) {
-        // If the batch size is (0 or) 1, then the update data for this component is 'independent'
-        if (update_data.batch_size() <= 1) {
-            return true;
-        }
+    static UpdateCompIndependence check_components_independence(ConstDataset const& update_data) {
+        auto check_ids_na = [](auto const& all_spans) {
+            std::vector<std::vector<bool>> ids_na{};
+            for (const auto& span : all_spans) {
+                for (const auto& obj : span) {
+                    std::vector<bool> id_na{};
+                    if constexpr (requires { obj.id; }) {
+                        id_na.push_back(is_nan(obj.id));
+                    }
+                    ids_na.push_back(id_na);
+                }
+            }
+            return ids_na;
+        };
 
-        auto const process_buffer_span = []<typename CT>(auto const& all_spans) -> bool {
+        auto process_buffer_span = [check_ids_na]<typename CT>(auto const& all_spans, UpdateCompProperties& result) {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            auto const elements_per_scenario = static_cast<Idx>(all_spans.front().size());
-            bool const uniform_batch = std::ranges::all_of(all_spans, [elements_per_scenario](auto const& span) {
-                return static_cast<Idx>(span.size()) == elements_per_scenario;
+            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
+            result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
+            result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
+                return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
             });
-            if (!uniform_batch) {
-                return false;
-            }
-            if (elements_per_scenario == 0) {
-                return true;
-            }
+            result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
+                return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
+                       std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
+            });
+            result.uniform =
+                std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
+                    return static_cast<Idx>(span.size()) == n_elements;
+                });
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
             auto const first_span = all_spans[0];
             // check the subsequent scenarios
             // only return true if all scenarios match the ids of the first batch
-            return std::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                return std::ranges::equal(
-                    current_span, first_span,
-                    [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
-            });
+            result.ids_match =
+                std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+                    return std::ranges::equal(
+                        current_span, first_span,
+                        [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
+                });
         };
 
-        auto const is_component_update_independent = [&update_data, &process_buffer_span]<typename CT>() -> bool {
+        auto const check_each_component = [&update_data, &process_buffer_span]<typename CT>() -> UpdateCompProperties {
             // get span of all the update data
-            if (update_data.is_columnar(CT::name)) {
-                return process_buffer_span.template operator()<CT>(
-                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
+            auto const comp_index = update_data.find_component(CT::name, false);
+            UpdateCompProperties result;
+            result.name = CT::name;
+            result.is_columnar = update_data.is_columnar(result.name);
+            if (comp_index >= 0) {
+                result.elements_ps_in_update = update_data.get_component_info(comp_index).elements_per_scenario;
             }
-            return process_buffer_span.template operator()<CT>(
-                update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>());
+            if (result.is_columnar) {
+                process_buffer_span.template operator()<CT>(
+                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
+            } else {
+                process_buffer_span.template operator()<CT>(
+                    update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
+            }
+            return result;
         };
 
-        // check all components
-        auto const update_independent = run_functor_with_all_types_return_array(is_component_update_independent);
-        return std::ranges::all_of(update_independent, [](bool const is_independent) { return is_independent; });
+        // check and return indenpendence of all components
+        return run_functor_with_all_types_return_vector(check_each_component);
+    }
+
+    static bool is_update_independent(ConstDataset const& update_data) {
+        // If the batch size is (0 or) 1, then the update data for this component is 'independent'
+        if (update_data.batch_size() <= 1) {
+            return true;
+        }
+        auto const all_comp_update_independence = check_components_independence(update_data);
+        return std::ranges::all_of(all_comp_update_independence,
+                                   [](auto const& comp) { return !comp.has_id || comp.ids_match; });
+    }
+
+    void validate_update_data_independence(UpdateCompProperties const& comp) const {
+        if (!comp.has_id && comp.ids_all_na) {
+            return; // empty dataset is still supported
+        }
+        if (comp.elements_ps_in_base < comp.elements_ps_in_update) {
+            throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
+                               "!");
+        }
+        if (comp.ids_part_na) {
+            throw DatasetError("Part of the IDs are not valid for component " + comp.name + " in update data!");
+        }
+        if (!comp.uniform) {
+            if (comp.is_columnar && !comp.has_id) {
+                throw DatasetError("Columnar input data without IDs for component " + comp.name + " is not uniform!");
+            }
+            if (!comp.is_columnar && comp.ids_all_na) {
+                throw DatasetError("Row based input data with all NA IDs for component " + comp.name +
+                                   " is not uniform!");
+            }
+        }
+        if (comp.elements_ps_in_base != comp.elements_ps_in_update) {
+            if (comp.is_columnar && !comp.has_id) {
+                throw DatasetError("Columnar input data for component " + comp.name +
+                                   " has different number of elements per scenario in update and input data!");
+            }
+            if (!comp.is_columnar && comp.uniform && (comp.has_id && comp.ids_all_na)) {
+                throw DatasetError("Row based input data for component " + comp.name +
+                                   " has different number of elements per scenario in update and input data!");
+            }
+        }
     }
 
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {

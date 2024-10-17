@@ -33,21 +33,31 @@ template <component_c Component, class ComponentContainer,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                   ForwardIterator end, OutputIterator destination) {
+                                   ForwardIterator end, OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
-    std::transform(begin, end, destination,
-                   [&state](UpdateType const& update) { return get_component_idx_by_id<Component>(state, update.id); });
+    auto idx_getter_func = [&state, n_comp_elements](UpdateType const& update, auto index) {
+        if (n_comp_elements == na_Idx) {
+            return get_component_idx_by_id<Component>(state, update.id);
+        } else {
+            Idx group = get_component_group_idx<Component>(state);
+            return Idx2D{group, index % n_comp_elements};
+        }
+    };
+
+    std::ranges::transform(begin, end, destination, [&, index = 0](UpdateType const& update) mutable {
+        return idx_getter_func(update, index++);
+    });
 }
 
 template <component_c Component, class ComponentContainer,
           forward_iterator_like<typename Component::UpdateType> ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                                 ForwardIterator end) {
+                                                 ForwardIterator end, Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::distance(begin, end));
-    get_component_sequence<Component>(state, begin, end, std::back_inserter(result));
+    get_component_sequence<Component>(state, begin, end, std::back_inserter(result), n_comp_elements);
     return result;
 }
 
