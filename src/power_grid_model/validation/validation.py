@@ -31,11 +31,7 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.validation.errors import (
-    MissingValueError,
-    MultiComponentNotUniqueError,
-    ValidationError,
-)
+from power_grid_model.validation.errors import MissingValueError, MultiComponentNotUniqueError, ValidationError
 from power_grid_model.validation.rules import (
     all_between,
     all_between_or_at,
