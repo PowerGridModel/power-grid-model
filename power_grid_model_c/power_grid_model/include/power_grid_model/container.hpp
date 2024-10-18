@@ -125,6 +125,10 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         return result;
     }
+    template <supported_type_c<StorageableTypes...> Storageable> Idx get_group_idx() const {
+        return static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
+    }
+
     // get item based on ID
     template <supported_type_c<GettableTypes...> Gettable> Gettable& get_item(ID id) {
         Idx2D const idx = get_idx_by_id<Gettable>(id);
