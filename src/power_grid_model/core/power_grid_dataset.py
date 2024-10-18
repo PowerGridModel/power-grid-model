@@ -466,11 +466,6 @@ class CWritableDataset:
         for key in keys_to_remove:
             del attributes[key]
 
-    def _filter_with_option(self):
-        if self._data_filter is ComponentAttributeFilterOptions.relevant:
-            for attributes in self._data.values():
-                self._filter_attributes(attributes)
-
     def _filter_with_mapping(self):
         for component_type, attributes in self._data.items():
             if component_type in self._data_filter:
@@ -479,9 +474,7 @@ class CWritableDataset:
                     self._filter_attributes(attributes)
 
     def _post_filtering(self):
-        if isinstance(self._data_filter, ComponentAttributeFilterOptions):
-            self._filter_with_option()
-        elif isinstance(self._data_filter, dict):
+        if isinstance(self._data_filter, dict):
             self._filter_with_mapping()
 
 
