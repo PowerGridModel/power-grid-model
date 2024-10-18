@@ -3,10 +3,22 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
-Type hints for PGM. This includes all miscellaneous type hints not under dataset or dataset_definitions categories
+Type hints for the power-grid-model library.
+
+This includes all miscellaneous type hints not under dataset or categories.
 """
 
-from power_grid_model.core.dataset_definitions import ComponentType, ComponentTypeVar
+from power_grid_model.core.dataset_definitions import (  # pylint: disable=unused-import
+    ComponentType,
+    ComponentTypeVar,
+    DatasetType,
+    DatasetTypeVar,
+)
+from power_grid_model.core.power_grid_meta import (  # pylint: disable=unused-import
+    ComponentMetaData,
+    DatasetMetaData,
+    PowerGridMetaData,
+)
 from power_grid_model.enum import ComponentAttributeFilterOptions
 
 _ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]
@@ -23,13 +35,14 @@ Type hint for mapping component attributes.
 
 `ComponentAttributeMapping` can be one of the following:
 
-- A set of `ComponentTypeVar`
+- A set of :class:`ComponentType` or `str`
 
-- A list of `ComponentTypeVar`
+- A list of :class:`ComponentType` or `str`
 
-- A `ComponentAttributeFilterOptions` value
+- A :class:`ComponentAttributeFilterOptions <power_grid_model.enum.ComponentAttributeFilterOptions>` value
 
 - `None`
 
-- A dictionary mapping `ComponentType` to a set, list, `None`, or `ComponentAttributeFilterOptions`
+- A dictionary mapping :class:`ComponentType` to a set, list, `None` or
+  :class:`ComponentAttributeFilterOptions <power_grid_model.enum.ComponentAttributeFilterOptions>`
 """

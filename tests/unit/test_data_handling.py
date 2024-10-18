@@ -2,12 +2,16 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import warnings
+
 import numpy as np
 import pytest
 
 from power_grid_model._utils import is_columnar
 from power_grid_model.core.data_handling import create_output_data
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model.core.power_grid_core import VoidPtr
+from power_grid_model.core.power_grid_dataset import CMutableDataset
 from power_grid_model.core.power_grid_meta import initialize_array
 
 
@@ -69,3 +73,35 @@ def test_create_output_data(output_component_types, is_batch, expected):
         else:
             assert actual[comp].keys() == expected[comp].keys()
             assert all(actual[comp][attr].dtype == expected[comp][attr].dtype for attr in expected[comp])
+
+
+def test_dtype_compatibility_check_normal():
+    nodes = initialize_array(DT.sym_output, CT.node, (1, 2))
+    nodes_ptr = nodes.ctypes.data_as(VoidPtr)
+
+    data = {CT.node: nodes}
+    mutable_dataset = CMutableDataset(data, DT.sym_output)
+    buffer_views = mutable_dataset.get_buffer_views()
+
+    assert buffer_views[0].data.value == nodes_ptr.value
+
+
+def test_dtype_compatibility_check_compatible():
+    nodes = initialize_array(DT.sym_output, CT.node, 4)
+    nodes = nodes[::2]
+    nodes_ptr = nodes.ctypes.data_as(VoidPtr)
+
+    data = {CT.node: nodes}
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        mutable_dataset = CMutableDataset(data, DT.sym_output)
+        buffer_views = mutable_dataset.get_buffer_views()
+
+    assert buffer_views[0].data.value != nodes_ptr.value
+
+
+def test_dtype_compatibility_check__error():
+    nodes = initialize_array(DT.sym_output, CT.node, (1, 2))
+    data = {CT.node: nodes.astype(nodes.dtype.newbyteorder("S"))}
+    with pytest.warns(DeprecationWarning):
+        CMutableDataset(data, DT.sym_output)
