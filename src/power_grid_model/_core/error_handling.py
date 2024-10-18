@@ -11,8 +11,8 @@ from typing import Optional
 
 import numpy as np
 
-from power_grid_model.core.index_integer import IdxNp
-from power_grid_model.core.power_grid_core import power_grid_core as pgc
+from power_grid_model._core.index_integer import IdxNp
+from power_grid_model._core.power_grid_core import power_grid_core as pgc
 from power_grid_model.errors import (
     AutomaticTapCalculationError,
     ConflictID,

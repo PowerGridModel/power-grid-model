@@ -7,7 +7,7 @@ Option class
 """
 from typing import Any, Callable
 
-from power_grid_model.core.power_grid_core import OptionsPtr, power_grid_core as pgc
+from power_grid_model._core.power_grid_core import OptionsPtr, power_grid_core as pgc
 
 
 class OptionSetter:

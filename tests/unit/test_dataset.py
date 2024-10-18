@@ -5,9 +5,9 @@
 import numpy as np
 import pytest
 
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_dataset import CConstDataset
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.power_grid_dataset import CConstDataset
+from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
 
