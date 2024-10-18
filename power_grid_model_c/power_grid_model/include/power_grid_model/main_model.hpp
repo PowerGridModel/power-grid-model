@@ -13,8 +13,7 @@ namespace power_grid_model {
 class MainModel {
   private:
     using Impl =
-        MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad,
-                                            GenericGenerator, GenericPowerSensor, GenericVoltageSensor, Regulator>,
+        MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Appliance, GenericLoadGen, GenericLoad>,
                       AllComponents>;
 
   public:

@@ -8,21 +8,10 @@
 #include "common/common.hpp"
 #include "common/component_list.hpp"
 // component include
-#include "component/appliance.hpp"
-#include "component/fault.hpp"
-#include "component/generic_branch.hpp"
 #include "component/line.hpp"
-#include "component/link.hpp"
 #include "component/load_gen.hpp"
 #include "component/node.hpp"
-#include "component/power_sensor.hpp"
-#include "component/sensor.hpp"
-#include "component/shunt.hpp"
 #include "component/source.hpp"
-#include "component/three_winding_transformer.hpp"
-#include "component/transformer.hpp"
-#include "component/transformer_tap_regulator.hpp"
-#include "component/voltage_sensor.hpp"
 
 namespace power_grid_model {
 
