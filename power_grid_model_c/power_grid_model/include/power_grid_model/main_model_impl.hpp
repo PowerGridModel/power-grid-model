@@ -13,13 +13,11 @@
 // common
 #include "common/common.hpp"
 #include "common/exception.hpp"
-#include "common/timer.hpp"
 
 // component include
 #include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/input.hpp"
-#include "auxiliary/output.hpp"
 
 // main model implementation
 #include "main_core/input.hpp"
@@ -28,81 +26,10 @@
 // stl library
 #include <memory>
 #include <span>
-#include <thread>
 
 namespace power_grid_model {
 
 // solver output type to output type getter meta function
-
-template <solver_output_type SolverOutputType> struct output_type_getter;
-template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
-    using type = meta_data::sc_output_getter_s;
-};
-template <> struct output_type_getter<SolverOutput<symmetric_t>> {
-    using type = meta_data::sym_output_getter_s;
-};
-template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
-    using type = meta_data::asym_output_getter_s;
-};
-
-struct power_flow_t {};
-struct state_estimation_t {};
-struct short_circuit_t {};
-
-template <typename T>
-concept calculation_type_tag = std::derived_from<T, power_flow_t> || std::derived_from<T, state_estimation_t> ||
-                               std::derived_from<T, short_circuit_t>;
-
-template <class Functor, class... Args>
-decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, Functor&& f,
-                                                  Args&&... args) {
-    using enum CalculationSymmetry;
-
-    switch (calculation_symmetry) {
-    case symmetric:
-        return std::forward<Functor>(f).template operator()<symmetric_t>(std::forward<Args>(args)...);
-    case asymmetric:
-        return std::forward<Functor>(f).template operator()<asymmetric_t>(std::forward<Args>(args)...);
-    default:
-        throw MissingCaseForEnumError{"Calculation symmetry selector", calculation_symmetry};
-    }
-}
-
-template <class Functor, class... Args>
-decltype(auto) calculation_type_func_selector(CalculationType calculation_type, Functor&& f, Args&&... args) {
-    using enum CalculationType;
-
-    switch (calculation_type) {
-    case CalculationType::power_flow:
-        return std::forward<Functor>(f).template operator()<power_flow_t>(std::forward<Args>(args)...);
-    case CalculationType::state_estimation:
-        return std::forward<Functor>(f).template operator()<state_estimation_t>(std::forward<Args>(args)...);
-    case CalculationType::short_circuit:
-        return std::forward<Functor>(f).template operator()<short_circuit_t>(std::forward<Args>(args)...);
-    default:
-        throw MissingCaseForEnumError{"CalculationType", calculation_type};
-    }
-}
-
-template <class Functor, class... Args>
-decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
-                                                       CalculationSymmetry calculation_symmetry, Functor&& f,
-                                                       Args&&... args) {
-    calculation_type_func_selector(
-        calculation_type,
-        []<calculation_type_tag calculation_type, typename Functor_, typename... Args_>(
-            CalculationSymmetry calculation_symmetry_, Functor_&& f_, Args_&&... args_) {
-            calculation_symmetry_func_selector(
-                calculation_symmetry_,
-                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor&& sub_f,
-                                                                               SubArgs&&... sub_args) {
-                    std::forward<SubFunctor>(sub_f).template operator()<calculation_type, sym>(
-                        std::forward<SubArgs>(sub_args)...);
-                },
-                std::forward<Functor_>(f_), std::forward<Args_>(args_)...);
-        },
-        calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
-}
 
 // main model implementation template
 template <class T, class U> class MainModelImpl;
@@ -162,22 +89,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CompType> Idx component_count() const {
         assert(construction_complete_);
         return state_.components.template size<CompType>();
-    }
-
-    // all component count
-    std::map<std::string, Idx, std::less<>> all_component_count() const {
-        auto const get_comp_count = [this]<typename CT>() -> std::pair<std::string, Idx> {
-            return make_pair(std::string{CT::name}, this->component_count<CT>());
-        };
-        auto const all_count = run_functor_with_all_types_return_array(get_comp_count);
-        std::map<std::string, Idx, std::less<>> result;
-        for (auto const& [name, count] : all_count) {
-            if (count > 0) {
-                // only add if count is greater than 0
-                result[name] = count;
-            }
-        }
-        return result;
     }
 
     // helper function to add vectors of components
