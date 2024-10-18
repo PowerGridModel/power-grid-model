@@ -208,7 +208,7 @@ class _ExperimentalFeatures(IntEnum):
 class ComponentAttributeFilterOptions(IntEnum):
     """Filter option component or attribute"""
 
-    ALL = 0
+    everything = 0
     """Filter all components/attributes"""
-    RELEVANT = 1
+    relevant = 1
     """Filter only non-empty components/attributes that contain non-NaN values"""
