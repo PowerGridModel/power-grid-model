@@ -58,13 +58,26 @@ class ValidationError(ABC):
         """
         A string representation of the component to which this error applies
         """
-        return str(self.component)
+        if self.component is None:
+            return str(None)
+        if isinstance(self.component, list):
+            return str(list(component.value for component in self.component))
+        return self.component.value
 
     @property
     def field_str(self) -> str:
         """
         A string representation of the field to which this error applies
         """
+
+        def _unpack(field: str | tuple[ComponentType, str]) -> str:
+            if isinstance(field, str):
+                return field
+            component, component_field = field
+            return str((component.value, component_field))
+
+        if isinstance(self.field, list):
+            return str(list(_unpack(field) for field in self.field))
         return f"'{self.field}'"
 
     def get_context(self, id_lookup: Optional[list[str] | dict[int, str]] = None) -> dict[str, Any]:
@@ -189,12 +202,11 @@ class MultiComponentValidationError(ValidationError):
 
     @property
     def component_str(self) -> str:
-        str_components = [str(component) for component in self.component]
-        return "/".join(str_components)
+        return "/".join(component.value for component in self.component)
 
     @property
     def field_str(self) -> str:
-        return self._delimiter.join(f"{component}.{field}" for component, field in self.field)
+        return self._delimiter.join(f"{component.value}.{field}" for component, field in self.field)
 
 
 class NotIdenticalError(SingleFieldValidationError):
