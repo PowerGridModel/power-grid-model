@@ -12,7 +12,6 @@
 
 #include "power_grid_model_c/handle.h"
 
-#include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
 
 #include <string_view>
@@ -24,7 +23,6 @@ struct PGM_Handle {
     power_grid_model::IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
-    [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
 };
 
 template <class Exception = std::exception, class Functor>
