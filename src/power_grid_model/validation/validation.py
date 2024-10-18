@@ -31,7 +31,13 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.validation.errors import MissingValueError, MultiComponentNotUniqueError, ValidationError
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    ValidationError,
+)
 from power_grid_model.validation.rules import (
     all_between,
     all_between_or_at,
@@ -52,6 +58,7 @@ from power_grid_model.validation.rules import (
     all_valid_enum_values,
     all_valid_fault_phases,
     all_valid_ids,
+    ids_valid_in_update_data_set,
     none_missing,
     valid_p_q_sigma,
 )
@@ -206,6 +213,29 @@ def validate_unique_ids_across_components(data: SingleDataset) -> list[MultiComp
         have non-unique ids
     """
     return all_cross_unique(data, [(component, "id") for component in data])
+
+
+def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[IdNotInDatasetError | InvalidIdError]:
+    """
+    Checks if all ids of the components in the update data:
+     - exist and match those in the input data
+     - are not present but qualifies for optional id
+
+    This function should be called for every update dataset in a batch set
+
+    Args:
+        update_data: A single update dataset
+        input_data: Input dataset
+
+    Returns:
+        An empty list if all update data ids are valid, or a list of IdNotInDatasetErrors or InvalidIdError for
+        all update components that have invalid ids
+
+    """
+    errors = (
+        ids_valid_in_update_data_set(update_data, input_data, component, "update_data") for component in update_data
+    )
+    return list(chain(*errors))
 
 
 def _process_power_sigma_and_p_q_sigma(

@@ -326,12 +326,13 @@ class InvalidIdError(SingleFieldValidationError):
         self,
         component: ComponentType,
         field: str,
-        ids: list[int],
-        ref_components: ComponentType | list[ComponentType],
+        ids: list[int] = None,
+        ref_components: ComponentType | list[ComponentType] = None,
         filters: Optional[dict[str, Any]] = None,
     ):
         # pylint: disable=too-many-positional-arguments
-        super().__init__(component=component, field=field, ids=ids)
+        self.ids = ids if ids is not None else []
+        super().__init__(component=component, field=field, ids=self.ids)
         self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
         self.filters = filters if filters else None
 
