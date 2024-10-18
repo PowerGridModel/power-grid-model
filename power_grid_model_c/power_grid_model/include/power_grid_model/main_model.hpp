@@ -74,28 +74,6 @@ class MainModel {
         impl().update_component<CacheType>(update_data);
     }
 
-    template <typename CompType, typename MathOutputType, typename OutputType>
-    void output_result(MathOutputType const& math_output, std::vector<OutputType>& target) const {
-        output_result<CompType>(math_output, std::span<OutputType>{target});
-    }
-    template <typename CompType, typename MathOutputType, typename OutputType>
-    void output_result(MathOutputType const& math_output, std::span<OutputType> target) const {
-        impl().output_result<CompType>(math_output, target.begin());
-    }
-
-    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
-        return impl().calculate<calculation_type, sym>(options);
-    }
-    void calculate(Options const& options, MutableDataset const& result_data) {
-        return impl().calculate(options, result_data);
-    }
-    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
-                             ConstDataset const& update_data) {
-        return impl().calculate(options, result_data, update_data);
-    }
-
-    CalculationInfo calculation_info() const { return impl().calculation_info(); }
-
   private:
     Impl& impl() {
         assert(impl_ != nullptr);
