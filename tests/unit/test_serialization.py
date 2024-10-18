@@ -377,17 +377,17 @@ def serialized_data(request):
 @pytest.fixture(
     params=[
         pytest.param(None, id="All row filter"),
-        pytest.param(ComponentAttributeFilterOptions.ALL, id="All columnar filter"),
-        pytest.param(ComponentAttributeFilterOptions.RELEVANT, id="All relevant columnar filter"),
+        pytest.param(ComponentAttributeFilterOptions.everything, id="All columnar filter"),
+        pytest.param(ComponentAttributeFilterOptions.relevant, id="All relevant columnar filter"),
         pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
         pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
         pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
         pytest.param(
             {
                 "node": ["id"],
-                "line": ComponentAttributeFilterOptions.ALL,
+                "line": ComponentAttributeFilterOptions.everything,
                 "sym_load": None,
-                "asym_load": ComponentAttributeFilterOptions.RELEVANT,
+                "asym_load": ComponentAttributeFilterOptions.relevant,
             },
             id="mixed filter",
         ),
@@ -629,9 +629,9 @@ def _check_only_relevant_attributes_present(component_values) -> bool:
 
 
 def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data_filter) -> bool:
-    if data_filter is ComponentAttributeFilterOptions.ALL:
+    if data_filter is ComponentAttributeFilterOptions.everything:
         return True
-    if data_filter is ComponentAttributeFilterOptions.RELEVANT:
+    if data_filter is ComponentAttributeFilterOptions.relevant:
         for component_values in deserialized_dataset.values():
             if not _check_only_relevant_attributes_present(component_values):
                 return False
