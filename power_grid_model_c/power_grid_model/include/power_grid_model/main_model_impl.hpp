@@ -7,11 +7,8 @@
 // main model class
 
 // main include
-#include "batch_parameter.hpp"
-#include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "main_model_fwd.hpp"
-#include "topology.hpp"
 
 // common
 #include "common/common.hpp"
@@ -24,17 +21,8 @@
 #include "auxiliary/input.hpp"
 #include "auxiliary/output.hpp"
 
-// math model include
-#include "math_solver/math_solver.hpp"
-
-#include "optimizer/optimizer.hpp"
-
 // main model implementation
-#include "main_core/calculation_info.hpp"
 #include "main_core/input.hpp"
-#include "main_core/math_state.hpp"
-#include "main_core/output.hpp"
-#include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
 // stl library
@@ -126,7 +114,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // container class
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
-    using MathState = main_core::MathState;
 
     template <class CT>
     static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CT, ComponentType...>;
@@ -246,7 +233,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_, begin, end, std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
-        update_state(changed);
+        //update_state(changed);
         if constexpr (CacheType::value) {
             cached_state_changes_ = cached_state_changes_ || changed;
         }
@@ -298,28 +285,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
     }
 
-    template <typename CompType> void restore_component(SequenceIdx const& sequence_idx) {
-        constexpr auto component_index = index_of_component<CompType>;
-
-        auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
-        auto const& component_sequence = std::get<component_index>(sequence_idx);
-
-        if (!cached_inverse_update.empty()) {
-            update_component<CompType, permanent_update_t>(cached_inverse_update, component_sequence);
-            cached_inverse_update.clear();
-        }
-    }
-
-    // restore the initial values of all components
-    void restore_components(SequenceIdx const& sequence_idx) {
-        (restore_component<ComponentType>(sequence_idx), ...);
-
-        update_state(cached_state_changes_);
-        cached_state_changes_ = {};
-    }
-
-    void restore_components(ConstDataset const& update_data) { restore_components(get_sequence_idx_map(update_data)); }
-
     // set complete construction
     // initialize internal arrays
     void set_construction_complete() {
@@ -329,33 +294,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-        construct_topology();
-    }
-
-    void construct_topology() {
-        ComponentTopology comp_topo;
-        main_core::register_topology_components<Node>(state_, comp_topo);
-        main_core::register_topology_components<Branch>(state_, comp_topo);
-        main_core::register_topology_components<Branch3>(state_, comp_topo);
-        main_core::register_topology_components<Source>(state_, comp_topo);
-        main_core::register_topology_components<Shunt>(state_, comp_topo);
-        main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
-        main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
-        main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
-        main_core::register_topology_components<Regulator>(state_, comp_topo);
-        state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
-    }
-
-    void reset_solvers() {
-        assert(construction_complete_);
-        is_topology_up_to_date_ = false;
-        is_sym_parameter_up_to_date_ = false;
-        is_asym_parameter_up_to_date_ = false;
-        n_math_solvers_ = 0;
-        main_core::clear(math_state_);
-        state_.math_topology.clear();
-        state_.topo_comp_coup.reset();
-        state_.comp_coup = {};
+        //construct_topology();
     }
 
     /*
@@ -405,95 +344,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   private:
-    void update_state(const UpdateChange& changes) {
-        // if topology changed, everything is not up to date
-        // if only param changed, set param to not up to date
-        is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
-        is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changes.topo && !changes.param;
-        is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
-    }
-
-    template <typename... Args, typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
-              typename RecoverFromBadFn>
-        requires std::invocable<std::remove_cvref_t<RunFn>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<SetupFn>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<WinddownFn>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<HandleExceptionFn>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<RecoverFromBadFn>, Args const&...>
-    static auto call_with(RunFn run, SetupFn setup, WinddownFn winddown, HandleExceptionFn handle_exception,
-                          RecoverFromBadFn recover_from_bad) {
-        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
-                handle_exception_ = std::move(handle_exception),
-                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
-            try {
-                setup_(args...);
-                run_(args...);
-                winddown_(args...);
-            } catch (...) {
-                handle_exception_(args...);
-                try {
-                    winddown_(args...);
-                } catch (...) {
-                    recover_from_bad_(args...);
-                }
-            }
-        };
-    }
-
-    static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
-                                        SequenceIdx const& scenario_sequence, SequenceIdx& scenario_sequence_cache,
-                                        bool is_independent, std::vector<CalculationInfo>& infos) noexcept {
-        bool const do_update_cache = !is_independent;
-        return std::make_pair(
-            [&model, &update_data, &scenario_sequence, &scenario_sequence_cache, do_update_cache,
-             &infos](Idx scenario_idx) {
-                Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
-                if (do_update_cache) {
-                    scenario_sequence_cache = model.get_sequence_idx_map(update_data, scenario_idx);
-                }
-                model.template update_component<cached_update_t>(update_data, scenario_idx, scenario_sequence);
-            },
-            [&model, &scenario_sequence, &scenario_sequence_cache, do_update_cache, &infos](Idx scenario_idx) {
-                Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
-                model.restore_components(scenario_sequence);
-                if (do_update_cache) {
-                    std::ranges::for_each(scenario_sequence_cache, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
-                }
-            });
-    }
-
-    // Lippincott pattern
-    static auto scenario_exception_handler(MainModelImpl& model, std::vector<std::string>& messages,
-                                           std::vector<CalculationInfo>& infos) {
-        return [&model, &messages, &infos](Idx scenario_idx) {
-            std::exception_ptr const ex_ptr = std::current_exception();
-            try {
-                std::rethrow_exception(ex_ptr);
-            } catch (std::exception const& ex) {
-                messages[scenario_idx] = ex.what();
-            } catch (...) {
-                messages[scenario_idx] = "unknown exception";
-            }
-            infos[scenario_idx].merge(model.calculation_info_);
-        };
-    }
-
-    static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
-        std::string combined_error_message;
-        IdxVector failed_scenarios;
-        std::vector<std::string> err_msgs;
-        for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
-            // append exception if it is not empty
-            if (!exceptions[batch].empty()) {
-                combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
-                failed_scenarios.push_back(batch);
-                err_msgs.push_back(exceptions[batch]);
-            }
-        }
-        if (!combined_error_message.empty()) {
-            throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
-        }
-    }
 
   public:
     template <class Component> using UpdateType = typename Component::UpdateType;
@@ -545,21 +395,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   private:
-    mutable CalculationInfo calculation_info_; // needs to be first due to padding override
-                                               // may be changed in const functions for metrics
 
     double system_frequency_;
     meta_data::MetaData const* meta_data_;
 
     MainModelState state_;
     // math model
-    MathState math_state_;
-    Idx n_math_solvers_{0};
-    bool is_topology_up_to_date_{false};
-    bool is_sym_parameter_up_to_date_{false};
-    bool is_asym_parameter_up_to_date_{false};
-    bool is_accumulated_component_updated_{true};
-    bool last_updated_calculation_symmetry_mode_{false};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
@@ -568,175 +409,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
 #endif // !NDEBUG
-
-    template <symmetry_tag sym> bool& is_parameter_up_to_date() {
-        if constexpr (is_symmetric_v<sym>) {
-            return is_sym_parameter_up_to_date_;
-        } else {
-            return is_asym_parameter_up_to_date_;
-        }
-    }
-
-    template <symmetry_tag sym> std::vector<MathSolver<sym>>& get_solvers() {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state_.math_solvers_sym;
-        } else {
-            return math_state_.math_solvers_asym;
-        }
-    }
-
-    template <symmetry_tag sym> std::vector<YBus<sym>>& get_y_bus() {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state_.y_bus_vec_sym;
-        } else {
-            return math_state_.y_bus_vec_asym;
-        }
-    }
-
-    void rebuild_topology() {
-        assert(construction_complete_);
-        // clear old solvers
-        reset_solvers();
-        // get connection info
-        ComponentConnections comp_conn;
-        comp_conn.branch_connected.resize(state_.comp_topo->branch_node_idx.size());
-        comp_conn.branch_phase_shift.resize(state_.comp_topo->branch_node_idx.size());
-        comp_conn.branch3_connected.resize(state_.comp_topo->branch3_node_idx.size());
-        comp_conn.branch3_phase_shift.resize(state_.comp_topo->branch3_node_idx.size());
-        comp_conn.source_connected.resize(state_.comp_topo->source_node_idx.size());
-        std::transform(
-            state_.components.template citer<Branch>().begin(), state_.components.template citer<Branch>().end(),
-            comp_conn.branch_connected.begin(), [](Branch const& branch) {
-                return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
-            });
-        std::transform(state_.components.template citer<Branch>().begin(),
-                       state_.components.template citer<Branch>().end(), comp_conn.branch_phase_shift.begin(),
-                       [](Branch const& branch) { return branch.phase_shift(); });
-        std::transform(
-            state_.components.template citer<Branch3>().begin(), state_.components.template citer<Branch3>().end(),
-            comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
-                return Branch3Connected{static_cast<IntS>(branch3.status_1()), static_cast<IntS>(branch3.status_2()),
-                                        static_cast<IntS>(branch3.status_3())};
-            });
-        std::transform(state_.components.template citer<Branch3>().begin(),
-                       state_.components.template citer<Branch3>().end(), comp_conn.branch3_phase_shift.begin(),
-                       [](Branch3 const& branch3) { return branch3.phase_shift(); });
-        std::transform(state_.components.template citer<Source>().begin(),
-                       state_.components.template citer<Source>().end(), comp_conn.source_connected.begin(),
-                       [](Source const& source) { return source.status(); });
-        // re build
-        Topology topology{*state_.comp_topo, comp_conn};
-        std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
-        n_math_solvers_ = static_cast<Idx>(state_.math_topology.size());
-        is_topology_up_to_date_ = true;
-        is_sym_parameter_up_to_date_ = false;
-        is_asym_parameter_up_to_date_ = false;
-    }
-
-    template <symmetry_tag sym> std::vector<MathModelParam<sym>> get_math_param() {
-        std::vector<MathModelParam<sym>> math_param(n_math_solvers_);
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            math_param[i].branch_param.resize(state_.math_topology[i]->n_branch());
-            math_param[i].shunt_param.resize(state_.math_topology[i]->n_shunt());
-            math_param[i].source_param.resize(state_.math_topology[i]->n_source());
-        }
-        // loop all branch
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch_node_idx.size()); ++i) {
-            Idx2D const math_idx = state_.topo_comp_coup->branch[i];
-            if (math_idx.group == -1) {
-                continue;
-            }
-            // assign parameters
-            math_param[math_idx.group].branch_param[math_idx.pos] =
-                state_.components.template get_item_by_seq<Branch>(i).template calc_param<sym>();
-        }
-        // loop all branch3
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch3_node_idx.size()); ++i) {
-            Idx2DBranch3 const math_idx = state_.topo_comp_coup->branch3[i];
-            if (math_idx.group == -1) {
-                continue;
-            }
-            // assign parameters, branch3 param consists of three branch parameters
-            auto const branch3_param =
-                state_.components.template get_item_by_seq<Branch3>(i).template calc_param<sym>();
-            for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-                math_param[math_idx.group].branch_param[math_idx.pos[branch2]] = branch3_param[branch2];
-            }
-        }
-        // loop all shunt
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->shunt_node_idx.size()); ++i) {
-            Idx2D const math_idx = state_.topo_comp_coup->shunt[i];
-            if (math_idx.group == -1) {
-                continue;
-            }
-            // assign parameters
-            math_param[math_idx.group].shunt_param[math_idx.pos] =
-                state_.components.template get_item_by_seq<Shunt>(i).template calc_param<sym>();
-        }
-        // loop all source
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->source_node_idx.size()); ++i) {
-            Idx2D const math_idx = state_.topo_comp_coup->source[i];
-            if (math_idx.group == -1) {
-                continue;
-            }
-            // assign parameters
-            math_param[math_idx.group].source_param[math_idx.pos] =
-                state_.components.template get_item_by_seq<Source>(i).template math_param<sym>();
-        }
-        return math_param;
-    }
-    template <symmetry_tag sym> std::vector<MathModelParamIncrement> get_math_param_increment() {
-        using AddToIncrement = void (*)(std::vector<MathModelParamIncrement>&, MainModelState const&, Idx2D const&);
-
-        static constexpr std::array<AddToIncrement, n_types> add_to_increments{
-            [](std::vector<MathModelParamIncrement>& increments, MainModelState const& state,
-               Idx2D const& changed_component_idx) {
-                if constexpr (std::derived_from<ComponentType, Branch>) {
-                    Idx2D const math_idx =
-                        state.topo_comp_coup
-                            ->branch[main_core::get_component_sequence<Branch>(state, changed_component_idx)];
-                    if (math_idx.group == -1) {
-                        return;
-                    }
-                    // assign parameters
-                    increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
-                } else if constexpr (std::derived_from<ComponentType, Branch3>) {
-                    Idx2DBranch3 const math_idx =
-                        state.topo_comp_coup
-                            ->branch3[main_core::get_component_sequence<Branch3>(state, changed_component_idx)];
-                    if (math_idx.group == -1) {
-                        return;
-                    }
-                    // assign parameters, branch3 param consists of three branch parameters
-                    // auto const branch3_param =
-                    //   get_component<Branch3>(state, changed_component_idx).template calc_param<sym>();
-                    for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-                        increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
-                    }
-                } else if constexpr (std::same_as<ComponentType, Shunt>) {
-                    Idx2D const math_idx =
-                        state.topo_comp_coup
-                            ->shunt[main_core::get_component_sequence<Shunt>(state, changed_component_idx)];
-                    if (math_idx.group == -1) {
-                        return;
-                    }
-                    // assign parameters
-                    increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
-                }
-            }...};
-
-        std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
-
-        for (size_t i = 0; i < n_types; ++i) {
-            auto const& changed_type_components = parameter_changed_components_[i];
-            auto const& add_type_to_increment = add_to_increments[i];
-            for (auto const& changed_component : changed_type_components) {
-                add_type_to_increment(math_param_increment, state_, changed_component);
-            }
-        }
-
-        return math_param_increment;
-    }
 
     static constexpr auto include_all = [](Idx) { return true; };
 };
