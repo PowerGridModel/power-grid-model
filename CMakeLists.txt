@@ -48,8 +48,6 @@ if(${PGM_ENABLE_DEV_BUILD})
   enable_testing()
   # get tests
   add_subdirectory("tests")
-  # get c api example
-  add_subdirectory("power_grid_model_c_example")
 endif()
 
 
