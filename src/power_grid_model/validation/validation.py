@@ -47,7 +47,6 @@ from power_grid_model.validation.rules import (
     all_greater_or_equal,
     all_greater_than_or_equal_to_zero,
     all_greater_than_zero,
-    all_ids_exist_in_data_set,
     all_less_than,
     all_not_two_values_equal,
     all_not_two_values_zero,
@@ -149,13 +148,11 @@ def validate_batch_data(
     for batch, batch_update_data in enumerate(batch_data):
         row_update_data = compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
         assert_valid_data_structure(row_update_data, DatasetType.update)
-        id_errors: list[ValidationError] = list(validate_ids_exist(row_update_data, input_data_copy))
 
-        batch_errors = input_errors + id_errors
-        if not id_errors:
-            merged_data = update_input_data(input_data_copy, row_update_data)
-            batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
-            batch_errors += validate_values(merged_data, calculation_type)
+        batch_errors = input_errors
+        merged_data = update_input_data(input_data_copy, row_update_data)
+        batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
+        batch_errors += validate_values(merged_data, calculation_type)
 
         if batch_errors:
             errors[batch] = batch_errors
@@ -214,26 +211,6 @@ def validate_unique_ids_across_components(data: SingleDataset) -> list[MultiComp
         have non-unique ids
     """
     return all_cross_unique(data, [(component, "id") for component in data])
-
-
-def validate_ids_exist(update_data: SingleDataset, input_data: SingleDataset) -> list[IdNotInDatasetError]:
-    """
-    Checks if all ids of the components in the update data exist in the input data. This needs to be true, because you
-    can only update existing components.
-
-    This function should be called for every update dataset in a batch set
-
-    Args:
-        update_data: A single update dataset
-        input_data: A power-grid-model input dataset
-
-    Returns:
-        An empty list if all update data ids exist in the input dataset, or a list of IdNotInDatasetErrors for
-        all update components of which the id does not exist in the input dataset
-
-    """
-    errors = (all_ids_exist_in_data_set(update_data, input_data, component, "input_data") for component in update_data)
-    return list(chain(*errors))
 
 
 def _process_power_sigma_and_p_q_sigma(

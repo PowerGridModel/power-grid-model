@@ -685,7 +685,7 @@ def all_ids_exist_in_data_set(
     Check that for all records of a particular type of component, the ids exist in the reference data set.
 
     Args:
-        data: The (update) data set for all components
+        data: The input data set for all components
         ref_data: The reference (input) data set for all components
         component: The component of interest
         ref_name: The name of the reference data set, e.g. 'input_data'
