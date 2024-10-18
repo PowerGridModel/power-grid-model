@@ -27,8 +27,6 @@
 namespace power_grid_model {
 
 using AllComponents =
-    ComponentList<Node, Line, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source, SymGenerator,
-                  AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
-                  AsymVoltageSensor, Fault, TransformerTapRegulator>;
+    ComponentList<Node, Line, Source, SymLoad>;
 
 } // namespace power_grid_model
