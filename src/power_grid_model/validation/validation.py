@@ -32,7 +32,6 @@ from power_grid_model.enum import (
     WindingType,
 )
 from power_grid_model.validation.errors import (
-    IdNotInDatasetError,
     MissingValueError,
     MultiComponentNotUniqueError,
     ValidationError,
