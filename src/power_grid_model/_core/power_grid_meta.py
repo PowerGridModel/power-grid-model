@@ -71,6 +71,9 @@ class ComponentMetaData:
 
 DatasetMetaData = dict[ComponentTypeVar, ComponentMetaData]
 PowerGridMetaData = dict[DatasetType, DatasetMetaData]
+"""
+The data types for all dataset types and components used by the Power Grid Model.
+"""
 
 
 def _generate_meta_data() -> PowerGridMetaData:
@@ -165,6 +168,9 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
 
 # store meta data
 power_grid_meta_data = _generate_meta_data()
+"""
+The data types for all dataset types and components used by the Power Grid Model.
+"""
 
 
 def initialize_array(

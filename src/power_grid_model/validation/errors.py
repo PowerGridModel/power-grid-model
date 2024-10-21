@@ -61,7 +61,7 @@ class ValidationError(ABC):
         if self.component is None:
             return str(None)
         if isinstance(self.component, list):
-            return str(list(component.value for component in self.component))
+            return "/".join(component.value for component in self.component)
         return self.component.value
 
     @property
@@ -72,13 +72,12 @@ class ValidationError(ABC):
 
         def _unpack(field: str | tuple[ComponentType, str]) -> str:
             if isinstance(field, str):
-                return field
-            component, component_field = field
-            return str((component.value, component_field))
+                return f"'{field}'"
+            return ".".join(field)
 
         if isinstance(self.field, list):
-            return str(list(_unpack(field) for field in self.field))
-        return f"'{self.field}'"
+            return self._delimiter.join(_unpack(field) for field in self.field)
+        return _unpack(self.field) if self.field else str(self.field)
 
     def get_context(self, id_lookup: Optional[list[str] | dict[int, str]] = None) -> dict[str, Any]:
         """
@@ -168,10 +167,6 @@ class MultiFieldValidationError(ValidationError):
         if len(self.field) < 2:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
 
-    @property
-    def field_str(self) -> str:
-        return self._delimiter.join(f"'{field}'" for field in self.field)
-
 
 class MultiComponentValidationError(ValidationError):
     """
@@ -199,14 +194,6 @@ class MultiComponentValidationError(ValidationError):
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
         if len(self.component) < 2:
             raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
-
-    @property
-    def component_str(self) -> str:
-        return "/".join(component.value for component in self.component)
-
-    @property
-    def field_str(self) -> str:
-        return self._delimiter.join(f"{component.value}.{field}" for component, field in self.field)
 
 
 class NotIdenticalError(SingleFieldValidationError):
