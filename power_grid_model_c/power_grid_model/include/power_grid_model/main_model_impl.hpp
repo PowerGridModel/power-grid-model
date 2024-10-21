@@ -796,8 +796,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
             result.uniform =
                 std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
-                    // return static_cast<Idx>(span.size()) == n_elements;
-                    return std::size(span) == n_elements;
+                    return static_cast<Idx>(std::size(span)) == n_elements;
                 });
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
