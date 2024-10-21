@@ -774,10 +774,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 std::vector<bool> id_na{};
                 for (const auto& obj : span) {
                     if constexpr (requires { obj.id; }) {
-                        id_na.push_back(is_nan(obj.id));
+                        id_na.emplace_back(is_nan(obj.id));
                     }
                 }
-                ids_na.push_back(id_na);
+                ids_na.emplace_back(std::move(id_na));
             }
             return ids_na;
         };
