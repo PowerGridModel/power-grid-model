@@ -466,3 +466,26 @@ the {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blo
 This project has the main project as a required dependency. Configuration will fail if the main project has not been
 built and installed, e.g. using `cmake --build --preset <preset> --target install` for the current preset.
 ```
+
+## Documentation
+
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[doc]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
+
+```shell
+pip install -e .[doc]
+```
+
+```{note}
+The `pip install .` part of the command installs the complete package from scratch.
+```
+
+The C API documentation is generated using [Doxygen](https://www.doxygen.nl). If you do not have Doxygen installed, it can also be temporarily bypassed by commenting out the `breathe` settings in  `docs/conf.py`.
+
+The documentation can be built with the following commands, resulting in html files of the webpages which can be found in `docs/_build/html` directory.
+
+```shell
+cd docs/doxygen
+doxygen
+cd ..
+sphinx-build -b html . _build/html
+```
