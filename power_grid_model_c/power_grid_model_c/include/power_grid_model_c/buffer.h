@@ -20,15 +20,15 @@ extern "C" {
 /**
  * @brief Create a buffer with certain size and component type.
  *
- * You can use this function to allocate a buffer.
+ * You can use this function to allocate a (row-based) component buffer.
  * You can also use your own allocation function to do that
- * with size and alignment got from PGM_meta_component_size() and PGM_meta_component_alignment().
+ * with size and alignment obtained from PGM_meta_component_size() and PGM_meta_component_alignment().
  * The buffer created by this function should be freed by PGM_destroy_buffer().
  *
  * It is recommended to call PGM_buffer_set_nan() after you create an input or update buffer.
  * In this way all the attributes will be set to NaN.
- * And if there is a new optional attribute added in the future.
- * You have garantee that your code is still compatible
+ * Additionally, if there is a new optional attribute added in the future,
+ * compatibility with your code is guaranteed,
  * because that optional attribute will be set to NaN and the default value will be used.
  *
  * @param handle
@@ -41,7 +41,7 @@ PGM_API void* PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* com
 /**
  * @brief Destroy the buffer you created using PGM_create_buffer().
  *
- * NOTE: do not call this function on the buffer you created using your own function.
+ * NOTE: Do not call this function on the buffer you created using your own function.
  *
  * @param ptr The pointer to the buffer created using PGM_create_buffer().
  */
