@@ -195,6 +195,7 @@ TEST_CASE("Test component container") {
     }
 
     SUBCASE("Test get group index") {
+        CHECK(const_container.get_group_idx<C>() == 0);
         CHECK(const_container.get_group_idx<C1>() == 1);
         CHECK(const_container.get_group_idx<C2>() == 2);
     }
