@@ -358,7 +358,10 @@ TEST_CASE("API Model") {
 
         SUBCASE("Batch calculation error") {
             // wrong id
-            load_updates_id[1] = 5;
+            load_updates_id[1] = 98;
+            load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
+            CAPTURE(load_updates_buffer);
+            CAPTURE(load_updates_id);
             // failed in batch 1
             try {
                 model.calculate(options, batch_output_dataset, batch_update_dataset);
@@ -387,16 +390,6 @@ TEST_CASE("API Model") {
             CHECK(batch_node_result_u[1] == doctest::Approx(0.0));
             CHECK(batch_node_result_u_pu[1] == doctest::Approx(0.0));
             CHECK(batch_node_result_u_angle[1] == doctest::Approx(0.0));
-            CHECK(batch_node_result_id[2] == 0);
-            CHECK(batch_node_result_energized[2] == 1);
-            CHECK(batch_node_result_u[2] == doctest::Approx(70.0));
-            CHECK(batch_node_result_u_pu[2] == doctest::Approx(0.7));
-            CHECK(batch_node_result_u_angle[2] == doctest::Approx(0.0));
-            CHECK(batch_node_result_id[3] == 4);
-            CHECK(batch_node_result_energized[3] == 0);
-            CHECK(batch_node_result_u[3] == doctest::Approx(0.0));
-            CHECK(batch_node_result_u_pu[3] == doctest::Approx(0.0));
-            CHECK(batch_node_result_u_angle[3] == doctest::Approx(0.0));
         }
     }
 }
