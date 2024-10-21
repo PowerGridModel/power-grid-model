@@ -202,6 +202,7 @@ def test_single_calculation_error(model: PowerGridModel):
         with pytest.raises(InvalidCalculationMethod):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
+
 @pytest.mark.xfail
 def test_batch_calculation_error(model: PowerGridModel, update_batch):
     # wrong id
@@ -213,6 +214,7 @@ def test_batch_calculation_error(model: PowerGridModel, update_batch):
     np.testing.assert_allclose(error.failed_scenarios, [1])
     np.testing.assert_allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
+
 
 @pytest.mark.xfail
 def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, sym_output_batch):

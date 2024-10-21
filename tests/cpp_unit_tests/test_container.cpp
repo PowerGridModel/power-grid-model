@@ -193,6 +193,11 @@ TEST_CASE("Test component container") {
         CHECK(const_container2.get_item_by_seq<C>(1).a == 66);
         CHECK(const_container2.get_item_by_seq<C>(2).a == 7);
     }
+
+    SUBCASE("Test get group index") {
+        CHECK(const_container.get_group_idx<C1>() == 1);
+        CHECK(const_container.get_group_idx<C2>() == 2);
+    }
 }
 
 } // namespace power_grid_model

@@ -290,7 +290,6 @@ TEST_CASE("API Model") {
 
         SUBCASE("Update error") {
             source_update_id = 5;
-            source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
             try {
                 model.update(single_update_dataset);
             } catch (PowerGridRegularError const& e) {
