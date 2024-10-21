@@ -27,6 +27,7 @@ from power_grid_model.validation.errors import (
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
     validate_generic_power_sensor,
+    validate_ids,
     validate_required_values,
     validate_unique_ids_across_components,
     validate_values,
@@ -110,6 +111,34 @@ def test_validate_unique_ids_across_components():
         in unique_id_errors
     )
     assert len(unique_id_errors[0].ids) == 4
+
+
+def test_validate_ids():
+    source = initialize_array("input", "source", 3)
+    source["id"] = [1, 2, 3]
+
+    sym_load = initialize_array("input", "sym_load", 3)
+    sym_load["id"] = [4, 5, 6]
+
+    input_data = {
+        "source": source,
+        "sym_load": sym_load,
+    }
+
+    source_update = initialize_array("update", "source", 3)
+    source_update["id"] = [1, 2, 4]
+    source_update["u_ref"] = [1.0, 2.0, 3.0]
+
+    sym_load_update = initialize_array("update", "sym_load", 3)
+    sym_load_update["id"] = [4, 5, 7]
+    sym_load_update["p_specified"] = [4.0, 5.0, 6.0]
+
+    update_data = {"source": source_update, "sym_load": sym_load_update}
+
+    invalid_ids = validate_ids(update_data, input_data)
+
+    assert IdNotInDatasetError("source", [4], "update_data") in invalid_ids
+    assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
 
 
 @pytest.mark.parametrize(
