@@ -94,6 +94,9 @@ A [`ComponentDataset`](#json-schema-component-dataset-object) is an array of [`C
 - [`ComponentDataset`](#json-schema-component-dataset-object): `Array`
   - [`ComponentData`](#json-schema-component-data-object): the data per single component.
 
+**NOTE:** The actual deserialized data representation may be row based or columnar, depending on the `data_filter` provided at deserialization (Check {py:function}`json_deserialize <power_grid_model.utils.json_deserialize>` for example).
+Regardless of whether the deserialized data representation data is row based or columnar, the serialization format remains the same.
+
 #### JSON schema component data object
 
 A [`ComponentData`](#json-schema-component-data-object) object is either a [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) object or an [`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object) object

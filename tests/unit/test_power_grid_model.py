@@ -72,7 +72,7 @@ def input_row():
 @pytest.fixture
 def input_col(input_row):
     return compatibility_convert_row_columnar_dataset(
-        input_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+        input_row, ComponentAttributeFilterOptions.relevant, DatasetType.input
     )
 
 
@@ -117,7 +117,7 @@ def update_batch_row():
 @pytest.fixture
 def update_batch_col(update_batch_row):
     return compatibility_convert_row_columnar_dataset(
-        update_batch_row, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update
+        update_batch_row, ComponentAttributeFilterOptions.relevant, DatasetType.update
     )
 
 
@@ -149,10 +149,8 @@ def test_simple_power_flow(model: PowerGridModel, sym_output):
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
-def test_simple_permanent_update(
-    model: PowerGridModel, update_batch, sym_output_batch
-):  # error if permanent update is not single scenario
-    model.update(update_data=update_batch)  # single permanent model update
+def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output_batch):
+    model.update(update_data=get_dataset_scenario(update_batch, 0))  # single permanent model update
     result = model.calculate_power_flow()
     expected_result = get_dataset_scenario(sym_output_batch, 0)
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
@@ -165,7 +163,7 @@ def test_update_error(model: PowerGridModel):
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
     update_data_col = compatibility_convert_row_columnar_dataset(
-        update_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update
+        update_data, ComponentAttributeFilterOptions.relevant, DatasetType.update
     )
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data_col)

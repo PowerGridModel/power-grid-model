@@ -3,10 +3,10 @@
 .. SPDX-License-Identifier: MPL-2.0
 
 =====
-power_grid_model_c
+power_grid_model_c (C API)
 =====
 
-This is a C-API reference. In the following sections the content of all the headers are shown.
+This is a C API reference. In the following sections the content of all the headers are shown.
 
 You can include `power_grid_model_c.h` if you want to use all the symbols (except for the global definition pointers of all datasets, components, attributes).
 
