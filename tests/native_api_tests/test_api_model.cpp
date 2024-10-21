@@ -57,16 +57,18 @@ TEST_CASE("API Model") {
     node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
     node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
 
-    std::vector<ID> const line_id{5, 6};
-    std::vector<ID> const line_from_node{0, 4};
-    std::vector<ID> const line_to_node{4, 0};
-    std::vector<Idx> const line_from_status{0, 1};
-    std::vector<Idx> const line_to_status{1, 0};
-    std::vector<ID> const batch_line_id{5, 6, 5, 6};
-    std::vector<ID> const batch_line_from_node{0, 4, 0, 4};
-    std::vector<ID> const batch_line_to_node{4, 0, 4, 0};
-    std::vector<Idx> const batch_line_from_status{0, 1, 0, 1};
-    std::vector<Idx> const batch_line_to_status{1, 0, 1, 0};
+    ID const line_id{5};
+    ID const line_from_node{0};
+    ID const line_to_node{4};
+    Idx const line_from_status{0};
+    Idx const line_to_status{1};
+    Buffer line_buffer{PGM_def_input_line, 1};
+    line_buffer.set_nan();
+    line_buffer.set_value(PGM_def_input_line_id, &line_id, 0);
+    line_buffer.set_value(PGM_def_input_line_from_node, &line_from_node, 0);
+    line_buffer.set_value(PGM_def_input_line_to_node, &line_to_node, 0);
+    line_buffer.set_value(PGM_def_input_line_from_status, &line_from_status, 0);
+    line_buffer.set_value(PGM_def_input_line_to_status, &line_to_status, 0);
 
     // source buffer
     ID const source_id = 1;
@@ -102,38 +104,12 @@ TEST_CASE("API Model") {
     // add buffers - row
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
+    input_dataset.add_buffer("line", 1, 1, nullptr, line_buffer);
 
     // add buffers - columnar
     input_dataset.add_buffer("node", 2, 2, nullptr, nullptr);
     input_dataset.add_attribute_buffer("node", "id", node_id.data());
     input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-    input_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
-    input_dataset.add_attribute_buffer("line", "id", line_id.data());
-    input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
-    input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
-    input_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
-    input_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-
-    // output data
-    Buffer node_output{PGM_def_sym_output_node, 2};
-    node_output.set_nan();
-    DatasetMutable single_output_dataset{"sym_output", 0, 1};
-    single_output_dataset.add_buffer("node", 2, 2, nullptr, node_output);
-    Buffer node_batch_output{PGM_def_sym_output_node, 4};
-    node_batch_output.set_nan();
-    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
-    batch_output_dataset.add_buffer("node", 2, 4, nullptr, node_batch_output);
-
-    std::vector<ID> node_result_id(2);
-    std::vector<int8_t> node_result_energized(2);
-    std::vector<double> node_result_u(2);
-    std::vector<double> node_result_u_pu(2);
-    std::vector<double> node_result_u_angle(2);
-    std::vector<ID> batch_node_result_id(4);
-    std::vector<int8_t> batch_node_result_energized(4);
-    std::vector<double> batch_node_result_u(4);
-    std::vector<double> batch_node_result_u_pu(4);
-    std::vector<double> batch_node_result_u_angle(4);
 
     // update data
     ID source_update_id = 1;
@@ -146,32 +122,17 @@ TEST_CASE("API Model") {
     source_update_buffer.set_value(PGM_def_update_source_status, &source_update_status, 0, -1);
     source_update_buffer.set_value(PGM_def_update_source_u_ref, &source_update_u_ref, 0, -1);
     source_update_buffer.set_value(PGM_def_update_source_u_ref_angle, &source_update_u_ref_angle, 0, -1);
-    std::array<Idx, 3> source_update_indptr{0, 1, 1};
 
-    std::vector<ID> load_updates_id = {2, 2};
-    std::vector<double> load_updates_q_specified = {100.0, 300.0};
-    Buffer load_updates_buffer{PGM_def_update_sym_load, 2};
-    // set nan twice with offset
-    load_updates_buffer.set_nan(0);
-    load_updates_buffer.set_nan(1);
-    load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
-    load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
-    load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
+    Buffer line_update_buffer{PGM_def_update_line, 1};
+    line_update_buffer.set_nan();
+    line_update_buffer.set_value(PGM_def_update_line_id, &line_id, 0);
+    line_update_buffer.set_value(PGM_def_update_line_from_status, &line_from_status, 0);
+    line_update_buffer.set_value(PGM_def_update_line_to_status, &line_to_status, 0);
+
     // dataset
     DatasetConst single_update_dataset{"update", 0, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
-    single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
-    single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
-    single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
-    single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-    DatasetConst batch_update_dataset{"update", 1, 2};
-    batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
-    batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-    batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
-    batch_update_dataset.add_attribute_buffer("line", "id", batch_line_id.data());
-    batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
-    batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
+    single_update_dataset.add_buffer("line", 1, 1, nullptr, line_update_buffer);
 
     // create model
     Model model{50.0, input_dataset};
@@ -184,6 +145,7 @@ TEST_CASE("API Model") {
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
             try {
                 model.update(single_update_dataset);
+                throw std::exception{};
             } catch (PowerGridRegularError const& e) {
                 check_exception(e, PGM_regular_error, "The id cannot be found:"s);
             }
