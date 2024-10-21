@@ -88,6 +88,22 @@ def test_invalid_id_error():
     assert str(error) == "Field 'november' does not contain a valid oscar/papa id for 3 nodes."
 
 
+def test_invalid_id_error_with_filters():
+    error = InvalidIdError(
+        ComponentType.node,
+        field="november",
+        ids=[1, 2, 3],
+        ref_components=["oscar", "papa"],
+        filters={"foo": "bar", "baz": ComponentType.node},
+    )
+    assert error.component == "node"
+    assert error.field == "november"
+    assert error.ids == [1, 2, 3]
+    assert error.ref_components == ["oscar", "papa"]
+    assert error.filters_str == "(foo=bar, baz=node)"
+    assert str(error) == "Field 'november' does not contain a valid oscar/papa id for 3 nodes. (foo=bar, baz=node)"
+
+
 def test_comparison_error():
     error = ComparisonError(component=ComponentType.node, field="romeo", ids=[1, 2, 3], ref_value=0)
     assert error.component == "node"
