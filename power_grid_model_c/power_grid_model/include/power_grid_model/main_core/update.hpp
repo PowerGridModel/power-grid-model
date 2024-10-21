@@ -45,7 +45,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
     };
 
     std::ranges::transform(begin, end, destination, [&, index = 0](UpdateType const& update) mutable {
-        return idx_getter_func(update, index++);
+        return idx_getter_func(update, index++); // NOSONAR
     });
 }
 

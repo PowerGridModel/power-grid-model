@@ -403,8 +403,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
             auto const get_n_comp_elements = [&comp_indenpendence]() {
                 if (!comp_indenpendence.empty()) {
-                    auto const comp_idx = std::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
-                                                       [](auto const& comp) { return comp.name == CT::name; });
+                    auto const comp_idx = std::ranges::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
+                                                               [](auto const& comp) { return comp.name == CT::name; });
                     if (comp_idx == comp_indenpendence.end()) {
                         return na_Idx;
                     }
@@ -445,10 +445,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
         auto const all_comp_count_in_base = this->all_component_count();
         for (auto& comp : update_components_independence) {
-            auto it =
-                std::ranges::find_if(all_comp_count_in_base.begin(), all_comp_count_in_base.end(),
-                                     [&comp](const ComponentCountInBase& pair) { return pair.first == comp.name; });
-            if (it != all_comp_count_in_base.end()) {
+            if (auto it =
+                    std::ranges::find_if(all_comp_count_in_base,
+                                         [&comp](const ComponentCountInBase& pair) { return pair.first == comp.name; });
+                it != all_comp_count_in_base.end()) {
                 comp.elements_ps_in_base = it->second;
             }
             validate_update_data_independence(comp);
@@ -796,7 +796,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
             result.uniform =
                 std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
-                    return static_cast<Idx>(span.size()) == n_elements;
+                    // return static_cast<Idx>(span.size()) == n_elements;
+                    return std::size(span) == n_elements;
                 });
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
             // ids
