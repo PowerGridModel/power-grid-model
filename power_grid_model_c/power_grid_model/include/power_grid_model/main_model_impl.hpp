@@ -146,7 +146,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
     struct UpdateCompProperties {
-        std::string name{""};
+        std::string name{};
         bool has_id{false};           // if the component has id
         bool ids_all_na{false};       // if all ids are all NA
         bool ids_part_na{false};      // if some ids are NA but some are not
@@ -771,13 +771,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto check_ids_na = [](auto const& all_spans) {
             std::vector<std::vector<bool>> ids_na{};
             for (const auto& span : all_spans) {
+                std::vector<bool> id_na{};
                 for (const auto& obj : span) {
-                    std::vector<bool> id_na{};
                     if constexpr (requires { obj.id; }) {
                         id_na.push_back(is_nan(obj.id));
                     }
-                    ids_na.push_back(id_na);
                 }
+                ids_na.push_back(id_na);
             }
             return ids_na;
         };

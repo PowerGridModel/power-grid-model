@@ -39,10 +39,9 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
     auto idx_getter_func = [&state, n_comp_elements](UpdateType const& update, auto index) {
         if (n_comp_elements == na_Idx) {
             return get_component_idx_by_id<Component>(state, update.id);
-        } else {
-            Idx group = get_component_group_idx<Component>(state);
-            return Idx2D{group, index % n_comp_elements};
         }
+        Idx const group = get_component_group_idx<Component>(state);
+        return Idx2D{group, index % n_comp_elements};
     };
 
     std::ranges::transform(begin, end, destination, [&, index = 0](UpdateType const& update) mutable {
