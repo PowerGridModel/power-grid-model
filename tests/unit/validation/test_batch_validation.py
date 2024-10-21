@@ -45,14 +45,14 @@ def original_input_data() -> dict[str, np.ndarray]:
 @pytest.fixture
 def original_input_data_columnar_all(original_input_data):
     return compatibility_convert_row_columnar_dataset(
-        original_input_data, ComponentAttributeFilterOptions.ALL, DatasetType.input
+        original_input_data, ComponentAttributeFilterOptions.everything, DatasetType.input
     )
 
 
 @pytest.fixture
 def original_input_data_columnar_relevant(original_input_data):
     return compatibility_convert_row_columnar_dataset(
-        original_input_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.input
+        original_input_data, ComponentAttributeFilterOptions.relevant, DatasetType.input
     )
 
 
@@ -79,14 +79,14 @@ def original_batch_data() -> dict[str, np.ndarray]:
 @pytest.fixture
 def original_batch_data_columnar_all(original_batch_data):
     return compatibility_convert_row_columnar_dataset(
-        original_batch_data, ComponentAttributeFilterOptions.ALL, DatasetType.update
+        original_batch_data, ComponentAttributeFilterOptions.everything, DatasetType.update
     )
 
 
 @pytest.fixture
 def original_batch_data_columnar_relevant(original_batch_data):
     return compatibility_convert_row_columnar_dataset(
-        original_batch_data, ComponentAttributeFilterOptions.RELEVANT, DatasetType.update
+        original_batch_data, ComponentAttributeFilterOptions.relevant, DatasetType.update
     )
 
 
@@ -103,7 +103,7 @@ def test_validate_batch_data(input_data, batch_data):
 
 
 def test_validate_batch_data_input_error(input_data, batch_data):
-    if is_columnar(input_data):
+    if is_columnar(input_data["node"]):
         input_data["node"]["id"][-1] = 123
         input_data["line"]["id"][-1] = 123
     else:

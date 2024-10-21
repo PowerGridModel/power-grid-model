@@ -77,8 +77,8 @@ class Shunt : public Appliance {
     DoubleComplex y0_{nan};
 
     template <typename T>
-        requires std::same_as<T, ShuntInput> || std::same_as<T, ShuntUpdate> bool
-    update_params(T shunt_params) {
+        requires std::same_as<T, ShuntInput> || std::same_as<T, ShuntUpdate>
+    bool update_params(T shunt_params) {
         bool changed = update_param(shunt_params.g1, g1_);
         changed = update_param(shunt_params.b1, b1_) || changed;
         changed = update_param(shunt_params.g0, g0_) || changed;

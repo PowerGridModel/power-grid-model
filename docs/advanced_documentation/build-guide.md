@@ -46,8 +46,8 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
   * Version 12.x tested using the musllinux build with custom compiler
   * Version 13.x tested in CI
 * Clang >= 15.0
-  * Version 15.x tested in CI
-  * Version 15.x tested in CI with code quality checks
+  * Version 18.x tested in CI
+  * Version 18.x tested in CI with code quality checks
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
@@ -207,10 +207,10 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-15            # or g++-13
-export CC=clang-15               # gcc-13
+export CXX=clang++-18            # or g++-13
+export CC=clang-18               # gcc-13
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
-export LLVM_COV=llvm-cov-15
+export LLVM_COV=llvm-cov-18
 export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
 ```
 
@@ -220,7 +220,7 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-15 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
 ```
 
 ### C++ packages
@@ -465,4 +465,27 @@ the {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blo
 ```{note}
 This project has the main project as a required dependency. Configuration will fail if the main project has not been
 built and installed, e.g. using `cmake --build --preset <preset> --target install` for the current preset.
+```
+
+## Documentation
+
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[doc]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
+
+```shell
+pip install -e .[doc]
+```
+
+```{note}
+The `pip install .` part of the command installs the complete package from scratch.
+```
+
+The C API documentation is generated using [Doxygen](https://www.doxygen.nl). If you do not have Doxygen installed, it can also be temporarily bypassed by commenting out the `breathe` settings in  `docs/conf.py`.
+
+The documentation can be built with the following commands, resulting in html files of the webpages which can be found in `docs/_build/html` directory.
+
+```shell
+cd docs/doxygen
+doxygen
+cd ..
+sphinx-build -b html . _build/html
 ```

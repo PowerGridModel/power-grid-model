@@ -327,8 +327,7 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                 } else {
                     return voltage(0);
                 }
-            }
-            ();
+            }();
             return cabs(voltage_a) / voltage_a;
         }();
 

@@ -30,8 +30,7 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
         } else {
             return math_state.y_bus_vec_asym;
         }
-    }
-    ();
+    }();
 
     assert(y_bus_vec.size() == math_model_params.size());
 
@@ -49,8 +48,7 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
         } else {
             return math_state.y_bus_vec_asym;
         }
-    }
-    ();
+    }();
 
     assert(y_bus_vec.size() == math_model_params.size());
 

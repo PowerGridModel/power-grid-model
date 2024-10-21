@@ -14,7 +14,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "power-grid-model"
-authors = [{ name = "Contributors to the Power Grid Model project", email = "powergridmodel@lfenergy.org" }]
+authors = [
+    { name = "Contributors to the Power Grid Model project", email = "powergridmodel@lfenergy.org" },
+]
 description = "Python/C++ library for distribution power system analysis"
 readme = "README.md"
 license = { text = "MPL-2.0" }
@@ -32,20 +34,12 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 requires-python = ">=3.10"
-dependencies = [
-    "numpy>=1.21.0",
-]
+dependencies = ["numpy>=1.21.0"]
 dynamic = ["version"]
 
 
 [project.optional-dependencies]
-dev = [
-    "msgpack",
-    "pre-commit",
-    "pylint",
-    "pytest",
-    "pytest-cov",
-]
+dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov"]
 doc = [
     "sphinx",
     "breathe",
@@ -53,7 +47,7 @@ doc = [
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
     "sphinx-hoverxref",
-    "sphinxcontrib-mermaid",
+    "sphinxcontrib-mermaid>=1.0.0",
     "numpydoc",
     "pandas",
     "gitpython",
@@ -71,14 +65,23 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools.dynamic]
-version = {file = "PYPI_VERSION"}
+version = { file = "PYPI_VERSION" }
 
 [tool.setuptools.package-data]
 "power_grid_model" = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=power_grid_model", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=95"]
+addopts = [
+    "--cov=power_grid_model",
+    "--cov-report",
+    "term",
+    "--cov-report",
+    "html:python_cov_html",
+    "--cov-report",
+    "xml:python_coverage.xml",
+    "--cov-fail-under=95",
+]
 xfail_strict = true
 
 [tool.black]
@@ -116,14 +119,14 @@ skip = ["pp*", "*-musllinux_aarch64"]
 archs = ["x86_64", "aarch64"]
 # force auditwheel to use manylinux_2_24 to support Amazon Linux 2 when building in manylinux_2_28
 repair-wheel-command = "auditwheel repair --plat ${AUDITWHEEL_PLAT//2_28/2_24} -w {dest_dir} {wheel}"
-environment = { CC="gcc", CXX="g++" }
+environment = { CC = "gcc", CXX = "g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-environment = { CC="clang", CXX="clang++" }
+environment = { CC = "clang", CXX = "clang++" }
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64"]

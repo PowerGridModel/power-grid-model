@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
-Error classes
+Error classes used by the power-grid-model library.
 """
 
 
