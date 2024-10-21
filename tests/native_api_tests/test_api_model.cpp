@@ -39,6 +39,17 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
     std::string const err_msg{e.what()};
     CHECK(err_msg.find(reference_err_msg) != std::string::npos);
 }
+
+template <typename Func, class... Args>
+void error_handler(Func func, PGM_ErrorCode const& reference_error, std::string_view reference_err_msg,
+                   Args&&... args) {
+    try {
+        func(std::forward<Args>(args)...);
+        FAIL("Exception was not thrown when it was supposed to.");
+    } catch (PowerGridRegularError const& e) {
+        check_exception(e, reference_error, reference_err_msg);
+    }
+}
 } // namespace
 
 TEST_CASE("API Model") {
@@ -284,12 +295,8 @@ TEST_CASE("API Model") {
             load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 1;
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
-            try {
-                Model const wrong_model{50.0, input_dataset};
-                throw std::exception{};
-            } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "Conflicting id detected:"s);
-            }
+            auto const wrong_model_lambda = [&input_dataset]() { Model const wrong_model{50.0, input_dataset}; };
+            error_handler(wrong_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
         }
 
         SUBCASE("Update error") {
@@ -297,32 +304,24 @@ TEST_CASE("API Model") {
             load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 99;
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
-            try {
-                model.update(single_update_dataset);
-                throw std::exception{};
-            } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "The id cannot be found:"s);
-            }
+            auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
+            error_handler(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
         }
 
         SUBCASE("Invalid calculation type error") {
-            try {
+            auto const bad_calc_type_lambda = [&options, &model, &single_output_dataset]() {
                 options.set_calculation_type(-128);
                 model.calculate(options, single_output_dataset);
-                throw std::exception{};
-            } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "CalculationType is not implemented for"s);
-            }
+            };
+            error_handler(bad_calc_type_lambda, PGM_regular_error, "CalculationType is not implemented for"s);
         }
 
         SUBCASE("Invalid tap changing strategy error") {
-            try {
+            auto const bad_tap_strat_lambda = [&options, &model, &single_output_dataset]() {
                 options.set_tap_changing_strategy(-128);
                 model.calculate(options, single_output_dataset);
-                throw std::exception{};
-            } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "get_optimizer_type is not implemented for"s);
-            }
+            };
+            error_handler(bad_tap_strat_lambda, PGM_regular_error, "get_optimizer_type is not implemented for"s);
         }
 
         SUBCASE("Tap changing strategy") {
@@ -338,34 +337,26 @@ TEST_CASE("API Model") {
             options.set_err_tol(1e-100);
             options.set_symmetric(0);
             options.set_threading(1);
-            try {
+            auto const calc_error_lambda = [&model, &single_output_dataset](auto const& options) {
                 model.calculate(options, single_output_dataset);
-                throw std::exception{};
-            } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "Iteration failed to converge after"s);
-            }
+            };
+            error_handler(calc_error_lambda, PGM_regular_error, "Iteration failed to converge after"s, options);
 
             // wrong method
             options.set_calculation_type(PGM_state_estimation);
             options.set_calculation_method(PGM_iterative_current);
-            try {
-                model.calculate(options, single_output_dataset);
-                throw std::exception{};
-            } catch (PowerGridRegularError const& e) {
-                check_exception(e, PGM_regular_error, "The calculation method is invalid for this calculation!"s);
-            }
+            error_handler(calc_error_lambda, PGM_regular_error,
+                          "The calculation method is invalid for this calculation!"s, options);
         }
 
         SUBCASE("Batch calculation error") {
             // wrong id
-            load_updates_id[1] = 98;
+            load_updates_id[1] = 999;
             load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
-            CAPTURE(load_updates_buffer);
-            CAPTURE(load_updates_id);
             // failed in batch 1
             try {
                 model.calculate(options, batch_output_dataset, batch_update_dataset);
-                throw std::exception{};
+                FAIL("Batch calculation exception was not thrown when it was supposed to.");
             } catch (PowerGridBatchError const& e) {
                 CHECK(e.error_code() == PGM_batch_error);
                 auto const& failed_scenarios = e.failed_scenarios();

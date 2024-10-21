@@ -95,7 +95,7 @@ TEST_CASE("API Serialization and Deserialization") {
         SUBCASE("Invalid serialization format") {
             try {
                 Serializer const unknown_serializer{dataset, -1};
-                throw std::exception{};
+                FAIL("Serialization error not thrown when it was supposed to.");
             } catch (PowerGridSerializationError const& e) {
                 CHECK(e.error_code() == PGM_serialization_error);
             }
