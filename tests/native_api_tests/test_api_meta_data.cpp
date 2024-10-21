@@ -67,6 +67,7 @@ TEST_CASE("API Meta Data") {
 
             try {
                 MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute");
+                throw std::exception{};
             } catch (PowerGridRegularError const& e) {
                 std::string const err_msg{e.what()};
                 CHECK(err_msg.find("You supplied wrong name and/or index!"s) != std::string::npos);
