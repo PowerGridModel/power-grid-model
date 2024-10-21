@@ -22,6 +22,9 @@ from power_grid_model.validation.errors import (
 def test_validation_error():
     error = ValidationError()
     assert str(error) == "An unknown validation error occurred."
+    assert error.component_str == str(None)
+    assert error.field_str == str(None)
+    assert not error.ids
 
 
 def test_single_field_validation_error():
