@@ -47,8 +47,6 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
     try {
         std::forward<Func>(func)(std::forward<Args>(args)...);
         FAIL("Expected error not thrown.");
-    } catch (PowerGridRegularError const& e) {
-        check_exception(e, reference_error, reference_err_msg);
     } catch (PowerGridError const& e) {
         check_exception(e, reference_error, reference_err_msg);
     }
