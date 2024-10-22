@@ -37,7 +37,7 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
                      std::string_view reference_err_msg) {
     CHECK(e.error_code() == reference_error);
     std::string const err_msg{e.what()};
-    doctest::String ref_err_msg{reference_err_msg.data()};
+    doctest::String const ref_err_msg{reference_err_msg.data()};
     REQUIRE(err_msg.c_str() == doctest::Contains(ref_err_msg));
 }
 
@@ -338,8 +338,8 @@ TEST_CASE("API Model") {
             options.set_err_tol(1e-100);
             options.set_symmetric(0);
             options.set_threading(1);
-            auto const calc_error_lambda = [&model, &single_output_dataset](auto const& options) {
-                model.calculate(options, single_output_dataset);
+            auto const calc_error_lambda = [&model, &single_output_dataset](auto const& opt) {
+                model.calculate(opt, single_output_dataset);
             };
             check_throws_with(calc_error_lambda, PGM_regular_error, "Iteration failed to converge after"s, options);
 
