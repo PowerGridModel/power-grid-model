@@ -28,7 +28,7 @@ extern "C" {
  * It is recommended to call PGM_buffer_set_nan() after you create an input or update buffer.
  * In this way all the attributes will be set to NaN.
  * Additionally, if there is a new optional attribute added in the future,
- * compatibility with your code is guaranteed: that optional attribute will be set to NaN 
+ * compatibility with your code is guaranteed: that optional attribute will be set to NaN
  * and the default value will be used.
  *
  * @param handle
