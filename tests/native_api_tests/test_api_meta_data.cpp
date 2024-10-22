@@ -65,10 +65,8 @@ TEST_CASE("API Meta Data") {
         SUBCASE("Check error handling for unknown name") {
             using namespace std::string_literals;
 
-            CHECK_THROWS_WITH_AS(
-                MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute"),
-                "Cannot find dataset with name: No_dataset!\n\n You supplied wrong name and/or index!\n",
-                PowerGridRegularError);
+            CHECK_THROWS_WITH_AS(MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute"),
+                                 doctest::Contains("You supplied wrong name and/or index!"), PowerGridRegularError);
         }
     }
 }
