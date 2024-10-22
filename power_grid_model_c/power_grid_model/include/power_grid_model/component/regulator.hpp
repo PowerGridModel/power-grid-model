@@ -29,7 +29,7 @@ class Regulator : public Base {
     void set_status(IntS status) { status_ = static_cast<bool>(status); }
 
     auto inverse(std::convertible_to<RegulatorUpdate> auto update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         set_if_not_nan(update_data.status, static_cast<IntS>(status_));
         return update_data;
     }
