@@ -12,7 +12,6 @@ It remains performant, even when doing calculations with one or a combination of
 - Large grids
 - Batch calculations with many scenarios
 - Many changes in the grid in each scenario
-- Meshed grids
 
 To achieve that high performance, several optimizations to the code are made.
 To use those optimizations to their fullest extend, we recommend our users to follow the following guidelines.
