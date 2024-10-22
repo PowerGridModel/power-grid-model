@@ -7,7 +7,7 @@ from enum import IntEnum
 import numpy as np
 import pytest
 
-from power_grid_model import LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model import ComponentType, LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -304,14 +304,16 @@ def test_all_cross_unique(cross_only):
         "node": np.array([(1, 0.1), (2, 0.2), (3, 0.3)], dtype=[("id", "i4"), ("foo", "f8")]),
         "line": np.array([(4, 0.4), (5, 0.5), (6, 0.6), (7, 0.7)], dtype=[("id", "i4"), ("bar", "f8")]),
     }
-    errors = all_cross_unique(valid, [("node", "foo"), ("line", "bar")], cross_only=cross_only)
+    errors = all_cross_unique(valid, [(ComponentType.node, "foo"), (ComponentType.line, "bar")], cross_only=cross_only)
     assert not errors
 
     invalid = {
         "node": np.array([(1, 0.1), (2, 0.2), (3, 0.2)], dtype=[("id", "i4"), ("foo", "f8")]),
         "line": np.array([(4, 0.2), (5, 0.1), (6, 0.3), (7, 0.3)], dtype=[("id", "i4"), ("bar", "f8")]),
     }
-    errors = all_cross_unique(invalid, [("node", "foo"), ("line", "bar")], cross_only=cross_only)
+    errors = all_cross_unique(
+        invalid, [(ComponentType.node, "foo"), (ComponentType.line, "bar")], cross_only=cross_only
+    )
     assert len(errors) == 1
     error = errors.pop()
     assert isinstance(error, MultiComponentNotUniqueError)
