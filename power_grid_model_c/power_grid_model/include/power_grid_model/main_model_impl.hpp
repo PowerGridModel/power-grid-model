@@ -876,6 +876,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
+    // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {

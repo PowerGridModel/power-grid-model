@@ -49,6 +49,8 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
         FAIL("Expected error not thrown.");
     } catch (PowerGridRegularError const& e) {
         check_exception(e, reference_error, reference_err_msg);
+    } catch (PowerGridError const& e) {
+        check_exception(e, reference_error, reference_err_msg);
     }
 }
 } // namespace
@@ -296,7 +298,9 @@ TEST_CASE("API Model") {
             load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 1;
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+
             auto const wrong_model_lambda = [&input_dataset]() { Model const wrong_model{50.0, input_dataset}; };
+
             check_throws_with(wrong_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
         }
 
@@ -305,8 +309,23 @@ TEST_CASE("API Model") {
             load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 99;
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+
             auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
+
             check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
+        }
+
+        SUBCASE("Update error in calculation") {
+            load_id = 2;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
+            source_update_id = 99;
+            source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+
+            auto const bad_calc_with_update_lambda = [&model, &options, &batch_output_dataset,
+                                                      &batch_update_dataset]() {
+                model.calculate(options, batch_output_dataset, batch_update_dataset);
+            };
+            check_throws_with(bad_calc_with_update_lambda, PGM_batch_error, "The id cannot be found:"s);
         }
 
         SUBCASE("Invalid calculation type error") {
