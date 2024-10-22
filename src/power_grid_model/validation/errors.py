@@ -58,14 +58,26 @@ class ValidationError(ABC):
         """
         A string representation of the component to which this error applies
         """
-        return str(self.component)
+        if self.component is None:
+            return str(None)
+        if isinstance(self.component, list):
+            return "/".join(component.value for component in self.component)
+        return self.component.value
 
     @property
     def field_str(self) -> str:
         """
         A string representation of the field to which this error applies
         """
-        return f"'{self.field}'"
+
+        def _unpack(field: str | tuple[ComponentType, str]) -> str:
+            if isinstance(field, str):
+                return f"'{field}'"
+            return ".".join(field)
+
+        if isinstance(self.field, list):
+            return self._delimiter.join(_unpack(field) for field in self.field)
+        return _unpack(self.field) if self.field else str(self.field)
 
     def get_context(self, id_lookup: Optional[list[str] | dict[int, str]] = None) -> dict[str, Any]:
         """
@@ -155,10 +167,6 @@ class MultiFieldValidationError(ValidationError):
         if len(self.field) < 2:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
 
-    @property
-    def field_str(self) -> str:
-        return self._delimiter.join(f"'{field}'" for field in self.field)
-
 
 class MultiComponentValidationError(ValidationError):
     """
@@ -186,15 +194,6 @@ class MultiComponentValidationError(ValidationError):
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
         if len(self.component) < 2:
             raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
-
-    @property
-    def component_str(self) -> str:
-        str_components = [str(component) for component in self.component]
-        return "/".join(str_components)
-
-    @property
-    def field_str(self) -> str:
-        return self._delimiter.join(f"{component}.{field}" for component, field in self.field)
 
 
 class NotIdenticalError(SingleFieldValidationError):
