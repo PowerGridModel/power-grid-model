@@ -26,9 +26,10 @@ However, these checks are extremely expensive and should therefore not be used i
 Instead, we recommend using the data validator specifically for debugging purposes.
 
 ```{note}
-Some combinations of input data are not forbidden by physics, but still pose unrealistic conditions, e.g. a source with a very low short-circuit power, and unexpected behavior of the calculation core as a result.
+Some combinations of input data are not forbidden by physics, but still pose unrealistic conditions, e.g. a source with a very low short-circuit power.
+These cases may result in unexpected behavior of the calculation core under the optimizations in the code.
 Vagueness and case-dependence make it hard to check what can be considered "unrealistic", and the [data validator](data-validator.md) will therefore not catch such cases.
-We recommend our users to provide reasonably physical scenarios to prevent these edge cases from happening.
+We recommend our users to provide reasonably realistic scenarios to prevent these edge cases from happening.
 ```
 
 ## Data format
