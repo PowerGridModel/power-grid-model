@@ -78,6 +78,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
     detail::iterate_component_sequence<Component>(
         [&state_changed, &changed_it, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
             auto& comp = get_component<Component>(state, sequence_single);
+
             auto const comp_changed = comp.update(update_data);
 
             state_changed = state_changed || comp_changed;

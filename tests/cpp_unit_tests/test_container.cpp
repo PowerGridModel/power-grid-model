@@ -199,6 +199,12 @@ TEST_CASE("Test component container") {
         CHECK(const_container.get_group_idx<C1>() == 1);
         CHECK(const_container.get_group_idx<C2>() == 2);
     }
+
+    SUBCASE("Test get id by idx2d") {
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 0}) == 1);
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 1}) == 11);
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 2}) == 111);
+    }
 }
 
 } // namespace power_grid_model

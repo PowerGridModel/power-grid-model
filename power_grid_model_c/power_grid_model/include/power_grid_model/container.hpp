@@ -110,6 +110,15 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         assert(is_base<Gettable>[idx_2d.group]);
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
+    // get id by idx
+    ID get_id_by_idx(Idx2D idx_2d) const {
+        for (auto const& [key, value] : map_) {
+            if (value == idx_2d) {
+                return key;
+            }
+        }
+        throw Idx2DNotFound{idx_2d};
+    }
     // get idx by id
     Idx2D get_idx_by_id(ID id) const {
         auto const found = map_.find(id);
