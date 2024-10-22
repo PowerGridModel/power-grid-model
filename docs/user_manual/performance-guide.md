@@ -7,7 +7,7 @@ SPDX-License-Identifier: MPL-2.0
 # Guidelines for performance enhancement
 
 The Power Grid Model is a library that shines in its ability to handle calculations at scale in.
-It remains performant, even when doing calculations with one or a combination of the following list of difficult extremes (non-exhaustive):
+It remains performant, even when doing calculations with one or a combination of the following extremes (non-exhaustive):
 
 - Large grids
 - Batch calculations with many scenarios
