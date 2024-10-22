@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Guidelines for performance enhancement
 
-The Power Grid Model is a library that shines in its ability to handle calculations at scale in.
+The `power-grid-model` is a library that shines in its ability to handle calculations at scale in.
 It remains performant, even when doing calculations with one or a combination of the following extremes (non-exhaustive):
 
 - Large grids
@@ -22,12 +22,12 @@ To use those optimizations to their fullest extend, we recommend our users to fo
 Many of our optimizations rely on assuming input data validity and the fact that the provided grid is reasonably close to realistic.
 Non-convergence, underdetermined equations (sparse matrices) or other unexpected behavior may therefore be encountered when the data is not realistic.
 
-To keep the PGM performant, a separate tool, the [data validator](data-validator.md), can be used for checking hard physical bounds.
+To keep the PGM performant, checks on hard physical bounds are offloaded to a separate tool, the [data validator](data-validator.md).
 However, these checks are extremely expensive and should therefore not be used in production environments at scale when performance matters.
 Instead, we recommend using the data validator specifically for debugging purposes.
 
 ```{note}
-Some combinations of input data are not forbidden by physics, but still pose unrealistic conditions, e.g. a source with a very low short-circuit power.
+Some combinations of input data are not forbidden by physics, but still pose unrealistic conditions, e.g. a source with a very low short-circuit power, and unexpected behavior of the calculation core as a result.
 Vagueness and case-dependence make it hard to check what can be considered "unrealistic", and the [data validator](data-validator.md) will therefore not catch such cases.
 We recommend our users to provide reasonably physical scenarios to prevent these edge cases from happening.
 ```
@@ -47,7 +47,8 @@ If you are running on a system on which memory is the bottle-neck, using a colum
 
 For most use cases, only certain output values are relevant.
 For instance, if you are only interested in line loading, outputting all other components and attributes results in unnecessary overhead.
-We recommend restricting the output data to only the components and attributes that are used by the user in production environments.
+The output data may be a significant, if not the dominant, contributor to memory load, particularly when running batch calculations with many scenarios.
+We therefore recommend restricting the output data to only the components and attributes that are used by the user in such production environments.
 In Python, it is possible to do so by using the `output_component_types` keyword argument in the `calculate_*` functions (like {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`)
 
 ### Database integration
