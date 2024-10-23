@@ -47,7 +47,7 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
     try {
         std::forward<Func>(func)(std::forward<Args>(args)...);
         FAIL("Expected error not thrown.");
-    } catch (PowerGridRegularError const& e) {
+    } catch (PowerGridError const& e) {
         check_exception(e, reference_error, reference_err_msg);
     }
 }
@@ -296,7 +296,9 @@ TEST_CASE("API Model") {
             load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 1;
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+
             auto const wrong_model_lambda = [&input_dataset]() { Model const wrong_model{50.0, input_dataset}; };
+
             check_throws_with(wrong_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
         }
 
@@ -305,8 +307,30 @@ TEST_CASE("API Model") {
             load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
             source_update_id = 99;
             source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+
             auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
+
             check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
+        }
+
+        SUBCASE("Update error in calculation") {
+            load_id = 2;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
+            DatasetConst bad_batch_update_dataset{"update", 1, 2};
+            bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
+                                                source_update_buffer.get());
+            bad_batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
+            bad_batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr); // columnar input for line
+            std::vector<ID> const bad_batch_line_id{99, 999, 9999, 99999};
+            bad_batch_update_dataset.add_attribute_buffer("line", "id", bad_batch_line_id.data());
+            bad_batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
+            bad_batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
+
+            auto const bad_calc_with_update_lambda = [&model, &options, &batch_output_dataset,
+                                                      &bad_batch_update_dataset]() {
+                model.calculate(options, batch_output_dataset, bad_batch_update_dataset);
+            };
+            check_throws_with(bad_calc_with_update_lambda, PGM_batch_error, "The id cannot be found:"s);
         }
 
         SUBCASE("Invalid calculation type error") {

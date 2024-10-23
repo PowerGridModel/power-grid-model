@@ -13,10 +13,11 @@ from power_grid_model import (
     DatasetType,
     PowerGridModel,
     initialize_array,
+    power_grid_meta_data,
 )
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
-from power_grid_model.utils import get_dataset_scenario
+from power_grid_model.utils import get_dataset_scenario, json_serialize_to_file
 from power_grid_model.validation import assert_valid_input_data
 
 from .utils import compare_result
@@ -66,6 +67,149 @@ def input_row():
         ComponentType.node: node,
         ComponentType.source: source,
         ComponentType.sym_load: sym_load,
+    }
+
+
+@pytest.fixture
+def input_col_cpp():
+    node = initialize_array(DatasetType.input, ComponentType.node, 2)
+    node["id"] = [0, 4]
+    node["u_rated"] = [100.0, 100.0]
+
+    source = initialize_array(DatasetType.input, ComponentType.source, 1)
+    source["id"] = 1
+    source["node"] = 0
+    source["status"] = 1
+    source["u_ref"] = 1.0
+    source["sk"] = 1000.0
+    source["rx_ratio"] = 0.0
+
+    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
+    sym_load["id"] = 2
+    sym_load["node"] = 0
+    sym_load["status"] = 1
+    sym_load["type"] = 2
+    sym_load["p_specified"] = 0.0
+    sym_load["q_specified"] = 500.0
+
+    line = {}
+    line["id"] = np.array([5, 6], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["id"])
+    line["from_node"] = np.array(
+        [0, 4], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_node"]
+    )
+    line["to_node"] = np.array(
+        [4, 0], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_node"]
+    )
+    line["from_status"] = np.array(
+        [0, 1], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_status"]
+    )
+    line["to_status"] = np.array(
+        [1, 0], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_status"]
+    )
+
+    return {
+        ComponentType.node: node,
+        ComponentType.source: source,
+        ComponentType.sym_load: sym_load,
+        ComponentType.line: line,
+    }
+
+
+@pytest.fixture
+def update_col_cpp():
+    node = initialize_array(DatasetType.input, ComponentType.node, 2)
+    node["id"] = [0, 4]
+    node["u_rated"] = [100.0, 100.0]
+
+    source = initialize_array(DatasetType.input, ComponentType.source, 1)
+    source["id"] = 1
+    source["node"] = 0
+    source["status"] = 1
+    source["u_ref"] = 0.5
+    source["sk"] = 1000.0
+    source["rx_ratio"] = 0.0
+
+    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
+    sym_load["id"] = [2, 2]
+    sym_load["node"] = 0
+    sym_load["status"] = 1
+    sym_load["type"] = 2
+    sym_load["p_specified"] = 0.0
+    sym_load["q_specified"] = [100.0, 300]
+
+    batch_line = {}
+    batch_line["id"] = np.array(
+        [[5, 6], [5, 6]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["id"]
+    )
+    batch_line["from_node"] = np.array(
+        [[0, 4], [0, 4]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_node"]
+    )
+    batch_line["to_node"] = np.array(
+        [[4, 0], [4, 0]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_node"]
+    )
+    batch_line["from_status"] = np.array(
+        [[0, 1], [0, 1]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_status"]
+    )
+    batch_line["to_status"] = np.array(
+        [[1, 0], [1, 0]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_status"]
+    )
+
+    return {
+        ComponentType.source: {
+            "data": source,
+            "indptr": np.array([0, 1, 1]),
+        },
+        ComponentType.sym_load: sym_load,
+        ComponentType.line: batch_line,
+    }
+
+
+@pytest.fixture
+def bad_update_col_cpp():
+    node = initialize_array(DatasetType.input, ComponentType.node, 2)
+    node["id"] = [0, 4]
+    node["u_rated"] = [100.0, 100.0]
+
+    source = initialize_array(DatasetType.input, ComponentType.source, 1)
+    source["id"] = 1
+    source["node"] = 0
+    source["status"] = 1
+    source["u_ref"] = 0.5
+    source["sk"] = 1000.0
+    source["rx_ratio"] = 0.0
+
+    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
+    sym_load["id"] = [2, 2]
+    sym_load["node"] = 0
+    sym_load["status"] = 1
+    sym_load["type"] = 2
+    sym_load["p_specified"] = 0.0
+    sym_load["q_specified"] = [100.0, 300]
+
+    batch_line = {}
+    batch_line["id"] = np.array(
+        [[99, 999], [99, 999]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["id"]
+    )
+    batch_line["from_node"] = np.array(
+        [[0, 4], [0, 4]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_node"]
+    )
+    batch_line["to_node"] = np.array(
+        [[4, 0], [4, 0]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_node"]
+    )
+    batch_line["from_status"] = np.array(
+        [[0, 1], [0, 1]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_status"]
+    )
+    batch_line["to_status"] = np.array(
+        [[1, 0], [1, 0]], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_status"]
+    )
+
+    return {
+        ComponentType.source: {
+            "data": source,
+            "indptr": np.array([0, 1, 1]),
+        },
+        ComponentType.sym_load: sym_load,
+        ComponentType.line: batch_line,
     }
 
 
@@ -203,12 +347,26 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-def test_batch_calculation_error(model: PowerGridModel, update_batch):
-    # wrong id
-    update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
+def test_debug(input_col_cpp, update_col_cpp, bad_update_col_cpp):
+    model = PowerGridModel(input_col_cpp)
+    # should raise no exception
+    # model.calculate_power_flow(update_data=update_col_cpp)
+    # should pass with exception expected
+    with pytest.raises(PowerGridBatchError) as e:
+        model.calculate_power_flow(update_data=bad_update_col_cpp)
     # with error
+    error = e.value
+    np.testing.assert_allclose(error.failed_scenarios, [1])
+    np.testing.assert_allclose(error.succeeded_scenarios, [0])
+    assert "The id cannot be found:" in error.error_messages[0]
+
+
+def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
+    # wrong id
+    update_batch[ComponentType.source]["data"]["id"][0] = 999
     with pytest.raises(PowerGridBatchError) as e:
         model.calculate_power_flow(update_data=update_batch)
+    # with error
     error = e.value
     np.testing.assert_allclose(error.failed_scenarios, [1])
     np.testing.assert_allclose(error.succeeded_scenarios, [0])
