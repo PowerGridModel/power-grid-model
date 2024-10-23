@@ -40,6 +40,7 @@ from typing import Any, Callable, Optional, Type, TypeVar
 import numpy as np
 
 from power_grid_model import ComponentType
+from power_grid_model._utils import is_columnar
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
@@ -699,13 +700,17 @@ def ids_valid_in_update_data_set(
     component_ref_data = ref_data[component]
     if component_ref_data["id"].size == 0:
         return [InvalidIdError(component=component, field="id", ids=None)]
+    is_nan_or_default = lambda x: np.isnan(x) | (x == -2147483648)
+    get_comp_batch_size = lambda _data: (len(next(iter(_data.items()))[1]) if is_columnar(_data) else len(_data),)
+    id_field_is_nan = np.array(is_nan_or_default(component_data["id"]))
     # check whether id qualify for optional
-    if component_data["id"].size == 0 or np.isnan(component_data["id"]).all():
+    if component_data["id"].size == 0 or np.all(id_field_is_nan):
         # check if the dimension of the component_data is the same as the component_ref_data
-        if len(component_data) != len(component_ref_data):
+        if get_comp_batch_size(component_data) != get_comp_batch_size(component_ref_data):
             return [InvalidIdError(component=component, field="id", ids=None)]
+        return []  # supported optional id
 
-    if np.isnan(component_data["id"]).any() and not np.isnan(component_data["id"]).all():
+    if np.all(id_field_is_nan) and not np.all(~id_field_is_nan):
         return [InvalidIdError(component=component, field="id", ids=None)]
 
     # normal check: exist and match with input
