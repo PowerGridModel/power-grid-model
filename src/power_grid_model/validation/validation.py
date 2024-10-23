@@ -540,6 +540,8 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
 
 def validate_generic_branch(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, ComponentType.generic_branch)
+    errors += all_greater_than_zero(data, ComponentType.generic_branch, "k")
+    errors += all_greater_than_or_equal_to_zero(data, ComponentType.generic_branch, "sn")
     return errors
 
 

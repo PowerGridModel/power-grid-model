@@ -6,6 +6,57 @@ SPDX-License-Identifier: MPL-2.0
 
 # Guidelines for performance enhancement
 
+The `power-grid-model` is a library that shines in its ability to handle calculations at scale.
+It remains performant, even when doing calculations with one or a combination of the following extremes (non-exhaustive):
+
+- Large grids
+- Batch calculations with many scenarios
+- Many changes in the grid in each scenario
+
+To achieve that high performance, several optimizations are made.
+To use those optimizations to the fullest, we recommend our users to follow the following guidelines.
+
+## Data validity
+
+Many of our optimizations assume input data validity and rely on the fact that the provided grid is reasonably close to realistic.
+Non-convergence, underdetermined equations or other unexpected behavior may therefore be encountered when the data is not realistic.
+
+To keep the PGM performant, checks on hard physical bounds are offloaded to a separate tool, i.e., the [data validator](data-validator.md).
+However, these checks can be prohibitively expensive and application at scale in production environments is therefore not recommended when performance matters.
+Instead, we recommend using the data validator specifically for debugging purposes.
+
+```{note}
+Some combinations of input data are not forbidden by physics, but still pose unrealistic conditions, e.g., a source with a very low short-circuit power.
+These cases may result in unexpected behavior of the calculation core.
+Vagueness and case-dependence make it hard to check what can be considered "unrealistic", and the [data validator](data-validator.md) will therefore not catch such cases.
+We recommend our users to provide reasonably realistic scenarios to prevent these edge cases from happening.
+```
+
+## Data format
+
+The data format of input, output and update data can have a big effect on memory and computational cost.
+
+### Input/update data volume
+
+Row-based data (created, e.g., using {py:class}`power_grid_model.initialize_array` in Python) constructs input/update data with all attributes for a given dataset type.
+However, many component attributes are optional.
+If your use case does not depend on these attributes, a lot of data is needlessly created and initialized.
+If you are running on a system where memory is the bottle-neck, using a columnar data format may reduce the memory footprint. This may or may not induce a slight computational overhead during calculations.
+
+### Output data volume
+
+For most use cases, only certain output values are relevant.
+For example, if you are only interested in line loading, outputting all other components and attributes results in unnecessary overhead.
+The output data may be a significant, if not the dominant, contributor to memory load, particularly when running large batch calculations.
+We therefore recommend restricting the output data to only the components and attributes that are used by the user in such production environments.
+In Python, it is possible to do so by using the `output_component_types` keyword argument in the `calculate_*` functions (like {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`)
+
+### Database integration
+
+Most databases store their data in a columnar data format.
+Copying, reserving unused memory, and cache misses can lead to unnecessary memory usage and computational overhead.
+With the introduction of columnar data input to PGM, integrating with databases using this format becomes easier, more natural, and more efficient.
+
 ## Batch calculations
 
 Depending on the details of the batch, a number of performance optimizations are possible:
