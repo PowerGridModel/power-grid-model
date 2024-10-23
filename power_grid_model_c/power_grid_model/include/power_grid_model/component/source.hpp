@@ -88,7 +88,7 @@ class Source : public Appliance {
 
     // update for source
     UpdateChange update(SourceUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.status);
         bool const param_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
         // change source connection will change both topo and param
@@ -97,7 +97,7 @@ class Source : public Appliance {
     }
 
     SourceUpdate inverse(SourceUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
         set_if_not_nan(update_data.u_ref, u_ref_);

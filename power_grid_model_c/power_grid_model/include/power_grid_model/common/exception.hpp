@@ -141,6 +141,13 @@ class IDNotFound : public PowerGridError {
   public:
     explicit IDNotFound(ID id) { append_msg("The id cannot be found: " + detail::to_string(id) + '\n'); }
 };
+class Idx2DNotFound : public PowerGridError {
+  public:
+    explicit Idx2DNotFound(Idx2D id) {
+        append_msg("The idx 2d cannot be found: {" + detail::to_string(id.group) + ", " + detail::to_string(id.pos) +
+                   "}.\n");
+    }
+};
 
 class InvalidMeasuredObject : public PowerGridError {
   public:

@@ -118,7 +118,7 @@ class Fault final : public Base {
     }
 
     FaultUpdate inverse(FaultUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status, static_cast<IntS>(status_));
         set_if_not_nan(update_data.fault_type, fault_type_);
