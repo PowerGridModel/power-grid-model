@@ -14,7 +14,7 @@ It remains performant, even when doing calculations with one or a combination of
 - Many changes in the grid in each scenario
 
 To achieve that high performance, several optimizations are made.
-To use those optimizations to their fullest extend, we recommend our users to follow the following guidelines.
+To use those optimizations to the fullest, we recommend our users to follow the following guidelines.
 
 ## Data validity
 
@@ -54,8 +54,8 @@ In Python, it is possible to do so by using the `output_component_types` keyword
 ### Database integration
 
 Most databases store their data in a columnar data format.
-Copying, reserving unused memory and cache misses may cause both unnecessary memory and computational overhead.
-Integration of the PGM with databases using a columnar data format is therefore often not only easier and more natural, but also more performant.
+Copying, reserving unused memory, and cache misses can lead to unnecessary memory usage and computational overhead.
+With the introduction of columnar data input to PGM, integrating with databases using this format becomes easier, more natural, and more efficient.
 
 ## Batch calculations
 
