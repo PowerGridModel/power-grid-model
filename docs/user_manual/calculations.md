@@ -659,9 +659,9 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 
 Given the discrete nature of the finite tap ranges, we use the following search methods to find the next tap position along the exploitation direction.
 
-| Search method | Description                                                                            |
-| ------------- | -------------------------------------------------------------------------------------- |
-| linear search | Start with an initial guess and do a local search with step size 1 for each iteration step. |
+| Search method | Description                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| linear search | Start with an initial guess and do a local search with step size 1 for each iteration step.     |
 | binary search | Start with a large search region and reduce the search region by half for every iteration step. |
 
 
@@ -675,9 +675,9 @@ The framework for creating the batches is the same for all types of calculations
 For every component, the attributes that can be updated in a batch scenario are mentioned in [Components](components.md).
 Examples of batch calculations for timeseries and contingency analysis are given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
-The same method as for single calculations, `calculate_power_flow`, can be used to calculate a number of scenarios in one go.
-To do this, you need to supply an `update_data` argument. 
-This argument contains a dictionary of 2D update arrays (one array per component type).
+The same method as for single calculations, {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`, can be used to calculate a number of scenarios in one go.
+To do this, you need to supply an `update_data` keyword argument. 
+This keyword argument contains a dictionary of 2D update arrays (one array per component type).
 
 The performance for different batches vary. power-grid-model automatically makes efficient calculations whenever possible. See the [Performance Guide](performance-guide.md#topology-caching) for ways to optimally use the performance optimizations.
 
@@ -736,7 +736,7 @@ independent_update_data = {'line': line_update}
 The batch calculation supports shared memory multi-threading parallel computing. 
 The common internal states and variables are shared as much as possible to save memory usage and avoid copy.
 
-You can set `threading` parameter in `calculate_power_flow()` or `calculate_state_estimation()` to enable/disable parallel computing.
+You can set the `threading` keyword argument in the `calculate_*` functions (like {py:class}`calculate_power_flow() <power_grid_model.PowerGridModel.calculate_power_flow>`) to enable/disable parallel computing.
 
 - `threading=-1`, use sequential computing (default)
 - `threading=0`, use number of threads available from the machine hardware (recommended)
