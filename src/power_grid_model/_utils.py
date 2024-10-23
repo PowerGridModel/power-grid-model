@@ -749,3 +749,29 @@ def get_dataset_type(data: Dataset) -> DatasetType:
         raise ValueError("The dataset type could not be deduced because multiple dataset types match the data.")
 
     return next(iter(candidates))
+
+
+def is_nan_or_default(x: np.ndarray) -> np.ndarray:
+    """
+    Check if elements in the array are NaN or equal to the default value -2147483648.
+
+    Args:
+        x: A NumPy array to check.
+
+    Returns:
+        A boolean NumPy array where each element is True if the corresponding element in x is NaN or -2147483648, and False otherwise.
+    """
+    return np.isnan(x) | (x == -2147483648)
+
+
+def get_comp_batch_size(_data: dict) -> int:
+    """
+    Get the batch size of the component data.
+
+    Args:
+        _data: A dictionary representing the component data. The dictionary can be either columnar or non-columnar.
+
+    Returns:
+        The length of the first value in the dictionary if the data is columnar, otherwise the length of the dictionary itself.
+    """
+    return len(next(iter(_data.items()))[1]) if is_columnar(_data) else len(_data)
