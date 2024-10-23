@@ -351,37 +351,170 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Batch calculation error") {
-            // wrong id
-            load_updates_id[1] = 999;
-            load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
-            // failed in batch 1
-            try {
-                model.calculate(options, batch_output_dataset, batch_update_dataset);
-                FAIL("Expected batch calculation error not thrown.");
-            } catch (PowerGridBatchError const& e) {
-                CHECK(e.error_code() == PGM_batch_error);
-                auto const& failed_scenarios = e.failed_scenarios();
-                CHECK(failed_scenarios.size() == 1);
-                CHECK(failed_scenarios[0].scenario == 1);
-                std::string const err_msg{failed_scenarios[0].error_message};
-                CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
+            SUBCASE("Line bad line id") {
+                // wrong id
+                load_updates_id[1] = 999;
+                load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
+                // failed in batch 1
+                try {
+                    model.calculate(options, batch_output_dataset, batch_update_dataset);
+                    FAIL("Expected batch calculation error not thrown.");
+                } catch (PowerGridBatchError const& e) {
+                    CHECK(e.error_code() == PGM_batch_error);
+                    auto const& failed_scenarios = e.failed_scenarios();
+                    CHECK(failed_scenarios.size() == 1);
+                    CHECK(failed_scenarios[0].scenario == 1);
+                    std::string const err_msg{failed_scenarios[0].error_message};
+                    CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
+                }
+                // valid results for batch 0
+                node_batch_output.get_value(PGM_def_sym_output_node_id, batch_node_result_id.data(), -1);
+                node_batch_output.get_value(PGM_def_sym_output_node_energized, batch_node_result_energized.data(), -1);
+                node_batch_output.get_value(PGM_def_sym_output_node_u, batch_node_result_u.data(), -1);
+                node_batch_output.get_value(PGM_def_sym_output_node_u_pu, batch_node_result_u_pu.data(), -1);
+                node_batch_output.get_value(PGM_def_sym_output_node_u_angle, batch_node_result_u_angle.data(), -1);
+                CHECK(batch_node_result_id[0] == 0);
+                CHECK(batch_node_result_energized[0] == 1);
+                CHECK(batch_node_result_u[0] == doctest::Approx(40.0));
+                CHECK(batch_node_result_u_pu[0] == doctest::Approx(0.4));
+                CHECK(batch_node_result_u_angle[0] == doctest::Approx(0.0));
+                CHECK(batch_node_result_id[1] == 4);
+                CHECK(batch_node_result_energized[1] == 0);
+                CHECK(batch_node_result_u[1] == doctest::Approx(0.0));
+                CHECK(batch_node_result_u_pu[1] == doctest::Approx(0.0));
+                CHECK(batch_node_result_u_angle[1] == doctest::Approx(0.0));
             }
-            // valid results for batch 0
-            node_batch_output.get_value(PGM_def_sym_output_node_id, batch_node_result_id.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_energized, batch_node_result_energized.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_u, batch_node_result_u.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_u_pu, batch_node_result_u_pu.data(), -1);
-            node_batch_output.get_value(PGM_def_sym_output_node_u_angle, batch_node_result_u_angle.data(), -1);
-            CHECK(batch_node_result_id[0] == 0);
-            CHECK(batch_node_result_energized[0] == 1);
-            CHECK(batch_node_result_u[0] == doctest::Approx(40.0));
-            CHECK(batch_node_result_u_pu[0] == doctest::Approx(0.4));
-            CHECK(batch_node_result_u_angle[0] == doctest::Approx(0.0));
-            CHECK(batch_node_result_id[1] == 4);
-            CHECK(batch_node_result_energized[1] == 0);
-            CHECK(batch_node_result_u[1] == doctest::Approx(0.0));
-            CHECK(batch_node_result_u_pu[1] == doctest::Approx(0.0));
-            CHECK(batch_node_result_u_angle[1] == doctest::Approx(0.0));
+        }
+    }
+}
+
+TEST_CASE("API Model - Repro case python version") {
+    std::vector<ID> const node_id{0};
+    std::vector<double> const node_u_rated{100.0};
+    Buffer node_buffer{PGM_def_input_node, 1};
+    node_buffer.set_nan();
+    node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
+    node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
+
+    std::vector<ID> const source_id{1};
+    std::vector<ID> const source_node{0};
+    std::vector<int8_t> const source_status{1};
+    std::vector<double> const source_u_ref{1.0};
+    std::vector<double> const source_sk{1000.0};
+    std::vector<double> const source_rx_ratio{0.0};
+    Buffer source_buffer{PGM_def_input_source, 1};
+    source_buffer.set_nan();
+    source_buffer.set_value(PGM_def_input_source_id, source_id.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_node, source_node.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_status, source_status.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_u_ref, source_u_ref.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_sk, source_sk.data(), -1);
+    source_buffer.set_value(PGM_def_input_source_rx_ratio, source_rx_ratio.data(), -1);
+
+    std::vector<ID> const sym_load_id{2};
+    std::vector<ID> const sym_load_node{0};
+    std::vector<int8_t> const sym_load_status{1};
+    std::vector<int8_t> const sym_load_type{2};
+    std::vector<double> const sym_load_p_specified{0.0};
+    std::vector<double> const sym_load_q_specified{500.0};
+    Buffer sym_load_buffer{PGM_def_input_sym_load, 1};
+    sym_load_buffer.set_nan();
+    sym_load_buffer.set_value(PGM_def_input_sym_load_id, sym_load_id.data(), -1);
+    sym_load_buffer.set_value(PGM_def_input_sym_load_node, sym_load_node.data(), -1);
+    sym_load_buffer.set_value(PGM_def_input_sym_load_status, sym_load_status.data(), -1);
+    sym_load_buffer.set_value(PGM_def_input_sym_load_type, sym_load_type.data(), -1);
+    sym_load_buffer.set_value(PGM_def_input_sym_load_p_specified, sym_load_p_specified.data(), -1);
+    sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, sym_load_q_specified.data(), -1);
+
+    // input dataset - row
+    DatasetConst input_dataset_row{"input", 0, 1};
+    input_dataset_row.add_buffer("node", 1, 1, nullptr, node_buffer);
+    input_dataset_row.add_buffer("source", 1, 1, nullptr, source_buffer);
+    input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, sym_load_buffer);
+
+    // input dataset - col
+    DatasetConst input_dataset_col{"input", 0, 1};
+    input_dataset_col.add_buffer("node", 1, 1, nullptr, nullptr);
+    input_dataset_col.add_attribute_buffer("node", "id", node_id.data());
+    input_dataset_col.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+    input_dataset_col.add_buffer("source", 1, 1, nullptr, nullptr);
+    input_dataset_col.add_attribute_buffer("source", "id", source_id.data());
+    input_dataset_col.add_attribute_buffer("source", "node", source_node.data());
+    input_dataset_col.add_attribute_buffer("source", "status", source_status.data());
+    input_dataset_col.add_attribute_buffer("source", "u_ref", source_u_ref.data());
+    input_dataset_col.add_attribute_buffer("source", "sk", source_sk.data());
+    input_dataset_col.add_attribute_buffer("source", "rx_ratio", source_rx_ratio.data());
+
+    input_dataset_col.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+    input_dataset_col.add_attribute_buffer("sym_load", "id", sym_load_id.data());
+    input_dataset_col.add_attribute_buffer("sym_load", "node", sym_load_node.data());
+    input_dataset_col.add_attribute_buffer("sym_load", "status", sym_load_status.data());
+    input_dataset_col.add_attribute_buffer("sym_load", "type", sym_load_type.data());
+    input_dataset_col.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
+    input_dataset_col.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+
+    // update dataset
+    std::vector<Idx> source_indptr{0, 1, 1};
+    std::vector<ID> const update_source_id{1};
+    std::vector<double> const update_source_u_ref{0.5};
+    Buffer update_source_buffer{PGM_def_update_source, 1};
+    update_source_buffer.set_nan();
+    update_source_buffer.set_value(PGM_def_update_source_id, update_source_id.data(), -1);
+    update_source_buffer.set_value(PGM_def_update_source_u_ref, update_source_u_ref.data(), -1);
+
+    std::vector<Idx> sym_load_indptr{0, 1, 2};
+    std::vector<ID> const update_sym_load_id{2, 5};
+    std::vector<double> const update_sym_load_q_specified{100.0, 300.0};
+    Buffer update_sym_load_buffer{PGM_def_update_sym_load, 1};
+    update_sym_load_buffer.set_nan();
+    update_sym_load_buffer.set_value(PGM_def_update_sym_load_id, update_sym_load_id.data(), -1);
+    update_sym_load_buffer.set_value(PGM_def_update_sym_load_q_specified, update_sym_load_q_specified.data(), -1);
+
+    // update dataset - row
+    DatasetConst update_dataset_row{"update", 1, 2};
+    update_dataset_row.add_buffer("source", -1, 1, source_indptr.data(), update_source_buffer);
+    update_dataset_row.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), update_sym_load_buffer);
+
+    // update dataset - col
+    DatasetConst update_dataset_col{"update", 1, 2};
+
+    update_dataset_col.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
+    update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
+    update_dataset_col.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
+
+    update_dataset_col.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
+    update_dataset_col.add_attribute_buffer("sym_load", "id", update_sym_load_id.data());
+    update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
+
+    // output data
+    Buffer node_batch_output{PGM_def_sym_output_node, 2};
+    node_batch_output.set_nan();
+    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
+    batch_output_dataset.add_buffer("node", 1, 2, nullptr, node_batch_output);
+
+    // options
+    Options const options{};
+
+    SUBCASE("Row-based input dataset") {
+        Model const model{50.0, input_dataset_row};
+
+        // SUBCASE("Row-based update dataset") {
+        //     CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row), PowerGridBatchError);
+        // }
+        SUBCASE("Columnar update dataset") {
+            CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col), PowerGridBatchError);
+        }
+    }
+
+    SUBCASE("Columnar input dataset") {
+        Model const model{50.0, input_dataset_col};
+
+        // SUBCASE("Row-based update dataset") {
+        //     CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row), PowerGridBatchError);
+        // }
+        SUBCASE("Columnar update dataset") {
+            CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col), PowerGridBatchError);
         }
     }
 }
