@@ -523,9 +523,9 @@ TEST_CASE("API Model - Repro case python version") {
     SUBCASE("Row-based input dataset") {
         Model const model{50.0, input_dataset_row};
 
-        // SUBCASE("Row-based update dataset") {
-        //     CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row), PowerGridBatchError);
-        // }
+        SUBCASE("Row-based update dataset") {
+            CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row), PowerGridBatchError);
+        }
         SUBCASE("Columnar update dataset") {
             CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col), PowerGridBatchError);
         }
@@ -534,12 +534,12 @@ TEST_CASE("API Model - Repro case python version") {
     SUBCASE("Columnar input dataset") {
         Model const model{50.0, input_dataset_col};
 
-        // SUBCASE("Row-based update dataset") {
-        //     CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row), PowerGridBatchError);
-        // }
-        SUBCASE("Columnar update dataset") {
-            CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col), PowerGridBatchError);
+        SUBCASE("Row-based update dataset") {
+            CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row), PowerGridBatchError);
         }
+        //SUBCASE("Columnar update dataset") {
+        //    CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col), PowerGridBatchError);
+        //}
     }
 }
 
