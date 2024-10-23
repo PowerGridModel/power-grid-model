@@ -9,6 +9,8 @@ import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, DatasetType, initialize_array
+from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model._utils import (
     compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list,
@@ -22,8 +24,6 @@ from power_grid_model._utils import (
     split_dense_batch_data_in_batches,
     split_sparse_batch_data_in_batches,
 )
-from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import BatchDataset, BatchList
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridError

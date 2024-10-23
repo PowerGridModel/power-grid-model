@@ -8,13 +8,13 @@ Type hints for the power-grid-model library.
 This includes all miscellaneous type hints not under dataset or categories.
 """
 
-from power_grid_model.core.dataset_definitions import (  # pylint: disable=unused-import
+from power_grid_model._core.dataset_definitions import (  # pylint: disable=unused-import
     ComponentType,
     ComponentTypeVar,
     DatasetType,
     DatasetTypeVar,
 )
-from power_grid_model.core.power_grid_meta import (  # pylint: disable=unused-import
+from power_grid_model._core.power_grid_meta import (  # pylint: disable=unused-import
     ComponentMetaData,
     DatasetMetaData,
     PowerGridMetaData,

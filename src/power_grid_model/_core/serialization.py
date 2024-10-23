@@ -10,17 +10,17 @@ from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
 
-from power_grid_model.core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
-from power_grid_model.core.error_handling import assert_no_error
-from power_grid_model.core.index_integer import IdxC
-from power_grid_model.core.power_grid_core import (
+from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
+from power_grid_model._core.error_handling import assert_no_error
+from power_grid_model._core.index_integer import IdxC
+from power_grid_model._core.power_grid_core import (
     CharPtr,
     DeserializerPtr,
     SerializerPtr,
     WritableDatasetPtr,
     power_grid_core as pgc,
 )
-from power_grid_model.core.power_grid_dataset import CConstDataset, CWritableDataset
+from power_grid_model._core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.typing import ComponentAttributeMapping

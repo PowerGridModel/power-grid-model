@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model._utils import convert_batch_dataset_to_batch_list
-from power_grid_model.core.power_grid_model import PowerGridModel
 from power_grid_model.utils import import_json_data
 
 from ..utils import compare_result
