@@ -47,7 +47,7 @@ If you are running on a system where memory is the bottle-neck, using a columnar
 
 For most use cases, only certain output values are relevant.
 For example, if you are only interested in line loading, outputting all other components and attributes results in unnecessary overhead.
-The output data may be a significant, if not the dominant, contributor to memory load, particularly when running batch calculations with many scenarios.
+The output data may be a significant, if not the dominant, contributor to memory load, particularly when running large batch calculations.
 We therefore recommend restricting the output data to only the components and attributes that are used by the user in such production environments.
 In Python, it is possible to do so by using the `output_component_types` keyword argument in the `calculate_*` functions (like {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`)
 
