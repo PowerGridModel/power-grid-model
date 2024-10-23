@@ -347,7 +347,6 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-@pytest.mark.skip(reason="ENTRY_POINT")
 def test_debug(input_col_cpp, update_col_cpp, bad_update_col_cpp):
     model = PowerGridModel(input_col_cpp)
     # should raise no exception
@@ -362,7 +361,6 @@ def test_debug(input_col_cpp, update_col_cpp, bad_update_col_cpp):
     assert "The id cannot be found:" in error.error_messages[0]
 
 
-@pytest.mark.skip(reason="will revive once core tested with updated c++ test")
 def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
     # wrong id
     update_batch[ComponentType.source]["data"]["id"][0] = 999
@@ -375,7 +373,6 @@ def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
     assert "The id cannot be found:" in error.error_messages[0]
 
 
-@pytest.mark.skip(reason="will revive once core tested with updated c++ test")
 def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, sym_output_batch):
     # wrong id
     update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
