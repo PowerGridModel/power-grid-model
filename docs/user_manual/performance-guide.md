@@ -19,7 +19,7 @@ To use those optimizations to the fullest, we recommend our users to follow the 
 ## Data validity
 
 Many of our optimizations assume input data validity and rely on the fact that the provided grid is reasonably close to realistic.
-Non-convergence, underdetermined equations (sparse matrices) or other unexpected behavior may therefore be encountered when the data is not realistic.
+Non-convergence, underdetermined equations or other unexpected behavior may therefore be encountered when the data is not realistic.
 
 To keep the PGM performant, checks on hard physical bounds are offloaded to a separate tool, i.e., the [data validator](data-validator.md).
 However, these checks can be prohibitively expensive and application at scale in production environments is therefore not recommended when performance matters.
