@@ -753,25 +753,33 @@ def get_dataset_type(data: Dataset) -> DatasetType:
 
 def is_nan_or_default(x: np.ndarray) -> np.ndarray:
     """
-    Check if elements in the array are NaN or equal to the default value -2147483648.
+    Check if elements in the array are NaN or equal to the min of its dtype.
 
     Args:
         x: A NumPy array to check.
 
     Returns:
-        A boolean NumPy array where each element is True if the corresponding element in x is NaN or -2147483648, and False otherwise.
+        A boolean NumPy array where each element is True if the corresponding element in x is NaN
+        or min of its dtype, and False otherwise.
     """
-    return np.isnan(x) | (x == -2147483648)
+    if x.dtype == np.float64:
+        return np.isnan(x)
+    elif x.dtype in (np.int32, np.int8):
+        return x == np.iinfo(x.dtype).min
+    else:
+        raise TypeError(f"Unsupported data type: {x.dtype}")
 
 
-def get_comp_batch_size(_data: dict) -> int:
+def get_comp_batch_size(comp_data: dict) -> int:
     """
-    Get the batch size of the component data.
+    Get the batch size of the component update data.
 
     Args:
-        _data: A dictionary representing the component data. The dictionary can be either columnar or non-columnar.
+        comp_data: A dictionary representing the component data. The dictionary can be either columnar
+        or row-based.
 
     Returns:
-        The length of the first value in the dictionary if the data is columnar, otherwise the length of the dictionary itself.
+        The length of the first value in the dictionary if the data is columnar, otherwise the length
+        of the dictionary itself.
     """
-    return len(next(iter(_data.items()))[1]) if is_columnar(_data) else len(_data)
+    return len(next(iter(comp_data.items()))[1]) if is_columnar(comp_data) else len(comp_data)
