@@ -568,7 +568,7 @@ def is_nan_or_equivalent(array) -> bool:
     Returns:
         bool: True if the array contains only nan or equivalent nan values, False otherwise.
     """
-    return isinstance(array, np.ndarray) and (
+    return isinstance(array, np.ndarray) and bool(
         (array.dtype == np.float64 and np.isnan(array).all())
         or (array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min))
     )
