@@ -539,9 +539,28 @@ def is_columnar(component_data: ComponentData) -> bool:
     return not isinstance(component_data, np.ndarray)
 
 
-def is_nan_or_equivalent(array):
+def is_nan_or_default(x: np.ndarray) -> np.ndarray:
+    """
+    Check if elements in the array are NaN or equal to the min of its dtype.
+
+    Args:
+        x: A NumPy array to check.
+
+    Returns:
+        A boolean NumPy array where each element is True if the corresponding element in x is NaN
+        or min of its dtype, and False otherwise.
+    """
+    if x.dtype == np.float64:
+        return np.isnan(x)
+    if x.dtype in (np.int32, np.int8):
+        return x == np.iinfo(x.dtype).min
+    raise TypeError(f"Unsupported data type: {x.dtype}")
+
+
+def is_nan_or_equivalent(array) -> bool:
     """
     Check if the array contains only nan values or equivalent nan values for specific data types.
+    This is the aggregrated version of `is_nan_or_default` for the whole array.
 
     Args:
         array: The array to check.
@@ -549,7 +568,7 @@ def is_nan_or_equivalent(array):
     Returns:
         bool: True if the array contains only nan or equivalent nan values, False otherwise.
     """
-    return isinstance(array, np.ndarray) and (
+    return isinstance(array, np.ndarray) and bool(
         (array.dtype == np.float64 and np.isnan(array).all())
         or (array.dtype in (np.int32, np.int8) and np.all(array == np.iinfo(array.dtype).min))
     )
@@ -749,3 +768,18 @@ def get_dataset_type(data: Dataset) -> DatasetType:
         raise ValueError("The dataset type could not be deduced because multiple dataset types match the data.")
 
     return next(iter(candidates))
+
+
+def get_comp_batch_size(comp_data: dict) -> int:
+    """
+    Get the batch size of the component update data.
+
+    Args:
+        comp_data: A dictionary representing the component data. The dictionary can be either columnar
+        or row-based.
+
+    Returns:
+        The length of the first value in the dictionary if the data is columnar, otherwise the length
+        of the dictionary itself.
+    """
+    return len(next(iter(comp_data.items()))[1]) if is_columnar(comp_data) else len(comp_data)
