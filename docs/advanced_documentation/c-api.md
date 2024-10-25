@@ -71,7 +71,10 @@ If we add a new option, it will get a default value in the `PGM_create_options` 
 
 ## Buffers and attributes
 
-The biggest challenge in the design of C API is the handling of input/output/update data buffers.
+The biggest challenge in the design of the C API is the handling of input/output/update data communication.
+To this end, data is communicated using buffers, which are contiguous blocks of memory that represent data in a given format.
+For compatibility reasons, that format is dictated by the C API using the `PGM_meta_*` functions and `PGM_def_*` dataset definitions.
+
 We define the following concepts in the data hierarchy:
 
 * Dataset: a collection of data buffers for a given purpose. 
@@ -176,6 +179,8 @@ because the buffer will be overwritten in the calculation core with the real out
 
 An attribute buffer contains data for a single component attribute and represents one column in a columnar representation of component data.
 A combination of attribute buffers with the same amount of elements has the power to carry the same information as row-based [component buffers](#component-buffers).
+
+The type (implying the size) of each attribute can be found using the `PGM_meta_attribute_ctype`.
 
 Since all attributes consist of primitive types, operations are straightforward.
 We therefore do not provide explicit interface functionality.
