@@ -51,7 +51,13 @@ template <auto func> struct DeleterFunctor {
 };
 
 // unique pointer definition
-template <typename T, auto func> using UniquePtr = std::unique_ptr<T, DeleterFunctor<func>>;
+template <typename T, auto func> class UniquePtr : public std::unique_ptr<T, DeleterFunctor<func>> {
+  public:
+    using std::unique_ptr<T, DeleterFunctor<func>>::unique_ptr;
+    using std::unique_ptr<T, DeleterFunctor<func>>::operator=;
+    T* get() { return static_cast<std::unique_ptr<T, DeleterFunctor<func>>&>(*this).get(); }
+    T const* get() const { return static_cast<std::unique_ptr<T, DeleterFunctor<func>> const&>(*this).get(); }
+};
 } // namespace detail
 
 } // namespace power_grid_model_cpp
