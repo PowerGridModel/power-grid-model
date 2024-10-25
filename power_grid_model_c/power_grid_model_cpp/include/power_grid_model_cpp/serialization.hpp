@@ -34,7 +34,6 @@ class Deserializer {
     RawDeserializer* get() { return deserializer_.get(); }
     RawDeserializer const* get() const { return deserializer_.get(); }
 
-
     DatasetWritable& get_dataset() { return dataset_; }
 
     void parse_to_buffer() { handle_.call_with(PGM_deserializer_parse_to_buffer, get()); }

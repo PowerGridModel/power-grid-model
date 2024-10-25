@@ -35,7 +35,7 @@ class Buffer {
         set_value(attribute, src_ptr, buffer_offset, 1, src_stride);
     }
     void set_value(MetaAttribute const* attribute, RawDataConstPtr src_ptr, Idx buffer_offset, Idx size,
-                   Idx src_stride) { 
+                   Idx src_stride) {
         handle_.call_with(PGM_buffer_set_value, attribute, get(), src_ptr, buffer_offset, size, src_stride);
     }
 
