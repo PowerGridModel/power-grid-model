@@ -770,7 +770,7 @@ def get_dataset_type(data: Dataset) -> DatasetType:
     return next(iter(candidates))
 
 
-def get_comp_batch_size(comp_data: dict) -> int:
+def get_comp_batch_size(comp_data: ComponentData | dict) -> int:
     """
     Get the batch size of the component update data.
 
