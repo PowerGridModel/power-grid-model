@@ -56,7 +56,7 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
 TEST_CASE("API Model") {
     using namespace std::string_literals;
 
-    Options const options{};
+    Options options{};
 
     // input data
     DatasetConst input_dataset{"input", 0, 1};
