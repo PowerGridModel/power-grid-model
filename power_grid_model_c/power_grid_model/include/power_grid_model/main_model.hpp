@@ -49,9 +49,7 @@ class MainModel {
     };
     ~MainModel() { impl_.reset(); }
 
-    static bool is_update_independent(ConstDataset const& update_data) {
-        return Impl::is_update_independent(update_data);
-    }
+    bool is_update_independent(ConstDataset const& update_data) { return impl().is_update_independent(update_data); }
 
     std::map<std::string, Idx, std::less<>> all_component_count() const { return impl().all_component_count(); }
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {

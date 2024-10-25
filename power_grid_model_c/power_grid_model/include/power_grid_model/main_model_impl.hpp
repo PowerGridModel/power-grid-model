@@ -154,12 +154,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool is_columnar{false};      // if the component is columnar
         bool ids_match{false};        // if the ids match
         Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
-        Idx elements_ps_in_base{0};   // count of elements for this component per scenario in input
+        Idx elements_in_base{0};      // count of elements for this component per scenario in input
+        bool is_independent() const { return !has_id || ids_match; }
     };
     using UpdateCompIndependence = std::vector<UpdateCompProperties>;
     using ComponentCountInBase = std::pair<std::string, Idx>;
 
     static constexpr Idx ignore_output{-1};
+    static constexpr Idx invalid_index{-1};
 
   protected:
     // run functors with all component types
@@ -438,21 +440,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // get sequence idx map of an entire batch for fast caching of component sequences
     // (only applicable for independent update dataset)
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
-        auto update_components_independence = check_components_independence(update_data);
+        auto const update_components_independence = check_components_independence(update_data);
         assert(std::ranges::all_of(update_components_independence,
-                                   [](auto const& comp) { return !comp.has_id || comp.ids_match; }));
+                                   [](auto const& comp) { return comp.is_independent(); }));
 
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-        auto const all_comp_count_in_base = this->all_component_count();
-        for (auto& comp : update_components_independence) {
-            if (auto it =
-                    std::ranges::find_if(all_comp_count_in_base,
-                                         [&comp](const ComponentCountInBase& pair) { return pair.first == comp.name; });
-                it != all_comp_count_in_base.end()) {
-                comp.elements_ps_in_base = it->second;
-            }
-            validate_update_data_independence(comp);
-        }
+        std::for_each(update_components_independence.begin(), update_components_independence.end(),
+                      [this](auto& comp) { validate_update_data_independence(comp); });
 
         return get_sequence_idx_map(update_data, 0, update_components_independence);
     }
@@ -767,7 +761,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     template <class Component> using UpdateType = typename Component::UpdateType;
 
-    static UpdateCompIndependence check_components_independence(ConstDataset const& update_data) {
+    UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
+        auto const all_comp_count_in_base = this->all_component_count();
+        Idx const n_scenarios = update_data.batch_size();
+
         auto check_ids_na = [](auto const& all_spans) {
             std::vector<std::vector<bool>> ids_na{};
             for (const auto& span : all_spans) {
@@ -785,21 +782,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto process_buffer_span = [check_ids_na]<typename CT>(auto const& all_spans, UpdateCompProperties& result) {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
-            result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
-            result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
-                return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
-            });
-            result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
-                return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
-                       std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
-            });
-            result.uniform =
-                std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
-                    return static_cast<Idx>(std::size(span)) == n_elements;
+            if (!result.is_columnar) {
+                std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
+                result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
+                result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
+                    return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
                 });
-            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check the
-            // ids
+                result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
+                    return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
+                           std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
+                });
+                result.uniform =
+                    std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
+                        return static_cast<Idx>(std::size(span)) == n_elements;
+                    });
+            }
+            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
+            // the ids
             auto const first_span = all_spans[0];
             // check the subsequent scenarios
             // only return true if all scenarios match the ids of the first batch
@@ -811,21 +810,72 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 });
         };
 
-        auto const check_each_component = [&update_data, &process_buffer_span]<typename CT>() -> UpdateCompProperties {
+        auto const check_each_component = [&update_data, &process_buffer_span, &all_comp_count_in_base,
+                                           &n_scenarios]<typename CT>() -> UpdateCompProperties {
             // get span of all the update data
             auto const comp_index = update_data.find_component(CT::name, false);
             UpdateCompProperties result;
             result.name = CT::name;
             result.is_columnar = update_data.is_columnar(result.name);
-            if (comp_index >= 0) {
-                result.elements_ps_in_update = update_data.get_component_info(comp_index).elements_per_scenario;
+            if (auto it = std::ranges::find_if(
+                    all_comp_count_in_base,
+                    [&result](const ComponentCountInBase& pair) { return pair.first == result.name; });
+                it != all_comp_count_in_base.end()) {
+                result.elements_in_base = it->second;
             }
-            if (result.is_columnar) {
+            if (result.is_columnar && comp_index != invalid_index) {
+                auto const& comp_buffer = update_data.get_buffer(comp_index);
+                auto const& comp_info = update_data.get_component_info(comp_index);
+                auto const id_idx = comp_buffer.find_attribute("id");
+
+                result.has_id = id_idx != invalid_index;
+                result.uniform = (comp_info.elements_per_scenario == result.elements_in_base) &&
+                                 (comp_info.elements_per_scenario != invalid_index); // throw exception if false
+
+                if (result.has_id) {
+                    auto const* id_buffer = comp_buffer.template get_col_data_at_index<ID>(id_idx);
+
+                    result.ids_all_na =
+                        std::all_of(id_buffer, id_buffer + comp_info.total_elements, [](ID id) { return is_nan(id); });
+                    result.ids_part_na = std::any_of(id_buffer, id_buffer + comp_info.total_elements,
+                                                     [](ID id) { return is_nan(id); }) &&
+                                         !result.ids_all_na;
+                    // loop through all ids across n_scenarios to check if they match, each should have
+                    // comp.total_elements many ids All subsequent ids should equal the first one
+                    result.ids_match = std::all_of(id_buffer, id_buffer + comp_info.total_elements,
+                                                   [id_buffer, total_elements = comp_info.total_elements](ID id) {
+                                                       return std::all_of(id_buffer, id_buffer + total_elements,
+                                                                          [id](ID id2) { return id == id2; });
+                                                   });
+                    if (comp_info.elements_per_scenario != invalid_index) {
+                        result.elements_ps_in_update = comp_info.elements_per_scenario;
+                    }
+                } else {                        // no id,
+                    result.ids_all_na = true;   // no id, all NA
+                    result.ids_part_na = false; // no id, no part NA
+                    result.ids_match = true;    // no id, all match
+
+                    // if (comp_info.elements_per_scenario == -1) { // sparse
+                    //     result.uniform = false;                  // throw exception
+                    // }
+                    // if (comp_info.elements_per_scenario != result.elements_in_base) {
+                    //     throw 1; // exception
+                    // }
+
+                    // result.uniform =
+                    //     comp_info.elements_per_scenario == result.elements_in_base; // throw exception if false
+                }
+
+                // for ids_match
                 process_buffer_span.template operator()<CT>(
                     update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
             } else {
                 process_buffer_span.template operator()<CT>(
                     update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
+            }
+            if (comp_index >= 0 && result.uniform) {
+                result.elements_ps_in_update =
+                    update_data.get_component_info(comp_index).elements_per_scenario; // -1 for sparse
             }
             return result;
         };
@@ -834,21 +884,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return run_functor_with_all_types_return_vector(check_each_component);
     }
 
-    static bool is_update_independent(ConstDataset const& update_data) {
+    bool is_update_independent(ConstDataset const& update_data) {
         // If the batch size is (0 or) 1, then the update data for this component is 'independent'
         if (update_data.batch_size() <= 1) {
             return true;
         }
         auto const all_comp_update_independence = check_components_independence(update_data);
         return std::ranges::all_of(all_comp_update_independence,
-                                   [](auto const& comp) { return !comp.has_id || comp.ids_match; });
+                                   [](auto const& comp) { return comp.is_independent(); });
     }
 
     void validate_update_data_independence(UpdateCompProperties const& comp) const {
         if (!comp.has_id && comp.ids_all_na) {
             return; // empty dataset is still supported
         }
-        if (comp.elements_ps_in_base < comp.elements_ps_in_update) {
+        if (comp.elements_in_base < comp.elements_ps_in_update) {
             throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
                                "!");
         }
@@ -864,7 +914,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                    " is not uniform!");
             }
         }
-        if (comp.elements_ps_in_base != comp.elements_ps_in_update) {
+        if (comp.elements_in_base != comp.elements_ps_in_update) {
             if (comp.is_columnar && !comp.has_id) {
                 throw DatasetError("Columnar input data for component " + comp.name +
                                    " has different number of elements per scenario in update and input data!");
