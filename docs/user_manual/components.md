@@ -240,7 +240,7 @@ Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\te
 | `x1`    | `double`  | ohm              | positive-sequence reactance   | &#10004;               | &#10060; |                 |
 | `g1`    | `double`  | siemens          | positive-sequence conductance | &#10004;               | &#10060; |                 |
 | `b1`    | `double`  | siemens          | positive-sequence susceptance | &#10004;               | &#10060; |                 |
-| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; |                 |
+| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; | `> 0`           |
 | `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |                 |
 | `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; | `>= 0`          |
 
