@@ -173,15 +173,15 @@ def test_validate_ids():
     assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
 
     source_update_part_nan_id = initialize_array("update", "source", 3)
-    source_update_part_nan_id["id"] = [1, -2147483648, 4]
+    source_update_part_nan_id["id"] = [1, np.iinfo(np.int32).min, 4]
     source_update_part_nan_id["u_ref"] = [1.0, 2.0, 3.0]
 
-    update_data_col_less_no_id = compatibility_convert_row_columnar_dataset(
-        data={"source": source_update_less_no_id, "sym_load": sym_load_update},
+    update_data_col_part_nan_id = compatibility_convert_row_columnar_dataset(
+        data={"source": source_update_part_nan_id, "sym_load": sym_load_update},
         data_filter=ComponentAttributeFilterOptions.relevant,
         dataset_type=DatasetType.update,
     )
-    invalid_ids = validate_ids(update_data_col_less_no_id, input_data)
+    invalid_ids = validate_ids(update_data_col_part_nan_id, input_data)
     assert len(invalid_ids) == 2
     assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
 
