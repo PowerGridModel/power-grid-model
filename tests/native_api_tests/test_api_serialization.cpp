@@ -59,7 +59,7 @@ TEST_CASE("API Serialization and Deserialization") {
         dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
         SUBCASE("JSON") {
-            Serializer const json_serializer{dataset, 0};
+            Serializer json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
                 std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
@@ -77,7 +77,7 @@ TEST_CASE("API Serialization and Deserialization") {
         }
 
         SUBCASE("MessagePack") {
-            Serializer const msgpack_serializer{dataset, 1};
+            Serializer msgpack_serializer{dataset, 1};
 
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
