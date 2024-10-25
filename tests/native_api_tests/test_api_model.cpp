@@ -56,7 +56,7 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
 TEST_CASE("API Model") {
     using namespace std::string_literals;
 
-    Options const options{};
+    Options options{};
 
     // input data
     DatasetConst input_dataset{"input", 0, 1};
@@ -232,7 +232,7 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Copy model") {
-        auto const model_copy = Model{model};
+        auto model_copy = Model{model};
         model_copy.calculate(options, single_output_dataset);
         node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
         node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
