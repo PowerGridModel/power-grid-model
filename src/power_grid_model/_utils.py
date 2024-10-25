@@ -782,4 +782,4 @@ def get_comp_batch_size(comp_data: dict) -> int:
         The length of the first value in the dictionary if the data is columnar, otherwise the length
         of the dictionary itself.
     """
-    return len(next(iter(comp_data.items()))[1]) if is_columnar(comp_data) else len(comp_data)
+    return len(next(iter(comp_data.values()))) if is_columnar(comp_data) else len(comp_data)
