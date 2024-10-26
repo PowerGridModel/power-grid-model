@@ -171,7 +171,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <class StructType>
     using DataStruct = std::conditional_t<is_data_mutable_v<dataset_type>, StructType, StructType const>;
 
-    // for columnar buffers, Data* data is empty and attributes is filled
+    // for columnar buffers, Data* data is empty and attributes.data is filled
     // for uniform buffers, indptr is empty
     struct Buffer {
         using Data = Dataset::Data;
@@ -179,6 +179,26 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
+        Idx find_attribute(std::string_view attr_name) const {
+            if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
+                return invalid_index;
+            }
+
+            auto const found = std::ranges::find_if(
+                attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });
+
+            if (found == attributes.cend()) {
+                return invalid_index;
+            }
+            return std::distance(attributes.cbegin(), found);
+        }
+        template <typename T> T* get_col_data_at_index(Idx index) const {
+            assert(data == nullptr);
+            if (data != nullptr) {
+                throw std::runtime_error("Buffer access by index not supported for row based data!\n");
+            }
+            return const_cast<T*>(reinterpret_cast<T const*>(attributes[index].data));
+        }
     };
 
     template <class StructType>
