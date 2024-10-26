@@ -155,7 +155,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool ids_match{false};        // if the ids match
         Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
         Idx elements_in_base{0};      // count of elements for this component per scenario in input
-        bool is_independent() const { return !has_id || ids_match; }
+        inline bool qualify_for_optional_id() const { return !has_id && ids_match && ids_all_na && !ids_part_na; }
+        bool is_independent() const {
+            bool const provided_ids_valid = has_id && ids_match && !ids_all_na && !ids_part_na;
+            return qualify_for_optional_id() || provided_ids_valid;
+        }
+        Idx get_n_elements() const {
+            return qualify_for_optional_id() ? (uniform ? elements_ps_in_update : elements_in_base) : invalid_index;
+        }
     };
     using UpdateCompIndependence = std::vector<UpdateCompProperties>;
     using ComponentCountInBase = std::pair<std::string, Idx>;
@@ -403,7 +410,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx, &process_buffer_span,
                                        &comp_indenpendence]<typename CT>() -> std::vector<Idx2D> {
             // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-            auto const get_n_comp_elements = [&comp_indenpendence]() {
+            Idx const n_comp_elements = [&comp_indenpendence]() {
                 if (!comp_indenpendence.empty()) {
                     auto const comp_idx = std::ranges::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
                                                                [](auto const& comp) { return comp.name == CT::name; });
@@ -412,16 +419,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     }
                     auto const& comp = *comp_idx;
                     if (comp.is_columnar && (!comp.has_id || comp.ids_all_na)) {
-                        return comp.elements_ps_in_update;
+                        return comp.get_n_elements();
                     }
                     if (!comp.is_columnar && (!comp.has_id && comp.ids_all_na)) {
-                        return comp.elements_ps_in_update;
+                        return comp.get_n_elements();
                     }
                 }
                 return na_Idx;
-            };
-
-            Idx n_comp_elements = get_n_comp_elements();
+            }();
 
             auto const get_sequence = [&state, &n_comp_elements](auto const& it_begin, auto const& it_end) {
                 return main_core::get_component_sequence<CT>(state, it_begin, it_end, n_comp_elements);
@@ -782,21 +787,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto process_buffer_span = [check_ids_na]<typename CT>(auto const& all_spans, UpdateCompProperties& result) {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            if (!result.is_columnar) {
-                std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
-                result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
-                result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
-                    return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
+            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
+            result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
+            result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
+                return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
+            });
+            result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
+                return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
+                       std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
+            });
+            result.uniform =
+                std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
+                    return static_cast<Idx>(std::size(span)) == n_elements;
                 });
-                result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
-                    return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
-                           std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
-                });
-                result.uniform =
-                    std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
-                        return static_cast<Idx>(std::size(span)) == n_elements;
-                    });
-            }
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
             // the ids
             auto const first_span = all_spans[0];
@@ -830,7 +833,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
                 result.has_id = id_idx != invalid_index;
                 result.uniform = (comp_info.elements_per_scenario == result.elements_in_base) &&
-                                 (comp_info.elements_per_scenario != invalid_index); // throw exception if false
+                                 (comp_info.elements_per_scenario != invalid_index);
 
                 if (result.has_id) {
                     auto const* id_buffer = comp_buffer.template get_col_data_at_index<ID>(id_idx);
@@ -840,13 +843,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     result.ids_part_na = std::any_of(id_buffer, id_buffer + comp_info.total_elements,
                                                      [](ID id) { return is_nan(id); }) &&
                                          !result.ids_all_na;
-                    // loop through all ids across n_scenarios to check if they match, each should have
-                    // comp.total_elements many ids All subsequent ids should equal the first one
-                    result.ids_match = std::all_of(id_buffer, id_buffer + comp_info.total_elements,
-                                                   [id_buffer, total_elements = comp_info.total_elements](ID id) {
-                                                       return std::all_of(id_buffer, id_buffer + total_elements,
-                                                                          [id](ID id2) { return id == id2; });
-                                                   });
+                    result.ids_match = [id_buffer, elements_ps = result.elements_in_base, n_scenarios]() {
+                        bool all_match = true;
+                        for (Idx i = 0; i < elements_ps; ++i) {
+                            for (Idx j = 0; j < n_scenarios; ++j) {
+                                if (id_buffer[i] != id_buffer[i + elements_ps * j]) {
+                                    all_match = false;
+                                    break;
+                                }
+                            }
+                            if (!all_match) {
+                                break;
+                            }
+                        }
+                        return all_match;
+                    }();
                     if (comp_info.elements_per_scenario != invalid_index) {
                         result.elements_ps_in_update = comp_info.elements_per_scenario;
                     }
@@ -854,21 +865,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     result.ids_all_na = true;   // no id, all NA
                     result.ids_part_na = false; // no id, no part NA
                     result.ids_match = true;    // no id, all match
-
-                    // if (comp_info.elements_per_scenario == -1) { // sparse
-                    //     result.uniform = false;                  // throw exception
-                    // }
-                    // if (comp_info.elements_per_scenario != result.elements_in_base) {
-                    //     throw 1; // exception
-                    // }
-
-                    // result.uniform =
-                    //     comp_info.elements_per_scenario == result.elements_in_base; // throw exception if false
                 }
-
-                // for ids_match
-                process_buffer_span.template operator()<CT>(
-                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
             } else {
                 process_buffer_span.template operator()<CT>(
                     update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);

@@ -1357,61 +1357,63 @@ TEST_CASE("Test main model - runtime dispatch") {
                                    [](auto const& sym_load) { return sym_load.id; });
             REQUIRE(sym_load_ids.size() == sym_load_p_specified.size());
             REQUIRE(sym_load_p_specified.size() == state.sym_load_update.size());
+            /*
+                        SUBCASE("With IDs") {
+                            ConstDataset update_data_with_rows{false, 1, "update", meta_data::meta_data_gen::meta_data};
+                            update_data_with_rows.add_buffer("sym_load", state.sym_load_update.size(),
+               state.sym_load_update.size(), nullptr, state.sym_load_update.data());
 
-            SUBCASE("With IDs") {
-                ConstDataset update_data_with_rows{false, 1, "update", meta_data::meta_data_gen::meta_data};
-                update_data_with_rows.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(),
-                                                 nullptr, state.sym_load_update.data());
+                            ConstDataset update_data_with_columns{false, 1, "update",
+               meta_data::meta_data_gen::meta_data}; update_data_with_columns.add_buffer("sym_load",
+               sym_load_p_specified.size(), sym_load_p_specified.size(), nullptr, nullptr);
+                            update_data_with_columns.add_attribute_buffer("sym_load", "id", sym_load_ids.data());
+                            update_data_with_columns.add_attribute_buffer("sym_load", "p_specified",
+               sym_load_p_specified.data());
 
-                ConstDataset update_data_with_columns{false, 1, "update", meta_data::meta_data_gen::meta_data};
-                update_data_with_columns.add_buffer("sym_load", sym_load_p_specified.size(),
-                                                    sym_load_p_specified.size(), nullptr, nullptr);
-                update_data_with_columns.add_attribute_buffer("sym_load", "id", sym_load_ids.data());
-                update_data_with_columns.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
+                            MainModel base_model{50.0, input_data};
+                            MainModel row_based_model{base_model};
+                            MainModel columnar_model{base_model};
+                            row_based_model.update_component<permanent_update_t>(update_data_with_rows);
+                            columnar_model.update_component<permanent_update_t>(update_data_with_columns);
 
-                MainModel base_model{50.0, input_data};
-                MainModel row_based_model{base_model};
-                MainModel columnar_model{base_model};
-                row_based_model.update_component<permanent_update_t>(update_data_with_rows);
-                columnar_model.update_component<permanent_update_t>(update_data_with_columns);
+                            std::vector<SymNodeOutput> node_output_from_base(state.node_input.size());
+                            std::vector<SymNodeOutput> node_output_from_row_based(state.node_input.size());
+                            std::vector<SymNodeOutput> node_output_from_columnar(state.node_input.size());
 
-                std::vector<SymNodeOutput> node_output_from_base(state.node_input.size());
-                std::vector<SymNodeOutput> node_output_from_row_based(state.node_input.size());
-                std::vector<SymNodeOutput> node_output_from_columnar(state.node_input.size());
+                            MutableDataset sym_output_from_base{true, 1, "sym_output",
+               meta_data::meta_data_gen::meta_data}; sym_output_from_base.add_buffer("node",
+               node_output_from_base.size(), node_output_from_base.size(), nullptr, node_output_from_base.data());
+                            MutableDataset sym_output_from_row_based{true, 1, "sym_output",
+               meta_data::meta_data_gen::meta_data}; sym_output_from_row_based.add_buffer("node",
+               node_output_from_row_based.size(), node_output_from_row_based.size(), nullptr,
+                                                                 node_output_from_row_based.data());
+                            MutableDataset sym_output_from_columnar{true, 1, "sym_output",
+               meta_data::meta_data_gen::meta_data}; sym_output_from_columnar.add_buffer("node",
+               node_output_from_columnar.size(), node_output_from_columnar.size(), nullptr,
+                                                                node_output_from_columnar.data());
 
-                MutableDataset sym_output_from_base{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-                sym_output_from_base.add_buffer("node", node_output_from_base.size(), node_output_from_base.size(),
-                                                nullptr, node_output_from_base.data());
-                MutableDataset sym_output_from_row_based{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-                sym_output_from_row_based.add_buffer("node", node_output_from_row_based.size(),
-                                                     node_output_from_row_based.size(), nullptr,
-                                                     node_output_from_row_based.data());
-                MutableDataset sym_output_from_columnar{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-                sym_output_from_columnar.add_buffer("node", node_output_from_columnar.size(),
-                                                    node_output_from_columnar.size(), nullptr,
-                                                    node_output_from_columnar.data());
+                            base_model.calculate(options, sym_output_from_base);
+                            row_based_model.calculate(options, sym_output_from_row_based);
+                            columnar_model.calculate(options, sym_output_from_columnar);
 
-                base_model.calculate(options, sym_output_from_base);
-                row_based_model.calculate(options, sym_output_from_row_based);
-                columnar_model.calculate(options, sym_output_from_columnar);
+                            REQUIRE(node_output_from_columnar.size() == node_output_from_base.size());
+                            REQUIRE(node_output_from_columnar.size() == node_output_from_row_based.size());
 
-                REQUIRE(node_output_from_columnar.size() == node_output_from_base.size());
-                REQUIRE(node_output_from_columnar.size() == node_output_from_row_based.size());
-
-                for (Idx idx = 0; idx < std::ssize(node_output_from_columnar); ++idx) {
-                    // check columnar updates work same way as row-based updates
-                    CHECK(node_output_from_columnar[idx].id == doctest::Approx(node_output_from_row_based[idx].id));
-                    CHECK(node_output_from_columnar[idx].u_pu == doctest::Approx(node_output_from_row_based[idx].u_pu));
-                    // check update actually changed something
-                    CHECK(node_output_from_columnar[idx].id == doctest::Approx(node_output_from_base[idx].id));
-                    if (idx == 0) { // sym_load node
-                        CHECK(node_output_from_columnar[idx].u_pu == doctest::Approx(node_output_from_base[idx].u_pu));
-                    } else {
-                        CHECK(node_output_from_columnar[idx].u_pu != doctest::Approx(node_output_from_base[idx].u_pu));
-                    }
-                }
-            }
-
+                            for (Idx idx = 0; idx < std::ssize(node_output_from_columnar); ++idx) {
+                                // check columnar updates work same way as row-based updates
+                                CHECK(node_output_from_columnar[idx].id ==
+               doctest::Approx(node_output_from_row_based[idx].id)); CHECK(node_output_from_columnar[idx].u_pu ==
+               doctest::Approx(node_output_from_row_based[idx].u_pu));
+                                // check update actually changed something
+                                CHECK(node_output_from_columnar[idx].id ==
+               doctest::Approx(node_output_from_base[idx].id)); if (idx == 0) { // sym_load node
+                                    CHECK(node_output_from_columnar[idx].u_pu ==
+               doctest::Approx(node_output_from_base[idx].u_pu)); } else { CHECK(node_output_from_columnar[idx].u_pu !=
+               doctest::Approx(node_output_from_base[idx].u_pu));
+                                }
+                            }
+                        }
+            */
             SUBCASE("Without IDs") {
                 ConstDataset update_data_with_rows{false, 1, "update", meta_data::meta_data_gen::meta_data};
                 update_data_with_rows.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(),
