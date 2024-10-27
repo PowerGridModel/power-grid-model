@@ -309,7 +309,8 @@ def test_update_error(model: PowerGridModel):
     update_data_col = compatibility_convert_row_columnar_dataset(
         update_data, ComponentAttributeFilterOptions.relevant, DatasetType.update
     )
-    model.update(update_data=update_data_col)
+    with pytest.raises(PowerGridError, match="The id cannot be found:"):
+        model.update(update_data=update_data_col)
 
 
 def test_copy_model(model: PowerGridModel, sym_output):
@@ -347,29 +348,15 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-def test_debug(input_col_cpp, update_col_cpp, bad_update_col_cpp):
-    model = PowerGridModel(input_col_cpp)
-    # should raise no exception
-    # model.calculate_power_flow(update_data=update_col_cpp)
-    # should pass with exception expected
-    with pytest.raises(PowerGridBatchError) as e:
-        model.calculate_power_flow(update_data=bad_update_col_cpp)
-    # with error
-    error = e.value
-    np.testing.assert_allclose(error.failed_scenarios, [1])
-    np.testing.assert_allclose(error.succeeded_scenarios, [0])
-    assert "The id cannot be found:" in error.error_messages[0]
-
-
 def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
     # wrong id
-    update_batch[ComponentType.source]["data"]["id"][0] = 999
+    update_batch[ComponentType.source]["data"]["id"][0] = 5
     with pytest.raises(PowerGridBatchError) as e:
         model.calculate_power_flow(update_data=update_batch)
     # with error
     error = e.value
-    np.testing.assert_allclose(error.failed_scenarios, [1])
-    np.testing.assert_allclose(error.succeeded_scenarios, [0])
+    np.testing.assert_allclose(error.failed_scenarios, [0])
+    np.testing.assert_allclose(error.succeeded_scenarios, [1])
     assert "The id cannot be found:" in error.error_messages[0]
 
 

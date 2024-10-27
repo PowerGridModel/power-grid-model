@@ -410,6 +410,7 @@ TEST_CASE("API Model") {
             }
         }
     }
+
     SUBCASE("Model update error optional id") {
         std::vector<ID> const node_id{0};
         std::vector<double> const node_u_rated{100.0};
