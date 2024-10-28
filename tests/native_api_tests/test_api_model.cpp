@@ -489,7 +489,7 @@ TEST_CASE("API Model") {
         std::vector<Idx> sym_load_indptr{0, 1, 2};
         std::vector<ID> const update_sym_load_id{2, 5};
         std::vector<double> const update_sym_load_q_specified{100.0, 300.0};
-        Buffer update_sym_load_buffer{PGM_def_update_sym_load, 1};
+        Buffer update_sym_load_buffer{PGM_def_update_sym_load, 2};
         update_sym_load_buffer.set_nan();
         update_sym_load_buffer.set_value(PGM_def_update_sym_load_id, update_sym_load_id.data(), -1);
         update_sym_load_buffer.set_value(PGM_def_update_sym_load_q_specified, update_sym_load_q_specified.data(), -1);

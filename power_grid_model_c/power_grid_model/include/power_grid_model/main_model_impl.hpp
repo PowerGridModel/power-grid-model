@@ -787,7 +787,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto process_buffer_span = [check_ids_na]<typename CT>(auto const& all_spans, UpdateCompProperties& result) {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans); // sym_load breaks here
+            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
             result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
             result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
                 return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
@@ -796,8 +796,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
                        std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
             });
-            result.uniform =
-                std::ranges::all_of(all_spans, [n_elements = result.elements_in_base](auto const& span) {
+            result.uniform = std::ranges::all_of(
+                all_spans, [n_elements = static_cast<Idx>(all_spans.front().size())](auto const& span) {
                     return static_cast<Idx>(std::size(span)) == n_elements;
                 });
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
@@ -832,8 +832,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const id_idx = comp_buffer.find_attribute("id");
 
                 result.has_id = id_idx != invalid_index;
-                result.uniform = (comp_info.elements_per_scenario == result.elements_in_base) &&
-                                 (comp_info.elements_per_scenario != invalid_index);
+                result.uniform = comp_info.elements_per_scenario == result.elements_in_base;
 
                 if (result.has_id) {
                     auto const* id_buffer = comp_buffer.template get_col_data_at_index<ID>(id_idx);
@@ -843,10 +842,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     result.ids_part_na = std::any_of(id_buffer, id_buffer + comp_info.total_elements,
                                                      [](ID id) { return is_nan(id); }) &&
                                          !result.ids_all_na;
-                    result.ids_match = [id_buffer, elements_ps = result.elements_in_base, n_scenarios]() {
+                    assert(result.elements_in_base > 0);
+                    auto const n_scenario_comp_in_update =
+                        result.elements_in_base * n_scenarios > comp_info.total_elements
+                            ? comp_info.total_elements / result.elements_in_base
+                            : n_scenarios;
+                    result.ids_match = [id_buffer, elements_ps = result.elements_in_base, n_scenario_comp_in_update]() {
                         bool all_match = true;
                         for (Idx i = 0; i < elements_ps; ++i) {
-                            for (Idx j = 0; j < n_scenarios; ++j) {
+                            for (Idx j = 0; j < n_scenario_comp_in_update; ++j) {
                                 if (id_buffer[i] != id_buffer[i + elements_ps * j]) {
                                     all_match = false;
                                     break;

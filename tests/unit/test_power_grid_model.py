@@ -350,13 +350,13 @@ def test_single_calculation_error(model: PowerGridModel):
 
 def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
     # wrong id
-    update_batch[ComponentType.source]["data"]["id"][0] = 5
+    update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
+    # with error
     with pytest.raises(PowerGridBatchError) as e:
         model.calculate_power_flow(update_data=update_batch)
-    # with error
     error = e.value
-    np.testing.assert_allclose(error.failed_scenarios, [0])
-    np.testing.assert_allclose(error.succeeded_scenarios, [1])
+    np.testing.assert_allclose(error.failed_scenarios, [1])
+    np.testing.assert_allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
 
 
