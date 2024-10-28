@@ -385,71 +385,71 @@ TEST_CASE("API Model") {
         }
     }
 
-    SUBCASE("Model update error") {
-        std::vector<ID> const node_id{0};
-        std::vector<double> const node_u_rated{100.0};
-        Buffer node_buffer{PGM_def_input_node, 1};
-        node_buffer.set_nan();
-        node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
-        node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
+    SUBCASE("Self contained model update error") {
+        std::vector<ID> const input_node_id{0};
+        std::vector<double> const input_node_u_rated{100.0};
+        Buffer input_node_buffer{PGM_def_input_node, 1};
+        input_node_buffer.set_nan();
+        input_node_buffer.set_value(PGM_def_input_node_id, input_node_id.data(), -1);
+        input_node_buffer.set_value(PGM_def_input_node_u_rated, input_node_u_rated.data(), -1);
 
-        std::vector<ID> const source_id{1};
-        std::vector<ID> const source_node{0};
-        std::vector<int8_t> const source_status{1};
-        std::vector<double> const source_u_ref{1.0};
-        std::vector<double> const source_sk{1000.0};
-        std::vector<double> const source_rx_ratio{0.0};
-        Buffer source_buffer{PGM_def_input_source, 1};
-        source_buffer.set_nan();
-        source_buffer.set_value(PGM_def_input_source_id, source_id.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_node, source_node.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_status, source_status.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_u_ref, source_u_ref.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_sk, source_sk.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_rx_ratio, source_rx_ratio.data(), -1);
+        std::vector<ID> const input_source_id{1};
+        std::vector<ID> const input_source_node{0};
+        std::vector<int8_t> const input_source_status{1};
+        std::vector<double> const input_source_u_ref{1.0};
+        std::vector<double> const input_source_sk{1000.0};
+        std::vector<double> const input_source_rx_ratio{0.0};
+        Buffer input_source_buffer{PGM_def_input_source, 1};
+        input_source_buffer.set_nan();
+        input_source_buffer.set_value(PGM_def_input_source_id, input_source_id.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_node, input_source_node.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_status, input_source_status.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_u_ref, input_source_u_ref.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_sk, input_source_sk.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_rx_ratio, input_source_rx_ratio.data(), -1);
 
-        std::vector<ID> const sym_load_id{2};
-        std::vector<ID> const sym_load_node{0};
-        std::vector<int8_t> const sym_load_status{1};
-        std::vector<int8_t> const sym_load_type{2};
-        std::vector<double> const sym_load_p_specified{0.0};
-        std::vector<double> const sym_load_q_specified{500.0};
-        Buffer sym_load_buffer{PGM_def_input_sym_load, 1};
-        sym_load_buffer.set_nan();
-        sym_load_buffer.set_value(PGM_def_input_sym_load_id, sym_load_id.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_node, sym_load_node.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_status, sym_load_status.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_type, sym_load_type.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_p_specified, sym_load_p_specified.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, sym_load_q_specified.data(), -1);
+        std::vector<ID> const input_sym_load_id{2};
+        std::vector<ID> const input_sym_load_node{0};
+        std::vector<int8_t> const input_sym_load_status{1};
+        std::vector<int8_t> const input_sym_load_type{2};
+        std::vector<double> const input_sym_load_p_specified{0.0};
+        std::vector<double> const input_sym_load_q_specified{500.0};
+        Buffer input_sym_load_buffer{PGM_def_input_sym_load, 1};
+        input_sym_load_buffer.set_nan();
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_id, input_sym_load_id.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_node, input_sym_load_node.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_status, input_sym_load_status.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_type, input_sym_load_type.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_p_specified, input_sym_load_p_specified.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, input_sym_load_q_specified.data(), -1);
 
         // input dataset - row
         DatasetConst input_dataset_row{"input", 0, 1};
-        input_dataset_row.add_buffer("node", 1, 1, nullptr, node_buffer);
-        input_dataset_row.add_buffer("source", 1, 1, nullptr, source_buffer);
-        input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, sym_load_buffer);
+        input_dataset_row.add_buffer("node", 1, 1, nullptr, input_node_buffer);
+        input_dataset_row.add_buffer("source", 1, 1, nullptr, input_source_buffer);
+        input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, input_sym_load_buffer);
 
         // input dataset - col
         DatasetConst input_dataset_col{"input", 0, 1};
         input_dataset_col.add_buffer("node", 1, 1, nullptr, nullptr);
-        input_dataset_col.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset_col.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+        input_dataset_col.add_attribute_buffer("node", "id", input_node_id.data());
+        input_dataset_col.add_attribute_buffer("node", "u_rated", input_node_u_rated.data());
 
         input_dataset_col.add_buffer("source", 1, 1, nullptr, nullptr);
-        input_dataset_col.add_attribute_buffer("source", "id", source_id.data());
-        input_dataset_col.add_attribute_buffer("source", "node", source_node.data());
-        input_dataset_col.add_attribute_buffer("source", "status", source_status.data());
-        input_dataset_col.add_attribute_buffer("source", "u_ref", source_u_ref.data());
-        input_dataset_col.add_attribute_buffer("source", "sk", source_sk.data());
-        input_dataset_col.add_attribute_buffer("source", "rx_ratio", source_rx_ratio.data());
+        input_dataset_col.add_attribute_buffer("source", "id", input_source_id.data());
+        input_dataset_col.add_attribute_buffer("source", "node", input_source_node.data());
+        input_dataset_col.add_attribute_buffer("source", "status", input_source_status.data());
+        input_dataset_col.add_attribute_buffer("source", "u_ref", input_source_u_ref.data());
+        input_dataset_col.add_attribute_buffer("source", "sk", input_source_sk.data());
+        input_dataset_col.add_attribute_buffer("source", "rx_ratio", input_source_rx_ratio.data());
 
         input_dataset_col.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-        input_dataset_col.add_attribute_buffer("sym_load", "id", sym_load_id.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "node", sym_load_node.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "status", sym_load_status.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "type", sym_load_type.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "id", input_sym_load_id.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "node", input_sym_load_node.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "status", input_sym_load_status.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "type", input_sym_load_type.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "p_specified", input_sym_load_p_specified.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "q_specified", input_sym_load_q_specified.data());
 
         // update dataset
         std::vector<Idx> source_indptr{0, 1, 1};
@@ -485,28 +485,28 @@ TEST_CASE("API Model") {
         update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // output data
-        Buffer node_batch_output{PGM_def_sym_output_node, 2};
-        node_batch_output.set_nan();
-        DatasetMutable batch_output_dataset{"sym_output", 1, 2};
-        batch_output_dataset.add_buffer("node", 1, 2, nullptr, node_batch_output);
+        Buffer output_node_batch{PGM_def_sym_output_node, 2};
+        output_node_batch.set_nan();
+        DatasetMutable output_batch_dataset{"sym_output", 1, 2};
+        output_batch_dataset.add_buffer("node", 1, 2, nullptr, output_node_batch);
 
         // options
-        Options const options{};
+        Options const opt{};
 
         SUBCASE("Row-based input dataset") {
-            Model model{50.0, input_dataset_row};
+            Model row_model{50.0, input_dataset_row};
 
             SUBCASE("Row-based update dataset") {
-                CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row),
+                CHECK_THROWS_AS(row_model.calculate(opt, output_batch_dataset, update_dataset_row),
                                 PowerGridBatchError);
             }
         }
 
         SUBCASE("Columnar input dataset") {
-            Model model{50.0, input_dataset_col};
+            Model col_model{50.0, input_dataset_col};
 
             SUBCASE("Row-based update dataset") {
-                CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row),
+                CHECK_THROWS_AS(col_model.calculate(opt, output_batch_dataset, update_dataset_row),
                                 PowerGridBatchError);
             }
         }
