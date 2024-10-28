@@ -787,7 +787,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto process_buffer_span = [check_ids_na]<typename CT>(auto const& all_spans, UpdateCompProperties& result) {
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
-            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
+            std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans); // sym_load breaks here
             result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
             result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
                 return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
@@ -797,7 +797,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                        std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
             });
             result.uniform =
-                std::ranges::all_of(all_spans, [n_elements = result.elements_ps_in_update](auto const& span) {
+                std::ranges::all_of(all_spans, [n_elements = result.elements_in_base](auto const& span) {
                     return static_cast<Idx>(std::size(span)) == n_elements;
                 });
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
