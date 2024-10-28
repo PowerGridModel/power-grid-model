@@ -111,7 +111,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
 
-#ifdef _DEBUG
+#ifndef NDEBUG
     // get id by idx
     ID get_id_by_idx(Idx2D idx_2d) const {
         for (auto const& [key, value] : map_) {
@@ -121,7 +121,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         throw Idx2DNotFound{idx_2d};
     }
-#endif // _DEBUG
+#endif // NDEBUG
 
     // get idx by id
     Idx2D get_idx_by_id(ID id) const {
