@@ -122,6 +122,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         throw Idx2DNotFound{idx_2d};
     }
 #endif // _DEBUG
+
     // get idx by id
     Idx2D get_idx_by_id(ID id) const {
         auto const found = map_.find(id);

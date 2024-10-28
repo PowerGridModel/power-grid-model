@@ -614,10 +614,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         MainModelImpl const& base_model = *this;
 
         // cache component update order if possible
-        bool const is_independent =
-            std::ranges::all_of(is_update_independent(update_data), [](auto const& result) {
-                return result.second; // Check if all components are independent
-            });
+        bool const is_independent = std::ranges::all_of(is_update_independent(update_data), [](auto const& result) {
+            return result.second; // Check if all components are independent
+        });
         if (is_independent) {
             all_scenarios_sequence = get_sequence_idx_map(update_data);
         }
