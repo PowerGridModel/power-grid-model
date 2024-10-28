@@ -79,7 +79,7 @@ We define the following concepts in the data hierarchy:
 
 * Dataset: a collection of data buffers for a given purpose. 
   At this moment, we have four dataset types: `input`, `update`, `sym_output`, `asym_output`.
-* Component: the representation of attributes for the same component in our [data model](../user_manual/components.md), e.g., `node`.
+* Component: a data buffer with the representation of all attributes of a physical grid component in our [data model](../user_manual/components.md), e.g., `node`.
 * Attribute: a property of given component. For example, `u_rated` attribute of `node` is the rated voltage of the node.
 
 Additionally, at this time, we distinguish two buffer types: [component buffers](#component-buffers) and [attribute buffers](#attribute-buffers).
@@ -183,7 +183,7 @@ A combination of attribute buffers with the same amount of elements has the powe
 The type (implying the size) of each attribute can be found using the `PGM_meta_attribute_ctype`.
 
 Since all attributes consist of primitive types, operations are straightforward.
-We therefore do not provide explicit interface functionality.
+We therefore do not provide explicit interface functionality to create an attribute buffer. Instead, you should use `PGM_dataset_const_add_buffer` or `PGM_dataset_mutable_add_buffer` with empty data (`NULL`) to set a component buffer for data in columnar-format, and use the functions `PGM_dataset_const_add_attribute_buffer` and `PGM_dataset_mutable_add_attribute_buffer` to add the attribute buffers directly to a dataset.
 
 ## Dataset views
 
