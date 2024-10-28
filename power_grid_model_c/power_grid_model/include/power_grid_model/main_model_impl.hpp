@@ -400,7 +400,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // get sequence idx map of a certain batch scenario
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
-                                     UpdateCompIndependence comp_indenpendence = {}) const {
+                                     UpdateCompIndependence comp_independence = {}) const {
         auto const process_buffer_span = [](auto const& buffer_span, auto const& get_sequence) {
             auto const it_begin = buffer_span.begin();
             auto const it_end = buffer_span.end();
@@ -408,13 +408,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         auto const get_seq_idx_func = [&state = this->state_, &update_data, scenario_idx, &process_buffer_span,
-                                       &comp_indenpendence]<typename CT>() -> std::vector<Idx2D> {
+                                       &comp_independence]<typename CT>() -> std::vector<Idx2D> {
             // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-            Idx const n_comp_elements = [&comp_indenpendence]() {
-                if (!comp_indenpendence.empty()) {
-                    auto const comp_idx = std::ranges::find_if(comp_indenpendence.begin(), comp_indenpendence.end(),
+            Idx const n_comp_elements = [&comp_independence]() {
+                if (!comp_independence.empty()) {
+                    auto const comp_idx = std::ranges::find_if(comp_independence.begin(), comp_independence.end(),
                                                                [](auto const& comp) { return comp.name == CT::name; });
-                    if (comp_idx == comp_indenpendence.end()) {
+                    if (comp_idx == comp_independence.end()) {
                         return na_Idx;
                     }
                     auto const& comp = *comp_idx;
