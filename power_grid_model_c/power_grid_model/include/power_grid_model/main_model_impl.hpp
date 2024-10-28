@@ -614,7 +614,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         MainModelImpl const& base_model = *this;
 
         // cache component update order if possible
-        bool const is_independent = MainModelImpl::is_update_independent(update_data);
+        bool const is_independent =
+            std::ranges::all_of(is_update_independent(update_data), [](auto const& result) {
+                return result.second; // Check if all components are independent
+            });
         if (is_independent) {
             all_scenarios_sequence = get_sequence_idx_map(update_data);
         }
@@ -885,16 +888,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return run_functor_with_all_types_return_vector(check_each_component);
     }
 
-    bool is_update_independent(ConstDataset const& update_data) {
+    std::vector<std::pair<std::string, bool>> is_update_independent(ConstDataset const& update_data) {
+        std::vector<std::pair<std::string, bool>> result;
+
         // If the batch size is (0 or) 1, then the update data for this component is 'independent'
         if (update_data.batch_size() <= 1) {
-            return true;
+            result.emplace_back("all component", true);
+            return result;
         }
-        auto const all_comp_update_independence = check_components_independence(update_data);
-        return std::ranges::all_of(all_comp_update_independence,
-                                   [](auto const& comp) { return comp.is_independent(); });
-    }
 
+        auto const all_comp_update_independence = check_components_independence(update_data);
+        for (auto const& comp : all_comp_update_independence) {
+            result.emplace_back(comp.name, comp.is_independent());
+        }
+
+        return result;
+    }
     void validate_update_data_independence(UpdateCompProperties const& comp) const {
         if (!comp.has_id && comp.ids_all_na) {
             return; // empty dataset is still supported

@@ -193,7 +193,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
             return std::distance(attributes.cbegin(), found);
         }
         template <typename T> const T* get_col_data_at_index(Idx index) const {
-            assert(data == nullptr);
             if (data != nullptr) {
                 throw std::runtime_error("Buffer access by index not supported for row based data!\n");
             }
