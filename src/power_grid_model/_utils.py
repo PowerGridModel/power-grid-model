@@ -770,16 +770,17 @@ def get_dataset_type(data: Dataset) -> DatasetType:
     return next(iter(candidates))
 
 
-def get_comp_batch_size(comp_data: dict) -> int:
+def get_comp_size(comp_data: SingleColumnarData | SingleArray) -> int:
     """
-    Get the batch size of the component update data.
+    Get the number of elements in the comp_data of a single dataset.
 
     Args:
-        comp_data: A dictionary representing the component data. The dictionary can be either columnar
-        or row-based.
+        comp_data: Columnar or row based data of a single batch
 
     Returns:
-        The length of the first value in the dictionary if the data is columnar, otherwise the length
-        of the dictionary itself.
+        Number of elements in the component
     """
-    return len(next(iter(comp_data.values()))) if is_columnar(comp_data) else len(comp_data)
+    if not is_columnar(comp_data):
+        return len(comp_data)
+    comp_data = cast(SingleColumnarData, comp_data)
+    return len(next(iter(comp_data.values())))

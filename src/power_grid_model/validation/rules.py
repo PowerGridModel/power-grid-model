@@ -40,7 +40,7 @@ from typing import Any, Callable, Optional, Type, TypeVar
 import numpy as np
 
 from power_grid_model import ComponentType
-from power_grid_model._utils import get_comp_batch_size, is_nan_or_default
+from power_grid_model._utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
@@ -704,7 +704,7 @@ def ids_valid_in_update_data_set(
     # check whether id qualify for optional
     if component_data["id"].size == 0 or np.all(id_field_is_nan):
         # check if the dimension of the component_data is the same as the component_ref_data
-        if get_comp_batch_size(component_data) != get_comp_batch_size(component_ref_data):
+        if get_comp_size(component_data) != get_comp_size(component_ref_data):
             return [InvalidIdError(component=component, field="id", ids=None)]
         return []  # supported optional id
 
