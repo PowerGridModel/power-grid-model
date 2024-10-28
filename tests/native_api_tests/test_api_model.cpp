@@ -475,7 +475,6 @@ TEST_CASE("API Model") {
 
         // update dataset - col
         DatasetConst update_dataset_col{"update", 1, 2};
-        DatasetConst update_dataset_col_no_id{"update", 1, 2};
 
         update_dataset_col.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
@@ -484,12 +483,6 @@ TEST_CASE("API Model") {
         update_dataset_col.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("sym_load", "id", update_sym_load_id.data());
         update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
-
-        update_dataset_col_no_id.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
-        update_dataset_col_no_id.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
-
-        update_dataset_col_no_id.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
-        update_dataset_col_no_id.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // output data
         Buffer node_batch_output{PGM_def_sym_output_node, 2};
