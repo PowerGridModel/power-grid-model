@@ -194,7 +194,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
         template <typename T> const T* get_col_data_at_index(Idx index) const {
             if (data != nullptr) {
-                throw std::runtime_error("Buffer access by index not supported for row based data!\n");
+                throw DatasetError{"Buffer access by index not supported for row based data!\n"};
             }
             return reinterpret_cast<const T*>(attributes[index].data);
         }

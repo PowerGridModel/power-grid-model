@@ -155,13 +155,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool ids_match{false};        // if the ids match
         Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
         Idx elements_in_base{0};      // count of elements for this component per scenario in input
-        inline bool qualify_for_optional_id() const { return !has_id && ids_match && ids_all_na && !ids_part_na; }
-        bool is_independent() const {
-            bool const provided_ids_valid = has_id && ids_match && !ids_all_na && !ids_part_na;
-            return qualify_for_optional_id() || provided_ids_valid;
-        }
+        inline bool no_id_col() const { return is_columnar && (!has_id || ids_all_na); }
+        inline bool no_id_row() const { return !is_columnar && (!has_id && ids_all_na); }
+        inline bool qualify_for_optional_id() const { return ids_match && ids_all_na && !ids_part_na; }
+        inline bool provided_ids_valid() const { return has_id && ids_match && !ids_all_na && !ids_part_na; }
+        bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
         Idx get_n_elements() const {
-            return qualify_for_optional_id() ? (uniform ? elements_ps_in_update : elements_in_base) : invalid_index;
+            auto const prov_n_elements = uniform ? elements_ps_in_update : elements_in_base;
+            return qualify_for_optional_id() ? prov_n_elements : invalid_index;
         }
     };
     using UpdateCompIndependence = std::vector<UpdateCompProperties>;
@@ -412,16 +413,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
             Idx const n_comp_elements = [&comp_independence]() {
                 if (!comp_independence.empty()) {
-                    auto const comp_idx = std::ranges::find_if(comp_independence.begin(), comp_independence.end(),
-                                                               [](auto const& comp) { return comp.name == CT::name; });
+                    auto const comp_idx =
+                        std::ranges::find_if(comp_independence, [](auto const& comp) { return comp.name == CT::name; });
                     if (comp_idx == comp_independence.end()) {
                         return na_Idx;
                     }
                     auto const& comp = *comp_idx;
-                    if (comp.is_columnar && (!comp.has_id || comp.ids_all_na)) {
-                        return comp.get_n_elements();
-                    }
-                    if (!comp.is_columnar && (!comp.has_id && comp.ids_all_na)) {
+                    if (comp.no_id_col() || comp.no_id_row()) {
                         return comp.get_n_elements();
                     }
                 }
@@ -450,8 +448,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                    [](auto const& comp) { return comp.is_independent(); }));
 
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-        std::for_each(update_components_independence.begin(), update_components_independence.end(),
-                      [this](auto& comp) { validate_update_data_independence(comp); });
+        std::ranges::for_each(update_components_independence,
+                              [this](auto& comp) { validate_update_data_independence(comp); });
 
         return get_sequence_idx_map(update_data, 0, update_components_independence);
     }
@@ -875,10 +873,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             } else {
                 process_buffer_span.template operator()<CT>(
                     update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
-            }
-            if (comp_index >= 0 && result.uniform) {
-                result.elements_ps_in_update =
-                    update_data.get_component_info(comp_index).elements_per_scenario; // -1 for sparse
             }
             return result;
         };

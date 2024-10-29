@@ -412,48 +412,48 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Model update error optional id") {
-        std::vector<ID> const node_id{0};
-        std::vector<double> const node_u_rated{100.0};
-        Buffer node_buffer{PGM_def_input_node, 1};
-        node_buffer.set_nan();
-        node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
-        node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
+        std::vector<ID> const input_node_id{0};
+        std::vector<double> const input_node_u_rated{100.0};
+        Buffer input_node_buffer{PGM_def_input_node, 1};
+        input_node_buffer.set_nan();
+        input_node_buffer.set_value(PGM_def_input_node_id, input_node_id.data(), -1);
+        input_node_buffer.set_value(PGM_def_input_node_u_rated, input_node_u_rated.data(), -1);
 
-        std::vector<ID> const source_id{1};
-        std::vector<ID> const source_node{0};
-        std::vector<int8_t> const source_status{1};
-        std::vector<double> const source_u_ref{1.0};
-        std::vector<double> const source_sk{1000.0};
-        std::vector<double> const source_rx_ratio{0.0};
-        Buffer source_buffer{PGM_def_input_source, 1};
-        source_buffer.set_nan();
-        source_buffer.set_value(PGM_def_input_source_id, source_id.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_node, source_node.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_status, source_status.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_u_ref, source_u_ref.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_sk, source_sk.data(), -1);
-        source_buffer.set_value(PGM_def_input_source_rx_ratio, source_rx_ratio.data(), -1);
+        std::vector<ID> const input_source_id{1};
+        std::vector<ID> const input_source_node{0};
+        std::vector<int8_t> const input_source_status{1};
+        std::vector<double> const input_source_u_ref{1.0};
+        std::vector<double> const input_source_sk{1000.0};
+        std::vector<double> const input_source_rx_ratio{0.0};
+        Buffer input_source_buffer{PGM_def_input_source, 1};
+        input_source_buffer.set_nan();
+        input_source_buffer.set_value(PGM_def_input_source_id, input_source_id.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_node, input_source_node.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_status, input_source_status.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_u_ref, input_source_u_ref.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_sk, input_source_sk.data(), -1);
+        input_source_buffer.set_value(PGM_def_input_source_rx_ratio, input_source_rx_ratio.data(), -1);
 
-        std::vector<ID> const sym_load_id{2};
-        std::vector<ID> const sym_load_node{0};
-        std::vector<int8_t> const sym_load_status{1};
-        std::vector<int8_t> const sym_load_type{2};
-        std::vector<double> const sym_load_p_specified{0.0};
-        std::vector<double> const sym_load_q_specified{500.0};
-        Buffer sym_load_buffer{PGM_def_input_sym_load, 1};
-        sym_load_buffer.set_nan();
-        sym_load_buffer.set_value(PGM_def_input_sym_load_id, sym_load_id.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_node, sym_load_node.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_status, sym_load_status.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_type, sym_load_type.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_p_specified, sym_load_p_specified.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, sym_load_q_specified.data(), -1);
+        std::vector<ID> const input_sym_load_id{2};
+        std::vector<ID> const input_sym_load_node{0};
+        std::vector<int8_t> const input_sym_load_status{1};
+        std::vector<int8_t> const input_sym_load_type{2};
+        std::vector<double> const input_sym_load_p_specified{0.0};
+        std::vector<double> const input_sym_load_q_specified{500.0};
+        Buffer input_sym_load_buffer{PGM_def_input_sym_load, 1};
+        input_sym_load_buffer.set_nan();
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_id, input_sym_load_id.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_node, input_sym_load_node.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_status, input_sym_load_status.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_type, input_sym_load_type.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_p_specified, input_sym_load_p_specified.data(), -1);
+        input_sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, input_sym_load_q_specified.data(), -1);
 
         // input dataset - row
         DatasetConst input_dataset_row{"input", 0, 1};
-        input_dataset_row.add_buffer("node", 1, 1, nullptr, node_buffer);
-        input_dataset_row.add_buffer("source", 1, 1, nullptr, source_buffer);
-        input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, sym_load_buffer);
+        input_dataset_row.add_buffer("node", 1, 1, nullptr, input_node_buffer);
+        input_dataset_row.add_buffer("source", 1, 1, nullptr, input_source_buffer);
+        input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, input_sym_load_buffer);
 
         // input dataset - col
         DatasetConst input_dataset_col{"input", 0, 1};
@@ -462,23 +462,23 @@ TEST_CASE("API Model") {
         input_dataset_col.add_attribute_buffer("node", "u_rated", node_u_rated.data());
 
         input_dataset_col.add_buffer("source", 1, 1, nullptr, nullptr);
-        input_dataset_col.add_attribute_buffer("source", "id", source_id.data());
-        input_dataset_col.add_attribute_buffer("source", "node", source_node.data());
-        input_dataset_col.add_attribute_buffer("source", "status", source_status.data());
-        input_dataset_col.add_attribute_buffer("source", "u_ref", source_u_ref.data());
-        input_dataset_col.add_attribute_buffer("source", "sk", source_sk.data());
-        input_dataset_col.add_attribute_buffer("source", "rx_ratio", source_rx_ratio.data());
+        input_dataset_col.add_attribute_buffer("source", "id", input_source_id.data());
+        input_dataset_col.add_attribute_buffer("source", "node", input_source_node.data());
+        input_dataset_col.add_attribute_buffer("source", "status", input_source_status.data());
+        input_dataset_col.add_attribute_buffer("source", "u_ref", input_source_u_ref.data());
+        input_dataset_col.add_attribute_buffer("source", "sk", input_source_sk.data());
+        input_dataset_col.add_attribute_buffer("source", "rx_ratio", input_source_rx_ratio.data());
 
         input_dataset_col.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-        input_dataset_col.add_attribute_buffer("sym_load", "id", sym_load_id.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "node", sym_load_node.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "status", sym_load_status.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "type", sym_load_type.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
-        input_dataset_col.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "id", input_sym_load_id.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "node", input_sym_load_node.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "status", input_sym_load_status.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "type", input_sym_load_type.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "p_specified", input_sym_load_p_specified.data());
+        input_dataset_col.add_attribute_buffer("sym_load", "q_specified", input_sym_load_q_specified.data());
 
         // update dataset
-        std::vector<Idx> source_indptr{0, 1, 1};
+        std::vector<Idx> input_source_indptr{0, 1, 1};
         std::vector<ID> const update_source_id{1};
         std::vector<double> const update_source_u_ref{0.5};
         Buffer update_source_buffer{PGM_def_update_source, 1};
@@ -486,7 +486,7 @@ TEST_CASE("API Model") {
         update_source_buffer.set_value(PGM_def_update_source_id, update_source_id.data(), -1);
         update_source_buffer.set_value(PGM_def_update_source_u_ref, update_source_u_ref.data(), -1);
 
-        std::vector<Idx> sym_load_indptr{0, 1, 2};
+        std::vector<Idx> input_sym_load_indptr{0, 1, 2};
         std::vector<ID> const update_sym_load_id{2, 5};
         std::vector<double> const update_sym_load_q_specified{100.0, 300.0};
         Buffer update_sym_load_buffer{PGM_def_update_sym_load, 2};
@@ -496,25 +496,25 @@ TEST_CASE("API Model") {
 
         // update dataset - row
         DatasetConst update_dataset_row{"update", 1, 2};
-        update_dataset_row.add_buffer("source", -1, 1, source_indptr.data(), update_source_buffer);
-        update_dataset_row.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), update_sym_load_buffer);
+        update_dataset_row.add_buffer("source", -1, 1, input_source_indptr.data(), update_source_buffer);
+        update_dataset_row.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(), update_sym_load_buffer);
 
         // update dataset - col
         DatasetConst update_dataset_col{"update", 1, 2};
         DatasetConst update_dataset_col_no_id{"update", 1, 2};
 
-        update_dataset_col.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
+        update_dataset_col.add_buffer("source", -1, 1, input_source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
         update_dataset_col.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
 
-        update_dataset_col.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
+        update_dataset_col.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("sym_load", "id", update_sym_load_id.data());
         update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
-        update_dataset_col_no_id.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
+        update_dataset_col_no_id.add_buffer("source", -1, 1, input_source_indptr.data(), nullptr);
         update_dataset_col_no_id.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
 
-        update_dataset_col_no_id.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
+        update_dataset_col_no_id.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(), nullptr);
         update_dataset_col_no_id.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // output data
