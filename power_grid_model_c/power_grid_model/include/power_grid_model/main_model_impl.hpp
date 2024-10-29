@@ -155,10 +155,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool ids_match{false};        // if the ids match
         Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
         Idx elements_in_base{0};      // count of elements for this component per scenario in input
-        inline bool no_id_col() const { return is_columnar && (!has_id || ids_all_na); }
-        inline bool no_id_row() const { return !is_columnar && (!has_id && ids_all_na); }
-        inline bool qualify_for_optional_id() const { return ids_match && ids_all_na && !ids_part_na; }
-        inline bool provided_ids_valid() const { return has_id && ids_match && !ids_all_na && !ids_part_na; }
+        bool no_id_col() const { return is_columnar && (!has_id || ids_all_na); }
+        bool no_id_row() const { return !is_columnar && (!has_id && ids_all_na); }
+        bool qualify_for_optional_id() const { return ids_match && ids_all_na && !ids_part_na; }
+        bool provided_ids_valid() const { return has_id && ids_match && !ids_all_na && !ids_part_na; }
         bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
         Idx get_n_elements() const {
             auto const prov_n_elements = uniform ? elements_ps_in_update : elements_in_base;
