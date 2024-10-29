@@ -59,7 +59,7 @@ TEST_CASE("API Serialization and Deserialization") {
         dataset.add_buffer("source", elements_per_scenario[1], total_elements[1], nullptr, source_buffer);
 
         SUBCASE("JSON") {
-            Serializer const json_serializer{dataset, 0};
+            Serializer json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
                 std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
@@ -77,7 +77,7 @@ TEST_CASE("API Serialization and Deserialization") {
         }
 
         SUBCASE("MessagePack") {
-            Serializer const msgpack_serializer{dataset, 1};
+            Serializer msgpack_serializer{dataset, 1};
 
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
@@ -95,6 +95,7 @@ TEST_CASE("API Serialization and Deserialization") {
         SUBCASE("Invalid serialization format") {
             try {
                 Serializer const unknown_serializer{dataset, -1};
+                FAIL("Expected serialization error not thrown.");
             } catch (PowerGridSerializationError const& e) {
                 CHECK(e.error_code() == PGM_serialization_error);
             }
@@ -190,7 +191,7 @@ TEST_CASE("API Serialization and Deserialization") {
             ID node_id_2{0};
             double node_u_rated_2;
             // set buffer
-            Buffer const source_buffer_columnar{PGM_def_input_source, 1};
+            Buffer source_buffer_columnar{PGM_def_input_source, 1};
             dataset.set_buffer("node", nullptr, nullptr);
             dataset.set_attribute_buffer("node", "id", &node_id_2);
             dataset.set_attribute_buffer("node", "u_rated", &node_u_rated_2);

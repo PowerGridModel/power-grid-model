@@ -129,11 +129,16 @@ class PowerGridModel:
         """
         Update the model with changes.
 
+        The model will be in an invalid state if the update fails and should be discarded.
+
         Args:
             update_data: Update data dictionary
 
                 - key: Component type
                 - value: Component data with the correct type :class:`ComponentData` (single scenario or batch)
+
+        Raises:
+            PowerGridError if the update fails. The model is left in an invalid state and should be discarded.
 
         Returns:
             None

@@ -57,6 +57,20 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     line["x0"] = [0, 0, 50]
     line["i_n"] = [-3, 0, 50]
 
+    generic_branch = initialize_array(DatasetType.input, ComponentType.generic_branch, 1)
+    generic_branch["id"] = [6]
+    generic_branch["from_node"] = [1]
+    generic_branch["to_node"] = [2]
+    generic_branch["from_status"] = [1]
+    generic_branch["to_status"] = [1]
+    generic_branch["r1"] = [0.129059]
+    generic_branch["x1"] = [16.385859]
+    generic_branch["g1"] = [8.692e-7]
+    generic_branch["b1"] = [-2.336e-7]
+    generic_branch["k"] = [0.0]
+    generic_branch["theta"] = [0.0]
+    generic_branch["sn"] = [-10.0]
+
     link = initialize_array(DatasetType.input, ComponentType.link, 2)
     link["id"] = [12, 13]
     link["from_node"] = [0, -1]
@@ -256,6 +270,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     data = {
         ComponentType.node: node,
         ComponentType.line: line,
+        ComponentType.generic_branch: generic_branch,
         ComponentType.link: link,
         ComponentType.transformer: transformer,
         ComponentType.three_winding_transformer: three_winding_transformer,
@@ -667,3 +682,9 @@ def test_validate_input_data_asym_calculation(input_data):
 def test_validate_input_data_invalid_structure():
     with pytest.raises(TypeError, match=r"should be a Numpy structured array"):
         validate_input_data({"node": np.array([[1, 10500.0], [2, 10500.0]])}, symmetric=True)
+
+
+def test_generic_branch_input_data(input_data):
+    validation_errors = validate_input_data(input_data, symmetric=True)
+    assert NotGreaterThanError("generic_branch", "k", [6], 0) in validation_errors
+    assert NotGreaterOrEqualError("generic_branch", "sn", [6], 0) in validation_errors

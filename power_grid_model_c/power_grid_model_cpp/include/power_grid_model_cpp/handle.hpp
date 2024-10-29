@@ -98,7 +98,9 @@ class Handle {
     }
 
   private:
-    detail::UniquePtr<RawHandle, &PGM_destroy_handle> handle_{PGM_create_handle()};
+    // For handle the const semantics are not needed.
+    // It is meant to be mutated even in const situations.
+    std::unique_ptr<RawHandle, detail::DeleterFunctor<&PGM_destroy_handle>> handle_{PGM_create_handle()};
 };
 } // namespace power_grid_model_cpp
 

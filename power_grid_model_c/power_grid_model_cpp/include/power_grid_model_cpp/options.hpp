@@ -16,29 +16,30 @@ class Options {
   public:
     Options() : options_{handle_.call_with(PGM_create_options)} {}
 
-    RawOptions* get() const { return options_.get(); }
+    RawOptions* get() { return options_.get(); }
+    RawOptions const* get() const { return options_.get(); }
 
-    void set_calculation_type(Idx type) const { handle_.call_with(PGM_set_calculation_type, get(), type); }
+    void set_calculation_type(Idx type) { handle_.call_with(PGM_set_calculation_type, get(), type); }
 
-    void set_calculation_method(Idx method) const { handle_.call_with(PGM_set_calculation_method, get(), method); }
+    void set_calculation_method(Idx method) { handle_.call_with(PGM_set_calculation_method, get(), method); }
 
-    void set_symmetric(Idx sym) const { handle_.call_with(PGM_set_symmetric, get(), sym); }
+    void set_symmetric(Idx sym) { handle_.call_with(PGM_set_symmetric, get(), sym); }
 
-    void set_err_tol(double err_tol) const { handle_.call_with(PGM_set_err_tol, get(), err_tol); }
+    void set_err_tol(double err_tol) { handle_.call_with(PGM_set_err_tol, get(), err_tol); }
 
-    void set_max_iter(Idx max_iter) const { handle_.call_with(PGM_set_max_iter, get(), max_iter); }
+    void set_max_iter(Idx max_iter) { handle_.call_with(PGM_set_max_iter, get(), max_iter); }
 
-    void set_threading(Idx threading) const { handle_.call_with(PGM_set_threading, get(), threading); }
+    void set_threading(Idx threading) { handle_.call_with(PGM_set_threading, get(), threading); }
 
-    void set_short_circuit_voltage_scaling(Idx short_circuit_voltage_scaling) const {
+    void set_short_circuit_voltage_scaling(Idx short_circuit_voltage_scaling) {
         handle_.call_with(PGM_set_short_circuit_voltage_scaling, get(), short_circuit_voltage_scaling);
     }
 
-    void set_tap_changing_strategy(Idx tap_changing_strategy) const {
+    void set_tap_changing_strategy(Idx tap_changing_strategy) {
         handle_.call_with(PGM_set_tap_changing_strategy, get(), tap_changing_strategy);
     }
 
-    void set_experimental_features(Idx experimental_features) const {
+    void set_experimental_features(Idx experimental_features) {
         handle_.call_with(PGM_set_experimental_features, get(), experimental_features);
     }
 
