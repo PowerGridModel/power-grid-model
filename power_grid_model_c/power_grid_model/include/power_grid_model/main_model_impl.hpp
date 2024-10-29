@@ -874,6 +874,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 process_buffer_span.template operator()<CT>(
                     update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
             }
+            if (comp_index >= 0 && result.uniform) {
+                result.elements_ps_in_update =
+                    update_data.get_component_info(comp_index).elements_per_scenario; // -1 for sparse
+            }
             return result;
         };
 
