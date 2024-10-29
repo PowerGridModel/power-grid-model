@@ -152,6 +152,8 @@ def validate_batch_data(
         assert_valid_data_structure(row_update_data, DatasetType.update)
         id_errors: list[IdNotInDatasetError | InvalidIdError] = validate_ids(row_update_data, input_data_copy)
 
+        batch_errors = input_errors + id_errors
+
         if not id_errors:
             batch_errors = input_errors
             merged_data = update_input_data(input_data_copy, row_update_data)
