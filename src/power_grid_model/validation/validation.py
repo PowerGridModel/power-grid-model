@@ -150,11 +150,13 @@ def validate_batch_data(
     for batch, batch_update_data in enumerate(batch_data):
         row_update_data = compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
         assert_valid_data_structure(row_update_data, DatasetType.update)
+        id_errors: list[ValidationError] = validate_ids(row_update_data, input_data_copy)
 
-        batch_errors = input_errors
-        merged_data = update_input_data(input_data_copy, row_update_data)
-        batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
-        batch_errors += validate_values(merged_data, calculation_type)
+        if not id_errors:
+            batch_errors = input_errors
+            merged_data = update_input_data(input_data_copy, row_update_data)
+            batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
+            batch_errors += validate_values(merged_data, calculation_type)
 
         if batch_errors:
             errors[batch] = batch_errors
