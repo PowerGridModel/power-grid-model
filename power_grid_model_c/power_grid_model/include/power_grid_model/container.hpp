@@ -114,8 +114,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 #ifndef NDEBUG
     // get id by idx, only for debugging purpose
     ID get_id_by_idx(Idx2D idx_2d) const {
-        auto it = std::ranges::find(map_, idx_2d, &std::pair<const ID, Idx2D>::second);
-        if (it != map_.end()) {
+        if (auto it = std::ranges::find(map_, idx_2d, &std::pair<const ID, Idx2D>::second); it != map_.end()) {
             return it->first;
         }
         throw Idx2DNotFound{idx_2d};

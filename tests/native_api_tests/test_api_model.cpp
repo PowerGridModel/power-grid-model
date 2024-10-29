@@ -518,39 +518,39 @@ TEST_CASE("API Model") {
         update_dataset_col_no_id.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // output data
-        Buffer node_batch_output{PGM_def_sym_output_node, 2};
-        node_batch_output.set_nan();
+        Buffer batch_node_output{PGM_def_sym_output_node, 2};
+        batch_node_output.set_nan();
         DatasetMutable batch_output_dataset{"sym_output", 1, 2};
-        batch_output_dataset.add_buffer("node", 1, 2, nullptr, node_batch_output);
+        batch_output_dataset.add_buffer("node", 1, 2, nullptr, batch_node_output);
 
         // options
-        Options const options{};
+        Options const batch_options{};
 
         SUBCASE("Row-based input dataset") {
-            Model model{50.0, input_dataset_row};
+            Model row_model{50.0, input_dataset_row};
 
             SUBCASE("Row-based update dataset") {
-                CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row),
+                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_row),
                                 PowerGridBatchError);
             }
             SUBCASE("Columnar update dataset") {
-                CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col),
+                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_col),
                                 PowerGridBatchError);
-                model.calculate(options, batch_output_dataset, update_dataset_col_no_id);
+                row_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id);
             }
         }
 
         SUBCASE("Columnar input dataset") {
-            Model model{50.0, input_dataset_col};
+            Model col_model{50.0, input_dataset_col};
 
             SUBCASE("Row-based update dataset") {
-                CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_row),
+                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_row),
                                 PowerGridBatchError);
             }
             SUBCASE("Columnar update dataset") {
-                CHECK_THROWS_AS(model.calculate(options, batch_output_dataset, update_dataset_col),
+                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_col),
                                 PowerGridBatchError);
-                model.calculate(options, batch_output_dataset, update_dataset_col_no_id);
+                col_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id);
             }
         }
     }
