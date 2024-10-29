@@ -29,17 +29,16 @@ extern "C" {
  * @param input_dataset Pointer to an instance of PGM_ConstDataset. It should have data type "input".
  * @return The opaque pointer to the created model.
  * If there are errors during the creation, a NULL is returned.
- * Use PGM_error_code() and PGM_error_message() to check the error. */
+ * Use PGM_error_code() and PGM_error_message() to check the error.
+ */
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                              PGM_ConstDataset const* input_dataset);
 
 /**
  * @brief Update the model by changing mutable attributes of some elements.
  *
- * All the elements you supply in the update dataset should have valid ids
- * which exist in the original model.
- *
  * Use PGM_error_code() and PGM_error_message() to check if there are errors in the update.
+ * NOTE: The model will be in an undefined state after errors occured during the update and should be destroyed.
  *
  * @param handle
  * @param model A pointer to an existing model.
