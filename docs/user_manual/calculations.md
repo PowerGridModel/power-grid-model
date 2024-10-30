@@ -131,19 +131,16 @@ Power flowing through a branch is calculated by voltage and current for any type
 
 $$
     \begin{eqnarray}
-        \underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{node-line-line-side}} \cdot \underline{I_{branch-side}}
+        \underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}
     \end{eqnarray}
 $$
 
 These quantities are in complex form. Hence, they can be constructed by PGM output attributes in the following way:
 
-For  $\underline{U}$ of nodes, `u`, `u_angle` can be used.
+* For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle. Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
 
-For  $\underline{I}$ of branches, `i_side`, `p_side`, `q_side` can be used: $\underline{I} = i_{side} \angle \arctan(((p_{side} + j \cdot q_{side}) / \underline{U})*)$.
-
-The `side` here can be `from`, `to` for `Branch`-es, `1`, `2`, `3` for `Branch3`-s. 
-
-Also, $ U_{node-line-neural} = U_{node-line-line} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is used in your calculation.
+* For  $\underline{I}$ of branches, `i_side` is the maginute and angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
+The `side` here can be `from`, `to` for `Branch`es, `1`, `2`, `3` for `Branch3`s. 
 
 ### Power flow algorithms
 
