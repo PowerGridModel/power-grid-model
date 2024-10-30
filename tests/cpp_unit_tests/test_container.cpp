@@ -205,6 +205,9 @@ TEST_CASE("Test component container") {
         CHECK(const_container.get_id_by_idx(Idx2D{0, 0}) == 1);
         CHECK(const_container.get_id_by_idx(Idx2D{0, 1}) == 11);
         CHECK(const_container.get_id_by_idx(Idx2D{0, 2}) == 111);
+        CHECK(const_container.get_id_by_idx(Idx2D{1, 0}) == 2);
+        CHECK(const_container.get_id_by_idx(Idx2D{1, 1}) == 22);
+        CHECK(const_container.get_id_by_idx(Idx2D{2, 0}) == 3);
     }
 #endif // NDEBUG
 }

@@ -184,6 +184,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
                 return invalid_index;
             }
+            assert(data == nullptr); // assume colomnar buffer
 
             auto const found = std::ranges::find_if(
                 attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });

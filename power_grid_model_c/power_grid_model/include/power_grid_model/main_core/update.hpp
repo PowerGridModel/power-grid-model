@@ -39,9 +39,8 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
     auto idx_getter_default = [&state](UpdateType const& update) {
         return get_component_idx_by_id<Component>(state, update.id);
     };
-    auto idx_getter_func = [&state, n_comp_elements](auto index) {
+    auto idx_getter_func = [&state](auto index) {
         Idx const group = get_component_group_idx<Component>(state);
-        assert(index < n_comp_elements);
         return Idx2D{group, index};
     };
 
@@ -49,6 +48,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
         if (n_comp_elements == na_Idx) {
             return idx_getter_default(update);
         }
+        assert(index < n_comp_elements);
         return idx_getter_func(index++); // NOSONAR
     });
 }

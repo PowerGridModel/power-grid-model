@@ -159,6 +159,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool no_id_row() const { return !is_columnar && (!has_id && ids_all_na); }
         bool qualify_for_optional_id() const { return ids_match && ids_all_na && !ids_part_na; }
         bool provided_ids_valid() const { return has_id && ids_match && !ids_all_na && !ids_part_na; }
+        bool is_empty_component() const { return !has_id && ids_all_na; }
         bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
         Idx get_n_elements() const {
             auto const prov_n_elements = uniform ? elements_ps_in_update : elements_in_base;
@@ -412,15 +413,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                        &comp_independence]<typename CT>() -> std::vector<Idx2D> {
             // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
             Idx const n_comp_elements = [&comp_independence]() {
-                if (!comp_independence.empty()) {
-                    auto const comp_idx =
+                if (auto const comp_idx =
                         std::ranges::find_if(comp_independence, [](auto const& comp) { return comp.name == CT::name; });
-                    if (comp_idx == comp_independence.end()) {
-                        return na_Idx;
-                    }
-                    auto const& comp = *comp_idx;
-                    if (comp.no_id_col() || comp.no_id_row()) {
-                        return comp.get_n_elements();
+                    comp_idx != comp_independence.end()) {
+                    if ((*comp_idx).no_id_col() || (*comp_idx).no_id_row()) {
+                        return (*comp_idx).get_n_elements();
                     }
                 }
                 return na_Idx;
@@ -774,8 +771,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             std::vector<std::vector<bool>> ids_na{};
             for (const auto& span : all_spans) {
                 std::vector<bool> id_na{};
-                for (const auto& obj : span) {
-                    if constexpr (requires { obj.id; }) {
+                if constexpr (requires { span.front().id; }) {
+                    for (const auto& obj : span) {
                         id_na.emplace_back(is_nan(obj.id));
                     }
                 }
@@ -885,49 +882,52 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return run_functor_with_all_types_return_vector(check_each_component);
     }
 
-    std::vector<std::pair<std::string, bool>> is_update_independent(ConstDataset const& update_data) {
-        std::vector<std::pair<std::string, bool>> result;
+    std::unordered_map<std::string, bool> is_update_independent(ConstDataset const& update_data) {
+        std::unordered_map<std::string, bool> result;
 
         // If the batch size is (0 or) 1, then the update data for this component is 'independent'
         if (update_data.batch_size() <= 1) {
-            result.emplace_back("all component", true);
+            result["all component"] = true;
             return result;
         }
 
         auto const all_comp_update_independence = check_components_independence(update_data);
         for (auto const& comp : all_comp_update_independence) {
-            result.emplace_back(comp.name, comp.is_independent());
+            result[comp.name] = comp.is_independent();
         }
 
         return result;
     }
+
     void validate_update_data_independence(UpdateCompProperties const& comp) const {
-        if (!comp.has_id && comp.ids_all_na) {
+        if (comp.is_empty_component()) {
             return; // empty dataset is still supported
         }
         if (comp.elements_in_base < comp.elements_ps_in_update) {
-            throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
-                               "!");
+            throw DatasetError(
+                "Dataset error: Update data has more elements per scenario than input data for component " + comp.name +
+                "!");
         }
         if (comp.ids_part_na) {
-            throw DatasetError("Part of the IDs are not valid for component " + comp.name + " in update data!");
+            throw DatasetError("Dataset error: Some IDs are not valid for component " + comp.name + " in update data!");
         }
         if (!comp.uniform) {
             if (comp.is_columnar && !comp.has_id) {
-                throw DatasetError("Columnar input data without IDs for component " + comp.name + " is not uniform!");
+                throw DatasetError("Dataset error: Columnar input data without IDs for component " + comp.name +
+                                   " is not uniform!");
             }
             if (!comp.is_columnar && comp.ids_all_na) {
-                throw DatasetError("Row based input data with all NA IDs for component " + comp.name +
+                throw DatasetError("Dataset error: Row based input data with all NA IDs for component " + comp.name +
                                    " is not uniform!");
             }
         }
         if (comp.elements_in_base != comp.elements_ps_in_update) {
             if (comp.is_columnar && !comp.has_id) {
-                throw DatasetError("Columnar input data for component " + comp.name +
+                throw DatasetError("Dataset error: Columnar input data for component " + comp.name +
                                    " has different number of elements per scenario in update and input data!");
             }
             if (!comp.is_columnar && comp.uniform && (comp.has_id && comp.ids_all_na)) {
-                throw DatasetError("Row based input data for component " + comp.name +
+                throw DatasetError("Dataset error: Row based input data for component " + comp.name +
                                    " has different number of elements per scenario in update and input data!");
             }
         }
