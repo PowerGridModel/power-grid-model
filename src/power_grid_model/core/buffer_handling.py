@@ -170,7 +170,7 @@ def _get_uniform_buffer_properties(
         columns = None
     else:
         if not sub_data:
-            raise ValueError(f"Empty columnar buffer is ambiguous.{VALIDATOR_MSG}")
+            raise ValueError(f"Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
         attribute, attribute_data = next(iter(sub_data.items()))
         actual_ndim = attribute_data.ndim - schema.dtype[attribute].ndim
         shape = attribute_data.shape[:actual_ndim]
