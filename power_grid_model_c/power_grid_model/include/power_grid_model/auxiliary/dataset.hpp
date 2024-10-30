@@ -179,10 +179,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
+
         Idx find_attribute(std::string_view attr_name) const {
             if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
                 return invalid_index;
             }
+            assert(data == nullptr); // assume colomnar buffer
 
             auto const found = std::ranges::find_if(
                 attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });

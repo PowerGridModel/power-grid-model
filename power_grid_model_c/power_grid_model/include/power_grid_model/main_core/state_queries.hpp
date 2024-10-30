@@ -35,7 +35,7 @@ inline Idx2D get_component_idx_by_id(MainModelState<ComponentContainer> const& s
 
 template <typename ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
-inline Idx get_component_group_idx(MainModelState<ComponentContainer> const& state) {
+constexpr Idx get_component_group_idx(MainModelState<ComponentContainer> const& state) {
     return state.components.template get_group_idx<ComponentType>();
 }
 

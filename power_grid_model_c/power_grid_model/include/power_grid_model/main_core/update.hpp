@@ -36,16 +36,20 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
                                    ForwardIterator end, OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
-    auto idx_getter_func = [&state, n_comp_elements](UpdateType const& update, auto index) {
-        if (n_comp_elements == na_Idx) {
-            return get_component_idx_by_id<Component>(state, update.id);
-        }
+    auto idx_getter_default = [&state](UpdateType const& update) {
+        return get_component_idx_by_id<Component>(state, update.id);
+    };
+    auto idx_getter_func = [&state](auto index) {
         Idx const group = get_component_group_idx<Component>(state);
-        return Idx2D{group, index % n_comp_elements};
+        return Idx2D{group, index};
     };
 
     std::ranges::transform(begin, end, destination, [&, index = 0](UpdateType const& update) mutable {
-        return idx_getter_func(update, index++); // NOSONAR
+        if (n_comp_elements == na_Idx) {
+            return idx_getter_default(update);
+        }
+        assert(index < n_comp_elements);
+        return idx_getter_func(index++); // NOSONAR
     });
 }
 
