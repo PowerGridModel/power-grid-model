@@ -131,15 +131,15 @@ Power flowing through a branch is calculated by voltage and current for any type
 
 $$
     \begin{eqnarray}
-        S_{branch-side} = \sqrt{3} \cdot U_{node-line-line-side} \cdot I_{branch-side}
+        \underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{node-line-line-side}} \cdot \underline{I_{branch-side}}
     \end{eqnarray}
 $$
 
-These quantities are in complex form. Hence, they can be constructed by PGM output attributes.
+These quantities are in complex form. Hence, they can be constructed by PGM output attributes in the following way:
 
 For  $U$ of nodes, `u`, `u_angle` can be used.
 
-For  $I$ of branches, `i_side`, `p_side`, `q_side` can be used: $I = i_{side} \angle \arctan(q_{side} / p_{side})$.
+For  $I$ of branches, `i_side`, `p_side`, `q_side` can be used: $\underline{I} = i_{side} \angle \arctan((p_{side} + j \cdot q_{side}) / \underline{U})$.
 
 The `side` here can be `from`, `to` for `Branch`-es, `1`, `2`, `3` for `Branch3`-s. 
 
