@@ -137,9 +137,9 @@ $$
 
 These quantities are in complex form. Hence, they can be constructed by PGM output attributes in the following way:
 
-For  $\udnerline{U}$ of nodes, `u`, `u_angle` can be used.
+For  $\underline{U}$ of nodes, `u`, `u_angle` can be used.
 
-For  $\udnerline{I}$ of branches, `i_side`, `p_side`, `q_side` can be used: $\underline{I} = i_{side} \angle \arctan((p_{side} + j \cdot q_{side}) / \underline{U})$.
+For  $\underline{I}$ of branches, `i_side`, `p_side`, `q_side` can be used: $\underline{I} = i_{side} \angle \arctan(((p_{side} + j \cdot q_{side}) / \underline{U})*)$.
 
 The `side` here can be `from`, `to` for `Branch`-es, `1`, `2`, `3` for `Branch3`-s. 
 
