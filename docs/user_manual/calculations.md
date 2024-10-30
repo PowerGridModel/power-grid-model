@@ -139,8 +139,8 @@ These quantities are in complex form. Hence, they can be constructed by PGM outp
 
 * For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle. Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
 
-* For  $\underline{I}$ of branches, `i_side` is the maginute and angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
-The `side` here can be `from`, `to` for `Branch`es, `1`, `2`, `3` for `Branch3`s. 
+* For  $\underline{I}$ of branches, `i_side` is the magnitude. Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
+The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for {hoverxreftooltip}`user_manual/components:Branch3`s. 
 
 ### Power flow algorithms
 
