@@ -136,7 +136,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         return result;
     }
-    template <supported_type_c<StorageableTypes...> Storageable> Idx get_group_idx() const {
+    template <supported_type_c<StorageableTypes...> Storageable> constexpr Idx get_group_idx() const {
         return static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
     }
 
