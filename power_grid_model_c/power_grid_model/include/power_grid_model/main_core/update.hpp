@@ -40,9 +40,8 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
         auto idx_getter_default = [&state](UpdateType const& update) {
             return get_component_idx_by_id<Component>(state, update.id);
         };
-        std::ranges::transform(begin, end, destination, [&](UpdateType const& update) {
-            return idx_getter_default(update);
-        });
+        std::ranges::transform(begin, end, destination,
+                               [&](UpdateType const& update) { return idx_getter_default(update); });
     } else {
         auto idx_getter_func = [&state](auto index) {
             Idx const group = get_component_group_idx<Component>(state);

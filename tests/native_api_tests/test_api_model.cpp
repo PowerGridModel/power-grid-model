@@ -411,7 +411,7 @@ TEST_CASE("API Model") {
         }
     }
 
-    SUBCASE("Model update error optional id") {
+    SUBCASE("Model update optional id") {
         std::vector<ID> const input_node_id{0};
         std::vector<double> const input_node_u_rated{100.0};
         Buffer input_node_buffer{PGM_def_input_node, 1};
@@ -529,13 +529,15 @@ TEST_CASE("API Model") {
         SUBCASE("Row-based input dataset") {
             Model row_model{50.0, input_dataset_row};
 
-            SUBCASE("Row-based update dataset") {
+            SUBCASE("Row-based update dataset error") {
                 CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_row),
                                 PowerGridBatchError);
             }
-            SUBCASE("Columnar update dataset") {
+            SUBCASE("Columnar update dataset error") {
                 CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_col),
                                 PowerGridBatchError);
+            }
+            SUBCASE("Columnar update dataset wo id") {
                 row_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id);
             }
         }
@@ -543,13 +545,15 @@ TEST_CASE("API Model") {
         SUBCASE("Columnar input dataset") {
             Model col_model{50.0, input_dataset_col};
 
-            SUBCASE("Row-based update dataset") {
+            SUBCASE("Row-based update dataset error") {
                 CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_row),
                                 PowerGridBatchError);
             }
-            SUBCASE("Columnar update dataset") {
+            SUBCASE("Columnar update dataset error") {
                 CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_col),
                                 PowerGridBatchError);
+            }
+            SUBCASE("Columnar update dataset wo id") {
                 col_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id);
             }
         }

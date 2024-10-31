@@ -769,10 +769,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto check_ids_na = [](auto const& all_spans) {
             std::vector<std::vector<bool>> ids_na{};
-            for (const auto& span : all_spans) {
+            for (auto const& span : all_spans) {
                 std::vector<bool> id_na{};
                 if constexpr (requires { span.front().id; }) {
-                    for (const auto& obj : span) {
+                    for (auto const& obj : span) {
                         id_na.emplace_back(is_nan(obj.id));
                     }
                 }
@@ -785,11 +785,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
             std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
-            result.has_id = !std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) { return vec.empty(); });
-            result.ids_all_na = std::ranges::all_of(ids_na, [](const std::vector<bool>& vec) {
+            result.has_id = !std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) { return vec.empty(); });
+            result.ids_all_na = std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) {
                 return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
             });
-            result.ids_part_na = std::ranges::any_of(ids_na, [](const std::vector<bool>& vec) {
+            result.ids_part_na = std::ranges::any_of(ids_na, [](std::vector<bool> const& vec) {
                 return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
                        std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
             });
@@ -819,7 +819,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result.is_columnar = update_data.is_columnar(result.name);
             if (auto it = std::ranges::find_if(
                     all_comp_count_in_base,
-                    [&result](const ComponentCountInBase& pair) { return pair.first == result.name; });
+                    [&result](ComponentCountInBase const& pair) { return pair.first == result.name; });
                 it != all_comp_count_in_base.end()) {
                 result.elements_in_base = it->second;
             }
@@ -904,30 +904,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             return; // empty dataset is still supported
         }
         if (comp.elements_in_base < comp.elements_ps_in_update) {
-            throw DatasetError(
-                "Dataset error: Update data has more elements per scenario than input data for component " + comp.name +
-                "!");
+            throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
+                               "!");
         }
         if (comp.ids_part_na) {
-            throw DatasetError("Dataset error: Some IDs are not valid for component " + comp.name + " in update data!");
+            throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
         }
         if (!comp.uniform) {
             if (comp.is_columnar && !comp.has_id) {
-                throw DatasetError("Dataset error: Columnar input data without IDs for component " + comp.name +
-                                   " is not uniform!");
+                throw DatasetError("Columnar input data without IDs for component " + comp.name + " is not uniform!");
             }
             if (!comp.is_columnar && comp.ids_all_na) {
-                throw DatasetError("Dataset error: Row based input data with all NA IDs for component " + comp.name +
+                throw DatasetError("Row based input data with all NA IDs for component " + comp.name +
                                    " is not uniform!");
             }
         }
         if (comp.elements_in_base != comp.elements_ps_in_update) {
             if (comp.is_columnar && !comp.has_id) {
-                throw DatasetError("Dataset error: Columnar input data for component " + comp.name +
+                throw DatasetError("Columnar input data for component " + comp.name +
                                    " has different number of elements per scenario in update and input data!");
             }
             if (!comp.is_columnar && comp.uniform && (comp.has_id && comp.ids_all_na)) {
-                throw DatasetError("Dataset error: Row based input data for component " + comp.name +
+                throw DatasetError("Row based input data for component " + comp.name +
                                    " has different number of elements per scenario in update and input data!");
             }
         }
