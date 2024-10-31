@@ -85,7 +85,7 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
         a raw view on the data set.
     """
     if data.dtype != dtype:
-        warnings.warn("Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
+        warnings.warn(f"Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
 
@@ -170,7 +170,7 @@ def _get_uniform_buffer_properties(
         columns = None
     else:
         if not sub_data:
-            raise ValueError("Empty columnar buffer is ambiguous.{VALIDATOR_MSG}")
+            raise ValueError(f"Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
         attribute, attribute_data = next(iter(sub_data.items()))
         actual_ndim = attribute_data.ndim - schema.dtype[attribute].ndim
         shape = attribute_data.shape[:actual_ndim]
@@ -237,7 +237,7 @@ def _get_sparse_buffer_properties(
         shape: tuple[int, ...] = contents.shape
     else:
         if not contents:
-            raise ValueError("Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
+            raise ValueError(f"Empty columnar buffer is ambiguous. {VALIDATOR_MSG}")
         attribute_data = next(iter(contents.values()))
         shape = attribute_data.shape[:ndim]
         columns = list(contents)
