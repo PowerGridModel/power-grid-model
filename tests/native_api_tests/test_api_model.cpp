@@ -231,11 +231,8 @@ TEST_CASE("API Model") {
     SUBCASE("Single power flow") {
         SUBCASE("Simple power flow") {
             model.calculate(options, single_output_dataset);
-            node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-            node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
             node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
             node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
             CHECK(node_result_u[0] == doctest::Approx(50.0));
             CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
         }
@@ -243,11 +240,8 @@ TEST_CASE("API Model") {
         SUBCASE("Simple update") {
             model.update(single_update_dataset);
             model.calculate(options, single_output_dataset);
-            node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-            node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
             node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
             node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
             CHECK(node_result_u[0] == doctest::Approx(40.0));
             CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
         }
@@ -255,16 +249,17 @@ TEST_CASE("API Model") {
         SUBCASE("Copy model") {
             auto model_copy = Model{model};
             model_copy.calculate(options, single_output_dataset);
-            node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-            node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
             node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
             node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
             CHECK(node_result_u[0] == doctest::Approx(50.0));
             CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
         }
 
-        // Common checks for single power flow tests
+        // Common checks applicable for single power flow tests
+        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+
         CHECK(node_result_id[0] == 0);
         CHECK(node_result_energized[0] == 1);
         CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
