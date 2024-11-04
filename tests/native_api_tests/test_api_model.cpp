@@ -600,9 +600,9 @@ TEST_CASE_TEMPLATE(
     std::vector<double> const sym_load_p_specified{0.0};
     std::vector<double> const sym_load_q_specified{500.0};
     Buffer sym_load_buffer{PGM_def_input_sym_load, 1};
+    sym_load_buffer.set_nan();
 
     if constexpr (std::is_same_v<input_type, row_t>) {
-        sym_load_buffer.set_nan();
         sym_load_buffer.set_value(PGM_def_input_sym_load_id, sym_load_id.data(), -1);
         sym_load_buffer.set_value(PGM_def_input_sym_load_node, sym_load_node.data(), -1);
         sym_load_buffer.set_value(PGM_def_input_sym_load_status, sym_load_status.data(), -1);
@@ -620,8 +620,8 @@ TEST_CASE_TEMPLATE(
         input_dataset.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
     }
 
-    std::vector<Idx> sym_load_indptr{0, 1, 2};
-    std::vector<double> load_updates_q_specified = {100.0, 300.0};
+    std::vector<Idx> const sym_load_indptr{0, 1, 2};
+    std::vector<double> const load_updates_q_specified = {100.0, 300.0};
 
     auto load_updates_id = []() {
         if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
