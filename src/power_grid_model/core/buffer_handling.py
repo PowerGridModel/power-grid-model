@@ -245,7 +245,7 @@ def _get_sparse_buffer_properties(
             if attribute_data.ndim != ndim + schema.dtype[attribute].ndim or attribute_data.shape[:ndim] != shape:
                 raise ValueError(f"Data buffers must be consistent. {VALIDATOR_MSG}")
 
-    contents_size = shape[0] if len(shape) == 1 else shape[0] * shape[1]
+    contents_size = shape[0]
     check_indptr_consistency(indptr, batch_size, contents_size)
 
     is_batch = True

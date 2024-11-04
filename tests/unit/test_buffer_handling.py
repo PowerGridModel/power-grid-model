@@ -15,13 +15,15 @@ from power_grid_model.core.power_grid_meta import initialize_array, power_grid_m
 
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
+    """Creates load data of different formats for testing"""
     shape = (2, 4) if is_batch else (4,)
     load = initialize_array(DatasetType.update, component_type, shape)
+    columnar_names = ["p_specified", "q_specified"]
 
     if is_columnar:
         if is_sparse:
-            return {"indptr": np.array([0, 5, 8]), "data": {k: load.reshape(-1)[k] for k in load.dtype.names}}
-        return {k: load[k] for k in load.dtype.names}
+            return {"indptr": np.array([0, 5, 8]), "data": {k: load.reshape(-1)[k] for k in columnar_names}}
+        return {k: load[k] for k in columnar_names}
     if is_sparse:
         return {"indptr": np.array([0, 5, 8]), "data": load.reshape(-1)}
     return load
