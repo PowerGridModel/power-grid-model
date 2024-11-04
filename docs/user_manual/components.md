@@ -20,7 +20,7 @@ The base type for all power-grid-model components.
 | ---- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :----------------------------------------------------------------------------: |
 | `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (If a component update is uniform (See below), the ID can be omitted or set to `nan`. Otherwise, the id needs to be specified in the update query, but cannot be changed) |
 
-A component update is uniform when the number of elements is consistent across all scenarios and matches the number of elements in the input data for that component. Therefore, the ID is not optional for updates on sparse data, and when the ID of a component is ommited, the updated field must be explicit across all scenarios (even if it is not always updated). An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
+A uniform component is defined as one in which every scenario modifies the same number of elements within that component. Therefore, a dense component is always uniform, hence the ID can be optional; whereas a sparse component may or may not be uniform. An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
 
 #### Steady state output and Short circuit output
 
