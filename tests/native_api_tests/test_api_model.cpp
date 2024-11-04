@@ -16,19 +16,42 @@
 /*
 Testing network
 
-source_1(1.0 p.u., 100.0 V) --internal_impedance(j10.0 ohm, sk=1000.0 VA, rx_ratio=0.0)--
--- node_0 (100.0 V) --load_2(const_i, -j5.0A, 0.0 W, 500.0 var)
+source_1 -- node_0 |---- line_5 ----| node_4
+              |    |---- line_6 ----|
+              |
+              load_2
 
-u0 = 100.0 V - (j10.0 ohm * -j5.0 A) = 50.0 V
+source_1: 1.0 p.u., 100.0 V, internal_impedance(j10.0 ohm, sk=1000.0 VA, rx_ratio=0.0)
+node_0: 100.0 V
+oad_2: const_i, -j5.0A, 0.0 W, 500.0 var
 
-update_0:
+update_0 voltage calculation:
     u_ref = 0.5 p.u. (50.0 V)
     q_specified = 100 var (-j1.0A)
 u0 = 50.0 V - (j10.0 ohm * -j1.0 A) = 40.0 V
 
-update_1:
+update_1 voltage calculation:
     q_specified = 300 var (-j3.0A)
 u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
+
+Dataset created with the following buffers:
+
+|                | Row Based | Columnar | Dense | Sparse |
+|----------------|-----------|----------|-------|--------|
+| input data     |           |          |       |        |
+| - node         |           |    Y     |       |        |
+| - line         |           |    Y     |       |        |
+| - load         |     Y     |          |       |        |
+| - source       |     Y     |          |       |        |
+| single update  |           |          |       |        |
+| - line         |           |    Y     |       |        |
+| - load         |     Y     |          |       |        |
+| - source       |     Y     |          |       |        |
+| batch update   |           |          |       |        |
+| - line         |           |    Y     |   Y   |        |
+| - load         |     Y     |          |   Y   |        |
+| - source       |     Y     |          |       |    Y   |
+
 */
 
 namespace power_grid_model_cpp {
@@ -51,6 +74,23 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
         check_exception(e, reference_error, reference_err_msg);
     }
 }
+
+// Types for template parameters
+struct row_t {};
+struct columnar_t {};
+struct sparse_t {};
+struct dense_t {};
+struct with_id_t {};
+struct optional_id_t {};
+struct invalid_id_t {};
+
+template <typename first, typename second, typename third, typename fourth> struct TypeCombo {
+    using input_type = first;
+    using update_type = second;
+    using sparsity_type = third;
+    using id_check_type = fourth;
+};
+
 } // namespace
 
 TEST_CASE("API Model") {
@@ -64,11 +104,8 @@ TEST_CASE("API Model") {
     // node buffer
     std::vector<ID> const node_id{0, 4};
     std::vector<double> const node_u_rated{100.0, 100.0};
-    Buffer node_buffer{PGM_def_input_node, 2};
-    node_buffer.set_nan(0, node_buffer.size());
-    node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
-    node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
 
+    // line buffer
     std::vector<ID> const line_id{5, 6};
     std::vector<ID> const line_from_node{0, 4};
     std::vector<ID> const line_to_node{4, 0};
@@ -97,7 +134,7 @@ TEST_CASE("API Model") {
     source_buffer.set_value(PGM_def_input_source_rx_ratio, &source_rx_ratio, -1);
 
     // load buffer
-    ID load_id = 2;
+    ID const load_id = 2;
     ID const load_node = 0;
     int8_t const load_status = 1;
     int8_t const load_type = 2;
@@ -148,7 +185,7 @@ TEST_CASE("API Model") {
     std::vector<double> batch_node_result_u_angle(4);
 
     // update data
-    ID source_update_id = 1;
+    ID const source_update_id = 1;
     int8_t const source_update_status = std::numeric_limits<int8_t>::min();
     double const source_update_u_ref = 0.5;
     double const source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
@@ -192,57 +229,45 @@ TEST_CASE("API Model") {
     Model model_dummy{std::move(model)};
     model = std::move(model_dummy);
 
-    SUBCASE("Simple power flow") {
-        model.calculate(options, single_output_dataset);
-        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
-        node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
-        node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
-        CHECK(node_result_id[0] == 0);
-        CHECK(node_result_energized[0] == 1);
-        CHECK(node_result_u[0] == doctest::Approx(50.0));
-        CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
-        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
-        CHECK(node_result_id[1] == 4);
-        CHECK(node_result_energized[1] == 0);
-        CHECK(node_result_u[1] == doctest::Approx(0.0));
-        CHECK(node_result_u_pu[1] == doctest::Approx(0.0));
-        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
-    }
+    SUBCASE("Single power flow") {
+        SUBCASE("Simple power flow") {
+            model.calculate(options, single_output_dataset);
+            node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+            node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+            CHECK(node_result_u[0] == doctest::Approx(50.0));
+            CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
+        }
 
-    SUBCASE("Simple update") {
-        model.update(single_update_dataset);
-        model.calculate(options, single_output_dataset);
-        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
-        node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
-        node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
-        CHECK(node_result_id[0] == 0);
-        CHECK(node_result_energized[0] == 1);
-        CHECK(node_result_u[0] == doctest::Approx(40.0));
-        CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
-        CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
-        CHECK(node_result_id[1] == 4);
-        CHECK(node_result_energized[1] == 0);
-        CHECK(node_result_u[1] == doctest::Approx(0.0));
-        CHECK(node_result_u_pu[1] == doctest::Approx(0.0));
-        CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
-    }
+        SUBCASE("Simple update") {
+            model.update(single_update_dataset);
+            model.calculate(options, single_output_dataset);
+            node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+            node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+            CHECK(node_result_u[0] == doctest::Approx(40.0));
+            CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
+        }
 
-    SUBCASE("Copy model") {
-        auto model_copy = Model{model};
-        model_copy.calculate(options, single_output_dataset);
-        node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
-        node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
-        node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
-        node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
-        node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+        SUBCASE("Copy model") {
+            auto model_copy = Model{model};
+            model_copy.calculate(options, single_output_dataset);
+            node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
+            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+            node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+            CHECK(node_result_u[0] == doctest::Approx(50.0));
+            CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
+        }
+
+        // Common checks for single power flow tests
         CHECK(node_result_id[0] == 0);
         CHECK(node_result_energized[0] == 1);
-        CHECK(node_result_u[0] == doctest::Approx(50.0));
-        CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
         CHECK(node_result_u_angle[0] == doctest::Approx(0.0));
         CHECK(node_result_id[1] == 4);
         CHECK(node_result_energized[1] == 0);
@@ -292,19 +317,19 @@ TEST_CASE("API Model") {
 
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
-            load_id = 0;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
-            source_update_id = 1;
-            source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+            ID const bad_load_id = 0;
+            ID const bad_source_update_id = 1;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
+            source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
             auto const wrong_model_lambda = [&input_dataset]() { Model const wrong_model{50.0, input_dataset}; };
             check_throws_with(wrong_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
         }
 
         SUBCASE("Update error") {
-            load_id = 2;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
-            source_update_id = 99;
-            source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+            ID const bad_load_id = 2;
+            ID const bad_source_update_id = 99;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
+            source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
             auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
             check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
         }
