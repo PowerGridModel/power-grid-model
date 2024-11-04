@@ -184,7 +184,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
                 return invalid_index;
             }
-            assert(data == nullptr); // assume colomnar buffer
+            assert(data == nullptr); // assume columnar buffer
 
             auto const found = std::ranges::find_if(
                 attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });
@@ -278,7 +278,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     constexpr bool is_dense(std::string_view component) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
-            return false;
+            return true; // by definition
         }
         return is_dense(idx);
     }
@@ -299,7 +299,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     constexpr bool is_uniform(std::string_view component) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
-            return false;
+            return true; // by definition
         }
         return is_uniform(idx);
     }

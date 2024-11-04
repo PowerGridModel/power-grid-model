@@ -162,14 +162,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
         constexpr bool no_id_col() const { return is_columnar && no_id(); }
         constexpr bool no_id_row() const { return !is_columnar && no_id(); }
-        constexpr bool qualify_for_optional_id() const { return update_ids_match && ids_all_na && has_any_elements; }
-        constexpr bool provided_ids_valid() const { return update_ids_match && !ids_all_na; }
+        constexpr bool qualify_for_optional_id() const {
+            return update_ids_match && ids_all_na && uniform && get_elements_ps_in_update() == elements_in_base;
+        }
+        constexpr bool provided_ids_valid() const {
+            return is_empty_component() || (update_ids_match && !(ids_all_na || ids_part_na));
+        }
         constexpr bool is_empty_component() const { return !has_any_elements; }
         constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
+        constexpr Idx get_elements_ps_in_update() const {
+            // TODO(mgovers): remove and combine elements_ps_in_update and elements_ps_in_update_from_sparse
+            return dense ? elements_ps_in_update : elements_ps_in_update_from_sparse;
+        }
         constexpr Idx get_n_elements() const {
             assert(elements_ps_in_update == invalid_index || elements_ps_in_update_from_sparse == invalid_index);
 
-            auto const prov_n_elements = dense ? elements_ps_in_update : elements_ps_in_update_from_sparse;
+            auto const prov_n_elements = get_elements_ps_in_update();
 
             assert(uniform || prov_n_elements == invalid_index);
             assert(dense || elements_ps_in_update_from_sparse == elements_in_base);
@@ -800,8 +808,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
             std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
-            result.has_any_elements =
-                !std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) { return vec.empty(); });
+            assert(result.has_any_elements ==
+                   !std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) { return vec.empty(); }));
             result.ids_all_na = std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) {
                 return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
             });
@@ -827,22 +835,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
                 });
 
-            // std::string name{};
-            // bool has_any_elements{false};             // whether the component has id
             // bool ids_all_na{false};                   // whether all ids are all NA
             // bool ids_part_na{false};                  // whether some ids are NA but some are not
-            // bool dense{false};                        // whether the component is dense
-            // bool uniform{false};                      // whether the component is uniform
-            // bool is_columnar{false};                  // whether the component is columnar
             // bool update_ids_match{false};             // whether the ids match
-            // Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
-            // Idx elements_ps_in_update_from_sparse{
-            //     invalid_index};                  // count of elements for this component per scenario in update
-            // Idx elements_in_base{invalid_index}; // count of elements for this component per scenario in input
         };
 
         auto const check_each_component = [&update_data, &process_buffer_span, &all_comp_count_in_base,
                                            &n_scenarios]<typename CT>() -> UpdateCompProperties {
+            // std::string name{};
+            // bool is_columnar{false};                  // whether the component is columnar
+            // bool dense{false};                        // whether the component is dense
+            // bool uniform{false};                      // whether the component is uniform
+            // bool has_any_elements{false};             // whether the component has id
+            // Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
+            // Idx elements_ps_in_update_from_sparse{
+            //     invalid_index};                  // count of elements for this component per scenario in update
+            // Idx elements_in_base{invalid_index}; // count of elements for this component per scenario in input
+
             // get span of all the update data
             auto const comp_index = update_data.find_component(CT::name, false);
             UpdateCompProperties result;
@@ -850,6 +859,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result.is_columnar = update_data.is_columnar(result.name);
             result.dense = update_data.is_dense(result.name);
             result.uniform = update_data.is_uniform(result.name);
+            result.has_any_elements =
+                comp_index != invalid_index && update_data.get_component_info(comp_index).total_elements > 0;
             if (result.dense) {
                 result.elements_ps_in_update = update_data.uniform_elements_per_scenario(result.name);
             } else if (result.uniform) {
@@ -871,10 +882,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const& comp_info = update_data.get_component_info(comp_index);
                 auto const id_idx = comp_buffer.find_attribute("id");
 
-                result.has_any_elements = id_idx != invalid_index;
-                result.uniform = comp_info.elements_per_scenario == result.elements_in_base;
-
-                if (result.has_any_elements) {
+                bool const has_id_column = id_idx != invalid_index;
+                if (has_id_column) {
+                    // bool ids_all_na{false};                   // whether all ids are all NA
+                    // bool ids_part_na{false};                  // whether some ids are NA but some are not
+                    // bool update_ids_match{false};             // whether the ids match
                     auto const* id_buffer = comp_buffer.template get_col_data_at_index<ID>(id_idx);
 
                     result.ids_all_na =
@@ -882,29 +894,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     result.ids_part_na = std::any_of(id_buffer, id_buffer + comp_info.total_elements,
                                                      [](ID id) { return is_nan(id); }) &&
                                          !result.ids_all_na;
-                    assert(result.elements_in_base > 0);
-                    auto const n_scenario_comp_in_update =
-                        result.elements_in_base * n_scenarios > comp_info.total_elements
-                            ? comp_info.total_elements / result.elements_in_base
-                            : n_scenarios;
-                    result.update_ids_match = [id_buffer, elements_ps = result.elements_in_base,
-                                               n_scenario_comp_in_update]() {
-                        bool all_match = true;
-                        for (Idx i = 0; i < elements_ps; ++i) {
-                            for (Idx j = 0; j < n_scenario_comp_in_update; ++j) {
-                                if (id_buffer[i] != id_buffer[i + elements_ps * j]) {
-                                    all_match = false;
+                    assert(result.elements_in_base > 0 || result.is_empty_component());
+                    if (result.uniform) {
+                        result.update_ids_match = [id_buffer, batch_size = update_data.batch_size(),
+                                                   elements_ps =
+                                                       update_data.uniform_elements_per_scenario(comp_index)]() {
+                            bool all_match = true;
+                            for (Idx component_idx = 0; component_idx < elements_ps; ++component_idx) {
+                                for (Idx scenario_idx = 0; scenario_idx < batch_size; ++scenario_idx) {
+                                    if (id_buffer[component_idx] !=
+                                        id_buffer[component_idx + elements_ps * scenario_idx]) {
+                                        all_match = false;
+                                        break;
+                                    }
+                                }
+                                if (!all_match) {
                                     break;
                                 }
                             }
-                            if (!all_match) {
-                                break;
-                            }
-                        }
-                        return all_match;
-                    }();
-                    if (comp_info.elements_per_scenario != invalid_index) {
-                        result.elements_ps_in_update = comp_info.elements_per_scenario;
+                            return all_match;
+                        }();
+                    } else {
+                        result.update_ids_match = false;
                     }
                 } else {                            // no id,
                     result.ids_all_na = true;       // no id, all NA
