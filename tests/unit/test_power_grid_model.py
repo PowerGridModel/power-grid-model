@@ -281,10 +281,7 @@ def input_sym_load_col(input_row):
     )
 
 
-@pytest.fixture(params=[
-    pytest.param("input_row", id="input_row"),
-    pytest.param("input_sym_load_col", id="input_col")
-])
+@pytest.fixture(params=[pytest.param("input_row", id="input_row"), pytest.param("input_sym_load_col", id="input_col")])
 def minimal_input(request):
     return request.getfixturevalue(request.param)
 
@@ -345,7 +342,9 @@ def test_update_ids_batch(minimal_update, minimal_input):
         pytest.param(update_sym_load_row_optional_id(), id="update_dense_row"),
         pytest.param(update_sym_load_col(update_sym_load_row_optional_id()), id="update_dense_col"),
         pytest.param(update_sym_load_sparse(update_sym_load_row_optional_id()), id="update_sparse_row"),
-        pytest.param(update_sym_load_col(update_sym_load_sparse(update_sym_load_row_optional_id())), id="update_sparse_col"),
+        pytest.param(
+            update_sym_load_col(update_sym_load_sparse(update_sym_load_row_optional_id())), id="update_sparse_col"
+        ),
     ],
 )
 def test_update_id_optional(minimal_update, minimal_input):
