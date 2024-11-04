@@ -18,9 +18,9 @@ The base type for all power-grid-model components.
 
 | name | data type | unit | description                                                                                                                                                       | required |                                     update                                     |
 | ---- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :----------------------------------------------------------------------------: |
-| `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (If a component update is uniform (See below), the ID can be omitted or set to `nan`. Otherwise, the id needs to be specified in the update query, but cannot be changed) |
+| `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (If a component update is uniform (see below), the ID can be omitted or set to `nan`. Otherwise, the id needs to be specified in the update query, but cannot be changed) |
 
-A uniform component is defined as one in which every scenario modifies the same number of elements within that component. Therefore, a dense component is always uniform, hence the ID can be optional; whereas a sparse component may or may not be uniform. An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
+A uniform component update is defined as one in which every scenario modifies the same number of elements within that component. Therefore, a dense update is always uniform, hence the ID can always be optional; whereas a sparse update is only uniform if the index pointer is given as a linear sequence of elements (sparse representation of a dense buffer). An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
 
 #### Steady state output and Short circuit output
 
