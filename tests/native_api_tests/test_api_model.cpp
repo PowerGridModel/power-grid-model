@@ -81,7 +81,6 @@ struct columnar_t {};
 struct sparse_t {};
 struct dense_t {};
 struct with_id_t {};
-struct optional_id_t {};
 struct invalid_id_t {};
 
 template <typename first, typename second, typename third, typename fourth> struct TypeCombo {
@@ -555,15 +554,10 @@ TEST_CASE_TEMPLATE(
     TypeCombo<columnar_t, columnar_t, dense_t, with_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, with_id_t>,
     TypeCombo<columnar_t, row_t, dense_t, with_id_t>, TypeCombo<columnar_t, row_t, sparse_t, with_id_t>,
     TypeCombo<row_t, columnar_t, dense_t, with_id_t>, TypeCombo<row_t, columnar_t, sparse_t, with_id_t>,
-    TypeCombo<row_t, row_t, dense_t, optional_id_t>, TypeCombo<row_t, row_t, sparse_t, optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<columnar_t, row_t, dense_t, optional_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>, TypeCombo<row_t, columnar_t, dense_t, optional_id_t>,
-    TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<row_t, row_t, dense_t, invalid_id_t>,
-    TypeCombo<row_t, row_t, sparse_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>, TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>, TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>,
-    TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
+    TypeCombo<row_t, row_t, dense_t, invalid_id_t>, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>,
+    TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>,
+    TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>,
+    TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
 
     using namespace std::string_literals;
     using input_type = typename T::input_type;
@@ -637,9 +631,7 @@ TEST_CASE_TEMPLATE(
 
     Buffer sym_load_update_buffer{PGM_def_update_sym_load, 2};
     sym_load_update_buffer.set_nan();
-    if constexpr (!std::is_same_v<id_check_type, optional_id_t>) {
-        sym_load_update_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
-    }
+    sym_load_update_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
     sym_load_update_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), -1);
 
     if constexpr (std::is_same_v<update_type, row_t>) {
@@ -655,9 +647,7 @@ TEST_CASE_TEMPLATE(
             update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
         }
 
-        if constexpr (!std::is_same_v<id_check_type, optional_id_t>) {
-            update_dataset.add_attribute_buffer("sym_load", "id", load_updates_id.data());
-        }
+        update_dataset.add_attribute_buffer("sym_load", "id", load_updates_id.data());
         update_dataset.add_attribute_buffer("sym_load", "q_specified", load_updates_q_specified.data());
     }
 
@@ -666,7 +656,7 @@ TEST_CASE_TEMPLATE(
     batch_node_output.set_nan();
     DatasetMutable batch_output_dataset{"sym_output", 1, 2};
     batch_output_dataset.add_buffer("node", 1, 2, nullptr, batch_node_output);
-    
+
     Options const batch_options{};
     Model model{50.0, input_dataset};
     if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
