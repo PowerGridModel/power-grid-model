@@ -147,22 +147,33 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     struct UpdateCompProperties {
         std::string name{};
-        bool has_id{false};           // if the component has id
-        bool ids_all_na{false};       // if all ids are all NA
-        bool ids_part_na{false};      // if some ids are NA but some are not
-        bool uniform{false};          // if the component is uniform
-        bool is_columnar{false};      // if the component is columnar
-        bool ids_match{false};        // if the ids match
-        Idx elements_ps_in_update{0}; // count of elements for this component per scenario in update
-        Idx elements_in_base{0};      // count of elements for this component per scenario in input
-        constexpr bool no_id_col() const { return is_columnar && (!has_id || ids_all_na); }
-        constexpr bool no_id_row() const { return !is_columnar && (!has_id && ids_all_na); }
-        constexpr bool qualify_for_optional_id() const { return ids_match && ids_all_na && !ids_part_na; }
-        constexpr bool provided_ids_valid() const { return has_id && ids_match && !ids_all_na && !ids_part_na; }
-        constexpr bool is_empty_component() const { return !has_id && ids_all_na; }
+        bool has_any_elements{false};             // whether the component has id
+        bool ids_all_na{false};                   // whether all ids are all NA
+        bool ids_part_na{false};                  // whether some ids are NA but some are not
+        bool dense{false};                        // whether the component is dense
+        bool uniform{false};                      // whether the component is uniform
+        bool is_columnar{false};                  // whether the component is columnar
+        bool update_ids_match{false};             // whether the ids match
+        Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
+        Idx elements_ps_in_update_from_sparse{
+            invalid_index};      // count of elements for this component per scenario in update
+        Idx elements_in_base{0}; // count of elements for this component per scenario in input
+
+        constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
+        constexpr bool no_id_col() const { return is_columnar && no_id(); }
+        constexpr bool no_id_row() const { return !is_columnar && no_id(); }
+        constexpr bool qualify_for_optional_id() const { return update_ids_match && ids_all_na && has_any_elements; }
+        constexpr bool provided_ids_valid() const { return update_ids_match && !ids_all_na; }
+        constexpr bool is_empty_component() const { return !has_any_elements; }
         constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
-        Idx get_n_elements() const {
-            auto const prov_n_elements = uniform ? elements_ps_in_update : elements_in_base;
+        constexpr Idx get_n_elements() const {
+            assert(elements_ps_in_update == invalid_index || elements_ps_in_update_from_sparse == invalid_index);
+
+            auto const prov_n_elements = dense ? elements_ps_in_update : elements_ps_in_update_from_sparse;
+
+            assert(uniform || prov_n_elements == invalid_index);
+            assert(dense || elements_ps_in_update_from_sparse == elements_in_base);
+
             return qualify_for_optional_id() ? prov_n_elements : invalid_index;
         }
     };
@@ -771,9 +782,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             std::vector<std::vector<bool>> ids_na{};
             for (auto const& span : all_spans) {
                 std::vector<bool> id_na{};
-                if constexpr (requires { span.front().id; }) {
-                    for (auto const& obj : span) {
+                for (auto const& obj : span) {
+                    if constexpr (requires { span.front().id; }) {
                         id_na.emplace_back(is_nan(obj.id));
+                    } else if constexpr (requires { span.front().get().id; }) {
+                        id_na.emplace_back(is_nan(obj.get().id));
+                    } else {
+                        throw UnreachableHit{"This cannot exist"};
                     }
                 }
                 ids_na.emplace_back(std::move(id_na));
@@ -785,7 +800,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // Remember the first batch size, then loop over the remaining batches and check if they are of the same
             // length
             std::vector<std::vector<bool>> const ids_na = check_ids_na(all_spans);
-            result.has_id = !std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) { return vec.empty(); });
+            result.has_any_elements =
+                !std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) { return vec.empty(); });
             result.ids_all_na = std::ranges::all_of(ids_na, [](std::vector<bool> const& vec) {
                 return std::ranges::all_of(vec, [](bool const& obj) { return obj; });
             });
@@ -793,21 +809,36 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
                        std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
             });
-            result.uniform = std::ranges::all_of(
-                all_spans, [n_elements = static_cast<Idx>(all_spans.front().size())](auto const& span) {
-                    return static_cast<Idx>(std::size(span)) == n_elements;
-                });
+            result.uniform = all_spans.empty() ||
+                             std::ranges::all_of(all_spans, [n_elements = all_spans.front().ssize()](auto const& span) {
+                                 return std::ssize(span) == n_elements;
+                             });
+            result.dense = result.uniform; // TODO(mgovers): we should be able to remove UpdateCompProperties::dense
+
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
             // the ids
             auto const first_span = all_spans[0];
             // check the subsequent scenarios
             // only return true if all scenarios match the ids of the first batch
-            result.ids_match =
+            result.update_ids_match =
                 std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
                     return std::ranges::equal(
                         current_span, first_span,
                         [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
                 });
+
+            // std::string name{};
+            // bool has_any_elements{false};             // whether the component has id
+            // bool ids_all_na{false};                   // whether all ids are all NA
+            // bool ids_part_na{false};                  // whether some ids are NA but some are not
+            // bool dense{false};                        // whether the component is dense
+            // bool uniform{false};                      // whether the component is uniform
+            // bool is_columnar{false};                  // whether the component is columnar
+            // bool update_ids_match{false};             // whether the ids match
+            // Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
+            // Idx elements_ps_in_update_from_sparse{
+            //     invalid_index};      // count of elements for this component per scenario in update
+            // Idx elements_in_base{0}; // count of elements for this component per scenario in input
         };
 
         auto const check_each_component = [&update_data, &process_buffer_span, &all_comp_count_in_base,
@@ -817,6 +848,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             UpdateCompProperties result;
             result.name = CT::name;
             result.is_columnar = update_data.is_columnar(result.name);
+            result.dense = update_data.is_dense(result.name);
+            result.uniform = update_data.is_uniform(result.name);
             if (auto it = std::ranges::find_if(
                     all_comp_count_in_base,
                     [&result](ComponentCountInBase const& pair) { return pair.first == result.name; });
@@ -828,10 +861,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const& comp_info = update_data.get_component_info(comp_index);
                 auto const id_idx = comp_buffer.find_attribute("id");
 
-                result.has_id = id_idx != invalid_index;
+                result.has_any_elements = id_idx != invalid_index;
                 result.uniform = comp_info.elements_per_scenario == result.elements_in_base;
 
-                if (result.has_id) {
+                if (result.has_any_elements) {
                     auto const* id_buffer = comp_buffer.template get_col_data_at_index<ID>(id_idx);
 
                     result.ids_all_na =
@@ -844,7 +877,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                         result.elements_in_base * n_scenarios > comp_info.total_elements
                             ? comp_info.total_elements / result.elements_in_base
                             : n_scenarios;
-                    result.ids_match = [id_buffer, elements_ps = result.elements_in_base, n_scenario_comp_in_update]() {
+                    result.update_ids_match = [id_buffer, elements_ps = result.elements_in_base,
+                                               n_scenario_comp_in_update]() {
                         bool all_match = true;
                         for (Idx i = 0; i < elements_ps; ++i) {
                             for (Idx j = 0; j < n_scenario_comp_in_update; ++j) {
@@ -862,10 +896,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     if (comp_info.elements_per_scenario != invalid_index) {
                         result.elements_ps_in_update = comp_info.elements_per_scenario;
                     }
-                } else {                        // no id,
-                    result.ids_all_na = true;   // no id, all NA
-                    result.ids_part_na = false; // no id, no part NA
-                    result.ids_match = true;    // no id, all match
+                } else {                            // no id,
+                    result.ids_all_na = true;       // no id, all NA
+                    result.ids_part_na = false;     // no id, no part NA
+                    result.update_ids_match = true; // no id, all match
                 }
             } else {
                 process_buffer_span.template operator()<CT>(
@@ -903,14 +937,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (comp.is_empty_component()) {
             return; // empty dataset is still supported
         }
-        if (comp.elements_in_base < comp.elements_ps_in_update) {
+        auto const elements_ps = comp.get_n_elements();
+        assert(comp.uniform || elements_ps < 0);
+
+        if (elements_ps >= 0 && comp.elements_in_base < elements_ps) {
             throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
                                "!");
         }
         if (comp.ids_part_na) {
             throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
         }
-        if (comp.ids_all_na && comp.elements_in_base != comp.elements_ps_in_update) {
+        if (comp.ids_all_na && comp.elements_in_base != elements_ps) {
             throw DatasetError("Update data without IDs for component " + comp.name +
                                " has a different number of elements per scenario then input data!");
         }

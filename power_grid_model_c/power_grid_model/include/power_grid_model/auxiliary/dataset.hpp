@@ -275,6 +275,65 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return !is_row_based(buffer) && !(with_attribute_buffers && buffer.attributes.empty());
     }
 
+    constexpr bool is_dense(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_dense(idx);
+    }
+    constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[idx]); }
+    constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
+    constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_sparse(idx, with_attribute_buffers);
+    }
+    constexpr bool is_sparse(Idx const i, bool with_attribute_buffers = false) const {
+        return is_sparse(buffers_[i], with_attribute_buffers);
+    }
+    constexpr bool is_sparse(Buffer const& buffer) const { return !is_dense(buffer); }
+
+    constexpr bool is_uniform(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_uniform(idx);
+    }
+    constexpr bool is_uniform(Idx const i) const { return is_uniform(buffers_[idx]); }
+    constexpr bool is_uniform(Buffer const& buffer) const {
+        if (is_dense(buffer)) {
+            return true;
+        }
+        assert(buffer.indptr.size() > 1);
+        auto const first_scenario_size = buffer.indptr[1] - buffer.indptr[0];
+        return std::ranges::adjacent_find(buffer.indptr, [first_scenario_size](Idx start, Idx stop) {
+                   return stop - start != first_scenario_size;
+               }) == buffer.indptr.end();
+    }
+
+    constexpr auto uniform_elements_per_scenario(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return 0;
+        }
+        return uniform_elements_per_scenario(idx);
+    }
+    constexpr auto uniform_elements_per_scenario(Idx const i) const {
+        return uniform_elements_per_scenario(buffers_[idx]);
+    }
+    constexpr auto uniform_elements_per_scenario(Buffer const& buffer) const {
+        assert(is_uniform(buffer));
+        if (is_dense(buffer)) {
+            return buffer.elements_per_scenario;
+        }
+        assert(buffer.indptr.size() > 1);
+        return buffer.indptr[1] - buffer.indptr[0];
+    }
+
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
             return x.component->name == component;
