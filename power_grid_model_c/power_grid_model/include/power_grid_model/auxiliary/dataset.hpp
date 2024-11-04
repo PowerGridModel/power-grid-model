@@ -93,14 +93,25 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
                 ctype_func_selector(
                     meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
-                        AttributeType const* buffer_ptr =
-                            reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
                         auto& attribute_ref =
                             meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
-                        attribute_ref = *buffer_ptr;
+                        attribute_ref = get_attribute<AttributeType>(attribute_buffer);
                     });
             }
             return result;
+        }
+        template <typename AttributeType> auto get_attribute(std::string_view attribute_name) const {
+            if (auto const it = std::ranges::find_if(attribute_buffers_,
+                                                     [attribute_name](auto const& attribute_buffer) {
+                                                         return attribute_buffer.meta_attribute->name == attribute_name;
+                                                     });
+                it != attribute_buffers_.end()) {
+                return get_attribute<AttributeType>(*it);
+            }
+            return nan_value<AttributeType>;
+        }
+        template <typename AttributeType> auto get_attribute(Idx attribute_buffer_idx) const {
+            return get_attribute(attribute_buffers_[attribute_buffer_idx]);
         }
 
       private:
@@ -109,6 +120,11 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
 
         Idx idx_{};
         std::span<AttributeBuffer<Data> const> attribute_buffers_{};
+
+        template <typename AttributeType> auto get_attribute(AttributeBuffer<Data> const& attribute_buffer) const {
+            AttributeType const* buffer_ptr = reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
+            return *buffer_ptr;
+        }
     };
 
     class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
