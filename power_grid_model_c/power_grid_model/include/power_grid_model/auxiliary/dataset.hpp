@@ -282,7 +282,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
         return is_dense(idx);
     }
-    constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[idx]); }
+    constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[i]); }
     constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
     constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
         Idx const idx = find_component(component, false);
@@ -303,7 +303,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         }
         return is_uniform(idx);
     }
-    constexpr bool is_uniform(Idx const i) const { return is_uniform(buffers_[idx]); }
+    constexpr bool is_uniform(Idx const i) const { return is_uniform(buffers_[i]); }
     constexpr bool is_uniform(Buffer const& buffer) const {
         if (is_dense(buffer)) {
             return true;
@@ -315,23 +315,21 @@ template <dataset_type_tag dataset_type_> class Dataset {
                }) == buffer.indptr.end();
     }
 
-    constexpr auto uniform_elements_per_scenario(std::string_view component) const {
+    constexpr Idx uniform_elements_per_scenario(std::string_view component) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
             return 0;
         }
         return uniform_elements_per_scenario(idx);
     }
-    constexpr auto uniform_elements_per_scenario(Idx const i) const {
-        return uniform_elements_per_scenario(buffers_[idx]);
-    }
-    constexpr auto uniform_elements_per_scenario(Buffer const& buffer) const {
-        assert(is_uniform(buffer));
-        if (is_dense(buffer)) {
-            return buffer.elements_per_scenario;
+    constexpr Idx uniform_elements_per_scenario(Idx const i) const {
+        assert(is_uniform(i));
+        if (is_dense(i)) {
+            return get_component_info(i).elements_per_scenario;
         }
-        assert(buffer.indptr.size() > 1);
-        return buffer.indptr[1] - buffer.indptr[0];
+        auto const& indptr = buffers_[i].indptr;
+        assert(indptr.size() > 1);
+        return indptr[1] - indptr[0];
     }
 
     Idx find_component(std::string_view component, bool required = false) const {
@@ -350,7 +348,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     bool contains_component(std::string_view component) const { return find_component(component) >= 0; }
 
     ComponentInfo const& get_component_info(std::string_view component) const {
-        return dataset_info_.component_info[find_component(component, true)];
+        return get_component_info(find_component(component, true));
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)

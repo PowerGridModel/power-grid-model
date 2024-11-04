@@ -156,8 +156,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool update_ids_match{false};             // whether the ids match
         Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
         Idx elements_ps_in_update_from_sparse{
-            invalid_index};      // count of elements for this component per scenario in update
-        Idx elements_in_base{0}; // count of elements for this component per scenario in input
+            invalid_index};                  // count of elements for this component per scenario in update
+        Idx elements_in_base{invalid_index}; // count of elements for this component per scenario in input
 
         constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
         constexpr bool no_id_col() const { return is_columnar && no_id(); }
@@ -788,7 +788,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     } else if constexpr (requires { span.front().get().id; }) {
                         id_na.emplace_back(is_nan(obj.get().id));
                     } else {
-                        throw UnreachableHit{"This cannot exist"};
+                        throw UnreachableHit{"check_components_independence", "This cannot exist"};
                     }
                 }
                 ids_na.emplace_back(std::move(id_na));
@@ -809,11 +809,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return std::ranges::any_of(vec, [](bool const& obj) { return obj; }) &&
                        std::ranges::any_of(vec, [](bool const& obj) { return !obj; });
             });
-            result.uniform = all_spans.empty() ||
-                             std::ranges::all_of(all_spans, [n_elements = all_spans.front().ssize()](auto const& span) {
-                                 return std::ssize(span) == n_elements;
-                             });
-            result.dense = result.uniform; // TODO(mgovers): we should be able to remove UpdateCompProperties::dense
+            assert(result.uniform == all_spans.empty() ||
+                   std::ranges::all_of(all_spans, [n_elements = std::ssize(all_spans.front())](auto const& span) {
+                       return std::ssize(span) == n_elements;
+                   })); // TODO(mgovers): remove this check
+            // result.dense = result.uniform;  // TODO(mgovers): we may be able to remove UpdateCompProperties::dense
 
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
             // the ids
@@ -837,8 +837,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             // bool update_ids_match{false};             // whether the ids match
             // Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
             // Idx elements_ps_in_update_from_sparse{
-            //     invalid_index};      // count of elements for this component per scenario in update
-            // Idx elements_in_base{0}; // count of elements for this component per scenario in input
+            //     invalid_index};                  // count of elements for this component per scenario in update
+            // Idx elements_in_base{invalid_index}; // count of elements for this component per scenario in input
         };
 
         auto const check_each_component = [&update_data, &process_buffer_span, &all_comp_count_in_base,
@@ -850,12 +850,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result.is_columnar = update_data.is_columnar(result.name);
             result.dense = update_data.is_dense(result.name);
             result.uniform = update_data.is_uniform(result.name);
+            if (result.dense) {
+                result.elements_ps_in_update = update_data.uniform_elements_per_scenario(result.name);
+            } else if (result.uniform) {
+                result.elements_ps_in_update_from_sparse = update_data.uniform_elements_per_scenario(result.name);
+            } else {
+                result.elements_ps_in_update_from_sparse = invalid_index;
+            }
             if (auto it = std::ranges::find_if(
                     all_comp_count_in_base,
                     [&result](ComponentCountInBase const& pair) { return pair.first == result.name; });
                 it != all_comp_count_in_base.end()) {
                 result.elements_in_base = it->second;
+            } else {
+                result.elements_in_base = 0;
             }
+
             if (result.is_columnar && comp_index != invalid_index) {
                 auto const& comp_buffer = update_data.get_buffer(comp_index);
                 auto const& comp_info = update_data.get_component_info(comp_index);
@@ -905,10 +915,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 process_buffer_span.template operator()<CT>(
                     update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
             }
-            if (comp_index >= 0 && result.uniform) {
-                result.elements_ps_in_update =
-                    update_data.get_component_info(comp_index).elements_per_scenario; // -1 for sparse
-            }
+            // if (comp_index >= 0 && result.dense) {
+            //     result.elements_ps_in_update =
+            //         update_data.get_component_info(comp_index).elements_per_scenario; // -1 for sparse
+            // }
             return result;
         };
 
