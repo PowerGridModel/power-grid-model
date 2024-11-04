@@ -910,24 +910,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (comp.ids_part_na) {
             throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
         }
-        if (!comp.uniform) {
-            if (comp.is_columnar && !comp.has_id) {
-                throw DatasetError("Columnar input data without IDs for component " + comp.name + " is not uniform!");
-            }
-            if (!comp.is_columnar && comp.ids_all_na) {
-                throw DatasetError("Row based input data with all NA IDs for component " + comp.name +
-                                   " is not uniform!");
-            }
+        if (comp.ids_all_na && comp.elements_in_base != comp.elements_ps_in_update) {
+            throw DatasetError("Update data without IDs for component " + comp.name +
+                               " has a different number of elements per scenario then input data!");
         }
-        if (comp.elements_in_base != comp.elements_ps_in_update) {
-            if (comp.is_columnar && !comp.has_id) {
-                throw DatasetError("Columnar input data for component " + comp.name +
-                                   " has different number of elements per scenario in update and input data!");
-            }
-            if (!comp.is_columnar && comp.uniform && (comp.has_id && comp.ids_all_na)) {
-                throw DatasetError("Row based input data for component " + comp.name +
-                                   " has different number of elements per scenario in update and input data!");
-            }
+        if (!comp.is_columnar && comp.ids_all_na) {
+            throw DatasetError("Row based update data without IDs for component " + comp.name + " is not supported!");
         }
     }
 
