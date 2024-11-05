@@ -40,6 +40,7 @@ from typing import Any, Callable, Optional, Type, TypeVar
 import numpy as np
 
 from power_grid_model import ComponentType
+from power_grid_model._utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
@@ -678,26 +679,39 @@ def all_not_two_values_equal(
     return []
 
 
-def all_ids_exist_in_data_set(
-    data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: str
-) -> list[IdNotInDatasetError]:
+def ids_valid_in_update_data_set(
+    update_data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: str
+) -> list[IdNotInDatasetError | InvalidIdError]:
     """
-    Check that for all records of a particular type of component, the ids exist in the reference data set.
+    Check that for all records of a particular type of component, whether the ids:
+    - exist and match those in the reference data set
+    - are not present but qualifies for optional id
 
     Args:
-        data: The (update) data set for all components
+        update_data: The update data set for all components
         ref_data: The reference (input) data set for all components
         component: The component of interest
-        ref_name: The name of the reference data set, e.g. 'input_data'
+        ref_name: The name of the reference data set, e.g. 'update_data'
     Returns:
         A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not
         exist in the reference data set.
     """
-    component_data = data[component]
+    component_data = update_data[component]
     component_ref_data = ref_data[component]
-    if not isinstance(component_data, np.ndarray) or not isinstance(component_ref_data, np.ndarray):
-        raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+    if component_ref_data["id"].size == 0:
+        return [InvalidIdError(component=component, field="id", ids=None)]
+    id_field_is_nan = np.array(is_nan_or_default(component_data["id"]))
+    # check whether id qualify for optional
+    if component_data["id"].size == 0 or np.all(id_field_is_nan):
+        # check if the dimension of the component_data is the same as the component_ref_data
+        if get_comp_size(component_data) != get_comp_size(component_ref_data):
+            return [InvalidIdError(component=component, field="id", ids=None)]
+        return []  # supported optional id
 
+    if np.all(id_field_is_nan) and not np.all(~id_field_is_nan):
+        return [InvalidIdError(component=component, field="id", ids=None)]
+
+    # normal check: exist and match with input
     invalid = np.isin(component_data["id"], component_ref_data["id"], invert=True)
     if invalid.any():
         ids = component_data["id"][invalid].flatten().tolist()

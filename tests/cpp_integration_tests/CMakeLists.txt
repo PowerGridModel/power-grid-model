@@ -7,7 +7,6 @@ set(PROJECT_SOURCES
     "test_main_model_sc.cpp"
     "test_main_model_se.cpp"
     "test_main_model.cpp"
-    "test_main_model_static.cpp"
     "test_math_solver.cpp"
 )
 

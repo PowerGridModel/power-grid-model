@@ -13,6 +13,7 @@ from power_grid_model import (
     DatasetType,
     PowerGridModel,
     initialize_array,
+    power_grid_meta_data,
 )
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
@@ -204,7 +205,7 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-def test_batch_calculation_error(model: PowerGridModel, update_batch):
+def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
     # wrong id
     update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
     # with error
@@ -329,7 +330,6 @@ def test_update_ids_batch(minimal_update, minimal_input):
     np.testing.assert_almost_equal(output_data[ComponentType.node]["u"], np.array([[90.0], [70.0]]))
 
 
-@pytest.mark.xfail(reason="The current implementation does not support optional ids.")
 @pytest.mark.parametrize(
     "minimal_update",
     [

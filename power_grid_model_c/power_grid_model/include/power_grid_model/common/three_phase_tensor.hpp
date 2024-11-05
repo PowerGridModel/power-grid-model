@@ -297,6 +297,7 @@ template <class Enum>
 inline bool is_nan(Enum x) {
     return static_cast<IntS>(x) == na_IntS;
 }
+inline bool is_nan(Idx x) { return x == na_Idx; }
 
 // is normal
 inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }

@@ -119,6 +119,7 @@ def test_validate_batch_data_input_error(input_data, batch_data):
 def test_validate_batch_data_update_error(input_data, batch_data):
     batch_data["line"]["from_status"] = np.array([[12, 34], [0, -128], [56, 78]])
     errors = validate_batch_data(input_data, batch_data)
-    assert len(errors) == 2
-    assert [NotBooleanError("line", "from_status", [5, 6])] == errors[0]
-    assert [NotBooleanError("line", "from_status", [5, 7])] == errors[2]
+    assert len(errors) == 3
+    assert NotBooleanError("line", "from_status", [5, 6]) == errors[0][0]
+    assert NotBooleanError("line", "from_status", [5, 7]) == errors[1][1]
+    assert NotBooleanError("line", "from_status", [5, 6]) == errors[2][0]

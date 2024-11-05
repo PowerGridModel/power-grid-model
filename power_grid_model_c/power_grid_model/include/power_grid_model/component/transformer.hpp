@@ -94,14 +94,14 @@ class Transformer : public Branch {
 
     // update for transformer, hide default update for branch
     UpdateChange update(TransformerUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.from_status, update_data.to_status);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
         return {topo_changed, param_changed};
     }
 
     TransformerUpdate inverse(TransformerUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         update_data = Branch::inverse(update_data);
         set_if_not_nan(update_data.tap_pos, tap_pos_);

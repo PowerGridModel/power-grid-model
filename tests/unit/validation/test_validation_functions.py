@@ -9,8 +9,16 @@ import numpy as np
 import pytest
 
 from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, FaultType, TapChangingStrategy
+from power_grid_model.enum import (
+    Branch3Side,
+    BranchSide,
+    CalculationType,
+    ComponentAttributeFilterOptions,
+    FaultType,
+    TapChangingStrategy,
+)
 from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
@@ -27,7 +35,7 @@ from power_grid_model.validation.errors import (
 from power_grid_model.validation.validation import (
     assert_valid_data_structure,
     validate_generic_power_sensor,
-    validate_ids_exist,
+    validate_ids,
     validate_required_values,
     validate_unique_ids_across_components,
     validate_values,
@@ -113,7 +121,7 @@ def test_validate_unique_ids_across_components():
     assert len(unique_id_errors[0].ids) == 4
 
 
-def test_validate_ids_exist():
+def test_validate_ids():
     source = initialize_array("input", "source", 3)
     source["id"] = [1, 2, 3]
 
@@ -135,10 +143,47 @@ def test_validate_ids_exist():
 
     update_data = {"source": source_update, "sym_load": sym_load_update}
 
-    invalid_ids = validate_ids_exist(update_data, input_data)
+    invalid_ids = validate_ids(update_data, input_data)
 
-    assert IdNotInDatasetError("source", [4], "input_data") in invalid_ids
-    assert IdNotInDatasetError("sym_load", [7], "input_data") in invalid_ids
+    assert IdNotInDatasetError("source", [4], "update_data") in invalid_ids
+    assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
+
+    source_update_no_id = initialize_array("update", "source", 3)
+    source_update_no_id["u_ref"] = [1.0, 2.0, 3.0]
+
+    update_data_col = compatibility_convert_row_columnar_dataset(
+        data={"source": source_update_no_id, "sym_load": sym_load_update},
+        data_filter=ComponentAttributeFilterOptions.relevant,
+        dataset_type=DatasetType.update,
+    )
+    invalid_ids = validate_ids(update_data_col, input_data)
+    assert len(invalid_ids) == 1
+    assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
+
+    source_update_less_no_id = initialize_array("update", "source", 2)
+    source_update_less_no_id["u_ref"] = [1.0, 2.0]
+
+    update_data_col_less_no_id = compatibility_convert_row_columnar_dataset(
+        data={"source": source_update_less_no_id, "sym_load": sym_load_update},
+        data_filter=ComponentAttributeFilterOptions.relevant,
+        dataset_type=DatasetType.update,
+    )
+    invalid_ids = validate_ids(update_data_col_less_no_id, input_data)
+    assert len(invalid_ids) == 2
+    assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
+
+    source_update_part_nan_id = initialize_array("update", "source", 3)
+    source_update_part_nan_id["id"] = [1, np.iinfo(np.int32).min, 4]
+    source_update_part_nan_id["u_ref"] = [1.0, 2.0, 3.0]
+
+    update_data_col_part_nan_id = compatibility_convert_row_columnar_dataset(
+        data={"source": source_update_part_nan_id, "sym_load": sym_load_update},
+        data_filter=ComponentAttributeFilterOptions.relevant,
+        dataset_type=DatasetType.update,
+    )
+    invalid_ids = validate_ids(update_data_col_part_nan_id, input_data)
+    assert len(invalid_ids) == 2
+    assert IdNotInDatasetError("sym_load", [7], "update_data") in invalid_ids
 
 
 @pytest.mark.parametrize(

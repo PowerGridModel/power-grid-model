@@ -76,6 +76,21 @@ def test_update_input_data():
     np.testing.assert_array_equal(merged["sym_load"]["q_specified"], [4.1, 5.2, 6.1, np.nan, np.nan, 3.2])
 
 
+def test_update_input_data__without_ids():
+    input_test = initialize_array("input", "sym_load", 6)
+    input_test["id"] = [4, 5, 6, 1, 2, 3]
+    input_test["p_specified"] = [4.0, 5.0, 6.0, 1.0, 2.0, 3.0]
+    input_test["q_specified"] = [4.1, 5.1, 6.1, np.nan, np.nan, np.nan]
+
+    update_test = initialize_array("update", "sym_load", 6)
+    input_test["q_specified"] = [4.1, 5.2, np.nan, np.nan, np.nan, 3.2]
+
+    merged = update_input_data(input_data={"sym_load": input_test}, update_data={"sym_load": update_test})
+    np.testing.assert_array_equal(merged["sym_load"]["id"], [4, 5, 6, 1, 2, 3])
+    np.testing.assert_array_equal(merged["sym_load"]["p_specified"], [4.0, 5.0, 6.0, 1.0, 2.0, 3.0])
+    np.testing.assert_array_equal(merged["sym_load"]["q_specified"], [4.1, 5.2, np.nan, np.nan, np.nan, 3.2])
+
+
 def test_update_input_data_int_nan():
     input_line = initialize_array("input", "line", 3)
     input_line["id"] = [1, 2, 3]
