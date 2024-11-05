@@ -1386,14 +1386,15 @@ TEST_CASE("Test main model - runtime dispatch") {
             REQUIRE(sym_load_ids.size() == sym_load_p_specified.size());
             REQUIRE(sym_load_p_specified.size() == state.sym_load_update.size());
 
+            auto const update_size = sym_load_ids.size();
+
             SUBCASE("With IDs") {
                 ConstDataset update_data_with_rows{false, 1, "update", meta_data::meta_data_gen::meta_data};
                 update_data_with_rows.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(),
                                                  nullptr, state.sym_load_update.data());
 
                 ConstDataset update_data_with_columns{false, 1, "update", meta_data::meta_data_gen::meta_data};
-                update_data_with_columns.add_buffer("sym_load", sym_load_p_specified.size(),
-                                                    sym_load_p_specified.size(), nullptr, nullptr);
+                update_data_with_columns.add_buffer("sym_load", update_size, update_size, nullptr, nullptr);
                 update_data_with_columns.add_attribute_buffer("sym_load", "id", sym_load_ids.data());
                 update_data_with_columns.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
 
@@ -1442,14 +1443,12 @@ TEST_CASE("Test main model - runtime dispatch") {
 
             SUBCASE("Without IDs") {
                 ConstDataset update_data_with_ids{false, 1, "update", meta_data::meta_data_gen::meta_data};
-                update_data_with_ids.add_buffer("sym_load", sym_load_p_specified.size(), sym_load_p_specified.size(),
-                                                nullptr, nullptr);
+                update_data_with_ids.add_buffer("sym_load", update_size, update_size, nullptr, nullptr);
                 update_data_with_ids.add_attribute_buffer("sym_load", "id", sym_load_ids.data());
                 update_data_with_ids.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
 
                 ConstDataset update_data_without_ids{false, 1, "update", meta_data::meta_data_gen::meta_data};
-                update_data_without_ids.add_buffer("sym_load", sym_load_p_specified.size(), sym_load_p_specified.size(),
-                                                   nullptr, nullptr);
+                update_data_without_ids.add_buffer("sym_load", update_size, update_size, nullptr, nullptr);
                 update_data_without_ids.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
 
                 MainModel base_model{50.0, input_data};

@@ -125,6 +125,23 @@ Output:
 - Node voltage magnitude and angle
 - Current flowing through branches and fault.
 
+#### Common calculations
+
+Power flowing through a branch is calculated by voltage and current for any type of calculations in the following way:
+
+$$
+    \begin{eqnarray}
+        \underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}
+    \end{eqnarray}
+$$
+
+These quantities are in complex form. Hence, they can be constructed by PGM output attributes in the following way:
+
+* For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle. Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
+
+* For  $\underline{I}$ of branches, `i_side` is the magnitude. Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
+The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for {hoverxreftooltip}`user_manual/components:Branch3`s. 
+
 ### Power flow algorithms
 
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
