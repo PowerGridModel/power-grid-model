@@ -179,27 +179,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
-
-        Idx find_attribute(std::string_view attr_name) const {
-            if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
-                return invalid_index;
-            }
-            assert(data == nullptr); // assume columnar buffer
-
-            auto const found = std::ranges::find_if(
-                attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });
-
-            if (found == attributes.cend()) {
-                return invalid_index;
-            }
-            return std::distance(attributes.cbegin(), found);
-        }
-        template <typename T> const T* get_col_data_at_index(Idx index) const {
-            if (data != nullptr) {
-                throw DatasetError{"Buffer access by index not supported for row based data!\n"};
-            }
-            return reinterpret_cast<const T*>(attributes[index].data);
-        }
     };
 
     template <class StructType>
@@ -248,9 +227,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
     MetaDataset const& dataset() const { return *dataset_info_.dataset; }
     Idx n_components() const { return static_cast<Idx>(buffers_.size()); }
     DatasetInfo const& get_description() const { return dataset_info_; }
-    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
+
+    ComponentInfo const& get_component_info(std::string_view component) const {
+        return get_component_info(find_component(component, true));
+    }
+    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
 
     constexpr bool is_row_based(std::string_view component) const {
         Idx const idx = find_component(component, false);
@@ -346,10 +329,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return std::distance(dataset_info_.component_info.cbegin(), found);
     }
     bool contains_component(std::string_view component) const { return find_component(component) >= 0; }
-
-    ComponentInfo const& get_component_info(std::string_view component) const {
-        return get_component_info(find_component(component, true));
-    }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
         requires is_indptr_mutable_v<dataset_type>
