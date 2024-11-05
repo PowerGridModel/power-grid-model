@@ -522,13 +522,13 @@ TEST_CASE("API Model") {
 
         // update dataset - row no ids
         DatasetConst update_dataset_row_no_id{"update", 1, 2};
-        update_dataset_row_no_id.add_buffer("source", -1, 2, input_source_indptr.data(), update_source_buffer_no_id);
-        update_dataset_row_no_id.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(),
+        update_dataset_row_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), update_source_buffer_no_id);
+        update_dataset_row_no_id.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(),
                                             update_sym_load_buffer_no_id);
 
         // update dataset - col no ids
         DatasetConst update_dataset_col_no_id{"update", 1, 2};
-        update_dataset_col_no_id.add_buffer("source", -1, 2, input_source_indptr.data(), nullptr);
+        update_dataset_col_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
 
         update_dataset_col_no_id.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
 
