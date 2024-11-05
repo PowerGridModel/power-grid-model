@@ -780,7 +780,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             } else if constexpr (requires { obj.get().id; }) {
                 return is_nan(obj.get().id);
             } else {
-                throw UnreachableHit{"check_components_independence", "This cannot exist"};
+                throw UnreachableHit{"check_components_independence", "Only components with id are supported"};
             }
         };
 
