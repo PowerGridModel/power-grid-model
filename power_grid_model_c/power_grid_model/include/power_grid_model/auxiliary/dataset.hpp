@@ -179,27 +179,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
-
-        Idx find_attribute(std::string_view attr_name) const {
-            if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
-                return invalid_index;
-            }
-            assert(data == nullptr); // assume columnar buffer
-
-            auto const found = std::ranges::find_if(
-                attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });
-
-            if (found == attributes.cend()) {
-                return invalid_index;
-            }
-            return std::distance(attributes.cbegin(), found);
-        }
-        template <typename T> const T* get_col_data_at_index(Idx index) const {
-            if (data != nullptr) {
-                throw DatasetError{"Buffer access by index not supported for row based data!\n"};
-            }
-            return reinterpret_cast<const T*>(attributes[index].data);
-        }
     };
 
     template <class StructType>
