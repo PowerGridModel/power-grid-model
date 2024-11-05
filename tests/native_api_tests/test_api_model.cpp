@@ -875,7 +875,7 @@ TEST_CASE_TEMPLATE(
     batch_node_output.set_nan();
     DatasetMutable batch_output_dataset{"sym_output", 1, 2};
     batch_output_dataset.add_buffer("node", 1, 2, nullptr, batch_node_output);
-    
+
     Options const batch_options{};
     Model model{50.0, input_dataset};
     if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
