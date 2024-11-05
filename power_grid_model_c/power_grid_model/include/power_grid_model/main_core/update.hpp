@@ -41,12 +41,12 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
             return get_component_idx_by_id<Component>(state, update.id);
         });
     } else {
-        std::ranges::transform(begin, end, destination,
-                               [n_comp_elements, group = get_component_group_idx<Component>(state),
-                                index = 0](auto const& /*update*/) mutable {
-                                   assert(index < n_comp_elements);
-                                   return Idx2D{group, index++}; // NOSONAR
-                               });
+        assert(std::distance(begin, end) <= n_comp_elements);
+        std::ranges::transform(
+            begin, end, destination,
+            [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {
+                return Idx2D{group, index++}; // NOSONAR
+            });
     }
 }
 
