@@ -825,10 +825,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result.elements_ps_in_update =
                 result.uniform ? update_data.uniform_elements_per_scenario(result.name) : invalid_index;
 
-            if (auto it = std::ranges::find_if(
-                    all_comp_count_in_base,
-                    [&result](ComponentCountInBase const& pair) { return pair.first == result.name; });
-                it != all_comp_count_in_base.end()) {
+            if (auto it = all_comp_count_in_base.find(result.name); it != all_comp_count_in_base.end()) {
                 result.elements_in_base = it->second;
             } else {
                 result.elements_in_base = 0;
