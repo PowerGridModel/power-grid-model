@@ -147,14 +147,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     struct UpdateCompProperties {
         std::string name{};
-        bool has_any_elements{false}; // whether the component has any elements in the update data
-        bool ids_all_na{false};       // whether all ids are all NA
-        bool ids_part_na{false};      // whether some ids are NA but some are not
-        bool dense{false};            // whether the component is dense // TODO(mgovers): we may be able to remove
-                                      // UpdateCompProperties::dense
-        bool uniform{false};          // whether the component is uniform
-        bool is_columnar{false};      // whether the component is columnar
-        bool update_ids_match{false}; // whether the ids match
+        bool has_any_elements{false};             // whether the component has any elements in the update data
+        bool ids_all_na{false};                   // whether all ids are all NA
+        bool ids_part_na{false};                  // whether some ids are NA but some are not
+        bool dense{false};                        // whether the component is dense
+        bool uniform{false};                      // whether the component is uniform
+        bool is_columnar{false};                  // whether the component is columnar
+        bool update_ids_match{false};             // whether the ids match
         Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
         Idx elements_in_base{invalid_index};      // count of elements for this component per scenario in input
 
