@@ -158,8 +158,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         Idx elements_in_base{invalid_index};      // count of elements for this component per scenario in input
 
         constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
-        constexpr bool no_id_col() const { return is_columnar && no_id(); }
-        constexpr bool no_id_row() const { return !is_columnar && no_id(); }
         constexpr bool qualify_for_optional_id() const {
             return update_ids_match && ids_all_na && uniform && elements_ps_in_update == elements_in_base;
         }
@@ -423,10 +421,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             Idx const n_comp_elements = [&comp_independence]() {
                 if (auto const comp_idx =
                         std::ranges::find_if(comp_independence, [](auto const& comp) { return comp.name == CT::name; });
-                    comp_idx == comp_independence.end()) {
-                    return na_Idx;
-                }
-                if (comp_idx->no_id_col() || comp_idx->no_id_row()) {
+                    comp_idx != comp_independence.end() && comp_idx->no_id()) {
                     return comp_idx->get_n_elements();
                 }
                 return na_Idx;
