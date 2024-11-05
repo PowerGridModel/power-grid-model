@@ -224,17 +224,17 @@ TEST_CASE("API Model") {
     // create model
     Model model{50.0, input_dataset};
 
-    // test move-ability
-    Model model_dummy{std::move(model)};
-    model = std::move(model_dummy);
-
+    SUBCASE("Test Movability") {
+        Model model_dummy{std::move(model)};
+        model = std::move(model_dummy);
+    }
     SUBCASE("Single power flow") {
 
         // Common checker used for all single power flow test subcases
         auto check_common_node_results = [&]() {
             node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
             node_output.get_value(PGM_def_sym_output_node_energized, node_result_energized.data(), 0, -1);
-            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), -1);
+            node_output.get_value(PGM_def_sym_output_node_u_angle, node_result_u_angle.data(), 0, 1, -1);
 
             CHECK(node_result_id[0] == 0);
             CHECK(node_result_energized[0] == 1);
@@ -246,19 +246,19 @@ TEST_CASE("API Model") {
             CHECK(node_result_u_angle[1] == doctest::Approx(0.0));
         };
 
-        SUBCASE("Simple power flow") {
+        SUBCASE("Single power flow") {
             model.calculate(options, single_output_dataset);
-            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
             node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
             CHECK(node_result_u[0] == doctest::Approx(50.0));
             CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
             check_common_node_results();
         }
 
-        SUBCASE("Simple update") {
+        SUBCASE("Permanent update") {
             model.update(single_update_dataset);
             model.calculate(options, single_output_dataset);
-            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
             node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
             CHECK(node_result_u[0] == doctest::Approx(40.0));
             CHECK(node_result_u_pu[0] == doctest::Approx(0.4));
@@ -268,7 +268,7 @@ TEST_CASE("API Model") {
         SUBCASE("Copy model") {
             auto model_copy = Model{model};
             model_copy.calculate(options, single_output_dataset);
-            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), 0, 1, -1);
+            node_output.get_value(PGM_def_sym_output_node_u, node_result_u.data(), -1);
             node_output.get_value(PGM_def_sym_output_node_u_pu, node_result_u_pu.data(), -1);
             CHECK(node_result_u[0] == doctest::Approx(50.0));
             CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
@@ -318,17 +318,17 @@ TEST_CASE("API Model") {
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
             ID const bad_load_id = 0;
-            ID const bad_source_update_id = 1;
+            ID const good_source_update_id = 1;
             load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
+            source_update_buffer.set_value(PGM_def_update_source_id, &good_source_update_id, 0, -1);
             auto const wrong_model_lambda = [&input_dataset]() { Model const wrong_model{50.0, input_dataset}; };
             check_throws_with(wrong_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
         }
 
         SUBCASE("Update error") {
-            ID const bad_load_id = 2;
+            ID const good_load_id = 2;
             ID const bad_source_update_id = 99;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
+            load_buffer.set_value(PGM_def_input_sym_load_id, &good_load_id, -1);
             source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
             auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
             check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
@@ -544,7 +544,7 @@ source_1 -- node_0 --load_2
 
 source and node inputs are row based.
 load input is either row based or columnar.
-load update is row based / columnar and densse / sparse.
+load update is row based / columnar and dense / sparse.
 
 invalid_id_t tests are for testing the error handling of the model when the id is not found in the update dataset.
 optional_id_t tests are for testing the model when the id is not added to the update dataset.
