@@ -136,7 +136,7 @@ def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
     return np.ascontiguousarray(indptr, dtype=IdxNp).ctypes.data_as(IdxPtr)
 
 
-def _get_uniform_buffer_properties(
+def _get_dense_buffer_properties(
     data: ComponentData,
     schema: ComponentMetaData,
     is_batch: bool | None,
@@ -245,7 +245,7 @@ def _get_sparse_buffer_properties(
             if attribute_data.ndim != ndim + schema.dtype[attribute].ndim or attribute_data.shape[:ndim] != shape:
                 raise ValueError(f"Data buffers must be consistent. {VALIDATOR_MSG}")
 
-    contents_size = sum(shape)
+    contents_size = shape[0]
     check_indptr_consistency(indptr, batch_size, contents_size)
 
     is_batch = True
@@ -284,7 +284,7 @@ def get_buffer_properties(
         the properties of the dataset component.
     """
     if not is_sparse(data):
-        return _get_uniform_buffer_properties(data=data, schema=schema, is_batch=is_batch, batch_size=batch_size)
+        return _get_dense_buffer_properties(data=data, schema=schema, is_batch=is_batch, batch_size=batch_size)
 
     if is_batch is not None and not is_batch:
         raise ValueError("Sparse data must be batch data")
@@ -334,7 +334,7 @@ def _get_uniform_buffer_view(
     Returns:
         the C API buffer view.
     """
-    properties = _get_uniform_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
+    properties = _get_dense_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
 
     return CBuffer(
         data=_get_raw_component_data_view(data=data, schema=schema),
