@@ -92,7 +92,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                 assert(attribute_buffer.meta_attribute != nullptr);
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
                 ctype_func_selector(
-                    meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
+                    meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute]<typename AttributeType> {
                         auto& attribute_ref =
                             meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
                         attribute_ref = get_attribute<AttributeType>(attribute_buffer);
