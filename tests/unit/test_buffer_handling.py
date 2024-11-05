@@ -9,7 +9,7 @@ Power grid model buffer handler tests
 import numpy as np
 import pytest
 
-from power_grid_model.core.buffer_handling import _get_sparse_buffer_properties, _get_uniform_buffer_properties
+from power_grid_model.core.buffer_handling import _get_sparse_buffer_properties, _get_dense_buffer_properties
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 
@@ -42,11 +42,11 @@ def load_data(component_type, is_batch, is_sparse, is_columnar):
         pytest.param(ComponentType.asym_load, False, False, id="asym_load-single-row_based"),
     ],
 )
-def test__get_uniform_buffer_properties(component_type, is_batch, is_columnar):
+def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
     data = load_data(component_type, is_batch=is_batch, is_columnar=is_columnar, is_sparse=False)
     schema = power_grid_meta_data[DatasetType.update][component_type]
     batch_size = 2 if is_batch else None
-    properties = _get_uniform_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
+    properties = _get_dense_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
 
     assert not properties.is_sparse
     assert properties.is_batch == is_batch
