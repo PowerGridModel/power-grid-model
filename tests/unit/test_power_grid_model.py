@@ -261,3 +261,102 @@ def test_empty_input():
     result = model.calculate_power_flow()
 
     assert result == {}
+
+
+@pytest.fixture
+def input_sym_load_col(input_row):
+    return compatibility_convert_row_columnar_dataset(
+        input_row,
+        {
+            ComponentType.node: None,
+            ComponentType.source: None,
+            ComponentType.sym_load: ComponentAttributeFilterOptions.relevant,
+        },
+        DatasetType.input,
+    )
+
+
+@pytest.fixture(params=[pytest.param("input_row", id="input_row"), pytest.param("input_sym_load_col", id="input_col")])
+def minimal_input(request):
+    return request.getfixturevalue(request.param)
+
+
+def update_sym_load_row():
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
+    sym_load["id"] = [[2], [2]]
+    sym_load["q_specified"] = [[100.0], [300.0]]
+    return {ComponentType.sym_load: sym_load}
+
+
+def update_sym_load_row_optional_id():
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
+    sym_load["q_specified"] = [[100.0], [300.0]]
+    return {ComponentType.sym_load: sym_load}
+
+
+def update_sym_load_row_invalid_id():
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
+    sym_load["id"] = [[2], [5]]
+    sym_load["q_specified"] = [[100.0], [300.0]]
+    return {ComponentType.sym_load: sym_load}
+
+
+def update_sym_load_col(update_sym_load_row):
+    return compatibility_convert_row_columnar_dataset(
+        update_sym_load_row, ComponentAttributeFilterOptions.relevant, DatasetType.update
+    )
+
+
+def update_sym_load_sparse(update_data):
+    return {
+        ComponentType.sym_load: {
+            "data": update_data[ComponentType.sym_load].reshape(-1),
+            "indptr": np.array([0, 1, 2]),
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "minimal_update",
+    [
+        pytest.param(update_sym_load_row(), id="update_dense_row"),
+        pytest.param(update_sym_load_col(update_sym_load_row()), id="update_dense_col"),
+        pytest.param(update_sym_load_sparse(update_sym_load_row()), id="update_sparse_row"),
+        pytest.param(update_sym_load_col(update_sym_load_sparse(update_sym_load_row())), id="update_sparse_col"),
+    ],
+)
+def test_update_ids_batch(minimal_update, minimal_input):
+    output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=minimal_update)
+    np.testing.assert_almost_equal(output_data[ComponentType.node]["u"], np.array([[90.0], [70.0]]))
+
+
+@pytest.mark.parametrize(
+    "minimal_update",
+    [
+        pytest.param(update_sym_load_row_optional_id(), id="update_dense_row"),
+        pytest.param(update_sym_load_col(update_sym_load_row_optional_id()), id="update_dense_col"),
+        pytest.param(update_sym_load_sparse(update_sym_load_row_optional_id()), id="update_sparse_row"),
+        pytest.param(
+            update_sym_load_col(update_sym_load_sparse(update_sym_load_row_optional_id())), id="update_sparse_col"
+        ),
+    ],
+)
+def test_update_id_optional(minimal_update, minimal_input):
+    output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=minimal_update)
+    np.testing.assert_almost_equal(output_data[ComponentType.node]["u"], np.array([[90.0], [70.0]]))
+
+
+@pytest.mark.parametrize(
+    "minimal_update",
+    [
+        update_sym_load_row_invalid_id(),
+        update_sym_load_col(update_sym_load_row_invalid_id()),
+        update_sym_load_sparse(update_sym_load_row_invalid_id()),
+        update_sym_load_col(update_sym_load_sparse(update_sym_load_row_invalid_id())),
+    ],
+)
+def test_update_id_error(minimal_update, minimal_input):
+    with pytest.raises(PowerGridBatchError) as e:
+        PowerGridModel(minimal_input).calculate_power_flow(update_data=minimal_update)
+    assert e.value.failed_scenarios == [1]
+    assert "The id cannot be found: 5" in e.value.error_messages[0]
