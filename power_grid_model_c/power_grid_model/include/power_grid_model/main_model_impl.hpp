@@ -147,7 +147,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     struct UpdateCompProperties {
         std::string name{};
-        bool has_any_elements{false}; // whether the component has id
+        bool has_any_elements{false}; // whether the component has any elements in the update data
         bool ids_all_na{false};       // whether all ids are all NA
         bool ids_part_na{false};      // whether some ids are NA but some are not
         bool dense{false};            // whether the component is dense // TODO(mgovers): we may be able to remove
@@ -156,35 +156,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         bool is_columnar{false};      // whether the component is columnar
         bool update_ids_match{false}; // whether the ids match
         Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
-        Idx elements_ps_in_update_from_sparse{
-            invalid_index}; // count of elements for this component per scenario in update // TODO(mgovers): merge with
-                            // elements_ps_in_update
-        Idx elements_in_base{invalid_index}; // count of elements for this component per scenario in input
+        Idx elements_in_base{invalid_index};      // count of elements for this component per scenario in input
 
         constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
         constexpr bool no_id_col() const { return is_columnar && no_id(); }
         constexpr bool no_id_row() const { return !is_columnar && no_id(); }
         constexpr bool qualify_for_optional_id() const {
-            return update_ids_match && ids_all_na && uniform && get_elements_ps_in_update() == elements_in_base;
+            return update_ids_match && ids_all_na && uniform && elements_ps_in_update == elements_in_base;
         }
         constexpr bool provided_ids_valid() const {
             return is_empty_component() || (update_ids_match && !(ids_all_na || ids_part_na));
         }
         constexpr bool is_empty_component() const { return !has_any_elements; }
         constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
-        constexpr Idx get_elements_ps_in_update() const {
-            // TODO(mgovers): remove and combine elements_ps_in_update and elements_ps_in_update_from_sparse
-            return dense ? elements_ps_in_update : elements_ps_in_update_from_sparse;
-        }
         constexpr Idx get_n_elements() const {
-            assert(elements_ps_in_update == invalid_index || elements_ps_in_update_from_sparse == invalid_index);
+            assert(uniform || elements_ps_in_update == invalid_index);
 
-            auto const prov_n_elements = get_elements_ps_in_update();
-
-            assert(uniform || prov_n_elements == invalid_index);
-            assert(dense || elements_ps_in_update_from_sparse == elements_in_base);
-
-            return qualify_for_optional_id() ? prov_n_elements : invalid_index;
+            return qualify_for_optional_id() ? elements_ps_in_update : invalid_index;
         }
     };
     using UpdateCompIndependence = std::vector<UpdateCompProperties>;
@@ -789,18 +777,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         Idx const n_scenarios = update_data.batch_size();
 
         auto const check_id_na = [](auto const& obj) -> bool {
-            // if constexpr (requires { obj.id; }) {
-            //     return is_nan(obj.id);
-            // } else if constexpr (requires { obj.get().id; }) {
-            //     return is_nan(obj.get().id);
-            // } else {
-            //     throw UnreachableHit{"check_components_independence", "This cannot exist"};
-            // }
-            // TODO(mgovers): or using direct attribute access.... if so: how?
             if constexpr (requires { obj.id; }) {
                 return is_nan(obj.id);
-            } else if constexpr (requires { obj.template get_attribute<ID>("ID"); }) {
-                return is_nan(obj.template get_attribute<ID>("ID"));
+            } else if constexpr (requires { obj.get().id; }) {
+                return is_nan(obj.get().id);
             } else {
                 throw UnreachableHit{"check_components_independence", "This cannot exist"};
             }
@@ -817,15 +797,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
             // the ids
-            auto const first_span = all_spans[0];
-            // check the subsequent scenarios
-            // only return true if all scenarios match the ids of the first batch
-            result.update_ids_match =
-                std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                    return std::ranges::equal(
-                        current_span, first_span,
-                        [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
-                });
+            if (all_spans.empty()) {
+                result.update_ids_match = true;
+            } else {
+                auto const first_span = all_spans[0];
+                // check the subsequent scenarios
+                // only return true if all scenarios match the ids of the first batch
+                result.update_ids_match = std::ranges::all_of(
+                    all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+                        return std::ranges::equal(
+                            current_span, first_span,
+                            [](UpdateType<CT> const& obj, UpdateType<CT> const& first) { return obj.id == first.id; });
+                    });
+            }
         };
 
         auto const check_each_component = [&update_data, &process_buffer_span,
@@ -839,13 +823,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result.uniform = update_data.is_uniform(result.name);
             result.has_any_elements =
                 comp_index != invalid_index && update_data.get_component_info(comp_index).total_elements > 0;
-            if (result.dense) {
-                result.elements_ps_in_update = update_data.uniform_elements_per_scenario(result.name);
-            } else if (result.uniform) {
-                result.elements_ps_in_update_from_sparse = update_data.uniform_elements_per_scenario(result.name);
-            } else {
-                result.elements_ps_in_update_from_sparse = invalid_index;
-            }
+
+            result.elements_ps_in_update =
+                result.uniform ? update_data.uniform_elements_per_scenario(result.name) : invalid_index;
+
             if (auto it = std::ranges::find_if(
                     all_comp_count_in_base,
                     [&result](ComponentCountInBase const& pair) { return pair.first == result.name; });
@@ -855,50 +836,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 result.elements_in_base = 0;
             }
 
-            // if (result.is_columnar && comp_index != invalid_index) {
-            //     auto const& comp_buffer = update_data.get_buffer(comp_index);
-            //     auto const& comp_info = update_data.get_component_info(comp_index);
-            //     auto const id_idx = comp_buffer.find_attribute("id");
-
-            //     bool const has_id_column = id_idx != invalid_index;
-            //     if (has_id_column) {
-            //         auto const* id_buffer = comp_buffer.template get_col_data_at_index<ID>(id_idx);
-
-            //         result.ids_all_na =
-            //             std::all_of(id_buffer, id_buffer + comp_info.total_elements, [](ID id) { return is_nan(id);
-            //             });
-            //         result.ids_part_na = std::any_of(id_buffer, id_buffer + comp_info.total_elements,
-            //                                          [](ID id) { return is_nan(id); }) &&
-            //                              !result.ids_all_na;
-            //         assert(result.elements_in_base > 0 || result.is_empty_component());
-            //         if (result.uniform) {
-            //             result.update_ids_match = [id_buffer, batch_size = update_data.batch_size(),
-            //                                        elements_ps =
-            //                                            update_data.uniform_elements_per_scenario(comp_index)]() {
-            //                 bool all_match = true;
-            //                 for (Idx component_idx = 0; component_idx < elements_ps; ++component_idx) {
-            //                     for (Idx scenario_idx = 0; scenario_idx < batch_size; ++scenario_idx) {
-            //                         if (id_buffer[component_idx] !=
-            //                             id_buffer[component_idx + elements_ps * scenario_idx]) {
-            //                             all_match = false;
-            //                             break;
-            //                         }
-            //                     }
-            //                     if (!all_match) {
-            //                         break;
-            //                     }
-            //                 }
-            //                 return all_match;
-            //             }();
-            //         } else {
-            //             result.update_ids_match = false;
-            //         }
-            //     } else {                            // no id,
-            //         result.ids_all_na = true;       // no id, all NA
-            //         result.ids_part_na = false;     // no id, no part NA
-            //         result.update_ids_match = true; // no id, all match
-            //     }
-            // } else {
             if (result.is_columnar) {
                 process_buffer_span.template operator()<CT>(
                     update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CT>(), result);
