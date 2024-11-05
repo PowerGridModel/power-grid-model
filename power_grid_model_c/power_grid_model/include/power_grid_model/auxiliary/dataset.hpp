@@ -227,9 +227,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
     MetaDataset const& dataset() const { return *dataset_info_.dataset; }
     Idx n_components() const { return static_cast<Idx>(buffers_.size()); }
     DatasetInfo const& get_description() const { return dataset_info_; }
-    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
+
+    ComponentInfo const& get_component_info(std::string_view component) const {
+        return get_component_info(find_component(component, true));
+    }
+    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
 
     constexpr bool is_row_based(std::string_view component) const {
         Idx const idx = find_component(component, false);
@@ -325,10 +329,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return std::distance(dataset_info_.component_info.cbegin(), found);
     }
     bool contains_component(std::string_view component) const { return find_component(component) >= 0; }
-
-    ComponentInfo const& get_component_info(std::string_view component) const {
-        return get_component_info(find_component(component, true));
-    }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
         requires is_indptr_mutable_v<dataset_type>
