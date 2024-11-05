@@ -789,21 +789,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         Idx const n_scenarios = update_data.batch_size();
 
         auto const check_id_na = [](auto const& obj) -> bool {
-            if constexpr (requires { obj.id; }) {
-                return is_nan(obj.id);
-            } else if constexpr (requires { obj.get().id; }) {
-                return is_nan(obj.get().id);
-            } else {
-                throw UnreachableHit{"check_components_independence", "This cannot exist"};
-            }
-            // // TODO(mgovers): or using direct attribute access.... if so: how?
             // if constexpr (requires { obj.id; }) {
             //     return is_nan(obj.id);
-            // } else if constexpr (requires { obj.template get_attribute<ID>("ID").id; }) {
-            //     return is_nan(obj.template get_attribute<ID>("ID").id);
+            // } else if constexpr (requires { obj.get().id; }) {
+            //     return is_nan(obj.get().id);
             // } else {
             //     throw UnreachableHit{"check_components_independence", "This cannot exist"};
             // }
+            // TODO(mgovers): or using direct attribute access.... if so: how?
+            if constexpr (requires { obj.id; }) {
+                return is_nan(obj.id);
+            } else if constexpr (requires { obj.template get_attribute<ID>("ID"); }) {
+                return is_nan(obj.template get_attribute<ID>("ID"));
+            } else {
+                throw UnreachableHit{"check_components_independence", "This cannot exist"};
+            }
         };
 
         auto const process_buffer_span = [check_id_na]<typename CT>(auto const& all_spans,
