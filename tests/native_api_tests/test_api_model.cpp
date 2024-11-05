@@ -339,8 +339,8 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error in calculation") {
-            load_id = 2;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
+            ID const bad_load_id = 2;
+            load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
             DatasetConst bad_batch_update_dataset{"update", 1, 2};
             bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
                                                 source_update_buffer.get());
