@@ -880,9 +880,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             throw DatasetError("Update data without IDs for component " + comp.name +
                                " has a different number of elements per scenario then input data!");
         }
-        if (!comp.is_columnar && comp.ids_all_na) {
-            throw DatasetError("Row based update data without IDs for component " + comp.name + " is not supported!");
-        }
     }
 
     // Calculate with optimization, e.g., automatic tap changer
