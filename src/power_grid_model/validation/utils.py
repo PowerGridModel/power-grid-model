@@ -123,8 +123,10 @@ def _update_component_array_data(
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
     """
-    optional_ids_active = "id" in update_data.dtype.names and np.all(
-        update_data["id"] == np.iinfo(update_data["id"].dtype).min
+    optional_ids_active = (
+        "id" in update_data.dtype.names
+        and np.all(update_data["id"] == np.iinfo(update_data["id"].dtype).min)
+        and len(update_data["id"]) == len(input_data["id"])
     )
     update_data_ids = input_data["id"] if optional_ids_active else update_data["id"]
 
