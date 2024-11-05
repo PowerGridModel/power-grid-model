@@ -330,7 +330,6 @@ def test_update_ids_batch(minimal_update, minimal_input):
     np.testing.assert_almost_equal(output_data[ComponentType.node]["u"], np.array([[90.0], [70.0]]))
 
 
-@pytest.mark.xfail(reason="The current implementation does not support optional ids.")
 @pytest.mark.parametrize(
     "minimal_update",
     [
