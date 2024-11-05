@@ -478,7 +478,7 @@ TEST_CASE("API Model") {
         input_dataset_col.add_attribute_buffer("sym_load", "q_specified", input_sym_load_q_specified.data());
 
         // update dataset
-        std::vector<Idx> input_source_indptr{0, 1, 2};
+        std::vector<Idx> update_source_indptr{0, 1, 2};
         std::vector<ID> const update_source_id{1, 1};
         std::vector<double> const update_source_u_ref{0.5, 1.0};
         Buffer update_source_buffer{PGM_def_update_source, 2};
@@ -486,7 +486,7 @@ TEST_CASE("API Model") {
         update_source_buffer.set_value(PGM_def_update_source_id, update_source_id.data(), -1);
         update_source_buffer.set_value(PGM_def_update_source_u_ref, update_source_u_ref.data(), -1);
 
-        std::vector<Idx> input_sym_load_indptr{0, 1, 2};
+        std::vector<Idx> update_sym_load_indptr{0, 1, 2};
         std::vector<ID> const update_sym_load_id{2, 5};
         std::vector<double> const update_sym_load_q_specified{100.0, 300.0};
         Buffer update_sym_load_buffer{PGM_def_update_sym_load, 2};
@@ -496,25 +496,25 @@ TEST_CASE("API Model") {
 
         // update dataset - row
         DatasetConst update_dataset_row{"update", 1, 2};
-        update_dataset_row.add_buffer("source", -1, 2, input_source_indptr.data(), update_source_buffer);
-        update_dataset_row.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(), update_sym_load_buffer);
+        update_dataset_row.add_buffer("source", -1, 2, update_source_indptr.data(), update_source_buffer);
+        update_dataset_row.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(), update_sym_load_buffer);
 
         // update dataset - col
         DatasetConst update_dataset_col{"update", 1, 2};
         DatasetConst update_dataset_col_no_id{"update", 1, 2};
 
-        update_dataset_col.add_buffer("source", -1, 2, input_source_indptr.data(), nullptr);
+        update_dataset_col.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
         update_dataset_col.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
 
-        update_dataset_col.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(), nullptr);
+        update_dataset_col.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("sym_load", "id", update_sym_load_id.data());
         update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
-        update_dataset_col_no_id.add_buffer("source", -1, 2, input_source_indptr.data(), nullptr);
+        update_dataset_col_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
         update_dataset_col_no_id.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
 
-        update_dataset_col_no_id.add_buffer("sym_load", -1, 2, input_sym_load_indptr.data(), nullptr);
+        update_dataset_col_no_id.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(), nullptr);
         update_dataset_col_no_id.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // output data
@@ -541,7 +541,7 @@ TEST_CASE("API Model") {
                 row_model.calculate(batch_options, batch_output, update_dataset_col_no_id);
             }
             SUBCASE("Columnar update dataset wo id - non-uniform") {
-                input_source_indptr = {0, 1, 1};
+                update_source_indptr = {0, 1, 1};
                 CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output, update_dataset_col_no_id),
                                 PowerGridBatchError);
             }
@@ -562,7 +562,7 @@ TEST_CASE("API Model") {
                 col_model.calculate(batch_options, batch_output, update_dataset_col_no_id);
             }
             SUBCASE("Columnar update dataset wo id - non-uniform") {
-                input_source_indptr = {0, 1, 1};
+                update_source_indptr = {0, 1, 1};
                 CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output, update_dataset_col_no_id),
                                 PowerGridBatchError);
             }
