@@ -17,7 +17,7 @@ from power_grid_model import (
 )
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
-from power_grid_model.utils import get_dataset_scenario, json_serialize_to_file
+from power_grid_model.utils import get_dataset_scenario
 from power_grid_model.validation import assert_valid_input_data
 
 from .utils import compare_result
@@ -67,51 +67,6 @@ def input_row():
         ComponentType.node: node,
         ComponentType.source: source,
         ComponentType.sym_load: sym_load,
-    }
-
-
-@pytest.fixture
-def input_col_cpp():
-    node = initialize_array(DatasetType.input, ComponentType.node, 2)
-    node["id"] = [0, 4]
-    node["u_rated"] = [100.0, 100.0]
-
-    source = initialize_array(DatasetType.input, ComponentType.source, 1)
-    source["id"] = 1
-    source["node"] = 0
-    source["status"] = 1
-    source["u_ref"] = 1.0
-    source["sk"] = 1000.0
-    source["rx_ratio"] = 0.0
-
-    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
-    sym_load["id"] = 2
-    sym_load["node"] = 0
-    sym_load["status"] = 1
-    sym_load["type"] = 2
-    sym_load["p_specified"] = 0.0
-    sym_load["q_specified"] = 500.0
-
-    line = {}
-    line["id"] = np.array([5, 6], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["id"])
-    line["from_node"] = np.array(
-        [0, 4], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_node"]
-    )
-    line["to_node"] = np.array(
-        [4, 0], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_node"]
-    )
-    line["from_status"] = np.array(
-        [0, 1], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["from_status"]
-    )
-    line["to_status"] = np.array(
-        [1, 0], dtype=power_grid_meta_data[DatasetType.input][ComponentType.line].dtype["to_status"]
-    )
-
-    return {
-        ComponentType.node: node,
-        ComponentType.source: source,
-        ComponentType.sym_load: sym_load,
-        ComponentType.line: line,
     }
 
 

@@ -179,10 +179,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Data* data{nullptr};
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
+
         Idx find_attribute(std::string_view attr_name) const {
             if (data == nullptr && std::ranges::all_of(attributes, [](auto const& x) { return x.data == nullptr; })) {
                 return invalid_index;
             }
+            assert(data == nullptr); // assume columnar buffer
 
             auto const found = std::ranges::find_if(
                 attributes, [attr_name](auto const& x) { return x.meta_attribute->name == attr_name; });
@@ -273,6 +275,63 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return !is_row_based(buffer) && !(with_attribute_buffers && buffer.attributes.empty());
     }
 
+    constexpr bool is_dense(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return true; // by definition
+        }
+        return is_dense(idx);
+    }
+    constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[i]); }
+    constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
+    constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_sparse(idx, with_attribute_buffers);
+    }
+    constexpr bool is_sparse(Idx const i, bool with_attribute_buffers = false) const {
+        return is_sparse(buffers_[i], with_attribute_buffers);
+    }
+    constexpr bool is_sparse(Buffer const& buffer) const { return !is_dense(buffer); }
+
+    constexpr bool is_uniform(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return true; // by definition
+        }
+        return is_uniform(idx);
+    }
+    constexpr bool is_uniform(Idx const i) const { return is_uniform(buffers_[i]); }
+    constexpr bool is_uniform(Buffer const& buffer) const {
+        if (is_dense(buffer)) {
+            return true;
+        }
+        assert(buffer.indptr.size() > 1);
+        auto const first_scenario_size = buffer.indptr[1] - buffer.indptr[0];
+        return std::ranges::adjacent_find(buffer.indptr, [first_scenario_size](Idx start, Idx stop) {
+                   return stop - start != first_scenario_size;
+               }) == buffer.indptr.end();
+    }
+
+    constexpr Idx uniform_elements_per_scenario(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return 0;
+        }
+        return uniform_elements_per_scenario(idx);
+    }
+    constexpr Idx uniform_elements_per_scenario(Idx const i) const {
+        assert(is_uniform(i));
+        if (is_dense(i)) {
+            return get_component_info(i).elements_per_scenario;
+        }
+        auto const& indptr = buffers_[i].indptr;
+        assert(indptr.size() > 1);
+        return indptr[1] - indptr[0];
+    }
+
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
             return x.component->name == component;
@@ -289,7 +348,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     bool contains_component(std::string_view component) const { return find_component(component) >= 0; }
 
     ComponentInfo const& get_component_info(std::string_view component) const {
-        return dataset_info_.component_info[find_component(component, true)];
+        return get_component_info(find_component(component, true));
     }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
