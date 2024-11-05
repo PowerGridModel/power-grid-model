@@ -424,8 +424,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 if (auto const comp_idx =
                         std::ranges::find_if(comp_independence, [](auto const& comp) { return comp.name == CT::name; });
                     comp_idx != comp_independence.end()) {
-                    if ((*comp_idx).no_id_col() || (*comp_idx).no_id_row()) {
-                        return (*comp_idx).get_n_elements();
+                    if (comp_idx->no_id_col() || comp_idx->no_id_row()) {
+                        return comp_idx->get_n_elements();
                     }
                 }
                 return na_Idx;
@@ -793,11 +793,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     all_spans, [&check_id_na](auto const& vec) { return std::ranges::any_of(vec, check_id_na); }) &&
                 !result.ids_all_na;
 
-            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and check
-            // the ids
             if (all_spans.empty()) {
                 result.update_ids_match = true;
             } else {
+                // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
+                // check the ids
                 auto const first_span = all_spans[0];
                 // check the subsequent scenarios
                 // only return true if all scenarios match the ids of the first batch
