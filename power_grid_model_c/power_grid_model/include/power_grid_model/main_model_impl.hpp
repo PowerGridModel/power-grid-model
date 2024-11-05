@@ -423,10 +423,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             Idx const n_comp_elements = [&comp_independence]() {
                 if (auto const comp_idx =
                         std::ranges::find_if(comp_independence, [](auto const& comp) { return comp.name == CT::name; });
-                    comp_idx != comp_independence.end()) {
-                    if (comp_idx->no_id_col() || comp_idx->no_id_row()) {
-                        return comp_idx->get_n_elements();
-                    }
+                    comp_idx == comp_independence.end()) {
+                    return na_Idx;
+                }
+                if (comp_idx->no_id_col() || comp_idx->no_id_row()) {
+                    return comp_idx->get_n_elements();
                 }
                 return na_Idx;
             }();
@@ -845,8 +846,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return run_functor_with_all_types_return_vector(check_each_component);
     }
 
-    std::unordered_map<std::string, bool> is_update_independent(ConstDataset const& update_data) {
-        std::unordered_map<std::string, bool> result;
+    std::unordered_map<std::string, bool, std::hash<std::string_view>, std::equal_to<>>
+    is_update_independent(ConstDataset const& update_data) {
+        std::unordered_map<std::string, bool, std::hash<std::string_view>, std::equal_to<>> result;
 
         // If the batch size is (0 or) 1, then the update data for this component is 'independent'
         if (update_data.batch_size() <= 1) {

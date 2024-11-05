@@ -520,8 +520,8 @@ TEST_CASE("API Model") {
         // output data
         Buffer batch_node_output{PGM_def_sym_output_node, 2};
         batch_node_output.set_nan();
-        DatasetMutable batch_output_dataset{"sym_output", 1, 2};
-        batch_output_dataset.add_buffer("node", 1, 2, nullptr, batch_node_output);
+        DatasetMutable batch_output{"sym_output", 1, 2};
+        batch_output.add_buffer("node", 1, 2, nullptr, batch_node_output);
 
         // options
         Options const batch_options{};
@@ -530,19 +530,19 @@ TEST_CASE("API Model") {
             Model row_model{50.0, input_dataset_row};
 
             SUBCASE("Row-based update dataset error") {
-                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_row),
+                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output, update_dataset_row),
                                 PowerGridBatchError);
             }
             SUBCASE("Columnar update dataset error") {
-                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_col),
+                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output, update_dataset_col),
                                 PowerGridBatchError);
             }
             SUBCASE("Columnar update dataset wo id") {
-                row_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id);
+                row_model.calculate(batch_options, batch_output, update_dataset_col_no_id);
             }
             SUBCASE("Columnar update dataset wo id - non-uniform") {
                 input_source_indptr = {0, 1, 1};
-                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id),
+                CHECK_THROWS_AS(row_model.calculate(batch_options, batch_output, update_dataset_col_no_id),
                                 PowerGridBatchError);
             }
         }
@@ -551,19 +551,19 @@ TEST_CASE("API Model") {
             Model col_model{50.0, input_dataset_col};
 
             SUBCASE("Row-based update dataset error") {
-                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_row),
+                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output, update_dataset_row),
                                 PowerGridBatchError);
             }
             SUBCASE("Columnar update dataset error") {
-                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_col),
+                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output, update_dataset_col),
                                 PowerGridBatchError);
             }
             SUBCASE("Columnar update dataset wo id") {
-                col_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id);
+                col_model.calculate(batch_options, batch_output, update_dataset_col_no_id);
             }
             SUBCASE("Columnar update dataset wo id - non-uniform") {
                 input_source_indptr = {0, 1, 1};
-                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output_dataset, update_dataset_col_no_id),
+                CHECK_THROWS_AS(col_model.calculate(batch_options, batch_output, update_dataset_col_no_id),
                                 PowerGridBatchError);
             }
         }
