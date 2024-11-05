@@ -773,7 +773,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
         auto const all_comp_count_in_base = this->all_component_count();
-        Idx const n_scenarios = update_data.batch_size();
 
         auto const check_id_na = [](auto const& obj) -> bool {
             if constexpr (requires { obj.id; }) {
