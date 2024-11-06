@@ -320,13 +320,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     update_component(ConstDataset const& update_data, Idx pos,
                      std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types> const& sequence_idx_map) {
         run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map).get());
+            this->update_component<CT, CacheType>(update_data, pos,
+                                                  std::get<index_of_component<CT>>(sequence_idx_map).get());
         });
     }
     template <cache_type_c CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
         run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
+            this->update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
         });
     }
 
