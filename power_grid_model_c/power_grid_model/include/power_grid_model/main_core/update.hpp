@@ -36,12 +36,12 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
                                    ForwardIterator end, OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
-    if (n_comp_elements == na_Idx) {
+    if (n_comp_elements < 0) {
         std::ranges::transform(begin, end, destination, [&state](UpdateType const& update) {
             return get_component_idx_by_id<Component>(state, update.id);
         });
     } else {
-        assert(std::distance(begin, end) <= n_comp_elements || begin == end);
+        assert(std::distance(begin, end) <= n_comp_elements);
         std::ranges::transform(
             begin, end, destination,
             [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {

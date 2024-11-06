@@ -162,7 +162,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         constexpr Idx get_n_elements() const {
             assert(uniform || elements_ps_in_update == invalid_index);
 
-            return qualify_for_optional_id() ? elements_ps_in_update : invalid_index;
+            return qualify_for_optional_id() ? elements_ps_in_update : na_Idx;
         }
     };
     using UpdateCompIndependence = std::array<UpdateCompProperties, n_types>;
@@ -423,7 +423,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // TODO: (jguo) this function could be encapsulated in UpdateCompProperties in update.hpp
         auto const get_sequence = [this, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
             return main_core::get_component_sequence<CompType>(
-                state_, std::begin(span), std::end(span), n_comp_elements == invalid_index ? na_Idx : n_comp_elements);
+                state_, std::begin(span), std::end(span), n_comp_elements);
         };
         if (update_data.is_columnar(CompType::name)) {
             auto const buffer_span =
