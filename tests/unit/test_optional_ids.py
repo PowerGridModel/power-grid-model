@@ -169,7 +169,5 @@ def update_data(update_sym_load, update_line):
 
 def test_power_flow(input_data, update_data):
     model = PowerGridModel(input_data)
-    assert_valid_batch_data(
-        input_data=input_data, update_data=update_data, calculation_type=CalculationType.power_flow
-    )
+    assert_valid_batch_data(input_data=input_data, update_data=update_data, calculation_type=CalculationType.power_flow)
     model.calculate_power_flow(update_data=update_data)
