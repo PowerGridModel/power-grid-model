@@ -12,8 +12,26 @@ from power_grid_model.core.data_handling import create_output_data
 from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model.core.power_grid_core import VoidPtr
 from power_grid_model.core.power_grid_dataset import CMutableDataset
-from power_grid_model.core.power_grid_meta import initialize_array
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
+from power_grid_model.enum import ComponentAttributeFilterOptions
 
+
+def columnnar_output_array(component_type, n_components, batch_size_tuple=(), attributes=None):
+    component_dtype = power_grid_meta_data[DT.sym_output][component_type].dtype
+    attributes = component_dtype.names if attributes is None else attributes
+    return {
+        attr: np.empty(n_components + batch_size_tuple, dtype=component_dtype[attr])
+        for attr in component_dtype.names
+        if attr in attributes
+    }
+
+def row_output_array(component_type, n_components, batch_size_tuple=()):
+    return initialize_array(DT.sym_output, component_type, n_components + batch_size_tuple)
+
+
+@pytest.fixture(params=[(), (15,)])
+def batch_size(request):
+    return request.param
 
 @pytest.mark.parametrize(
     ("output_component_types", "is_batch", "expected"),
@@ -44,15 +62,55 @@ from power_grid_model.core.power_grid_meta import initialize_array
             },
         ),
         pytest.param(
-            {CT.node: [], CT.sym_load: []}, True, {CT.node: dict(), CT.sym_load: dict()}, marks=pytest.mark.xfail
+            ComponentAttributeFilterOptions.relevant,
+            False,
+            {
+                CT.node: columnnar_output_array(CT.node, 4),
+                CT.sym_load: columnnar_output_array(CT.sym_load, 3),
+                CT.source: columnnar_output_array(CT.source, 1),
+            },
         ),
-        pytest.param({CT.node: [], CT.sym_load: ["p"]}, True, {}, marks=pytest.mark.xfail),
-        pytest.param({CT.node: ["u"], CT.sym_load: ["p"]}, True, {}, marks=pytest.mark.xfail),
-        pytest.param({CT.node: None, CT.sym_load: ["p"]}, True, {}, marks=pytest.mark.xfail),
+        pytest.param(
+            {CT.node: ComponentAttributeFilterOptions.everything, CT.sym_load: ComponentAttributeFilterOptions.relevant},
+            False,
+            {
+                CT.node: columnnar_output_array(CT.node, 4),
+                CT.sym_load: columnnar_output_array(CT.sym_load, 3),
+            },
+        ),
+        pytest.param(
+            {CT.node: ComponentAttributeFilterOptions.relevant, CT.sym_load: ["p"]},
+            False,
+            {
+                CT.node: columnnar_output_array(CT.node, 4),
+                CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"]),
+            },
+        ),
+        pytest.param(
+            {CT.node: None, CT.sym_load: ["p"]},
+            False,
+            {
+                CT.node: initialize_array(DT.sym_output, CT.node, 4),
+                CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"]),
+            },
+        ),
+        pytest.param({CT.node: [], CT.sym_load: []}, False, {CT.node: dict(), CT.sym_load: dict()}),
+        pytest.param(
+            {CT.node: [], CT.sym_load: ["p"]},
+            False,
+            {CT.node: dict(), CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"])},
+        ),
+        pytest.param(
+            {CT.node: ["u"], CT.sym_load: ["p"]},
+            False,
+            {
+                CT.node: columnnar_output_array(CT.node, 4, ["u"]),
+                CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"]),
+            },
+        ),
     ],
 )
 def test_create_output_data(output_component_types, is_batch, expected):
-    # TODO use is_batch and shorten parameterization after columnar data implementation
     all_component_count = {CT.node: 4, CT.sym_load: 3, CT.source: 1}
     batch_size = 15 if is_batch else 1
     actual = create_output_data(

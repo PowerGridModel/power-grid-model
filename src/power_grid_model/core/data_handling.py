@@ -6,13 +6,14 @@
 Data handling
 """
 
+import numpy as np
 
 from power_grid_model._utils import process_data_filter
 from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
-from power_grid_model.core.power_grid_meta import initialize_array
+from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import Dataset, SingleDataset
-from power_grid_model.enum import CalculationType
+from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
 from power_grid_model.typing import ComponentAttributeMapping
 
 
@@ -121,5 +122,13 @@ def create_output_data(
             shape: tuple[int] | tuple[int, int] = (batch_size, count)
         else:
             shape = (count,)
-        result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
+
+        dtype = power_grid_meta_data[output_type][name].dtype
+        if processed_output_types[name] is None:
+            result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
+        elif isinstance(processed_output_types[name], ComponentAttributeFilterOptions):
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in dtype.names}
+        elif isinstance(processed_output_types[name], list | set):
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in processed_output_types[name]}
+
     return result_dict

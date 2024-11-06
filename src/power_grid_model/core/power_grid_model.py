@@ -303,12 +303,6 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-        output_data = compatibility_convert_row_columnar_dataset(
-            data=output_data,
-            data_filter=output_component_types,
-            dataset_type=get_output_type(calculation_type=calculation_type, symmetric=symmetric),
-            available_components=list(self._get_output_component_count(calculation_type=calculation_type).keys()),
-        )
         return output_data
 
     def _calculate_power_flow(
