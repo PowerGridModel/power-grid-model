@@ -194,7 +194,7 @@ def update_line_row():
 
 @pytest.fixture
 def update_line_no_id_row():
-    line = initialize_array(DatasetType.update, ComponentType.line, 1)
+    line = initialize_array(DatasetType.update, ComponentType.line, 3)
     line["from_status"] = [0, 1, 1]
     return line
 
