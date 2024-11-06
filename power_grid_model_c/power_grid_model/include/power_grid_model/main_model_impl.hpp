@@ -347,8 +347,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // update all components
-    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data, Idx pos = 0) {
-        update_component<CacheType>(update_data, pos, get_sequence_idx_map(update_data));
+    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data) {
+        update_component<CacheType>(update_data, 0, get_sequence_idx_map(update_data.get_individual_scenario(0)));
     }
 
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
@@ -378,8 +378,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         restore_components(
             std::array{std::span<Idx2D const>{std::get<index_of_component<ComponentType>>(sequence_idx)}...});
     }
-
-    void restore_components(ConstDataset const& update_data) { restore_components(get_sequence_idx_map(update_data)); }
 
     // set complete construction
     // initialize internal arrays
@@ -449,14 +447,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
         return get_sequence(buffer_span);
-    }
-    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
-                                     UpdateCompIndependence const& all_comp_independence = {}) const {
-        // TODO(mgovers): remove this function?
-        return run_functor_with_all_types_return_array([this, &update_data, scenario_idx,
-                                                        &all_comp_independence]<typename CT>() {
-            return get_component_sequence<CT>(update_data, scenario_idx, all_comp_independence[index_of_component<CT>]);
-        });
     }
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
                                      ComponentFlags const& to_store) const {
