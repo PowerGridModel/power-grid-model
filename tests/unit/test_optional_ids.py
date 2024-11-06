@@ -229,10 +229,109 @@ def update_dataset(update_sym_load, update_line):
     }
 
 
-def test_assert_valid_data(input_dataset, update_dataset):
+@pytest.fixture
+def batch_update_sym_load_row():
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 2))
+    sym_load["id"] = [[4], [7]]
+    sym_load["p_specified"] = [[30e6], [15e6]]
+    return sym_load
+
+
+@pytest.fixture
+def batch_update_sym_load_no_id_row():
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 2))
+    sym_load["p_specified"] = [[30e6, 10e6], [30e6, 15e6]]
+    return sym_load
+
+
+@pytest.fixture
+def batch_update_sym_load_col():
+    source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
+    return {
+        "id": np.array([[4], [7]], dtype=source_attribute_dtypes["id"]),
+        "p_specified": np.array([[30e6], [15e6]], dtype=source_attribute_dtypes["p_specified"]),
+    }
+
+
+@pytest.fixture
+def batch_update_sym_load_no_id_col():
+    source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
+    return {
+        "p_specified": np.array([[30e6, 10e6], [30e6, 15e6]], dtype=source_attribute_dtypes["p_specified"]),
+    }
+
+
+@pytest.fixture(
+    params=[
+        "batch_update_sym_load_row",
+        "batch_update_sym_load_no_id_row",
+        "batch_update_sym_load_col",
+        "batch_update_sym_load_no_id_col",
+    ]
+)
+def batch_update_sym_load(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture
+def batch_update_line_row():
+    line = initialize_array(DatasetType.update, ComponentType.line, (2, 1))
+    line["id"] = [[3], [5]]
+    line["from_status"] = [[0], [0]]
+    return line
+
+
+@pytest.fixture
+def batch_update_line_no_id_row():
+    line = initialize_array(DatasetType.update, ComponentType.line, (2, 3))
+    line["from_status"] = [[0, 1, 1], [0, 0, 1]]
+    return line
+
+
+@pytest.fixture
+def batch_update_line_col():
+    source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
+    return {
+        "id": np.array([[3], [5]], dtype=source_attribute_dtypes["id"]),
+        "from_status": np.array([[0], [0]], dtype=source_attribute_dtypes["from_status"]),
+    }
+
+
+@pytest.fixture
+def batch_update_line_no_id_col():
+    source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
+    return {
+        "from_status": np.array([[0, 1, 1], [0, 0, 1]], dtype=source_attribute_dtypes["from_status"]),
+    }
+
+
+@pytest.fixture(
+    params=[
+        "batch_update_line_row",
+        "batch_update_line_no_id_row",
+        "batch_update_line_col",
+        "batch_update_line_no_id_col",
+    ]
+)
+def batch_update_line(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture
+def batch_update_dataset(batch_update_sym_load, batch_update_line):
+    return {
+        ComponentType.sym_load: batch_update_sym_load,
+        ComponentType.line: batch_update_line,
+    }
+
+
+def test_assert_valid_data(input_dataset, update_dataset, batch_update_dataset):
     assert_valid_input_data(input_data=input_dataset, calculation_type=CalculationType.power_flow)
     assert_valid_batch_data(
         input_data=input_dataset, update_data=update_dataset, calculation_type=CalculationType.power_flow
+    )
+    assert_valid_batch_data(
+        input_data=input_dataset, update_data=batch_update_dataset, calculation_type=CalculationType.power_flow
     )
 
 
@@ -242,6 +341,6 @@ def test_permanent_update_and_power_flow(input_dataset, update_dataset):
     model.calculate_power_flow()
 
 
-def test_power_flow(input_dataset, update_dataset):
+def test_power_flow(input_dataset, batch_update_dataset):
     model = PowerGridModel(input_dataset)
-    model.calculate_power_flow(update_data=update_dataset)
+    model.calculate_power_flow(update_data=batch_update_dataset)
