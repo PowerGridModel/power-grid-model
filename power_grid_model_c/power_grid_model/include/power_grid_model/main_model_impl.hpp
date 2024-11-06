@@ -642,7 +642,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto model = copy_model_functor(start);
 
             SequenceIdx current_scenario_sequence_cache = SequenceIdx{};
-            std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types> current_scenario_sequence =
+            std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types> const current_scenario_sequence =
                 run_functor_with_all_types_return_array(
                     [&is_independent, &all_scenarios_sequence, &current_scenario_sequence_cache]<typename CT>() {
                         constexpr auto comp_idx = index_of_component<CT>;
