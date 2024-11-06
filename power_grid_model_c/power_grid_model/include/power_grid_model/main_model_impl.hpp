@@ -304,7 +304,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void update_component(ConstDataset const& update_data, Idx pos, std::span<Idx2D const> sequence_idx) {
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
-        constexpr auto component_index = index_of_component<CompType>;
 
         if (update_data.is_columnar(CompType::name)) {
             this->update_component<CompType, CacheType>(
