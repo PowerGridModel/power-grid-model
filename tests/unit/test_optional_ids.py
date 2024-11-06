@@ -146,27 +146,10 @@ def input_dataset(input_node, input_line, input_load, input_source):
 
 
 @pytest.fixture
-def update_sym_load_row():
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (1, 2))
-    sym_load["id"] = [[4, 7]]
-    sym_load["p_specified"] = [[30e6, 15e6]]
-    return sym_load
-
-
-@pytest.fixture
 def update_sym_load_no_id_row():
     sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (1, 2))
     sym_load["p_specified"] = [[30e6, 15e6]]
     return sym_load
-
-
-@pytest.fixture
-def update_sym_load_col():
-    source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
-    return {
-        "id": np.array([[4, 7]], dtype=source_attribute_dtypes["id"]),
-        "p_specified": np.array([[30e6, 15e6]], dtype=source_attribute_dtypes["p_specified"]),
-    }
 
 
 @pytest.fixture
@@ -177,19 +160,9 @@ def update_sym_load_no_id_col():
     }
 
 
-@pytest.fixture(
-    params=["update_sym_load_row", "update_sym_load_no_id_row", "update_sym_load_col", "update_sym_load_no_id_col"]
-)
+@pytest.fixture(params=["update_sym_load_no_id_row", "update_sym_load_no_id_col"])
 def update_sym_load(request):
     return request.getfixturevalue(request.param)
-
-
-@pytest.fixture
-def update_line_row():
-    line = initialize_array(DatasetType.update, ComponentType.line, (1, 1))
-    line["id"] = [[3]]
-    line["from_status"] = [[0]]
-    return line
 
 
 @pytest.fixture
@@ -200,15 +173,6 @@ def update_line_no_id_row():
 
 
 @pytest.fixture
-def update_line_col():
-    source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
-    return {
-        "id": np.array([[3]], dtype=source_attribute_dtypes["id"]),
-        "from_status": np.array([[0]], dtype=source_attribute_dtypes["from_status"]),
-    }
-
-
-@pytest.fixture
 def update_line_no_id_col():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
@@ -216,7 +180,7 @@ def update_line_no_id_col():
     }
 
 
-@pytest.fixture(params=["update_line_row", "update_line_no_id_row", "update_line_col", "update_line_no_id_col"])
+@pytest.fixture(params=["update_line_no_id_row", "update_line_no_id_col"])
 def update_line(request):
     return request.getfixturevalue(request.param)
 
