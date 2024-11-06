@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from functools import partial
 import warnings
 
 import numpy as np
@@ -16,111 +17,117 @@ from power_grid_model.core.power_grid_meta import initialize_array, power_grid_m
 from power_grid_model.enum import ComponentAttributeFilterOptions
 
 
-def columnnar_output_array(component_type, n_components, batch_size_tuple=(), attributes=None):
+def columnar_array(component_type, n_components, attributes=None, batch_size_tuple=()):
     component_dtype = power_grid_meta_data[DT.sym_output][component_type].dtype
     attributes = component_dtype.names if attributes is None else attributes
     return {
-        attr: np.empty(n_components + batch_size_tuple, dtype=component_dtype[attr])
+        attr: np.empty((n_components,) + batch_size_tuple, dtype=component_dtype[attr])
         for attr in component_dtype.names
         if attr in attributes
     }
 
-def row_output_array(component_type, n_components, batch_size_tuple=()):
-    return initialize_array(DT.sym_output, component_type, n_components + batch_size_tuple)
+
+def row_array(component_type, n_components, batch_size_tuple=()):
+    return initialize_array(DT.sym_output, component_type, (n_components,) + batch_size_tuple)
 
 
 @pytest.fixture(params=[(), (15,)])
 def batch_size(request):
     return request.param
 
+
 @pytest.mark.parametrize(
-    ("output_component_types", "is_batch", "expected"),
+    ("output_component_types", "expected_fns"),
     [
         (
             None,
-            False,
             {
-                CT.node: initialize_array(DT.sym_output, CT.node, 4),
-                CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
-                CT.source: initialize_array(DT.sym_output, CT.source, 1),
+                CT.node: partial(row_array, CT.node, 4),
+                CT.sym_load: partial(row_array, CT.sym_load, 3),
+                CT.source: partial(row_array, CT.source, 1),
             },
         ),
         (
             [CT.node, CT.sym_load],
-            False,
             {
-                CT.node: initialize_array(DT.sym_output, CT.node, 4),
-                CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
+                CT.node: partial(row_array, CT.node, 4),
+                CT.sym_load: partial(row_array, CT.sym_load, 3),
             },
         ),
         (
             {CT.node, CT.sym_load},
-            False,
             {
-                CT.node: initialize_array(DT.sym_output, CT.node, 4),
-                CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
+                CT.node: partial(row_array, CT.node, 4),
+                CT.sym_load: partial(row_array, CT.sym_load, 3),
             },
         ),
         pytest.param(
             ComponentAttributeFilterOptions.relevant,
-            False,
             {
-                CT.node: columnnar_output_array(CT.node, 4),
-                CT.sym_load: columnnar_output_array(CT.sym_load, 3),
-                CT.source: columnnar_output_array(CT.source, 1),
+                CT.node: partial(columnar_array, CT.node, 4, None),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, None),
+                CT.source: partial(columnar_array, CT.source, 1, None),
             },
         ),
         pytest.param(
-            {CT.node: ComponentAttributeFilterOptions.everything, CT.sym_load: ComponentAttributeFilterOptions.relevant},
-            False,
             {
-                CT.node: columnnar_output_array(CT.node, 4),
-                CT.sym_load: columnnar_output_array(CT.sym_load, 3),
+                CT.node: ComponentAttributeFilterOptions.everything,
+                CT.sym_load: ComponentAttributeFilterOptions.relevant,
+            },
+            {
+                CT.node: partial(columnar_array, CT.node, 4, None),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, None),
             },
         ),
         pytest.param(
             {CT.node: ComponentAttributeFilterOptions.relevant, CT.sym_load: ["p"]},
-            False,
             {
-                CT.node: columnnar_output_array(CT.node, 4),
-                CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"]),
+                CT.node: partial(columnar_array, CT.node, 4, None),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, ["p"]),
             },
         ),
         pytest.param(
             {CT.node: None, CT.sym_load: ["p"]},
-            False,
             {
-                CT.node: initialize_array(DT.sym_output, CT.node, 4),
-                CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"]),
+                CT.node: partial(row_array, CT.node, 4),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, ["p"]),
             },
         ),
-        pytest.param({CT.node: [], CT.sym_load: []}, False, {CT.node: dict(), CT.sym_load: dict()}),
+        pytest.param(
+            {CT.node: [], CT.sym_load: []},
+            {
+                CT.node: partial(columnar_array, CT.node, 4, []),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, []),
+            },
+        ),
         pytest.param(
             {CT.node: [], CT.sym_load: ["p"]},
-            False,
-            {CT.node: dict(), CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"])},
+            {
+                CT.node: partial(columnar_array, CT.node, 4, []),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, ["p"]),
+            },
         ),
         pytest.param(
             {CT.node: ["u"], CT.sym_load: ["p"]},
-            False,
             {
-                CT.node: columnnar_output_array(CT.node, 4, ["u"]),
-                CT.sym_load: columnnar_output_array(CT.sym_load, 3, ["p"]),
+                CT.node: partial(columnar_array, CT.node, 4, ["u"]),
+                CT.sym_load: partial(columnar_array, CT.sym_load, 3, ["p"]),
             },
         ),
     ],
 )
-def test_create_output_data(output_component_types, is_batch, expected):
+def test_create_output_data(output_component_types, expected_fns, batch_size):
+    """Test output_data creation. Batch size is set later in the test."""
     all_component_count = {CT.node: 4, CT.sym_load: 3, CT.source: 1}
-    batch_size = 15 if is_batch else 1
     actual = create_output_data(
         output_component_types=output_component_types,
         output_type=DT.sym_output,
         all_component_count=all_component_count,
-        is_batch=is_batch,
-        batch_size=batch_size,
+        is_batch=False if batch_size == () else True,
+        batch_size=1 if batch_size == () else batch_size[0],
     )
 
+    expected = {comp: fn(batch_size_tuple=batch_size) for comp, fn in expected_fns.items()}
     assert actual.keys() == expected.keys()
     for comp in expected:
         if not is_columnar(expected[comp]):
