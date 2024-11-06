@@ -16,11 +16,11 @@ from power_grid_model import (
 )
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
-from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
+from power_grid_model.validation import assert_valid_batch_data
 
 
 @pytest.fixture
-def input_dataset_row():
+def input_data_r():
     node = initialize_array(DatasetType.input, ComponentType.node, 3)
     node["id"] = np.array([1, 2, 6])
     node["u_rated"] = [10.5e3, 10.5e3, 10.5e3]
@@ -60,19 +60,19 @@ def input_dataset_row():
 
 
 @pytest.fixture
-def input_dataset_col(input_dataset_row):
+def input_data_c(input_data_r):
     return compatibility_convert_row_columnar_dataset(
-        input_dataset_row, ComponentAttributeFilterOptions.relevant, DatasetType.input
+        input_data_r, ComponentAttributeFilterOptions.relevant, DatasetType.input
     )
 
 
-@pytest.fixture(params=["input_dataset_row", "input_dataset_col"])
-def input_dataset(request):
+@pytest.fixture(params=["input_data_r", "input_data_c"])
+def input_data(request):
     return request.getfixturevalue(request.param)
 
 
 @pytest.fixture
-def batch_update_sym_load_row():
+def update_sym_load_r():
     sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 2))
     sym_load["id"] = [[4], [7]]
     sym_load["p_specified"] = [[30e6], [15e6]]
@@ -80,14 +80,14 @@ def batch_update_sym_load_row():
 
 
 @pytest.fixture
-def batch_update_sym_load_no_id_row():
+def update_sym_load_no_id_r():
     sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 2))
     sym_load["p_specified"] = [[30e6, 10e6], [30e6, 15e6]]
     return sym_load
 
 
 @pytest.fixture
-def batch_update_sym_load_col():
+def update_sym_load_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
         "id": np.array([[4], [7]], dtype=source_attribute_dtypes["id"]),
@@ -96,7 +96,7 @@ def batch_update_sym_load_col():
 
 
 @pytest.fixture
-def batch_update_sym_load_no_id_col():
+def update_sym_load_no_id_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
         "p_specified": np.array([[30e6, 10e6], [30e6, 15e6]], dtype=source_attribute_dtypes["p_specified"]),
@@ -105,18 +105,18 @@ def batch_update_sym_load_no_id_col():
 
 @pytest.fixture(
     params=[
-        "batch_update_sym_load_row",
-        "batch_update_sym_load_no_id_row",
-        "batch_update_sym_load_col",
-        "batch_update_sym_load_no_id_col",
+        "update_sym_load_r",
+        "update_sym_load_no_id_r",
+        "update_sym_load_c",
+        "update_sym_load_no_id_c",
     ]
 )
-def batch_update_sym_load(request):
+def update_sym_load(request):
     return request.getfixturevalue(request.param)
 
 
 @pytest.fixture
-def batch_update_line_row():
+def update_line_r():
     line = initialize_array(DatasetType.update, ComponentType.line, (2, 1))
     line["id"] = [[3], [5]]
     line["from_status"] = [[0], [0]]
@@ -124,14 +124,14 @@ def batch_update_line_row():
 
 
 @pytest.fixture
-def batch_update_line_no_id_row():
+def update_line_no_id_r():
     line = initialize_array(DatasetType.update, ComponentType.line, (2, 3))
     line["from_status"] = [[0, 1, 1], [0, 0, 1]]
     return line
 
 
 @pytest.fixture
-def batch_update_line_col():
+def update_line_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
         "id": np.array([[3], [5]], dtype=source_attribute_dtypes["id"]),
@@ -140,7 +140,7 @@ def batch_update_line_col():
 
 
 @pytest.fixture
-def batch_update_line_no_id_col():
+def update_line_no_id_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
         "from_status": np.array([[0, 1, 1], [0, 0, 1]], dtype=source_attribute_dtypes["from_status"]),
@@ -149,27 +149,27 @@ def batch_update_line_no_id_col():
 
 @pytest.fixture(
     params=[
-        "batch_update_line_row",
-        "batch_update_line_no_id_row",
-        "batch_update_line_col",
-        "batch_update_line_no_id_col",
+        "update_line_r",
+        "update_line_no_id_r",
+        "update_line_c",
+        "update_line_no_id_c",
     ]
 )
-def batch_update_line(request):
+def update_line(request):
     return request.getfixturevalue(request.param)
 
 
 @pytest.fixture
-def batch_update_dataset(batch_update_sym_load, batch_update_line):
+def update_data(update_sym_load, update_line):
     return {
-        ComponentType.sym_load: batch_update_sym_load,
-        ComponentType.line: batch_update_line,
+        ComponentType.sym_load: update_sym_load,
+        ComponentType.line: update_line,
     }
 
 
-def test_power_flow(input_dataset, batch_update_dataset):
-    model = PowerGridModel(input_dataset)
+def test_power_flow(input_data, update_data):
+    model = PowerGridModel(input_data)
     assert_valid_batch_data(
-        input_data=input_dataset, update_data=batch_update_dataset, calculation_type=CalculationType.power_flow
+        input_data=input_data, update_data=update_data, calculation_type=CalculationType.power_flow
     )
-    model.calculate_power_flow(update_data=batch_update_dataset)
+    model.calculate_power_flow(update_data=update_data)
