@@ -16,7 +16,7 @@ from power_grid_model import (
 )
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
-from power_grid_model.validation import assert_valid_batch_data
+from power_grid_model.validation import assert_valid_batch_data, assert_valid_input_data
 
 
 @pytest.fixture
@@ -147,16 +147,16 @@ def input_dataset(input_node, input_line, input_load, input_source):
 
 @pytest.fixture
 def update_sym_load_row():
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, 2)
-    sym_load["id"] = [4, 7]
-    sym_load["p_specified"] = [30e6, 15e6]
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (1, 2))
+    sym_load["id"] = [[4, 7]]
+    sym_load["p_specified"] = [[30e6, 15e6]]
     return sym_load
 
 
 @pytest.fixture
 def update_sym_load_no_id_row():
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, 2)
-    sym_load["p_specified"] = [30e6, 15e6]
+    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (1, 2))
+    sym_load["p_specified"] = [[30e6, 15e6]]
     return sym_load
 
 
@@ -164,8 +164,8 @@ def update_sym_load_no_id_row():
 def update_sym_load_col():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
-        "id": np.array([4, 7], dtype=source_attribute_dtypes["id"]),
-        "p_specified": np.array([30e6, 15e6], dtype=source_attribute_dtypes["p_specified"]),
+        "id": np.array([[4, 7]], dtype=source_attribute_dtypes["id"]),
+        "p_specified": np.array([[30e6, 15e6]], dtype=source_attribute_dtypes["p_specified"]),
     }
 
 
@@ -173,7 +173,7 @@ def update_sym_load_col():
 def update_sym_load_no_id_col():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
-        "p_specified": np.array([30e6, 15e6], dtype=source_attribute_dtypes["p_specified"]),
+        "p_specified": np.array([[30e6, 15e6]], dtype=source_attribute_dtypes["p_specified"]),
     }
 
 
@@ -186,16 +186,16 @@ def update_sym_load(request):
 
 @pytest.fixture
 def update_line_row():
-    line = initialize_array(DatasetType.update, ComponentType.line, 1)
-    line["id"] = [3]
-    line["from_status"] = [0]
+    line = initialize_array(DatasetType.update, ComponentType.line, (1, 1))
+    line["id"] = [[3]]
+    line["from_status"] = [[0]]
     return line
 
 
 @pytest.fixture
 def update_line_no_id_row():
-    line = initialize_array(DatasetType.update, ComponentType.line, 3)
-    line["from_status"] = [0, 1, 1]
+    line = initialize_array(DatasetType.update, ComponentType.line, (1, 3))
+    line["from_status"] = [[0, 1, 1]]
     return line
 
 
@@ -203,8 +203,8 @@ def update_line_no_id_row():
 def update_line_col():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
-        "id": np.array([3], dtype=source_attribute_dtypes["id"]),
-        "from_status": np.array([0], dtype=source_attribute_dtypes["from_status"]),
+        "id": np.array([[3]], dtype=source_attribute_dtypes["id"]),
+        "from_status": np.array([[0]], dtype=source_attribute_dtypes["from_status"]),
     }
 
 
@@ -212,7 +212,7 @@ def update_line_col():
 def update_line_no_id_col():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
-        "from_status": np.array([0, 1, 1], dtype=source_attribute_dtypes["from_status"]),
+        "from_status": np.array([[0, 1, 1]], dtype=source_attribute_dtypes["from_status"]),
     }
 
 
@@ -229,12 +229,19 @@ def update_dataset(update_sym_load, update_line):
     }
 
 
-def test_assert_valid_batch_data(input_dataset, update_dataset):
+def test_assert_valid_data(input_dataset, update_dataset):
+    assert_valid_input_data(input_data=input_dataset, calculation_type=CalculationType.power_flow)
     assert_valid_batch_data(
         input_data=input_dataset, update_data=update_dataset, calculation_type=CalculationType.power_flow
     )
 
 
-def test_permanent_update(input_dataset, update_dataset):
+def test_permanent_update_and_power_flow(input_dataset, update_dataset):
     model = PowerGridModel(input_dataset)
     model.update(update_data=update_dataset)
+    model.calculate_power_flow()
+
+
+def test_power_flow(input_dataset, update_dataset):
+    model = PowerGridModel(input_dataset)
+    model.calculate_power_flow(update_data=update_dataset)
