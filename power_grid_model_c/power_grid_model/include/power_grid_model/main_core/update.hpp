@@ -15,7 +15,7 @@ namespace detail {
 template <component_c Component, forward_iterator_like<typename Component::UpdateType> ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
-                                       std::vector<Idx2D> const& sequence_idx) {
+                                       std::span<Idx2D const> sequence_idx) {
     assert(std::distance(begin, end) >= static_cast<ptrdiff_t>(sequence_idx.size()));
 
     Idx seq = 0;
@@ -41,7 +41,7 @@ inline void get_component_sequence(MainModelState<ComponentContainer> const& sta
             return get_component_idx_by_id<Component>(state, update.id);
         });
     } else {
-        assert(std::distance(begin, end) <= n_comp_elements || begin == end);
+        assert(std::distance(begin, end) <= n_comp_elements || n_comp_elements == -1);
         std::ranges::transform(
             begin, end, destination,
             [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {
@@ -71,7 +71,7 @@ template <component_c Component, class ComponentContainer,
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
                                      ForwardIterator end, OutputIterator changed_it,
-                                     std::vector<Idx2D> const& sequence_idx) {
+                                     std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
     UpdateChange state_changed;
@@ -110,7 +110,7 @@ template <component_c Component, class ComponentContainer,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
-                           OutputIterator destination, std::vector<Idx2D> const& sequence_idx) {
+                           OutputIterator destination, std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
     detail::iterate_component_sequence<Component>(

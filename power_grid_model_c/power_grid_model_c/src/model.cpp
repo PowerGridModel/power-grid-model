@@ -35,7 +35,10 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) {
     call_with_catch(
-        handle, [model, update_dataset] { model->update_component<permanent_update_t>(*update_dataset); },
+        handle,
+        [model, update_dataset] {
+            model->update_component<permanent_update_t>(update_dataset->get_individual_scenario(0));
+        },
         PGM_regular_error);
 }
 
