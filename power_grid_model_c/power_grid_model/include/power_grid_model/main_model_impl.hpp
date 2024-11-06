@@ -317,33 +317,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // update all components
     template <cache_type_c CacheType>
-    void update_component(ConstDataset const& update_data, Idx pos, SequenceIdxView const& sequence_idx_map) {
-        assert(construction_complete_);
-        assert(update_data.get_description().dataset->name == std::string_view("update"));
-        auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
-        };
-        run_functor_with_all_types_return_void(update_func);
-    }
-    template <cache_type_c CacheType>
     void
     update_component(ConstDataset const& update_data, Idx pos,
                      std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types> const& sequence_idx_map) {
-        assert(construction_complete_);
-        assert(update_data.get_description().dataset->name == std::string_view("update"));
-        auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
+        run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
             update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map).get());
-        };
-        run_functor_with_all_types_return_void(update_func);
+        });
     }
     template <cache_type_c CacheType>
     void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
-        assert(construction_complete_);
-        assert(update_data.get_description().dataset->name == std::string_view("update"));
-        auto const update_func = [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
+        run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
             update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
-        };
-        run_functor_with_all_types_return_void(update_func);
+        });
     }
 
     // update all components
