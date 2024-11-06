@@ -422,8 +422,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                               UpdateCompProperties const& comp_independence = {}) const {
         // TODO: (jguo) this function could be encapsulated in UpdateCompProperties in update.hpp
         auto const get_sequence = [this, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
-            return main_core::get_component_sequence<CompType>(
-                state_, std::begin(span), std::end(span), n_comp_elements);
+            return main_core::get_component_sequence<CompType>(state_, std::begin(span), std::end(span),
+                                                               n_comp_elements);
         };
         if (update_data.is_columnar(CompType::name)) {
             auto const buffer_span =
@@ -447,7 +447,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     // get sequence idx map of an entire batch for fast caching of component sequences
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, ComponentFlags const& to_store) const {
-        // TODO(mgovers): remove this function?
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
         return run_functor_with_all_types_return_array([this, &update_data, &to_store]<typename CT>() {
             if (!to_store[index_of_component<CT>]) {
@@ -459,7 +458,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         });
     }
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
-        // TODO(mgovers): remove this function?
         constexpr ComponentFlags all_true = [] {
             ComponentFlags result{};
             std::ranges::fill(result, true);
