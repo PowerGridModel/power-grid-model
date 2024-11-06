@@ -66,6 +66,7 @@ constexpr double numerical_tolerance = 1e-8;
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr IntS na_IntS = std::numeric_limits<IntS>::min();
 constexpr ID na_IntID = std::numeric_limits<ID>::min();
+constexpr Idx na_Idx = std::numeric_limits<Idx>::min();
 
 // power grid constant
 constexpr double base_power_3p = 1e6;

@@ -123,6 +123,13 @@ def _update_component_array_data(
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
     """
+    optional_ids_active = (
+        "id" in update_data.dtype.names
+        and np.all(update_data["id"] == np.iinfo(update_data["id"].dtype).min)
+        and len(update_data["id"]) == len(input_data["id"])
+    )
+    update_data_ids = input_data["id"] if optional_ids_active else update_data["id"]
+
     for field in update_data.dtype.names:
         if field == "id":
             continue
@@ -136,12 +143,12 @@ def _update_component_array_data(
             for phase in range(mask.shape[1]):
                 # find indexers of to-be-updated object
                 sub_mask = mask[:, phase]
-                idx = get_indexer(input_data["id"], update_data["id"][sub_mask])
+                idx = get_indexer(input_data["id"], update_data_ids[sub_mask])
                 # update
                 input_data[field][idx, phase] = update_data[field][sub_mask, phase]
         else:
             # find indexers of to-be-updated object
-            idx = get_indexer(input_data["id"], update_data["id"][mask])
+            idx = get_indexer(input_data["id"], update_data_ids[mask])
             # update
             input_data[field][idx] = update_data[field][mask]
 

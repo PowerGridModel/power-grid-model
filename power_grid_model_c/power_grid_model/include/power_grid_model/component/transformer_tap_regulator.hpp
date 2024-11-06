@@ -35,7 +35,7 @@ class TransformerTapRegulator : public Regulator {
 
     // update for transformer tap regulator, hide default update for branch
     UpdateChange update(TransformerTapRegulatorUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         set_status(update_data.status);
         update_real_value<symmetric_t>(update_data.u_set, u_set_, 1.0);
         update_real_value<symmetric_t>(update_data.u_band, u_band_, 1.0);
@@ -45,7 +45,7 @@ class TransformerTapRegulator : public Regulator {
     }
 
     TransformerTapRegulatorUpdate inverse(TransformerTapRegulatorUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         update_data = Regulator::inverse(update_data);
         set_if_not_nan(update_data.u_set, u_set_);

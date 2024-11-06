@@ -129,9 +129,9 @@ class SingleFieldValidationError(ValidationError):
     _message = "Field {field} is not valid for {n} {objects}."
     component: ComponentType
     field: str
-    ids: list[int]
+    ids: Optional[list[int]]
 
-    def __init__(self, component: ComponentType, field: str, ids: Iterable[int]):
+    def __init__(self, component: ComponentType, field: str, ids: Optional[Iterable[int]]):
         """
         Args:
             component: Component name
@@ -140,7 +140,7 @@ class SingleFieldValidationError(ValidationError):
         """
         self.component = component
         self.field = field
-        self.ids = sorted(ids)
+        self.ids = sorted(ids) if ids is not None else None
 
 
 class MultiFieldValidationError(ValidationError):
@@ -325,12 +325,13 @@ class InvalidIdError(SingleFieldValidationError):
         self,
         component: ComponentType,
         field: str,
-        ids: list[int],
-        ref_components: ComponentType | list[ComponentType],
+        ids: Optional[list[int]] = None,
+        ref_components: Optional[ComponentType | list[ComponentType]] = None,
         filters: Optional[dict[str, Any]] = None,
     ):
         # pylint: disable=too-many-positional-arguments
         super().__init__(component=component, field=field, ids=ids)
+        ref_components = ref_components if ref_components is not None else []
         self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
         self.filters = filters if filters else None
 
