@@ -6,13 +6,15 @@
 Data handling
 """
 
+import numpy as np
 
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model._core.power_grid_dataset import CConstDataset, CMutableDataset
-from power_grid_model._core.power_grid_meta import initialize_array
+from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._utils import process_data_filter
 from power_grid_model.data_types import Dataset, SingleDataset
-from power_grid_model.enum import CalculationType
+from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
+from power_grid_model.errors import PowerGridUnreachableHitError
 from power_grid_model.typing import ComponentAttributeMapping
 
 
@@ -113,7 +115,7 @@ def create_output_data(
     all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}
 
     # create result dataset
-    result_dict = {}
+    result_dict: Dataset = {}
 
     for name, count in all_component_count.items():
         # shape
@@ -121,5 +123,19 @@ def create_output_data(
             shape: tuple[int] | tuple[int, int] = (batch_size, count)
         else:
             shape = (count,)
-        result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
+
+        requested_component = processed_output_types[name]
+        dtype = power_grid_meta_data[output_type][name].dtype
+        if dtype.names is None:
+            raise PowerGridUnreachableHitError
+        if requested_component is None:
+            result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
+        elif requested_component in [
+            ComponentAttributeFilterOptions.everything,
+            ComponentAttributeFilterOptions.relevant,
+        ]:
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in dtype.names}
+        elif isinstance(requested_component, list | set):
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in requested_component}
+
     return result_dict
