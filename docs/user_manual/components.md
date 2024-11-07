@@ -22,7 +22,7 @@ The base type for all power-grid-model components.
 
 If a component update is uniform and is updating all the elements with the same component type, IDs can be omitted or set to `nan`s. In any other case, the IDs need to be present in the update dataset, but cannot be changed.
 
-Uniform component updates are ones that update the same number of component elements across scenarios. By definition, a dense update is always uniform, hence the IDs can always be optional; whereas for a sparse update, the IDs can only be optional if the index pointer is given as an arithmetic sequence of all elements (i.e. a sparse representation of a dense buffer). An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
+Uniform component updates are ones that update the same number of component of the same type across scenarios. By definition, a dense update is always uniform, hence the IDs can always be optional; whereas for a sparse update, the IDs can only be optional if the index pointer is given as an arithmetic sequence of all elements (i.e. a sparse representation of a dense buffer). An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
 
 #### Steady state output and Short circuit output
 
