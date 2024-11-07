@@ -149,9 +149,8 @@ class CMutableDataset:
         instance._dataset_type = dataset_type if dataset_type in DatasetType else get_dataset_type(data)
         instance._schema = power_grid_meta_data[instance._dataset_type]
 
-        compatibility_converted_data = data
-        if compatibility_converted_data:
-            first_component, first_component_data = next(iter(compatibility_converted_data.items()))
+        if data:
+            first_component, first_component_data = next(iter(data.items()))
             first_sub_info = get_buffer_properties(data=first_component_data, schema=instance._schema[first_component])
             instance._is_batch = first_sub_info.is_batch
             instance._batch_size = first_sub_info.batch_size
@@ -164,7 +163,7 @@ class CMutableDataset:
         )
         assert_no_error()
 
-        instance._add_data(compatibility_converted_data)
+        instance._add_data(data)
         assert_no_error()
 
         return instance
