@@ -11,7 +11,6 @@ from typing import Optional, Type
 
 import numpy as np
 
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.core.data_handling import (
     create_output_data,
     get_output_type,
