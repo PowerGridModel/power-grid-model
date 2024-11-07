@@ -140,7 +140,7 @@ PGM_API void PGM_destroy_dataset_const(PGM_ConstDataset* dataset);
  *     If the component is not uniform, indptr must point to an array of size (batch_size + 1).
  *         The values in the array must be not decreasing.
  *         And we must have indptr[0] = 0, indptr[batch_size] = total_elements.
- * @param data A void pointer to the row based buffer data or a nullptr for columnar data.
+ * @param data A void pointer to the row based buffer data or NULL for columnar data.
  * @return
  */
 PGM_API void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
@@ -185,7 +185,7 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle,
  * @param indptr A pointer to an array of indptr of a non-uniform component.
  *     If the component is uniform, indptr must be NULL.
  *     If the component is not uniform, indptr must point to an array of size (batch_size + 1).
- * @param data A void pointer to the row based buffer data or a nullptr for columnar data.
+ * @param data A void pointer to the row based buffer data or NULL for columnar data.
  * @return
  */
 PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
@@ -237,7 +237,7 @@ PGM_API void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset);
  *     If the component is not uniform, indptr must point to an array of size (batch_size + 1).
  *         The values in the array must be not decreasing.
  *         And we must have indptr[0] = 0, indptr[batch_size] = total_elements.
- * @param data A void pointer to the row based buffer data or a nullptr for columnar data.
+ * @param data A void pointer to the row based buffer data or NULL for columnar data.
  * @return
  */
 PGM_API void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,

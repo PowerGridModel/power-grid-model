@@ -171,7 +171,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <class StructType>
     using DataStruct = std::conditional_t<is_data_mutable_v<dataset_type>, StructType, StructType const>;
 
-    // for columnar buffers, Data* data is empty and attributes is filled
+    // for columnar buffers, Data* data is empty and attributes.data is filled
     // for uniform buffers, indptr is empty
     struct Buffer {
         using Data = Dataset::Data;
@@ -227,9 +227,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
     MetaDataset const& dataset() const { return *dataset_info_.dataset; }
     Idx n_components() const { return static_cast<Idx>(buffers_.size()); }
     DatasetInfo const& get_description() const { return dataset_info_; }
-    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
     Buffer const& get_buffer(std::string_view component) const { return get_buffer(find_component(component, true)); }
     Buffer const& get_buffer(Idx i) const { return buffers_[i]; }
+
+    ComponentInfo const& get_component_info(std::string_view component) const {
+        return get_component_info(find_component(component, true));
+    }
+    ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
 
     constexpr bool is_row_based(std::string_view component) const {
         Idx const idx = find_component(component, false);
@@ -254,6 +258,63 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return !is_row_based(buffer) && !(with_attribute_buffers && buffer.attributes.empty());
     }
 
+    constexpr bool is_dense(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return true; // by definition
+        }
+        return is_dense(idx);
+    }
+    constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[i]); }
+    constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
+    constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return false;
+        }
+        return is_sparse(idx, with_attribute_buffers);
+    }
+    constexpr bool is_sparse(Idx const i, bool with_attribute_buffers = false) const {
+        return is_sparse(buffers_[i], with_attribute_buffers);
+    }
+    constexpr bool is_sparse(Buffer const& buffer) const { return !is_dense(buffer); }
+
+    constexpr bool is_uniform(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return true; // by definition
+        }
+        return is_uniform(idx);
+    }
+    constexpr bool is_uniform(Idx const i) const { return is_uniform(buffers_[i]); }
+    constexpr bool is_uniform(Buffer const& buffer) const {
+        if (is_dense(buffer)) {
+            return true;
+        }
+        assert(buffer.indptr.size() > 1);
+        auto const first_scenario_size = buffer.indptr[1] - buffer.indptr[0];
+        return std::ranges::adjacent_find(buffer.indptr, [first_scenario_size](Idx start, Idx stop) {
+                   return stop - start != first_scenario_size;
+               }) == buffer.indptr.end();
+    }
+
+    constexpr Idx uniform_elements_per_scenario(std::string_view component) const {
+        Idx const idx = find_component(component, false);
+        if (idx == invalid_index) {
+            return 0;
+        }
+        return uniform_elements_per_scenario(idx);
+    }
+    constexpr Idx uniform_elements_per_scenario(Idx const i) const {
+        assert(is_uniform(i));
+        if (is_dense(i)) {
+            return get_component_info(i).elements_per_scenario;
+        }
+        auto const& indptr = buffers_[i].indptr;
+        assert(indptr.size() > 1);
+        return indptr[1] - indptr[0];
+    }
+
     Idx find_component(std::string_view component, bool required = false) const {
         auto const found = std::ranges::find_if(dataset_info_.component_info, [component](ComponentInfo const& x) {
             return x.component->name == component;
@@ -268,10 +329,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return std::distance(dataset_info_.component_info.cbegin(), found);
     }
     bool contains_component(std::string_view component) const { return find_component(component) >= 0; }
-
-    ComponentInfo const& get_component_info(std::string_view component) const {
-        return dataset_info_.component_info[find_component(component, true)];
-    }
 
     void add_component_info(std::string_view component, Idx elements_per_scenario, Idx total_elements)
         requires is_indptr_mutable_v<dataset_type>

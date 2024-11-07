@@ -92,7 +92,7 @@ OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
             current_indptr.at(batch_size) = component_size;
         }
         Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto const& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         writable_dataset.set_buffer(component_name, indptr, current_buffer);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, current_buffer);
@@ -120,7 +120,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
             input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto const& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
         owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
                                                   indptr, current_buffer);
     }
@@ -574,7 +574,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create and run model
         auto const& options = get_options(param);
-        Model const model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.const_dataset.value()};
         model.calculate(options, result.dataset.value());
 
         // check results
@@ -592,7 +592,7 @@ void validate_batch_case(CaseParam const& param) {
             create_result_dataset(validation_case.output_batch.value(), output_prefix, Idx{1}, batch_size);
 
         // create model
-        Model const model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.const_dataset.value()};
 
         // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {

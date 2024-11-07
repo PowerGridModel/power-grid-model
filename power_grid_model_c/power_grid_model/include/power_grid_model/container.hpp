@@ -110,6 +110,17 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         assert(is_base<Gettable>[idx_2d.group]);
         return (this->*(func_arr[idx_2d.group]))(idx_2d.pos);
     }
+
+#ifndef NDEBUG
+    // get id by idx, only for debugging purpose
+    ID get_id_by_idx(Idx2D idx_2d) const {
+        if (auto it = std::ranges::find(map_, idx_2d, &std::pair<const ID, Idx2D>::second); it != map_.end()) {
+            return it->first;
+        }
+        throw Idx2DNotFound{idx_2d};
+    }
+#endif // NDEBUG
+
     // get idx by id
     Idx2D get_idx_by_id(ID id) const {
         auto const found = map_.find(id);
@@ -125,6 +136,10 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         return result;
     }
+    template <supported_type_c<StorageableTypes...> Storageable> constexpr Idx get_group_idx() const {
+        return static_cast<Idx>(get_cls_pos_v<Storageable, StorageableTypes...>);
+    }
+
     // get item based on ID
     template <supported_type_c<GettableTypes...> Gettable> Gettable& get_item(ID id) {
         Idx2D const idx = get_idx_by_id<Gettable>(id);
