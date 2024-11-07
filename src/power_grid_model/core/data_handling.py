@@ -6,6 +6,8 @@
 Data handling
 """
 
+from typing import Iterable, cast
+
 import numpy as np
 
 from power_grid_model._utils import process_data_filter
@@ -114,7 +116,7 @@ def create_output_data(
     all_component_count = {k: v for k, v in all_component_count.items() if k in processed_output_types}
 
     # create result dataset
-    result_dict = {}
+    result_dict: Dataset = {}
 
     for name, count in all_component_count.items():
         # shape
@@ -123,12 +125,13 @@ def create_output_data(
         else:
             shape = (count,)
 
+        requested_component = processed_output_types[name]
         dtype = power_grid_meta_data[output_type][name].dtype
-        if processed_output_types[name] is None:
+        if requested_component is None:
             result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
-        elif isinstance(processed_output_types[name], ComponentAttributeFilterOptions):
-            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in dtype.names}
-        elif isinstance(processed_output_types[name], list | set):
-            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in processed_output_types[name]}
+        elif isinstance(requested_component, ComponentAttributeFilterOptions):
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in cast(Iterable[str], dtype.names)}
+        elif isinstance(requested_component, list | set):
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in requested_component}
 
     return result_dict
