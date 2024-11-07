@@ -640,9 +640,17 @@ class PowerGridModel:
                 - < 0: Sequential
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads
-            output_component_types ({set, list}, optional):
-                List or set of component types you want to be present in the output dict.
-                By default, all component types will be in the output.
+            output_component_types (ComponentAttributeMapping):
+
+                - None: Row based data for all component types.
+                - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
+                - ComponentAttributeFilterOptions: Columnar data for all component types.
+                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                    key: ComponentType
+                    value:
+                        - None: Row based data for the specified component types.
+                        - ComponentAttributeFilterOptions: Columnar data for the specified component types.
+                        - set[str] | list[str]: Columnar data for the specified component types and attributes.
             continue_on_batch_error (bool, optional):
                 Continue the program (instead of throwing error) if some scenarios fail.
             decode_error (bool, optional):
