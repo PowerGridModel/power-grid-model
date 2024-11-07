@@ -330,8 +330,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             this->update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
         });
     }
-
-    // update all components
     template <cache_type_c CacheType> void update_component(ConstDataset const& update_data) {
         update_component<CacheType>(update_data, 0, get_sequence_idx_map(update_data.get_individual_scenario(0)));
     }
@@ -735,10 +733,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         return std::make_pair(
             [&model, &update_data, &scenario_sequence, &current_scenario_sequence_cache,
-             do_update_cache = std::move(do_update_cache), &infos](Idx scenario_idx) {
+             do_update_cache_ = std::move(do_update_cache), &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
                 current_scenario_sequence_cache =
-                    model.get_sequence_idx_map(update_data, scenario_idx, do_update_cache);
+                    model.get_sequence_idx_map(update_data, scenario_idx, do_update_cache_);
                 model.template update_component<cached_update_t>(update_data, scenario_idx, scenario_sequence);
             },
             [&model, &scenario_sequence, &current_scenario_sequence_cache, &infos](Idx scenario_idx) {
