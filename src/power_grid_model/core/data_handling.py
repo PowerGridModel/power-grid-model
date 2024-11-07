@@ -6,8 +6,6 @@
 Data handling
 """
 
-from typing import Iterable, cast
-
 import numpy as np
 
 from power_grid_model._utils import process_data_filter
@@ -16,6 +14,7 @@ from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableData
 from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
+from power_grid_model.errors import PowerGridUnreachableHitError
 from power_grid_model.typing import ComponentAttributeMapping
 
 
@@ -127,10 +126,15 @@ def create_output_data(
 
         requested_component = processed_output_types[name]
         dtype = power_grid_meta_data[output_type][name].dtype
+        if dtype.names is None:
+            raise PowerGridUnreachableHitError
         if requested_component is None:
             result_dict[name] = initialize_array(output_type, name, shape=shape, empty=True)
-        elif isinstance(requested_component, ComponentAttributeFilterOptions):
-            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in cast(Iterable[str], dtype.names)}
+        elif requested_component in [
+            ComponentAttributeFilterOptions.everything,
+            ComponentAttributeFilterOptions.relevant,
+        ]:
+            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in dtype.names}
         elif isinstance(requested_component, list | set):
             result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in requested_component}
 

@@ -21,7 +21,6 @@ from power_grid_model.core.data_handling import (
 from power_grid_model.core.dataset_definitions import (
     ComponentType,
     ComponentTypeLike,
-    ComponentTypeVar,
     _map_to_component_types,
     _str_to_component_type,
 )
@@ -313,7 +312,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentTypeVar] | list[ComponentTypeVar]] = None,
+        output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
@@ -350,7 +349,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentTypeVar] | list[ComponentTypeVar]] = None,
+        output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
@@ -382,7 +381,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
         update_data: Optional[Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentTypeVar] | list[ComponentTypeVar]] = None,
+        output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
@@ -419,7 +418,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
         update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentTypeVar] | list[ComponentTypeVar]] = None,
+        output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
@@ -464,8 +463,17 @@ class PowerGridModel:
                 - < 0: Sequential
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads
-            output_component_types ({set, list}, optional): List or set of component types you want to be present in
-                the output dict. By default, all component types will be in the output.
+            output_component_types (ComponentAttributeMapping):
+
+                - None: Row based data for all component types.
+                - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
+                - ComponentAttributeFilterOptions: Columnar data for all component types.
+                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                    key: ComponentType
+                    value:
+                        - None: Row based data for the specified component types.
+                        - ComponentAttributeFilterOptions: Columnar data for the specified component types.
+                        - set[str] | list[str]: Columnar data for the specified component types and attributes.
             continue_on_batch_error (bool, optional): Continue the program (instead of throwing error) if some
                 scenarios fail.
             decode_error (bool, optional):
@@ -508,7 +516,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
         update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentTypeVar] | list[ComponentTypeVar]] = None,
+        output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
     ) -> dict[ComponentType, np.ndarray]:
@@ -549,8 +557,17 @@ class PowerGridModel:
                 - < 0: Sequential
                 - = 0: Parallel, use number of hardware threads
                 - > 0: Specify number of parallel threads
-            output_component_types ({set, list}, optional): List or set of component types you want to be present in
-                the output dict. By default, all component types will be in the output.
+            output_component_types (ComponentAttributeMapping):
+
+                - None: Row based data for all component types.
+                - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
+                - ComponentAttributeFilterOptions: Columnar data for all component types.
+                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                    key: ComponentType
+                    value:
+                        - None: Row based data for the specified component types.
+                        - ComponentAttributeFilterOptions: Columnar data for the specified component types.
+                        - set[str] | list[str]: Columnar data for the specified component types and attributes.
             continue_on_batch_error (bool, optional): Continue the program (instead of throwing error) if some
                 scenarios fail.
             decode_error (bool, optional):
@@ -589,7 +606,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
         update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
         threading: int = -1,
-        output_component_types: Optional[set[ComponentTypeVar] | list[ComponentTypeVar]] = None,
+        output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
