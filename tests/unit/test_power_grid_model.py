@@ -346,6 +346,23 @@ def test_update_id_optional(minimal_update, minimal_input):
     np.testing.assert_almost_equal(output_data[ComponentType.node]["u"], np.array([[90.0], [70.0]]))
 
 
+def test_update_id_mixed(minimal_input):
+    update_sym_load_no_id = initialize_array(DatasetType.update, ComponentType.sym_load, (3, 1))
+    update_sym_load_no_id["p_specified"] = [[30e6], [15e5], [0]]
+
+    update_source_indptr = np.array([0, 1, 1, 2])
+    update_source = initialize_array(DatasetType.update, ComponentType.source, 2)
+    update_source["id"] = 1
+    update_source["status"] = 0
+
+    update_batch = {
+        ComponentType.sym_load: update_sym_load_no_id,
+        ComponentType.source: {"indptr": update_source_indptr, "data": update_source},
+    }
+
+    output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=update_batch)
+
+
 @pytest.mark.parametrize(
     "minimal_update",
     [
