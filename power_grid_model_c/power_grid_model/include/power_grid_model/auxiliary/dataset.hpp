@@ -447,7 +447,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     // get individual dataset from batch
-    Dataset get_individual_scenario(Idx scenario)
+    Dataset get_individual_scenario(Idx scenario) const
         requires(!is_indptr_mutable_v<dataset_type>)
     {
         using AdvanceablePtr = std::conditional_t<is_data_mutable_v<dataset_type>, char*, char const*>;

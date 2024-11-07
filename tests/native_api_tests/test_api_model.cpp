@@ -82,6 +82,7 @@ struct sparse_t {};
 struct dense_t {};
 struct with_id_t {};
 struct optional_id_t {};
+struct mixed_optional_id_t {};
 struct invalid_id_t {};
 
 template <typename first, typename second, typename third, typename fourth> struct TypeCombo {
@@ -769,10 +770,16 @@ TEST_CASE_TEMPLATE(
     TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<columnar_t, row_t, dense_t, optional_id_t>,
     TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>, TypeCombo<row_t, columnar_t, dense_t, optional_id_t>,
     TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<row_t, row_t, dense_t, invalid_id_t>,
-    TypeCombo<row_t, row_t, sparse_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>, TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>, TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>,
-    TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
+    TypeCombo<row_t, row_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, row_t, sparse_t, mixed_optional_id_t>,
+    TypeCombo<columnar_t, columnar_t, dense_t, mixed_optional_id_t>,
+    TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>,
+    TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>,
+    TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>,
+    TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>,
+    TypeCombo<row_t, row_t, dense_t, invalid_id_t>, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>,
+    TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>,
+    TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>,
+    TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
 
     using namespace std::string_literals;
     using input_type = typename T::input_type;
@@ -836,13 +843,24 @@ TEST_CASE_TEMPLATE(
 
     std::vector<Idx> const sym_load_indptr{0, 1, 2};
     std::vector<double> const load_updates_q_specified = {100.0, 300.0};
-
-    auto load_updates_id = []() {
+    auto load_updates_id = [] {
         if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
-            return std::vector<ID>{2, 5};
+            return std::vector<ID>{99, 2};
         }
         return std::vector<ID>{2, 2};
     }();
+
+    auto source_indptr = [] {
+        if constexpr (std::is_same_v<id_check_type, mixed_optional_id_t>) {
+            return std::vector<Idx>{0, 1, 1};
+        }
+        return std::vector<Idx>{0, 0, 0};
+    }();
+    std::vector<ID> const source_updates_id = {1};
+
+    Buffer source_update_buffer{PGM_def_update_sym_load, 1};
+    source_update_buffer.set_nan();
+    source_update_buffer.set_value(PGM_def_update_source_id, source_updates_id.data(), -1);
 
     Buffer sym_load_update_buffer{PGM_def_update_sym_load, 2};
     sym_load_update_buffer.set_nan();
@@ -857,14 +875,20 @@ TEST_CASE_TEMPLATE(
         } else {
             update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), sym_load_update_buffer);
         }
+        // source is always sparse. the sparsity tag affects the sym_load
+        update_dataset.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), source_update_buffer);
     } else {
         if constexpr (std::is_same_v<sparsity_type, dense_t>) {
             update_dataset.add_buffer("sym_load", 1, 2, nullptr, nullptr);
         } else {
             update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
         }
+        // source is always sparse. the sparsity tag affects the sym_load
+        update_dataset.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), nullptr);
 
-        if constexpr (!std::is_same_v<id_check_type, optional_id_t>) {
+        if constexpr (std::is_same_v<id_check_type, mixed_optional_id_t>) {
+            update_dataset.add_attribute_buffer("source", "id", source_updates_id.data());
+        } else if constexpr (!std::is_same_v<id_check_type, optional_id_t>) {
             update_dataset.add_attribute_buffer("sym_load", "id", load_updates_id.data());
         }
         update_dataset.add_attribute_buffer("sym_load", "q_specified", load_updates_q_specified.data());
@@ -878,10 +902,20 @@ TEST_CASE_TEMPLATE(
 
     Options const batch_options{};
     Model model{50.0, input_dataset};
-    if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
-        CHECK_THROWS_AS(model.calculate(batch_options, batch_output_dataset, update_dataset), PowerGridBatchError);
-    } else {
-        model.calculate(batch_options, batch_output_dataset, update_dataset);
+
+    SUBCASE("Permanent update") {
+        if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
+            CHECK_THROWS_AS(model.update(update_dataset), PowerGridError);
+        } else {
+            CHECK_NOTHROW(model.update(update_dataset));
+        }
+    }
+    SUBCASE("Batch update") {
+        if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
+            CHECK_THROWS_AS(model.calculate(batch_options, batch_output_dataset, update_dataset), PowerGridBatchError);
+        } else {
+            CHECK_NOTHROW(model.calculate(batch_options, batch_output_dataset, update_dataset));
+        }
     }
 }
 
