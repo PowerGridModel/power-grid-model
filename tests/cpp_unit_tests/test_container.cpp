@@ -193,6 +193,23 @@ TEST_CASE("Test component container") {
         CHECK(const_container2.get_item_by_seq<C>(1).a == 66);
         CHECK(const_container2.get_item_by_seq<C>(2).a == 7);
     }
+
+    SUBCASE("Test get group index") {
+        CHECK(const_container.get_group_idx<C>() == 0);
+        CHECK(const_container.get_group_idx<C1>() == 1);
+        CHECK(const_container.get_group_idx<C2>() == 2);
+    }
+
+#ifndef NDEBUG
+    SUBCASE("Test get id by idx2d") {
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 0}) == 1);
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 1}) == 11);
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 2}) == 111);
+        CHECK(const_container.get_id_by_idx(Idx2D{1, 0}) == 2);
+        CHECK(const_container.get_id_by_idx(Idx2D{1, 1}) == 22);
+        CHECK(const_container.get_id_by_idx(Idx2D{2, 0}) == 3);
+    }
+#endif // NDEBUG
 }
 
 } // namespace power_grid_model

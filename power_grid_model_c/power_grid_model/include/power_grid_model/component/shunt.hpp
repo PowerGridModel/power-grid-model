@@ -46,7 +46,7 @@ class Shunt : public Appliance {
     }
 
     UpdateChange update(ShuntUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool changed = set_status(update_data.status);
         changed = update_params(update_data) || changed;
 
@@ -55,7 +55,7 @@ class Shunt : public Appliance {
     }
 
     ShuntUpdate inverse(ShuntUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
         set_if_not_nan(update_data.g1, g1_);

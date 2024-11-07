@@ -33,21 +33,31 @@ template <component_c Component, class ComponentContainer,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                   ForwardIterator end, OutputIterator destination) {
+                                   ForwardIterator end, OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
-    std::transform(begin, end, destination,
-                   [&state](UpdateType const& update) { return get_component_idx_by_id<Component>(state, update.id); });
+    if (n_comp_elements == na_Idx) {
+        std::ranges::transform(begin, end, destination, [&state](UpdateType const& update) {
+            return get_component_idx_by_id<Component>(state, update.id);
+        });
+    } else {
+        assert(std::distance(begin, end) <= n_comp_elements || begin == end);
+        std::ranges::transform(
+            begin, end, destination,
+            [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {
+                return Idx2D{group, index++}; // NOSONAR
+            });
+    }
 }
 
 template <component_c Component, class ComponentContainer,
           forward_iterator_like<typename Component::UpdateType> ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
-                                                 ForwardIterator end) {
+                                                 ForwardIterator end, Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::distance(begin, end));
-    get_component_sequence<Component>(state, begin, end, std::back_inserter(result));
+    get_component_sequence<Component>(state, begin, end, std::back_inserter(result), n_comp_elements);
     return result;
 }
 
@@ -69,8 +79,8 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
     detail::iterate_component_sequence<Component>(
         [&state_changed, &changed_it, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
             auto& comp = get_component<Component>(state, sequence_single);
+            assert(state.components.get_id_by_idx(sequence_single) == comp.id());
             auto const comp_changed = comp.update(update_data);
-
             state_changed = state_changed || comp_changed;
 
             if (comp_changed.param || comp_changed.topo) {
