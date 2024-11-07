@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from functools import partial
 import warnings
+from functools import partial
 
 import numpy as np
 import pytest
