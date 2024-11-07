@@ -875,6 +875,7 @@ TEST_CASE_TEMPLATE(
         } else {
             update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), sym_load_update_buffer);
         }
+        // source is always sparse. the sparsity tag affects the sym_load
         update_dataset.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), source_update_buffer);
     } else {
         if constexpr (std::is_same_v<sparsity_type, dense_t>) {
@@ -882,6 +883,7 @@ TEST_CASE_TEMPLATE(
         } else {
             update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
         }
+        // source is always sparse. the sparsity tag affects the sym_load
         update_dataset.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), nullptr);
 
         if constexpr (std::is_same_v<id_check_type, mixed_optional_id_t>) {
@@ -901,18 +903,18 @@ TEST_CASE_TEMPLATE(
     Options const batch_options{};
     Model model{50.0, input_dataset};
 
-    SUBCASE("Single update") {
+    SUBCASE("Permanent update") {
         if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
             CHECK_THROWS_AS(model.update(update_dataset), PowerGridError);
         } else {
-            model.update(update_dataset);
+            CHECK_NOTHROW(model.update(update_dataset));
         }
     }
     SUBCASE("Batch update") {
         if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
             CHECK_THROWS_AS(model.calculate(batch_options, batch_output_dataset, update_dataset), PowerGridBatchError);
         } else {
-            model.calculate(batch_options, batch_output_dataset, update_dataset);
+            CHECK_NOTHROW(model.calculate(batch_options, batch_output_dataset, update_dataset));
         }
     }
 }
