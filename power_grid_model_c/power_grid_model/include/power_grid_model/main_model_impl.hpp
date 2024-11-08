@@ -714,13 +714,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto const scenario_sequence = [&all_scenario_sequence, &current_scenario_sequence_cache,
                                         &is_independent]() -> SequenceIdxView {
-            return run_functor_with_all_types_return_array([&]<typename CT>() {
-                constexpr auto comp_idx = index_of_component<CT>;
-                if (std::get<comp_idx>(is_independent)) {
-                    return std::span<Idx2D const>{std::get<comp_idx>(all_scenario_sequence)};
-                }
-                return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache)};
-            });
+            return run_functor_with_all_types_return_array(
+                [&all_scenario_sequence, &current_scenario_sequence_cache, &is_independent]<typename CT>() {
+                    constexpr auto comp_idx = index_of_component<CT>;
+                    if (std::get<comp_idx>(is_independent)) {
+                        return std::span<Idx2D const>{std::get<comp_idx>(all_scenario_sequence)};
+                    }
+                    return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache)};
+                });
         };
 
         return std::make_pair(
