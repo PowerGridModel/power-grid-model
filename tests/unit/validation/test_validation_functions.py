@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 
 from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.enum import (
     Branch3Side,
     BranchSide,
