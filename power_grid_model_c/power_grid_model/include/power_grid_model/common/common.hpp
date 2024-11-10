@@ -56,6 +56,7 @@ using DoubleComplex = std::complex<double>;
 using std::numbers::inv_sqrt3;
 using std::numbers::pi;
 using std::numbers::sqrt3;
+using std::numbers::e;
 
 constexpr DoubleComplex a2{-0.5, -sqrt3 / 2.0};
 constexpr DoubleComplex a{-0.5, sqrt3 / 2.0};

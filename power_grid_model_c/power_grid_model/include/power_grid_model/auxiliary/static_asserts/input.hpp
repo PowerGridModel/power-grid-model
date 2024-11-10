@@ -70,6 +70,25 @@ static_assert(offsetof(LineInput, to_node) == offsetof(BranchInput, to_node));
 static_assert(offsetof(LineInput, from_status) == offsetof(BranchInput, from_status));
 static_assert(offsetof(LineInput, to_status) == offsetof(BranchInput, to_status));
 
+// static asserts for AsymLineInput
+static_assert(std::is_standard_layout_v<AsymLineInput>);
+// static asserts for conversion of AsymLineInput to BaseInput
+static_assert(std::alignment_of_v<AsymLineInput> >= std::alignment_of_v<BranchInput>);
+static_assert(std::same_as<decltype(AsymLineInput::id), decltype(BaseInput::id)>);
+static_assert(offsetof(AsymLineInput, id) == offsetof(BaseInput, id));
+// static asserts for conversion of AsymLineInput to BranchInput
+static_assert(std::alignment_of_v<AsymLineInput> >= std::alignment_of_v<BranchInput>);
+static_assert(std::same_as<decltype(AsymLineInput::id), decltype(BranchInput::id)>);
+static_assert(std::same_as<decltype(AsymLineInput::from_node), decltype(BranchInput::from_node)>);
+static_assert(std::same_as<decltype(AsymLineInput::to_node), decltype(BranchInput::to_node)>);
+static_assert(std::same_as<decltype(AsymLineInput::from_status), decltype(BranchInput::from_status)>);
+static_assert(std::same_as<decltype(AsymLineInput::to_status), decltype(BranchInput::to_status)>);
+static_assert(offsetof(AsymLineInput, id) == offsetof(BranchInput, id));
+static_assert(offsetof(AsymLineInput, from_node) == offsetof(BranchInput, from_node));
+static_assert(offsetof(AsymLineInput, to_node) == offsetof(BranchInput, to_node));
+static_assert(offsetof(AsymLineInput, from_status) == offsetof(BranchInput, from_status));
+static_assert(offsetof(AsymLineInput, to_status) == offsetof(BranchInput, to_status));
+
 // static asserts for GenericBranchInput
 static_assert(std::is_standard_layout_v<GenericBranchInput>);
 // static asserts for conversion of GenericBranchInput to BaseInput

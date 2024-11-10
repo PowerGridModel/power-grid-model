@@ -22,6 +22,7 @@ namespace three_phase_tensor {
 
 template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T> using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
+template <class T> using Eigen4Tensor = Eigen::Array<T, 4, 4, Eigen::ColMajor>;
 template <class T> using Eigen3DiagonalTensor = Eigen::DiagonalMatrix<T, 3>;
 
 template <scalar_value T> class Vector : public Eigen3Vector<T> {
@@ -61,11 +62,29 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
     // additional constructors
     explicit Tensor(T const& x) { (*this) << x, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, x; }
     explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
+    explicit Tensor(T const& x1, T const& x2, T const& x3, T const& x4, T const& x5, T const& x6) { (*this) << x1, x2, x4, x2, x3, x5, x4, x5, x6; }
+    explicit Tensor(T const& x1, T const& x2, T const& x3, T const& x4, T const& x5, T const& x6, T const& x7, T const& x8, T const& x9) { (*this) << x1, x2, x3, x4, x5, x6, x7, x8, x9; }
     explicit Tensor(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2); }
     // eigen expression
     template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
     template <typename OtherDerived> Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->Eigen3Tensor<T>::operator=(other);
+        return *this;
+    }
+};
+
+template <scalar_value T> class Tensor4 : public Eigen4Tensor<T> {
+  public:
+    Tensor4() { (*this) = Eigen4Tensor<T>::Zero(); }
+    // additional constructors
+    explicit Tensor4(T const& x) { (*this) << x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x; }
+    explicit Tensor4(T const& s, T const& m) { (*this) << s, m, m, m, m, s, m, m, m, m, s, m, m, m, m, s; }
+    explicit Tensor4(T const& x1, T const& x2, T const& x3, T const& x4, T const& x5, T const& x6, T const& x7, T const& x8, T const& x9, T const& x10) { (*this) << x1, x2, x4, x7, x2, x3, x5, x8, x4, x5, x6, x9, x7, x8, x9, x10; }
+    explicit Tensor4(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, 0.0, v(2), 0.0, 0.0, 0.0, 0.0, v(3); }
+    // eigen expression
+    template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : Eigen4Tensor<T>{other} {}
+    template <typename OtherDerived> Tensor4& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+        this->Eigen4Tensor<T>::operator=(other);
         return *this;
     }
 };
@@ -92,6 +111,7 @@ template <symmetry_tag sym>
 using RealTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::Tensor<double>>;
 template <symmetry_tag sym>
 using ComplexTensor = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
+using ComplexTensor4 = three_phase_tensor::Tensor4<DoubleComplex>;
 
 template <symmetry_tag sym>
 using RealDiagonalTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::DiagonalTensor<double>>;
