@@ -11,23 +11,23 @@ from typing import Optional, Type
 
 import numpy as np
 
-from power_grid_model.core.data_handling import (
+from power_grid_model._core.data_handling import (
     create_output_data,
     get_output_type,
     prepare_input_view,
     prepare_output_view,
     prepare_update_view,
 )
-from power_grid_model.core.dataset_definitions import (
+from power_grid_model._core.dataset_definitions import (
     ComponentType,
     ComponentTypeLike,
     _map_to_component_types,
     _str_to_component_type,
 )
-from power_grid_model.core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
-from power_grid_model.core.index_integer import IdNp, IdxNp
-from power_grid_model.core.options import Options
-from power_grid_model.core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
+from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
+from power_grid_model._core.index_integer import IdNp, IdxNp
+from power_grid_model._core.options import Options
+from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
 from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import (
     CalculationMethod,
