@@ -796,12 +796,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <typename CompType>
     void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) const {
         properties.ids_all_na = std::ranges::all_of(all_spans, [this](auto const& vec) {
-            return std::ranges::all_of(vec, [this](auto const& item) { return this->template check_id_na(item); });
+            return std::ranges::all_of(vec, [this](auto const& item) { return this->check_id_na(item); });
         });
         properties.ids_part_na = std::ranges::any_of(all_spans,
                                                      [this](auto const& vec) {
                                                          return std::ranges::any_of(vec, [this](auto const& item) {
-                                                             return this->template check_id_na(item);
+                                                             return this->check_id_na(item);
                                                          });
                                                      }) &&
                                  !properties.ids_all_na;
