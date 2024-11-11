@@ -11,7 +11,7 @@ from typing import Any, Optional, cast
 import numpy as np
 
 from power_grid_model import power_grid_meta_data
-from power_grid_model.core.dataset_definitions import (
+from power_grid_model._core.dataset_definitions import (
     ComponentType,
     ComponentTypeLike,
     ComponentTypeVar,
@@ -22,7 +22,7 @@ from power_grid_model.data_types import SingleArray, SingleComponentData, Single
 from power_grid_model.validation.errors import ValidationError
 
 
-def eval_expression(data: np.ndarray, expression: int | float | str) -> np.ndarray:
+def _eval_expression(data: np.ndarray, expression: int | float | str) -> np.ndarray:
     """
     Wrapper function that checks the type of the 'expression'. If the expression is a string, it is assumed to be a
     field expression and the expression is validated. Otherwise it is assumed to be a numerical value and the value
@@ -42,11 +42,11 @@ def eval_expression(data: np.ndarray, expression: int | float | str) -> np.ndarr
 
     """
     if isinstance(expression, str):
-        return eval_field_expression(data, expression)
+        return _eval_field_expression(data, expression)
     return np.array(expression)
 
 
-def eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
+def _eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
     """
     A field expression can either be the name of a field (e.g. 'field_x') in the data, or a ratio between two fields
     (e.g. 'field_x / field_y'). The expression is checked on validity and then the fields are checked to be present in
@@ -92,18 +92,18 @@ def eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
     return np.true_divide(data[fields[0]], data[fields[1]])
 
 
-def update_input_data(input_data: SingleDataset, update_data: SingleDataset):
+def _update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     """
     Update the input data using the available non-nan values in the update data.
     """
 
     merged_data = {component: array.copy() for component, array in input_data.items()}
     for component in update_data.keys():
-        update_component_data(component, merged_data[component], update_data[component])
+        _update_component_data(component, merged_data[component], update_data[component])
     return merged_data
 
 
-def update_component_data(
+def _update_component_data(
     component: ComponentTypeLike, input_data: SingleComponentData, update_data: SingleComponentData
 ) -> None:
     """
@@ -133,7 +133,7 @@ def _update_component_array_data(
     for field in update_data.dtype.names:
         if field == "id":
             continue
-        nan = nan_type(component, field, DatasetType.update)
+        nan = _nan_type(component, field, DatasetType.update)
         if np.isnan(nan):
             mask = ~np.isnan(update_data[field])
         else:
@@ -143,12 +143,12 @@ def _update_component_array_data(
             for phase in range(mask.shape[1]):
                 # find indexers of to-be-updated object
                 sub_mask = mask[:, phase]
-                idx = get_indexer(input_data["id"], update_data_ids[sub_mask])
+                idx = _get_indexer(input_data["id"], update_data_ids[sub_mask])
                 # update
                 input_data[field][idx, phase] = update_data[field][sub_mask, phase]
         else:
             # find indexers of to-be-updated object
-            idx = get_indexer(input_data["id"], update_data_ids[mask])
+            idx = _get_indexer(input_data["id"], update_data_ids[mask])
             # update
             input_data[field][idx] = update_data[field][mask]
 
@@ -190,7 +190,7 @@ def errors_to_string(
     return msg
 
 
-def nan_type(component: ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
+def _nan_type(component: ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
@@ -198,7 +198,7 @@ def nan_type(component: ComponentTypeLike, field: str, data_type: DatasetType = 
     return power_grid_meta_data[data_type][component].nans[field]
 
 
-def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[int] = None) -> np.ndarray:
+def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[int] = None) -> np.ndarray:
     """
     Given array of values from a source and a target dataset.
     Find the position of each value in the target dataset in the context of the source dataset.
@@ -209,7 +209,7 @@ def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[
 
     >>> input_ids = [1, 2, 3, 4, 5]
     >>> update_ids = [3]
-    >>> assert get_indexer(input_ids, update_ids) == np.array([2])
+    >>> assert _get_indexer(input_ids, update_ids) == np.array([2])
 
     Args:
         source: array of values in the source dataset
@@ -238,7 +238,7 @@ def get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[
     return np.where(source[clipped_indices] == target, permutation_sort[clipped_indices], default_value)
 
 
-def set_default_value(
+def _set_default_value(
     data: SingleDataset, component: ComponentTypeLike, field: str, default_value: int | float | np.ndarray
 ):
     """
@@ -256,17 +256,17 @@ def set_default_value(
     Returns:
 
     """
-    if np.isnan(nan_type(component, field)):
+    if np.isnan(_nan_type(component, field)):
         mask = np.isnan(data[component][field])
     else:
-        mask = data[component][field] == nan_type(component, field)
+        mask = data[component][field] == _nan_type(component, field)
     if isinstance(default_value, np.ndarray):
         data[component][field][mask] = default_value[mask]
     else:
         data[component][field][mask] = default_value
 
 
-def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[ComponentTypeVar]) -> list[int]:
+def _get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[ComponentTypeVar]) -> list[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -286,7 +286,7 @@ def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[
     valid_ids = set()
     for ref_component in ref_components:
         if ref_component in data:
-            nan = nan_type(ref_component, "id")
+            nan = _nan_type(ref_component, "id")
             if np.isnan(nan):
                 mask = ~np.isnan(data[ref_component]["id"])
             else:
@@ -296,7 +296,7 @@ def get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[
     return list(valid_ids)
 
 
-def get_mask(data: SingleDataset, component: ComponentTypeLike, field: str, **filters: Any) -> np.ndarray:
+def _get_mask(data: SingleDataset, component: ComponentTypeLike, field: str, **filters: Any) -> np.ndarray:
     """
     Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
 
