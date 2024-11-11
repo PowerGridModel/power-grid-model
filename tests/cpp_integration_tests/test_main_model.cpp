@@ -1451,7 +1451,7 @@ TEST_CASE("Test main model - runtime dispatch") {
                 update_data_without_ids.add_buffer("sym_load", update_size, update_size, nullptr, nullptr);
                 update_data_without_ids.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
 
-                MainModel base_model{50.0, input_data};
+                MainModel const base_model{50.0, input_data};
                 MainModel columnar_model_w_id{base_model};
                 MainModel columnar_model_wo_id{base_model};
 
