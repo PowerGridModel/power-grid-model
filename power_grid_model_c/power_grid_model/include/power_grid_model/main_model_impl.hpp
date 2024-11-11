@@ -169,6 +169,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using ComponentFlags = std::array<bool, n_types>;
     using ComponentCountInBase = std::pair<std::string, Idx>;
 
+    // TODO: (figueroa1395) probably move to common.hpp or somewhere else
     static constexpr Idx ignore_output{-1};
     static constexpr Idx invalid_index{-1};
     static constexpr Idx isolated_component{-1};
@@ -706,21 +707,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
-                                        ComponentFlags const& is_independent, SequenceIdx const& all_scenario_sequence,
+                                        ComponentFlags const& independence_flags, SequenceIdx const& all_scenario_sequence,
                                         SequenceIdx& current_scenario_sequence_cache,
                                         std::vector<CalculationInfo>& infos) noexcept {
-        auto do_update_cache = [&is_independent] {
+        auto do_update_cache = [&independence_flags] {
             ComponentFlags result;
-            std::ranges::transform(is_independent, result.begin(), std::logical_not<>{});
+            std::ranges::transform(independence_flags, result.begin(), std::logical_not<>{});
             return result;
         }();
 
         auto const scenario_sequence = [&all_scenario_sequence, &current_scenario_sequence_cache,
-                                        &is_independent]() -> SequenceIdxView {
+                                        &independence_flags]() -> SequenceIdxView {
             return run_functor_with_all_types_return_array(
-                [&all_scenario_sequence, &current_scenario_sequence_cache, &is_independent]<typename CT>() {
+                [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags]<typename CT>() {
                     constexpr auto comp_idx = index_of_component<CT>;
-                    if (std::get<comp_idx>(is_independent)) {
+                    if (std::get<comp_idx>(independence_flags)) {
                         return std::span<Idx2D const>{std::get<comp_idx>(all_scenario_sequence)};
                     }
                     return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache)};
