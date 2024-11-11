@@ -439,7 +439,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             if (!std::get<index_of_component<CT>>(to_store)) {
                 return std::vector<Idx2D>{};
             }
-            auto const independence = check_components_independence<CT>(update_data);
+            auto const independence = check_component_independence<CT>(update_data);
             validate_update_data_independence(independence);
             return get_component_sequence<CT>(update_data, scenario_idx, independence);
         });
@@ -707,7 +707,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
-                                        ComponentFlags const& independence_flags, SequenceIdx const& all_scenario_sequence,
+                                        ComponentFlags const& independence_flags,
+                                        SequenceIdx const& all_scenario_sequence,
                                         SequenceIdx& current_scenario_sequence_cache,
                                         std::vector<CalculationInfo>& infos) noexcept {
         auto do_update_cache = [&independence_flags] {
@@ -782,79 +783,76 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     template <class Component> using UpdateType = typename Component::UpdateType;
 
-    template <class CompType>
-    UpdateCompProperties check_components_independence(ConstDataset const& update_data) const {
-        auto const comp_count_in_base = this->component_count<CompType>();
+    template <typename T> bool check_id_na(T const& obj) const {
+        if constexpr (requires { obj.id; }) {
+            return is_nan(obj.id);
+        } else if constexpr (requires { obj.get().id; }) {
+            return is_nan(obj.get().id);
+        } else {
+            throw UnreachableHit{"check_component_independence", "Only components with id are supported"};
+        }
+    }
 
-        auto const check_id_na = [](auto const& obj) -> bool {
-            if constexpr (requires { obj.id; }) {
-                return is_nan(obj.id);
-            } else if constexpr (requires { obj.get().id; }) {
-                return is_nan(obj.get().id);
-            } else {
-                throw UnreachableHit{"check_components_independence", "Only components with id are supported"};
-            }
-        };
+    template <typename CompType>
+    void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) const {
+        properties.ids_all_na = std::ranges::all_of(all_spans, [this](auto const& vec) {
+            return std::ranges::all_of(vec, [this](auto const& item) { return this->template check_id_na(item); });
+        });
+        properties.ids_part_na = std::ranges::any_of(all_spans,
+                                                     [this](auto const& vec) {
+                                                         return std::ranges::any_of(vec, [this](auto const& item) {
+                                                             return this->template check_id_na(item);
+                                                         });
+                                                     }) &&
+                                 !properties.ids_all_na;
 
-        auto const process_buffer_span = [check_id_na](auto const& all_spans, UpdateCompProperties& result) {
-            result.ids_all_na = std::ranges::all_of(
-                all_spans, [&check_id_na](auto const& vec) { return std::ranges::all_of(vec, check_id_na); });
-            result.ids_part_na =
-                std::ranges::any_of(
-                    all_spans, [&check_id_na](auto const& vec) { return std::ranges::any_of(vec, check_id_na); }) &&
-                !result.ids_all_na;
+        if (all_spans.empty()) {
+            properties.update_ids_match = true;
+        } else {
+            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
+            // check the ids
+            auto const first_span = all_spans[0];
+            // check the subsequent scenarios
+            // only return true if all scenarios match the ids of the first batch
+            properties.update_ids_match =
+                std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+                    return std::ranges::equal(current_span, first_span,
+                                              [](UpdateType<CompType> const& obj, UpdateType<CompType> const& first) {
+                                                  return obj.id == first.id;
+                                              });
+                });
+        }
+    }
 
-            if (all_spans.empty()) {
-                result.update_ids_match = true;
-            } else {
-                // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
-                // check the ids
-                auto const first_span = all_spans[0];
-                // check the subsequent scenarios
-                // only return true if all scenarios match the ids of the first batch
-                result.update_ids_match = std::ranges::all_of(
-                    all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                        return std::ranges::equal(current_span, first_span,
-                                                  [](UpdateType<CompType> const& obj,
-                                                     UpdateType<CompType> const& first) { return obj.id == first.id; });
-                    });
-            }
-        };
+    template <class CompType> UpdateCompProperties check_component_independence(ConstDataset const& update_data) const {
+        UpdateCompProperties properties;
+        properties.name = CompType::name;
+        auto const component_idx = update_data.find_component(properties.name, false);
+        properties.is_columnar = update_data.is_columnar(properties.name);
+        properties.dense = update_data.is_dense(properties.name);
+        properties.uniform = update_data.is_uniform(properties.name);
+        properties.has_any_elements =
+            component_idx != invalid_index && update_data.get_component_info(component_idx).total_elements > 0;
+        properties.elements_ps_in_update =
+            properties.uniform ? update_data.uniform_elements_per_scenario(properties.name) : invalid_index;
+        properties.elements_in_base = this->component_count<CompType>();
 
-        auto const check_each_component = [&update_data, &process_buffer_span,
-                                           &comp_count_in_base]() -> UpdateCompProperties {
-            // get span of all the update data
-            auto const comp_index = update_data.find_component(CompType::name, false);
-            UpdateCompProperties result;
-            result.name = CompType::name;
-            result.is_columnar = update_data.is_columnar(result.name);
-            result.dense = update_data.is_dense(result.name);
-            result.uniform = update_data.is_uniform(result.name);
-            result.has_any_elements =
-                comp_index != invalid_index && update_data.get_component_info(comp_index).total_elements > 0;
+        if (properties.is_columnar) {
+            process_buffer_span<CompType>(
+                update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
+                properties);
+        } else {
+            process_buffer_span<CompType>(
+                update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), properties);
+        }
 
-            result.elements_ps_in_update =
-                result.uniform ? update_data.uniform_elements_per_scenario(result.name) : invalid_index;
-
-            result.elements_in_base = comp_count_in_base;
-
-            if (result.is_columnar) {
-                process_buffer_span(
-                    update_data.get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), result);
-            } else {
-                process_buffer_span(update_data.get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
-                                    result);
-            }
-            return result;
-        };
-
-        return check_each_component();
+        return properties;
     }
 
     UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
         // check and return indenpendence of all components
         return run_functor_with_all_types_return_array(
-            [this, &update_data]<typename CT>() { return this->check_components_independence<CT>(update_data); });
+            [this, &update_data]<typename CT>() { return this->check_component_independence<CT>(update_data); });
     }
 
     ComponentFlags is_update_independent(ConstDataset const& update_data) {
@@ -1271,24 +1269,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <calculation_input_type CalcInputType>
-    static auto calculate_param(auto const& c, auto const&... extra_args)
-        requires requires {
-            { c.calc_param(extra_args...) };
-        }
-    {
-        return c.calc_param(extra_args...);
-    }
-
-    template <calculation_input_type CalcInputType>
-    static auto calculate_param(auto const& c, auto const&... extra_args)
-        requires requires {
-            { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
-        }
-    {
-        return c.template calc_param<typename CalcInputType::sym>(extra_args...);
-    }
-
     template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
@@ -1402,7 +1382,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         }
 
-        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component, not_connected});
+        auto fault_coup =
+            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component, not_connected});
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {
@@ -1501,5 +1482,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
     }
 };
+
+template <calculation_input_type CalcInputType>
+static auto calculate_param(auto const& c, auto const&... extra_args)
+    requires requires {
+        { c.calc_param(extra_args...) };
+    }
+{
+    return c.calc_param(extra_args...);
+}
+
+template <calculation_input_type CalcInputType>
+static auto calculate_param(auto const& c, auto const&... extra_args)
+    requires requires {
+        { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
+    }
+{
+    return c.template calc_param<typename CalcInputType::sym>(extra_args...);
+}
 
 } // namespace power_grid_model
