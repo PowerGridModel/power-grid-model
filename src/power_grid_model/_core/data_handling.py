@@ -8,10 +8,10 @@ Data handling
 
 import numpy as np
 
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.power_grid_dataset import CConstDataset, CMutableDataset
+from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._utils import process_data_filter
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_dataset import CConstDataset, CMutableDataset
-from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridUnreachableHitError

@@ -70,12 +70,12 @@ from power_grid_model.validation.errors import (
     ValidationError,
 )
 from power_grid_model.validation.utils import (
-    eval_expression,
-    get_indexer,
-    get_mask,
-    get_valid_ids,
-    nan_type,
-    set_default_value,
+    _eval_expression,
+    _get_indexer,
+    _get_mask,
+    _get_valid_ids,
+    _nan_type,
+    _set_default_value,
 )
 
 Error = TypeVar("Error", bound=ValidationError)
@@ -370,17 +370,17 @@ def none_match_comparison(  # pylint: disable=too-many-arguments
         where the value in the field of interest matched the comparison.
     """
     if default_value_1 is not None:
-        set_default_value(data=data, component=component, field=field, default_value=default_value_1)
+        _set_default_value(data=data, component=component, field=field, default_value=default_value_1)
     if default_value_2 is not None:
-        set_default_value(data=data, component=component, field=field, default_value=default_value_2)
+        _set_default_value(data=data, component=component, field=field, default_value=default_value_2)
     component_data = data[component]
     if not isinstance(component_data, np.ndarray):
         raise NotImplementedError()  # TODO(mgovers): add support for columnar data
 
     if isinstance(ref_value, tuple):
-        ref = tuple(eval_expression(component_data, v) for v in ref_value)
+        ref = tuple(_eval_expression(component_data, v) for v in ref_value)
     else:
-        ref = (eval_expression(component_data, ref_value),)
+        ref = (_eval_expression(component_data, ref_value),)
     matches = compare_fn(component_data[field], *ref)
     if matches.any():
         if matches.ndim > 1:
@@ -520,7 +520,7 @@ def all_valid_enum_values(
     """
     enums: list[Type[Enum]] = enum if isinstance(enum, list) else [enum]
 
-    valid = {nan_type(component, field)}
+    valid = {_nan_type(component, field)}
     for enum_type in enums:
         valid.update(list(enum_type))
 
@@ -557,13 +557,13 @@ def all_valid_associated_enum_values(  # pylint: disable=too-many-positional-arg
     """
     enums: list[Type[Enum]] = enum if isinstance(enum, list) else [enum]
 
-    valid_ids = get_valid_ids(data=data, ref_components=ref_components)
+    valid_ids = _get_valid_ids(data=data, ref_components=ref_components)
     mask = np.logical_and(
-        get_mask(data=data, component=component, field=field, **filters),
+        _get_mask(data=data, component=component, field=field, **filters),
         np.isin(data[component][ref_object_id_field], valid_ids),
     )
 
-    valid = {nan_type(component, field)}
+    valid = {_nan_type(component, field)}
     for enum_type in enums:
         valid.update(list(enum_type))
 
@@ -596,8 +596,8 @@ def all_valid_ids(
         A list containing zero or one InvalidIdError, listing all ids where the value in the field of interest
         was not a valid object identifier.
     """
-    valid_ids = get_valid_ids(data=data, ref_components=ref_components)
-    mask = get_mask(data=data, component=component, field=field, **filters)
+    valid_ids = _get_valid_ids(data=data, ref_components=ref_components)
+    mask = _get_mask(data=data, component=component, field=field, **filters)
 
     # Find any values that can't be found in the set of ids
     invalid = np.logical_and(mask, np.isin(data[component][field], valid_ids, invert=True))
@@ -779,7 +779,7 @@ def none_missing(
     for field in fields:
         if isinstance(field, list):
             field = field[0]
-        nan = nan_type(component, field)
+        nan = _nan_type(component, field)
         if np.isnan(nan):
             invalid = np.isnan(data[component][field][index])
         else:
@@ -939,14 +939,14 @@ def all_supported_tap_control_side(  # pylint: disable=too-many-arguments
         A list containing zero or more InvalidAssociatedEnumValueErrors; listing all the ids
         of components where the field of interest was invalid, given the referenced object's field.
     """
-    mask = get_mask(data=data, component=component, field=control_side_field, **filters)
+    mask = _get_mask(data=data, component=component, field=control_side_field, **filters)
     values = data[component][control_side_field][mask]
 
     invalid = np.zeros_like(mask)
 
     for ref_component, ref_field in tap_side_fields:
         if ref_component in data:
-            indices = get_indexer(data[ref_component]["id"], data[component][regulated_object_field], default_value=-1)
+            indices = _get_indexer(data[ref_component]["id"], data[component][regulated_object_field], default_value=-1)
             found = indices != -1
             ref_comp_values = data[ref_component][ref_field][indices[found]]
             invalid[found] = np.logical_or(invalid[found], values[found] == ref_comp_values)

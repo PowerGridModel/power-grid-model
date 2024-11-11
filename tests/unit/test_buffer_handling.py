@@ -9,9 +9,9 @@ Power grid model buffer handler tests
 import numpy as np
 import pytest
 
-from power_grid_model.core.buffer_handling import _get_dense_buffer_properties, _get_sparse_buffer_properties
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
+from power_grid_model._core.buffer_handling import _get_dense_buffer_properties, _get_sparse_buffer_properties
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
