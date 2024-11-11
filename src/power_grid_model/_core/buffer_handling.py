@@ -6,12 +6,15 @@
 Power grid model buffer handler
 """
 
-import warnings
 from dataclasses import dataclass
 from typing import cast
 
 import numpy as np
 
+from power_grid_model._core.error_handling import VALIDATOR_MSG
+from power_grid_model._core.index_integer import IdxC, IdxNp
+from power_grid_model._core.power_grid_core import IdxPtr, VoidPtr
+from power_grid_model._core.power_grid_meta import ComponentMetaData
 from power_grid_model._utils import (
     _extract_data_from_component_data,
     _extract_indptr,
@@ -19,10 +22,6 @@ from power_grid_model._utils import (
     is_columnar,
     is_sparse,
 )
-from power_grid_model.core.error_handling import VALIDATOR_MSG
-from power_grid_model.core.index_integer import IdxC, IdxNp
-from power_grid_model.core.power_grid_core import IdxPtr, VoidPtr
-from power_grid_model.core.power_grid_meta import ComponentMetaData
 from power_grid_model.data_types import (
     AttributeType,
     ComponentData,
@@ -85,7 +84,7 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
         a raw view on the data set.
     """
     if data.dtype != dtype:
-        warnings.warn(f"Data type does not match schema. {VALIDATOR_MSG}", DeprecationWarning)
+        raise ValueError(f"Data type does not match schema. {VALIDATOR_MSG}")
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
 

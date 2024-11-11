@@ -13,7 +13,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Callable, Optional
 
-from power_grid_model.core.index_integer import IdC, IdxC
+from power_grid_model._core.index_integer import IdC, IdxC
 
 # integer index
 IdxPtr = POINTER(IdxC)

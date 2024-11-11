@@ -8,12 +8,12 @@ from functools import partial
 import numpy as np
 import pytest
 
+from power_grid_model._core.data_handling import create_output_data
+from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model._core.power_grid_core import VoidPtr
+from power_grid_model._core.power_grid_dataset import CMutableDataset
+from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._utils import is_columnar
-from power_grid_model.core.data_handling import create_output_data
-from power_grid_model.core.dataset_definitions import ComponentType as CT, DatasetType as DT
-from power_grid_model.core.power_grid_core import VoidPtr
-from power_grid_model.core.power_grid_dataset import CMutableDataset
-from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.enum import ComponentAttributeFilterOptions
 
 
@@ -168,5 +168,5 @@ def test_dtype_compatibility_check_compatible():
 def test_dtype_compatibility_check__error():
     nodes = initialize_array(DT.sym_output, CT.node, (1, 2))
     data = {CT.node: nodes.astype(nodes.dtype.newbyteorder("S"))}
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(ValueError):
         CMutableDataset(data, DT.sym_output)
