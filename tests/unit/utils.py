@@ -11,8 +11,8 @@ from typing import Any, Optional
 import numpy as np
 import pytest
 
-from power_grid_model.core.dataset_definitions import DatasetType
-from power_grid_model.core.power_grid_model import PowerGridModel
+from power_grid_model._core.dataset_definitions import DatasetType
+from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
     AutomaticTapCalculationError,

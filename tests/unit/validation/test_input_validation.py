@@ -36,7 +36,7 @@ from power_grid_model.validation.errors import (
     TwoValuesZeroError,
     UnsupportedTransformerRegulationError,
 )
-from power_grid_model.validation.utils import nan_type
+from power_grid_model.validation.utils import _nan_type
 
 
 @pytest.fixture
@@ -98,12 +98,12 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     transformer["tap_pos"] = [-1, 6, -4]
     transformer["tap_min"] = [-2, 4, 3]
     transformer["tap_max"] = [2, -4, -3]
-    transformer["tap_nom"] = [-3, nan_type("transformer", "tap_nom"), 4]
+    transformer["tap_nom"] = [-3, _nan_type("transformer", "tap_nom"), 4]
     transformer["tap_size"] = [262.5, 0.0, -10.0]
-    transformer["uk_min"] = [0.0000000005, nan_type("transformer", "uk_min"), 0.9]
-    transformer["uk_max"] = [0.0000000005, nan_type("transformer", "uk_max"), 0.8]
-    transformer["pk_min"] = [300.0, 0.0, nan_type("transformer", "pk_min")]
-    transformer["pk_max"] = [400.0, -0.1, nan_type("transformer", "pk_max")]
+    transformer["uk_min"] = [0.0000000005, _nan_type("transformer", "uk_min"), 0.9]
+    transformer["uk_max"] = [0.0000000005, _nan_type("transformer", "uk_max"), 0.8]
+    transformer["pk_min"] = [300.0, 0.0, _nan_type("transformer", "pk_min")]
+    transformer["pk_max"] = [400.0, -0.1, _nan_type("transformer", "pk_max")]
 
     three_winding_transformer = initialize_array(DatasetType.input, ComponentType.three_winding_transformer, 4)
     three_winding_transformer["id"] = [1, 28, 29, 30]
@@ -137,49 +137,49 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     three_winding_transformer["tap_min"] = [-10, -10, -10, -10]
     three_winding_transformer["tap_max"] = [10, 10, 10, 10]
     three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
-    three_winding_transformer["tap_nom"] = [-12, 41, nan_type("three_winding_transformer", "tap_nom"), 0]
+    three_winding_transformer["tap_nom"] = [-12, 41, _nan_type("three_winding_transformer", "tap_nom"), 0]
     three_winding_transformer["uk_12_min"] = [
-        nan_type("three_winding_transformer", "uk_12_min"),
+        _nan_type("three_winding_transformer", "uk_12_min"),
         1.1,
         0.05,
-        nan_type("three_winding_transformer", "uk_12_min"),
+        _nan_type("three_winding_transformer", "uk_12_min"),
     ]
     three_winding_transformer["uk_13_min"] = [
-        nan_type("three_winding_transformer", "uk_13_min"),
+        _nan_type("three_winding_transformer", "uk_13_min"),
         1.2,
         0.3,
-        nan_type("three_winding_transformer", "uk_13_min"),
+        _nan_type("three_winding_transformer", "uk_13_min"),
     ]
     three_winding_transformer["uk_23_min"] = [
-        nan_type("three_winding_transformer", "uk_23_min"),
+        _nan_type("three_winding_transformer", "uk_23_min"),
         1,
         0.15,
-        nan_type("three_winding_transformer", "uk_23_min"),
+        _nan_type("three_winding_transformer", "uk_23_min"),
     ]
-    three_winding_transformer["pk_12_min"] = [-450, nan_type("three_winding_transformer", "pk_12_min"), 10, 40]
-    three_winding_transformer["pk_13_min"] = [-40, nan_type("three_winding_transformer", "pk_13_min"), 40, 50]
-    three_winding_transformer["pk_23_min"] = [-120, nan_type("three_winding_transformer", "pk_23_min"), 40, 30]
+    three_winding_transformer["pk_12_min"] = [-450, _nan_type("three_winding_transformer", "pk_12_min"), 10, 40]
+    three_winding_transformer["pk_13_min"] = [-40, _nan_type("three_winding_transformer", "pk_13_min"), 40, 50]
+    three_winding_transformer["pk_23_min"] = [-120, _nan_type("three_winding_transformer", "pk_23_min"), 40, 30]
     three_winding_transformer["uk_12_max"] = [
-        nan_type("three_winding_transformer", "uk_12_max"),
+        _nan_type("three_winding_transformer", "uk_12_max"),
         1.1,
         0.05,
-        nan_type("three_winding_transformer", "uk_12_max"),
+        _nan_type("three_winding_transformer", "uk_12_max"),
     ]
     three_winding_transformer["uk_13_max"] = [
-        nan_type("three_winding_transformer", "uk_13_max"),
+        _nan_type("three_winding_transformer", "uk_13_max"),
         1.2,
         0.3,
-        nan_type("three_winding_transformer", "uk_13_max"),
+        _nan_type("three_winding_transformer", "uk_13_max"),
     ]
     three_winding_transformer["uk_23_max"] = [
-        nan_type("three_winding_transformer", "uk_23_max"),
+        _nan_type("three_winding_transformer", "uk_23_max"),
         1,
         0.15,
-        nan_type("three_winding_transformer", "uk_23_max"),
+        _nan_type("three_winding_transformer", "uk_23_max"),
     ]
-    three_winding_transformer["pk_12_max"] = [-450, nan_type("three_winding_transformer", "pk_12_max"), 10, 40]
-    three_winding_transformer["pk_13_max"] = [-40, nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
-    three_winding_transformer["pk_23_max"] = [-120, nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
+    three_winding_transformer["pk_12_max"] = [-450, _nan_type("three_winding_transformer", "pk_12_max"), 10, 40]
+    three_winding_transformer["pk_13_max"] = [-40, _nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
+    three_winding_transformer["pk_23_max"] = [-120, _nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
 
     transformer_tap_regulator = initialize_array(DatasetType.input, ComponentType.transformer_tap_regulator, 5)
     transformer_tap_regulator["id"] = [51, 52, 53, 54, 1]
@@ -261,11 +261,13 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
     fault["id"] = [1] + list(range(32, 51))
     fault["status"] = [0, -1, 2] + 17 * [1]
-    fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4]
-    fault["fault_phase"] = list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7]
+    fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type("fault", "fault_type"), 4]
+    fault["fault_phase"] = (
+        list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [_nan_type("fault", "fault_phase"), 7]
+    )
     fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
-    fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "r_f")]
-    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [nan_type("fault", "x_f")]
+    fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "r_f")]
+    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "x_f")]
 
     data = {
         ComponentType.node: node,
@@ -654,7 +656,7 @@ def test_fault(input_data):
             ComponentType.fault,
             "fault_type",
             list(range(32, 51)),
-            5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [nan_type("fault", "fault_type"), 4],
+            5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type("fault", "fault_type"), 4],
         )
         in validation_errors
     )
@@ -663,7 +665,7 @@ def test_fault(input_data):
             ComponentType.fault,
             "fault_phase",
             list(range(32, 51)),
-            list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [nan_type("fault", "fault_phase"), 7],
+            list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [_nan_type("fault", "fault_phase"), 7],
         )
         in validation_errors
     )

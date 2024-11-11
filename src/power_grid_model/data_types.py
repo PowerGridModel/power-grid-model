@@ -13,7 +13,7 @@ from typing import TypeAlias, TypedDict, TypeVar
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentTypeVar
+from power_grid_model._core.dataset_definitions import ComponentTypeVar
 
 AttributeType: TypeAlias = str
 """

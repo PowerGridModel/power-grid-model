@@ -15,9 +15,9 @@ from typing import Optional, Sequence, cast
 
 import numpy as np
 
-from power_grid_model.core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.core.error_handling import VALIDATOR_MSG
-from power_grid_model.core.power_grid_meta import initialize_array, power_grid_meta_data
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.error_handling import VALIDATOR_MSG
+from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import (
     BatchColumn,
     BatchComponentData,
