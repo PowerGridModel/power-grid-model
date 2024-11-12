@@ -775,25 +775,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     template <class Component> using UpdateType = typename Component::UpdateType;
 
-    template <typename T> bool check_id_na(T const& obj) const {
-        if constexpr (requires { obj.id; }) {
-            return is_nan(obj.id);
-        } else if constexpr (requires { obj.get().id; }) {
-            return is_nan(obj.get().id);
-        } else {
-            throw UnreachableHit{"check_component_independence", "Only components with id are supported"};
-        }
-    }
-
     template <typename CompType>
     void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) const {
-        properties.ids_all_na = std::ranges::all_of(all_spans, [this](auto const& vec) {
-            return std::ranges::all_of(vec, [this](auto const& item) { return this->check_id_na(item); });
+        properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
+            return std::ranges::all_of(vec, [](auto const& item) { return main_core::detail::check_id_na(item); });
         });
         properties.ids_part_na = std::ranges::any_of(all_spans,
-                                                     [this](auto const& vec) {
-                                                         return std::ranges::any_of(vec, [this](auto const& item) {
-                                                             return this->check_id_na(item);
+                                                     [](auto const& vec) {
+                                                         return std::ranges::any_of(vec, [](auto const& item) {
+                                                             return main_core::detail::check_id_na(item);
                                                          });
                                                      }) &&
                                  !properties.ids_all_na;

@@ -26,6 +26,16 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
         func(*it, sequence_idx[seq]);
     }
 }
+
+template <typename T> bool check_id_na(T const& obj) {
+    if constexpr (requires { obj.id; }) {
+        return is_nan(obj.id);
+    } else if constexpr (requires { obj.get().id; }) {
+        return is_nan(obj.get().id);
+    } else {
+        throw UnreachableHit{"check_component_independence", "Only components with id are supported"};
+    }
+}
 } // namespace detail
 
 template <component_c Component, class ComponentContainer,
@@ -129,5 +139,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
     return update_inverse<Component>(state, begin, end, destination,
                                      get_component_sequence<Component>(state, begin, end));
 }
+
+////////////////////////
 
 } // namespace power_grid_model::main_core
