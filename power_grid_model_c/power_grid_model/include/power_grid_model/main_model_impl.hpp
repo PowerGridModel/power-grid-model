@@ -281,7 +281,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // helper function to update vectors of components
+    // update all components of a single type across all scenarios
     template <class CompType, cache_type_c CacheType>
     void update_component(std::vector<typename CompType::UpdateType> const& components,
                           std::span<Idx2D const> sequence_idx) {
@@ -304,8 +304,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
+    // helper for row or columnar-based components
     template <class CompType, cache_type_c CacheType>
-    void update_component(ConstDataset const& update_data, Idx pos, std::span<Idx2D const> sequence_idx) {
+    void update_component_row_col(ConstDataset const& update_data, Idx pos, std::span<Idx2D const> sequence_idx) {
         assert(construction_complete_);
         assert(update_data.get_description().dataset->name == std::string_view("update"));
 
@@ -318,21 +319,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // update all components
-    template <cache_type_c CacheType>
-    void update_component(ConstDataset const& update_data, Idx pos, SequenceIdxView const& sequence_idx_map) {
+    // update all components across all scenarios
+    template <cache_type_c CacheType, typename SequenceIdxMap>
+        requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
+    void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
         run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            this->update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
+            this->update_component_row_col<CT, CacheType>(update_data, pos,
+                                                          std::get<index_of_component<CT>>(sequence_idx_map));
         });
     }
-    template <cache_type_c CacheType>
-    void update_component(ConstDataset const& update_data, Idx pos, SequenceIdx const& sequence_idx_map) {
-        run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            this->update_component<CT, CacheType>(update_data, pos, std::get<index_of_component<CT>>(sequence_idx_map));
-        });
-    }
-    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data) {
-        update_component<CacheType>(update_data, 0, get_sequence_idx_map(update_data.get_individual_scenario(0)));
+    // update all components in the first scenario (e.g. permanent update)
+    template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
+        update_components<CacheType>(update_data, 0, get_sequence_idx_map(update_data.get_individual_scenario(0)));
     }
 
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
@@ -736,7 +734,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 current_scenario_sequence_cache =
                     model.get_sequence_idx_map(update_data, scenario_idx, do_update_cache_);
 
-                model.template update_component<cached_update_t>(update_data, scenario_idx, scenario_sequence());
+                model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());
             },
             [&model, scenario_sequence, &current_scenario_sequence_cache, &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
@@ -904,7 +902,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy, calculator,
-                   [this](ConstDataset update_data) { this->update_component<permanent_update_t>(update_data); },
+                   [this](ConstDataset update_data) { this->update_components<permanent_update_t>(update_data); },
                    *meta_data_, search_method)
             ->optimize(state_, options.calculation_method);
     }
