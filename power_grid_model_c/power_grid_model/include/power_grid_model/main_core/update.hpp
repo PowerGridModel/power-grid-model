@@ -172,7 +172,7 @@ struct UpdateCompProperties {
     }
 };
 
-template <typename ComponentType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
+template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
     properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
         return std::ranges::all_of(vec, [](auto const& item) { return detail::check_id_na(item); });
     });
@@ -195,10 +195,37 @@ template <typename ComponentType> void process_buffer_span(auto const& all_spans
         properties.update_ids_match =
             std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
                 return std::ranges::equal(current_span, first_span,
-                                          [](ComponentType::UpdateType const& obj,
-                                             ComponentType::UpdateType const& first) { return obj.id == first.id; });
+                                          [](CompType::UpdateType const& obj, CompType::UpdateType const& first) {
+                                              return obj.id == first.id;
+                                          });
             });
     }
+}
+
+template <class CompType>
+UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx const n_component) {
+    UpdateCompProperties properties;
+    properties.name = CompType::name;
+    auto const component_idx = update_data.find_component(properties.name, false);
+    properties.is_columnar = update_data.is_columnar(properties.name);
+    properties.dense = update_data.is_dense(properties.name);
+    properties.uniform = update_data.is_uniform(properties.name);
+    properties.has_any_elements =
+        component_idx != invalid_index && update_data.get_component_info(component_idx).total_elements > 0;
+    properties.elements_ps_in_update =
+        properties.uniform ? update_data.uniform_elements_per_scenario(properties.name) : invalid_index;
+    properties.elements_in_base = n_component;
+
+    if (properties.is_columnar) {
+        process_buffer_span<CompType>(
+            update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
+            properties);
+    } else {
+        process_buffer_span<CompType>(
+            update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), properties);
+    }
+
+    return properties;
 }
 
 } // namespace power_grid_model::main_core

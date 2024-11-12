@@ -403,7 +403,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 if (!std::get<index_of_component<CT>>(to_store)) {
                     return std::vector<Idx2D>{};
                 }
-                auto const independence = check_component_independence<CT>(update_data);
+                auto const n_component = this->component_count<CT>();
+                auto const independence = main_core::check_component_independence<CT>(update_data, n_component);
                 validate_update_data_independence(independence);
                 return get_component_sequence<CT>(update_data, scenario_idx, independence);
             });
@@ -745,39 +746,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    // TODO: (figueroa1395) may need to move this to update.hpp or make something similar
+    // TODO: (figueroa1395) may want to move this to update.hpp or make something similar there
     template <class Component> using UpdateType = typename Component::UpdateType;
-
-    template <class CompType>
-    main_core::UpdateCompProperties check_component_independence(ConstDataset const& update_data) const {
-        main_core::UpdateCompProperties properties;
-        properties.name = CompType::name;
-        auto const component_idx = update_data.find_component(properties.name, false);
-        properties.is_columnar = update_data.is_columnar(properties.name);
-        properties.dense = update_data.is_dense(properties.name);
-        properties.uniform = update_data.is_uniform(properties.name);
-        properties.has_any_elements = component_idx != main_core::invalid_index &&
-                                      update_data.get_component_info(component_idx).total_elements > 0;
-        properties.elements_ps_in_update =
-            properties.uniform ? update_data.uniform_elements_per_scenario(properties.name) : main_core::invalid_index;
-        properties.elements_in_base = this->component_count<CompType>();
-
-        if (properties.is_columnar) {
-            process_buffer_span<CompType>(
-                update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
-                properties);
-        } else {
-            process_buffer_span<CompType>(
-                update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), properties);
-        }
-
-        return properties;
-    }
 
     UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
         // check and return indenpendence of all components
-        return run_functor_with_all_types_return_array<ComponentType...>(
-            [this, &update_data]<typename CT>() { return this->check_component_independence<CT>(update_data); });
+        return run_functor_with_all_types_return_array<ComponentType...>([this, &update_data]<typename CT>() {
+            auto const n_component = this->component_count<CT>();
+            return main_core::check_component_independence<CT>(update_data, n_component);
+        });
     }
 
     ComponentFlags is_update_independent(ConstDataset const& update_data) {
