@@ -139,40 +139,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    struct UpdateCompProperties {
-        std::string name{};
-        bool has_any_elements{false};             // whether the component has any elements in the update data
-        bool ids_all_na{false};                   // whether all ids are all NA
-        bool ids_part_na{false};                  // whether some ids are NA but some are not
-        bool dense{false};                        // whether the component is dense
-        bool uniform{false};                      // whether the component is uniform
-        bool is_columnar{false};                  // whether the component is columnar
-        bool update_ids_match{false};             // whether the ids match
-        Idx elements_ps_in_update{invalid_index}; // count of elements for this component per scenario in update
-        Idx elements_in_base{invalid_index};      // count of elements for this component per scenario in input
-
-        constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
-        constexpr bool qualify_for_optional_id() const {
-            return update_ids_match && ids_all_na && uniform && elements_ps_in_update == elements_in_base;
-        }
-        constexpr bool provided_ids_valid() const {
-            return is_empty_component() || (update_ids_match && !(ids_all_na || ids_part_na));
-        }
-        constexpr bool is_empty_component() const { return !has_any_elements; }
-        constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
-        constexpr Idx get_n_elements() const {
-            assert(uniform || elements_ps_in_update == invalid_index);
-
-            return qualify_for_optional_id() ? elements_ps_in_update : na_Idx;
-        }
-    };
-    using UpdateCompIndependence = std::array<UpdateCompProperties, n_types>;
+    using UpdateCompIndependence = std::array<main_core::UpdateCompProperties, n_types>;
     using ComponentFlags = std::array<bool, n_types>;
     using ComponentCountInBase = std::pair<std::string, Idx>;
 
     // TODO: (figueroa1395) probably move to common.hpp or somewhere else
     static constexpr Idx ignore_output{-1};
-    static constexpr Idx invalid_index{-1};
     static constexpr Idx isolated_component{-1};
     static constexpr Idx not_connected{-1};
     static constexpr Idx sequential{-1};
@@ -409,7 +381,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // get sequence idx map of a certain batch scenario
     template <typename CompType>
     std::vector<Idx2D> get_component_sequence(ConstDataset const& update_data, Idx scenario_idx,
-                                              UpdateCompProperties const& comp_independence = {}) const {
+                                              main_core::UpdateCompProperties const& comp_independence = {}) const {
         // TODO: (jguo) this function could be encapsulated in UpdateCompProperties in update.hpp
         auto const get_sequence = [this, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
             return main_core::get_component_sequence<CompType>(state_, std::begin(span), std::end(span),
@@ -773,50 +745,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
+    // TODO: (figueroa1395) may need to move this to update.hpp or make something similar
     template <class Component> using UpdateType = typename Component::UpdateType;
 
-    template <typename CompType>
-    void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) const {
-        properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
-            return std::ranges::all_of(vec, [](auto const& item) { return main_core::detail::check_id_na(item); });
-        });
-        properties.ids_part_na = std::ranges::any_of(all_spans,
-                                                     [](auto const& vec) {
-                                                         return std::ranges::any_of(vec, [](auto const& item) {
-                                                             return main_core::detail::check_id_na(item);
-                                                         });
-                                                     }) &&
-                                 !properties.ids_all_na;
-
-        if (all_spans.empty()) {
-            properties.update_ids_match = true;
-        } else {
-            // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
-            // check the ids
-            auto const first_span = all_spans[0];
-            // check the subsequent scenarios
-            // only return true if all scenarios match the ids of the first batch
-            properties.update_ids_match =
-                std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                    return std::ranges::equal(current_span, first_span,
-                                              [](UpdateType<CompType> const& obj, UpdateType<CompType> const& first) {
-                                                  return obj.id == first.id;
-                                              });
-                });
-        }
-    }
-
-    template <class CompType> UpdateCompProperties check_component_independence(ConstDataset const& update_data) const {
-        UpdateCompProperties properties;
+    template <class CompType>
+    main_core::UpdateCompProperties check_component_independence(ConstDataset const& update_data) const {
+        main_core::UpdateCompProperties properties;
         properties.name = CompType::name;
         auto const component_idx = update_data.find_component(properties.name, false);
         properties.is_columnar = update_data.is_columnar(properties.name);
         properties.dense = update_data.is_dense(properties.name);
         properties.uniform = update_data.is_uniform(properties.name);
-        properties.has_any_elements =
-            component_idx != invalid_index && update_data.get_component_info(component_idx).total_elements > 0;
+        properties.has_any_elements = component_idx != main_core::invalid_index &&
+                                      update_data.get_component_info(component_idx).total_elements > 0;
         properties.elements_ps_in_update =
-            properties.uniform ? update_data.uniform_elements_per_scenario(properties.name) : invalid_index;
+            properties.uniform ? update_data.uniform_elements_per_scenario(properties.name) : main_core::invalid_index;
         properties.elements_in_base = this->component_count<CompType>();
 
         if (properties.is_columnar) {
@@ -844,7 +787,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return result;
     }
 
-    void validate_update_data_independence(UpdateCompProperties const& comp) const {
+    void validate_update_data_independence(main_core::UpdateCompProperties const& comp) const {
         if (comp.is_empty_component()) {
             return; // empty dataset is still supported
         }
