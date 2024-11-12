@@ -11,6 +11,7 @@
 #include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "main_model_fwd.hpp"
+#include "main_model_utils.hpp"
 #include "topology.hpp"
 
 // common
@@ -131,7 +132,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CT>
     static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CT, ComponentType...>;
 
-    static constexpr size_t n_types = sizeof...(ComponentType);
+    static constexpr size_t n_types = n_component_types<ComponentType...>;
 
     using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
     using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
@@ -176,15 +177,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     static constexpr Idx not_connected{-1};
     static constexpr Idx sequential{-1};
 
-  protected:
-    // run functors with all component types
-    template <class Functor> static constexpr void run_functor_with_all_types_return_void(Functor functor) {
-        (functor.template operator()<ComponentType>(), ...);
-    }
-    template <class Functor> static constexpr auto run_functor_with_all_types_return_array(Functor functor) {
-        return std::array { functor.template operator()<ComponentType>()... };
-    }
-
   public:
     using Options = MainModelOptions;
 
@@ -211,7 +203,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const get_comp_count = [this]<typename CT>() -> ComponentCountInBase {
             return make_pair(std::string{CT::name}, this->component_count<CT>());
         };
-        auto const all_count = run_functor_with_all_types_return_array(get_comp_count);
+        auto const all_count = run_functor_with_all_types_return_array<ComponentType...>(get_comp_count);
         std::map<std::string, Idx, std::less<>> result;
         for (auto const& [name, count] : all_count) {
             if (count > 0) {
@@ -251,7 +243,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
             }
         };
-        run_functor_with_all_types_return_void(add_func);
+        run_functor_with_all_types_return_void<ComponentType...>(add_func);
     }
 
     // template to update components
@@ -323,10 +315,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <cache_type_c CacheType, typename SequenceIdxMap>
         requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
     void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
-        run_functor_with_all_types_return_void([this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-            this->update_component_row_col<CT, CacheType>(update_data, pos,
-                                                          std::get<index_of_component<CT>>(sequence_idx_map));
-        });
+        run_functor_with_all_types_return_void<ComponentType...>(
+            [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
+                this->update_component_row_col<CT, CacheType>(update_data, pos,
+                                                              std::get<index_of_component<CT>>(sequence_idx_map));
+            });
     }
     // update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
@@ -410,7 +403,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
             }
         };
-        run_functor_with_all_types_return_void(get_index_func);
+        run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
     }
 
     // get sequence idx map of a certain batch scenario
@@ -433,14 +426,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
                                      ComponentFlags const& to_store) const {
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-        return run_functor_with_all_types_return_array([this, scenario_idx, &update_data, &to_store]<typename CT>() {
-            if (!std::get<index_of_component<CT>>(to_store)) {
-                return std::vector<Idx2D>{};
-            }
-            auto const independence = check_component_independence<CT>(update_data);
-            validate_update_data_independence(independence);
-            return get_component_sequence<CT>(update_data, scenario_idx, independence);
-        });
+        return run_functor_with_all_types_return_array<ComponentType...>(
+            [this, scenario_idx, &update_data, &to_store]<typename CT>() {
+                if (!std::get<index_of_component<CT>>(to_store)) {
+                    return std::vector<Idx2D>{};
+                }
+                auto const independence = check_component_independence<CT>(update_data);
+                validate_update_data_independence(independence);
+                return get_component_sequence<CT>(update_data, scenario_idx, independence);
+            });
     }
     // get sequence idx map of an entire batch for fast caching of component sequences
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, ComponentFlags const& to_store) const {
@@ -717,7 +711,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto const scenario_sequence = [&all_scenario_sequence, &current_scenario_sequence_cache,
                                         &independence_flags]() -> SequenceIdxView {
-            return run_functor_with_all_types_return_array(
+            return run_functor_with_all_types_return_array<ComponentType...>(
                 [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags]<typename CT>() {
                     constexpr auto comp_idx = index_of_component<CT>;
                     if (std::get<comp_idx>(independence_flags)) {
@@ -849,7 +843,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
         // check and return indenpendence of all components
-        return run_functor_with_all_types_return_array(
+        return run_functor_with_all_types_return_array<ComponentType...>(
             [this, &update_data]<typename CT>() { return this->check_component_independence<CT>(update_data); });
     }
 
@@ -976,7 +970,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         Timer const t_output(calculation_info_, 3000, "Produce output");
-        run_functor_with_all_types_return_void(output_func);
+        run_functor_with_all_types_return_void<ComponentType...>(output_func);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
