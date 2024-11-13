@@ -397,30 +397,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return get_sequence(buffer_span);
     }
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
-                                     ComponentFlags const& to_store) const {
+                                     ComponentFlags const& components_to_store) const {
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-        return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
-            [this, scenario_idx, &update_data, &to_store]<typename CT>() {
-                if (!std::get<index_of_component<CT>>(to_store)) {
+        return main_core::utils::run_functor_with_all_types_return_array(
+            [this, scenario_idx, &update_data, &components_to_store]<typename CT>() {
+                if (!std::get<index_of_component<CT>>(components_to_store)) {
                     return std::vector<Idx2D>{};
                 }
-                auto const n_component = this->component_count<CT>();
-                auto const independence = main_core::check_component_independence<CT>(update_data, n_component);
-                main_core::validate_update_data_independence(independence);
+                auto const independence = check_components_independence<CT>(update_data);
+                validate_update_data_independence(independence);
                 return get_component_sequence<CT>(update_data, scenario_idx, independence);
             });
     }
-    // get sequence idx map of an entire batch for fast caching of component sequences
-    SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, ComponentFlags const& to_store) const {
-        return get_sequence_idx_map(update_data, 0, to_store);
-    }
+    // Get sequence idx map of an entire batch for fast caching of component sequences.
+    // The sequence idx map of the batch is the same as that of the first scenario in the batch (assuming homogeneity)
+    // This is the entry point for permanent updates.
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) const {
         constexpr ComponentFlags all_true = [] {
             ComponentFlags result{};
             std::ranges::fill(result, true);
             return result;
         }();
-        return get_sequence_idx_map(update_data, all_true);
+        return get_sequence_idx_map(update_data, 0, all_true);
     }
 
   private:
@@ -580,9 +578,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // const ref of current instance
         MainModelImpl const& base_model = *this;
 
-        // cache component update order if possible
+        // cache component update order where possible.
+        // the order for a cacheable (independent) component by definition is the same across all scenarios
         auto const is_independent = is_update_independent(update_data);
-        all_scenarios_sequence = get_sequence_idx_map(update_data, is_independent);
+        all_scenarios_sequence = get_sequence_idx_map(update_data, 0, is_independent);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
                 &all_scenarios_sequence = std::as_const(all_scenarios_sequence),
