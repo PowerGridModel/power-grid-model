@@ -194,10 +194,11 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, Upd
         // only return true if all scenarios match the ids of the first batch
         properties.update_ids_match =
             std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                return std::ranges::equal(current_span, first_span,
-                                          [](CompType::UpdateType const& obj, CompType::UpdateType const& first) {
-                                              return obj.id == first.id;
-                                          });
+                return std::ranges::equal(
+                    current_span, first_span,
+                    [](typename CompType::UpdateType const& obj, typename CompType::UpdateType const& first) {
+                        return obj.id == first.id;
+                    });
             });
     }
 }
