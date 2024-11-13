@@ -235,18 +235,13 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
 template <typename... ComponentType> using ComponentFlags = std::array<bool, sizeof...(ComponentType)>;
 
 template <class... ComponentType>
-ComponentFlags<ComponentType...>
-is_update_independent(ConstDataset const& update_data,
-                      std::map<std::string, Idx, std::less<>> const& relevant_component_count_map) {
+ComponentFlags<ComponentType...> is_update_independent(ConstDataset const& update_data,
+                                                       std::span<bool const> relevant_component_count) {
     ComponentFlags<ComponentType...> result{};
     size_t idx{};
     utils::run_functor_with_all_types_return_void<ComponentType...>(
-        [&result, &relevant_component_count_map, &update_data, &idx]<typename CompType>() {
-            Idx n_component{};
-            auto it = relevant_component_count_map.find(CompType::name);
-            if (it != relevant_component_count_map.end()) {
-                n_component = it->second;
-            }
+        [&result, &relevant_component_count, &update_data, &idx]<typename CompType>() {
+            Idx n_component = relevant_component_count[idx];
             result[idx] = check_component_independence<CompType>(update_data, n_component).is_independent();
             ++idx;
         });

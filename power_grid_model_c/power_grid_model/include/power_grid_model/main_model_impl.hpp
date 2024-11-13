@@ -186,6 +186,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return result;
     }
 
+    // helper function to get the number of components per type
+    std::array<bool, n_types> get_n_components_per_type() const {
+        std::array<bool, n_types> result{};
+        size_t idx{};
+        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(
+            [&result, this, &idx]<typename CompType>() {
+                result[idx] = this->component_count<CompType>();
+                ++idx;
+            });
+        return result;
+    }
+
     // helper function to add vectors of components
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
         add_component<CompType>(components.begin(), components.end());
@@ -580,10 +592,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
-        // TODO: (figueroa1395): don't use string lookup, it is slow
-        std::map<std::string, Idx, std::less<>> const relevant_component_count_map = all_component_count();
+        auto const relevant_component_count = get_n_components_per_type();
         auto const is_independent =
-            main_core::is_update_independent<ComponentType...>(update_data, relevant_component_count_map);
+            main_core::is_update_independent<ComponentType...>(update_data, relevant_component_count);
         all_scenarios_sequence = get_sequence_idx_map(update_data, 0, is_independent);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
