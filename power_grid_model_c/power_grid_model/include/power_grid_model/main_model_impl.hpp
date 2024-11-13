@@ -139,8 +139,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    using UpdateCompIndependence = std::array<main_core::UpdateCompProperties, n_types>;
-    using ComponentFlags = std::array<bool, n_types>;
+    using ComponentFlags = std::array<bool, n_types>; // TODO: (figueroa1395) also in update.hpp ish
     using ComponentCountInBase = std::pair<std::string, Idx>;
 
     // TODO: (figueroa1395) probably move to common.hpp or somewhere else
@@ -581,7 +580,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
-        auto const is_independent = is_update_independent(update_data);
+        // TODO: (figueroa1395): don't use string lookup, it is slow
+        std::map<std::string, Idx, std::less<>> const relevant_component_count_map = all_component_count();
+        auto const is_independent =
+            main_core::is_update_independent<ComponentType...>(update_data, relevant_component_count_map);
         all_scenarios_sequence = get_sequence_idx_map(update_data, 0, is_independent);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
@@ -749,22 +751,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     // TODO: (figueroa1395) may want to move this to update.hpp or make something similar there
     template <class Component> using UpdateType = typename Component::UpdateType;
-
-    UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
-        // check and return indenpendence of all components
-        return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
-            [this, &update_data]<typename CT>() {
-                auto const n_component = this->component_count<CT>();
-                return main_core::check_component_independence<CT>(update_data, n_component);
-            });
-    }
-
-    ComponentFlags is_update_independent(ConstDataset const& update_data) {
-        ComponentFlags result;
-        std::ranges::transform(check_components_independence(update_data), result.begin(),
-                               [](auto const& comp) { return comp.is_independent(); });
-        return result;
-    }
 
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {

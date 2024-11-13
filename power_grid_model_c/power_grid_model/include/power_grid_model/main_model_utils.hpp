@@ -20,3 +20,4 @@ template <class... Types, class Functor> constexpr auto run_functor_with_all_typ
 }
 
 } // namespace power_grid_model::main_core::utils
+// TODO: (figueroa1395) move to main_core under utils.hpp
