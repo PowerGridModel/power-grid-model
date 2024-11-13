@@ -8,7 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any
+from typing import Any, Iterable
 
 import numpy as np
 
@@ -21,7 +21,8 @@ from power_grid_model._core.dataset_definitions import (
     _str_to_datatype,
 )
 from power_grid_model._core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-from power_grid_model.data_types import DenseBatchArray, SingleArray
+from power_grid_model.data_types import DenseBatchData, SingleComponentData
+from power_grid_model.errors import PowerGridUnreachableHitError
 
 
 # constant enum for ctype
@@ -178,7 +179,9 @@ def initialize_array(
     component_type: ComponentTypeLike,
     shape: tuple | int,
     empty: bool = False,
-) -> SingleArray | DenseBatchArray:
+    *,
+    attributes: Iterable[str] | None = None,
+) -> SingleComponentData | DenseBatchData:
     """
     Initializes an array for use in Power Grid Model calculations
 
@@ -197,11 +200,29 @@ def initialize_array(
     component_type = _str_to_component_type(component_type)
     if not isinstance(shape, tuple):
         shape = (shape,)
-    if empty:
-        return np.empty(shape=shape, dtype=power_grid_meta_data[data_type][component_type].dtype, order="C")
-    return np.full(
-        shape=shape,
-        fill_value=power_grid_meta_data[data_type][component_type].nan_scalar,
-        dtype=power_grid_meta_data[data_type][component_type].dtype,
-        order="C",
-    )
+    component_meta = power_grid_meta_data[data_type][component_type]
+    if attributes is None:
+        if empty:
+            return np.empty(shape=shape, dtype=component_meta.dtype, order="C")
+        return np.full(
+            shape=shape,
+            fill_value=component_meta.nan_scalar,
+            dtype=component_meta.dtype,
+            order="C",
+        )
+    data = {}
+    for attribute in attributes:
+        if component_meta.dtype.names is None:
+            raise PowerGridUnreachableHitError
+        if attribute not in component_meta.dtype.names:
+            raise ValueError(f"Attribute {attribute} is not available for {component_type}")
+        if empty:
+            data[attribute] = np.empty(shape=shape, dtype=component_meta.dtype[attribute], order="C")
+        else:
+            data[attribute] = np.full(
+                shape=shape,
+                fill_value=component_meta.nan_scalar[attribute],
+                dtype=component_meta.dtype[attribute],
+                order="C",
+            )
+    return data

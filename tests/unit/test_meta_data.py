@@ -20,6 +20,20 @@ def test_initialize_array():
     assert np.all(np.isnan(arr_2d["u_rated"]))
 
 
+def test_initialize_array__columnar():
+    some_attributes = ["id", "from_node", "r1"]
+    actual = initialize_array("input", "line", 3, attributes=some_attributes)
+    assert isinstance(actual, dict)
+    assert actual.keys() == set(some_attributes)
+    assert all(v.shape == (3,) for v in actual.values())
+    assert np.all(np.isnan(actual["r1"]))
+
+    actual_2d = initialize_array("input", "line", (2, 3), attributes=some_attributes)
+    assert actual.keys() == set(some_attributes)
+    assert all(v.shape == (2, 3) for v in actual_2d.values())
+    assert np.all(np.isnan(actual_2d["r1"]))
+
+
 def test_sensor_meta_data():
     sensors = ["sym_voltage_sensor", "asym_voltage_sensor", "sym_power_sensor", "asym_power_sensor"]
     input_voltage = ["u_measured", "u_angle_measured", "u_sigma"]
@@ -29,8 +43,7 @@ def test_sensor_meta_data():
     for sensor in sensors:
         for meta_type in ["input", "update", "sym_output", "asym_output"]:
             meta_data = power_grid_meta_data[meta_type]
-            # comp_names = list(meta_data.keys())
-            # assert sensor in comp_names
+            assert sensor in meta_data
             meta_data_sensor = meta_data[sensor]
             attr_names = meta_data_sensor.dtype_dict["names"]
             assert "id" in attr_names
