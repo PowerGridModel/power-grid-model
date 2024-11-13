@@ -132,7 +132,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CT>
     static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CT, ComponentType...>;
 
-    static constexpr size_t n_types = n_component_types<ComponentType...>;
+    static constexpr size_t n_types = main_core::utils::n_component_types<ComponentType...>;
 
     using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
     using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
@@ -175,7 +175,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const get_comp_count = [this]<typename CT>() -> ComponentCountInBase {
             return make_pair(std::string{CT::name}, this->component_count<CT>());
         };
-        auto const all_count = run_functor_with_all_types_return_array<ComponentType...>(get_comp_count);
+        auto const all_count =
+            main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(get_comp_count);
         std::map<std::string, Idx, std::less<>> result;
         for (auto const& [name, count] : all_count) {
             if (count > 0) {
@@ -215,7 +216,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
             }
         };
-        run_functor_with_all_types_return_void<ComponentType...>(add_func);
+        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(add_func);
     }
 
     // template to update components
@@ -287,7 +288,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <cache_type_c CacheType, typename SequenceIdxMap>
         requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
     void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
-        run_functor_with_all_types_return_void<ComponentType...>(
+        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(
             [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
                 this->update_component_row_col<CT, CacheType>(update_data, pos,
                                                               std::get<index_of_component<CT>>(sequence_idx_map));
@@ -375,7 +376,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
             }
         };
-        run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
+        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
     }
 
     // get sequence idx map of a certain batch scenario
@@ -398,14 +399,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
                                      ComponentFlags const& to_store) const {
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
-        return run_functor_with_all_types_return_array<ComponentType...>(
+        return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
             [this, scenario_idx, &update_data, &to_store]<typename CT>() {
                 if (!std::get<index_of_component<CT>>(to_store)) {
                     return std::vector<Idx2D>{};
                 }
                 auto const n_component = this->component_count<CT>();
                 auto const independence = main_core::check_component_independence<CT>(update_data, n_component);
-                validate_update_data_independence(independence);
+                main_core::validate_update_data_independence(independence);
                 return get_component_sequence<CT>(update_data, scenario_idx, independence);
             });
     }
@@ -684,7 +685,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         auto const scenario_sequence = [&all_scenario_sequence, &current_scenario_sequence_cache,
                                         &independence_flags]() -> SequenceIdxView {
-            return run_functor_with_all_types_return_array<ComponentType...>(
+            return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
                 [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags]<typename CT>() {
                     constexpr auto comp_idx = index_of_component<CT>;
                     if (std::get<comp_idx>(independence_flags)) {
@@ -751,10 +752,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     UpdateCompIndependence check_components_independence(ConstDataset const& update_data) const {
         // check and return indenpendence of all components
-        return run_functor_with_all_types_return_array<ComponentType...>([this, &update_data]<typename CT>() {
-            auto const n_component = this->component_count<CT>();
-            return main_core::check_component_independence<CT>(update_data, n_component);
-        });
+        return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
+            [this, &update_data]<typename CT>() {
+                auto const n_component = this->component_count<CT>();
+                return main_core::check_component_independence<CT>(update_data, n_component);
+            });
     }
 
     ComponentFlags is_update_independent(ConstDataset const& update_data) {
@@ -762,26 +764,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::ranges::transform(check_components_independence(update_data), result.begin(),
                                [](auto const& comp) { return comp.is_independent(); });
         return result;
-    }
-
-    void validate_update_data_independence(main_core::UpdateCompProperties const& comp) const {
-        if (comp.is_empty_component()) {
-            return; // empty dataset is still supported
-        }
-        auto const elements_ps = comp.get_n_elements();
-        assert(comp.uniform || elements_ps < 0);
-
-        if (elements_ps >= 0 && comp.elements_in_base < elements_ps) {
-            throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
-                               "!");
-        }
-        if (comp.ids_part_na) {
-            throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
-        }
-        if (comp.ids_all_na && comp.elements_in_base != elements_ps) {
-            throw DatasetError("Update data without IDs for component " + comp.name +
-                               " has a different number of elements per scenario then input data!");
-        }
     }
 
     // Calculate with optimization, e.g., automatic tap changer
@@ -880,7 +862,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         Timer const t_output(calculation_info_, 3000, "Produce output");
-        run_functor_with_all_types_return_void<ComponentType...>(output_func);
+        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(output_func);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }

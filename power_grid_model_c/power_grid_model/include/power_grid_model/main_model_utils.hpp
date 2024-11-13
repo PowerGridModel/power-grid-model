@@ -7,7 +7,7 @@
 #include "all_components.hpp"
 
 // main model class
-namespace power_grid_model {
+namespace power_grid_model::main_core::utils {
 
 template <typename... ComponentType> constexpr size_t n_component_types = sizeof...(ComponentType);
 
@@ -19,4 +19,4 @@ template <class... Types, class Functor> constexpr auto run_functor_with_all_typ
     return std::array { functor.template operator()<Types>()... };
 }
 
-} // namespace power_grid_model
+} // namespace power_grid_model::main_core::utils

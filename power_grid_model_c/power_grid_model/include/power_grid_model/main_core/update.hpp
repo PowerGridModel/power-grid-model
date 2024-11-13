@@ -229,4 +229,24 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
     return properties;
 }
 
+void validate_update_data_independence(UpdateCompProperties const& comp) {
+    if (comp.is_empty_component()) {
+        return; // empty dataset is still supported
+    }
+    auto const elements_ps = comp.get_n_elements();
+    assert(comp.uniform || elements_ps < 0);
+
+    if (elements_ps >= 0 && comp.elements_in_base < elements_ps) {
+        throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
+                           "!");
+    }
+    if (comp.ids_part_na) {
+        throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
+    }
+    if (comp.ids_all_na && comp.elements_in_base != elements_ps) {
+        throw DatasetError("Update data without IDs for component " + comp.name +
+                           " has a different number of elements per scenario then input data!");
+    }
+}
+
 } // namespace power_grid_model::main_core
