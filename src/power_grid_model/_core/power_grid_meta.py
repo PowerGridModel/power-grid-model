@@ -8,7 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Iterable
+from typing import Any, Iterable, cast
 
 import numpy as np
 
@@ -208,8 +208,6 @@ def initialize_array(
     component_meta = power_grid_meta_data[data_type][component_type]
     if component_meta.dtype.names is None:
         raise PowerGridUnreachableHitError
-    if attributes in [ComponentAttributeFilterOptions.everything, ComponentAttributeFilterOptions.relevant]:
-        attributes = component_meta.dtype.names
 
     if attributes is None:
         if empty:
@@ -220,8 +218,14 @@ def initialize_array(
             dtype=component_meta.dtype,
             order="C",
         )
+
     data = {}
-    for attribute in attributes:
+    requested_attributes = (
+        component_meta.dtype.names
+        if attributes in [ComponentAttributeFilterOptions.everything, ComponentAttributeFilterOptions.relevant]
+        else cast(Iterable[str], attributes)
+    )
+    for attribute in requested_attributes:
         if attribute not in component_meta.dtype.names:
             raise ValueError(f"Attribute {attribute} is not available for {component_type}")
         if empty:
