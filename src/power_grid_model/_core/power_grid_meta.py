@@ -21,7 +21,8 @@ from power_grid_model._core.dataset_definitions import (
     _str_to_datatype,
 )
 from power_grid_model._core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-from power_grid_model.data_types import DenseBatchData, SingleComponentData
+from power_grid_model.data_types import AttributeType, DenseBatchData, SingleComponentData
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridUnreachableHitError
 
 
@@ -180,7 +181,7 @@ def initialize_array(
     shape: tuple | int,
     empty: bool = False,
     *,
-    attributes: Iterable[str] | None = None,
+    attributes: Iterable[AttributeType] | ComponentAttributeFilterOptions | None = None,
 ) -> SingleComponentData | DenseBatchData:
     """
     Initializes an array for use in Power Grid Model calculations
@@ -192,15 +193,24 @@ def initialize_array(
             integer, it is a 1-dimensional array
             tuple, it is an N-dimensional (tuple.shape) array
         empty: if True, leave the memory block un-initialized
+        attributes:
+            None: row based data
+            list[str]: list of attributes to initialize columnar data
 
     Returns:
         np structured array with all entries as null value
     """
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
+
     if not isinstance(shape, tuple):
         shape = (shape,)
     component_meta = power_grid_meta_data[data_type][component_type]
+    if component_meta.dtype.names is None:
+        raise PowerGridUnreachableHitError
+    if attributes in [ComponentAttributeFilterOptions.everything, ComponentAttributeFilterOptions.relevant]:
+        attributes = component_meta.dtype.names
+
     if attributes is None:
         if empty:
             return np.empty(shape=shape, dtype=component_meta.dtype, order="C")
@@ -212,8 +222,6 @@ def initialize_array(
         )
     data = {}
     for attribute in attributes:
-        if component_meta.dtype.names is None:
-            raise PowerGridUnreachableHitError
         if attribute not in component_meta.dtype.names:
             raise ValueError(f"Attribute {attribute} is not available for {component_type}")
         if empty:
