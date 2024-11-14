@@ -11,7 +11,7 @@ import math
 import tempfile
 import warnings
 from pathlib import Path
-from typing import Optional, cast as cast_type
+from typing import cast as cast_type
 
 import numpy as np
 
@@ -142,9 +142,9 @@ def json_deserialize_from_file(
 def json_serialize_to_file(
     file_path: Path,
     data: Dataset,
-    dataset_type: Optional[DatasetType] = None,
+    dataset_type: DatasetType | None = None,
     use_compact_list: bool = False,
-    indent: Optional[int] = 2,
+    indent: int | None = 2,
 ):
     """
     Export JSON data in most recent format.
@@ -189,7 +189,7 @@ def msgpack_deserialize_from_file(
 
 
 def msgpack_serialize_to_file(
-    file_path: Path, data: Dataset, dataset_type: Optional[DatasetType] = None, use_compact_list: bool = False
+    file_path: Path, data: Dataset, dataset_type: DatasetType | None = None, use_compact_list: bool = False
 ):
     """
     Export msgpack data in most recent format.
@@ -234,7 +234,7 @@ def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Datase
 
 
 def export_json_data(
-    json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False, use_deprecated_format: bool = True
+    json_file: Path, data: Dataset, indent: int | None = 2, compact: bool = False, use_deprecated_format: bool = True
 ):
     """
     [deprecated] Export json data in a deprecated serialization format.
@@ -268,7 +268,7 @@ def export_json_data(
 
 
 def _compatibility_deprecated_export_json_data(
-    json_file: Path, data: Dataset, indent: Optional[int] = 2, compact: bool = False
+    json_file: Path, data: Dataset, indent: int | None = 2, compact: bool = False
 ):
     serialized_data = json_serialize(data=data, use_compact_list=compact, indent=-1 if indent is None else indent)
     old_format_serialized_data = json.dumps(json.loads(serialized_data)["data"])

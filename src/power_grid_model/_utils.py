@@ -11,7 +11,7 @@ We do not officially support this functionality and may remove features in this 
 """
 
 from copy import deepcopy
-from typing import Optional, Sequence, cast
+from typing import Sequence, cast
 
 import numpy as np
 
@@ -218,8 +218,6 @@ def _split_numpy_array_in_batches(
 
     Args:
         data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
-        component: The name of the component to which the data belongs; only used for errors.
-        attribute [optional]: The name of the attribute to which the data belongs; only used for errors.
 
     Returns:
         A list with a single numpy structured array per batch
@@ -239,7 +237,6 @@ def split_dense_batch_data_in_batches(
 
     Args:
         data: A 1D or 2D Numpy structured array. A 1D array is a single table / batch, a 2D array is a batch per table.
-        component: The name of the component to which the data belongs, only used for errors.
         batch_size: size of batch
 
     Returns:
@@ -326,7 +323,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
 
     # Check if the dataset is a single dataset or batch dataset
     # It is batch dataset if it is 2D array or a indptr/data structure
-    is_batch: Optional[bool] = None
+    is_batch: bool | None = None
     for component, array in data.items():
         is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
         is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
