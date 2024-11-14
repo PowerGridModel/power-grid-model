@@ -232,7 +232,7 @@ TEST_CASE("Test Transformer ranking") {
             expected_edges_prop.insert(expected_edges_prop.end(),
                                        {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
             expected_edges_prop.insert(expected_edges_prop.end(),
-                                       {{{4, 0}, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}});
+                                       {{{4, 0}, 1}, {unregulated_idx, 0}, {unregulated_idx, 0}, {unregulated_idx, 0}});
             expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0});
 
             std::vector<pgm_tap::TrafoGraphVertex> const expected_vertex_props{
@@ -336,8 +336,8 @@ TEST_CASE("Test Transformer ranking") {
 
         SUBCASE("Ranking complete the graph") {
             pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-            pgm_tap::RankedTransformerGroups const ref_order{{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}},
-                                                             {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}};
+            pgm_tap::RankedTransformerGroups const ref_order{
+                {Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}, Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}};
             CHECK(order == ref_order);
         }
     }
