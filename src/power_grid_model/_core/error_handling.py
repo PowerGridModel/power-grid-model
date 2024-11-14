@@ -7,7 +7,6 @@ Error handling
 """
 
 import re
-from typing import Optional
 
 import numpy as np
 
@@ -115,7 +114,7 @@ def _interpret_error(message: str, decode_error: bool = True) -> PowerGridError:
     return PowerGridError(message)
 
 
-def find_error(batch_size: int = 1, decode_error: bool = True) -> Optional[RuntimeError]:
+def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError | None:
     """
     Check if there is an error and return it
 
@@ -171,7 +170,7 @@ def assert_no_error(batch_size: int = 1, decode_error: bool = True):
 
 def handle_errors(
     continue_on_batch_error: bool, batch_size: int = 1, decode_error: bool = True
-) -> Optional[PowerGridBatchError]:
+) -> PowerGridBatchError | None:
     """
     Handle any errors in the way that is specified.
 
@@ -184,10 +183,10 @@ def handle_errors(
         error: Any errors previously encountered, unless it was a batch error and continue_on_batch_error was True.
 
     Returns:
-        Optional[PowerGridBatchError]: None if there were no errors, or the previously encountered
-                                       error if it was a batch error and continue_on_batch_error was True.
+        PowerGridBatchError | None: None if there were no errors, or the previously encountered
+                                    error if it was a batch error and continue_on_batch_error was True.
     """
-    error: Optional[RuntimeError] = find_error(batch_size=batch_size, decode_error=decode_error)
+    error: RuntimeError | None = find_error(batch_size=batch_size, decode_error=decode_error)
     if error is None:
         return None
 
