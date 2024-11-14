@@ -145,6 +145,8 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 
 ////////////////////////
 
+// TODO: (figueroa1395) encapsulate all this in a independence related namespace (might even be a good idea to move to a
+// different file)
 static constexpr Idx invalid_index{-1};
 
 struct UpdateCompProperties {
@@ -174,6 +176,24 @@ struct UpdateCompProperties {
         return qualify_for_optional_id() ? elements_ps_in_update : na_Idx;
     }
 };
+
+// get sequence idx map of a certain batch scenario
+template <typename CompType, class ComponentContainer>
+std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state,
+                                          ConstDataset const& update_data, Idx scenario_idx,
+                                          UpdateCompProperties const& comp_independence = {}) {
+    // TODO: (figueroa1395) this function could be encapsulated in UpdateCompProperties in update.hpp
+    auto const get_sequence = [&state, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
+        return get_component_sequence<CompType>(state, std::begin(span), std::end(span), n_comp_elements);
+    };
+    if (update_data.is_columnar(CompType::name)) {
+        auto const buffer_span =
+            update_data.get_columnar_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
+        return get_sequence(buffer_span);
+    }
+    auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
+    return get_sequence(buffer_span);
+}
 
 template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
     properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
@@ -241,7 +261,7 @@ ComponentFlags<ComponentType...> is_update_independent(ConstDataset const& updat
     size_t idx{};
     utils::run_functor_with_all_types_return_void<ComponentType...>(
         [&result, &relevant_component_count, &update_data, &idx]<typename CompType>() {
-            Idx n_component = relevant_component_count[idx];
+            Idx const n_component = relevant_component_count[idx];
             result[idx] = check_component_independence<CompType>(update_data, n_component).is_independent();
             ++idx;
         });

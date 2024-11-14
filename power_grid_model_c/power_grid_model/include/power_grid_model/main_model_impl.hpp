@@ -390,23 +390,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
     }
 
-    // get sequence idx map of a certain batch scenario
-    template <typename CompType>
-    std::vector<Idx2D> get_component_sequence(ConstDataset const& update_data, Idx scenario_idx,
-                                              main_core::UpdateCompProperties const& comp_independence = {}) const {
-        // TODO: (jguo) this function could be encapsulated in UpdateCompProperties in update.hpp
-        auto const get_sequence = [this, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
-            return main_core::get_component_sequence<CompType>(state_, std::begin(span), std::end(span),
-                                                               n_comp_elements);
-        };
-        if (update_data.is_columnar(CompType::name)) {
-            auto const buffer_span =
-                update_data.get_columnar_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
-            return get_sequence(buffer_span);
-        }
-        auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
-        return get_sequence(buffer_span);
-    }
     SequenceIdx get_sequence_idx_map(ConstDataset const& update_data, Idx scenario_idx,
                                      ComponentFlags const& components_to_store) const {
         // TODO: (jguo) this function could be encapsulated in UpdateCompIndependence in update.hpp
@@ -418,7 +401,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 auto const n_component = this->component_count<CT>();
                 auto const independence = main_core::check_component_independence<CT>(update_data, n_component);
                 main_core::validate_update_data_independence(independence);
-                return get_component_sequence<CT>(update_data, scenario_idx, independence);
+                return main_core::get_component_sequence<CT>(state_, update_data, scenario_idx, independence);
             });
     }
     // Get sequence idx map of an entire batch for fast caching of component sequences.
