@@ -113,7 +113,7 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
-            TrafoGraphEdge const edge_value = (from_node == tap_side_node) ? unregulated_edge_prop : {trafo3w_idx, 1};
+            auto const edge_value = (from_node == tap_side_node) ? unregulated_edge_prop : TrafoGraphEdge{trafo3w_idx, 1};
             add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
