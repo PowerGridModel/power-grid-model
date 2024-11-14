@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../container.hpp"
 #include "state.hpp"
 
 #include "../all_components.hpp"
@@ -30,6 +31,7 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
     }
 }
 
+// TODO: (figueroa1395) maybe move to detail namespace within independence namespace
 template <typename T> bool check_id_na(T const& obj) {
     if constexpr (requires { obj.id; }) {
         return is_nan(obj.id);
@@ -145,9 +147,13 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
 
 ////////////////////////
 
-// TODO: (figueroa1395) encapsulate all this in a independence related namespace (might even be a good idea to move to a
-// different file)
+// TODO: (figueroa1395) encapsulate all these in a independence related namespace (might even be a good idea to move to
+// a different file) - UpdateCompIndependence
+// TODO: (figueroa1395) reorganize this file to have the independence related functions together and in a way it makes
+// sense. For now just dumping and refactoring things individually.
 static constexpr Idx invalid_index{-1};
+
+template <typename... ComponentTypes> using ComponentFlags = std::array<bool, sizeof...(ComponentTypes)>;
 
 struct UpdateCompProperties {
     std::string name{};
@@ -182,7 +188,6 @@ template <typename CompType, class ComponentContainer>
 std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state,
                                           ConstDataset const& update_data, Idx scenario_idx,
                                           UpdateCompProperties const& comp_independence = {}) {
-    // TODO: (figueroa1395) this function could be encapsulated in UpdateCompProperties in update.hpp
     auto const get_sequence = [&state, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
         return get_component_sequence<CompType>(state, std::begin(span), std::end(span), n_comp_elements);
     };
@@ -194,6 +199,11 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
     auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
     return get_sequence(buffer_span);
 }
+
+template <typename... ComponentTypes> using SequenceIdx = std::array<std::vector<Idx2D>, sizeof...(ComponentTypes)>;
+
+template <class CompType, class... ComponentTypes>
+constexpr size_t index_of_component = container_impl::get_cls_pos_v<CompType, ComponentTypes...>;
 
 template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
     properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
@@ -227,7 +237,7 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, Upd
 }
 
 template <class CompType>
-UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx const n_component) {
+UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
     UpdateCompProperties properties;
     properties.name = CompType::name;
     auto const component_idx = update_data.find_component(properties.name, false);
@@ -252,18 +262,50 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
     return properties;
 }
 
-template <typename... ComponentType> using ComponentFlags = std::array<bool, sizeof...(ComponentType)>;
+template <class... ComponentTypes, class ComponentContainer>
+SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentContainer> const& state,
+                                                    ConstDataset const& update_data, Idx scenario_idx,
+                                                    ComponentFlags<ComponentTypes...> const& components_to_store,
+                                                    std::span<Idx const> relevant_component_count) {
+    size_t comp_idx{};
+    return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
+        [&update_data, &components_to_store, &state, &relevant_component_count, scenario_idx,
+         &comp_idx]<typename CompType>() {
+            if (!std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
+                return std::vector<Idx2D>{};
+            }
+            Idx const n_component = relevant_component_count[comp_idx];
+            ++comp_idx;
+            auto const independence = check_component_independence<CompType>(update_data, n_component);
+            validate_update_data_independence(independence);
+            return get_component_sequence<CompType>(state, update_data, scenario_idx, independence);
+        });
+}
+// Get sequence idx map of an entire batch for fast caching of component sequences.
+// The sequence idx map of the batch is the same as that of the first scenario in the batch (assuming homogeneity)
+// This is the entry point for permanent updates.
+template <class... ComponentTypes, class ComponentContainer>
+SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentContainer> const& state,
+                                                    ConstDataset const& update_data,
+                                                    std::span<Idx const> relevant_component_count) {
+    constexpr ComponentFlags<ComponentTypes...> all_true = [] {
+        ComponentFlags<ComponentTypes...> result{};
+        std::ranges::fill(result, true);
+        return result;
+    }();
+    return get_sequence_idx_map<ComponentTypes...>(state, update_data, 0, all_true, relevant_component_count);
+}
 
-template <class... ComponentType>
-ComponentFlags<ComponentType...> is_update_independent(ConstDataset const& update_data,
-                                                       std::span<bool const> relevant_component_count) {
-    ComponentFlags<ComponentType...> result{};
-    size_t idx{};
-    utils::run_functor_with_all_types_return_void<ComponentType...>(
-        [&result, &relevant_component_count, &update_data, &idx]<typename CompType>() {
-            Idx const n_component = relevant_component_count[idx];
-            result[idx] = check_component_independence<CompType>(update_data, n_component).is_independent();
-            ++idx;
+template <class... ComponentTypes>
+ComponentFlags<ComponentTypes...> is_update_independent(ConstDataset const& update_data,
+                                                        std::span<Idx const> relevant_component_count) {
+    ComponentFlags<ComponentTypes...> result{};
+    size_t comp_idx{};
+    utils::run_functor_with_all_types_return_void<ComponentTypes...>(
+        [&result, &relevant_component_count, &update_data, &comp_idx]<typename CompType>() {
+            Idx const n_component = relevant_component_count[comp_idx];
+            result[comp_idx] = check_component_independence<CompType>(update_data, n_component).is_independent();
+            ++comp_idx;
         });
     return result;
 }
