@@ -270,14 +270,6 @@ TEST_CASE("Test main model - power flow") {
             CHECK_THROWS_AS(main_model2.add_component<SymPowerSensor>(state.sym_power_sensor_input), IDWrongType);
         }
     }
-
-    SUBCASE("Test calculate power flow") { // TODO(mgovers): delete
-        auto const solver_output =
-            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
-        main_model.output_result<Node>(solver_output, state.sym_node);
-        main_model.output_result<Branch>(solver_output, state.sym_branch);
-        main_model.output_result<Appliance>(solver_output, state.sym_appliance);
-    }
 }
 
 TEST_CASE("Test copy main model") { // TODO(mgovers): new test in unit tests: make TestMainModel derived of MainModel,
