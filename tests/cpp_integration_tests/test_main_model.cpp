@@ -279,7 +279,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     auto const res = main_model.calculate<power_flow_t, symmetric_t>(
         get_default_options(symmetric, CalculationMethod::newton_raphson));
 
-    SUBCASE("Node, sym output") { // TODO(mgovers): p and q not tested in power_flow/dummy-test/sym_output.json
+    SUBCASE("Node, sym output") { // TODO(mgovers): tested in power_flow/dummy-test/sym_output.json
         main_model.output_result<Node>(res, state.sym_node);
         main_model.output_result<Appliance>(res, state.sym_appliance);
 
