@@ -40,6 +40,7 @@ constexpr double i_load = 0.005 / 0.025 * i;
 } // namespace test
 
 struct State {
+    // TODO(mgovers): values identical to power_flow/dummy-test/input.json validation case
     std::vector<NodeInput> node_input{{1, 10e3}, {2, 10e3}, {3, 10e3}};
     std::vector<LineInput> line_input{{4, 1, 2, 1, 1, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};
     std::vector<LinkInput> link_input{{5, 2, 3, 1, 1}};
@@ -49,6 +50,7 @@ struct State {
         {8, 3, 1, LoadGenType::const_y, RealValue<asymmetric_t>{0.5e6 / 3.0}, RealValue<asymmetric_t>{0.0}}};
     std::vector<ShuntInput> shunt_input{{9, 3, 1, 0.015, 0.0, 0.015, 0.0}};
 
+    // TODO(mgovers): only power_flow/pandapower pf validation cases have sensor input and they differ from here
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<SymPowerSensorInput> sym_power_sensor_input{
         {11, 4, MeasuredTerminalType::branch_from, 0.02, 1.1e6, 1.1e3, nan, nan},
@@ -59,6 +61,7 @@ struct State {
         {17, 8, MeasuredTerminalType::load, 0.02, 1.7e6, 1.7e3, nan, nan},
         {28, 3, MeasuredTerminalType::node, 0.02, 3.0e6, 3.0e3, nan, nan}};
 
+    // TODO(mgovers): only power_flow/pandapower pf validation cases have sensor input and they differ from here
     // {{{id}, measured_object}, measured_terminal_type, power_sigma, p_measured, q_measured}
     std::vector<AsymPowerSensorInput> asym_power_sensor_input{{18,
                                                                4,
@@ -117,14 +120,18 @@ struct State {
                                                                {nan, nan, nan},
                                                                {nan, nan, nan}}};
 
+    // TODO(mgovers): only power_flow/pandapower pf validation cases have sensor input and they differ from here
     // {{{id}, measured_object}, u_sigma, u_measured, u_angle_measured}
     std::vector<SymVoltageSensorInput> sym_voltage_sensor_input{{25, 1, 105.0, 10.1e3, 0.1},
                                                                 {26, 2, 105.0, 10.2e3, 0.2}};
 
+    // TODO(mgovers): only power_flow/pandapower pf validation cases have sensor input and they differ from here
     // {{{id}, measured_object}, u_sigma, u_measured, u_angle_measured}
     std::vector<AsymVoltageSensorInput> asym_voltage_sensor_input{
         {27, 3, 105.0, {10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3}, {0.0, -deg_120, -deg_240}}};
 
+    // TODO(mgovers): only used for updating (and proving no different output). nowhere else used in powerflow
+    // TODO(mgovers): no powerflow validation cases have fault input
     std::vector<FaultInput> fault_input{{30, 1, FaultType::single_phase_to_ground, FaultPhase::a, 3, 0.1, 0.1}};
 
     // output vector
@@ -207,7 +214,7 @@ TEST_CASE("Test main model - power flow") {
     State state;
     auto main_model = default_model(state);
 
-    SUBCASE("Test get indexer") {
+    SUBCASE("Test get indexer") { // TODO(mgovers): needed
         std::vector<ID> const node_id{2, 1, 3, 2};
         IdxVector const expected_indexer{1, 0, 2, 1};
         IdxVector indexer(4);
@@ -215,20 +222,23 @@ TEST_CASE("Test main model - power flow") {
         CHECK(indexer == expected_indexer);
     }
 
-    SUBCASE("Test duplicated id") {
+    SUBCASE("Test duplicated id") { // TODO(mgovers): needed; captured in Python test; maybe move to
+                                    // test_main_core_input.cpp
         MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
         state.node_input[1].id = 1;
         CHECK_THROWS_AS(main_model2.add_component<Node>(state.node_input), ConflictID);
     }
 
-    SUBCASE("Test no existing id") {
+    SUBCASE("Test no existing id") { // TODO(mgovers): needed; captured in Python test; maybe move to
+                                     // test_main_core_input.cpp
         MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
         state.line_input[0].from_node = 100;
         main_model2.add_component<Node>(state.node_input);
         CHECK_THROWS_AS(main_model2.add_component<Line>(state.line_input), IDNotFound);
     }
 
-    SUBCASE("Test id for wrong type") {
+    SUBCASE("Test id for wrong type") { // TODO(mgovers): needed; captured in Python test but not all flavors; maybe
+                                        // move to test_main_core_input.cpp
         MainModel main_model2{50.0, meta_data::meta_data_gen::meta_data};
 
         state.link_input[0].from_node = 4;
@@ -261,7 +271,7 @@ TEST_CASE("Test main model - power flow") {
         }
     }
 
-    SUBCASE("Test calculate power flow") {
+    SUBCASE("Test calculate power flow") { // TODO(mgovers): delete
         auto const solver_output =
             main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
@@ -270,12 +280,13 @@ TEST_CASE("Test main model - power flow") {
     }
 }
 
-TEST_CASE("Test copy main model") {
+TEST_CASE("Test copy main model") { // TODO(mgovers): new test in unit tests: make TestMainModel derived of MainModel,
+                                    // check contents are same after copy (integrity)
     State state;
     auto main_model = default_model(state);
-    MainModel model_2{main_model};
+    MainModel model_2{main_model}; // TODO(mgovers): need copy and copy-assign checks in test_api_model.cpp
 
-    SUBCASE("Copied - Symmetrical") {
+    SUBCASE("Copied - Symmetrical") { // TODO(mgovers): captured exactly in powerflow/dummy-test/sym_output.json
         auto const solver_output =
             model_2.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.sym_node);
@@ -291,7 +302,7 @@ TEST_CASE("Test copy main model") {
         CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
-    SUBCASE("Copied - Asymmetrical") {
+    SUBCASE("Copied - Asymmetrical") { // TODO(mgovers): no explicit validation case for this (added in this branch)
         auto const solver_output =
             model_2.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.asym_node);
@@ -307,8 +318,8 @@ TEST_CASE("Test copy main model") {
         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
-    model_2 = main_model;
-    SUBCASE("Assigned - Symmetrical") {
+    model_2 = main_model;               // TODO(mgovers): remove
+    SUBCASE("Assigned - Symmetrical") { // TODO(mgovers): idem to Copied - Symmetrical
         auto const solver_output =
             model_2.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.sym_node);
@@ -325,7 +336,7 @@ TEST_CASE("Test copy main model") {
         CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
-    SUBCASE("Assigned - Asymmetrical") {
+    SUBCASE("Assigned - Asymmetrical") { // TODO(mgovers): idem to Copied - Asymmetrical
         auto const solver_output =
             model_2.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
         model_2.output_result<Node>(solver_output, state.asym_node);
@@ -341,7 +352,7 @@ TEST_CASE("Test copy main model") {
         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
     }
-    SUBCASE("Original - Symmetrical") {
+    SUBCASE("Original - Symmetrical") { // TODO(mgovers): idem to Copied - Symmetrical
         auto const solver_output =
             main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
@@ -357,7 +368,7 @@ TEST_CASE("Test copy main model") {
         CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
-    SUBCASE("Original - Asymmetrical") {
+    SUBCASE("Original - Asymmetrical") { // TODO(mgovers): idem to Copied - Asymmetrical
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
             get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
@@ -375,7 +386,8 @@ TEST_CASE("Test copy main model") {
     }
 }
 
-TEST_CASE("Test main model - iterative calculation") {
+TEST_CASE("Test main model - iterative calculation") { // TODO(mgovers): idem to Test copy main model: captured in
+                                                       // power_flow/dummy-test/(a)sym_output.json
     State state;
     auto main_model = default_model(state);
 
@@ -420,7 +432,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     auto const res = main_model.calculate<power_flow_t, symmetric_t>(
         get_default_options(symmetric, CalculationMethod::newton_raphson));
 
-    SUBCASE("Node, sym output") {
+    SUBCASE("Node, sym output") { // TODO(mgovers): p and q not tested in power_flow/dummy-test/sym_output.json
         main_model.output_result<Node>(res, state.sym_node);
         main_model.output_result<Appliance>(res, state.sym_appliance);
 
@@ -445,7 +457,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         */
     }
 
-    SUBCASE("Line, sym output") {
+    SUBCASE("Line, sym output") { // TODO(mgovers): only i_from tested in power_flow/dummy-test/sym_output.json; no
+                                  // reason to keep this
         main_model.output_result<Line>(res, state.sym_line);
 
         CHECK(state.sym_line[0].i_from == doctest::Approx(test::i));
@@ -459,7 +472,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         */
     }
 
-    SUBCASE("Link, sym output") {
+    SUBCASE("Link, sym output") { // TODO(mgovers): only i_from tested in power_flow/dummy-test/sym_output.json; no
+                                  // reason to keep this
         main_model.output_result<Link>(res, state.sym_link);
 
         CHECK(state.sym_link[0].i_from == doctest::Approx(test::i));
@@ -475,7 +489,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         */
     }
 
-    SUBCASE("Source, sym output") {
+    SUBCASE("Source, sym output") { // TODO(mgovers): only i tested in power_flow/dummy-test/sym_output.json; no reason
+                                    // to keep this
         main_model.output_result<Source>(res, state.sym_source);
         main_model.output_result<Node>(res, state.sym_node);
 
@@ -489,7 +504,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         */
     }
 
-    SUBCASE("SymLoad, sym output") {
+    SUBCASE("SymLoad, sym output") { // TODO(mgovers): only i tested in power_flow/dummy-test/sym_output.json; no reason
+                                     // to keep this
         main_model.output_result<SymLoad>(res, state.sym_load_sym);
 
         CHECK(state.sym_load_sym[0].i == doctest::Approx(test::i_load));
@@ -501,7 +517,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         */
     }
 
-    SUBCASE("AsymLoad, sym output") {
+    SUBCASE("AsymLoad, sym output") { // TODO(mgovers): only i tested in power_flow/dummy-test/sym_output.json; no
+                                      // reason to keep this
         main_model.output_result<AsymLoad>(res, state.sym_load_asym);
 
         CHECK(state.sym_load_asym[0].i == doctest::Approx(test::i_load));
@@ -513,7 +530,7 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         */
     }
 
-    SUBCASE("Shunt, sym output") {
+    SUBCASE("Shunt, sym output") { // TODO(mgovers): p, q and pf are not tested in power_flow/dummy-test/sym_output.json
         main_model.output_result<Node>(res, state.sym_node);
         main_model.output_result<Shunt>(res, state.sym_shunt);
         auto const& output = state.sym_shunt[0];
@@ -524,7 +541,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         CHECK(output.pf == doctest::Approx(1.0));
     }
 
-    SUBCASE("SymVoltageSensor, sym output") {
+    SUBCASE("SymVoltageSensor, sym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                              // elsewhere => validation case
         main_model.output_result<Node>(res, state.sym_node);
         main_model.output_result<SymVoltageSensor>(res, state.sym_voltage_sensor);
 
@@ -534,7 +552,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
         CHECK(state.sym_voltage_sensor[1].u_angle_residual == doctest::Approx(0.2 - state.sym_node[1].u_angle));
     }
 
-    SUBCASE("SymPowerSensor, sym output") {
+    SUBCASE("SymPowerSensor, sym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                            // elsewhere => validation case
         main_model.output_result<Line>(res, state.sym_line);
         main_model.output_result<Link>(res, state.sym_link);
         main_model.output_result<Source>(res, state.sym_source);
@@ -561,7 +580,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
               doctest::Approx(3.0e3 - (state.sym_source[1].q - state.sym_load_sym[0].q - state.sym_load_asym[0].q)));
     }
 
-    SUBCASE("AsymVoltageSensor, sym output") {
+    SUBCASE("AsymVoltageSensor, sym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                               // elsewhere => validation case
         main_model.output_result<Node>(res, state.sym_node);
         main_model.output_result<AsymVoltageSensor>(res, state.asym_voltage_sensor_sym_output);
 
@@ -570,7 +590,8 @@ TEST_CASE("Test main model - individual output (symmetric)") {
               doctest::Approx(0.0 - state.sym_node[2].u_angle));
     }
 
-    SUBCASE("AsymPowerSensor, sym output") {
+    SUBCASE("AsymPowerSensor, sym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                             // elsewhere => validation case
         main_model.output_result<Line>(res, state.sym_line);
         main_model.output_result<Link>(res, state.sym_link);
         main_model.output_result<Source>(res, state.sym_source);
@@ -624,7 +645,7 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
     - test shunt
     */
 
-    SUBCASE("Node, asym output") {
+    SUBCASE("Node, asym output") { // TODO(mgovers): p and q not tested in power_flow/dummy-test/sym_output.json
         main_model.output_result<Node>(res, state.asym_node);
         main_model.output_result<Appliance>(res, state.asym_appliance);
 
@@ -644,7 +665,8 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
                                              .scale(1e3));
     }
 
-    SUBCASE("AsymVoltageSensor, asym output") {
+    SUBCASE("AsymVoltageSensor, asym output") { // TODO(mgovers): sensor output for powerflow calculations are not
+                                                // tested elsewhere => validation case
         main_model.output_result<Node>(res, state.asym_node);
         main_model.output_result<AsymVoltageSensor>(res, state.asym_voltage_sensor);
 
@@ -661,7 +683,8 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
               doctest::Approx(-deg_240 - state.asym_node[2].u_angle[2]));
     }
 
-    SUBCASE("SymVoltageSensor, asym output") {
+    SUBCASE("SymVoltageSensor, asym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                               // elsewhere => validation case
         main_model.output_result<Node>(res, state.asym_node);
         main_model.output_result<SymVoltageSensor>(res, state.sym_voltage_sensor_asym_output);
 
@@ -692,7 +715,8 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
     }
 
     // Note that only 1/3 of the values is being checked
-    SUBCASE("AsymPowerSensor, asym output") {
+    SUBCASE("AsymPowerSensor, asym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                              // elsewhere
         main_model.output_result<Line>(res, state.asym_line);
         main_model.output_result<Link>(res, state.asym_link);
         main_model.output_result<Source>(res, state.asym_source);
@@ -721,7 +745,8 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
                   5.02e3 - (state.asym_source[1].q[1] - state.asym_load_sym[0].q[1] - state.asym_load_asym[0].q[1])));
     }
 
-    SUBCASE("SymPowerSensor, asym output") {
+    SUBCASE("SymPowerSensor, asym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
+                                             // elsewhere
         main_model.output_result<Line>(res, state.asym_line);
         main_model.output_result<Link>(res, state.asym_link);
         main_model.output_result<Source>(res, state.asym_source);
@@ -767,7 +792,7 @@ TEST_CASE("Test main model - linear calculation") {
     State state;
     auto main_model = default_model(state);
 
-    SUBCASE("Symmetrical") {
+    SUBCASE("Symmetrical") { // TODO(mgovers): tested above and in power_flow/dummy-test/sym_output.json
         auto const solver_output =
             main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.sym_node);
@@ -783,7 +808,7 @@ TEST_CASE("Test main model - linear calculation") {
         CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
     }
-    SUBCASE("Asymmetrical") {
+    SUBCASE("Asymmetrical") { // TODO(mgovers): tested above and in power_flow/dummy-test/asym_output.json
         auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
             get_default_options(asymmetric, CalculationMethod::linear));
         main_model.output_result<Node>(solver_output, state.asym_node);
@@ -801,7 +826,8 @@ TEST_CASE("Test main model - linear calculation") {
     }
 }
 
-TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update,
+                   cached_update) { // TODO(mgovers): we need this test
     State const state;
     auto main_model = default_model(state);
 
@@ -811,7 +837,9 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update, cac
     CHECK_THROWS_AS((main_model.update_component<typename settings::update_type>(update_data)), IDNotFound);
 }
 
-TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE(
+    "Test main model - update only load", settings, regular_update,
+    cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation tests
     State state;
     auto main_model = default_model(state);
 
@@ -856,7 +884,9 @@ TEST_CASE_TEMPLATE("Test main model - update only load", settings, regular_updat
     }
 }
 
-TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE(
+    "Test main model - update load and shunt param", settings, regular_update,
+    cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation tests
     State state;
     auto main_model = default_model(state);
 
@@ -904,7 +934,9 @@ TEST_CASE_TEMPLATE("Test main model - update load and shunt param", settings, re
     }
 }
 
-TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE(
+    "Test main model - all updates", settings, regular_update,
+    cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation tests
     State state;
     auto main_model = default_model(state);
 
@@ -959,7 +991,8 @@ TEST_CASE_TEMPLATE("Test main model - all updates", settings, regular_update, ca
     }
 }
 
-TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", settings, regular_update,
+                   cached_update) { // TODO(mgovers): we should whitebox-test this instead
     State state;
     auto main_model = default_model(state);
 
@@ -1010,7 +1043,9 @@ TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", setti
     }
 }
 
-TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_update,
+                   cached_update) { // TODO(mgovers): either whitebox (as a sub-part of batch impl) or otherwise drop
+                                    // entirely (tested by batch update)
     State state;
     auto main_model = default_model(state);
 
@@ -1072,7 +1107,8 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     }
 }
 
-TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update, cached_update) {
+TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update,
+                   cached_update) { // TODO(mgovers): we need to keep this one way or another
     constexpr auto check_sym = [](MainModel const& model_, auto const& math_output_) {
         State state_;
         model_.output_result<Node>(math_output_, state_.sym_node);
@@ -1174,7 +1210,8 @@ TEST_CASE("Test main model - runtime dispatch") {
     input_data.add_buffer("shunt", state.shunt_input.size(), state.shunt_input.size(), nullptr,
                           state.shunt_input.data());
 
-    SUBCASE("Single-size batches") {
+    SUBCASE("Single-size batches") { // TODO(mgovers): can be removed: validation cases already do single +
+                                     // multi-threaded; whitebox test should be isolated
         ConstDataset update_data{true, 1, "update", meta_data::meta_data_gen::meta_data};
         update_data.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(), nullptr,
                                state.sym_load_update.data());
@@ -1265,7 +1302,8 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
     }
 
-    SUBCASE("no dependent updates within batches") {
+    SUBCASE("no dependent updates within batches") { // TODO(mgovers): validation cases capture this; whitebox test
+                                                     // should be isolated
         MainModel model{50.0, input_data};
         std::vector<SymLoadGenUpdate> sym_load_update_2{{7, 1, nan, 1.0e7}, {7, 1, 1.0e3, nan}, {7, 1, 1.0e3, 1.0e7}};
 
@@ -1291,7 +1329,8 @@ TEST_CASE("Test main model - runtime dispatch") {
         CHECK(sym_node_2[8].u_pu == doctest::Approx(0.67).epsilon(0.005));
     }
 
-    SUBCASE("Columnar buffers in dataset") {
+    SUBCASE("Columnar buffers in dataset") { // TODO(mgovers): API tests now capture this; validation cases do not test
+                                             // columnar buffers
         auto const options = get_default_options(symmetric, CalculationMethod::newton_raphson);
 
         SUBCASE("Columnar buffers in input data") {
@@ -1441,7 +1480,7 @@ TEST_CASE("Test main model - runtime dispatch") {
                 }
             }
 
-            SUBCASE("Without IDs") {
+            SUBCASE("Without IDs") { // TODO(mgovers): API tests already captured this; validation cases added
                 ConstDataset update_data_with_ids{false, 1, "update", meta_data::meta_data_gen::meta_data};
                 update_data_with_ids.add_buffer("sym_load", update_size, update_size, nullptr, nullptr);
                 update_data_with_ids.add_attribute_buffer("sym_load", "id", sym_load_ids.data());
@@ -1484,7 +1523,8 @@ TEST_CASE("Test main model - runtime dispatch") {
             }
         }
 
-        SUBCASE("Empty columnar update data") {
+        SUBCASE(
+            "Empty columnar update data") { // TODO(mgovers): power_flow/dummy-test-batch-shunt already captures this
             std::vector<ID> sym_load_ids;
             std::vector<double> sym_load_p_specified;
             REQUIRE(sym_load_ids.size() == sym_load_p_specified.size());
@@ -1583,7 +1623,8 @@ TEST_CASE("Test main model - incomplete input") {
 
     MainModel const ref_model{main_model};
 
-    SUBCASE("Symmetrical - Complete") {
+    SUBCASE("Symmetrical - Complete") { // TODO(mgovers): validation case with different values in
+                                        // power_flow/dummy-test-batch-incomplete-input
         MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
         MutableDataset ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
 
@@ -1617,7 +1658,7 @@ TEST_CASE("Test main model - incomplete input") {
         CHECK(test_sym_node[2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
     }
 
-    SUBCASE("Asymmetrical - Complete") {
+    SUBCASE("Asymmetrical - Complete") { // TODO(mgovers): no validation case for asym exists
         MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
         MutableDataset ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
 
@@ -1659,7 +1700,7 @@ TEST_CASE("Test main model - incomplete input") {
         }
     }
 
-    SUBCASE("Symmetrical - Incomplete") {
+    SUBCASE("Symmetrical - Incomplete") { // TODO(mgovers): not tested elsewhere; maybe test in API model?
         MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
         MutableDataset const ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
 
@@ -1697,7 +1738,7 @@ TEST_CASE("Test main model - incomplete input") {
         }
     }
 
-    SUBCASE("Asymmetrical - Incomplete") {
+    SUBCASE("Asymmetrical - Incomplete") { // TODO(mgovers): not tested elsewhere; maybe test in API model?
         MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
         MutableDataset const ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
 
@@ -1736,7 +1777,8 @@ TEST_CASE("Test main model - incomplete input") {
     }
 }
 
-TEST_CASE("Test main model - Incomplete followed by complete") {
+TEST_CASE("Test main model - Incomplete followed by complete") { // TODO(mgovers): This tests the reset of 2 consecutive
+                                                                 // batch scenarios and definitely needs to be tested
     using CalculationMethod::linear;
 
     State const state;

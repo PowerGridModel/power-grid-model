@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "u": 10.0
+      },
+      {
+        "u": 10.0
+      }
+    ]
+  }
+}
