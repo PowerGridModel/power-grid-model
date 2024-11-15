@@ -268,10 +268,10 @@ SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentCont
                                                     ComponentFlags<ComponentTypes...> const& components_to_store) {
     return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
         [&update_data, &components_to_store, &state, scenario_idx]<typename CompType>() {
-            auto const n_components = std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store);
-            if (!n_components) {
+            if (!std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
+            auto const n_components = state.components.template size<CompType>();
             auto const independence = check_component_independence<CompType>(update_data, n_components);
             validate_update_data_independence(independence);
             return get_component_sequence<CompType>(state, update_data, scenario_idx, independence);
