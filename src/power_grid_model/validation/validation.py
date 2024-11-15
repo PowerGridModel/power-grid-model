@@ -14,7 +14,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
-from typing import Optional, cast
+from typing import cast
 
 import numpy as np
 
@@ -69,8 +69,8 @@ from power_grid_model.validation.utils import _update_input_data
 
 
 def validate_input_data(
-    input_data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
-) -> Optional[list[ValidationError]]:
+    input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+) -> list[ValidationError] | None:
     """
     Validates the entire input dataset:
 
@@ -108,9 +108,9 @@ def validate_input_data(
 def validate_batch_data(
     input_data: SingleDataset,
     update_data: BatchDataset,
-    calculation_type: Optional[CalculationType] = None,
+    calculation_type: CalculationType | None = None,
     symmetric: bool = True,
-) -> Optional[dict[int, list[ValidationError]]]:
+) -> dict[int, list[ValidationError]] | None:
     """
     The input dataset is validated:
 
@@ -285,7 +285,7 @@ def _process_power_sigma_and_p_q_sigma(
 
 
 def validate_required_values(
-    data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
+    data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[MissingValueError]:
     """
     Checks if all required data is available.
@@ -451,7 +451,7 @@ def _validate_required_in_data(data, required):
     return list(chain(*results))
 
 
-def validate_values(data: SingleDataset, calculation_type: Optional[CalculationType] = None) -> list[ValidationError]:
+def validate_values(data: SingleDataset, calculation_type: CalculationType | None = None) -> list[ValidationError]:
     """
     For each component supplied in the data, call the appropriate validation function
 

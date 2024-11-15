@@ -35,7 +35,7 @@ Output data:
 
 """
 from enum import Enum
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Callable, Type, TypeVar
 
 import numpy as np
 
@@ -103,7 +103,7 @@ def all_greater_than_or_equal_to_zero(
     data: SingleDataset,
     component: ComponentType,
     field: str,
-    default_value: Optional[np.ndarray | int | float] = None,
+    default_value: np.ndarray | int | float | None = None,
 ) -> list[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
@@ -113,7 +113,7 @@ def all_greater_than_or_equal_to_zero(
         data (SingleDataset): The input/update data set for all components
         component (ComponentType) The component of interest
         field (str): The field of interest
-        default_value (Optional[np.ndarray | int | float], optional): Some values are not required, but will
+        default_value (np.ndarray | int | float | None, optional): Some values are not required, but will
             receive a default value in the C++ core. To do a proper input validation, these default values should be
             included in the validation. It can be a fixed value for the entire column (int/float) or be different for
             each element (np.ndarray).
@@ -156,7 +156,7 @@ def all_greater_or_equal(
     component: ComponentType,
     field: str,
     ref_value: int | float | str,
-    default_value: Optional[np.ndarray | int | float] = None,
+    default_value: np.ndarray | int | float | None = None,
 ) -> list[NotGreaterOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than,
@@ -249,7 +249,7 @@ def all_between(  # pylint: disable=too-many-positional-arguments
     field: str,
     ref_value_1: int | float | str,
     ref_value_2: int | float | str,
-    default_value: Optional[np.ndarray | int | float] = None,
+    default_value: np.ndarray | int | float | None = None,
 ) -> list[NotBetweenError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are (exclusively)
@@ -290,8 +290,8 @@ def all_between_or_at(  # pylint: disable=too-many-positional-arguments
     field: str,
     ref_value_1: int | float | str,
     ref_value_2: int | float | str,
-    default_value_1: Optional[np.ndarray | int | float] = None,
-    default_value_2: Optional[np.ndarray | int | float] = None,
+    default_value_1: np.ndarray | int | float | None = None,
+    default_value_2: np.ndarray | int | float | None = None,
 ) -> list[NotBetweenOrAtError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are inclusively
@@ -341,8 +341,8 @@ def none_match_comparison(  # pylint: disable=too-many-arguments
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: Type[CompError] = ComparisonError,  # type: ignore
-    default_value_1: Optional[np.ndarray | int | float] = None,
-    default_value_2: Optional[np.ndarray | int | float] = None,
+    default_value_1: np.ndarray | int | float | None = None,
+    default_value_2: np.ndarray | int | float | None = None,
 ) -> list[CompError]:
     # pylint: disable=too-many-positional-arguments
     """
@@ -719,7 +719,7 @@ def ids_valid_in_update_data_set(
     return []
 
 
-def all_finite(data: SingleDataset, exceptions: Optional[dict[ComponentType, list[str]]] = None) -> list[InfinityError]:
+def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] | None = None) -> list[InfinityError]:
     """
     Check that for all records in all component, the values in all columns are finite value, i.e. float values other
     than inf, or -inf. Nan values are ignored, as in all other comparison functions. You can use non_missing() to

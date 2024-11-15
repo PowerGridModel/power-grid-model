@@ -8,7 +8,7 @@ Error classes
 import re
 from abc import ABC
 from enum import Enum
-from typing import Any, Iterable, Optional, Type
+from typing import Any, Iterable, Type
 
 from power_grid_model import ComponentType
 
@@ -32,18 +32,18 @@ class ValidationError(ABC):
 
     """
 
-    component: Optional[ComponentType | list[ComponentType]] = None
+    component: ComponentType | list[ComponentType] | None = None
     """
     The component, or components, to which the error applies.
     """
 
-    field: Optional[str | list[str] | list[tuple[ComponentType, str]]] = None
+    field: str | list[str] | list[tuple[ComponentType, str]] | None = None
     """
     The field, or fields, to which the error applies. A field can also be a tuple (component, field) when multiple
     components are being addressed.
     """
 
-    ids: Optional[list[int] | list[tuple[ComponentType, int]]] = None
+    ids: list[int] | list[tuple[ComponentType, int]] | None = None
     """
     The object identifiers to which the error applies. A field object identifier can also be a tuple (component, id)
     when multiple components are being addressed.
@@ -79,7 +79,7 @@ class ValidationError(ABC):
             return self._delimiter.join(_unpack(field) for field in self.field)
         return _unpack(self.field) if self.field else str(self.field)
 
-    def get_context(self, id_lookup: Optional[list[str] | dict[int, str]] = None) -> dict[str, Any]:
+    def get_context(self, id_lookup: list[str] | dict[int, str] | None = None) -> dict[str, Any]:
         """
         Returns a dictionary that supplies (human readable) information about this error. Each member variable is
         included in the dictionary. If a function {field_name}_str() exists, the value is overwritten by that function.
@@ -129,9 +129,9 @@ class SingleFieldValidationError(ValidationError):
     _message = "Field {field} is not valid for {n} {objects}."
     component: ComponentType
     field: str
-    ids: Optional[list[int]]
+    ids: list[int] | None
 
-    def __init__(self, component: ComponentType, field: str, ids: Optional[Iterable[int]]):
+    def __init__(self, component: ComponentType, field: str, ids: Iterable[int] | None):
         """
         Args:
             component: Component name
@@ -325,9 +325,9 @@ class InvalidIdError(SingleFieldValidationError):
         self,
         component: ComponentType,
         field: str,
-        ids: Optional[list[int]] = None,
-        ref_components: Optional[ComponentType | list[ComponentType]] = None,
-        filters: Optional[dict[str, Any]] = None,
+        ids: list[int] | None = None,
+        ref_components: ComponentType | list[ComponentType] | None = None,
+        filters: dict[str, Any] | None = None,
     ):
         # pylint: disable=too-many-positional-arguments
         super().__init__(component=component, field=field, ids=ids)
