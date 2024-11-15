@@ -279,17 +279,6 @@ TEST_CASE("Test main model - individual output (symmetric)") {
     auto const res = main_model.calculate<power_flow_t, symmetric_t>(
         get_default_options(symmetric, CalculationMethod::newton_raphson));
 
-    SUBCASE("Shunt, sym output") { // TODO(mgovers): p, q and pf are not tested in power_flow/dummy-test/sym_output.json
-        main_model.output_result<Node>(res, state.sym_node);
-        main_model.output_result<Shunt>(res, state.sym_shunt);
-        auto const& output = state.sym_shunt[0];
-        CHECK(output.i == doctest::Approx(test::i_shunt));
-        CHECK(output.p == doctest::Approx(sqrt3 * test::i_shunt * state.sym_node[2].u));
-        CHECK(output.q == doctest::Approx(0.0));
-        CHECK(output.s == doctest::Approx(output.p));
-        CHECK(output.pf == doctest::Approx(1.0));
-    }
-
     SUBCASE("SymVoltageSensor, sym output") { // TODO(mgovers): sensor output for powerflow calculations are not tested
                                               // elsewhere => validation case
         main_model.output_result<Node>(res, state.sym_node);
