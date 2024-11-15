@@ -6,8 +6,6 @@
 Helper functions to assert valid data. They basically call validate_input_data or validate_batch_data and raise a
 ValidationException if the validation results in one or more errors.
 """
-from typing import Optional
-
 from power_grid_model.data_types import BatchDataset, SingleDataset
 from power_grid_model.enum import CalculationType
 from power_grid_model.validation.errors import ValidationError
@@ -31,7 +29,7 @@ class ValidationException(ValueError):
 
 
 def assert_valid_input_data(
-    input_data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
+    input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ):
     """
     Validates the entire input dataset:
@@ -60,7 +58,7 @@ def assert_valid_input_data(
 def assert_valid_batch_data(
     input_data: SingleDataset,
     update_data: BatchDataset,
-    calculation_type: Optional[CalculationType] = None,
+    calculation_type: CalculationType | None = None,
     symmetric: bool = True,
 ):
     """

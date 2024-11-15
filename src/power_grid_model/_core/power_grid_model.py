@@ -7,7 +7,7 @@ Main power grid model class
 """
 
 from enum import IntEnum
-from typing import Optional, Type
+from typing import Type
 
 import numpy as np
 
@@ -45,11 +45,11 @@ class PowerGridModel:
     """
 
     _model_ptr: ModelPtr
-    _all_component_count: Optional[dict[ComponentType, int]]
-    _batch_error: Optional[PowerGridBatchError]
+    _all_component_count: dict[ComponentType, int] | None
+    _batch_error: PowerGridBatchError | None
 
     @property
-    def batch_error(self) -> Optional[PowerGridBatchError]:
+    def batch_error(self) -> PowerGridBatchError | None:
         """
         Get the batch error object, if present
 
@@ -242,7 +242,7 @@ class PowerGridModel:
         self,
         calculation_type: CalculationType,
         symmetric: bool,
-        update_data: Optional[Dataset],
+        update_data: Dataset | None,
         output_component_types: ComponentAttributeMapping,
         options: Options,
         continue_on_batch_error: bool,
@@ -310,7 +310,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
-        update_data: Optional[Dataset] = None,
+        update_data: Dataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -347,7 +347,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
-        update_data: Optional[Dataset] = None,
+        update_data: Dataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -379,7 +379,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
-        update_data: Optional[Dataset] = None,
+        update_data: Dataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -416,7 +416,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
-        update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
+        update_data: dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -514,7 +514,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
-        update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
+        update_data: dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -604,7 +604,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
-        update_data: Optional[dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset] = None,
+        update_data: dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
