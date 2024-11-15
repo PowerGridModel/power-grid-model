@@ -6,7 +6,7 @@
 Utilities used for validation. Only errors_to_string() is intended for end users.
 """
 import re
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -157,7 +157,7 @@ def errors_to_string(
     errors: list[ValidationError] | dict[int, list[ValidationError]] | None,
     name: str = "the data",
     details: bool = False,
-    id_lookup: Optional[list[str] | dict[int, str]] = None,
+    id_lookup: list[str] | dict[int, str] | None = None,
 ) -> str:
     """
     Convert a set of errors (list or dict) to a human readable string representation.
@@ -198,7 +198,7 @@ def _nan_type(component: ComponentTypeLike, field: str, data_type: DatasetType =
     return power_grid_meta_data[data_type][component].nans[field]
 
 
-def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional[int] = None) -> np.ndarray:
+def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: int | None = None) -> np.ndarray:
     """
     Given array of values from a source and a target dataset.
     Find the position of each value in the target dataset in the context of the source dataset.
@@ -214,7 +214,7 @@ def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: Optional
     Args:
         source: array of values in the source dataset
         target: array of values in the target dataset
-        default_value: Optional. the default index to provide for target values not in source
+        default_value (optional): the default index to provide for target values not in source
 
     Returns:
         np.ndarray: array of positions of the values from target dataset in the source dataset

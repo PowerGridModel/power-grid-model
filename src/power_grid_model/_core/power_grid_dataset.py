@@ -6,7 +6,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 
 from power_grid_model._core.buffer_handling import (
     BufferProperties,
@@ -283,7 +283,7 @@ class CConstDataset:
     _const_dataset: ConstDatasetPtr
     _buffer_views: list[CBuffer]
 
-    def __new__(cls, data: Dataset, dataset_type: Optional[DatasetType] = None):
+    def __new__(cls, data: Dataset, dataset_type: DatasetType | None = None):
         instance = super().__new__(cls)
         instance._const_dataset = ConstDatasetPtr()
 
