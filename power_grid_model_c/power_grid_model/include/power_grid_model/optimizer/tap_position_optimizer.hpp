@@ -25,6 +25,7 @@
 #include <optional>
 #include <queue>
 #include <ranges>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -69,9 +70,35 @@ constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0};
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
+struct RegulatedTrafoProperties {
+    Idx id{};
+    ControlSide control_side{};
+
+    bool operator<(const RegulatedTrafoProperties& other) const {
+        return std::tie(this->id, this->control_side) < std::tie(other.id, other.control_side);
+    }
+};
+
 struct RegulatedObjects {
     std::set<Idx> transformers{};
     std::set<Idx> transformers3w{};
+    std::set<RegulatedTrafoProperties> trafos{};
+    std::set<RegulatedTrafoProperties> trafos3w{};
+
+    template <typename TrafoType>
+    std::pair<bool, ControlSide> contains(TrafoType const& trafos_set, Idx const& id) const {
+        auto it = std::find_if(trafos_set.begin(), trafos_set.end(),
+                               [&](const RegulatedTrafoProperties& trafo) { return trafo.id == id; });
+        if (it != trafos_set.end()) {
+            return {true, it->control_side};
+        } else {
+            return {false, ControlSide{}};
+        }
+    }
+
+    std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return contains(trafos, id); }
+
+    std::pair<bool, ControlSide> contains_trafo3w(Idx const& id) const { return contains(trafos3w, id); }
 };
 
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
@@ -90,7 +117,7 @@ inline void add_to_edge(main_core::MainModelState<ComponentContainer> const& sta
 
 inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state,
                                  ThreeWindingTransformer const& transformer3w, bool const& trafo3w_is_regulated,
-                                 Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
+                                 ControlSide const& /*control_side*/, Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
                                  TrafoGraphEdgeProperties& edge_props) {
     using enum Branch3Side;
 
@@ -130,9 +157,11 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
                         TrafoGraphEdgeProperties& edge_props) {
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
-        bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
+        // bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
+        auto const trafo3w_is_regulated = regulated_objects.contains_trafo3w(transformer3w.id());
         Idx2D const trafo3w_idx = main_core::get_component_idx_by_id(state, transformer3w.id());
-        process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated, trafo3w_idx, edges, edge_props);
+        process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated.first, trafo3w_is_regulated.second, trafo3w_idx,
+                             edges, edge_props);
     }
 }
 
@@ -147,10 +176,13 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        if (regulated_objects.transformers.contains(transformer.id())) {
+        // if (regulated_objects.transformers.contains(transformer.id())) {
+        auto const trafo_regulated = regulated_objects.contains_trafo(transformer.id());
+        if (trafo_regulated.first) {
             auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
             auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
+            auto const control_side = trafo_regulated.second;
             add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
                         {main_core::get_component_idx_by_id(state, transformer.id()), 1});
         } else {
@@ -191,10 +223,13 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
         if (!regulator.status()) {
             continue;
         }
+        auto const control_side = regulator.control_side();
         if (regulator.regulated_object_type() == ComponentType::branch) {
             regulated_objects.transformers.emplace(regulator.regulated_object());
+            regulated_objects.trafos.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         } else {
             regulated_objects.transformers3w.emplace(regulator.regulated_object());
+            regulated_objects.trafos3w.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         }
     }
     return regulated_objects;
