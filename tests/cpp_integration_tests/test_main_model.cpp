@@ -372,37 +372,6 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
     auto const res = main_model.calculate<power_flow_t, asymmetric_t>(
         get_default_options(asymmetric, CalculationMethod::newton_raphson));
 
-    /*
-    TODO:
-    - test node
-    - test line
-    - test link
-    - test source
-    - test sym load
-    - test asym load
-    - test shunt
-    */
-
-    SUBCASE("Node, asym output") { // TODO(mgovers): p and q not tested in power_flow/dummy-test/sym_output.json
-        main_model.output_result<Node>(res, state.asym_node);
-        main_model.output_result<Appliance>(res, state.asym_appliance);
-
-        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-
-        CHECK(state.asym_node[0].p(0) == doctest::Approx(state.asym_appliance[0].p(0)).scale(1e3));
-        CHECK(state.asym_node[1].p(1) == doctest::Approx(0.0).scale(1e3));
-        CHECK(state.asym_node[2].p(2) == doctest::Approx(state.asym_appliance[1].p(2) - state.asym_appliance[2].p(2) -
-                                                         state.asym_appliance[3].p(2))
-                                             .scale(1e3));
-        CHECK(state.asym_node[0].q(2) == doctest::Approx(state.asym_appliance[0].q(2)).scale(1e3));
-        CHECK(state.asym_node[1].q(1) == doctest::Approx(0.0).scale(1e3));
-        CHECK(state.asym_node[2].q(0) == doctest::Approx(state.asym_appliance[1].q(0) - state.asym_appliance[2].q(0) -
-                                                         state.asym_appliance[3].q(0))
-                                             .scale(1e3));
-    }
-
     SUBCASE("AsymVoltageSensor, asym output") { // TODO(mgovers): sensor output for powerflow calculations are not
                                                 // tested elsewhere => validation case
         main_model.output_result<Node>(res, state.asym_node);
