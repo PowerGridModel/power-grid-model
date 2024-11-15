@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "../container.hpp"
 #include "state.hpp"
+#include "utils.hpp"
 
 #include "../all_components.hpp"
 #include "../common/iterator_like_concepts.hpp"
-#include "../main_model_utils.hpp"
+#include "../container.hpp"
 
 #include <map>
 
@@ -31,16 +31,6 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
     }
 }
 
-// TODO: (figueroa1395) maybe move to detail namespace within independence namespace
-template <typename T> bool check_id_na(T const& obj) {
-    if constexpr (requires { obj.id; }) {
-        return is_nan(obj.id);
-    } else if constexpr (requires { obj.get().id; }) {
-        return is_nan(obj.get().id);
-    } else {
-        throw UnreachableHit{"check_component_independence", "Only components with id are supported"};
-    }
-}
 } // namespace detail
 
 template <component_c Component, class ComponentContainer,
@@ -145,15 +135,20 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
                                      get_component_sequence<Component>(state, begin, end));
 }
 
-////////////////////////
+namespace update_independence {
+namespace detail {
 
-// TODO: (figueroa1395) encapsulate all these in a independence related namespace (might even be a good idea to move to
-// a different file) - UpdateCompIndependence
-// TODO: (figueroa1395) reorganize this file to have the independence related functions together and in a way it makes
-// sense. For now just dumping and refactoring things individually.
-static constexpr Idx invalid_index{-1};
+constexpr Idx invalid_index{-1};
 
-template <typename... ComponentTypes> using ComponentFlags = std::array<bool, sizeof...(ComponentTypes)>;
+template <typename T> bool check_id_na(T const& obj) {
+    if constexpr (requires { obj.id; }) {
+        return is_nan(obj.id);
+    } else if constexpr (requires { obj.get().id; }) {
+        return is_nan(obj.get().id);
+    } else {
+        throw UnreachableHit{"check_component_independence", "Only components with id are supported"};
+    }
+}
 
 struct UpdateCompProperties {
     std::string name{};
@@ -183,29 +178,7 @@ struct UpdateCompProperties {
     }
 };
 
-// get sequence idx map of a certain batch scenario
-template <typename CompType, class ComponentContainer>
-std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state,
-                                          ConstDataset const& update_data, Idx scenario_idx,
-                                          UpdateCompProperties const& comp_independence = {}) {
-    auto const get_sequence = [&state, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
-        return get_component_sequence<CompType>(state, std::begin(span), std::end(span), n_comp_elements);
-    };
-    if (update_data.is_columnar(CompType::name)) {
-        auto const buffer_span =
-            update_data.get_columnar_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
-        return get_sequence(buffer_span);
-    }
-    auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
-    return get_sequence(buffer_span);
-}
-
-template <typename... ComponentTypes> using SequenceIdx = std::array<std::vector<Idx2D>, sizeof...(ComponentTypes)>;
-
-template <class CompType, class... ComponentTypes>
-constexpr size_t index_of_component = container_impl::get_cls_pos_v<CompType, ComponentTypes...>;
-
-template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
+template <typename CompType> void process_buffer_span(auto const& all_spans, detail::UpdateCompProperties& properties) {
     properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
         return std::ranges::all_of(vec, [](auto const& item) { return detail::check_id_na(item); });
     });
@@ -237,8 +210,8 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, Upd
 }
 
 template <class CompType>
-UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
-    UpdateCompProperties properties;
+detail::UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
+    detail::UpdateCompProperties properties;
     properties.name = CompType::name;
     auto const component_idx = update_data.find_component(properties.name, false);
     properties.is_columnar = update_data.is_columnar(properties.name);
@@ -251,15 +224,60 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
     properties.elements_in_base = n_component;
 
     if (properties.is_columnar) {
-        process_buffer_span<CompType>(
+        detail::process_buffer_span<CompType>(
             update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
             properties);
     } else {
-        process_buffer_span<CompType>(
+        detail::process_buffer_span<CompType>(
             update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), properties);
     }
 
     return properties;
+}
+
+inline void validate_update_data_independence(detail::UpdateCompProperties const& comp) {
+    if (comp.is_empty_component()) {
+        return; // empty dataset is still supported
+    }
+    auto const elements_ps = comp.get_n_elements();
+    assert(comp.uniform || elements_ps < 0);
+
+    if (elements_ps >= 0 && comp.elements_in_base < elements_ps) {
+        throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
+                           "!");
+    }
+    if (comp.ids_part_na) {
+        throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
+    }
+    if (comp.ids_all_na && comp.elements_in_base != elements_ps) {
+        throw DatasetError("Update data without IDs for component " + comp.name +
+                           " has a different number of elements per scenario then input data!");
+    }
+}
+
+} // namespace detail
+
+// main core utils
+template <class CompType, class... ComponentTypes>
+constexpr auto index_of_component = main_core::utils::index_of_component<CompType, ComponentTypes...>;
+template <class... ComponentTypes> using SequenceIdx = main_core::utils::SequenceIdx<ComponentTypes...>;
+template <class... ComponentTypes> using ComponentFlags = main_core::utils::ComponentFlags<ComponentTypes...>;
+
+// get sequence idx map of a certain batch scenario
+template <typename CompType, class ComponentContainer>
+std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> const& state,
+                                          ConstDataset const& update_data, Idx scenario_idx,
+                                          detail::UpdateCompProperties const& comp_independence = {}) {
+    auto const get_sequence = [&state, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
+        return get_component_sequence<CompType>(state, std::begin(span), std::end(span), n_comp_elements);
+    };
+    if (update_data.is_columnar(CompType::name)) {
+        auto const buffer_span =
+            update_data.get_columnar_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
+        return get_sequence(buffer_span);
+    }
+    auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
+    return get_sequence(buffer_span);
 }
 
 template <class... ComponentTypes, class ComponentContainer>
@@ -272,8 +290,8 @@ SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentCont
                 return std::vector<Idx2D>{};
             }
             auto const n_components = state.components.template size<CompType>();
-            auto const independence = check_component_independence<CompType>(update_data, n_components);
-            validate_update_data_independence(independence);
+            auto const independence = detail::check_component_independence<CompType>(update_data, n_components);
+            detail::validate_update_data_independence(independence);
             return get_component_sequence<CompType>(state, update_data, scenario_idx, independence);
         });
 }
@@ -296,33 +314,15 @@ ComponentFlags<ComponentTypes...> is_update_independent(ConstDataset const& upda
                                                         std::span<Idx const> relevant_component_count) {
     ComponentFlags<ComponentTypes...> result{};
     size_t comp_idx{};
-    utils::run_functor_with_all_types_return_void<ComponentTypes...>(
-        [&result, &relevant_component_count, &update_data, &comp_idx]<typename CompType>() {
-            Idx const n_component = relevant_component_count[comp_idx];
-            result[comp_idx] = check_component_independence<CompType>(update_data, n_component).is_independent();
-            ++comp_idx;
-        });
+    utils::run_functor_with_all_types_return_void<ComponentTypes...>([&result, &relevant_component_count, &update_data,
+                                                                      &comp_idx]<typename CompType>() {
+        Idx const n_component = relevant_component_count[comp_idx];
+        result[comp_idx] = detail::check_component_independence<CompType>(update_data, n_component).is_independent();
+        ++comp_idx;
+    });
     return result;
 }
 
-inline void validate_update_data_independence(UpdateCompProperties const& comp) {
-    if (comp.is_empty_component()) {
-        return; // empty dataset is still supported
-    }
-    auto const elements_ps = comp.get_n_elements();
-    assert(comp.uniform || elements_ps < 0);
-
-    if (elements_ps >= 0 && comp.elements_in_base < elements_ps) {
-        throw DatasetError("Update data has more elements per scenario than input data for component " + comp.name +
-                           "!");
-    }
-    if (comp.ids_part_na) {
-        throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
-    }
-    if (comp.ids_all_na && comp.elements_in_base != elements_ps) {
-        throw DatasetError("Update data without IDs for component " + comp.name +
-                           " has a different number of elements per scenario then input data!");
-    }
-}
+} // namespace update_independence
 
 } // namespace power_grid_model::main_core

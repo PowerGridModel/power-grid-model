@@ -11,7 +11,6 @@
 #include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "main_model_fwd.hpp"
-#include "main_model_utils.hpp"
 #include "topology.hpp"
 
 // common
@@ -37,6 +36,7 @@
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
+#include "main_core/utils.hpp"
 
 // stl library
 #include <memory>
@@ -129,18 +129,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using MainModelState = main_core::MainModelState<ComponentContainer>;
     using MathState = main_core::MathState;
 
-    // Move SequenceIdx, n_types, index_of_component and ComponentFlags to Utils
-    template <class CT>
-    static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CT, ComponentType...>;
+    // main core utils
+    static constexpr auto n_types = main_core::utils::n_types<ComponentType...>;
+    template <class CompType>
+    static constexpr auto index_of_component = main_core::utils::index_of_component<CompType, ComponentType...>;
+    using SequenceIdx = main_core::utils::SequenceIdx<ComponentType...>;
+    using ComponentFlags = main_core::utils::ComponentFlags<ComponentType...>;
 
-    static constexpr size_t n_types = main_core::utils::n_component_types<ComponentType...>;
-
-    using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
     using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
-
-    using ComponentFlags = std::array<bool, n_types>;
     using ComponentCountInBase = std::pair<std::string, Idx>;
 
     static constexpr Idx ignore_output{-1};
@@ -307,8 +305,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     // update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
-        auto const sequence_idx_map =
-            main_core::get_sequence_idx_map<ComponentType...>(state_, update_data.get_individual_scenario(0));
+        auto const sequence_idx_map = main_core::update_independence::get_sequence_idx_map<ComponentType...>(
+            state_, update_data.get_individual_scenario(0));
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
@@ -394,7 +392,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // Entry point for main_model.hpp
     template <class... ComponentTypes> SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) {
-        return main_core::get_sequence_idx_map<ComponentType...>(state_, update_data);
+        return main_core::update_independence::get_sequence_idx_map<ComponentType...>(state_, update_data);
     }
 
   private:
@@ -557,10 +555,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
         auto const relevant_component_count = get_n_components_per_type();
-        auto const is_independent =
-            main_core::is_update_independent<ComponentType...>(update_data, relevant_component_count);
-        all_scenarios_sequence =
-            main_core::get_sequence_idx_map<ComponentType...>(state_, update_data, 0, is_independent);
+        auto const is_independent = main_core::update_independence::is_update_independent<ComponentType...>(
+            update_data, relevant_component_count);
+        all_scenarios_sequence = main_core::update_independence::get_sequence_idx_map<ComponentType...>(
+            state_, update_data, 0, is_independent);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
                 &all_scenarios_sequence = std::as_const(all_scenarios_sequence),
@@ -677,8 +675,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             [&model, &update_data, scenario_sequence, &current_scenario_sequence_cache,
              do_update_cache_ = std::move(do_update_cache), &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
-                current_scenario_sequence_cache = main_core::get_sequence_idx_map<ComponentType...>(
-                    model.state_, update_data, scenario_idx, do_update_cache_);
+                current_scenario_sequence_cache =
+                    main_core::update_independence::get_sequence_idx_map<ComponentType...>(
+                        model.state_, update_data, scenario_idx, do_update_cache_);
 
                 model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());
             },
@@ -725,9 +724,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    // TODO: (figueroa1395) move to update or remove
-    template <class Component> using UpdateType = typename Component::UpdateType;
-
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
