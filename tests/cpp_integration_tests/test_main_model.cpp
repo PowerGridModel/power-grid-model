@@ -495,44 +495,6 @@ TEST_CASE("Test main model - individual output (asymmetric)") {
     }
 }
 
-TEST_CASE("Test main model - linear calculation") {
-    State state;
-    auto main_model = default_model(state);
-
-    SUBCASE("Symmetrical") { // TODO(mgovers): tested above and in power_flow/dummy-test/sym_output.json
-        auto const solver_output =
-            main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
-        main_model.output_result<Node>(solver_output, state.sym_node);
-        main_model.output_result<Branch>(solver_output, state.sym_branch);
-        main_model.output_result<Appliance>(solver_output, state.sym_appliance);
-        CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-        CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
-        CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-        CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
-        CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
-        CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-        CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load));
-        CHECK(state.sym_appliance[3].i == doctest::Approx(test::i_load));
-        CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
-    }
-    SUBCASE("Asymmetrical") { // TODO(mgovers): tested above and in power_flow/dummy-test/asym_output.json
-        auto const solver_output = main_model.calculate<power_flow_t, asymmetric_t>(
-            get_default_options(asymmetric, CalculationMethod::linear));
-        main_model.output_result<Node>(solver_output, state.asym_node);
-        main_model.output_result<Branch>(solver_output, state.asym_branch);
-        main_model.output_result<Appliance>(solver_output, state.asym_appliance);
-        CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-        CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-        CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-        CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
-        CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
-        CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-        CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load));
-        CHECK(state.asym_appliance[3].i(1) == doctest::Approx(test::i_load));
-        CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
-    }
-}
-
 TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update,
                    cached_update) { // TODO(mgovers): we need this test
     State const state;
