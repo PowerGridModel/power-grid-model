@@ -265,18 +265,14 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
 template <class... ComponentTypes, class ComponentContainer>
 SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentContainer> const& state,
                                                     ConstDataset const& update_data, Idx scenario_idx,
-                                                    ComponentFlags<ComponentTypes...> const& components_to_store,
-                                                    std::span<Idx const> relevant_component_count) {
-    size_t comp_idx{};
+                                                    ComponentFlags<ComponentTypes...> const& components_to_store) {
     return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
-        [&update_data, &components_to_store, &state, &relevant_component_count, scenario_idx,
-         &comp_idx]<typename CompType>() {
-            if (!std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
+        [&update_data, &components_to_store, &state, scenario_idx]<typename CompType>() {
+            auto const n_components = std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store);
+            if (!n_components) {
                 return std::vector<Idx2D>{};
             }
-            Idx const n_component = relevant_component_count[comp_idx];
-            ++comp_idx;
-            auto const independence = check_component_independence<CompType>(update_data, n_component);
+            auto const independence = check_component_independence<CompType>(update_data, n_components);
             validate_update_data_independence(independence);
             return get_component_sequence<CompType>(state, update_data, scenario_idx, independence);
         });
@@ -286,14 +282,13 @@ SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentCont
 // This is the entry point for permanent updates.
 template <class... ComponentTypes, class ComponentContainer>
 SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentContainer> const& state,
-                                                    ConstDataset const& update_data,
-                                                    std::span<Idx const> relevant_component_count) {
+                                                    ConstDataset const& update_data) {
     constexpr ComponentFlags<ComponentTypes...> all_true = [] {
         ComponentFlags<ComponentTypes...> result{};
         std::ranges::fill(result, true);
         return result;
     }();
-    return get_sequence_idx_map<ComponentTypes...>(state, update_data, 0, all_true, relevant_component_count);
+    return get_sequence_idx_map<ComponentTypes...>(state, update_data, 0, all_true);
 }
 
 template <class... ComponentTypes>
