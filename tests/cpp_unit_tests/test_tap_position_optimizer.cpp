@@ -337,7 +337,7 @@ TEST_CASE("Test Transformer ranking") {
         SUBCASE("Ranking complete the graph") {
             pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
             pgm_tap::RankedTransformerGroups const ref_order{
-                {Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}, Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}};
+                {Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{3, 3}, Idx2D{4, 0}, Idx2D{3, 2}, Idx2D{3, 4}}};
             CHECK(order == ref_order);
         }
     }

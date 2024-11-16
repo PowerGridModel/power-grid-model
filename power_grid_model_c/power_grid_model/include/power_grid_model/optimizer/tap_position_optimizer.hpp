@@ -85,15 +85,14 @@ struct RegulatedObjects {
     std::set<RegulatedTrafoProperties> trafos{};
     std::set<RegulatedTrafoProperties> trafos3w{};
 
-    template <typename TrafoType>
+    template <typename TrafoType> // not really necessary to be templated, but just in case
     std::pair<bool, ControlSide> contains(TrafoType const& trafos_set, Idx const& id) const {
         auto it = std::find_if(trafos_set.begin(), trafos_set.end(),
                                [&](const RegulatedTrafoProperties& trafo) { return trafo.id == id; });
         if (it != trafos_set.end()) {
             return {true, it->control_side};
-        } else {
-            return {false, ControlSide{}};
         }
+        return {false, ControlSide{}}; // no default invalid control side, won't be used by logic
     }
 
     std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return contains(trafos, id); }
@@ -117,13 +116,16 @@ inline void add_to_edge(main_core::MainModelState<ComponentContainer> const& sta
 
 inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state,
                                  ThreeWindingTransformer const& transformer3w, bool const& trafo3w_is_regulated,
-                                 ControlSide const& /*control_side*/, Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
+                                 ControlSide const& control_side, Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
                                  TrafoGraphEdgeProperties& edge_props) {
     using enum Branch3Side;
 
     constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
         {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
 
+    auto const tap_at_control_side = [&control_side](Branch3Side const& tap_side) {
+        return static_cast<IntS>(control_side) == static_cast<IntS>(tap_side);
+    };
     for (auto const& [first_side, second_side] : branch3_combinations) {
         if (!transformer3w.status(first_side) || !transformer3w.status(second_side)) {
             continue;
@@ -133,16 +135,23 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
 
         auto const tap_at_first_side = transformer3w.tap_side() == first_side;
         auto const single_direction_condition =
-            trafo3w_is_regulated && (tap_at_first_side || transformer3w.tap_side() == second_side);
-        // ranking
+            trafo3w_is_regulated && (tap_at_first_side || (transformer3w.tap_side() == second_side));
+
+        auto const tap_at_control = tap_at_control_side(transformer3w.tap_side());
+
+        // only add weighted edge if the trafo3w meets the condition
         if (single_direction_condition) {
             auto const& tap_side_node = tap_at_first_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
+            auto const edge_from_node = tap_at_control ? non_tap_side_node : tap_side_node;
+            auto const edge_to_node = tap_at_control ? tap_side_node : non_tap_side_node;
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
             auto const edge_value =
                 (from_node == tap_side_node) ? unregulated_edge_prop : TrafoGraphEdge{trafo3w_idx, 1};
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
+            // (TODO: jguo) old way, to be removed
+            // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
+            add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
             add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
@@ -179,12 +188,19 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         // if (regulated_objects.transformers.contains(transformer.id())) {
         auto const trafo_regulated = regulated_objects.contains_trafo(transformer.id());
         if (trafo_regulated.first) {
-            auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
-            auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
-            auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
+            // (TODO: jguo) old way, to be removed
+            // auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
+            // auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
+            // auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
             auto const control_side = trafo_regulated.second;
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
-                        {main_core::get_component_idx_by_id(state, transformer.id()), 1});
+            auto const control_side_node = control_side == ControlSide::from ? from_node : to_node;
+            auto const non_control_side_node = control_side == ControlSide::from ? to_node : from_node;
+            auto const trafo_idx = main_core::get_component_idx_by_id(state, transformer.id());
+
+            // (TODO: jguo) old way, to be removed
+            // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
+            //             {main_core::get_component_idx_by_id(state, transformer.id()), 1});
+            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node, {trafo_idx, 1});
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
             add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
