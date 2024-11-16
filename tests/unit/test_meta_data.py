@@ -4,33 +4,56 @@
 
 import numpy as np
 
-from power_grid_model import initialize_array, power_grid_meta_data
+from power_grid_model import (
+    attribute_dtype,
+    attribute_empty_value,
+    initialize_array,
+    power_grid_meta_data,
+    DatasetType,
+    ComponentType,
+)
 
 
 def test_nan_scalar():
-    assert np.isnan(power_grid_meta_data["input"]["node"].nan_scalar["u_rated"])
+    assert np.isnan(power_grid_meta_data[DatasetType.input][ComponentType.node].nan_scalar["u_rated"])
 
 
 def test_initialize_array():
-    arr = initialize_array("input", "node", 3)
+    arr = initialize_array(DatasetType.input, ComponentType.node, 3)
     assert arr.shape == (3,)
     assert np.all(np.isnan(arr["u_rated"]))
-    arr_2d = initialize_array("input", "node", (2, 3))
+    arr_2d = initialize_array(DatasetType.input, ComponentType.node, (2, 3))
     assert arr_2d.shape == (2, 3)
     assert np.all(np.isnan(arr_2d["u_rated"]))
 
 
+def test_attribute_dtype():
+    assert attribute_dtype(DatasetType.input, ComponentType.node, "u_rated") == np.float64
+    assert attribute_dtype(DatasetType.input, ComponentType.node, "id") == np.int32
+
+
+def test_attribute_empty_value():
+    empty_value = attribute_empty_value(DatasetType.input, ComponentType.node, "u_rated")
+    assert np.isnan(empty_value)
+    empty_value = attribute_empty_value(DatasetType.input, ComponentType.node, "id")
+    assert empty_value == np.iinfo(np.int32).min
+
+
 def test_sensor_meta_data():
-    sensors = ["sym_voltage_sensor", "asym_voltage_sensor", "sym_power_sensor", "asym_power_sensor"]
+    sensors = [
+        ComponentType.sym_voltage_sensor,
+        ComponentType.asym_voltage_sensor,
+        ComponentType.sym_power_sensor,
+        ComponentType.asym_power_sensor,
+    ]
     input_voltage = ["u_measured", "u_angle_measured", "u_sigma"]
     output_voltage = ["u_residual", "u_angle_residual"]
     input_power = ["p_measured", "q_measured", "power_sigma"]
     output_power = ["p_residual", "q_residual"]
     for sensor in sensors:
-        for meta_type in ["input", "update", "sym_output", "asym_output"]:
+        for meta_type in [DatasetType.input, DatasetType.update, DatasetType.sym_output, DatasetType.asym_output]:
             meta_data = power_grid_meta_data[meta_type]
-            # comp_names = list(meta_data.keys())
-            # assert sensor in comp_names
+            assert sensor in meta_data
             meta_data_sensor = meta_data[sensor]
             attr_names = meta_data_sensor.dtype_dict["names"]
             assert "id" in attr_names
@@ -51,14 +74,17 @@ def test_sensor_meta_data():
 
 
 def test_dict_like_access():
-    assert power_grid_meta_data["input"]["node"].dtype == power_grid_meta_data["input"]["node"]["dtype"]
+    assert (
+        power_grid_meta_data[DatasetType.input][ComponentType.node].dtype
+        == power_grid_meta_data[DatasetType.input][ComponentType.node]["dtype"]
+    )
 
 
 def test_all_datasets():
     assert set(power_grid_meta_data.keys()) == {
-        "input",
-        "update",
-        "sym_output",
-        "asym_output",
-        "sc_output",
+        DatasetType.input,
+        DatasetType.update,
+        DatasetType.sym_output,
+        DatasetType.asym_output,
+        DatasetType.sc_output,
     }
