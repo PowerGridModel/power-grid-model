@@ -51,6 +51,9 @@ struct TrafoGraphEdge {
     Idx2D regulated_idx{};
     EdgeWeight weight{};
 
+    TapSide tap_side{};
+    ControlSide control_side{};
+
     bool operator==(const TrafoGraphEdge& other) const {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
@@ -66,7 +69,7 @@ struct TrafoGraphEdge {
     }
 };
 
-constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0};
+constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0, TapSide::from, ControlSide::from};
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
@@ -74,14 +77,14 @@ struct RegulatedTrafoProperties {
     Idx id{};
     ControlSide control_side{};
 
-    auto operator<=>(RegulatedTrafoProperties const& other) const = default;
+    auto operator<=>(RegulatedTrafoProperties const& other) const = default; // NOLINT(modernize-use-nullptr)
 };
 
 using RegulatedTrafos = std::set<RegulatedTrafoProperties>;
 
 inline std::pair<bool, ControlSide> regulated_trafos_contain(RegulatedTrafos const& trafos_set, Idx const& id) {
-    if (auto it = std::find_if(trafos_set.begin(), trafos_set.end(),
-                               [&](RegulatedTrafoProperties const& trafo) { return trafo.id == id; });
+    if (auto it =
+            std::ranges::find_if(trafos_set, [&](RegulatedTrafoProperties const& trafo) { return trafo.id == id; });
         it != trafos_set.end()) {
         return {true, it->control_side};
     }
@@ -149,7 +152,9 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
             auto const edge_value =
-                (from_node == tap_side_node) ? unregulated_edge_prop : TrafoGraphEdge{trafo3w_idx, 1};
+                (from_node == tap_side_node)
+                    ? unregulated_edge_prop
+                    : TrafoGraphEdge{trafo3w_idx, 1, branch_3_side_to_tap_side(transformer3w.tap_side()), control_side};
             // (TODO: jguo) old way, to be removed
             // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
             add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
@@ -201,7 +206,8 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
             // (TODO: jguo) old way, to be removed
             // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
             //             {main_core::get_component_idx_by_id(state, transformer.id()), 1});
-            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node, {trafo_idx, 1});
+            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node,
+                        {trafo_idx, 1, branch_side_to_tap_side(transformer.tap_side()), control_side});
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
             add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
