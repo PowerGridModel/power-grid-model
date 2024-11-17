@@ -256,6 +256,7 @@ TEST_CASE("Test Transformer ranking") {
             CHECK(actual_edges_prop == expected_edges_prop);
         }
 
+        // (TODO: jguo) old way, to be removed
         SUBCASE("Automatic tap unsupported tap side at LV") {
             TestState bad_state;
             std::vector<NodeInput> bad_nodes{{0, 50e3}, {1, 10e3}};

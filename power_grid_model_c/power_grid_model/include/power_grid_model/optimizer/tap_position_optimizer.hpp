@@ -74,30 +74,31 @@ struct RegulatedTrafoProperties {
     Idx id{};
     ControlSide control_side{};
 
-    bool operator<(const RegulatedTrafoProperties& other) const {
-        return std::tie(this->id, this->control_side) < std::tie(other.id, other.control_side);
-    }
+    auto operator<=>(RegulatedTrafoProperties const& other) const = default;
 };
 
-struct RegulatedObjects {
-    std::set<Idx> transformers{};
-    std::set<Idx> transformers3w{};
-    std::set<RegulatedTrafoProperties> trafos{};
-    std::set<RegulatedTrafoProperties> trafos3w{};
+using RegulatedTrafos = std::set<RegulatedTrafoProperties>;
 
-    template <typename TrafoType> // not really necessary to be templated, but just in case
-    std::pair<bool, ControlSide> contains(TrafoType const& trafos_set, Idx const& id) const {
-        auto it = std::find_if(trafos_set.begin(), trafos_set.end(),
-                               [&](const RegulatedTrafoProperties& trafo) { return trafo.id == id; });
-        if (it != trafos_set.end()) {
-            return {true, it->control_side};
-        }
-        return {false, ControlSide{}}; // no default invalid control side, won't be used by logic
+inline std::pair<bool, ControlSide> regulated_trafos_contain(RegulatedTrafos const& trafos_set, Idx const& id) {
+    if (auto it = std::find_if(trafos_set.begin(), trafos_set.end(),
+                               [&](RegulatedTrafoProperties const& trafo) { return trafo.id == id; });
+        it != trafos_set.end()) {
+        return {true, it->control_side};
     }
+    return {false, ControlSide{}}; // no default invalid control side, won't be used by logic
+}
 
-    std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return contains(trafos, id); }
+struct RegulatedObjects {
+    // (TODO: jguo) old way, to be removed
+    // std::set<Idx> transformers{};
+    // std::set<Idx> transformers3w{};
+    RegulatedTrafos trafos{};
+    RegulatedTrafos trafos3w{};
 
-    std::pair<bool, ControlSide> contains_trafo3w(Idx const& id) const { return contains(trafos3w, id); }
+    std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return regulated_trafos_contain(trafos, id); }
+    std::pair<bool, ControlSide> contains_trafo3w(Idx const& id) const {
+        return regulated_trafos_contain(trafos3w, id);
+    }
 };
 
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
@@ -241,10 +242,10 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
         }
         auto const control_side = regulator.control_side();
         if (regulator.regulated_object_type() == ComponentType::branch) {
-            regulated_objects.transformers.emplace(regulator.regulated_object());
+            // regulated_objects.transformers.emplace(regulator.regulated_object());
             regulated_objects.trafos.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         } else {
-            regulated_objects.transformers3w.emplace(regulator.regulated_object());
+            // regulated_objects.transformers3w.emplace(regulator.regulated_object());
             regulated_objects.trafos3w.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         }
     }
