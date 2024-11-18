@@ -21,7 +21,7 @@ from power_grid_model._core.dataset_definitions import (
     _str_to_datatype,
 )
 from power_grid_model._core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-from power_grid_model.data_types import DenseBatchArray, SingleArray
+from power_grid_model.data_types import AttributeType, DenseBatchArray, SingleArray
 
 
 # constant enum for ctype
@@ -205,3 +205,40 @@ def initialize_array(
         dtype=power_grid_meta_data[data_type][component_type].dtype,
         order="C",
     )
+
+
+def attribute_dtype(
+    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeType
+) -> np.dtype:
+    """Gives out dtype of the attribute to be used in a columnar data format
+
+    Args:
+        data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
+        component_type (ComponentTypeLike): The type of component (e.g., node)
+        attribute (AttributeType): The attribute whose dtype is required
+
+    Returns:
+        np.dtype: The dtype of the specified attribute
+    """
+    data_type = _str_to_datatype(data_type)
+    component_type = _str_to_component_type(component_type)
+    return power_grid_meta_data[data_type][component_type].dtype[attribute]
+
+
+def attribute_empty_value(
+    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeType
+) -> np.ndarray:
+    """
+    Returns the empty value for a specific attribute in the Power Grid Model.
+
+    Args:
+        data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
+        component_type (ComponentTypeLike): The type of component (e.g., node)
+        attribute (AttributeType): The attribute whose empty value is required
+
+    Returns:
+        np.ndarray: The empty value for the specified attribute
+    """
+    data_type = _str_to_datatype(data_type)
+    component_type = _str_to_component_type(component_type)
+    return power_grid_meta_data[data_type][component_type].nan_scalar[attribute]
