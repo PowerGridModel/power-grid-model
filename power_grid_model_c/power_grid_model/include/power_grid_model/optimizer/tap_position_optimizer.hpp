@@ -125,7 +125,7 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
     using enum Branch3Side;
 
     constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
-        {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
+        {{side_1, side_2}, {side_1, side_3}, {side_2, side_3}}};
 
     auto const tap_at_control_side = [&control_side](Branch3Side const& tap_side) {
         return static_cast<IntS>(control_side) == static_cast<IntS>(tap_side);
@@ -138,13 +138,13 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
         auto const& to_node = transformer3w.node(second_side);
 
         auto const tap_at_first_side = transformer3w.tap_side() == first_side;
-        auto const single_direction_condition =
+        auto const connected_to_primary_side_regulated =
             trafo3w_is_regulated && (tap_at_first_side || (transformer3w.tap_side() == second_side));
 
         auto const tap_at_control = tap_at_control_side(transformer3w.tap_side());
 
         // only add weighted edge if the trafo3w meets the condition
-        if (single_direction_condition) {
+        if (connected_to_primary_side_regulated) {
             auto const& tap_side_node = tap_at_first_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
             auto const edge_from_node = tap_at_control ? non_tap_side_node : tap_side_node;
@@ -152,9 +152,11 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
             auto const edge_value =
-                (from_node == tap_side_node)
-                    ? unregulated_edge_prop
-                    : TrafoGraphEdge{trafo3w_idx, 1, branch_3_side_to_tap_side(transformer3w.tap_side()), control_side};
+                // (TODO: jguo) The following commented out logic was a potential bug
+                // (from_node != tap_side_node)
+                //     ? unregulated_edge_prop
+                //     :
+                TrafoGraphEdge{trafo3w_idx, 1, branch_3_side_to_tap_side(transformer3w.tap_side()), control_side};
             // (TODO: jguo) old way, to be removed
             // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
             add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
@@ -172,6 +174,7 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
                         TrafoGraphEdgeProperties& edge_props) {
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
+        // (TODO: jguo) old way, to be removed
         // bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
         auto const trafo3w_is_regulated = regulated_objects.contains_trafo3w(transformer3w.id());
         Idx2D const trafo3w_idx = main_core::get_component_idx_by_id(state, transformer3w.id());
@@ -248,9 +251,11 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
         }
         auto const control_side = regulator.control_side();
         if (regulator.regulated_object_type() == ComponentType::branch) {
+            // (TODO: jguo) old way, to be removed
             // regulated_objects.transformers.emplace(regulator.regulated_object());
             regulated_objects.trafos.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         } else {
+            // (TODO: jguo) old way, to be removed
             // regulated_objects.transformers3w.emplace(regulator.regulated_object());
             regulated_objects.trafos3w.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         }
@@ -351,7 +356,10 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
             groups.emplace_back();
             previous_weight = trafo.weight;
         }
-        groups.back().push_back(trafo.regulated_idx);
+        auto& current_group = groups.back(); // avoid duplicates
+        if (std::find(current_group.begin(), current_group.end(), trafo.regulated_idx) == current_group.end()) {
+            current_group.push_back(trafo.regulated_idx);
+        }
     }
     return groups;
 }
