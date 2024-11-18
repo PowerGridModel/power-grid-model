@@ -14,6 +14,8 @@ This is the Python API reference for the `power-grid-model` library
 .. autoclass:: PowerGridModel
    :show-inheritance:
 .. autofunction:: initialize_array
+.. autofunction:: attribute_dtype
+.. autofunction:: attribute_empty_value
 
 .. py:data:: power_grid_meta_data
    :type: typing.PowerGridMetaData
