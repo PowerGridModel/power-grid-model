@@ -5,12 +5,12 @@
 import numpy as np
 
 from power_grid_model import (
+    ComponentType,
+    DatasetType,
     attribute_dtype,
     attribute_empty_value,
     initialize_array,
     power_grid_meta_data,
-    DatasetType,
-    ComponentType,
 )
 
 
