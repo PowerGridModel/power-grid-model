@@ -231,7 +231,6 @@ def attribute_empty_value(
     """
     Returns the empty value for a specific attribute in the Power Grid Model.
 
-
     Args:
         data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
         component_type (ComponentTypeLike): The type of component (e.g., node)
