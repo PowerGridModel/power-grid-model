@@ -82,6 +82,11 @@ def test_dict_like_access():
 
 def test_all_datasets():
     assert set(power_grid_meta_data.keys()) == {
+        "input",
+        "update",
+        "sym_output",
+        "asym_output",
+        "sc_output",
         DatasetType.input,
         DatasetType.update,
         DatasetType.sym_output,
