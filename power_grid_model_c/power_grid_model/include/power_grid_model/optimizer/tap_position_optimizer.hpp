@@ -92,9 +92,6 @@ inline std::pair<bool, ControlSide> regulated_trafos_contain(RegulatedTrafos con
 }
 
 struct RegulatedObjects {
-    // (TODO: jguo) old way, to be removed
-    // std::set<Idx> transformers{};
-    // std::set<Idx> transformers3w{};
     RegulatedTrafos trafos{};
     RegulatedTrafos trafos3w{};
 
@@ -157,8 +154,6 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
                 //     ? unregulated_edge_prop
                 //     :
                 TrafoGraphEdge{trafo3w_idx, 1, branch_3_side_to_tap_side(transformer3w.tap_side()), control_side};
-            // (TODO: jguo) old way, to be removed
-            // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
             add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
@@ -174,8 +169,6 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
                         TrafoGraphEdgeProperties& edge_props) {
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
-        // (TODO: jguo) old way, to be removed
-        // bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
         auto const trafo3w_is_regulated = regulated_objects.contains_trafo3w(transformer3w.id());
         Idx2D const trafo3w_idx = main_core::get_component_idx_by_id(state, transformer3w.id());
         process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated.first, trafo3w_is_regulated.second, trafo3w_idx,
@@ -194,21 +187,13 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        // if (regulated_objects.transformers.contains(transformer.id())) {
         auto const trafo_regulated = regulated_objects.contains_trafo(transformer.id());
         if (trafo_regulated.first) {
-            // (TODO: jguo) old way, to be removed
-            // auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
-            // auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
-            // auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
             auto const control_side = trafo_regulated.second;
             auto const control_side_node = control_side == ControlSide::from ? from_node : to_node;
             auto const non_control_side_node = control_side == ControlSide::from ? to_node : from_node;
             auto const trafo_idx = main_core::get_component_idx_by_id(state, transformer.id());
 
-            // (TODO: jguo) old way, to be removed
-            // add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
-            //             {main_core::get_component_idx_by_id(state, transformer.id()), 1});
             add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node,
                         {trafo_idx, 1, branch_side_to_tap_side(transformer.tap_side()), control_side});
         } else {
@@ -251,12 +236,8 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
         }
         auto const control_side = regulator.control_side();
         if (regulator.regulated_object_type() == ComponentType::branch) {
-            // (TODO: jguo) old way, to be removed
-            // regulated_objects.transformers.emplace(regulator.regulated_object());
             regulated_objects.trafos.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         } else {
-            // (TODO: jguo) old way, to be removed
-            // regulated_objects.transformers3w.emplace(regulator.regulated_object());
             regulated_objects.trafos3w.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         }
     }
@@ -307,7 +288,8 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEDGES here because our grid is undirected
+            // We can not use BGL_FORALL_OUTEDGES here because we need information 
+            // regardless of edge direction
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
                 pq.push({vertex_distances[t], t});
@@ -334,9 +316,19 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (graph[e].regulated_idx == unregulated_idx) {
             continue;
         }
-        auto edge_res = std::min(vertex_distances[boost::source(e, graph)], vertex_distances[boost::target(e, graph)]);
+        // control_side, two winding or three winding, is always parallel to the
+        // source side of the transformer edge
+        auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
+        auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
+        auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
+
+        if (edge_src_rank != edge_tgt_rank - 1) {
+            throw AutomaticTapInputError("Transformer is not unrechable: control side rank mismatch");
+        }
         if (!is_unreachable(edge_res)) {
-            result.push_back({graph[e].regulated_idx, edge_res});
+            // (TODO: jguo) old way -> broke existing validation tests
+            // result.push_back({graph[e].regulated_idx, edge_res});
+            result.push_back({graph[e].regulated_idx, edge_tgt_rank});
         }
     }
 

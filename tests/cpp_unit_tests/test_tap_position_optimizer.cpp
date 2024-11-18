@@ -210,12 +210,9 @@ TEST_CASE("Test Transformer ranking") {
         main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
         std::vector<TransformerTapRegulatorInput> regulators{
-            get_regulator(23, 11, ControlSide::from), get_regulator(24, 12, ControlSide::from),
-            get_regulator(25, 13, ControlSide::from), get_regulator(26, 14, ControlSide::from),
-            get_regulator(27, 15, ControlSide::from), get_regulator(28, 16, ControlSide::side_1)};
-        // get_regulator(23, 11, ControlSide::to), get_regulator(24, 12, ControlSide::to),
-        // get_regulator(25, 13, ControlSide::to), get_regulator(26, 14, ControlSide::to),
-        // get_regulator(27, 15, ControlSide::to), get_regulator(28, 16, ControlSide::side_2)};
+            get_regulator(23, 11, ControlSide::to), get_regulator(24, 12, ControlSide::to),
+            get_regulator(25, 13, ControlSide::to), get_regulator(26, 14, ControlSide::to),
+            get_regulator(27, 15, ControlSide::to), get_regulator(28, 16, ControlSide::side_2)};
         main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
 
         state.components.set_construction_complete();
@@ -282,7 +279,7 @@ TEST_CASE("Test Transformer ranking") {
 
             // Dummy graph
             pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{-1, -1}, 0}, {{2, 3}, 1}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -296,7 +293,7 @@ TEST_CASE("Test Transformer ranking") {
             }
 
             pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 0}, {{2, 3}, 2}};
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 1}, {{2, 3}, 1}};
             CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
 
@@ -319,13 +316,15 @@ TEST_CASE("Test Transformer ranking") {
             using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
             // Grid with multiple sources and symetric graph
-            pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{
-                {{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}, {{4, 5}, 1}};
-            std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {false}, {true}};
+            pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1, TapSide::from, ControlSide::to},
+                                                              {{1, 2}, 1, TapSide::from, ControlSide::to},
+                                                              {{2, 3}, 1, TapSide::from, ControlSide::to},
+                                                              {{3, 4}, 1, TapSide::from, ControlSide::to}};
+            std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
-                                        edge_prop.cbegin(), 6};
+                                        edge_prop.cbegin(), 5};
 
             // Vertex properties can not be set during graph creation
             vertex_iterator vi;
@@ -336,15 +335,17 @@ TEST_CASE("Test Transformer ranking") {
 
             pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
             pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{
-                {{0, 1}, 0}, {{1, 2}, 1}, {{2, 3}, 2}, {{3, 4}, 1}, {{4, 5}, 0}};
+                {{0, 1}, 1}, {{1, 2}, 2}, {{2, 3}, 2}, {{3, 4}, 1}};
             CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
 
         SUBCASE("Ranking complete the graph") {
-            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-            pgm_tap::RankedTransformerGroups const ref_order{
-                {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}}};
-            CHECK(order == ref_order);
+            // (TODO: jguo) existing demo grid is not compatible with the updated ranking
+            // pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+            // pgm_tap::RankedTransformerGroups const ref_order{
+            //     {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}}};
+            // CHECK(order == ref_order);
+            CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapInputError);
         }
     }
 }

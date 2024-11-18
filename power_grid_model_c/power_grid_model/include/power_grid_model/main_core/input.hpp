@@ -136,7 +136,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     throw InvalidRegulatedObject(input.regulated_object, Component::name);
                 }
             }();
-
+            // (TODO: jguo) This validation still needs to be updated
             if (regulated_object_idx.group == get_component_type_index<Transformer>(state)) {
                 auto const& regulated_object = get_component<Transformer>(state, regulated_object_idx);
 

@@ -181,6 +181,13 @@ class AutomaticTapCalculationError : public PowerGridError {
     }
 };
 
+class AutomaticTapInputError : public PowerGridError {
+  public:
+    AutomaticTapInputError(std::string const& msg) {
+        append_msg(msg); // NOSONAR
+    }
+};
+
 class IDWrongType : public PowerGridError {
   public:
     explicit IDWrongType(ID id) { append_msg("Wrong type for object with id " + detail::to_string(id) + '\n'); }
