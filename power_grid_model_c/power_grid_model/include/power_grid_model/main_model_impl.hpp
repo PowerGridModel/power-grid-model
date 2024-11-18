@@ -305,8 +305,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     // update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
-        auto const sequence_idx_map = main_core::update_independence::get_sequence_idx_map<ComponentType...>(
-            state_, update_data.get_individual_scenario(0));
+        auto const sequence_idx_map =
+            main_core::update_independence::get_all_sequence_idx_map<ComponentType...>(state_, update_data);
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
@@ -391,8 +391,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Entry point for main_model.hpp
-    template <class... ComponentTypes> SequenceIdx get_sequence_idx_map(ConstDataset const& update_data) {
-        return main_core::update_independence::get_sequence_idx_map<ComponentType...>(state_, update_data);
+    template <class... ComponentTypes> SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
+        return main_core::update_independence::get_all_sequence_idx_map<ComponentType...>(state_, update_data);
     }
 
   private:
@@ -557,7 +557,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const relevant_component_count = get_n_components_per_type();
         auto const is_independent = main_core::update_independence::is_update_independent<ComponentType...>(
             update_data, relevant_component_count);
-        all_scenarios_sequence = main_core::update_independence::get_sequence_idx_map<ComponentType...>(
+        all_scenarios_sequence = main_core::update_independence::get_all_sequence_idx_map<ComponentType...>(
             state_, update_data, 0, is_independent);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
@@ -676,7 +676,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
              do_update_cache_ = std::move(do_update_cache), &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
                 current_scenario_sequence_cache =
-                    main_core::update_independence::get_sequence_idx_map<ComponentType...>(
+                    main_core::update_independence::get_all_sequence_idx_map<ComponentType...>(
                         model.state_, update_data, scenario_idx, do_update_cache_);
 
                 model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());

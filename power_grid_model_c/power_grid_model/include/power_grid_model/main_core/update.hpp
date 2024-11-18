@@ -178,17 +178,16 @@ struct UpdateCompProperties {
     }
 };
 
-template <typename CompType> void process_buffer_span(auto const& all_spans, detail::UpdateCompProperties& properties) {
+template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
     properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
-        return std::ranges::all_of(vec, [](auto const& item) { return detail::check_id_na(item); });
+        return std::ranges::all_of(vec, [](auto const& item) { return check_id_na(item); });
     });
-    properties.ids_part_na = std::ranges::any_of(all_spans,
-                                                 [](auto const& vec) {
-                                                     return std::ranges::any_of(vec, [](auto const& item) {
-                                                         return detail::check_id_na(item);
-                                                     });
-                                                 }) &&
-                             !properties.ids_all_na;
+    properties.ids_part_na =
+        std::ranges::any_of(all_spans,
+                            [](auto const& vec) {
+                                return std::ranges::any_of(vec, [](auto const& item) { return check_id_na(item); });
+                            }) &&
+        !properties.ids_all_na;
 
     if (all_spans.empty()) {
         properties.update_ids_match = true;
@@ -210,8 +209,8 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, det
 }
 
 template <class CompType>
-detail::UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
-    detail::UpdateCompProperties properties;
+UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
+    UpdateCompProperties properties;
     properties.name = CompType::name;
     auto const component_idx = update_data.find_component(properties.name, false);
     properties.is_columnar = update_data.is_columnar(properties.name);
@@ -224,18 +223,18 @@ detail::UpdateCompProperties check_component_independence(ConstDataset const& up
     properties.elements_in_base = n_component;
 
     if (properties.is_columnar) {
-        detail::process_buffer_span<CompType>(
+        process_buffer_span<CompType>(
             update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
             properties);
     } else {
-        detail::process_buffer_span<CompType>(
+        process_buffer_span<CompType>(
             update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), properties);
     }
 
     return properties;
 }
 
-inline void validate_update_data_independence(detail::UpdateCompProperties const& comp) {
+inline void validate_update_data_independence(UpdateCompProperties const& comp) {
     if (comp.is_empty_component()) {
         return; // empty dataset is still supported
     }
@@ -247,7 +246,7 @@ inline void validate_update_data_independence(detail::UpdateCompProperties const
                            "!");
     }
     if (comp.ids_part_na) {
-        throw DatasetError("Some IDs are not valid for component " + comp.name + " in update data!");
+        throw DatasetError("IDs contain both numbers and NANs for component " + comp.name + " in update data!");
     }
     if (comp.ids_all_na && comp.elements_in_base != elements_ps) {
         throw DatasetError("Update data without IDs for component " + comp.name +
@@ -281,9 +280,9 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
 }
 
 template <class... ComponentTypes, class ComponentContainer>
-SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentContainer> const& state,
-                                                    ConstDataset const& update_data, Idx scenario_idx,
-                                                    ComponentFlags<ComponentTypes...> const& components_to_store) {
+SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state,
+                                                        ConstDataset const& update_data, Idx scenario_idx,
+                                                        ComponentFlags<ComponentTypes...> const& components_to_store) {
     return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
         [&update_data, &components_to_store, &state, scenario_idx]<typename CompType>() {
             if (!std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
@@ -299,14 +298,14 @@ SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentCont
 // The sequence idx map of the batch is the same as that of the first scenario in the batch (assuming homogeneity)
 // This is the entry point for permanent updates.
 template <class... ComponentTypes, class ComponentContainer>
-SequenceIdx<ComponentTypes...> get_sequence_idx_map(MainModelState<ComponentContainer> const& state,
-                                                    ConstDataset const& update_data) {
+SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state,
+                                                        ConstDataset const& update_data) {
     constexpr ComponentFlags<ComponentTypes...> all_true = [] {
         ComponentFlags<ComponentTypes...> result{};
         std::ranges::fill(result, true);
         return result;
     }();
-    return get_sequence_idx_map<ComponentTypes...>(state, update_data, 0, all_true);
+    return get_all_sequence_idx_map<ComponentTypes...>(state, update_data, 0, all_true);
 }
 
 template <class... ComponentTypes>

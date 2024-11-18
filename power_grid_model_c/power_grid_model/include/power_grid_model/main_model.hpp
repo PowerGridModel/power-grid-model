@@ -57,7 +57,7 @@ class MainModel {
 
     void set_construction_complete() { impl().set_construction_complete(); }
     void restore_components(ConstDataset const& update_data) {
-        impl().restore_components(impl().get_sequence_idx_map(update_data));
+        impl().restore_components(impl().get_all_sequence_idx_map(update_data));
     }
 
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
