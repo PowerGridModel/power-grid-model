@@ -95,21 +95,18 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, Upd
     if (all_spans.empty()) {
         properties.update_ids_match = true;
         return;
-    } else {
-        // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
-        // check the ids
-        auto const first_span = all_spans[0];
-        // check the subsequent scenarios
-        // only return true if all scenarios match the ids of the first batch
-        properties.update_ids_match =
-            std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-                return std::ranges::equal(
-                    current_span, first_span,
-                    [](typename CompType::UpdateType const& obj, typename CompType::UpdateType const& first) {
-                        return obj.id == first.id;
-                    });
-            });
     }
+    // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
+    // check the ids
+    auto const first_span = all_spans[0];
+    // check the subsequent scenarios
+    // only return true if all scenarios match the ids of the first batch
+    properties.update_ids_match =
+        std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+            return std::ranges::equal(current_span, first_span,
+                                      [](typename CompType::UpdateType const& obj,
+                                         typename CompType::UpdateType const& first) { return obj.id == first.id; });
+        });
 }
 
 template <class CompType>
