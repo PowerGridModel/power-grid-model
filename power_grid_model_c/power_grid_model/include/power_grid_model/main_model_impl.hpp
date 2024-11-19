@@ -974,7 +974,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 if constexpr (std::derived_from<ComponentType, Branch>) {
                     Idx2D const math_idx =
                         state.topo_comp_coup
-                            ->branch[main_core::get_component_sequence<Branch>(state, changed_component_idx)];
+                            ->branch[main_core::get_component_sequence_idx<Branch>(state, changed_component_idx)];
                     if (math_idx.group == isolated_component) {
                         return;
                     }
@@ -983,7 +983,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 } else if constexpr (std::derived_from<ComponentType, Branch3>) {
                     Idx2DBranch3 const math_idx =
                         state.topo_comp_coup
-                            ->branch3[main_core::get_component_sequence<Branch3>(state, changed_component_idx)];
+                            ->branch3[main_core::get_component_sequence_idx<Branch3>(state, changed_component_idx)];
                     if (math_idx.group == isolated_component) {
                         return;
                     }
@@ -996,7 +996,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 } else if constexpr (std::same_as<ComponentType, Shunt>) {
                     Idx2D const math_idx =
                         state.topo_comp_coup
-                            ->shunt[main_core::get_component_sequence<Shunt>(state, changed_component_idx)];
+                            ->shunt[main_core::get_component_sequence_idx<Shunt>(state, changed_component_idx)];
                     if (math_idx.group == isolated_component) {
                         return;
                     }
