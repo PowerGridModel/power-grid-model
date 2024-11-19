@@ -184,7 +184,9 @@ class AutomaticTapCalculationError : public PowerGridError {
 class AutomaticTapInputError : public PowerGridError {
   public:
     AutomaticTapInputError(std::string const& msg) {
-        append_msg(msg); // NOSONAR
+        append_msg(
+            "Automatic tap changer has invalid configuration that does not meet the transformer ranking criteria. " +
+            msg); // NOSONAR
     }
 };
 

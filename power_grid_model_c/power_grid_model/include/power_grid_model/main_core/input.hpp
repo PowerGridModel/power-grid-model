@@ -137,30 +137,31 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 }
             }();
             // (TODO: jguo) This validation still needs to be updated
-            if (regulated_object_idx.group == get_component_type_index<Transformer>(state)) {
-                auto const& regulated_object = get_component<Transformer>(state, regulated_object_idx);
+            // check and forbid for step-up transformer logic to be removed
+            // if (regulated_object_idx.group == get_component_type_index<Transformer>(state)) {
+            //     auto const& regulated_object = get_component<Transformer>(state, regulated_object_idx);
 
-                auto const non_tap_side =
-                    regulated_object.tap_side() == BranchSide::from ? BranchSide::to : BranchSide::from;
-                if (get_component<Node>(state, regulated_object.node(regulated_object.tap_side())).u_rated() <
-                    get_component<Node>(state, regulated_object.node(non_tap_side)).u_rated()) {
-                    throw AutomaticTapCalculationError(id);
-                }
-            } else if (regulated_object_idx.group == get_component_type_index<ThreeWindingTransformer>(state)) {
-                auto const& regulated_object = get_component<ThreeWindingTransformer>(state, regulated_object_idx);
-                auto const tap_side_u_rated =
-                    get_component<Node>(state, regulated_object.node(regulated_object.tap_side())).u_rated();
-                for (auto const side : branch3_sides) {
-                    if (side == regulated_object.tap_side()) {
-                        continue;
-                    }
-                    if (tap_side_u_rated < get_component<Node>(state, regulated_object.node(side)).u_rated()) {
-                        throw AutomaticTapCalculationError(id);
-                    }
-                }
-            } else {
-                throw InvalidRegulatedObject(input.regulated_object, Component::name);
-            }
+            //     auto const non_tap_side =
+            //         regulated_object.tap_side() == BranchSide::from ? BranchSide::to : BranchSide::from;
+            //     if (get_component<Node>(state, regulated_object.node(regulated_object.tap_side())).u_rated() <
+            //         get_component<Node>(state, regulated_object.node(non_tap_side)).u_rated()) {
+            //         throw AutomaticTapCalculationError(id);
+            //     }
+            // } else if (regulated_object_idx.group == get_component_type_index<ThreeWindingTransformer>(state)) {
+            //     auto const& regulated_object = get_component<ThreeWindingTransformer>(state, regulated_object_idx);
+            //     auto const tap_side_u_rated =
+            //         get_component<Node>(state, regulated_object.node(regulated_object.tap_side())).u_rated();
+            //     for (auto const side : branch3_sides) {
+            //         if (side == regulated_object.tap_side()) {
+            //             continue;
+            //         }
+            //         if (tap_side_u_rated < get_component<Node>(state, regulated_object.node(side)).u_rated()) {
+            //             throw AutomaticTapCalculationError(id);
+            //         }
+            //     }
+            // } else {
+            //     throw InvalidRegulatedObject(input.regulated_object, Component::name);
+            // }
 
             auto const regulated_object_type = get_component<Base>(state, regulated_object_idx).math_model_type();
             double const u_rated = get_component<Node>(state, regulated_terminal).u_rated();

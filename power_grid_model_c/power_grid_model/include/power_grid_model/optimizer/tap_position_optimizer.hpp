@@ -149,10 +149,6 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
             auto const edge_value =
-                // (TODO: jguo) The following commented out logic was a potential bug
-                // (from_node != tap_side_node)
-                //     ? unregulated_edge_prop
-                //     :
                 TrafoGraphEdge{trafo3w_idx, 1, branch_3_side_to_tap_side(transformer3w.tap_side()), control_side};
             add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
         } else {
@@ -288,7 +284,7 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEDGES here because we need information 
+            // We can not use BGL_FORALL_OUTEDGES here because we need information
             // regardless of edge direction
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
@@ -322,12 +318,25 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
         auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
 
+        // New edge logic for ranking
+        // |  Tap  | Control |         All edges       |
+        // ---------------------------------------------
+        // |   A   |    A    | [B->A], [C->A], [B<->C] |
+        // |   A   |    B    | [A->B], [A->C], [B<->C] |
+        // |   A   |    C    | [A->B], [A->C], [B<->C] |
+        // |   B   |    A    | [B->A], [C<->A], [B->C] |
+        // |   B   |    B    | [A->B], [C<->A], [C->B] |
+        // |   B   |    C    | [B->A], [C<->A], [B->C] |
+        // |   C   |    A    | [A<->B], [C->A], [C->B] |
+        // |   C   |    B    | [A<->B], [C->A], [C->B] |
+        // |   C   |    C    | [A<->B], [A->C], [A->B] |
+        // In two winding trafo, the edge is always pointing to the control side; in three winding trafo edges, the
+        // edges are always pointing parallel to the control side: meaning that for delta configuration ABC, the above
+        // situations can happen.
         if (edge_src_rank != edge_tgt_rank - 1) {
-            throw AutomaticTapInputError("Transformer is not unrechable: control side rank mismatch");
+            throw AutomaticTapInputError("Transformer is unrechable: control side rank mismatch");
         }
         if (!is_unreachable(edge_res)) {
-            // (TODO: jguo) old way -> broke existing validation tests
-            // result.push_back({graph[e].regulated_idx, edge_res});
             result.push_back({graph[e].regulated_idx, edge_tgt_rank});
         }
     }
@@ -349,7 +358,7 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
             previous_weight = trafo.weight;
         }
         auto& current_group = groups.back(); // avoid duplicates
-        if (std::find(current_group.begin(), current_group.end(), trafo.regulated_idx) == current_group.end()) {
+        if (std::ranges::find(current_group, trafo.regulated_idx) == current_group.end()) {
             current_group.push_back(trafo.regulated_idx);
         }
     }

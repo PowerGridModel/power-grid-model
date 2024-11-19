@@ -97,6 +97,10 @@ class AutomaticTapCalculationError(PowerGridError):
     """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation."""
 
 
+class AutomaticTapInputError(PowerGridError):
+    """Automatic tap changer has invalid configuration that does not meet the transformer ranking criteria."""
+
+
 class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided."""
 

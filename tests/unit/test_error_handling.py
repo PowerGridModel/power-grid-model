@@ -287,43 +287,44 @@ def test_handle_invalid_calculation_method_error():
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
 
-def test_transformer_tap_regulator_at_lv_tap_side():
-    node_input = initialize_array("input", "node", 2)
-    node_input["id"] = [0, 1]
-    node_input["u_rated"] = [1e4, 4e2]
+# (TODO: jguo) Needs confirmation whether this test should be removed like in C++ version
+# def test_transformer_tap_regulator_at_lv_tap_side():
+#     node_input = initialize_array("input", "node", 2)
+#     node_input["id"] = [0, 1]
+#     node_input["u_rated"] = [1e4, 4e2]
 
-    source_input = initialize_array("input", "source", 1)
-    source_input["id"] = [2]
-    source_input["node"] = [0]
-    source_input["status"] = [1]
-    source_input["u_ref"] = [10.0e3]
+#     source_input = initialize_array("input", "source", 1)
+#     source_input["id"] = [2]
+#     source_input["node"] = [0]
+#     source_input["status"] = [1]
+#     source_input["u_ref"] = [10.0e3]
 
-    transformer_input = initialize_array("input", "transformer", 1)
-    transformer_input["id"] = [3]
-    transformer_input["from_node"] = [0]
-    transformer_input["to_node"] = [1]
-    transformer_input["from_status"] = [1]
-    transformer_input["to_status"] = [1]
-    transformer_input["winding_from"] = [2]
-    transformer_input["winding_to"] = [1]
-    transformer_input["clock"] = [5]
-    transformer_input["tap_side"] = [1]
+#     transformer_input = initialize_array("input", "transformer", 1)
+#     transformer_input["id"] = [3]
+#     transformer_input["from_node"] = [0]
+#     transformer_input["to_node"] = [1]
+#     transformer_input["from_status"] = [1]
+#     transformer_input["to_status"] = [1]
+#     transformer_input["winding_from"] = [2]
+#     transformer_input["winding_to"] = [1]
+#     transformer_input["clock"] = [5]
+#     transformer_input["tap_side"] = [1]
 
-    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
-    transformer_tap_regulator_input["id"] = [4]
-    transformer_tap_regulator_input["regulated_object"] = [3]
-    transformer_tap_regulator_input["status"] = [1]
-    transformer_tap_regulator_input["control_side"] = [0]
+#     transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
+#     transformer_tap_regulator_input["id"] = [4]
+#     transformer_tap_regulator_input["regulated_object"] = [3]
+#     transformer_tap_regulator_input["status"] = [1]
+#     transformer_tap_regulator_input["control_side"] = [0]
 
-    with pytest.raises(AutomaticTapCalculationError):
-        PowerGridModel(
-            input_data={
-                "node": node_input,
-                "transformer": transformer_input,
-                "source": source_input,
-                "transformer_tap_regulator": transformer_tap_regulator_input,
-            }
-        )
+#     with pytest.raises(AutomaticTapCalculationError):
+#         PowerGridModel(
+#             input_data={
+#                 "node": node_input,
+#                 "transformer": transformer_input,
+#                 "source": source_input,
+#                 "transformer_tap_regulator": transformer_tap_regulator_input,
+#             }
+#         )
 
 
 def test_automatic_tap_changing():

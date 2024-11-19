@@ -258,22 +258,6 @@ TEST_CASE("Test Transformer ranking") {
             CHECK(actual_edges_prop == expected_edges_prop);
         }
 
-        // (TODO: jguo) old way, to be removed
-        SUBCASE("Automatic tap unsupported tap side at LV") {
-            TestState bad_state;
-            std::vector<NodeInput> bad_nodes{{0, 50e3}, {1, 10e3}};
-            main_core::add_component<Node>(bad_state, bad_nodes.begin(), bad_nodes.end(), 50.0);
-
-            std::vector<TransformerInput> bad_trafo{get_transformer(2, 0, 1, BranchSide::to)};
-            main_core::add_component<Transformer>(bad_state, bad_trafo.begin(), bad_trafo.end(), 50.0);
-
-            std::vector<TransformerTapRegulatorInput> bad_regulators{get_regulator(3, 2, ControlSide::from)};
-
-            CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(),
-                                                                              bad_regulators.end(), 50.0),
-                            AutomaticTapCalculationError);
-        }
-
         SUBCASE("Process edge weights") {
             using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
@@ -341,6 +325,7 @@ TEST_CASE("Test Transformer ranking") {
 
         SUBCASE("Ranking complete the graph") {
             // (TODO: jguo) existing demo grid is not compatible with the updated ranking
+            // The test grid needs to be updated here to match the new ranking logic
             // pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
             // pgm_tap::RankedTransformerGroups const ref_order{
             //     {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}}};
