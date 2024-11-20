@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "core_utils.hpp"
 #include "state.hpp"
-#include "utils.hpp"
 
 #include "../all_components.hpp"
 #include "../common/iterator_like_concepts.hpp"
@@ -100,7 +100,8 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, Upd
     // check the ids
     auto const first_span = all_spans[0];
     // check the subsequent scenarios
-    // only return true if all scenarios match the ids of the first batch
+    // only return true if ids of all scenarios match the ids of the first batch
+
     properties.update_ids_match =
         std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
             return std::ranges::equal(current_span, first_span,
@@ -198,9 +199,9 @@ inline void get_component_sequence_impl(MainModelState<ComponentContainer> const
 template <component_c Component, class ComponentContainer,
           forward_iterator_like<typename Component::UpdateType> ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline std::vector<Idx2D> get_component_sequence_by_it(MainModelState<ComponentContainer> const& state,
-                                                       ForwardIterator begin, ForwardIterator end,
-                                                       Idx n_comp_elements = na_Idx) {
+inline std::vector<Idx2D> get_component_sequence_by_iter(MainModelState<ComponentContainer> const& state,
+                                                         ForwardIterator begin, ForwardIterator end,
+                                                         Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::distance(begin, end));
     get_component_sequence_impl<Component>(state, begin, end, std::back_inserter(result), n_comp_elements);
@@ -213,7 +214,7 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
                                           ConstDataset const& update_data, Idx scenario_idx,
                                           independence::UpdateCompProperties const& comp_independence = {}) {
     auto const get_sequence = [&state, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
-        return get_component_sequence_by_it<CompType>(state, std::begin(span), std::end(span), n_comp_elements);
+        return get_component_sequence_by_iter<CompType>(state, std::begin(span), std::end(span), n_comp_elements);
     };
     if (update_data.is_columnar(CompType::name)) {
         auto const buffer_span =
@@ -246,6 +247,8 @@ SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<Component
 template <class... ComponentTypes, class ComponentContainer>
 SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state,
                                                         ConstDataset const& update_data) {
+    // Independence for all components is set to true as permanent updates involve only one scenario.
+    // Flags for all components (not only the ones present in update_data) are set to avoid more expensive checks.
     constexpr ComponentFlags<ComponentTypes...> all_true = [] {
         ComponentFlags<ComponentTypes...> result{};
         std::ranges::fill(result, true);
@@ -291,7 +294,7 @@ template <component_c Component, class ComponentContainer,
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
                                      ForwardIterator end, OutputIterator changed_it) {
     return update_component<Component>(state, begin, end, changed_it,
-                                       detail::get_component_sequence_by_it<Component>(state, begin, end));
+                                       detail::get_component_sequence_by_iter<Component>(state, begin, end));
 }
 
 // template to get the inverse update for components
@@ -320,7 +323,7 @@ template <component_c Component, class ComponentContainer,
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
                            OutputIterator destination) {
     return update_inverse<Component>(state, begin, end, destination,
-                                     detail::get_component_sequence_by_it<Component>(state, begin, end));
+                                     detail::get_component_sequence_by_iter<Component>(state, begin, end));
 }
 
 } // namespace power_grid_model::main_core::update

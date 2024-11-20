@@ -31,12 +31,12 @@
 
 // main model implementation
 #include "main_core/calculation_info.hpp"
+#include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
 #include "main_core/math_state.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
-#include "main_core/utils.hpp"
 
 // stl library
 #include <memory>
@@ -139,7 +139,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
 
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
-    using ComponentCountInBase = std::pair<std::string, Idx>;
 
     static constexpr Idx ignore_output{-1};
     static constexpr Idx isolated_component{-1};
@@ -167,9 +166,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return state_.components.template size<CompType>();
     }
 
+    // TODO: possibly remove, as well as from main_model.hpp
     // all component count
     std::map<std::string, Idx, std::less<>> all_component_count() const {
-        auto const get_comp_count = [this]<typename CT>() -> ComponentCountInBase {
+        auto const get_comp_count = [this]<typename CT>() {
             return make_pair(std::string{CT::name}, this->component_count<CT>());
         };
         auto const all_count =
@@ -255,7 +255,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // update all components of a single type across all scenarios
+    // ovearloads to update all components of a single type across all scenarios
     template <class CompType, cache_type_c CacheType>
     void update_component(std::vector<typename CompType::UpdateType> const& components,
                           std::span<Idx2D const> sequence_idx) {
@@ -278,7 +278,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // helper for row or columnar-based components
+    // entry point overload to update one row or column based component type
     template <class CompType, cache_type_c CacheType>
     void update_component_row_col(ConstDataset const& update_data, Idx pos, std::span<Idx2D const> sequence_idx) {
         assert(construction_complete_);
@@ -293,7 +293,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    // update all components across all scenarios
+    // overload to update all components across all scenarios
     template <cache_type_c CacheType, typename SequenceIdxMap>
         requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
     void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
@@ -303,7 +303,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                                               std::get<index_of_component<CT>>(sequence_idx_map));
             });
     }
-    // update all components in the first scenario (e.g. permanent update)
+    // overload to update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const sequence_idx_map =
             main_core::update::get_all_sequence_idx_map<ComponentType...>(state_, update_data);
