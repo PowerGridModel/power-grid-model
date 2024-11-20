@@ -166,7 +166,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return state_.components.template size<CompType>();
     }
 
-    // TODO: possibly remove, as well as from main_model.hpp
     // all component count
     std::map<std::string, Idx, std::less<>> all_component_count() const {
         auto const get_comp_count = [this]<typename CT>() {
