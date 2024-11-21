@@ -25,7 +25,7 @@
 #include <optional>
 #include <queue>
 #include <ranges>
-#include <utility>
+// #include <utility>
 #include <variant>
 #include <vector>
 
@@ -51,9 +51,6 @@ struct TrafoGraphEdge {
     Idx2D regulated_idx{};
     EdgeWeight weight{};
 
-    TapSide tap_side{};
-    ControlSide control_side{};
-
     bool operator==(const TrafoGraphEdge& other) const {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
@@ -69,7 +66,7 @@ struct TrafoGraphEdge {
     }
 };
 
-constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0, TapSide::from, ControlSide::from};
+constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0};
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
@@ -148,8 +145,7 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
             auto const edge_to_node = tap_at_control ? tap_side_node : non_tap_side_node;
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
-            auto const edge_value =
-                TrafoGraphEdge{trafo3w_idx, 1, branch_3_side_to_tap_side(transformer3w.tap_side()), control_side};
+            auto const edge_value = TrafoGraphEdge{trafo3w_idx, 1};
             add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
@@ -190,8 +186,7 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
             auto const non_control_side_node = control_side == ControlSide::from ? to_node : from_node;
             auto const trafo_idx = main_core::get_component_idx_by_id(state, transformer.id());
 
-            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node,
-                        {trafo_idx, 1, branch_side_to_tap_side(transformer.tap_side()), control_side});
+            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node, {trafo_idx, 1});
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
             add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
@@ -334,7 +329,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // edges are always pointing parallel to the control side: meaning that for delta configuration ABC, the above
         // situations can happen.
         if (edge_src_rank != edge_tgt_rank - 1) {
-            throw AutomaticTapInputError("Transformer is unrechable: control side rank mismatch");
+            throw AutomaticTapInputError(
+                "Control side of a transformer should be the relatively closer side to a source.\n");
         }
         if (!is_unreachable(edge_res)) {
             result.push_back({graph[e].regulated_idx, edge_tgt_rank});
@@ -359,7 +355,7 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
         }
         auto& current_group = groups.back(); // avoid duplicates
         if (std::ranges::find(current_group, trafo.regulated_idx) == current_group.end()) {
-            current_group.push_back(trafo.regulated_idx);
+            current_group.emplace_back(trafo.regulated_idx);
         }
     }
     return groups;

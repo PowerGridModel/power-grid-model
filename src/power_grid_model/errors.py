@@ -98,7 +98,7 @@ class AutomaticTapCalculationError(PowerGridError):
 
 
 class AutomaticTapInputError(PowerGridError):
-    """Automatic tap changer has invalid configuration that does not meet the transformer ranking criteria."""
+    """Automatic tap changer has invalid configuration."""
 
 
 class InvalidShortCircuitPhaseOrType(PowerGridError):

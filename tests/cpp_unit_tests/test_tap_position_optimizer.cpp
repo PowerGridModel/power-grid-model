@@ -301,10 +301,7 @@ TEST_CASE("Test Transformer ranking") {
 
             // Grid with multiple sources and symetric graph
             pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1, TapSide::from, ControlSide::to},
-                                                              {{1, 2}, 1, TapSide::from, ControlSide::to},
-                                                              {{2, 3}, 1, TapSide::from, ControlSide::to},
-                                                              {{3, 4}, 1, TapSide::from, ControlSide::to}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
