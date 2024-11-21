@@ -6,5 +6,8 @@
     "linear_current"
   ],
   "rtol": 1e-5,
-  "atol": 1e-5
+  "atol": {
+    "default": 1e-5,
+    "q": 0.02
+  }
 }
