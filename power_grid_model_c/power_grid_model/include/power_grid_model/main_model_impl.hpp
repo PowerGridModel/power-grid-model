@@ -166,23 +166,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return state_.components.template size<CompType>();
     }
 
-    // all component count
-    std::map<std::string, Idx, std::less<>> all_component_count() const {
-        auto const get_comp_count = [this]<typename CT>() {
-            return make_pair(std::string{CT::name}, this->component_count<CT>());
-        };
-        auto const all_count =
-            main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(get_comp_count);
-        std::map<std::string, Idx, std::less<>> result;
-        for (auto const& [name, count] : all_count) {
-            if (count > 0) {
-                // only add if count is greater than 0
-                result[name] = count;
-            }
-        }
-        return result;
-    }
-
     // helper function to get the number of components per type
     std::array<Idx, n_types> get_n_components_per_type() const {
         std::array<Idx, n_types> result{};

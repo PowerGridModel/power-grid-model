@@ -1208,10 +1208,6 @@ TEST_CASE("Test main model - runtime dispatch") {
                                     state.asym_node.data());
 
         MainModel model{50.0, input_data};
-        auto const count = model.all_component_count();
-        CHECK(count.at("node") == 3);
-        CHECK(count.at("source") == 2);
-        CHECK(count.find("sym_gen") == count.cend());
 
         // calculation
         model.calculate(get_default_options(symmetric, newton_raphson), sym_result_data);

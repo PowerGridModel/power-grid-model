@@ -247,14 +247,14 @@ SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<Component
 template <class... ComponentTypes, class ComponentContainer>
 SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state,
                                                         ConstDataset const& update_data) {
-    // Independence for all components is set to true as permanent updates involve only one scenario.
-    // Flags for all components (not only the ones present in update_data) are set to avoid more expensive checks.
-    constexpr ComponentFlags<ComponentTypes...> all_true = [] {
-        ComponentFlags<ComponentTypes...> result{};
-        std::ranges::fill(result, true);
-        return result;
-    }();
-    return get_all_sequence_idx_map<ComponentTypes...>(state, update_data, 0, all_true);
+    ComponentFlags<ComponentTypes...> components_to_store{};
+    Idx comp_idx{};
+    utils::run_functor_with_all_types_return_void<ComponentTypes...>(
+        [&update_data, &components_to_store, &comp_idx]<typename CompType>() {
+            components_to_store[comp_idx] = (update_data.find_component(CompType::name, false) != invalid_index);
+            ++comp_idx;
+        });
+    return get_all_sequence_idx_map<ComponentTypes...>(state, update_data, 0, components_to_store);
 }
 
 // template to update components
