@@ -149,15 +149,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using MainModelState = main_core::MainModelState<ComponentContainer>;
     using MathState = main_core::MathState;
 
-    // main core utils
-    static constexpr auto n_types = main_core::utils::n_types<ComponentType...>;
-    template <class CompType>
-    static constexpr auto index_of_component = main_core::utils::index_of_component<CompType, ComponentType...>;
-    using SequenceIdx = main_core::utils::SequenceIdx<ComponentType...>;
-    using ComponentFlags = main_core::utils::ComponentFlags<ComponentType...>;
-
-    using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
-
+    using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
     static constexpr Idx ignore_output{-1};
@@ -187,8 +179,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // helper function to get the number of components per type
-    std::array<Idx, n_types> get_n_components_per_type() const {
-        std::array<Idx, n_types> result{};
+    std::array<Idx, main_core::utils::n_types<ComponentType...>> get_n_components_per_type() const {
+        std::array<Idx, main_core::utils::n_types<ComponentType...>> result{};
         size_t idx{};
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(
             [&result, this, &idx]<typename CompType>() {
@@ -237,7 +229,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class CompType, cache_type_c CacheType,
               forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
-        constexpr auto comp_index = index_of_component<CompType>;
+        constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         assert(construction_complete_);
         assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
@@ -297,12 +289,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // overload to update all components across all scenarios
     template <cache_type_c CacheType, typename SequenceIdxMap>
-        requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
+        requires(std::same_as<SequenceIdxMap, main_core::utils::SequenceIdx<ComponentType...>> ||
+                 std::same_as<SequenceIdxMap, SequenceIdxView>)
     void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(
             [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
-                this->update_component_row_col<CT, CacheType>(update_data, pos,
-                                                              std::get<index_of_component<CT>>(sequence_idx_map));
+                this->update_component_row_col<CT, CacheType>(
+                    update_data, pos,
+                    std::get<main_core::utils::index_of_component<CT, ComponentType...>>(sequence_idx_map));
             });
     }
     // overload to update all components in the first scenario (e.g. permanent update)
@@ -313,7 +307,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
-        constexpr auto component_index = index_of_component<CompType>;
+        constexpr auto component_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
         auto const& component_sequence = std::get<component_index>(sequence_idx);
@@ -331,13 +325,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
     }
-    void restore_components(std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types> const& sequence_idx) {
-        restore_components(
-            std::array{std::span<Idx2D const>{std::get<index_of_component<ComponentType>>(sequence_idx).get()}...});
+    void restore_components(std::array<std::reference_wrapper<std::vector<Idx2D> const>,
+                                       main_core::utils::n_types<ComponentType...>> const& sequence_idx) {
+        restore_components(std::array{std::span<Idx2D const>{
+            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx).get()}...});
     }
-    void restore_components(SequenceIdx const& sequence_idx) {
-        restore_components(
-            std::array{std::span<Idx2D const>{std::get<index_of_component<ComponentType>>(sequence_idx)}...});
+    void restore_components(main_core::utils::SequenceIdx<ComponentType...> const& sequence_idx) {
+        restore_components(std::array{std::span<Idx2D const>{
+            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx)}...});
     }
 
     // set complete construction
@@ -393,7 +388,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Entry point for main_model.hpp
-    template <class... ComponentTypes> SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
+    template <class... ComponentTypes>
+    main_core::utils::SequenceIdx<ComponentType...> get_all_sequence_idx_map(ConstDataset const& update_data) {
         return main_core::update::get_all_sequence_idx_map<ComponentType...>(state_, update_data);
     }
 
@@ -534,7 +530,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::vector<CalculationInfo> infos(n_scenarios);
 
         // lambda for sub batch calculation
-        SequenceIdx all_scenarios_sequence;
+        main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence;
         auto sub_batch =
             sub_batch_calculation_(calculation_fn, result_data, update_data, all_scenarios_sequence, exceptions, infos);
 
@@ -549,7 +545,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                ConstDataset const& update_data, SequenceIdx& all_scenarios_sequence,
+                                ConstDataset const& update_data,
+                                main_core::utils::SequenceIdx<ComponentType...>& all_scenarios_sequence,
                                 std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
         // const ref of current instance
         MainModelImpl const& base_model = *this;
@@ -576,7 +573,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             };
             auto model = copy_model_functor(start);
 
-            SequenceIdx current_scenario_sequence_cache = SequenceIdx{};
+            auto current_scenario_sequence_cache = main_core::utils::SequenceIdx<ComponentType...>{};
             auto [setup, winddown] = scenario_update_restore(model, update_data, is_independent, all_scenarios_sequence,
                                                              current_scenario_sequence_cache, infos);
 
@@ -650,13 +647,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
     }
 
-    static auto scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
-                                        ComponentFlags const& independence_flags,
-                                        SequenceIdx const& all_scenario_sequence,
-                                        SequenceIdx& current_scenario_sequence_cache,
-                                        std::vector<CalculationInfo>& infos) noexcept {
+    static auto
+    scenario_update_restore(MainModelImpl& model, ConstDataset const& update_data,
+                            main_core::utils::ComponentFlags<ComponentType...> const& independence_flags,
+                            main_core::utils::SequenceIdx<ComponentType...> const& all_scenario_sequence,
+                            main_core::utils::SequenceIdx<ComponentType...>& current_scenario_sequence_cache,
+                            std::vector<CalculationInfo>& infos) noexcept {
         auto do_update_cache = [&independence_flags] {
-            ComponentFlags result;
+            main_core::utils::ComponentFlags<ComponentType...> result;
             std::ranges::transform(independence_flags, result.begin(), std::logical_not<>{});
             return result;
         }();
@@ -665,7 +663,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                         &independence_flags]() -> SequenceIdxView {
             return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
                 [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags]<typename CT>() {
-                    constexpr auto comp_idx = index_of_component<CT>;
+                    constexpr auto comp_idx = main_core::utils::index_of_component<CT, ComponentType...>;
                     if (std::get<comp_idx>(independence_flags)) {
                         return std::span<Idx2D const>{std::get<comp_idx>(all_scenario_sequence)};
                     }
@@ -845,7 +843,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
-    std::array<std::vector<Idx2D>, n_types> parameter_changed_components_{};
+    std::array<std::vector<Idx2D>, main_core::utils::n_types<ComponentType...>> parameter_changed_components_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
@@ -970,7 +968,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym> std::vector<MathModelParamIncrement> get_math_param_increment() {
         using AddToIncrement = void (*)(std::vector<MathModelParamIncrement>&, MainModelState const&, Idx2D const&);
 
-        static constexpr std::array<AddToIncrement, n_types> add_to_increments{
+        static constexpr std::array<AddToIncrement, main_core::utils::n_types<ComponentType...>> add_to_increments{
             [](std::vector<MathModelParamIncrement>& increments, MainModelState const& state,
                Idx2D const& changed_component_idx) {
                 if constexpr (std::derived_from<ComponentType, Branch>) {
@@ -1009,7 +1007,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
 
-        for (size_t i = 0; i < n_types; ++i) {
+        for (size_t i = 0; i < main_core::utils::n_types<ComponentType...>; ++i) {
             auto const& changed_type_components = parameter_changed_components_[i];
             auto const& add_type_to_increment = add_to_increments[i];
             for (auto const& changed_component : changed_type_components) {
@@ -1267,8 +1265,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             // Check the branch and shunt indices
             constexpr auto branch_param_in_seq_map =
-                std::array{index_of_component<Line>, index_of_component<Link>, index_of_component<Transformer>};
-            constexpr auto shunt_param_in_seq_map = std::array{index_of_component<Shunt>};
+                std::array{main_core::utils::index_of_component<Line, ComponentType...>,
+                           main_core::utils::index_of_component<Link, ComponentType...>,
+                           main_core::utils::index_of_component<Transformer, ComponentType...>};
+            constexpr auto shunt_param_in_seq_map =
+                std::array{main_core::utils::index_of_component<Shunt, ComponentType...>};
 
             for (Idx i = 0; i != n_math_solvers_; ++i) {
                 // construct from existing Y_bus structure if possible

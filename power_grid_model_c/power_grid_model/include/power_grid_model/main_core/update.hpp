@@ -246,8 +246,6 @@ get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstD
     Idx comp_idx{};
     utils::run_functor_with_all_types_return_void<ComponentTypes...>(
         [&update_data, &components_to_store, &comp_idx]<typename CompType>() {
-            // In a permanent update, all components that are present are independent (because only one scenario is
-            // considered) hence all present components are labeled are marked true (independent), the rest are false.
             components_to_store[comp_idx] = (update_data.find_component(CompType::name, false) != invalid_index);
             ++comp_idx;
         });
