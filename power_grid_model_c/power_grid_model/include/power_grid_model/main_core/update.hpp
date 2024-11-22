@@ -17,12 +17,6 @@ namespace power_grid_model::main_core::update {
 
 constexpr Idx invalid_index{-1};
 
-// main core utils
-template <class CompType, class... ComponentTypes>
-constexpr auto index_of_component = main_core::utils::index_of_component<CompType, ComponentTypes...>;
-template <class... ComponentTypes> using SequenceIdx = main_core::utils::SequenceIdx<ComponentTypes...>;
-template <class... ComponentTypes> using ComponentFlags = main_core::utils::ComponentFlags<ComponentTypes...>;
-
 namespace detail {
 template <component_c Component, forward_iterator_like<typename Component::UpdateType> ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
@@ -98,7 +92,7 @@ template <typename CompType> void process_buffer_span(auto const& all_spans, Upd
     }
     // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
     // check the ids
-    auto const first_span = all_spans[0];
+    auto const first_span = all_spans.front();
     // check the subsequent scenarios
     // only return true if ids of all scenarios match the ids of the first batch
 
@@ -157,9 +151,9 @@ inline void validate_update_data_independence(UpdateCompProperties const& comp) 
 }
 
 template <class... ComponentTypes>
-ComponentFlags<ComponentTypes...> is_update_independent(ConstDataset const& update_data,
-                                                        std::span<Idx const> relevant_component_count) {
-    ComponentFlags<ComponentTypes...> result{};
+main_core::utils::ComponentFlags<ComponentTypes...>
+is_update_independent(ConstDataset const& update_data, std::span<Idx const> relevant_component_count) {
+    main_core::utils::ComponentFlags<ComponentTypes...> result{};
     size_t comp_idx{};
     utils::run_functor_with_all_types_return_void<ComponentTypes...>(
         [&result, &relevant_component_count, &update_data, &comp_idx]<typename CompType>() {
@@ -227,12 +221,13 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
 } // namespace detail
 
 template <class... ComponentTypes, class ComponentContainer>
-SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state,
-                                                        ConstDataset const& update_data, Idx scenario_idx,
-                                                        ComponentFlags<ComponentTypes...> const& components_to_store) {
+main_core::utils::SequenceIdx<ComponentTypes...>
+get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data,
+                         Idx scenario_idx,
+                         main_core::utils::ComponentFlags<ComponentTypes...> const& components_to_store) {
     return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
         [&update_data, &components_to_store, &state, scenario_idx]<typename CompType>() {
-            if (!std::get<index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
+            if (!std::get<main_core::utils::index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
             auto const n_components = state.components.template size<CompType>();
@@ -245,12 +240,14 @@ SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<Component
 // The sequence idx map of the batch is the same as that of the first scenario in the batch (assuming homogeneity)
 // This is the entry point for permanent updates.
 template <class... ComponentTypes, class ComponentContainer>
-SequenceIdx<ComponentTypes...> get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state,
-                                                        ConstDataset const& update_data) {
-    ComponentFlags<ComponentTypes...> components_to_store{};
+main_core::utils::SequenceIdx<ComponentTypes...>
+get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data) {
+    main_core::utils::ComponentFlags<ComponentTypes...> components_to_store{};
     Idx comp_idx{};
     utils::run_functor_with_all_types_return_void<ComponentTypes...>(
         [&update_data, &components_to_store, &comp_idx]<typename CompType>() {
+            // In a permanent update, all components that are present are independent (because only one scenario is
+            // considered) hence all present components are labeled are marked true (independent), the rest are false.
             components_to_store[comp_idx] = (update_data.find_component(CompType::name, false) != invalid_index);
             ++comp_idx;
         });
