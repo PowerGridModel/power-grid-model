@@ -289,6 +289,16 @@ def test_handle_invalid_calculation_method_error():
 
 
 def test_transformer_tap_regulator_control_side_not_closer_to_source():
+    # =====Test Grid=====
+    # ________[0]________
+    # ||           |    |
+    # [1]         [4]--[5]
+    #  |           |    |
+    # [2]          |   [7]
+    #  |          [6]   |
+    # [3]----------|   [8]
+    #  |                |
+    #  L---------------[9]
     node_input = initialize_array("input", "node", 10)
     node_input["id"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     node_input["u_rated"] = [150e3, 10e3, 10e3, 10e3, 10e3, 50e3, 10e3, 10e3, 10e3, 10e3]
