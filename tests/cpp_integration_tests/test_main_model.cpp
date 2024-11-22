@@ -921,41 +921,6 @@ TEST_CASE("Test main model - incomplete input") {
 
     MainModel const ref_model{main_model};
 
-    SUBCASE("Symmetrical - Complete") { // TODO(mgovers): validation case with different values in
-                                        // power_flow/dummy-test-batch-incomplete-input
-        MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-        MutableDataset ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-
-        std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
-        std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size());
-        test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr, test_sym_node.data());
-        ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr, ref_sym_node.data());
-
-        SUBCASE("Test linear calculation") {
-            test_model.calculate(get_default_options(symmetric, linear), test_result_data, update_data);
-            main_model.calculate(get_default_options(symmetric, linear), ref_result_data, update_data);
-        }
-
-        SUBCASE("Test linear current calculation") {
-            test_model.calculate(get_default_options(symmetric, linear_current), test_result_data, update_data);
-            main_model.calculate(get_default_options(symmetric, linear_current), ref_result_data, update_data);
-        }
-
-        SUBCASE("Test iterative current calculation") {
-            test_model.calculate(get_default_options(symmetric, iterative_current), test_result_data, update_data);
-            main_model.calculate(get_default_options(symmetric, iterative_current), ref_result_data, update_data);
-        }
-
-        SUBCASE("Test iterative Newton-Raphson calculation") {
-            test_model.calculate(get_default_options(symmetric, newton_raphson), test_result_data, update_data);
-            main_model.calculate(get_default_options(symmetric, newton_raphson), ref_result_data, update_data);
-        }
-
-        CHECK(test_sym_node[0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
-        CHECK(test_sym_node[1].u_pu == doctest::Approx(ref_sym_node[1].u_pu));
-        CHECK(test_sym_node[2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
-    }
-
     SUBCASE("Asymmetrical - Complete") { // TODO(mgovers): no validation case for asym exists
         MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
         MutableDataset ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
