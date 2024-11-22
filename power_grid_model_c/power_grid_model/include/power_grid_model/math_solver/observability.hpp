@@ -45,17 +45,17 @@ Idx count_bus_injection_sensors(const Idx n_bus, const MeasuredValues<sym>& meas
 
 template <symmetry_tag sym>
 std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
-    Idx n_voltage_magnitude{};
-    Idx n_voltage_phasor{};
+    Idx n_voltage_sensor{};
+    Idx n_voltage_phasor_sensor{};
     for (Idx bus = 0; bus != n_bus; ++bus) {
         if (measured_values.has_voltage(bus)) {
-            n_voltage_magnitude++;
+            n_voltage_sensor++;
             if (measured_values.has_angle_measurement(bus)) {
-                n_voltage_phasor++;
+                n_voltage_phasor_sensor++;
             }
         }
     }
-    return std::make_tuple(n_voltage_magnitude, n_voltage_phasor);
+    return std::make_tuple(n_voltage_sensor, n_voltage_phasor_sensor);
 }
 
 } // namespace detail
@@ -66,17 +66,19 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
     Idx const n_bus{topo->n_bus()};
     std::vector<BranchIdx> const& branch_bus_idx{topo->branch_bus_idx};
 
-    auto const [n_voltage_magnitude, n_voltage_phasor] = detail::count_voltage_sensors(n_bus, measured_values);
-    if (n_voltage_magnitude + n_voltage_phasor < 1) {
+    auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
+    if (n_voltage_sensor < 1) {
         throw NotObservableError{};
     }
+
     Idx const n_injection_sensor = detail::count_bus_injection_sensors(n_bus, measured_values);
     Idx const n_branch_sensor = detail::count_branch_sensors(branch_bus_idx, n_bus, measured_values);
+    Idx const n_power_sensor = n_injection_sensor + n_branch_sensor;
 
-    if (n_voltage_phasor == 0 && n_branch_sensor + n_injection_sensor < n_bus - 1) {
+    if (n_voltage_phasor_sensor == 0 && n_power_sensor < n_bus - 1) {
         throw NotObservableError{};
     }
-    if (n_voltage_phasor > 0 && n_branch_sensor + n_injection_sensor + n_voltage_phasor < n_bus) {
+    if (n_voltage_phasor_sensor > 0 && n_power_sensor + n_voltage_phasor_sensor < n_bus) {
         throw NotObservableError{};
     }
 }
