@@ -120,9 +120,6 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
     constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
         {{side_1, side_2}, {side_1, side_3}, {side_2, side_3}}};
 
-    auto const tap_at_control_side = [&control_side](Branch3Side const& tap_side) {
-        return static_cast<IntS>(control_side) == static_cast<IntS>(tap_side);
-    };
     for (auto const& [first_side, second_side] : branch3_combinations) {
         if (!transformer3w.status(first_side) || !transformer3w.status(second_side)) {
             continue;
@@ -134,7 +131,7 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
         auto const connected_to_primary_side_regulated =
             trafo3w_is_regulated && (tap_at_first_side || (transformer3w.tap_side() == second_side));
 
-        auto const tap_at_control = tap_at_control_side(transformer3w.tap_side());
+        auto const tap_at_control = static_cast<IntS>(control_side) == static_cast<IntS>(transformer3w.tap_side());
 
         // only add weighted edge if the trafo3w meets the condition
         if (connected_to_primary_side_regulated) {

@@ -233,13 +233,6 @@ TEST_CASE("Test Transformer ranking") {
             using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
             // reference graph creation
-            // Inserted in order of transformer, transformer3w, line and link
-            std::vector<std::pair<Idx, Idx>> expected_edges;
-            expected_edges.insert(expected_edges.end(), {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9}});
-            expected_edges.insert(expected_edges.end(), {{0, 4}, {4, 5}, {5, 4}, {0, 5}});
-            expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
-            expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
-
             pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
             expected_edges_prop.insert(expected_edges_prop.end(),
                                        {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
