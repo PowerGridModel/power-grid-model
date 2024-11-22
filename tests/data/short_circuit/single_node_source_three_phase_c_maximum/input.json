@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node":
+      [
+        {"id": 1, "u_rated": 10000.0}
+      ],
+    "source":
+      [
+        {"id": 2, "node": 1, "status": 1, "u_ref": 1.0, "sk": 1e8, "rx_ratio": 0.1}
+      ],
+    "fault":
+      [
+        {"id": 3, "status": 1, "fault_type": 0, "fault_phase": -1, "fault_object": 1, "r_f": 0.1, "x_f": 0.1}
+      ]
+  }
+}
