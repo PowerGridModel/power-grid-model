@@ -69,9 +69,32 @@ constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0};
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
+struct RegulatedTrafoProperties {
+    Idx id{};
+    ControlSide control_side{};
+
+    auto operator<=>(RegulatedTrafoProperties const& other) const = default; // NOLINT(modernize-use-nullptr)
+};
+
+using RegulatedTrafos = std::set<RegulatedTrafoProperties>;
+
+inline std::pair<bool, ControlSide> regulated_trafos_contain(RegulatedTrafos const& trafos_set, Idx const& id) {
+    if (auto it =
+            std::ranges::find_if(trafos_set, [&](RegulatedTrafoProperties const& trafo) { return trafo.id == id; });
+        it != trafos_set.end()) {
+        return {true, it->control_side};
+    }
+    return {false, ControlSide{}}; // no default invalid control side, won't be used by logic
+}
+
 struct RegulatedObjects {
-    std::set<Idx> transformers{};
-    std::set<Idx> transformers3w{};
+    RegulatedTrafos trafos{};
+    RegulatedTrafos trafos3w{};
+
+    std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return regulated_trafos_contain(trafos, id); }
+    std::pair<bool, ControlSide> contains_trafo3w(Idx const& id) const {
+        return regulated_trafos_contain(trafos3w, id);
+    }
 };
 
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
@@ -90,12 +113,12 @@ inline void add_to_edge(main_core::MainModelState<ComponentContainer> const& sta
 
 inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state,
                                  ThreeWindingTransformer const& transformer3w, bool const& trafo3w_is_regulated,
-                                 Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
+                                 ControlSide const& control_side, Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
                                  TrafoGraphEdgeProperties& edge_props) {
     using enum Branch3Side;
 
     constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
-        {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
+        {{side_1, side_2}, {side_1, side_3}, {side_2, side_3}}};
 
     for (auto const& [first_side, second_side] : branch3_combinations) {
         if (!transformer3w.status(first_side) || !transformer3w.status(second_side)) {
@@ -105,17 +128,21 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
         auto const& to_node = transformer3w.node(second_side);
 
         auto const tap_at_first_side = transformer3w.tap_side() == first_side;
-        auto const single_direction_condition =
-            trafo3w_is_regulated && (tap_at_first_side || transformer3w.tap_side() == second_side);
-        // ranking
-        if (single_direction_condition) {
+        auto const connected_to_primary_side_regulated =
+            trafo3w_is_regulated && (tap_at_first_side || (transformer3w.tap_side() == second_side));
+
+        auto const tap_at_control = static_cast<IntS>(control_side) == static_cast<IntS>(transformer3w.tap_side());
+
+        // only add weighted edge if the trafo3w meets the condition
+        if (connected_to_primary_side_regulated) {
             auto const& tap_side_node = tap_at_first_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
+            auto const edge_from_node = tap_at_control ? non_tap_side_node : tap_side_node;
+            auto const edge_to_node = tap_at_control ? tap_side_node : non_tap_side_node;
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
-            auto const edge_value =
-                (from_node == tap_side_node) ? unregulated_edge_prop : TrafoGraphEdge{trafo3w_idx, 1};
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, edge_value);
+            auto const edge_value = TrafoGraphEdge{trafo3w_idx, 1};
+            add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
             add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
@@ -130,9 +157,10 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
                         TrafoGraphEdgeProperties& edge_props) {
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
-        bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
+        auto const trafo3w_is_regulated = regulated_objects.contains_trafo3w(transformer3w.id());
         Idx2D const trafo3w_idx = main_core::get_component_idx_by_id(state, transformer3w.id());
-        process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated, trafo3w_idx, edges, edge_props);
+        process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated.first, trafo3w_is_regulated.second, trafo3w_idx,
+                             edges, edge_props);
     }
 }
 
@@ -147,12 +175,14 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        if (regulated_objects.transformers.contains(transformer.id())) {
-            auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
-            auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
-            auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
-                        {main_core::get_component_idx_by_id(state, transformer.id()), 1});
+        auto const trafo_regulated = regulated_objects.contains_trafo(transformer.id());
+        if (trafo_regulated.first) {
+            auto const control_side = trafo_regulated.second;
+            auto const control_side_node = control_side == ControlSide::from ? from_node : to_node;
+            auto const non_control_side_node = control_side == ControlSide::from ? to_node : from_node;
+            auto const trafo_idx = main_core::get_component_idx_by_id(state, transformer.id());
+
+            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node, {trafo_idx, 1});
         } else {
             add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
             add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
@@ -191,10 +221,11 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
         if (!regulator.status()) {
             continue;
         }
+        auto const control_side = regulator.control_side();
         if (regulator.regulated_object_type() == ComponentType::branch) {
-            regulated_objects.transformers.emplace(regulator.regulated_object());
+            regulated_objects.trafos.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         } else {
-            regulated_objects.transformers3w.emplace(regulator.regulated_object());
+            regulated_objects.trafos3w.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         }
     }
     return regulated_objects;
@@ -244,7 +275,8 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEDGES here because our grid is undirected
+            // We can not use BGL_FORALL_OUTEDGES here because we need information
+            // regardless of edge direction
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
                 pq.push({vertex_distances[t], t});
@@ -271,9 +303,33 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (graph[e].regulated_idx == unregulated_idx) {
             continue;
         }
-        auto edge_res = std::min(vertex_distances[boost::source(e, graph)], vertex_distances[boost::target(e, graph)]);
+        // control_side, two winding or three winding, is always parallel to the
+        // source side of the transformer edge
+        auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
+        auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
+        auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
+
+        // New edge logic for ranking
+        // |  Tap  | Control |         All edges       |
+        // ---------------------------------------------
+        // |   A   |    A    | [B->A], [C->A], [B<->C] |
+        // |   A   |    B    | [A->B], [A->C], [B<->C] |
+        // |   A   |    C    | [A->B], [A->C], [B<->C] |
+        // |   B   |    A    | [B->A], [C<->A], [B->C] |
+        // |   B   |    B    | [A->B], [C<->A], [C->B] |
+        // |   B   |    C    | [B->A], [C<->A], [B->C] |
+        // |   C   |    A    | [A<->B], [C->A], [C->B] |
+        // |   C   |    B    | [A<->B], [C->A], [C->B] |
+        // |   C   |    C    | [A<->B], [A->C], [A->B] |
+        // In two winding trafo, the edge is always pointing to the control side; in three winding trafo edges, the
+        // edges are always pointing parallel to the control side: meaning that for delta configuration ABC, the above
+        // situations can happen.
+        if (edge_src_rank != edge_tgt_rank - 1) {
+            throw AutomaticTapInputError(
+                "Control side of a transformer should be the relatively closer side to a source.\n");
+        }
         if (!is_unreachable(edge_res)) {
-            result.push_back({graph[e].regulated_idx, edge_res});
+            result.emplace_back(TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank});
         }
     }
 
@@ -293,7 +349,10 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
             groups.emplace_back();
             previous_weight = trafo.weight;
         }
-        groups.back().push_back(trafo.regulated_idx);
+        auto& current_group = groups.back(); // avoid duplicates
+        if (std::ranges::find(current_group, trafo.regulated_idx) == current_group.end()) {
+            current_group.emplace_back(trafo.regulated_idx);
+        }
     }
     return groups;
 }
