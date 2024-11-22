@@ -22,30 +22,6 @@ enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
 enum class TapSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3 = 2 };
 
-inline TapSide branch_side_to_tap_side(BranchSide branch_side) {
-    switch (branch_side) {
-    case BranchSide::from:
-        return TapSide::from;
-    case BranchSide::to:
-        return TapSide::to;
-    default:
-        throw std::invalid_argument("branch_side_to_tap_side: Invalid BranchSide value");
-    }
-}
-
-inline TapSide branch_3_side_to_tap_side(Branch3Side branch3_side) {
-    switch (branch3_side) {
-    case Branch3Side::side_1:
-        return TapSide::side_1;
-    case Branch3Side::side_2:
-        return TapSide::side_2;
-    case Branch3Side::side_3:
-        return TapSide::side_3;
-    default:
-        throw std::invalid_argument("branch_3_side_to_tap_side: Invalid Branch3Side value");
-    }
-}
-
 enum class ControlSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3 = 2 };
 
 enum class CalculationType : IntS { power_flow = 0, state_estimation = 1, short_circuit = 2 };
