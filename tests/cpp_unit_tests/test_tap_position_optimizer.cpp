@@ -683,8 +683,8 @@ TEST_CASE("Test Tap position optimizer") {
         auto const& transformers_dataset =
             update_dataset.get_buffer_span<meta_data::update_getter_s, MockTransformer>();
         auto changed_components = std::vector<Idx2D>{};
-        main_core::update_component<MockTransformer>(state, transformers_dataset.begin(), transformers_dataset.end(),
-                                                     std::back_inserter(changed_components));
+        main_core::update::update_component<MockTransformer>(
+            state, transformers_dataset.begin(), transformers_dataset.end(), std::back_inserter(changed_components));
     };
 
     auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {

@@ -13,6 +13,7 @@ from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
+    IDNotFound,
     IDWrongType,
     InvalidArguments,
     InvalidBranch,
@@ -204,6 +205,21 @@ def test_handle_conflict_id_error():
 
     with pytest.raises(ConflictID):
         PowerGridModel(input_data={"node": node_input})
+
+
+def test_handle_id_not_found_error():
+    node_input = initialize_array("input", "node", 1)
+    node_input["id"] = [0]
+    node_input["u_rated"] = [0.0]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [1]
+    source_input["node"] = [99]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [0.0]
+
+    with pytest.raises(IDNotFound):
+        PowerGridModel(input_data={"node": node_input, "source": source_input})
 
 
 def test_handle_invalid_measured_object_error():

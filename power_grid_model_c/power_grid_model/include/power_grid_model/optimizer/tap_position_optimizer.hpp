@@ -105,8 +105,8 @@ template <class ComponentContainer>
 inline void add_to_edge(main_core::MainModelState<ComponentContainer> const& state, TrafoGraphEdges& edges,
                         TrafoGraphEdgeProperties& edge_props, ID const& start, ID const& end,
                         TrafoGraphEdge const& edge_prop) {
-    Idx const start_idx = main_core::get_component_sequence<Node>(state, start);
-    Idx const end_idx = main_core::get_component_sequence<Node>(state, end);
+    Idx const start_idx = main_core::get_component_sequence_idx<Node>(state, start);
+    Idx const end_idx = main_core::get_component_sequence_idx<Node>(state, end);
     edges.emplace_back(start_idx, end_idx);
     edge_props.emplace_back(edge_prop);
 }
@@ -250,7 +250,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
         // ignore disabled sources
-        trafo_graph[main_core::get_component_sequence<Node>(state, source.node())].is_source = source.status();
+        trafo_graph[main_core::get_component_sequence_idx<Node>(state, source.node())].is_source = source.status();
     }
 
     return trafo_graph;
