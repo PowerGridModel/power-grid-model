@@ -6,7 +6,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pytest
@@ -93,7 +93,7 @@ def get_output_type(calculation_type: str, sym: bool) -> str:
     return "asym_output"
 
 
-def get_test_case_paths(calculation_type: str, test_cases: Optional[list[str]] = None) -> dict[str, Path]:
+def get_test_case_paths(calculation_type: str, test_cases: list[str] | None = None) -> dict[str, Path]:
     """get a list of all cases, directories in validation datasets"""
     calculation_type_dir = DATA_PATH / calculation_type
     test_case_paths = {
@@ -173,7 +173,7 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
             )
 
 
-def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[list[str]] = None):
+def pytest_cases(get_batch_cases: bool = False, data_dir: str | None = None, test_cases: list[str] | None = None):
     if data_dir is not None:
         relevant_calculations = [data_dir]
     else:
@@ -191,7 +191,7 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
             )
 
 
-def bool_params(true_id: str, false_id: Optional[str] = None, **kwargs):
+def bool_params(true_id: str, false_id: str | None = None, **kwargs):
     if false_id is None:
         false_id = f"not-{true_id}"
     yield pytest.param(False, **kwargs, id=false_id)

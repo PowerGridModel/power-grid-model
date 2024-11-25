@@ -11,7 +11,7 @@ from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from power_grid_model._core.index_integer import IdC, IdxC
 
@@ -206,7 +206,7 @@ class PowerGridCore:
     """
 
     _handle: HandlePtr
-    _instance: Optional["PowerGridCore"] = None
+    _instance: "PowerGridCore | None" = None
 
     # singleton of power grid core
     def __new__(cls, *args, **kwargs):
