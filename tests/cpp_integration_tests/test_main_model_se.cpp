@@ -35,7 +35,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLi
                                       .max_iter = 20};
 
     SUBCASE("State Estimation") {
-        SUBCASE("Single Node + Source") {
+        SUBCASE("Single Node + Source") { // TODO(mgovers): these are so simple, they may be API tests, but that would
+                                          // just be moving the problem around.
             main_model.add_component<Node>({{1, 10e3}});
             main_model.add_component<Source>({{2, 1, 1, 1.0, nan, nan, nan, nan}});
             SUBCASE("Symmetric Voltage Sensor") {
@@ -141,7 +142,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLi
             }
         }
 
-        SUBCASE("Node Injection") {
+        SUBCASE("Node Injection") { // TODO(mgovers): these are so simple, they may be API tests, but that would just be
+                                    // moving the problem around.
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
             main_model.add_component<Link>({{3, 1, 2, 1, 1}});
             main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
@@ -220,7 +222,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLi
                 }
             }
         }
-        SUBCASE("Line power sensor") {
+        SUBCASE("Line power sensor") { // TODO(mgovers): these are so simple, they may be API tests, but that would just
+                                       // be moving the problem around.
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
             main_model.add_component<Line>({{3, 1, 2, 1, 1, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e3}});
             main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
@@ -265,7 +268,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLi
                 }
             }
         }
-        SUBCASE("Forbid Link Power Measurements") {
+        SUBCASE("Forbid Link Power Measurements") { // TODO(mgovers): This should be tested. maybe API test or in an
+                                                    // isolated environment
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
             main_model.add_component<Link>({{3, 1, 2, 1, 1}});
             CHECK_THROWS_AS(main_model.add_component<SymPowerSensor>(
@@ -298,7 +302,8 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLi
         }
     }
 
-    SUBCASE("Test incomplete input but complete update dataset") {
+    SUBCASE(
+        "Test incomplete input but complete update dataset") { // TODO(mgovers): this tests the same as the PF version
         std::vector<NodeInput> node_input{{1, 10e3}};
 
         std::vector<SourceInput> incomplete_source_input{{2, 1, 1, nan, nan, nan, nan, nan}};
