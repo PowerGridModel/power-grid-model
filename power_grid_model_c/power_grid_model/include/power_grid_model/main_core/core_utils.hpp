@@ -12,8 +12,6 @@
 
 namespace power_grid_model::main_core::utils {
 
-constexpr Idx invalid_index{-1};
-
 template <class... ComponentTypes> constexpr size_t n_types = sizeof...(ComponentTypes);
 template <class CompType, class... ComponentTypes>
 constexpr size_t index_of_component = container_impl::get_cls_pos_v<CompType, ComponentTypes...>;
