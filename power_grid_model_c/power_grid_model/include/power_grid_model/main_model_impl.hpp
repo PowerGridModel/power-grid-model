@@ -177,7 +177,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     get_components_to_update(ConstDataset const& update_data) const {
         return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
             [&update_data]<typename CompType>() {
-                return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index);
+                return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index_v);
             });
     }
 

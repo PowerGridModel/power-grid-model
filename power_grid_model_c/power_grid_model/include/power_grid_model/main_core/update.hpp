@@ -45,16 +45,15 @@ template <typename T> bool check_id_na(T const& obj) {
 
 namespace independence {
 struct UpdateCompProperties {
-    bool has_any_elements{false}; // whether the component has any elements in the update data
-    bool ids_all_na{false};       // whether all ids are all NA
-    bool ids_part_na{false};      // whether some ids are NA but some are not
-    bool dense{false};            // whether the component is dense
-    bool uniform{false};          // whether the component is uniform
-    bool is_columnar{false};      // whether the component is columnar
-    bool update_ids_match{false}; // whether the ids match
-    Idx elements_ps_in_update{
-        main_core::utils::invalid_index}; // count of elements for this component per scenario in update
-    Idx elements_in_base{main_core::utils::invalid_index}; // count of elements for this component per scenario in input
+    bool has_any_elements{false};                      // whether the component has any elements in the update data
+    bool ids_all_na{false};                            // whether all ids are all NA
+    bool ids_part_na{false};                           // whether some ids are NA but some are not
+    bool dense{false};                                 // whether the component is dense
+    bool uniform{false};                               // whether the component is uniform
+    bool is_columnar{false};                           // whether the component is columnar
+    bool update_ids_match{false};                      // whether the ids match
+    Idx elements_ps_in_update{utils::invalid_index_v}; // count of elements for this component per scenario in update
+    Idx elements_in_base{utils::invalid_index_v};      // count of elements for this component per scenario in input
 
     constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
     constexpr bool qualify_for_optional_id() const {
@@ -66,7 +65,7 @@ struct UpdateCompProperties {
     constexpr bool is_empty_component() const { return !has_any_elements; }
     constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
     constexpr Idx get_n_elements() const {
-        assert(uniform || elements_ps_in_update == main_core::utils::invalid_index);
+        assert(uniform || elements_ps_in_update == utils::invalid_index_v);
 
         return qualify_for_optional_id() ? elements_ps_in_update : na_Idx;
     }
@@ -109,10 +108,10 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
     properties.is_columnar = update_data.is_columnar(CompType::name);
     properties.dense = update_data.is_dense(CompType::name);
     properties.uniform = update_data.is_uniform(CompType::name);
-    properties.has_any_elements = component_idx != main_core::utils::invalid_index &&
-                                  update_data.get_component_info(component_idx).total_elements > 0;
-    properties.elements_ps_in_update = properties.uniform ? update_data.uniform_elements_per_scenario(CompType::name)
-                                                          : main_core::utils::invalid_index;
+    properties.has_any_elements =
+        component_idx != utils::invalid_index_v && update_data.get_component_info(component_idx).total_elements > 0;
+    properties.elements_ps_in_update =
+        properties.uniform ? update_data.uniform_elements_per_scenario(CompType::name) : utils::invalid_index_v;
     properties.elements_in_base = n_component;
 
     if (properties.is_columnar) {
