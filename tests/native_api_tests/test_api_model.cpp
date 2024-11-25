@@ -231,7 +231,7 @@ TEST_CASE("API Model") {
         model = std::move(model_dummy);
     }
     SUBCASE("Test Copyability") {
-        Model model_dummy{std::move(model)};
+        Model const model_dummy{std::move(model)};
         model = Model{model_dummy};
     }
     SUBCASE("Single power flow") {
