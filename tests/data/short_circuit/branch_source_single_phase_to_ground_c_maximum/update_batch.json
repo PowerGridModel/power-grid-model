@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "fault": [
+        {
+          "id": 5,
+          "fault_object": 1
+        }
+      ]
+    },
+    {
+      "fault": [
+        {
+          "id": 5,
+          "fault_object": 2
+        }
+      ]
+    }
+  ]
+}
