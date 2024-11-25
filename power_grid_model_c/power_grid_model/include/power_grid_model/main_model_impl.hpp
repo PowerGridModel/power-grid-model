@@ -152,10 +152,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    static constexpr Idx ignore_output{-1};
-    static constexpr Idx isolated_component{-1};
-    static constexpr Idx not_connected{-1};
-    static constexpr Idx sequential{-1};
+    static constexpr Idx ignore_output_v{-1};
+    static constexpr Idx isolated_component_v{-1};
+    static constexpr Idx not_connected_v{-1};
+    static constexpr Idx sequential_v{-1};
 
   public:
     using Options = MainModelOptions;
@@ -492,7 +492,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = sequential) {
+                                      ConstDataset const& update_data, Idx threading = sequential_v) {
         // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
@@ -518,7 +518,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                "sym_output",
                                *meta_data_,
                            },
-                           ignore_output);
+                           ignore_output_v);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         } catch (const NotObservableError&) {
@@ -768,7 +768,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Idx pos_) {
                 auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
 
-                if (pos_ != ignore_output) {
+                if (pos_ != ignore_output_v) {
                     main_model_.output_result(math_output, result_data_, pos_);
                 }
             },
@@ -781,8 +781,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return batch_calculation_(
             [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
-                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+                sub_opt.err_tol = pos != ignore_output_v ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output_v ? options.max_iter : 1;
 
                 model.calculate(sub_opt, target_data, pos);
             },
@@ -923,7 +923,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all branch
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->branch[i];
-            if (math_idx.group == isolated_component) {
+            if (math_idx.group == isolated_component_v) {
                 continue;
             }
             // assign parameters
@@ -933,7 +933,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all branch3
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch3_node_idx.size()); ++i) {
             Idx2DBranch3 const math_idx = state_.topo_comp_coup->branch3[i];
-            if (math_idx.group == isolated_component) {
+            if (math_idx.group == isolated_component_v) {
                 continue;
             }
             // assign parameters, branch3 param consists of three branch parameters
@@ -946,7 +946,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all shunt
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->shunt_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->shunt[i];
-            if (math_idx.group == isolated_component) {
+            if (math_idx.group == isolated_component_v) {
                 continue;
             }
             // assign parameters
@@ -956,7 +956,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all source
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->source_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->source[i];
-            if (math_idx.group == isolated_component) {
+            if (math_idx.group == isolated_component_v) {
                 continue;
             }
             // assign parameters
@@ -975,7 +975,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     Idx2D const math_idx =
                         state.topo_comp_coup
                             ->branch[main_core::get_component_sequence_idx<Branch>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component) {
+                    if (math_idx.group == isolated_component_v) {
                         return;
                     }
                     // assign parameters
@@ -984,7 +984,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     Idx2DBranch3 const math_idx =
                         state.topo_comp_coup
                             ->branch3[main_core::get_component_sequence_idx<Branch3>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component) {
+                    if (math_idx.group == isolated_component_v) {
                         return;
                     }
                     // assign parameters, branch3 param consists of three branch parameters
@@ -997,7 +997,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     Idx2D const math_idx =
                         state.topo_comp_coup
                             ->shunt[main_core::get_component_sequence_idx<Shunt>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component) {
+                    if (math_idx.group == isolated_component_v) {
                         return;
                     }
                     // assign parameters
@@ -1079,7 +1079,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
-                if (math_idx.group != isolated_component) {
+                if (math_idx.group != isolated_component_v) {
                     auto const& component = get_component_by_sequence<ComponentIn>(state, i);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
@@ -1099,7 +1099,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
-                if (math_idx.group != isolated_component) {
+                if (math_idx.group != isolated_component_v) {
                     auto const& component = get_component_by_sequence<ComponentIn>(state, i);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
@@ -1115,7 +1115,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
             Idx2D const math_idx = objects[i];
-            if (math_idx.group == isolated_component) {
+            if (math_idx.group == isolated_component_v) {
                 continue;
             }
             (input[math_idx.group].*component)[math_idx.pos] =
@@ -1224,7 +1224,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         auto fault_coup =
-            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component, not_connected});
+            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component_v, not_connected_v});
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {

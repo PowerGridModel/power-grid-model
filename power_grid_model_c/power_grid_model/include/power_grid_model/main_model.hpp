@@ -5,6 +5,7 @@
 #pragma once
 
 #include "main_model_impl.hpp"
+
 #include <memory>
 
 namespace power_grid_model {
