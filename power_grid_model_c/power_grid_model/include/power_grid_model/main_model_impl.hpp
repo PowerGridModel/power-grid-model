@@ -656,11 +656,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::ranges::transform(do_update_cache, independence_flags.begin(),
                                [](auto const& comp) { return comp.is_independent(); });
         auto const scenario_sequence = [&all_scenario_sequence, &current_scenario_sequence_cache,
-                                        &independence_flags]() -> SequenceIdxView {
+                                        independence_flags_ = std::move(independence_flags)]() -> SequenceIdxView {
             return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
-                [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags]<typename CT>() {
+                [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags_]<typename CT>() {
                     constexpr auto comp_idx = main_core::utils::index_of_component<CT, ComponentType...>;
-                    if (std::get<comp_idx>(independence_flags)) {
+                    if (std::get<comp_idx>(independence_flags_)) {
                         return std::span<Idx2D const>{std::get<comp_idx>(all_scenario_sequence)};
                     }
                     return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache)};
