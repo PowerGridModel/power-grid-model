@@ -127,7 +127,7 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
 }
 
 template <class... ComponentTypes>
-using UpdateIndependence = std::array<UpdateCompProperties, main_core::utils::n_types<ComponentTypes...>>;
+using UpdateIndependence = std::array<UpdateCompProperties, utils::n_types<ComponentTypes...>>;
 
 inline void validate_update_data_independence(UpdateCompProperties const& comp, std::string const& comp_name) {
     if (comp.is_empty_component()) {
@@ -218,16 +218,14 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
 template <class... ComponentTypes, class ComponentContainer>
 utils::SequenceIdx<ComponentTypes...>
 get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data,
-                         Idx scenario_idx,
-                         main_core::utils::ComponentFlags<ComponentTypes...> const& components_to_store,
+                         Idx scenario_idx, utils::ComponentFlags<ComponentTypes...> const& components_to_store,
                          independence::UpdateIndependence<ComponentTypes...> const& independence, bool cached = true) {
     return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
         [&state, &update_data, scenario_idx, &components_to_store, &independence, cached]<typename CompType>() {
-            auto const comp_properties =
-                std::get<main_core::utils::index_of_component<CompType, ComponentTypes...>>(independence);
+            auto const comp_properties = std::get<utils::index_of_component<CompType, ComponentTypes...>>(independence);
             bool const is_comp_independent =
                 cached ? comp_properties.is_independent() : !comp_properties.is_independent();
-            if (!std::get<main_core::utils::index_of_component<CompType, ComponentTypes...>>(components_to_store) ||
+            if (!std::get<utils::index_of_component<CompType, ComponentTypes...>>(components_to_store) ||
                 !is_comp_independent) {
                 return std::vector<Idx2D>{};
             }
@@ -239,9 +237,9 @@ get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstD
 // The sequence idx map of the batch is the same as that of the first scenario in the batch (assuming homogeneity)
 // This is the entry point for permanent updates.
 template <class... ComponentTypes, class ComponentContainer>
-main_core::utils::SequenceIdx<ComponentTypes...>
+utils::SequenceIdx<ComponentTypes...>
 get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data,
-                         main_core::utils::ComponentFlags<ComponentTypes...> const& components_to_store,
+                         utils::ComponentFlags<ComponentTypes...> const& components_to_store,
                          independence::UpdateIndependence<ComponentTypes...> const& independence) {
     return get_all_sequence_idx_map<ComponentTypes...>(state, update_data, 0, components_to_store, independence);
 }
