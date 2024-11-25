@@ -17,7 +17,8 @@ using enum CalculationSymmetry;
 TEST_CASE("Test main model - short circuit") {
     MainModel main_model{50.0, meta_data::meta_data_gen::meta_data};
 
-    SUBCASE("Single node + source") {
+    SUBCASE("Single node + source") { // TODO(mgovers): existing validation case for this is too difficult. we may want
+                                      // to keep this. Also should not live here but in SC solver
         double const u_rated = 10e3;
         double const u_ref = 1.0;
         double const sk = 100e6;
@@ -127,7 +128,8 @@ TEST_CASE("Test main model - short circuit") {
         }
     }
 
-    SUBCASE("Two nodes + branch + source") {
+    SUBCASE("Two nodes + branch + source") { // TODO(mgovers): existing validation case for this is too difficult. we
+                                             // may want to keep this
         ShortCircuitVoltageScaling const voltage_scaling = ShortCircuitVoltageScaling::maximum;
         constexpr double voltage_scaling_c = 1.1;
 
@@ -163,7 +165,9 @@ TEST_CASE("Test main model - short circuit") {
     }
 }
 
-TEST_CASE("Test main model - short circuit - Dataset input") {
+TEST_CASE("Test main model - short circuit - Dataset input") { // TODO(mgovers): same logic as above but different input
+                                                               // type. maybe make a validation case for this; otherwise
+                                                               // may be removed
     SUBCASE("Two nodes + branch + source") {
         std::vector<NodeInput> node_input{{1, 10e4}, {2, 10e4}};
         std::vector<LineInput> line_input{{3, 1, 2, 1, 1, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 1e3}};

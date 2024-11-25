@@ -122,7 +122,8 @@ void assert_sc_output(ShortCircuitSolverOutput<sym> const& output, ShortCircuitS
 
 } // namespace
 
-TEST_CASE("Test math solver") {
+TEST_CASE(
+    "Test math solver") { // most of these should be template test cases with instantiations for the individual solvers
     /*
     network, v means voltage measured, p means power measured, pp means double measured
     variance always 1.0
