@@ -503,7 +503,7 @@ TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update,
     std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
     update_data.add_buffer("source", source_update2.size(), source_update2.size(), nullptr, source_update2.data());
-    CHECK_THROWS_AS((main_model.update_component<typename settings::update_type>(update_data)), IDNotFound);
+    CHECK_THROWS_AS((main_model.update_components<typename settings::update_type>(update_data)), IDNotFound);
 }
 
 TEST_CASE_TEMPLATE(
@@ -517,7 +517,7 @@ TEST_CASE_TEMPLATE(
                            state.sym_load_update.data());
     update_data.add_buffer("asym_load", state.asym_load_update.size(), state.asym_load_update.size(), nullptr,
                            state.asym_load_update.data());
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_components<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
         auto const solver_output =
@@ -567,7 +567,7 @@ TEST_CASE_TEMPLATE(
                            state.asym_load_update.data());
     update_data.add_buffer("shunt", state.shunt_update.size(), state.shunt_update.size(), nullptr,
                            state.shunt_update.data());
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_components<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
         auto const solver_output =
@@ -624,7 +624,7 @@ TEST_CASE_TEMPLATE(
     update_data.add_buffer("fault", state.fault_update.size(), state.fault_update.size(), nullptr,
                            state.fault_update.data());
 
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_components<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
         auto const solver_output =
@@ -676,7 +676,7 @@ TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", setti
     update_data.add_buffer("link", 1, state.batch_link_update.size(), nullptr, state.batch_link_update.data());
     update_data.add_buffer("fault", 1, state.batch_fault_update.size(), nullptr, state.batch_fault_update.data());
 
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_components<typename settings::update_type>(update_data);
 
     SUBCASE("Symmetrical") {
         auto const solver_output =
@@ -727,7 +727,7 @@ TEST_CASE_TEMPLATE("Test main model - restore components", settings, regular_upd
     update_data.add_buffer("asym_load", state.asym_load_update.size(), state.asym_load_update.size(), nullptr,
                            state.asym_load_update.data());
 
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_components<typename settings::update_type>(update_data);
     main_model.restore_components(update_data);
 
     SUBCASE("Symmetrical") {
@@ -824,7 +824,7 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
                            state.shunt_update.data());
 
     // This will lead to no topo change but param change
-    main_model.update_component<typename settings::update_type>(update_data);
+    main_model.update_components<typename settings::update_type>(update_data);
 
     auto const math_output_sym_1 =
         main_model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
@@ -840,13 +840,13 @@ TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", sett
     if constexpr (std::same_as<typename settings::update_type, regular_update>) {
         SUBCASE("No new parameter change") {
             // Math state may be fully cached due to no change
-            main_model.update_component<typename settings::update_type>(update_data);
+            main_model.update_components<typename settings::update_type>(update_data);
         }
     }
     SUBCASE("With parameter change") {
         // Restore to original state and re-apply same update: causes param change for cached update
         main_model.restore_components(update_data);
-        main_model.update_component<typename settings::update_type>(update_data);
+        main_model.update_components<typename settings::update_type>(update_data);
     }
 
     auto const math_output_asym_2 =

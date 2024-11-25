@@ -5,6 +5,7 @@
 #pragma once
 
 #include "main_model_impl.hpp"
+#include <memory>
 
 namespace power_grid_model {
 
@@ -49,14 +50,13 @@ class MainModel {
     };
     ~MainModel() { impl_.reset(); }
 
-    std::map<std::string, Idx, std::less<>> all_component_count() const { return impl().all_component_count(); }
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         impl().get_indexer(component_type, id_begin, size, indexer_begin);
     }
 
     void set_construction_complete() { impl().set_construction_complete(); }
     void restore_components(ConstDataset const& update_data) {
-        impl().restore_components(impl().get_sequence_idx_map(update_data));
+        impl().restore_components(impl().get_all_sequence_idx_map(update_data));
     }
 
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
@@ -66,8 +66,8 @@ class MainModel {
         impl().add_component<CompType>(components);
     }
 
-    template <cache_type_c CacheType> void update_component(ConstDataset const& update_data) {
-        impl().update_component<CacheType>(update_data);
+    template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
+        impl().update_components<CacheType>(update_data);
     }
 
     template <typename CompType, typename MathOutputType, typename OutputType>
