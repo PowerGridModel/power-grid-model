@@ -41,7 +41,7 @@ constexpr Idx get_component_group_idx(MainModelState<ComponentContainer> const& 
 
 template <typename ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
-inline Idx get_component_sequence(MainModelState<ComponentContainer> const& state, auto const& id_or_index) {
+inline Idx get_component_sequence_idx(MainModelState<ComponentContainer> const& state, auto const& id_or_index) {
     return state.components.template get_seq<ComponentType>(id_or_index);
 }
 
@@ -97,19 +97,19 @@ constexpr auto get_component_citer(MainModelState<ComponentContainer> const& sta
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_topology_index(MainModelState<ComponentContainer> const& state, auto const& id_or_index) {
-    return get_component_sequence<Branch>(state, id_or_index);
+    return get_component_sequence_idx<Branch>(state, id_or_index);
 }
 
 template <std::derived_from<Branch3> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_topology_index(MainModelState<ComponentContainer> const& state, auto const& id_or_index) {
-    return get_component_sequence<Branch3>(state, id_or_index);
+    return get_component_sequence_idx<Branch3>(state, id_or_index);
 }
 
 template <std::derived_from<Regulator> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_topology_index(MainModelState<ComponentContainer> const& state, auto const& id_or_index) {
-    return get_component_sequence<Regulator>(state, id_or_index);
+    return get_component_sequence_idx<Regulator>(state, id_or_index);
 }
 
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>
