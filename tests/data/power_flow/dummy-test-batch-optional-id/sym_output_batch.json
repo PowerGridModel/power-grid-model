@@ -1,36 +1,36 @@
 {
   "version": "1.0",
-  "type": "update",
+  "type": "sym_output",
   "is_batch": true,
   "attributes": {},
   "data": [
     {
-      "sym_load": [
+      "node": [
         {
-          "q_specified": 2.5
+          "u": 9.0
         },
         {
-          "q_specified": 7.5
+          "u": 8.0
         }
       ]
     },
     {
-      "sym_load": [
+      "node": [
         {
-          "q_specified": 15.0
+          "u": 8.0
         },
         {
-          "q_specified": 5.0
+          "u": 6.0
         }
       ]
     },
     {
-      "sym_load": [
+      "node": [
         {
-          "q_specified": 21.0
+          "u": 7.0
         },
         {
-          "q_specified": 9.0
+          "u": 4.0
         }
       ]
     }
