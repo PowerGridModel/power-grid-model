@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 
 import msgpack
 import numpy as np
@@ -16,7 +16,7 @@ from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
 
-def to_json(data, raw_buffer: bool = False, indent: Optional[int] = None):
+def to_json(data, raw_buffer: bool = False, indent: int | None = None):
     indent = None if indent is None or indent < 0 else indent
     separators = (",", ":") if indent is None else None
     result = json.dumps(data, indent=indent, separators=separators)
