@@ -9,11 +9,6 @@
 
 namespace power_grid_model {
 namespace {
-using enum CalculationSymmetry;
-
-constexpr double s3 = sqrt3;
-constexpr double ph = 2.0 / 3.0 * pi;
-
 struct IterativeLinearCalculationMethod {
     static constexpr auto calculation_method = CalculationMethod::iterative_linear;
 };
