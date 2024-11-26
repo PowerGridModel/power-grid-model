@@ -68,7 +68,7 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
 
     auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_sensor < 1) {
-        throw NotObservableError{};
+        throw NotObservableError{"no voltage sensor found"};
     }
 
     Idx const n_injection_sensor = detail::count_bus_injection_sensors(n_bus, measured_values);
