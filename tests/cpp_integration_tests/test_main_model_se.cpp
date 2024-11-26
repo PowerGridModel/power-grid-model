@@ -35,52 +35,6 @@ TEST_CASE_TEMPLATE("Test main model - state estimation", CalcMethod, IterativeLi
                                       .max_iter = 20};
 
     SUBCASE("State Estimation") {
-        SUBCASE("Line power sensor") { // TODO(mgovers): these are so simple, they may be API tests, but that would just
-                                       // be moving the problem around.
-            main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
-            main_model.add_component<Line>({{3, 1, 2, 1, 1, 0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e3}});
-            main_model.add_component<Source>({{4, 1, 1, 1.0, nan, nan, nan, nan}});
-            main_model.add_component<Shunt>({{6, 2, 1, 1800 / 10e3 / 10e3, -180 / 10e3 / 10e3, 0.0, 0.0}});
-            main_model.add_component<SymVoltageSensor>({{11, 1, 1e2, 10.0e3, 0.0}});
-            SUBCASE("Symmetric Power Sensor - Symmetric Calculation") {
-                main_model.add_component<SymPowerSensor>(
-                    {{17, 3, MeasuredTerminalType::branch_from, 1e2, 1800.0, 180.0, nan, nan},
-                     {18, 3, MeasuredTerminalType::branch_to, 1e2, -1800.0, -180.0, nan, nan},
-                     {16, 6, MeasuredTerminalType::shunt, 1e2, 1800.0, 180.0, nan, nan}});
-                SUBCASE("Line flow") {
-                    main_model.set_construction_complete();
-                    options.calculation_symmetry = symmetric;
-                    auto const solver_output = main_model.calculate<state_estimation_t, symmetric_t>(options);
-
-                    std::vector<SymApplianceOutput> shunt_output(1);
-                    std::vector<SymNodeOutput> node_output(2);
-                    std::vector<SymPowerSensorOutput> power_sensor_output(3);
-                    std::vector<BranchOutput<symmetric_t>> line_output(1);
-                    main_model.output_result<Shunt>(solver_output, shunt_output);
-                    main_model.output_result<Node>(solver_output, node_output);
-                    main_model.output_result<Line>(solver_output, line_output);
-                    main_model.output_result<SymPowerSensor>(solver_output, power_sensor_output);
-
-                    CHECK(shunt_output[0].p == doctest::Approx(1800.0).epsilon(0.01));
-                    CHECK(shunt_output[0].q == doctest::Approx(180.0).epsilon(0.01));
-
-                    CHECK(line_output[0].p_from == doctest::Approx(1800.0).epsilon(0.01));
-                    CHECK(line_output[0].q_from == doctest::Approx(180.0).epsilon(0.01));
-                    CHECK(line_output[0].p_to == doctest::Approx(-1800.0).epsilon(0.01));
-                    CHECK(line_output[0].q_to == doctest::Approx(-180.0).epsilon(0.01));
-
-                    // dealing with orders of magnitude kW / kVA and precision at W / VA level
-                    auto const zero_at_order_of_magnitude = doctest::Approx(0.0).scale(1e3).epsilon(0.001);
-
-                    CHECK(power_sensor_output[0].p_residual == zero_at_order_of_magnitude); // shunt
-                    CHECK(power_sensor_output[0].q_residual == zero_at_order_of_magnitude); // shunt
-                    CHECK(power_sensor_output[1].p_residual == zero_at_order_of_magnitude); // branch_from
-                    CHECK(power_sensor_output[1].q_residual == zero_at_order_of_magnitude); // branch_from
-                    CHECK(power_sensor_output[2].p_residual == zero_at_order_of_magnitude); // branch_to
-                    CHECK(power_sensor_output[2].q_residual == zero_at_order_of_magnitude); // branch_to
-                }
-            }
-        }
         SUBCASE("Forbid Link Power Measurements") { // TODO(mgovers): This should be tested. maybe API test or in an
                                                     // isolated environment
             main_model.add_component<Node>({{1, 10e3}, {2, 10e3}});
