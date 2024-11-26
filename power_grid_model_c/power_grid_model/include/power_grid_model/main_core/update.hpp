@@ -225,8 +225,8 @@ get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstD
             auto const comp_properties = std::get<utils::index_of_component<CompType, ComponentTypes...>>(independence);
             bool const is_comp_independent =
                 cached ? comp_properties.is_independent() : !comp_properties.is_independent();
-            if (!std::get<utils::index_of_component<CompType, ComponentTypes...>>(components_to_store) ||
-                !is_comp_independent) {
+            if (!is_comp_independent ||
+                !std::get<utils::index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
             independence::validate_update_data_independence(comp_properties, CompType::name);

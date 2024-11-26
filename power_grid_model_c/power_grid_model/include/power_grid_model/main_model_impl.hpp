@@ -292,6 +292,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     // overload to update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
+
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
             main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
