@@ -112,7 +112,12 @@ class SparseMatrixError : public PowerGridError {
 
 class NotObservableError : public PowerGridError {
   public:
-    NotObservableError() { append_msg("Not enough measurements available for state estimation.\n"); }
+    NotObservableError(std::string const& msg = "") {
+        append_msg("Not enough measurements available for state estimation.\n");
+        if (!msg.empty()) {
+            append_msg(msg + "\n");
+        }
+    }
 };
 
 class IterationDiverge : public PowerGridError {
