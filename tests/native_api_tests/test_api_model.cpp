@@ -745,18 +745,11 @@ TEST_CASE("API Model") {
         std::vector<ID> const link_id_se{3};
         std::vector<ID> const link_from_node_se{1};
         std::vector<ID> const link_to_node_se{2};
-        std::vector<Idx> const link_from_status_se{1};
-        std::vector<Idx> const link_to_status_se{1};
 
         // power sensor
         std::vector<ID> const power_sensor_id_se{4};
         std::vector<ID> const power_sensor_measured_object_se{3};
         std::vector<IntS> const power_sensor_measured_terminal_type_se{0};
-        std::vector<double> const power_sensor_power_sigma_se{0.0};
-        std::vector<double> const sym_power_sensor_p_measured_se{0.0};
-        std::vector<double> const sym_power_sensor_q_measured_se{0.0};
-        std::vector<double> const asym_power_sensor_p_measured_se{0.0, 0.0, 0.0};
-        std::vector<double> const asym_power_sensor_q_measured_se{0.0, 0.0, 0.0};
 
         input_dataset_se.add_buffer("node", 2, 2, nullptr, nullptr);
         input_dataset_se.add_attribute_buffer("node", "id", node_id_se.data());
@@ -766,8 +759,6 @@ TEST_CASE("API Model") {
         input_dataset_se.add_attribute_buffer("link", "id", link_id_se.data());
         input_dataset_se.add_attribute_buffer("link", "from_node", link_from_node_se.data());
         input_dataset_se.add_attribute_buffer("link", "to_node", link_to_node_se.data());
-        input_dataset_se.add_attribute_buffer("link", "from_status", link_from_status_se.data());
-        input_dataset_se.add_attribute_buffer("link", "to_status", link_to_status_se.data());
 
         SUBCASE("SymPowerSensor") {
             input_dataset_se.add_buffer("sym_power_sensor", 1, 1, nullptr, nullptr);
@@ -776,12 +767,6 @@ TEST_CASE("API Model") {
                                                   power_sensor_measured_object_se.data());
             input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
                                                   power_sensor_measured_terminal_type_se.data());
-            input_dataset_se.add_attribute_buffer("sym_power_sensor", "power_sigma",
-                                                  power_sensor_power_sigma_se.data());
-            input_dataset_se.add_attribute_buffer("sym_power_sensor", "p_measured",
-                                                  sym_power_sensor_p_measured_se.data());
-            input_dataset_se.add_attribute_buffer("sym_power_sensor", "q_measured",
-                                                  sym_power_sensor_q_measured_se.data());
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
@@ -794,12 +779,6 @@ TEST_CASE("API Model") {
                                                   power_sensor_measured_object_se.data());
             input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_terminal_type",
                                                   power_sensor_measured_terminal_type_se.data());
-            input_dataset_se.add_attribute_buffer("asym_power_sensor", "power_sigma",
-                                                  power_sensor_power_sigma_se.data());
-            input_dataset_se.add_attribute_buffer("asym_power_sensor", "p_measured",
-                                                  asym_power_sensor_p_measured_se.data());
-            input_dataset_se.add_attribute_buffer("asym_power_sensor", "q_measured",
-                                                  asym_power_sensor_q_measured_se.data());
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
