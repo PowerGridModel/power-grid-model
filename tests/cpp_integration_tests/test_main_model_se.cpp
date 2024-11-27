@@ -9,6 +9,8 @@
 
 namespace power_grid_model {
 namespace {
+using enum CalculationSymmetry;
+
 struct IterativeLinearCalculationMethod {
     static constexpr auto calculation_method = CalculationMethod::iterative_linear;
 };
