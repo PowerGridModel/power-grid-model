@@ -406,42 +406,6 @@ TEST_CASE(
     se_input_asym_angle_const_z.load_gen_status[4] = 0;
     se_input_asym_angle_const_z.measured_load_gen_power[2].value *= 3.0;
 
-    SUBCASE("Test symmetric pf solver") {
-        MathSolver<symmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        SolverOutput<symmetric_t> output = solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
-        assert_output(output, output_ref);
-        // copy
-        MathSolver<symmetric_t> solver2{solver};
-        solver2.clear_solver();
-        output = solver2.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
-        assert_output(output, output_ref);
-        // move
-        MathSolver<symmetric_t> solver3{std::move(solver)};
-        output = solver3.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym);
-        assert_output(output, output_ref);
-    }
-
-    SUBCASE("Test symmetric iterative current pf solver") {
-        MathSolver<symmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        SolverOutput<symmetric_t> const output =
-            solver.run_power_flow(pf_input, 1e-12, 20, info, iterative_current, y_bus_sym);
-        assert_output(output, output_ref);
-    }
-
-    SUBCASE("Test symmetric linear current pf solver") {
-        // low precision
-        constexpr auto error_tolerance{5e-3};
-        constexpr auto result_tolerance{5e-2};
-
-        MathSolver<symmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        SolverOutput<symmetric_t> const output =
-            solver.run_power_flow(pf_input, error_tolerance, 20, info, linear_current, y_bus_sym);
-        assert_output(output, output_ref, false, result_tolerance);
-    }
-
     SUBCASE("Test wrong calculation type") {
         MathSolver<symmetric_t> solver{topo_ptr};
         CalculationInfo info;
@@ -449,63 +413,6 @@ TEST_CASE(
                         InvalidCalculationMethod);
         CHECK_THROWS_AS(solver.run_state_estimation(se_input_angle, 1e-10, 20, info, linear, y_bus_sym),
                         InvalidCalculationMethod);
-    }
-
-    SUBCASE("Test const z pf solver") {
-        MathSolver<symmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-
-        // const z
-        SolverOutput<symmetric_t> const output = solver.run_power_flow(pf_input_z, 1e-12, 20, info, linear, y_bus_sym);
-        assert_output(output, output_ref_z);
-    }
-
-    SUBCASE("Test not converge") {
-        MathSolver<symmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        pf_input.s_injection[6] = 1e6;
-        CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, newton_raphson, y_bus_sym), IterationDiverge);
-    }
-
-    SUBCASE("Test singular ybus") {
-        std::vector<CalculationMethod> const methods{linear, newton_raphson, linear_current, iterative_current};
-
-        param.branch_param[0] = BranchCalcParam<symmetric_t>{};
-        param.branch_param[1] = BranchCalcParam<symmetric_t>{};
-        param.shunt_param[0] = 0.0;
-        y_bus_sym.update_admittance(std::make_shared<MathModelParam<symmetric_t> const>(param));
-        MathSolver<symmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-
-        for (auto method : methods) {
-            CAPTURE(method);
-            CHECK_THROWS_AS(solver.run_power_flow(pf_input, 1e-12, 20, info, method, y_bus_sym), SparseMatrixError);
-        }
-    }
-
-    SUBCASE("Test asymmetric pf solver") {
-        MathSolver<asymmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        SolverOutput<asymmetric_t> const output =
-            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, newton_raphson, y_bus_asym);
-        assert_output(output, output_ref_asym);
-    }
-
-    SUBCASE("Test iterative current asymmetric pf solver") {
-        MathSolver<asymmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        SolverOutput<asymmetric_t> const output =
-            solver.run_power_flow(pf_input_asym, 1e-12, 20, info, iterative_current, y_bus_asym);
-        assert_output(output, output_ref_asym);
-    }
-
-    SUBCASE("Test asym const z pf solver") {
-        MathSolver<asymmetric_t> solver{topo_ptr};
-        CalculationInfo info;
-        // const z
-        SolverOutput<asymmetric_t> const output =
-            solver.run_power_flow(pf_input_asym_z, 1e-12, 20, info, linear, y_bus_asym);
-        assert_output(output, output_ref_asym_z);
     }
 
     SUBCASE("Test sym se with angle") {
