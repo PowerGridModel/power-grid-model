@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "line": [
+      {
+        "id": 3,
+        "p_from": 1800.0,
+        "q_from": 180.0,
+        "p_to": -1800.0,
+        "q_to": -180.0
+      }
+    ],
+    "shunt": [
+      {
+        "id": 6,
+        "p": 1800.0,
+        "q": 180.0
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 16,
+        "p_residual": 0.0,
+        "q_residual": 0.0
+      },
+      {
+        "id": 17,
+        "p_residual": 0.0,
+        "q_residual": 0.0
+      },
+      {
+        "id": 18,
+        "p_residual": 0.0,
+        "q_residual": 0.0
+      }
+    ]
+  }
+}
