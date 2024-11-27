@@ -42,6 +42,7 @@ set(PROJECT_SOURCES
     "test_optimizer.cpp"
     "test_tap_position_optimizer.cpp"
     "test_main_core_output.cpp"
+    "test_math_solver_sc.cpp"
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
