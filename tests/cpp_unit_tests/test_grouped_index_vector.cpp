@@ -35,12 +35,40 @@ auto construct_from(IdxVector const& element_groups, Idx num_groups) {
     return IdxVectorType{sparse_encode(element_groups, num_groups)};
 }
 
+} // namespace
+
+} // namespace power_grid_model
+
+namespace {
 template <typename first, typename second> struct TypePair {
     using A = first;
     using B = second;
 };
-
 } // namespace
+
+TYPE_TO_STRING_AS("SparseGroupedIdxVector, from_sparse_t",
+                  TypePair<power_grid_model::SparseGroupedIdxVector, power_grid_model::from_sparse_t>);
+TYPE_TO_STRING_AS("SparseGroupedIdxVector, from_dense_t",
+                  TypePair<power_grid_model::SparseGroupedIdxVector, power_grid_model::from_dense_t>);
+TYPE_TO_STRING_AS("SparseGroupedIdxVector, from_natural_t",
+                  TypePair<power_grid_model::SparseGroupedIdxVector, power_grid_model::from_natural_t>);
+TYPE_TO_STRING_AS("DenseGroupedIdxVector, from_sparse_t",
+                  TypePair<power_grid_model::DenseGroupedIdxVector, power_grid_model::from_sparse_t>);
+TYPE_TO_STRING_AS("DenseGroupedIdxVector, from_dense_t",
+                  TypePair<power_grid_model::DenseGroupedIdxVector, power_grid_model::from_dense_t>);
+TYPE_TO_STRING_AS("DenseGroupedIdxVector, from_natural_t",
+                  TypePair<power_grid_model::DenseGroupedIdxVector, power_grid_model::from_natural_t>);
+
+TYPE_TO_STRING_AS("SparseGroupedIdxVector, SparseGroupedIdxVector",
+                  TypePair<power_grid_model::SparseGroupedIdxVector, power_grid_model::SparseGroupedIdxVector>);
+TYPE_TO_STRING_AS("SparseGroupedIdxVector, DenseGroupedIdxVector",
+                  TypePair<power_grid_model::SparseGroupedIdxVector, power_grid_model::DenseGroupedIdxVector>);
+TYPE_TO_STRING_AS("DenseGroupedIdxVector, SparseGroupedIdxVector",
+                  TypePair<power_grid_model::DenseGroupedIdxVector, power_grid_model::SparseGroupedIdxVector>);
+TYPE_TO_STRING_AS("DenseGroupedIdxVector, DenseGroupedIdxVector",
+                  TypePair<power_grid_model::DenseGroupedIdxVector, power_grid_model::DenseGroupedIdxVector>);
+
+namespace power_grid_model {
 
 TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<SparseGroupedIdxVector, from_sparse_t>,
                    TypePair<SparseGroupedIdxVector, from_dense_t>, TypePair<SparseGroupedIdxVector, from_natural_t>,

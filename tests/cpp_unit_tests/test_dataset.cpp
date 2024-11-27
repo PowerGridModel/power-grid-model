@@ -141,6 +141,15 @@ constexpr MetaData test_meta_data_all =
                                  >::value;
 } // namespace
 
+} // namespace power_grid_model::meta_data
+
+TYPE_TO_STRING_AS("const_range_object<A::InputType>",
+                  power_grid_model::meta_data::const_range_object<power_grid_model::meta_data::A::InputType>);
+TYPE_TO_STRING_AS("mutable_range_object<A::InputType>",
+                  power_grid_model::meta_data::mutable_range_object<power_grid_model::meta_data::A::InputType>);
+
+namespace power_grid_model::meta_data {
+
 namespace test {
 namespace {
 template <typename DatasetType>
