@@ -70,11 +70,15 @@ namespace power_grid_model::math_solver {
 namespace iterative_current_pf {
 
 // solver
-template <symmetry_tag sym>
-class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
+template <symmetry_tag sym_type>
+class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCurrentPFSolver<sym_type>> {
   public:
+    using sym = sym_type;
+
     using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
     using BlockPermArray = typename SparseSolverType::BlockPermArray;
+
+    static constexpr auto is_iterative = true;
 
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
