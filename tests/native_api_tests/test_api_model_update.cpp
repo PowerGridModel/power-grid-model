@@ -10,7 +10,6 @@
 
 #include <string>
 
-namespace power_grid_model_cpp {
 namespace {
 // Types for template parameters
 struct row_t {};
@@ -30,6 +29,51 @@ template <typename first, typename second, typename third, typename fourth> stru
 };
 } // namespace
 
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, with_id_t", TypeCombo<row_t, row_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, with_id_t", TypeCombo<row_t, row_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, with_id_t", TypeCombo<columnar_t, columnar_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, with_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, with_id_t", TypeCombo<columnar_t, row_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, with_id_t", TypeCombo<columnar_t, row_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, with_id_t", TypeCombo<row_t, columnar_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, with_id_t", TypeCombo<row_t, columnar_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, optional_id_t", TypeCombo<row_t, row_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, optional_id_t", TypeCombo<row_t, row_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, optional_id_t", TypeCombo<columnar_t, row_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, optional_id_t", TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, optional_id_t", TypeCombo<row_t, columnar_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, optional_id_t", TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, invalid_id_t", TypeCombo<row_t, row_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, mixed_optional_id_t", TypeCombo<row_t, row_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, mixed_optional_id_t",
+                  TypeCombo<row_t, row_t, sparse_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, mixed_optional_id_t",
+                  TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, invalid_id_t", TypeCombo<row_t, row_t, sparse_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, invalid_id_t",
+                  TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, invalid_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, invalid_id_t", TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, invalid_id_t", TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, invalid_id_t", TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, invalid_id_t", TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>);
+
+namespace power_grid_model_cpp {
+
 /*
 
 source_1 -- node_0 --load_2
@@ -42,26 +86,7 @@ invalid_id_t tests are for testing the error handling of the model when the id i
 optional_id_t tests are for testing the model when the id is not added to the update dataset.
 
 */
-TEST_CASE_TEMPLATE(
-    "API update id tests", T, TypeCombo<row_t, row_t, dense_t, with_id_t>, TypeCombo<row_t, row_t, sparse_t, with_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, with_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, with_id_t>,
-    TypeCombo<columnar_t, row_t, dense_t, with_id_t>, TypeCombo<columnar_t, row_t, sparse_t, with_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, with_id_t>, TypeCombo<row_t, columnar_t, sparse_t, with_id_t>,
-    TypeCombo<row_t, row_t, dense_t, optional_id_t>, TypeCombo<row_t, row_t, sparse_t, optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<columnar_t, row_t, dense_t, optional_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>, TypeCombo<row_t, columnar_t, dense_t, optional_id_t>,
-    TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<row_t, row_t, dense_t, invalid_id_t>,
-    TypeCombo<row_t, row_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, row_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>,
-    TypeCombo<row_t, row_t, dense_t, invalid_id_t>, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>,
-    TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
+TEST_CASE_TEMPLATE_DEFINE("API update id tests", T, test_update_id_tests_test_id) {
 
     using namespace std::string_literals;
     using input_type = typename T::input_type;
@@ -200,5 +225,41 @@ TEST_CASE_TEMPLATE(
         }
     }
 }
+
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, dense_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, sparse_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, columnar_t, dense_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, columnar_t, sparse_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, dense_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, sparse_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, dense_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, sparse_t, with_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, dense_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, sparse_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, columnar_t, dense_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, dense_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, dense_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, dense_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, dense_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, sparse_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id,
+                          TypeCombo<columnar_t, columnar_t, dense_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id,
+                          TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, dense_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_update_id_tests_test_id, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>);
 
 } // namespace power_grid_model_cpp

@@ -8,6 +8,11 @@
 
 #include <doctest/doctest.h>
 
+TYPE_TO_STRING_AS("NewtonRaphsonPFSolver<symmetric_t>",
+                  power_grid_model::math_solver::NewtonRaphsonPFSolver<power_grid_model::symmetric_t>);
+TYPE_TO_STRING_AS("NewtonRaphsonPFSolver<asymmetric_t>",
+                  power_grid_model::math_solver::NewtonRaphsonPFSolver<power_grid_model::asymmetric_t>);
+
 namespace power_grid_model::math_solver {
 namespace {
 using newton_raphson_pf::PFJacBlock;
