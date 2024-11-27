@@ -230,8 +230,11 @@ TEST_CASE("API Model") {
         Model model_dummy{std::move(model)};
         model = std::move(model_dummy);
     }
+    SUBCASE("Test Copyability") {
+        Model const model_dummy{std::move(model)};
+        model = Model{model_dummy};
+    }
     SUBCASE("Single power flow") {
-
         // Common checker used for all single power flow test subcases
         auto check_common_node_results = [&]() {
             node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
