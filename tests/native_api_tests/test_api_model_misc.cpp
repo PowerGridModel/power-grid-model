@@ -371,9 +371,7 @@ struct State {
 auto default_model(State const& state) -> Model { return Model{50.0, state.get_input_dataset()}; }
 } // namespace
 
-TEST_CASE("API Model - misc") {
-    State state;
-
+TEST_CASE("API Model - indexing + bad input") {
     SUBCASE("Test get indexer") {
         std::vector<ID> const node_id{1, 2, 3};
         std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
@@ -410,8 +408,6 @@ TEST_CASE("API Model - misc") {
         std::vector<ID> link_id{5};
         std::vector<ID> link_from_node{99};
         std::vector<ID> link_to_node{3};
-        std::vector<IntS> link_from_status{1};
-        std::vector<IntS> link_to_status{1};
 
         DatasetConst input_dataset{"input", 0, 1};
 
@@ -423,46 +419,82 @@ TEST_CASE("API Model - misc") {
         input_dataset.add_attribute_buffer("link", "id", link_id.data());
         input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
         input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
-        input_dataset.add_attribute_buffer("link", "from_status", link_from_status.data());
-        input_dataset.add_attribute_buffer("link", "to_status", link_to_status.data());
 
         auto construct_model = [&] { Model{50.0, input_dataset}; };
         CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
     }
 
-    // SUBCASE("Test id for wrong type") { // TODO(mgovers): needed; captured in Python test but not all flavors; maybe
-    //                                     // move to test_main_core_input.cpp
-    //     MainModel model2{50.0, meta_data::meta_data_gen::meta_data};
+    SUBCASE("Test id for wrong type") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
 
-    //     state.link_input[0].from_node = 4;
-    //     model2.add_component<Node>(state.node_input); // 1 2 3
-    //     model2.add_component<Line>(state.line_input); // 4
-    //     CHECK_THROWS_AS(model2.add_component<Link>(state.link_input), IDWrongType);
+        std::vector<ID> line_id{9};
+        std::vector<ID> line_from_node{1};
+        std::vector<ID> line_to_node{2};
 
-    //     // Fix link input, retry
-    //     state.link_input[0].from_node = 2;
-    //     model2.add_component<Link>(state.link_input); // 5
+        std::vector<ID> link_id{5};
+        std::vector<ID> link_from_node{2};
+        std::vector<ID> link_to_node{3};
 
-    //     model2.add_component<Source>(state.source_input);      // 6 10
-    //     model2.add_component<SymLoad>(state.sym_load_input);   // 7
-    //     model2.add_component<AsymLoad>(state.asym_load_input); // 8
-    //     model2.add_component<Shunt>(state.shunt_input);        // 9
+        std::vector<ID> sym_voltage_sensor_id{25};
+        std::vector<ID> sym_voltage_sensor_measured_object{1};
 
-    //     // voltage sensor with a measured id which is not a node (link)
-    //     state.sym_voltage_sensor_sensor_input[0].measured_object = 5;
-    //     CHECK_THROWS_AS(model2.add_component<SymVoltageSensor>(state.sym_voltage_sensor_sensor_input), IDWrongType);
+        std::vector<ID> sym_power_sensor_id{28};
+        std::vector<ID> sym_power_sensor_measured_object{3};
+        std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{MeasuredTerminalType::node};
 
-    //     // Test for all MeasuredTerminalType instances
-    //     using enum MeasuredTerminalType;
-    //     std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
+        DatasetConst input_dataset{"input", 0, 1};
 
-    //     // power sensor with terminal branch, with a measured id which is not a branch (node)
-    //     for (auto const& mt_type : mt_types) {
-    //         state.sym_power_sensor_input[0].measured_object = 1;
-    //         state.sym_power_sensor_input[0].measured_terminal_type = mt_type;
-    //         CHECK_THROWS_AS(model2.add_component<SymPowerSensor>(state.sym_power_sensor_input), IDWrongType);
-    //     }
-    // }
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        input_dataset.add_buffer("line", line_id.size(), line_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("line", "id", line_id.data());
+        input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
+        input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
+
+        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
+
+        input_dataset.add_buffer("sym_voltage_sensor", sym_voltage_sensor_id.size(), sym_voltage_sensor_id.size(),
+                                 nullptr, nullptr);
+        input_dataset.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
+        input_dataset.add_attribute_buffer("sym_voltage_sensor", "measured_object",
+                                           sym_voltage_sensor_measured_object.data());
+
+        input_dataset.add_buffer("sym_power_sensor", sym_power_sensor_id.size(), sym_power_sensor_id.size(), nullptr,
+                                 nullptr);
+        input_dataset.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
+        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_object",
+                                           sym_power_sensor_measured_object.data());
+        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
+                                           sym_power_sensor_measured_terminal_type.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset}; };
+
+        SUBCASE("Correct type") { CHECK_NOTHROW(construct_model()); }
+        SUBCASE("Wrong branch terminal node") {
+            link_from_node[0] = 9;
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 9\n", PowerGridRegularError);
+        }
+        SUBCASE("Wrong voltage sensor measured object") {
+            sym_voltage_sensor_measured_object[0] = 5;
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 5\n", PowerGridRegularError);
+        }
+        SUBCASE("Wrong power sensor measured object type") {
+            using enum MeasuredTerminalType;
+            std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
+
+            for (auto const& mt_type : mt_types) {
+                CAPTURE(mt_type);
+                sym_power_sensor_measured_terminal_type[0] = mt_type;
+                CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 3\n", PowerGridRegularError);
+            }
+        }
+    }
 }
 
 // TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update,
