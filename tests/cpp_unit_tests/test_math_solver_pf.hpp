@@ -4,58 +4,23 @@
 
 // In this unit test the powerflow solvers are tested
 
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/three_phase_tensor.hpp>
-#include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
+#include "test_math_solver_common.hpp"
 
-#include <doctest/doctest.h>
+#include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model/math_solver/sparse_lu_solver.hpp>
+#include <power_grid_model/math_solver/y_bus.hpp>
 
 namespace power_grid_model {
-template <symmetry_tag sym> inline void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (is_symmetric_v<sym>) {
-        CHECK(cabs((x) - (y)) < (tolerance));
+template <typename SolverType>
+inline auto run_power_flow(SolverType& solver, YBus<typename SolverType::sym> const& y_bus,
+                           PowerFlowInput<typename SolverType::sym> const& input, double err_tol, Idx max_iter,
+                           CalculationInfo& calculation_info) {
+    if constexpr (SolverType::is_iterative) {
+        return solver.run_power_flow(y_bus, input, err_tol, max_iter, calculation_info);
     } else {
-        CHECK((cabs((x) - (y)) < (tolerance)).all());
+        return solver.run_power_flow(y_bus, input, calculation_info);
     }
-}
-
-template <symmetry_tag sym> inline void check_close(auto const& x, auto const& y) {
-    check_close<sym>(x, y, numerical_tolerance);
-}
-inline void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    check_close<symmetric_t>(x, y, tolerance);
-}
-inline void check_close(auto const& x, auto const& y) { check_close<symmetric_t>(x, y); }
-
-template <symmetry_tag sym>
-inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> const& output_ref,
-                          bool normalize_phase = false, double tolerance = numerical_tolerance) {
-    DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
-    for (size_t i = 0; i != output.u.size(); ++i) {
-        check_close<sym>(output.u[i], output_ref.u[i] * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.bus_injection.size(); ++i) {
-        check_close<sym>(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
-    }
-    for (size_t i = 0; i != output.branch.size(); ++i) {
-        check_close<sym>(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
-        check_close<sym>(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
-        check_close<sym>(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
-        check_close<sym>(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.source.size(); ++i) {
-        check_close<sym>(output.source[i].s, output_ref.source[i].s, tolerance);
-        check_close<sym>(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.load_gen.size(); ++i) {
-        check_close<sym>(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
-        check_close<sym>(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.shunt.size(); ++i) {
-        check_close<sym>(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
-        check_close<sym>(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
-    }
-}
+};
 
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_pf_id) {
     /*
@@ -75,15 +40,6 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     u2 = 0.90 -37deg
     */
     using sym = SolverType::sym;
-
-    auto const run = [](SolverType& solver, PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                        CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-        if constexpr (SolverType::is_iterative) {
-            return solver.run_power_flow(y_bus, input, err_tol, max_iter, calculation_info);
-        } else {
-            return solver.run_power_flow(y_bus, input, calculation_info);
-        }
-    };
 
     // build topo
     double const shift_val = deg_30;
@@ -313,7 +269,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
 
         SolverType solver{y_bus, topo_ptr};
         CalculationInfo info;
-        SolverOutput<sym> output = run(solver, pf_input, error_tolerance, num_iter, info, y_bus);
+        SolverOutput<sym> output = run_power_flow(solver, y_bus, pf_input, error_tolerance, num_iter, info);
         assert_output(output, output_ref, false, result_tolerance);
     }
 
@@ -322,7 +278,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         CalculationInfo info;
 
         // const z
-        SolverOutput<sym> const output = run(solver, pf_input_z, 1e-12, 20, info, y_bus);
+        SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input_z, 1e-12, 20, info);
         assert_output(output, output_ref_z); // for const z, all methods (including linear) should be accurate
     }
 
@@ -334,14 +290,14 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
 
             SolverType solver{y_bus, topo_ptr};
             CalculationInfo info;
-            SolverOutput<sym> const output = run(solver, pf_input, error_tolerance, 1, info, y_bus);
+            SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, error_tolerance, 1, info);
             assert_output(output, output_ref, false, result_tolerance);
         }
         SUBCASE("Test not converge") {
             SolverType solver{y_bus, topo_ptr};
             CalculationInfo info;
             pf_input.s_injection[6] = ComplexValue<sym>{1e6};
-            CHECK_THROWS_AS(run(solver, pf_input, 1e-12, 20, info, y_bus), IterationDiverge);
+            CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, info), IterationDiverge);
         }
     }
 
@@ -353,7 +309,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         SolverType solver{y_bus, topo_ptr};
         CalculationInfo info;
 
-        CHECK_THROWS_AS(run(solver, pf_input, 1e-12, 20, info, y_bus), SparseMatrixError);
+        CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, info), SparseMatrixError);
     }
 }
 

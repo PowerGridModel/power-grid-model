@@ -4,63 +4,17 @@
 
 // In this unit test the powerflow solvers are tested
 
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/three_phase_tensor.hpp>
-#include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
+#include "test_math_solver_common.hpp"
 
-#include <doctest/doctest.h>
+#include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model/math_solver/sparse_lu_solver.hpp>
+#include <power_grid_model/math_solver/y_bus.hpp>
 
 namespace power_grid_model {
-template <symmetry_tag sym> inline void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (is_symmetric_v<sym>) {
-        CHECK(cabs((x) - (y)) < (tolerance));
-    } else {
-        CHECK((cabs((x) - (y)) < (tolerance)).all());
-    }
-}
-
-template <symmetry_tag sym> inline void check_close(auto const& x, auto const& y) {
-    check_close<sym>(x, y, numerical_tolerance);
-}
-inline void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    check_close<symmetric_t>(x, y, tolerance);
-}
-inline void check_close(auto const& x, auto const& y) { check_close<symmetric_t>(x, y); }
-
-template <symmetry_tag sym>
-inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> const& output_ref,
-                          bool normalize_phase = false, double tolerance = numerical_tolerance) {
-    DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
-    for (size_t i = 0; i != output.u.size(); ++i) {
-        check_close<sym>(output.u[i], output_ref.u[i] * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.bus_injection.size(); ++i) {
-        check_close<sym>(output.bus_injection[i], output_ref.bus_injection[i], tolerance);
-    }
-    for (size_t i = 0; i != output.branch.size(); ++i) {
-        check_close<sym>(output.branch[i].s_f, output_ref.branch[i].s_f, tolerance);
-        check_close<sym>(output.branch[i].s_t, output_ref.branch[i].s_t, tolerance);
-        check_close<sym>(output.branch[i].i_f, output_ref.branch[i].i_f * phase_offset, tolerance);
-        check_close<sym>(output.branch[i].i_t, output_ref.branch[i].i_t * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.source.size(); ++i) {
-        check_close<sym>(output.source[i].s, output_ref.source[i].s, tolerance);
-        check_close<sym>(output.source[i].i, output_ref.source[i].i * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.load_gen.size(); ++i) {
-        check_close<sym>(output.load_gen[i].s, output_ref.load_gen[i].s, tolerance);
-        check_close<sym>(output.load_gen[i].i, output_ref.load_gen[i].i * phase_offset, tolerance);
-    }
-    for (size_t i = 0; i != output.shunt.size(); ++i) {
-        check_close<sym>(output.shunt[i].s, output_ref.shunt[i].s, tolerance);
-        check_close<sym>(output.shunt[i].i, output_ref.shunt[i].i * phase_offset, tolerance);
-    }
-}
-
 template <typename SolverType>
-inline auto run_state_estimation(SolverType& solver, StateEstimationInput<typename SolverType::sym> const& input,
-                                 double err_tol, Idx max_iter, CalculationInfo& calculation_info,
-                                 YBus<typename SolverType::sym> const& y_bus) {
+inline auto run_state_estimation(SolverType& solver, YBus<typename SolverType::sym> const& y_bus,
+                                 StateEstimationInput<typename SolverType::sym> const& input, double err_tol,
+                                 Idx max_iter, CalculationInfo& calculation_info) {
     static_assert(SolverType::is_iterative); // otherwise, call different version
     return solver.run_state_estimation(y_bus, input, err_tol, max_iter, calculation_info);
 };
@@ -377,7 +331,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         CalculationInfo info;
         SolverOutput<sym> output;
 
-        output = run_state_estimation(solver, se_input_angle, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, y_bus, se_input_angle, 1e-10, 20, info);
         assert_output(output, output_ref);
     }
 
@@ -386,7 +340,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         CalculationInfo info;
         SolverOutput<sym> output;
 
-        output = run_state_estimation(solver, se_input_no_angle, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, y_bus, se_input_no_angle, 1e-10, 20, info);
         assert_output(output, output_ref, true);
     }
 
@@ -395,7 +349,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         CalculationInfo info;
         SolverOutput<sym> output;
 
-        output = run_state_estimation(solver, se_input_angle_const_z, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, y_bus, se_input_angle_const_z, 1e-10, 20, info);
         assert_output(output, output_ref_z);
     }
 
@@ -407,7 +361,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         branch_from_power.q_variance = RealValue<sym>{0.75};
         SolverOutput<sym> output;
 
-        output = run_state_estimation(solver, se_input_angle, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, y_bus, se_input_angle, 1e-10, 20, info);
         assert_output(output, output_ref);
     }
 }
@@ -451,7 +405,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
     CalculationInfo info;
     SolverOutput<symmetric_t> output;
 
-    output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+    output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
     // check both voltage
     check_close(output.u[0], 1.0);
@@ -517,7 +471,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
 
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
         CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -544,7 +498,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
@@ -573,7 +527,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -602,7 +556,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -631,7 +585,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
@@ -659,7 +613,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
@@ -690,7 +644,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
@@ -720,7 +674,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+        output = run_state_estimation(solver, y_bus_sym, se_input, 1e-10, 20, info);
 
         // the different aggregation of the load gen's P and Q measurements cause differences compared to the case with
         // identical variances

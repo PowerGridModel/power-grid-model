@@ -2,11 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/three_phase_tensor.hpp>
-#include <power_grid_model/math_solver/short_circuit_solver.hpp>
+#include "test_math_solver_common.hpp"
 
-#include <doctest/doctest.h>
+#include <power_grid_model/math_solver/short_circuit_solver.hpp>
 
 namespace power_grid_model::math_solver {
 
@@ -16,20 +14,6 @@ using FaultType::single_phase_to_ground;
 using FaultType::three_phase;
 using FaultType::two_phase;
 using FaultType::two_phase_to_ground;
-
-template <symmetry_tag sym> void check_close(auto const& x, auto const& y, auto const& tolerance) {
-    if constexpr (is_symmetric_v<sym>) {
-        CHECK(cabs((x) - (y)) < (tolerance));
-    } else {
-        CHECK((cabs((x) - (y)) < (tolerance)).all());
-    }
-}
-
-template <symmetry_tag sym> void check_close(auto const& x, auto const& y) {
-    check_close<sym>(x, y, numerical_tolerance);
-}
-void check_close(auto const& x, auto const& y, auto const& tolerance) { check_close<symmetric_t>(x, y, tolerance); }
-void check_close(auto const& x, auto const& y) { check_close<symmetric_t>(x, y); }
 
 template <symmetry_tag sym>
 void assert_sc_output(ShortCircuitSolverOutput<sym> const& output, ShortCircuitSolverOutput<sym> const& output_ref,
