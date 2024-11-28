@@ -756,7 +756,7 @@ TEST_CASE("API Model") {
             CAPTURE(calculation_type);
             auto const& supported_type_methods = supported_methods.at(calculation_type);
 
-            DatasetMutable output_dataset{output_dataset_types.at(calculation_type), 0, 1};
+            DatasetMutable const output_dataset{output_dataset_types.at(calculation_type), 0, 1};
 
             for (auto calculation_method : all_methods) {
                 CAPTURE(calculation_method);
