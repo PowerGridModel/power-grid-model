@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <array>
 #include <exception>
 #include <limits>
@@ -755,7 +756,7 @@ TEST_CASE("API Model") {
             CAPTURE(calculation_type);
             auto const& supported_type_methods = supported_methods.at(calculation_type);
 
-            DatasetMutable single_output_dataset{output_dataset_types.at(calculation_type).c_str(), 0, 1};
+            DatasetMutable output_dataset{output_dataset_types.at(calculation_type), 0, 1};
 
             for (auto calculation_method : all_methods) {
                 CAPTURE(calculation_method);
@@ -763,11 +764,11 @@ TEST_CASE("API Model") {
                 options.set_calculation_method(calculation_method);
 
                 if (std::ranges::find(supported_type_methods, calculation_method) == std::end(supported_type_methods)) {
-                    CHECK_THROWS_WITH_AS(model.calculate(options, single_output_dataset),
-                                         invalid_calculation_method_pattern, PowerGridRegularError);
+                    CHECK_THROWS_WITH_AS(model.calculate(options, output_dataset), invalid_calculation_method_pattern,
+                                         PowerGridRegularError);
                 } else {
                     try {
-                        model.calculate(options, single_output_dataset);
+                        model.calculate(options, output_dataset);
                     } catch (std::exception const& e) {
                         CHECK(e.what() != doctest::Contains(invalid_calculation_method_pattern));
                     }

@@ -507,7 +507,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
 
     const ComplexValue<symmetric_t> load_gen_s =
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<symmetric_t>{},
-                        [](auto const& a, auto const& b) { return a + b.s; });
+                        [](auto const& first, auto const& second) { return first + second.s; });
 
     CHECK(output.bus_injection[0] == output.branch[0].s_f);
     CHECK(output.bus_injection[0] == output.source[0].s);

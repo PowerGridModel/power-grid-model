@@ -80,6 +80,8 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
 
     // build topo
     auto topo() const {
+        using enum LoadGenType;
+
         MathModelTopology result;
         result.slack_bus = 0;
         result.phase_shift = {0.0, 0.0, -shift_val};
@@ -88,9 +90,8 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
         result.shunts_per_bus = {from_sparse, {0, 0, 0, 1}};
         result.load_gens_per_bus = {from_sparse, {0, 3, 6, 7}};
         result.load_gen_type = {
-            LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
-            LoadGenType::const_pq, LoadGenType::const_i, LoadGenType::const_y,
-            LoadGenType::const_pq // not connected
+            const_pq, const_i, const_y, const_pq, const_i, const_y,
+            const_pq // not connected
         };
         result.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
         result.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
