@@ -373,30 +373,62 @@ auto default_model(State const& state) -> Model { return Model{50.0, state.get_i
 
 TEST_CASE("API Model - misc") {
     State state;
-    auto model = default_model(state);
 
-    SUBCASE("Test get indexer") { // TODO(mgovers): needed
-        std::vector<ID> const node_id{2, 1, 3, 2};
+    SUBCASE("Test get indexer") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+
+        DatasetConst input_dataset{"input", 0, 1};
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        auto model = Model{50.0, input_dataset};
+
+        std::vector<ID> const ids_to_index{2, 1, 3, 2};
         std::vector<Idx> const expected_indexer{1, 0, 2, 1};
-        std::vector<Idx> indexer(node_id.size());
-        model.get_indexer("node", node_id.size(), node_id.data(), indexer.data());
+        std::vector<Idx> indexer(ids_to_index.size());
+        model.get_indexer("node", ids_to_index.size(), ids_to_index.data(), indexer.data());
         CHECK(indexer == expected_indexer);
     }
 
-    // SUBCASE("Test duplicated id") { // TODO(mgovers): needed; captured in Python test; maybe move to
-    //                                 // test_main_core_input.cpp
-    //     MainModel model2{50.0, meta_data::meta_data_gen::meta_data};
-    //     state.node_input[1].id = 1;
-    //     CHECK_THROWS_AS(model2.add_component<Node>(state.node_input), ConflictID);
-    // }
+    SUBCASE("Test duplicated id") {
+        std::vector<ID> node_id{1, 1, 3};
+        DatasetConst input_dataset{"input", 0, 1};
 
-    // SUBCASE("Test no existing id") { // TODO(mgovers): needed; captured in Python test; maybe move to
-    //                                  // test_main_core_input.cpp
-    //     MainModel model2{50.0, meta_data::meta_data_gen::meta_data};
-    //     state.line_input[0].from_node = 100;
-    //     model2.add_component<Node>(state.node_input);
-    //     CHECK_THROWS_AS(model2.add_component<Line>(state.line_input), IDNotFound);
-    // }
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
+    }
+
+    SUBCASE("Test non-existing id") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+
+        std::vector<ID> link_id{5};
+        std::vector<ID> link_from_node{99};
+        std::vector<ID> link_to_node{3};
+        std::vector<IntS> link_from_status{1};
+        std::vector<IntS> link_to_status{1};
+
+        DatasetConst input_dataset{"input", 0, 1};
+
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
+        input_dataset.add_attribute_buffer("link", "from_status", link_from_status.data());
+        input_dataset.add_attribute_buffer("link", "to_status", link_to_status.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
+    }
 
     // SUBCASE("Test id for wrong type") { // TODO(mgovers): needed; captured in Python test but not all flavors; maybe
     //                                     // move to test_main_core_input.cpp
