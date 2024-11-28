@@ -57,6 +57,14 @@ inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> con
     }
 }
 
+template <typename SolverType>
+inline auto run_state_estimation(SolverType& solver, StateEstimationInput<typename SolverType::sym> const& input,
+                                 double err_tol, Idx max_iter, CalculationInfo& calculation_info,
+                                 YBus<typename SolverType::sym> const& y_bus) {
+    static_assert(SolverType::is_iterative); // otherwise, call different version
+    return solver.run_state_estimation(y_bus, input, err_tol, max_iter, calculation_info);
+};
+
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_se_id) {
     /*
     network, v means voltage measured, p means power measured, pp means double measured
@@ -75,12 +83,6 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
     u2 = 0.90 -37deg
     */
     using sym = SolverType::sym;
-
-    auto const run = [](SolverType& solver, StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
-                        CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-        static_assert(SolverType::is_iterative); // otherwise, call different version
-        return solver.run_state_estimation(y_bus, input, err_tol, max_iter, calculation_info);
-    };
 
     // build topo
     double const shift_val = deg_30;
@@ -375,7 +377,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         CalculationInfo info;
         SolverOutput<sym> output;
 
-        output = run(solver, se_input_angle, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, se_input_angle, 1e-10, 20, info, y_bus);
         assert_output(output, output_ref);
     }
 
@@ -384,7 +386,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         CalculationInfo info;
         SolverOutput<sym> output;
 
-        output = run(solver, se_input_no_angle, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, se_input_no_angle, 1e-10, 20, info, y_bus);
         assert_output(output, output_ref, true);
     }
 
@@ -393,7 +395,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         CalculationInfo info;
         SolverOutput<sym> output;
 
-        output = run(solver, se_input_angle_const_z, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, se_input_angle_const_z, 1e-10, 20, info, y_bus);
         assert_output(output, output_ref_z);
     }
 
@@ -405,9 +407,336 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         branch_from_power.q_variance = RealValue<sym>{0.75};
         SolverOutput<sym> output;
 
-        output = run(solver, se_input_angle, 1e-10, 20, info, y_bus);
+        output = run_state_estimation(solver, se_input_angle, 1e-10, 20, info, y_bus);
         assert_output(output, output_ref);
     }
+}
+
+TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverType,
+                          test_math_solver_se_zero_variance_id) {
+    /*
+    network, v means voltage measured
+    variance always 1.0
+
+    bus_1 --branch0-- bus_0(v) --yref-- source
+    bus_1 = bus_0 = 1.0
+    */
+    static_assert(is_symmetric_v<typename SolverType::sym>); // asymmetric is not yet implemented
+
+    MathModelTopology topo;
+    topo.slack_bus = 1;
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}};
+    topo.sources_per_bus = {from_sparse, {0, 0, 1}};
+    topo.shunts_per_bus = {from_sparse, {0, 0, 0}};
+    topo.load_gens_per_bus = {from_sparse, {0, 0, 0}};
+    topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 1}};
+    topo.power_sensors_per_bus = {from_sparse, {0, 0, 0}};
+    topo.power_sensors_per_source = {from_sparse, {0, 0}};
+    topo.power_sensors_per_load_gen = {from_sparse, {0}};
+    topo.power_sensors_per_shunt = {from_sparse, {0}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
+    topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
+    MathModelParam<symmetric_t> param;
+    param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
+    auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+    auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+    YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+
+    StateEstimationInput<symmetric_t> se_input;
+    se_input.source_status = {1};
+    se_input.measured_voltage = {{1.0, 1.0}};
+
+    SolverType solver{y_bus_sym, topo_ptr};
+    CalculationInfo info;
+    SolverOutput<symmetric_t> output;
+
+    output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+    // check both voltage
+    check_close(output.u[0], 1.0);
+    check_close(output.u[1], 1.0);
+}
+
+TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, test_math_solver_se_measurements_id) {
+    /*
+    network
+
+     bus_0 --branch_0-- bus_1
+        |                    |
+    source_0               load_0
+
+    */
+    static_assert(is_symmetric_v<typename SolverType::sym>); // asymmetric is not yet implemented
+
+    MathModelTopology topo;
+    topo.slack_bus = 0;
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}};
+    topo.sources_per_bus = {from_sparse, {0, 1, 1}};
+    topo.shunts_per_bus = {from_sparse, {0, 0, 0}};
+    topo.load_gens_per_bus = {from_sparse, {0, 0, 1}};
+
+    topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
+    topo.power_sensors_per_bus = {from_sparse, {0, 0, 0}};
+    topo.power_sensors_per_source = {from_sparse, {0, 0}};
+    topo.power_sensors_per_load_gen = {from_sparse, {0, 0}};
+    topo.power_sensors_per_shunt = {from_sparse, {0}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
+    topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
+
+    MathModelParam<symmetric_t> param;
+    param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
+
+    StateEstimationInput<symmetric_t> se_input;
+    se_input.source_status = {1};
+    se_input.load_gen_status = {1};
+    se_input.measured_voltage = {{1.0, 0.1}};
+
+    CalculationInfo info;
+    SolverOutput<symmetric_t> output;
+
+    SUBCASE("Source and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) -(p)-branch_0-- bus_1
+            |                       |
+        source_0(p)               load_0
+
+        */
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
+
+        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
+        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+        CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+    }
+
+    SUBCASE("Load and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-(p)- bus_1
+           |                        |
+        source_0                 load_0(p)
+
+        */
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
+
+        se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
+        se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-1.95));
+    }
+
+    SUBCASE("Node injection and source") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1}};
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
+
+        se_input.measured_bus_injection = {{2.2, 0.1, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
+        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
+    SUBCASE("Node injection, source and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(vp) -(p)-branch_0-- bus_1
+            |                        |
+        source_0(p)                load_0
+
+        */
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1}};
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
+
+        se_input.measured_bus_injection = {{2.2, 0.1, 0.1}};
+        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
+        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
+        CHECK(real(output.source[0].s) == doctest::Approx(2.0));
+        CHECK(real(output.branch[0].s_f) == doctest::Approx(2.0));
+    }
+
+    SUBCASE("Node injection, load and branch") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-(p)- bus_1(p)
+           |                        |
+        source_0                 load_0(p)
+
+        */
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
+
+        se_input.measured_bus_injection = {{-2.2, 0.1, 0.1}};
+        se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
+        se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
+    }
+
+    SUBCASE("Load and gen") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+
+        */
+
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-3.0, 0.05, 0.05}, {1.0, 0.05, 0.05}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
+        CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-3.0));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(1.0));
+    }
+
+    SUBCASE("Node injection, load and gen") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1(p)
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+        */
+
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.05, 0.05}};
+        se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
+        CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
+        CHECK(real(output.load_gen[1].s) == doctest::Approx(0.85));
+    }
+
+    SUBCASE("Node injection, load and gen with different variances") {
+        /*
+        network, v means voltage measured, p means power measured
+
+         bus_0(v) --branch_0-- bus_1(p)
+           |                    /   \
+        source_0          load_0(p)  gen_1(p)
+        */
+
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 2}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
+
+        se_input.load_gen_status = {1, 1};
+        se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.025, 0.075}};
+        se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        output = run_state_estimation(solver, se_input, 1e-10, 20, info, y_bus_sym);
+
+        // the different aggregation of the load gen's P and Q measurements cause differences compared to the case with
+        // identical variances
+        CHECK(real(output.bus_injection[1]) > doctest::Approx(-1.0));
+        CHECK(real(output.load_gen[0].s) < doctest::Approx(-1.85));
+        CHECK(real(output.load_gen[1].s) > doctest::Approx(0.85));
+    }
+
+    const ComplexValue<symmetric_t> load_gen_s =
+        std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<symmetric_t>{},
+                        [](auto const& a, auto const& b) { return a + b.s; });
+
+    CHECK(output.bus_injection[0] == output.branch[0].s_f);
+    CHECK(output.bus_injection[0] == output.source[0].s);
+    CHECK(output.bus_injection[1] == output.branch[0].s_t);
+    CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
 }
 
 } // namespace power_grid_model

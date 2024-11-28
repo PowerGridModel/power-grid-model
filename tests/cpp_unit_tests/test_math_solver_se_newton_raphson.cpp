@@ -16,4 +16,6 @@ TYPE_TO_STRING_AS("NewtonRaphsonSESolver<asymmetric_t>",
 namespace power_grid_model::math_solver {
 TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_id, NewtonRaphsonSESolver<symmetric_t>);
 TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_id, NewtonRaphsonSESolver<asymmetric_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_zero_variance_id, NewtonRaphsonSESolver<symmetric_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_measurements_id, NewtonRaphsonSESolver<symmetric_t>);
 } // namespace power_grid_model::math_solver

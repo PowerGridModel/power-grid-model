@@ -16,4 +16,6 @@ TYPE_TO_STRING_AS("IterativeLinearSESolver<asymmetric_t>",
 namespace power_grid_model::math_solver {
 TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_id, IterativeLinearSESolver<symmetric_t>);
 TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_id, IterativeLinearSESolver<asymmetric_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_zero_variance_id, IterativeLinearSESolver<symmetric_t>);
+TEST_CASE_TEMPLATE_INVOKE(test_math_solver_se_measurements_id, IterativeLinearSESolver<symmetric_t>);
 } // namespace power_grid_model::math_solver
