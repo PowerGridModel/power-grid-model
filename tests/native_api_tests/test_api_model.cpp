@@ -11,6 +11,7 @@
 #include <array>
 #include <exception>
 #include <limits>
+#include <map>
 #include <string>
 
 /*
@@ -728,6 +729,49 @@ TEST_CASE("API Model") {
             SUBCASE("Row-based update dataset") {
                 CHECK_THROWS_AS(col_model.calculate(opt, output_batch_dataset, update_dataset_row),
                                 PowerGridBatchError);
+            }
+        }
+    }
+
+    SUBCASE("Wrong calculation methods") {
+        using namespace std::string_view_literals;
+
+        constexpr auto invalid_calculation_method_pattern = "The calculation method is invalid for this calculation!";
+        constexpr auto all_types = std::array{PGM_power_flow, PGM_state_estimation, PGM_short_circuit};
+        constexpr auto all_methods =
+            std::array{PGM_default_method,    PGM_linear,           PGM_newton_raphson, PGM_linear_current,
+                       PGM_iterative_current, PGM_iterative_linear, PGM_iec60909};
+
+        auto supported_methods = std::map<PGM_CalculationType, std::vector<PGM_CalculationMethod>>{
+            {PGM_power_flow, std::vector{PGM_default_method, PGM_newton_raphson, PGM_linear, PGM_linear_current,
+                                         PGM_iterative_current}},
+            {PGM_state_estimation, std::vector{PGM_default_method, PGM_iterative_linear, PGM_newton_raphson}},
+            {PGM_short_circuit, std::vector{PGM_default_method, PGM_iec60909}}};
+
+        auto output_dataset_types = std::map<PGM_CalculationType, std::string>{
+            {PGM_power_flow, "sym_output"s}, {PGM_state_estimation, "sym_output"s}, {PGM_short_circuit, "sc_output"s}};
+
+        for (auto calculation_type : all_types) {
+            CAPTURE(calculation_type);
+            auto const& supported_type_methods = supported_methods.at(calculation_type);
+
+            DatasetMutable single_output_dataset{output_dataset_types.at(calculation_type).c_str(), 0, 1};
+
+            for (auto calculation_method : all_methods) {
+                CAPTURE(calculation_method);
+                options.set_calculation_type(calculation_type);
+                options.set_calculation_method(calculation_method);
+
+                if (std::ranges::find(supported_type_methods, calculation_method) == std::end(supported_type_methods)) {
+                    CHECK_THROWS_WITH_AS(model.calculate(options, single_output_dataset),
+                                         invalid_calculation_method_pattern, PowerGridRegularError);
+                } else {
+                    try {
+                        model.calculate(options, single_output_dataset);
+                    } catch (std::exception const& e) {
+                        CHECK(e.what() != doctest::Contains(invalid_calculation_method_pattern));
+                    }
+                }
             }
         }
     }
