@@ -13,6 +13,10 @@
 #include <algorithm>
 #include <numeric>
 
+TYPE_TO_STRING_AS("ConstDataset", power_grid_model::ConstDataset);
+TYPE_TO_STRING_AS("MutableDataset", power_grid_model::MutableDataset);
+TYPE_TO_STRING_AS("WritableDataset", power_grid_model::WritableDataset);
+
 namespace power_grid_model::meta_data {
 
 namespace {
