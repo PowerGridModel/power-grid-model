@@ -497,17 +497,6 @@ TEST_CASE("API Model - indexing + bad input") {
     }
 }
 
-// TEST_CASE_TEMPLATE("Test main model - unknown id", settings, regular_update,
-//                    cached_update) { // TODO(mgovers): we need this test
-//     State const state;
-//     auto model = default_model(state);
-
-//     std::vector<SourceUpdate> const source_update2{SourceUpdate{100, true, nan, nan}};
-//     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-//     update_data.add_buffer("source", source_update2.size(), source_update2.size(), nullptr, source_update2.data());
-//     CHECK_THROWS_AS((model.update_components<typename settings::update_type>(update_data)), IDNotFound);
-// }
-
 // TEST_CASE_TEMPLATE(
 //     "Test main model - update only load", settings, regular_update,
 //     cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation

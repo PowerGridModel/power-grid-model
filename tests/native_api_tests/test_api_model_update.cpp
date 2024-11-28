@@ -230,7 +230,8 @@ TEST_CASE_TEMPLATE(
 
     SUBCASE("Permanent update") {
         if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
-            CHECK_THROWS_AS(model.update(update_dataset), PowerGridError);
+            CHECK_THROWS_WITH_AS(model.update(update_dataset), doctest::Contains("The id cannot be found"),
+                                 PowerGridError);
         } else {
             CHECK_NOTHROW(model.update(update_dataset));
         }
