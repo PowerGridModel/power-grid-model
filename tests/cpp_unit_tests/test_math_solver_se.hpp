@@ -57,7 +57,7 @@ inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> con
     }
 }
 
-TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_pf_id) {
+TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_se_id) {
     /*
     network, v means voltage measured, p means power measured, pp means double measured
     variance always 1.0
@@ -76,13 +76,10 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     */
     using sym = SolverType::sym;
 
-    auto const run = [](SolverType& solver, PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
+    auto const run = [](SolverType& solver, StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                         CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-        if constexpr (SolverType::is_iterative) {
-            return solver.run_power_flow(y_bus, input, err_tol, max_iter, calculation_info);
-        } else {
-            return solver.run_power_flow(y_bus, input, calculation_info);
-        }
+        static_assert(SolverType::is_iterative); // otherwise, call different version
+        return solver.run_state_estimation(y_bus, input, err_tol, max_iter, calculation_info);
     };
 
     // build topo
@@ -138,29 +135,6 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     // injection of shunt0 at bus2
     DoubleComplex const i2_shunt_inj = branch1_i_t;
     DoubleComplex const ys = -i2_shunt_inj / u2;
-
-    PowerFlowInput<sym> pf_input = [&] {
-        PowerFlowInput<sym> result;
-        ComplexValueVector<symmetric_t> sym_s_injection = {s0_load_inj / 3.0,
-                                                           s0_load_inj / 3.0 / v0,
-                                                           s0_load_inj / 3.0 / v0 / v0,
-                                                           s1_load_inj / 3.0,
-                                                           s1_load_inj / 3.0 / v1,
-                                                           s1_load_inj / 3.0 / v1 / v1,
-                                                           0.0};
-
-        result.source = {vref};
-        if constexpr (is_symmetric_v<sym>) {
-            result.s_injection = std::move(sym_s_injection);
-        } else {
-            result.s_injection.resize(sym_s_injection.size());
-            for (size_t i = 0; i < sym_s_injection.size(); i++) {
-                result.s_injection[i] = RealValue<asymmetric_t>{real(sym_s_injection[i])} +
-                                        1.0i * RealValue<asymmetric_t>{imag(sym_s_injection[i])};
-            }
-        }
-        return result;
-    }();
 
     // output
     auto const get_sym_output_ref = [&] {
@@ -240,17 +214,6 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     }();
 
     // const z
-    PowerFlowInput<sym> pf_input_z = [&] {
-        PowerFlowInput<sym> result{pf_input};
-        for (size_t i = 0; i < 6; i++) {
-            if (i % 3 == 2) {
-                result.s_injection[i] *= 3.0;
-            } else {
-                result.s_injection[i] = ComplexValue<sym>{0.0};
-            }
-        }
-        return result;
-    }();
     SolverOutput<sym> output_ref_z = [&] {
         SolverOutput<sym> result{output_ref};
         for (size_t i = 0; i < 6; i++) {
@@ -305,55 +268,145 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     YBus<sym> y_bus{topo_ptr, param_ptr};
 
-    SUBCASE("Test pf solver") {
-        constexpr auto error_tolerance{1e-12};
-        constexpr auto num_iter{20};
-        constexpr auto result_tolerance =
-            SolverType::is_iterative ? 1e-12 : 0.15; // linear methods may be very inaccurate
+    // state estimation input
+    // symmetric, with u angle
+    StateEstimationInput<sym> se_input_angle = [&] {
+        StateEstimationInput<sym> result;
+        if constexpr (is_symmetric_v<sym>) {
+            result.shunt_status = {1};
+            result.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
+            result.source_status = {1};
+            result.measured_voltage = {{output_ref.u[0], 1.0}, {output_ref.u[2], 1.0}, {output_ref.u[2], 1.0}};
+            result.measured_bus_injection = {{output_ref.source[0].s + output_ref.load_gen[0].s +
+                                                  output_ref.load_gen[1].s + output_ref.load_gen[2].s,
+                                              0.5, 0.5}};
+            result.measured_source_power = {{output_ref.source[0].s, 0.5, 0.5}, {output_ref.source[0].s, 0.5, 0.5}};
+            result.measured_load_gen_power = {
+                {output_ref.load_gen[3].s, 0.5, 0.5},
+                {output_ref.load_gen[4].s, 0.5, 0.5},
+                {output_ref.load_gen[5].s, 0.5, 0.5},
+                {500.0, 0.5, 0.5},
+            };
+            result.measured_shunt_power = {
+                {output_ref.shunt[0].s, 0.5, 0.5},
+            };
 
-        SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
-        SolverOutput<sym> output = run(solver, pf_input, error_tolerance, num_iter, info, y_bus);
-        assert_output(output, output_ref, false, result_tolerance);
-    }
+            result.measured_branch_from_power = {
+                {output_ref.branch[0].s_f, 0.5, 0.5},
+            };
+            result.measured_branch_to_power = {
+                {output_ref.branch[0].s_t, 0.5, 0.5},
+                {output_ref.branch[0].s_t, 0.5, 0.5},
+                {output_ref.branch[1].s_t, 0.5, 0.5},
+            };
+        } else {
+            result.shunt_status = {1};
+            result.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
+            result.source_status = {1};
+            result.measured_voltage = {{ComplexValue<asymmetric_t>{output_ref.u[0]}, 1.0},
+                                       {ComplexValue<asymmetric_t>{output_ref.u[2]}, 1.0},
+                                       {ComplexValue<asymmetric_t>{output_ref.u[2]}, 1.0}};
+            result.measured_bus_injection = {{(output_ref.source[0].s + output_ref.load_gen[0].s +
+                                               output_ref.load_gen[1].s + output_ref.load_gen[2].s) *
+                                                  RealValue<asymmetric_t>{1.0},
+                                              RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
+            result.measured_source_power = {{output_ref.source[0].s * RealValue<asymmetric_t>{1.0},
+                                             RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
+                                            {output_ref.source[0].s * RealValue<asymmetric_t>{1.0},
+                                             RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
+            result.measured_load_gen_power = {
+                {output_ref.load_gen[3].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+                {output_ref.load_gen[4].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+                {output_ref.load_gen[5].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+                {500.0 * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
+            };
+            result.measured_shunt_power = {
+                {output_ref.shunt[0].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+            };
 
-    SUBCASE("Test const z pf solver") {
-        SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
-
-        // const z
-        SolverOutput<sym> const output = run(solver, pf_input_z, 1e-12, 20, info, y_bus);
-        assert_output(output, output_ref_z); // for const z, all methods (including linear) should be accurate
-    }
-
-    if constexpr (SolverType::is_iterative) {
-        SUBCASE("Test pf solver with single iteration") {
-            // low precision
-            constexpr auto error_tolerance{std::numeric_limits<double>::infinity()};
-            constexpr auto result_tolerance{0.15};
-
-            SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
-            SolverOutput<sym> const output = run(solver, pf_input, error_tolerance, 1, info, y_bus);
-            assert_output(output, output_ref, false, result_tolerance);
+            result.measured_branch_from_power = {
+                {output_ref.branch[0].s_f * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+            };
+            result.measured_branch_to_power = {
+                {output_ref.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+                {output_ref.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+                {output_ref.branch[1].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
+                 RealValue<asymmetric_t>{0.5}},
+            };
         }
-        SUBCASE("Test not converge") {
-            SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
-            pf_input.s_injection[6] = ComplexValue<sym>{1e6};
-            CHECK_THROWS_AS(run(solver, pf_input, 1e-12, 20, info, y_bus), IterationDiverge);
-        }
-    }
+        return result;
+    }();
 
-    SUBCASE("Test singular ybus") {
-        param.branch_param[0] = BranchCalcParam<sym>{};
-        param.branch_param[1] = BranchCalcParam<sym>{};
-        param.shunt_param[0] = ComplexTensor<sym>{};
-        y_bus.update_admittance(std::make_shared<MathModelParam<sym> const>(param));
+    // symmetric, without angle
+    // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
+    StateEstimationInput<sym> se_input_no_angle = [&] {
+        StateEstimationInput<sym> result = se_input_angle;
+        if constexpr (is_symmetric_v<sym>) {
+            result.measured_voltage[0].value = DoubleComplex{cabs(result.measured_voltage[0].value), nan};
+            result.measured_voltage[1].value = DoubleComplex{cabs(result.measured_voltage[1].value), nan};
+        } else { // TODO(mgovers): same as above; delete?
+            result.measured_voltage[0].value = cabs(result.measured_voltage[0].value) + DoubleComplex{0.0, nan};
+            result.measured_voltage[1].value = cabs(result.measured_voltage[1].value) + DoubleComplex{0.0, nan};
+        }
+        return result;
+    }();
+
+    // with angle, const z
+    // set open for load 01, 34, scale load 5 (sensor 2)
+    StateEstimationInput<sym> se_input_angle_const_z = [&] {
+        StateEstimationInput<sym> result = se_input_angle;
+        result.load_gen_status[0] = 0;
+        result.load_gen_status[1] = 0;
+        result.load_gen_status[3] = 0;
+        result.load_gen_status[4] = 0;
+        result.measured_load_gen_power[2].value *= 3.0;
+        return result;
+    }();
+
+    SUBCASE("Test se with angle") {
         SolverType solver{y_bus, topo_ptr};
         CalculationInfo info;
+        SolverOutput<sym> output;
 
-        CHECK_THROWS_AS(run(solver, pf_input, 1e-12, 20, info, y_bus), SparseMatrixError);
+        output = run(solver, se_input_angle, 1e-10, 20, info, y_bus);
+        assert_output(output, output_ref);
+    }
+
+    SUBCASE("Test se without angle") {
+        SolverType solver{y_bus, topo_ptr};
+        CalculationInfo info;
+        SolverOutput<sym> output;
+
+        output = run(solver, se_input_no_angle, 1e-10, 20, info, y_bus);
+        assert_output(output, output_ref, true);
+    }
+
+    SUBCASE("Test se with angle, const z") {
+        SolverType solver{y_bus, topo_ptr};
+        CalculationInfo info;
+        SolverOutput<sym> output;
+
+        output = run(solver, se_input_angle_const_z, 1e-10, 20, info, y_bus);
+        assert_output(output, output_ref_z);
+    }
+
+    SUBCASE("Test se with angle and different power variances") {
+        SolverType solver{y_bus, topo_ptr};
+        CalculationInfo info;
+        auto& branch_from_power = se_input_angle.measured_branch_from_power.front();
+        branch_from_power.p_variance = RealValue<sym>{0.25};
+        branch_from_power.q_variance = RealValue<sym>{0.75};
+        SolverOutput<sym> output;
+
+        output = run(solver, se_input_angle, 1e-10, 20, info, y_bus);
+        assert_output(output, output_ref);
     }
 }
 
