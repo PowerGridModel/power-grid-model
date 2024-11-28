@@ -106,13 +106,8 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
     // no angle, keep the angle of 2nd measurement of bus2, which will be ignored
     auto se_input_no_angle() const {
         StateEstimationInput<sym> result = se_input_angle();
-        if constexpr (is_symmetric_v<sym>) {
-            result.measured_voltage[0].value = DoubleComplex{cabs(result.measured_voltage[0].value), nan};
-            result.measured_voltage[1].value = DoubleComplex{cabs(result.measured_voltage[1].value), nan};
-        } else { // TODO(mgovers): same as above; delete?
-            result.measured_voltage[0].value = cabs(result.measured_voltage[0].value) + DoubleComplex{0.0, nan};
-            result.measured_voltage[1].value = cabs(result.measured_voltage[1].value) + DoubleComplex{0.0, nan};
-        }
+        result.measured_voltage[0].value = cabs(result.measured_voltage[0].value) + DoubleComplex{0.0, nan};
+        result.measured_voltage[1].value = cabs(result.measured_voltage[1].value) + DoubleComplex{0.0, nan};
         return result;
     };
 
