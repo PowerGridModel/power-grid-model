@@ -86,7 +86,13 @@ template <symmetry_tag sym> class NRSEGainBlock : public Block<double, sym, true
 };
 
 // solver
-template <symmetry_tag sym> class NewtonRaphsonSESolver {
+template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
+  public:
+    using sym = sym_type;
+
+    static constexpr auto is_iterative = true;
+
+  private:
     enum class Order { row_major = 0, column_major = 1 };
 
     struct NRSEVoltageState {

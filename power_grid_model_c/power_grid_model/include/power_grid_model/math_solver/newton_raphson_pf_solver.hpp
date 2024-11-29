@@ -200,11 +200,16 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
 };
 
 // solver
-template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
+template <symmetry_tag sym_type>
+class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPFSolver<sym_type>> {
   public:
+    using sym = sym_type;
+
     using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
     using BlockPermArray =
         typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+
+    static constexpr auto is_iterative = true;
 
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},

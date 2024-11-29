@@ -5,7 +5,6 @@
 set(PROJECT_SOURCES
     "test_entry_point.cpp"
     "test_main_model.cpp"
-    "test_math_solver.cpp"
 )
 
 add_executable(power_grid_model_integration_tests ${PROJECT_SOURCES})

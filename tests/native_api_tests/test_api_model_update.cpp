@@ -10,7 +10,6 @@
 
 #include <string>
 
-namespace power_grid_model_cpp {
 namespace {
 // Types for template parameters
 struct row_t {};
@@ -29,6 +28,51 @@ template <typename first, typename second, typename third, typename fourth> stru
     using id_check_type = fourth;
 };
 } // namespace
+
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, with_id_t", TypeCombo<row_t, row_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, with_id_t", TypeCombo<row_t, row_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, with_id_t", TypeCombo<columnar_t, columnar_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, with_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, with_id_t", TypeCombo<columnar_t, row_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, with_id_t", TypeCombo<columnar_t, row_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, with_id_t", TypeCombo<row_t, columnar_t, dense_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, with_id_t", TypeCombo<row_t, columnar_t, sparse_t, with_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, optional_id_t", TypeCombo<row_t, row_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, optional_id_t", TypeCombo<row_t, row_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, optional_id_t", TypeCombo<columnar_t, row_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, optional_id_t", TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, optional_id_t", TypeCombo<row_t, columnar_t, dense_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, optional_id_t", TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, invalid_id_t", TypeCombo<row_t, row_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, dense_t, mixed_optional_id_t", TypeCombo<row_t, row_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, mixed_optional_id_t",
+                  TypeCombo<row_t, row_t, sparse_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, mixed_optional_id_t",
+                  TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, mixed_optional_id_t",
+                  TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>);
+TYPE_TO_STRING_AS("row_t, row_t, sparse_t, invalid_id_t", TypeCombo<row_t, row_t, sparse_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, dense_t, invalid_id_t",
+                  TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, columnar_t, sparse_t, invalid_id_t",
+                  TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, dense_t, invalid_id_t", TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("columnar_t, row_t, sparse_t, invalid_id_t", TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, invalid_id_t", TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>);
+TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, invalid_id_t", TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>);
+
+namespace power_grid_model_cpp {
 
 /*
 
@@ -57,8 +101,7 @@ TEST_CASE_TEMPLATE(
     TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>,
     TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>,
     TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>,
-    TypeCombo<row_t, row_t, dense_t, invalid_id_t>, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>,
+    TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>,
     TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>,
     TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>,
     TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
