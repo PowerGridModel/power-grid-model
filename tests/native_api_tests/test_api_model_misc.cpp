@@ -2,12 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
 
 #include <doctest/doctest.h>
 
 #include <limits>
 #include <numbers>
+#include <span>
 #include <vector>
 
 namespace power_grid_model_cpp {
@@ -40,7 +42,7 @@ enum class MeasuredTerminalType : IntS {
 };
 
 enum class FaultType : IntS {
-    // three_phase = 0,
+    three_phase = 0,
     single_phase_to_ground = 1,
     // two_phase = 2,
     // two_phase_to_ground = 3,
@@ -48,7 +50,7 @@ enum class FaultType : IntS {
 };
 
 enum class FaultPhase : IntS {
-    // abc = 0,
+    abc = 0,
     a = 1,
     // b = 2,
     // c = 3,
@@ -497,159 +499,120 @@ TEST_CASE("API Model - indexing + bad input") {
     }
 }
 
-// TEST_CASE_TEMPLATE(
-//     "Test main model - update only load", settings, regular_update,
-//     cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation
-//     tests State state; auto model = default_model(state);
+TEST_CASE("API model - all updates") {
+    using namespace std::string_literals;
 
-//     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-//     update_data.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(), nullptr,
-//                            state.sym_load_update.data());
-//     update_data.add_buffer("asym_load", state.asym_load_update.size(), state.asym_load_update.size(), nullptr,
-//                            state.asym_load_update.data());
-//     model.update_components<typename settings::update_type>(update_data);
+    State state;
+    auto const input_dataset = state.get_input_dataset();
+    auto const& input_info = input_dataset.get_info();
+    auto model = Model{50.0, input_dataset};
 
-//     SUBCASE("Symmetrical") {
-//         auto const solver_output =
-//             model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric,
-//             CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.sym_node);
-//         model.output_result<Branch>(solver_output, state.sym_branch);
-//         model.output_result<Appliance>(solver_output, state.sym_appliance);
-//         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-//         CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
-//         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-//         CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-//         CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2));
-//         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-//         CHECK(state.sym_appliance[4].i == doctest::Approx(test::i_shunt));
-//     }
-//     SUBCASE("Asymmetrical") {
-//         auto const solver_output = model.calculate<power_flow_t, asymmetric_t>(
-//             get_default_options(asymmetric, CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.asym_node);
-//         model.output_result<Branch>(solver_output, state.asym_branch);
-//         model.output_result<Appliance>(solver_output, state.asym_appliance);
-//         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-//         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-//         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-//         CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-//         CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2));
-//         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-//         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(test::i_shunt));
-//     }
-// }
+    // // update vector
+    // std::vector<ID> sym_load_update_id{7};
+    // std::vector<IntS> sym_load_update_status{1};
+    // std::vector<double> sym_load_update_p_specified{2.5e6};
 
-// TEST_CASE_TEMPLATE(
-//     "Test main model - update load and shunt param", settings, regular_update,
-//     cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation
-//     tests State state; auto model = default_model(state);
+    // std::vector<ID> asym_load_update_id{8};
+    // std::vector<IntS> asym_load_update_status{0};
 
-//     state.sym_load_update[0].p_specified = 2.5e6;
-//     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-//     update_data.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(), nullptr,
-//                            state.sym_load_update.data());
-//     update_data.add_buffer("asym_load", state.asym_load_update.size(), state.asym_load_update.size(), nullptr,
-//                            state.asym_load_update.data());
-//     update_data.add_buffer("shunt", state.shunt_update.size(), state.shunt_update.size(), nullptr,
-//                            state.shunt_update.data());
-//     model.update_components<typename settings::update_type>(update_data);
+    // std::vector<ID> shunt_update_id{9};
+    // std::vector<IntS> shunt_update_status{0};
+    // std::vector<double> shunt_update_b1{0.02};
+    // std::vector<double> shunt_update_b0{0.02};
 
-//     SUBCASE("Symmetrical") {
-//         auto const solver_output =
-//             model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric,
-//             CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.sym_node);
-//         model.output_result<Branch>(solver_output, state.sym_branch);
-//         model.output_result<Appliance>(solver_output, state.sym_appliance);
-//         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-//         CHECK(state.sym_node[1].u_pu == doctest::Approx(test::u1));
-//         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-//         CHECK(state.sym_branch[0].i_from == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[0].i == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[1].i == doctest::Approx(0.0));
-//         CHECK(state.sym_appliance[2].i == doctest::Approx(test::i_load * 2 + test::i_shunt));
-//         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-//         CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
-//     }
-//     SUBCASE("Asymmetrical") {
-//         auto const solver_output = model.calculate<power_flow_t, asymmetric_t>(
-//             get_default_options(asymmetric, CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.asym_node);
-//         model.output_result<Branch>(solver_output, state.asym_branch);
-//         model.output_result<Appliance>(solver_output, state.asym_appliance);
-//         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-//         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-//         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-//         CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[0].i(1) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(0.0));
-//         CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2 + test::i_shunt));
-//         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-//         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
-//     }
-// }
+    // // used for test case alternate compute mode
+    // std::vector<ID> shunt_update_2_id{6};
+    // std::vector<IntS> source_update_2_status{0};
+    // std::vector<double> shunt_update_2_b1{0.01};
+    // std::vector<double> shunt_update_2_b0{0.01};
 
-// TEST_CASE_TEMPLATE(
-//     "Test main model - all updates", settings, regular_update,
-//     cached_update) { // TODO(mgovers): we should whitebox-test this instead; values not reproduced by validation
-//     tests State state; auto model = default_model(state);
+    // std::vector<ID> source_update_id{10};
+    // std::vector<IntS> source_update_status{1};
+    // std::vector<double> source_update_u_ref{test::u1};
 
-//     state.sym_load_update[0].p_specified = 2.5e6;
-//     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-//     update_data.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(), nullptr,
-//                            state.sym_load_update.data());
-//     update_data.add_buffer("asym_load", state.asym_load_update.size(), state.asym_load_update.size(), nullptr,
-//                            state.asym_load_update.data());
-//     update_data.add_buffer("shunt", state.shunt_update.size(), state.shunt_update.size(), nullptr,
-//                            state.shunt_update.data());
-//     update_data.add_buffer("source", state.source_update.size(), state.source_update.size(), nullptr,
-//                            state.source_update.data());
-//     update_data.add_buffer("link", state.link_update.size(), state.link_update.size(), nullptr,
-//                            state.link_update.data());
-//     update_data.add_buffer("fault", state.fault_update.size(), state.fault_update.size(), nullptr,
-//                            state.fault_update.data());
+    // std::vector<ID> link_update_id{5};
+    // std::vector<IntS> link_update_from_status{1};
+    // std::vector<IntS> link_update_to_status{0};
 
-//     model.update_components<typename settings::update_type>(update_data);
+    // std::vector<ID> fault_update_id{30};
+    // std::vector<IntS> fault_update_status{1};
+    // std::vector<FaultType> fault_update_type{FaultType::three_phase};
+    // std::vector<FaultPhase> fault_update_phase{FaultPhase::abc};
+    // std::vector<ID> fault_update_object{1};
 
-//     SUBCASE("Symmetrical") {
-//         auto const solver_output =
-//             model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric,
-//             CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.sym_node);
-//         model.output_result<Branch>(solver_output, state.sym_branch);
-//         model.output_result<Appliance>(solver_output, state.sym_appliance);
-//         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-//         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
-//         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-//         CHECK(state.sym_branch[0].i_from == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.sym_appliance[0].i == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.sym_appliance[1].i == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[2].i == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-//         CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
-//     }
-//     SUBCASE("Asymmetrical") {
-//         auto const solver_output = model.calculate<power_flow_t, asymmetric_t>(
-//             get_default_options(asymmetric, CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.asym_node);
-//         model.output_result<Branch>(solver_output, state.asym_branch);
-//         model.output_result<Appliance>(solver_output, state.asym_appliance);
-//         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-//         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
-//         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-//         CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.asym_appliance[0].i(1) == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-//         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
-//     }
-// }
+    // DatasetConst update_data{"update", 1, 1};
+    // update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
+    // update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
+    // update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
+
+    // update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
+    // update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
+
+    // update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
+    // update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
+    // update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
+    // update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
+
+    // update_data.add_buffer("source", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("source", "id", source_update_id.data());
+    // update_data.add_attribute_buffer("source", "status", source_update_status.data());
+    // update_data.add_attribute_buffer("source", "u_ref", source_update_u_ref.data());
+
+    // update_data.add_buffer("link", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("link", "id", link_update_id.data());
+    // update_data.add_attribute_buffer("link", "from_status", link_update_from_status.data());
+    // update_data.add_attribute_buffer("link", "to_status", link_update_to_status.data());
+
+    // update_data.add_buffer("fault", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("fault", "id", fault_update_id.data());
+    // update_data.add_attribute_buffer("fault", "status", fault_update_status.data());
+    // update_data.add_attribute_buffer("fault", "fault_type", fault_update_type.data());
+    // update_data.add_attribute_buffer("fault", "fault_phase", fault_update_phase.data());
+    // update_data.add_attribute_buffer("fault", "fault_object", fault_update_object.data());
+
+    auto const output_dataset_type = "sym_output"s;
+    for (Idx comp_type_idx = 0; comp_type_idx < input_info.n_components(); ++comp_type_idx) {
+        CAPTURE(comp_type_idx);
+
+        auto const comp_type = input_info.component_name(comp_type_idx);
+        CAPTURE(comp_type);
+
+        if (comp_type != "node") { // TODO(mgovers): remove
+            continue;
+        }
+
+        auto const comp_meta = MetaData::get_component_by_name(output_dataset_type, comp_type);
+
+        // DatasetMutable output_data_from_batch{output_dataset_type, 1, 1};
+        DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
+
+        auto const total_elements = input_info.component_total_elements(comp_type_idx);
+        auto const elements_per_scenario = input_info.component_elements_per_scenario(comp_type_idx);
+        auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
+
+        // Buffer sym_output_from_batch{comp_meta, total_elements};
+        Buffer sym_output_from_updated_single{comp_meta, total_elements};
+        // std::vector<char> sym_output_from_updated_single_data(n_bytes);
+
+        // output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
+        //                                   sym_output_from_batch);
+        output_data_from_updated_single.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
+                                                   sym_output_from_updated_single);
+        // output_data_from_updated_single.add_buffer(
+        //     comp_type, elements_per_scenario, total_elements, nullptr,
+        //     reinterpret_cast<void*>(sym_output_from_updated_single_data.data()));
+
+        auto opt = get_default_options(CalculationSymmetry::symmetric, PGM_linear);
+        // model.calculate(opt, output_data_from_batch, update_data);
+        // model.update(update_data);
+        model.calculate(opt, output_data_from_updated_single);
+
+        // CHECK(sym_output_from_batch == sym_output_from_updated_single);
+    }
+}
 
 // TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", settings, regular_update,
 //                    cached_update) { // TODO(mgovers): we should whitebox-test this instead
