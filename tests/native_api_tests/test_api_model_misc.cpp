@@ -404,16 +404,15 @@ TEST_CASE("API model - all updates") {
         CAPTURE(comp_type);
 
         auto const comp_meta = MetaData::get_component_by_name(output_dataset_type, comp_type);
-
-        DatasetMutable output_data_from_batch{output_dataset_type, 1, 1};
-        DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
-
         auto const total_elements = input_info.component_total_elements(comp_type_idx);
         auto const elements_per_scenario = input_info.component_elements_per_scenario(comp_type_idx);
         auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
 
         std::vector<char> sym_output_from_batch(n_bytes);
         std::vector<char> sym_output_from_updated_single(n_bytes);
+
+        DatasetMutable output_data_from_batch{output_dataset_type, 1, 1};
+        DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
 
         output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
                                           reinterpret_cast<void*>(sym_output_from_batch.data()));
@@ -429,83 +428,137 @@ TEST_CASE("API model - all updates") {
     }
 }
 
-// TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update,
-//                    cached_update) { // TODO(mgovers): move to api tests; not possible with current validation
-//                    framework
-//     constexpr auto check_sym = [](MainModel const& model_, auto const& math_output_) {
-//         State state_;
-//         model_.output_result<Node>(math_output_, state_.sym_node);
-//         model_.output_result<Branch>(math_output_, state_.sym_branch);
-//         model_.output_result<Appliance>(math_output_, state_.sym_appliance);
+TEST_CASE("API model - updates w/ alternating compute mode") {
+    State state;
+    auto const input_dataset = state.get_input_dataset();
+    auto const& input_info = input_dataset.get_info();
+    auto model = Model{50.0, input_dataset};
 
-//         CHECK(state_.sym_node[0].u_pu == doctest::Approx(1.05));
-//         CHECK(state_.sym_node[1].u_pu == doctest::Approx(test::u1));
-//         CHECK(state_.sym_node[2].u_pu == doctest::Approx(test::u1));
-//         CHECK(state_.sym_branch[0].i_from == doctest::Approx(test::i));
-//         CHECK(state_.sym_appliance[0].i == doctest::Approx(test::i));
-//         CHECK(state_.sym_appliance[1].i == doctest::Approx(0.0));
-//         CHECK(state_.sym_appliance[2].i == doctest::Approx(test::i_load * 2 + test::i_shunt));
-//         CHECK(state_.sym_appliance[3].i == doctest::Approx(0.0));
-//         CHECK(state_.sym_appliance[4].i == doctest::Approx(0.0));
-//     };
-//     constexpr auto check_asym = [](MainModel const& model_, auto const& math_output_) {
-//         State state_;
-//         model_.output_result<Node>(math_output_, state_.asym_node);
-//         model_.output_result<Branch>(math_output_, state_.asym_branch);
-//         model_.output_result<Appliance>(math_output_, state_.asym_appliance);
-//         CHECK(state_.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-//         CHECK(state_.asym_node[1].u_pu(1) == doctest::Approx(test::u1));
-//         CHECK(state_.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-//         CHECK(state_.asym_branch[0].i_from(0) == doctest::Approx(test::i));
-//         CHECK(state_.asym_appliance[0].i(1) == doctest::Approx(test::i));
-//         CHECK(state_.asym_appliance[1].i(2) == doctest::Approx(0.0));
-//         CHECK(state_.asym_appliance[2].i(0) == doctest::Approx(test::i_load * 2 + test::i_shunt));
-//         CHECK(state_.asym_appliance[3].i(1) == doctest::Approx(0.0));
-//         CHECK(state_.asym_appliance[4].i(2) == doctest::Approx(0.0));
-//     };
+    auto const check_sym = [&] {
+        std::vector<double> sym_node_output_u_pu(3);
+        std::vector<double> sym_line_output_i_from(1);
+        std::vector<double> sym_source_output_i(2);
+        std::vector<double> sym_sym_load_output_i(1);
+        std::vector<double> sym_asym_load_output_i(1);
+        std::vector<double> sym_shunt_output_i(1);
 
-//     State state;
-//     auto model = default_model(state);
+        DatasetMutable sym_output{"sym_output", false, 1};
+        sym_output.add_buffer("node", 1, 1, nullptr, nullptr);
+        sym_output.add_attribute_buffer("node", "u_pu", reinterpret_cast<void*>(sym_node_output_u_pu.data()));
 
-//     state.sym_load_update[0].p_specified = 2.5e6;
+        sym_output.add_buffer("line", 1, 1, nullptr, nullptr);
+        sym_output.add_attribute_buffer("line", "i_from", reinterpret_cast<void*>(sym_line_output_i_from.data()));
 
-//     ConstDataset update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-//     update_data.add_buffer("sym_load", state.sym_load_update.size(), state.sym_load_update.size(), nullptr,
-//                            state.sym_load_update.data());
-//     update_data.add_buffer("asym_load", state.asym_load_update.size(), state.asym_load_update.size(), nullptr,
-//                            state.asym_load_update.data());
-//     update_data.add_buffer("shunt", state.shunt_update.size(), state.shunt_update.size(), nullptr,
-//                            state.shunt_update.data());
+        sym_output.add_buffer("source", 2, 2, nullptr, nullptr);
+        sym_output.add_attribute_buffer("source", "i", reinterpret_cast<void*>(sym_source_output_i.data()));
 
-//     // This will lead to no topo change but param change
-//     model.update_components<typename settings::update_type>(update_data);
+        sym_output.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+        sym_output.add_attribute_buffer("sym_load", "i", reinterpret_cast<void*>(sym_sym_load_output_i.data()));
 
-//     auto const math_output_sym_1 =
-//         model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
-//     check_sym(model, math_output_sym_1);
+        sym_output.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+        sym_output.add_attribute_buffer("asym_load", "i", reinterpret_cast<void*>(sym_asym_load_output_i.data()));
 
-//     auto const math_output_asym_1 =
-//         model.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
-//     check_asym(model, math_output_asym_1);
+        sym_output.add_buffer("shunt", 1, 1, nullptr, nullptr);
+        sym_output.add_attribute_buffer("shunt", "i", reinterpret_cast<void*>(sym_shunt_output_i.data()));
 
-//     SUBCASE("No new update") {
-//         // Math state may be fully cached
-//     }
-//     if constexpr (std::same_as<typename settings::update_type, regular_update>) {
-//         SUBCASE("No new parameter change") {
-//             // Math state may be fully cached due to no change
-//             model.update_components<typename settings::update_type>(update_data);
-//         }
-//     }
+        model.calculate(get_default_options(PGM_symmetric, PGM_linear), sym_output);
 
-//     auto const math_output_asym_2 =
-//         model.calculate<power_flow_t, asymmetric_t>(get_default_options(asymmetric, CalculationMethod::linear));
-//     check_asym(model, math_output_asym_2);
+        CHECK(sym_node_output_u_pu[0] == doctest::Approx(1.05));
+        CHECK(sym_node_output_u_pu[1] == doctest::Approx(test::u1));
+        CHECK(sym_node_output_u_pu[2] == doctest::Approx(test::u1));
+        CHECK(sym_line_output_i_from[0] == doctest::Approx(test::i));
+        CHECK(sym_source_output_i[0] == doctest::Approx(test::i));
+        CHECK(sym_source_output_i[1] == doctest::Approx(0.0));
+        CHECK(sym_sym_load_output_i[0] == doctest::Approx(test::i_load * 2 + test::i_shunt));
+        CHECK(sym_asym_load_output_i[0] == doctest::Approx(0.0));
+        CHECK(sym_shunt_output_i[0] == doctest::Approx(0.0));
+    };
+    auto const check_asym = [&] {
+        std::vector<double> asym_node_output_u_pu(3 * 3);
+        std::vector<double> asym_line_output_i_from(1 * 3);
+        std::vector<double> asym_source_output_i(2 * 3);
+        std::vector<double> asym_sym_load_output_i(1 * 3);
+        std::vector<double> asym_asym_load_output_i(1 * 3);
+        std::vector<double> asym_shunt_output_i(1 * 3);
 
-//     auto const math_output_sym_2 =
-//         model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric, CalculationMethod::linear));
-//     check_sym(model, math_output_sym_2);
-// }
+        DatasetMutable asym_output{"asym_output", false, 1};
+        asym_output.add_buffer("node", 1, 1, nullptr, nullptr);
+        asym_output.add_attribute_buffer("node", "u_pu", reinterpret_cast<void*>(asym_node_output_u_pu.data()));
+
+        asym_output.add_buffer("line", 1, 1, nullptr, nullptr);
+        asym_output.add_attribute_buffer("line", "i_from", reinterpret_cast<void*>(asym_line_output_i_from.data()));
+
+        asym_output.add_buffer("source", 2, 2, nullptr, nullptr);
+        asym_output.add_attribute_buffer("source", "i", reinterpret_cast<void*>(asym_source_output_i.data()));
+
+        asym_output.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+        asym_output.add_attribute_buffer("sym_load", "i", reinterpret_cast<void*>(asym_sym_load_output_i.data()));
+
+        asym_output.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+        asym_output.add_attribute_buffer("asym_load", "i", reinterpret_cast<void*>(asym_asym_load_output_i.data()));
+
+        asym_output.add_buffer("shunt", 1, 1, nullptr, nullptr);
+        asym_output.add_attribute_buffer("shunt", "i", reinterpret_cast<void*>(asym_shunt_output_i.data()));
+
+        model.calculate(get_default_options(PGM_asymmetric, PGM_linear), asym_output);
+
+        CHECK(asym_node_output_u_pu[0 * 3 + 0] == doctest::Approx(1.05));
+        CHECK(asym_node_output_u_pu[1 * 3 + 1] == doctest::Approx(test::u1));
+        CHECK(asym_node_output_u_pu[2 * 2 + 1] == doctest::Approx(test::u1));
+        CHECK(asym_line_output_i_from[0] == doctest::Approx(test::i));
+        CHECK(asym_source_output_i[0 * 3 + 1] == doctest::Approx(test::i));
+        CHECK(asym_source_output_i[1 * 3 + 2] == doctest::Approx(0.0));
+        CHECK(asym_sym_load_output_i[0] == doctest::Approx(test::i_load * 2 + test::i_shunt));
+        CHECK(asym_asym_load_output_i[1] == doctest::Approx(0.0));
+        CHECK(asym_shunt_output_i[2] == doctest::Approx(0.0));
+    };
+
+    // update vector
+    std::vector<ID> sym_load_update_id{7};
+    std::vector<IntS> sym_load_update_status{1};
+    std::vector<double> sym_load_update_p_specified{2.5e6};
+
+    std::vector<ID> asym_load_update_id{8};
+    std::vector<IntS> asym_load_update_status{0};
+
+    std::vector<ID> shunt_update_id{9};
+    std::vector<IntS> shunt_update_status{0};
+    std::vector<double> shunt_update_b1{0.02};
+    std::vector<double> shunt_update_b0{0.02};
+
+    DatasetConst update_data{"update", 1, 1};
+    update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
+    update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
+    update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
+
+    update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
+    update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
+
+    update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
+    update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
+    update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
+    update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
+
+    // This will lead to no topo change but param change
+    model.update(update_data);
+
+    check_sym();
+    check_asym();
+
+    SUBCASE("No new update") {
+        // Math state may be fully cached
+    }
+    SUBCASE("No new parameter change") {
+        // Math state may be fully cached
+        model.update(update_data);
+    }
+
+    check_asym();
+    check_sym();
+}
 
 // namespace {
 // auto incomplete_input_model(State const& state) -> MainModel {
