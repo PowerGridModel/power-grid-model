@@ -61,7 +61,13 @@ template <symmetry_tag sym> class ILSEGainBlock : public Block<DoubleComplex, sy
     GetterType<1, 1> r() { return this->template get_val<1, 1>(); }
 };
 
-template <symmetry_tag sym> class IterativeLinearSESolver {
+template <symmetry_tag sym_type> class IterativeLinearSESolver {
+  public:
+    using sym = sym_type;
+
+    static constexpr auto is_iterative = true;
+
+  private:
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = is_symmetric_v<sym> ? 2 : 6;
 

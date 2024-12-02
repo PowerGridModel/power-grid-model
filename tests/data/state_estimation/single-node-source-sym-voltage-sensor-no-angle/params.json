@@ -1,0 +1,8 @@
+{
+  "calculation_method": ["iterative_linear", "newton_raphson"],
+  "rtol": 1e-05,
+  "atol": {
+    "default": 1e-05,
+    ".+_residual": 0.1
+  }
+}

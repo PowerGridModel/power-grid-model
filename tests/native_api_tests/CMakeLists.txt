@@ -7,6 +7,7 @@ set(PROJECT_SOURCES
     "test_api_meta_data.cpp"
     "test_api_buffer.cpp"
     "test_api_model.cpp"
+    "test_api_model_update.cpp"
     "test_api_serialization.cpp"
     "test_api_utils.cpp"
 )

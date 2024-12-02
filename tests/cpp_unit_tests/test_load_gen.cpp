@@ -6,6 +6,11 @@
 
 #include <doctest/doctest.h>
 
+TYPE_TO_STRING_AS("SymGenerator", power_grid_model::SymGenerator);
+TYPE_TO_STRING_AS("AsymGenerator", power_grid_model::AsymGenerator);
+TYPE_TO_STRING_AS("SymLoad", power_grid_model::SymLoad);
+TYPE_TO_STRING_AS("AsymLoad", power_grid_model::AsymLoad);
+
 namespace power_grid_model {
 namespace {
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {

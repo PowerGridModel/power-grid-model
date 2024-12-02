@@ -34,6 +34,7 @@ if there are sources
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
@@ -42,12 +43,16 @@ namespace power_grid_model::math_solver {
 
 namespace linear_pf {
 
-template <symmetry_tag sym> class LinearPFSolver {
+template <symmetry_tag sym_type> class LinearPFSolver {
 
   public:
+    using sym = sym_type;
+
     using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+
+    static constexpr auto is_iterative = false;
 
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
