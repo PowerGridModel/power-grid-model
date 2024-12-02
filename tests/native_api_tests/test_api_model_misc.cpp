@@ -429,58 +429,6 @@ TEST_CASE("API model - all updates") {
     }
 }
 
-// TEST_CASE_TEMPLATE("Test main model - single permanent update from batch", settings, regular_update,
-//                    cached_update) { // TODO(mgovers): we should whitebox-test this instead
-//     State state;
-//     auto model = default_model(state);
-
-//     state.batch_sym_load_update[0].p_specified = 2.5e6;
-//     ConstDataset update_data{true, 5, "update", meta_data::meta_data_gen::meta_data};
-//     update_data.add_buffer("sym_load", 1, state.batch_sym_load_update.size(), nullptr,
-//                            state.batch_sym_load_update.data());
-//     update_data.add_buffer("asym_load", 1, state.batch_asym_load_update.size(), nullptr,
-//                            state.batch_asym_load_update.data());
-//     update_data.add_buffer("shunt", 1, state.batch_shunt_update.size(), nullptr, state.batch_shunt_update.data());
-//     update_data.add_buffer("source", 1, state.batch_source_update.size(), nullptr, state.batch_source_update.data());
-//     update_data.add_buffer("link", 1, state.batch_link_update.size(), nullptr, state.batch_link_update.data());
-
-//     model.update_components<typename settings::update_type>(update_data);
-
-//     SUBCASE("Symmetrical") {
-//         auto const solver_output =
-//             model.calculate<power_flow_t, symmetric_t>(get_default_options(symmetric,
-//             CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.sym_node);
-//         model.output_result<Branch>(solver_output, state.sym_branch);
-//         model.output_result<Appliance>(solver_output, state.sym_appliance);
-//         CHECK(state.sym_node[0].u_pu == doctest::Approx(1.05));
-//         CHECK(state.sym_node[1].u_pu == doctest::Approx(1.05));
-//         CHECK(state.sym_node[2].u_pu == doctest::Approx(test::u1));
-//         CHECK(state.sym_branch[0].i_from == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.sym_appliance[0].i == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.sym_appliance[1].i == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[2].i == doctest::Approx(test::i));
-//         CHECK(state.sym_appliance[3].i == doctest::Approx(0.0));
-//         CHECK(state.sym_appliance[4].i == doctest::Approx(0.0));
-//     }
-//     SUBCASE("Asymmetrical") {
-//         auto const solver_output = model.calculate<power_flow_t, asymmetric_t>(
-//             get_default_options(asymmetric, CalculationMethod::linear));
-//         model.output_result<Node>(solver_output, state.asym_node);
-//         model.output_result<Branch>(solver_output, state.asym_branch);
-//         model.output_result<Appliance>(solver_output, state.asym_appliance);
-//         CHECK(state.asym_node[0].u_pu(0) == doctest::Approx(1.05));
-//         CHECK(state.asym_node[1].u_pu(1) == doctest::Approx(1.05));
-//         CHECK(state.asym_node[2].u_pu(2) == doctest::Approx(test::u1));
-//         CHECK(state.asym_branch[0].i_from(0) == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.asym_appliance[0].i(1) == doctest::Approx(0.0).epsilon(1e-6));
-//         CHECK(state.asym_appliance[1].i(2) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[2].i(0) == doctest::Approx(test::i));
-//         CHECK(state.asym_appliance[3].i(1) == doctest::Approx(0.0));
-//         CHECK(state.asym_appliance[4].i(2) == doctest::Approx(0.0));
-//     }
-// }
-
 // TEST_CASE_TEMPLATE("Test main model - updates w/ alternating compute mode", settings, regular_update,
 //                    cached_update) { // TODO(mgovers): move to api tests; not possible with current validation
 //                    framework
