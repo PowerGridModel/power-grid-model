@@ -479,44 +479,7 @@ TEST_CASE("API model - incomplete input") {
     State complete_state;
     State incomplete_state = get_incomplete_state();
 
-    auto ref_model = Model{50.0, complete_state.get_input_dataset()};
     auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
-
-    DatasetConst complete_update_data{"update", true, 1};
-    complete_update_data.add_buffer("source", complete_state.source_id.size(), complete_state.source_id.size(), nullptr,
-                                    nullptr);
-    complete_update_data.add_attribute_buffer("source", "id", complete_state.source_id.data());
-    complete_update_data.add_attribute_buffer("source", "u_ref", complete_state.source_u_ref.data());
-    complete_update_data.add_attribute_buffer("source", "u_ref_angle", complete_state.source_u_ref_angle.data());
-
-    complete_update_data.add_buffer("sym_load", complete_state.sym_load_id.size(), complete_state.sym_load_id.size(),
-                                    nullptr, nullptr);
-    complete_update_data.add_attribute_buffer("sym_load", "id", complete_state.sym_load_id.data());
-    complete_update_data.add_attribute_buffer("sym_load", "p_specified", complete_state.sym_load_p_specified.data());
-
-    complete_update_data.add_buffer("asym_load", complete_state.asym_load_id.size(), complete_state.asym_load_id.size(),
-                                    nullptr, nullptr);
-    complete_update_data.add_attribute_buffer("asym_load", "id", complete_state.asym_load_id.data());
-    complete_update_data.add_attribute_buffer("asym_load", "p_specified", complete_state.asym_load_p_specified.data());
-
-    DatasetConst incomplete_update_data{"update", true, 1};
-    incomplete_update_data.add_buffer("source", incomplete_state.source_id.size(), incomplete_state.source_id.size(),
-                                      nullptr, nullptr);
-    incomplete_update_data.add_attribute_buffer("source", "id", incomplete_state.source_id.data());
-    incomplete_update_data.add_attribute_buffer("source", "u_ref", incomplete_state.source_u_ref.data());
-    incomplete_update_data.add_attribute_buffer("source", "u_ref_angle", incomplete_state.source_u_ref_angle.data());
-
-    incomplete_update_data.add_buffer("sym_load", incomplete_state.sym_load_id.size(),
-                                      incomplete_state.sym_load_id.size(), nullptr, nullptr);
-    incomplete_update_data.add_attribute_buffer("sym_load", "id", incomplete_state.sym_load_id.data());
-    incomplete_update_data.add_attribute_buffer("sym_load", "p_specified",
-                                                incomplete_state.sym_load_p_specified.data());
-
-    incomplete_update_data.add_buffer("asym_load", incomplete_state.asym_load_id.size(),
-                                      incomplete_state.asym_load_id.size(), nullptr, nullptr);
-    incomplete_update_data.add_attribute_buffer("asym_load", "id", incomplete_state.asym_load_id.data());
-    incomplete_update_data.add_attribute_buffer("asym_load", "p_specified",
-                                                incomplete_state.asym_load_p_specified.data());
 
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
         CAPTURE(symmetry);
@@ -525,17 +488,14 @@ TEST_CASE("API model - incomplete input") {
         auto const output_type = symmetry == PGM_symmetric ? "sym_output" : "asym_output";
 
         SUBCASE(calculation_symmetry) {
-            DatasetMutable test_result_data{output_type, true, 1};
-            DatasetMutable ref_result_data{output_type, true, 1};
 
             auto n_bytes = complete_state.node_id.size() *
                            MetaData::component_size(MetaData::get_component_by_name(output_type, "node"));
 
             std::vector<char> test_sym_node(n_bytes);
-            std::vector<char> ref_sym_node(n_bytes);
+            DatasetMutable test_result_data{output_type, true, 1};
             test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr,
                                         test_sym_node.data());
-            ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr, ref_sym_node.data());
 
             SUBCASE("Target dataset") {
                 CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
@@ -558,6 +518,26 @@ TEST_CASE("API model - incomplete input") {
                 }
             }
             SUBCASE("Incomplete update dataset") {
+                DatasetConst incomplete_update_data{"update", true, 1};
+                incomplete_update_data.add_buffer("source", incomplete_state.source_id.size(),
+                                                  incomplete_state.source_id.size(), nullptr, nullptr);
+                incomplete_update_data.add_attribute_buffer("source", "id", incomplete_state.source_id.data());
+                incomplete_update_data.add_attribute_buffer("source", "u_ref", incomplete_state.source_u_ref.data());
+                incomplete_update_data.add_attribute_buffer("source", "u_ref_angle",
+                                                            incomplete_state.source_u_ref_angle.data());
+
+                incomplete_update_data.add_buffer("sym_load", incomplete_state.sym_load_id.size(),
+                                                  incomplete_state.sym_load_id.size(), nullptr, nullptr);
+                incomplete_update_data.add_attribute_buffer("sym_load", "id", incomplete_state.sym_load_id.data());
+                incomplete_update_data.add_attribute_buffer("sym_load", "p_specified",
+                                                            incomplete_state.sym_load_p_specified.data());
+
+                incomplete_update_data.add_buffer("asym_load", incomplete_state.asym_load_id.size(),
+                                                  incomplete_state.asym_load_id.size(), nullptr, nullptr);
+                incomplete_update_data.add_attribute_buffer("asym_load", "id", incomplete_state.asym_load_id.data());
+                incomplete_update_data.add_attribute_buffer("asym_load", "p_specified",
+                                                            incomplete_state.asym_load_p_specified.data());
+
                 SUBCASE("Single update") {
                     CHECK_NOTHROW(test_model.update(incomplete_update_data));
                     CHECK_THROWS_WITH_AS(
@@ -571,8 +551,34 @@ TEST_CASE("API model - incomplete input") {
                 }
             }
             SUBCASE("Complete update dataset") {
-                CHECK_NOTHROW(ref_model.calculate(get_default_options(symmetry, PGM_linear), ref_result_data,
-                                                  complete_update_data));
+                DatasetConst complete_update_data{"update", true, 1};
+                complete_update_data.add_buffer("source", complete_state.source_id.size(),
+                                                complete_state.source_id.size(), nullptr, nullptr);
+                complete_update_data.add_attribute_buffer("source", "id", complete_state.source_id.data());
+                complete_update_data.add_attribute_buffer("source", "u_ref", complete_state.source_u_ref.data());
+                complete_update_data.add_attribute_buffer("source", "u_ref_angle",
+                                                          complete_state.source_u_ref_angle.data());
+
+                complete_update_data.add_buffer("sym_load", complete_state.sym_load_id.size(),
+                                                complete_state.sym_load_id.size(), nullptr, nullptr);
+                complete_update_data.add_attribute_buffer("sym_load", "id", complete_state.sym_load_id.data());
+                complete_update_data.add_attribute_buffer("sym_load", "p_specified",
+                                                          complete_state.sym_load_p_specified.data());
+
+                complete_update_data.add_buffer("asym_load", complete_state.asym_load_id.size(),
+                                                complete_state.asym_load_id.size(), nullptr, nullptr);
+                complete_update_data.add_attribute_buffer("asym_load", "id", complete_state.asym_load_id.data());
+                complete_update_data.add_attribute_buffer("asym_load", "p_specified",
+                                                          complete_state.asym_load_p_specified.data());
+
+                auto ref_model = Model{50.0, complete_state.get_input_dataset()};
+                std::vector<char> ref_sym_node(n_bytes);
+                DatasetMutable ref_result_data{output_type, true, 1};
+                ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr,
+                                           ref_sym_node.data());
+
+                CHECK_NOTHROW(ref_model.calculate(get_default_options(symmetry, PGM_linear), ref_result_data));
+
                 SUBCASE("Single calculation") {
                     test_model.update(complete_update_data);
                     CHECK_NOTHROW(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data,
@@ -587,119 +593,119 @@ TEST_CASE("API model - incomplete input") {
             }
         }
     }
-
-    // TEST_CASE("Test main model - Incomplete followed by complete") { // TODO(mgovers): This tests the reset of 2
-    // consecutive
-    //                                                                  // batch scenarios and definitely needs to
-    //                                                                  be tested
-    //     using CalculationMethod::linear;
-
-    //     State const state;
-    //     auto model = default_model(state);
-    //     auto test_model = incomplete_input_model(state);
-
-    //     constexpr Idx batch_size = 2;
-
-    //     std::vector<SourceUpdate> mixed_source_update{
-    //         {6, 1, nan, nan}, {10, 1, nan, nan}, {6, 1, 1.05, nan}, {10, 1, 1.05, 0}};
-    //     std::vector<SymLoadGenUpdate> mixed_sym_load_update{{7, 1, nan, 1.0}, {7, 1, 0.5e6, nan}};
-    //     std::vector<AsymLoadGenUpdate> mixed_asym_load_update{
-    //         {8, 1, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{1.0}},
-    //         {8, 1, RealValue<asymmetric_t>{0.5e6 / 3.0}, RealValue<asymmetric_t>{nan}}};
-
-    //     auto const source_indptr = IdxVector{0, 0, static_cast<Idx>(mixed_source_update.size())};
-
-    //     REQUIRE(source_indptr.size() == batch_size + 1);
-
-    //     ConstDataset mixed_update_data{true, batch_size, "update", meta_data::meta_data_gen::meta_data};
-    //     mixed_update_data.add_buffer("source", 2, 4, nullptr, mixed_source_update.data());
-    //     mixed_update_data.add_buffer("sym_load", 1, 2, nullptr, mixed_sym_load_update.data());
-    //     mixed_update_data.add_buffer("asym_load", 1, 2, nullptr, mixed_asym_load_update.data());
-
-    //     ConstDataset second_scenario_update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-    //     second_scenario_update_data.add_buffer("source", 2, 2, nullptr, mixed_source_update.data() + 2);
-    //     second_scenario_update_data.add_buffer("sym_load", 1, 1, nullptr, mixed_sym_load_update.data() + 1);
-    //     second_scenario_update_data.add_buffer("asym_load", 1, 1, nullptr, mixed_asym_load_update.data() + 1);
-
-    //     SUBCASE("Symmetrical") {
-    //         MutableDataset test_result_data{true, batch_size, "sym_output", meta_data::meta_data_gen::meta_data};
-    //         MutableDataset ref_result_data{false, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-
-    //         std::vector<NodeOutput<symmetric_t>> test_sym_node(batch_size * state.sym_node.size(),
-    //                                                            {na_IntID, na_IntS, nan, nan, nan, nan, nan});
-    //         std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size(),
-    //                                                           {na_IntID, na_IntS, nan, nan, nan, nan, nan});
-    //         test_result_data.add_buffer("node", state.sym_node.size(), test_sym_node.size(), nullptr,
-    //         test_sym_node.data()); ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(),
-    //         nullptr, ref_sym_node.data());
-
-    //         CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                               .calculation_symmetry = symmetric,
-    //                                               .calculation_method = linear,
-    //                                               .err_tol = 1e-8,
-    //                                               .max_iter = 1},
-    //                                              test_result_data, mixed_update_data),
-    //                         BatchCalculationError);
-    //         model.calculate({.calculation_type = power_flow,
-    //                               .calculation_symmetry = symmetric,
-    //                               .calculation_method = linear,
-    //                               .err_tol = 1e-8,
-    //                               .max_iter = 1},
-    //                              ref_result_data, second_scenario_update_data);
-
-    //         CHECK(is_nan(test_sym_node[0].u_pu));
-    //         CHECK(is_nan(test_sym_node[1].u_pu));
-    //         CHECK(is_nan(test_sym_node[2].u_pu));
-    //         CHECK(test_sym_node[state.sym_node.size() + 0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
-    //         CHECK(test_sym_node[state.sym_node.size() + 1].u_pu == doctest::Approx(ref_sym_node[1].u_pu));
-    //         CHECK(test_sym_node[state.sym_node.size() + 2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
-    //     }
-
-    //     SUBCASE("Asymmetrical") {
-    //         MutableDataset test_result_data{true, batch_size, "asym_output",
-    //         meta_data::meta_data_gen::meta_data}; MutableDataset ref_result_data{false, 1, "asym_output",
-    //         meta_data::meta_data_gen::meta_data};
-
-    //         std::vector<NodeOutput<asymmetric_t>> test_asym_node(
-    //             batch_size * state.sym_node.size(),
-    //             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
-    //              RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}});
-    //         std::vector<NodeOutput<asymmetric_t>> ref_asym_node(
-    //             state.sym_node.size(),
-    //             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
-    //              RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}});
-    //         test_result_data.add_buffer("node", state.sym_node.size(), test_asym_node.size(), nullptr,
-    //                                     test_asym_node.data());
-    //         ref_result_data.add_buffer("node", ref_asym_node.size(), ref_asym_node.size(), nullptr,
-    //         ref_asym_node.data());
-
-    //         CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                               .calculation_symmetry = asymmetric,
-    //                                               .calculation_method = linear,
-    //                                               .err_tol = 1e-8,
-    //                                               .max_iter = 1},
-    //                                              test_result_data, mixed_update_data),
-    //                         BatchCalculationError);
-    //         model.calculate({.calculation_type = power_flow,
-    //                               .calculation_symmetry = asymmetric,
-    //                               .calculation_method = linear,
-    //                               .err_tol = 1e-8,
-    //                               .max_iter = 1},
-    //                              ref_result_data, second_scenario_update_data);
-
-    //         for (auto component_idx : {0, 1, 2}) {
-    //             CAPTURE(component_idx);
-
-    //             CHECK(is_nan(test_asym_node[component_idx].u_pu));
-
-    //             for (auto phase_idx : {0, 1, 2}) {
-    //                 CAPTURE(phase_idx);
-
-    //                 CHECK(test_asym_node[state.asym_node.size() + component_idx].u_pu(phase_idx) ==
-    //                       doctest::Approx(ref_asym_node[component_idx].u_pu(phase_idx)));
-    //             }
-    //         }
-    //     }
 }
+
+// TEST_CASE("Test main model - Incomplete followed by complete") { // TODO(mgovers): This tests the reset of 2
+// consecutive
+//                                                                  // batch scenarios and definitely needs to
+//                                                                  be tested
+//     using CalculationMethod::linear;
+
+//     State const state;
+//     auto model = default_model(state);
+//     auto test_model = incomplete_input_model(state);
+
+//     constexpr Idx batch_size = 2;
+
+//     std::vector<SourceUpdate> mixed_source_update{
+//         {6, 1, nan, nan}, {10, 1, nan, nan}, {6, 1, 1.05, nan}, {10, 1, 1.05, 0}};
+//     std::vector<SymLoadGenUpdate> mixed_sym_load_update{{7, 1, nan, 1.0}, {7, 1, 0.5e6, nan}};
+//     std::vector<AsymLoadGenUpdate> mixed_asym_load_update{
+//         {8, 1, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{1.0}},
+//         {8, 1, RealValue<asymmetric_t>{0.5e6 / 3.0}, RealValue<asymmetric_t>{nan}}};
+
+//     auto const source_indptr = IdxVector{0, 0, static_cast<Idx>(mixed_source_update.size())};
+
+//     REQUIRE(source_indptr.size() == batch_size + 1);
+
+//     ConstDataset mixed_update_data{true, batch_size, "update", meta_data::meta_data_gen::meta_data};
+//     mixed_update_data.add_buffer("source", 2, 4, nullptr, mixed_source_update.data());
+//     mixed_update_data.add_buffer("sym_load", 1, 2, nullptr, mixed_sym_load_update.data());
+//     mixed_update_data.add_buffer("asym_load", 1, 2, nullptr, mixed_asym_load_update.data());
+
+//     ConstDataset second_scenario_update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+//     second_scenario_update_data.add_buffer("source", 2, 2, nullptr, mixed_source_update.data() + 2);
+//     second_scenario_update_data.add_buffer("sym_load", 1, 1, nullptr, mixed_sym_load_update.data() + 1);
+//     second_scenario_update_data.add_buffer("asym_load", 1, 1, nullptr, mixed_asym_load_update.data() + 1);
+
+//     SUBCASE("Symmetrical") {
+//         MutableDataset test_result_data{true, batch_size, "sym_output", meta_data::meta_data_gen::meta_data};
+//         MutableDataset ref_result_data{false, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+
+//         std::vector<NodeOutput<symmetric_t>> test_sym_node(batch_size * state.sym_node.size(),
+//                                                            {na_IntID, na_IntS, nan, nan, nan, nan, nan});
+//         std::vector<NodeOutput<symmetric_t>> ref_sym_node(state.sym_node.size(),
+//                                                           {na_IntID, na_IntS, nan, nan, nan, nan, nan});
+//         test_result_data.add_buffer("node", state.sym_node.size(), test_sym_node.size(), nullptr,
+//         test_sym_node.data()); ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(),
+//         nullptr, ref_sym_node.data());
+
+//         CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+//                                               .calculation_symmetry = symmetric,
+//                                               .calculation_method = linear,
+//                                               .err_tol = 1e-8,
+//                                               .max_iter = 1},
+//                                              test_result_data, mixed_update_data),
+//                         BatchCalculationError);
+//         model.calculate({.calculation_type = power_flow,
+//                               .calculation_symmetry = symmetric,
+//                               .calculation_method = linear,
+//                               .err_tol = 1e-8,
+//                               .max_iter = 1},
+//                              ref_result_data, second_scenario_update_data);
+
+//         CHECK(is_nan(test_sym_node[0].u_pu));
+//         CHECK(is_nan(test_sym_node[1].u_pu));
+//         CHECK(is_nan(test_sym_node[2].u_pu));
+//         CHECK(test_sym_node[state.sym_node.size() + 0].u_pu == doctest::Approx(ref_sym_node[0].u_pu));
+//         CHECK(test_sym_node[state.sym_node.size() + 1].u_pu == doctest::Approx(ref_sym_node[1].u_pu));
+//         CHECK(test_sym_node[state.sym_node.size() + 2].u_pu == doctest::Approx(ref_sym_node[2].u_pu));
+//     }
+
+//     SUBCASE("Asymmetrical") {
+//         MutableDataset test_result_data{true, batch_size, "asym_output",
+//         meta_data::meta_data_gen::meta_data}; MutableDataset ref_result_data{false, 1, "asym_output",
+//         meta_data::meta_data_gen::meta_data};
+
+//         std::vector<NodeOutput<asymmetric_t>> test_asym_node(
+//             batch_size * state.sym_node.size(),
+//             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
+//              RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}});
+//         std::vector<NodeOutput<asymmetric_t>> ref_asym_node(
+//             state.sym_node.size(),
+//             {na_IntID, na_IntS, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan},
+//              RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan}});
+//         test_result_data.add_buffer("node", state.sym_node.size(), test_asym_node.size(), nullptr,
+//                                     test_asym_node.data());
+//         ref_result_data.add_buffer("node", ref_asym_node.size(), ref_asym_node.size(), nullptr,
+//         ref_asym_node.data());
+
+//         CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
+//                                               .calculation_symmetry = asymmetric,
+//                                               .calculation_method = linear,
+//                                               .err_tol = 1e-8,
+//                                               .max_iter = 1},
+//                                              test_result_data, mixed_update_data),
+//                         BatchCalculationError);
+//         model.calculate({.calculation_type = power_flow,
+//                               .calculation_symmetry = asymmetric,
+//                               .calculation_method = linear,
+//                               .err_tol = 1e-8,
+//                               .max_iter = 1},
+//                              ref_result_data, second_scenario_update_data);
+
+//         for (auto component_idx : {0, 1, 2}) {
+//             CAPTURE(component_idx);
+
+//             CHECK(is_nan(test_asym_node[component_idx].u_pu));
+
+//             for (auto phase_idx : {0, 1, 2}) {
+//                 CAPTURE(phase_idx);
+
+//                 CHECK(test_asym_node[state.asym_node.size() + component_idx].u_pu(phase_idx) ==
+//                       doctest::Approx(ref_asym_node[component_idx].u_pu(phase_idx)));
+//             }
+//         }
+//     }
 
 } // namespace power_grid_model_cpp
