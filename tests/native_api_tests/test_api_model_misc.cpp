@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <limits>
 #include <numbers>
 #include <span>
@@ -125,54 +126,6 @@ struct State {
     std::vector<double> shunt_g0{0.015};
     std::vector<double> shunt_b0{0.0};
 
-    std::vector<ID> sym_power_sensor_id{11, 13, 14, 15, 16, 17, 28};
-    std::vector<ID> sym_power_sensor_measured_object{4, 6, 6, 9, 7, 8, 3};
-    std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{
-        MeasuredTerminalType::branch_from, MeasuredTerminalType::source, MeasuredTerminalType::source,
-        MeasuredTerminalType::shunt,       MeasuredTerminalType::load,   MeasuredTerminalType::load,
-        MeasuredTerminalType::node};
-    std::vector<double> sym_power_sensor_power_sigma{0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02};
-    std::vector<double> sym_power_sensor_p_measured{1.1e6, 1.3e6, 1.4e6, 1.5e6, 1.6e6, 1.7e6, 3.0e6};
-    std::vector<double> sym_power_sensor_q_measured{1.1e3, 1.3e3, 1.4e3, 1.5e3, 1.6e3, 1.7e3, 3.0e3};
-
-    std::vector<ID> asym_power_sensor_id{18, 20, 21, 22, 23, 24, 29};
-    std::vector<ID> asym_power_sensor_measured_object{4, 6, 6, 9, 7, 8, 3};
-    std::vector<MeasuredTerminalType> asym_power_sensor_measured_terminal_type{
-        MeasuredTerminalType::branch_from, MeasuredTerminalType::source, MeasuredTerminalType::source,
-        MeasuredTerminalType::shunt,       MeasuredTerminalType::load,   MeasuredTerminalType::load,
-        MeasuredTerminalType::node};
-    std::vector<double> asym_power_sensor_power_sigma{0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02};
-    std::vector<double> asym_power_sensor_p_measured{
-        2.11e6, 2.12e6, 2.13e6, // 18
-        2.31e6, 2.32e6, 2.33e6, // 20
-        2.41e6, 2.42e6, 2.43e6, // 21
-        2.51e6, 2.52e6, 2.53e6, // 22
-        2.61e6, 2.62e6, 2.63e6, // 23
-        2.71e6, 2.72e6, 2.73e6, // 24
-        5.01e6, 5.02e6, 5.03e6  // 28
-    };
-    std::vector<double> asym_power_sensor_q_measured{
-        2.11e3, 2.12e3, 2.13e3, // 18
-        2.31e3, 2.32e3, 2.33e3, // 20
-        2.41e3, 2.42e3, 2.43e3, // 21
-        2.51e3, 2.52e3, 2.53e3, // 22
-        2.61e3, 2.62e3, 2.63e3, // 23
-        2.71e3, 2.72e3, 2.73e3, // 24
-        5.01e3, 5.02e3, 5.03e3, // 29
-    };
-
-    std::vector<ID> sym_voltage_sensor_id{25, 26};
-    std::vector<ID> sym_voltage_sensor_measured_object{1, 2};
-    std::vector<double> sym_voltage_sensor_u_sigma{105.0, 105.0};
-    std::vector<double> sym_voltage_sensor_u_measured{10.1e3, 10.2e3};
-    std::vector<double> sym_voltage_sensor_u_angle_measured{0.1, 0.2};
-
-    std::vector<ID> asym_voltage_sensor_id{27};
-    std::vector<ID> asym_voltage_sensor_measured_object{3};
-    std::vector<double> asym_voltage_sensor_u_sigma{105.0};
-    std::vector<double> asym_voltage_sensor_u_measured{10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3};
-    std::vector<double> asym_voltage_sensor_u_angle_measured{0.0, -deg_120, -deg_240};
-
     auto get_input_dataset() const {
         DatasetConst result{"input", 0, 1};
 
@@ -236,44 +189,6 @@ struct State {
         result.add_attribute_buffer("shunt", "g0", shunt_g0.data());
         result.add_attribute_buffer("shunt", "b0", shunt_b0.data());
 
-        result.add_buffer("sym_power_sensor", sym_power_sensor_id.size(), sym_power_sensor_id.size(), nullptr, nullptr);
-        result.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
-        result.add_attribute_buffer("sym_power_sensor", "measured_object", sym_power_sensor_measured_object.data());
-        result.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
-                                    sym_power_sensor_measured_terminal_type.data());
-        result.add_attribute_buffer("sym_power_sensor", "power_sigma", sym_power_sensor_power_sigma.data());
-        result.add_attribute_buffer("sym_power_sensor", "p_measured", sym_power_sensor_p_measured.data());
-        result.add_attribute_buffer("sym_power_sensor", "q_measured", sym_power_sensor_q_measured.data());
-
-        result.add_buffer("asym_power_sensor", asym_power_sensor_id.size(), asym_power_sensor_id.size(), nullptr,
-                          nullptr);
-        result.add_attribute_buffer("asym_power_sensor", "id", asym_power_sensor_id.data());
-        result.add_attribute_buffer("asym_power_sensor", "measured_object", asym_power_sensor_measured_object.data());
-        result.add_attribute_buffer("asym_power_sensor", "measured_terminal_type",
-                                    asym_power_sensor_measured_terminal_type.data());
-        result.add_attribute_buffer("asym_power_sensor", "power_sigma", asym_power_sensor_power_sigma.data());
-        result.add_attribute_buffer("asym_power_sensor", "p_measured", asym_power_sensor_p_measured.data());
-        result.add_attribute_buffer("asym_power_sensor", "q_measured", asym_power_sensor_q_measured.data());
-
-        result.add_buffer("sym_voltage_sensor", sym_voltage_sensor_id.size(), sym_voltage_sensor_id.size(), nullptr,
-                          nullptr);
-        result.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
-        result.add_attribute_buffer("sym_voltage_sensor", "measured_object", sym_voltage_sensor_measured_object.data());
-        result.add_attribute_buffer("sym_voltage_sensor", "u_sigma", sym_voltage_sensor_u_sigma.data());
-        result.add_attribute_buffer("sym_voltage_sensor", "u_measured", sym_voltage_sensor_u_measured.data());
-        result.add_attribute_buffer("sym_voltage_sensor", "u_angle_measured",
-                                    sym_voltage_sensor_u_angle_measured.data());
-
-        result.add_buffer("asym_voltage_sensor", asym_voltage_sensor_id.size(), asym_voltage_sensor_id.size(), nullptr,
-                          nullptr);
-        result.add_attribute_buffer("asym_voltage_sensor", "id", asym_voltage_sensor_id.data());
-        result.add_attribute_buffer("asym_voltage_sensor", "measured_object",
-                                    asym_voltage_sensor_measured_object.data());
-        result.add_attribute_buffer("asym_voltage_sensor", "u_sigma", asym_voltage_sensor_u_sigma.data());
-        result.add_attribute_buffer("asym_voltage_sensor", "u_measured", asym_voltage_sensor_u_measured.data());
-        result.add_attribute_buffer("asym_voltage_sensor", "u_angle_measured",
-                                    asym_voltage_sensor_u_angle_measured.data());
-
         return result;
     }
 
@@ -292,13 +207,6 @@ struct State {
     // std::vector<ApplianceOutput<symmetric_t>> sym_load_asym = std::vector<ApplianceOutput<symmetric_t>>(1);
     // std::vector<ApplianceOutput<symmetric_t>> sym_source = std::vector<ApplianceOutput<symmetric_t>>(2);
     // std::vector<ApplianceOutput<symmetric_t>> sym_shunt = std::vector<ApplianceOutput<symmetric_t>>(1);
-    // std::vector<VoltageSensorOutput<symmetric_t>> sym_voltage_sensor_sensor =
-    // std::vector<VoltageSensorOutput<symmetric_t>>(2); std::vector<VoltageSensorOutput<symmetric_t>>
-    // asym_voltage_sensor_sensor_sym_output =
-    //     std::vector<VoltageSensorOutput<symmetric_t>>(1);
-    // std::vector<PowerSensorOutput<symmetric_t>> sym_power_sensor = std::vector<PowerSensorOutput<symmetric_t>>(7);
-    // std::vector<PowerSensorOutput<symmetric_t>> asym_power_sensor_sym_output =
-    //     std::vector<PowerSensorOutput<symmetric_t>>(7);
 
     // // individual asymmetric
     // std::vector<BranchOutput<asymmetric_t>> asym_line = std::vector<BranchOutput<asymmetric_t>>(1);
@@ -307,13 +215,6 @@ struct State {
     // std::vector<ApplianceOutput<asymmetric_t>> asym_load_asym = std::vector<ApplianceOutput<asymmetric_t>>(1);
     // std::vector<ApplianceOutput<asymmetric_t>> asym_source = std::vector<ApplianceOutput<asymmetric_t>>(2);
     // std::vector<ApplianceOutput<asymmetric_t>> asym_shunt = std::vector<ApplianceOutput<asymmetric_t>>(1);
-    // std::vector<VoltageSensorOutput<asymmetric_t>> asym_voltage_sensor_sensor =
-    //     std::vector<VoltageSensorOutput<asymmetric_t>>(1);
-    // std::vector<VoltageSensorOutput<asymmetric_t>> sym_voltage_sensor_sensor_asym_output =
-    //     std::vector<VoltageSensorOutput<asymmetric_t>>(2);
-    // std::vector<PowerSensorOutput<asymmetric_t>> asym_power_sensor = std::vector<PowerSensorOutput<asymmetric_t>>(7);
-    // std::vector<PowerSensorOutput<asymmetric_t>> sym_power_sensor_asym_output =
-    //     std::vector<PowerSensorOutput<asymmetric_t>>(7);
 
     // // update vector
     // std::vector<SymLoadGenUpdate> sym_load_update{{7, 1, 1.0e6, nan}};
@@ -560,28 +461,19 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
     check_sym();
 }
 
-// namespace {
-// auto incomplete_input_model(State const& state) -> MainModel {
-//     MainModel model{50.0, meta_data::meta_data_gen::meta_data};
+namespace {
+auto incomplete_state() -> State {
+    State result;
 
-//     std::vector<SourceInput> const incomplete_source_input{{6, 1, 1, nan, nan, 1e12, nan, nan},
-//                                                            {10, 3, 1, nan, nan, 1e12, nan, nan}};
-//     std::vector<SymLoadGenInput> const incomplete_sym_load_input{{7, 3, 1, LoadGenType::const_y, nan, 0.0}};
-//     std::vector<AsymLoadGenInput> const incomplete_asym_load_input{
-//         {8, 3, 1, LoadGenType::const_y, RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{0.0}}};
+    std::ranges::fill(result.source_status, 1);
+    std::ranges::fill(result.source_u_ref, nan);
+    std::ranges::fill(result.source_u_ref_angle, nan);
+    std::ranges::fill(result.sym_load_p_specified, nan);
+    std::ranges::fill(result.asym_load_p_specified, nan);
 
-//     model.add_component<Node>(state.node_input);
-//     model.add_component<Line>(state.line_input);
-//     model.add_component<Link>(state.link_input);
-//     model.add_component<Source>(incomplete_source_input);
-//     model.add_component<SymLoad>(incomplete_sym_load_input);
-//     model.add_component<AsymLoad>(incomplete_asym_load_input);
-//     model.add_component<Shunt>(state.shunt_input);
-//     model.set_construction_complete();
-
-//     return model;
-// }
-// } // namespace
+    return result;
+}
+} // namespace
 
 // TEST_CASE("Test main model - incomplete input") {
 //     using CalculationMethod::iterative_current;
