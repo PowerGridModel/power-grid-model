@@ -22,7 +22,7 @@ constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr double deg_120 = 2.0 / 3.0 * pi;
 constexpr double deg_240 = 4.0 / 3.0 * pi;
 
-enum class CalculationSymmetry : Idx { symmetric = 0, asymmetric = 1 };
+enum class CalculationSymmetry : Idx { symmetric = 1, asymmetric = 0 };
 enum class LoadGenType : IntS {
     const_pq = 0, // constant power
     const_y = 1,  // constant element_admittance (impedance)
@@ -370,7 +370,7 @@ struct State {
     //     {30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}, {30}, {30}, {30}, {30}};
 };
 
-auto default_model(State const& state) -> Model { return Model{50.0, state.get_input_dataset()}; }
+// auto default_model(State const& state) -> Model { return Model{50.0, state.get_input_dataset()}; }
 } // namespace
 
 TEST_CASE("API Model - indexing + bad input") {
@@ -591,7 +591,7 @@ TEST_CASE("API model - all updates") {
 
         auto const total_elements = input_info.component_total_elements(comp_type_idx);
         auto const elements_per_scenario = input_info.component_elements_per_scenario(comp_type_idx);
-        auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
+        // auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
 
         // Buffer sym_output_from_batch{comp_meta, total_elements};
         Buffer sym_output_from_updated_single{comp_meta, total_elements};
