@@ -384,7 +384,7 @@ Options get_options(CaseParam const& param, Idx threading = -1) {
     Options options{};
     options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
     options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
-    options.set_symmetric(param.sym ? 1 : 0);
+    options.set_symmetric(param.sym ? PGM_symmetric : PGM_asymmetric);
     options.set_err_tol(param.err_tol);
     options.set_max_iter(param.max_iter);
     options.set_threading(threading);

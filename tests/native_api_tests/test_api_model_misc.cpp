@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model_c/dataset_definitions.h>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
 
@@ -22,7 +23,7 @@ constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr double deg_120 = 2.0 / 3.0 * pi;
 constexpr double deg_240 = 4.0 / 3.0 * pi;
 
-enum class CalculationSymmetry : Idx { symmetric = 1, asymmetric = 0 };
+enum class CalculationSymmetry : Idx { symmetric = PGM_symmetric, asymmetric = PGM_asymmetric };
 enum class LoadGenType : IntS {
     const_pq = 0, // constant power
     const_y = 1,  // constant element_admittance (impedance)
@@ -61,11 +62,11 @@ enum class FaultPhase : IntS {
     // nan = na_IntS
 };
 
-Options get_default_options(CalculationSymmetry calculation_symmetry, PGM_CalculationMethod calculation_method,
+Options get_default_options(PGM_SymmetryType calculation_symmetry, PGM_CalculationMethod calculation_method,
                             Idx threading = default_option) {
     Options opt;
     opt.set_calculation_type(PGM_power_flow);
-    opt.set_symmetric(static_cast<Idx>(calculation_symmetry));
+    opt.set_symmetric(calculation_symmetry);
     opt.set_calculation_method(calculation_method);
     if (threading != default_option) {
         opt.set_threading(threading);
@@ -507,71 +508,71 @@ TEST_CASE("API model - all updates") {
     auto const& input_info = input_dataset.get_info();
     auto model = Model{50.0, input_dataset};
 
-    // // update vector
-    // std::vector<ID> sym_load_update_id{7};
-    // std::vector<IntS> sym_load_update_status{1};
-    // std::vector<double> sym_load_update_p_specified{2.5e6};
+    // update vector
+    std::vector<ID> sym_load_update_id{7};
+    std::vector<IntS> sym_load_update_status{1};
+    std::vector<double> sym_load_update_p_specified{2.5e6};
 
-    // std::vector<ID> asym_load_update_id{8};
-    // std::vector<IntS> asym_load_update_status{0};
+    std::vector<ID> asym_load_update_id{8};
+    std::vector<IntS> asym_load_update_status{0};
 
-    // std::vector<ID> shunt_update_id{9};
-    // std::vector<IntS> shunt_update_status{0};
-    // std::vector<double> shunt_update_b1{0.02};
-    // std::vector<double> shunt_update_b0{0.02};
+    std::vector<ID> shunt_update_id{9};
+    std::vector<IntS> shunt_update_status{0};
+    std::vector<double> shunt_update_b1{0.02};
+    std::vector<double> shunt_update_b0{0.02};
 
-    // // used for test case alternate compute mode
-    // std::vector<ID> shunt_update_2_id{6};
-    // std::vector<IntS> source_update_2_status{0};
-    // std::vector<double> shunt_update_2_b1{0.01};
-    // std::vector<double> shunt_update_2_b0{0.01};
+    // used for test case alternate compute mode
+    std::vector<ID> shunt_update_2_id{6};
+    std::vector<IntS> source_update_2_status{0};
+    std::vector<double> shunt_update_2_b1{0.01};
+    std::vector<double> shunt_update_2_b0{0.01};
 
-    // std::vector<ID> source_update_id{10};
-    // std::vector<IntS> source_update_status{1};
-    // std::vector<double> source_update_u_ref{test::u1};
+    std::vector<ID> source_update_id{10};
+    std::vector<IntS> source_update_status{1};
+    std::vector<double> source_update_u_ref{test::u1};
 
-    // std::vector<ID> link_update_id{5};
-    // std::vector<IntS> link_update_from_status{1};
-    // std::vector<IntS> link_update_to_status{0};
+    std::vector<ID> link_update_id{5};
+    std::vector<IntS> link_update_from_status{1};
+    std::vector<IntS> link_update_to_status{0};
 
-    // std::vector<ID> fault_update_id{30};
-    // std::vector<IntS> fault_update_status{1};
-    // std::vector<FaultType> fault_update_type{FaultType::three_phase};
-    // std::vector<FaultPhase> fault_update_phase{FaultPhase::abc};
-    // std::vector<ID> fault_update_object{1};
+    std::vector<ID> fault_update_id{30};
+    std::vector<IntS> fault_update_status{1};
+    std::vector<FaultType> fault_update_type{FaultType::three_phase};
+    std::vector<FaultPhase> fault_update_phase{FaultPhase::abc};
+    std::vector<ID> fault_update_object{1};
 
-    // DatasetConst update_data{"update", 1, 1};
-    // update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-    // update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
-    // update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
-    // update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
+    DatasetConst update_data{"update", 1, 1};
+    update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
+    update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
+    update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
 
-    // update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
-    // update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
-    // update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
+    update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
+    update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
 
-    // update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
-    // update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
-    // update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
-    // update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
-    // update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
+    update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
+    update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
+    update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
+    update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
 
-    // update_data.add_buffer("source", 1, 1, nullptr, nullptr);
-    // update_data.add_attribute_buffer("source", "id", source_update_id.data());
-    // update_data.add_attribute_buffer("source", "status", source_update_status.data());
-    // update_data.add_attribute_buffer("source", "u_ref", source_update_u_ref.data());
+    update_data.add_buffer("source", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("source", "id", source_update_id.data());
+    update_data.add_attribute_buffer("source", "status", source_update_status.data());
+    update_data.add_attribute_buffer("source", "u_ref", source_update_u_ref.data());
 
-    // update_data.add_buffer("link", 1, 1, nullptr, nullptr);
-    // update_data.add_attribute_buffer("link", "id", link_update_id.data());
-    // update_data.add_attribute_buffer("link", "from_status", link_update_from_status.data());
-    // update_data.add_attribute_buffer("link", "to_status", link_update_to_status.data());
+    update_data.add_buffer("link", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("link", "id", link_update_id.data());
+    update_data.add_attribute_buffer("link", "from_status", link_update_from_status.data());
+    update_data.add_attribute_buffer("link", "to_status", link_update_to_status.data());
 
-    // update_data.add_buffer("fault", 1, 1, nullptr, nullptr);
-    // update_data.add_attribute_buffer("fault", "id", fault_update_id.data());
-    // update_data.add_attribute_buffer("fault", "status", fault_update_status.data());
-    // update_data.add_attribute_buffer("fault", "fault_type", fault_update_type.data());
-    // update_data.add_attribute_buffer("fault", "fault_phase", fault_update_phase.data());
-    // update_data.add_attribute_buffer("fault", "fault_object", fault_update_object.data());
+    update_data.add_buffer("fault", 1, 1, nullptr, nullptr);
+    update_data.add_attribute_buffer("fault", "id", fault_update_id.data());
+    update_data.add_attribute_buffer("fault", "status", fault_update_status.data());
+    update_data.add_attribute_buffer("fault", "fault_type", fault_update_type.data());
+    update_data.add_attribute_buffer("fault", "fault_phase", fault_update_phase.data());
+    update_data.add_attribute_buffer("fault", "fault_object", fault_update_object.data());
 
     auto const output_dataset_type = "sym_output"s;
     for (Idx comp_type_idx = 0; comp_type_idx < input_info.n_components(); ++comp_type_idx) {
@@ -580,37 +581,29 @@ TEST_CASE("API model - all updates") {
         auto const comp_type = input_info.component_name(comp_type_idx);
         CAPTURE(comp_type);
 
-        if (comp_type != "node") { // TODO(mgovers): remove
-            continue;
-        }
-
         auto const comp_meta = MetaData::get_component_by_name(output_dataset_type, comp_type);
 
-        // DatasetMutable output_data_from_batch{output_dataset_type, 1, 1};
+        DatasetMutable output_data_from_batch{output_dataset_type, 1, 1};
         DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
 
         auto const total_elements = input_info.component_total_elements(comp_type_idx);
         auto const elements_per_scenario = input_info.component_elements_per_scenario(comp_type_idx);
-        // auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
+        auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
 
-        // Buffer sym_output_from_batch{comp_meta, total_elements};
-        Buffer sym_output_from_updated_single{comp_meta, total_elements};
-        // std::vector<char> sym_output_from_updated_single_data(n_bytes);
+        std::vector<char> sym_output_from_batch(n_bytes);
+        std::vector<char> sym_output_from_updated_single(n_bytes);
 
-        // output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
-        //                                   sym_output_from_batch);
+        output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
+                                          reinterpret_cast<void*>(sym_output_from_batch.data()));
         output_data_from_updated_single.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
-                                                   sym_output_from_updated_single);
-        // output_data_from_updated_single.add_buffer(
-        //     comp_type, elements_per_scenario, total_elements, nullptr,
-        //     reinterpret_cast<void*>(sym_output_from_updated_single_data.data()));
+                                                   reinterpret_cast<void*>(sym_output_from_updated_single.data()));
 
-        auto opt = get_default_options(CalculationSymmetry::symmetric, PGM_linear);
-        // model.calculate(opt, output_data_from_batch, update_data);
-        // model.update(update_data);
+        auto opt = get_default_options(PGM_symmetric, PGM_linear);
+        model.calculate(opt, output_data_from_batch, update_data);
+        model.update(update_data);
         model.calculate(opt, output_data_from_updated_single);
 
-        // CHECK(sym_output_from_batch == sym_output_from_updated_single);
+        CHECK(sym_output_from_batch == sym_output_from_updated_single);
     }
 }
 
