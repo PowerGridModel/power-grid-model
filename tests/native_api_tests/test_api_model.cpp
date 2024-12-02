@@ -58,6 +58,19 @@ Dataset created with the following buffers:
 
 namespace power_grid_model_cpp {
 namespace {
+enum class MeasuredTerminalType : IntS {
+    branch_from = 0,
+    branch_to = 1,
+    source = 2,
+    shunt = 3,
+    load = 4,
+    generator = 5,
+    branch3_1 = 6,
+    branch3_2 = 7,
+    branch3_3 = 8,
+    node = 9
+};
+
 void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_error,
                      std::string_view reference_err_msg) {
     CHECK(e.error_code() == reference_error);
@@ -827,6 +840,130 @@ TEST_CASE("API Model") {
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
+        }
+    }
+
+    SUBCASE("Test get indexer") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+
+        DatasetConst input_dataset{"input", 0, 1};
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        auto model = Model{50.0, input_dataset};
+
+        std::vector<ID> const ids_to_index{2, 1, 3, 2};
+        std::vector<Idx> const expected_indexer{1, 0, 2, 1};
+        std::vector<Idx> indexer(ids_to_index.size());
+        model.get_indexer("node", ids_to_index.size(), ids_to_index.data(), indexer.data());
+        CHECK(indexer == expected_indexer);
+    }
+
+    SUBCASE("Test duplicated id") {
+        std::vector<ID> node_id{1, 1, 3};
+        DatasetConst input_dataset{"input", 0, 1};
+
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
+    }
+
+    SUBCASE("Test non-existing id") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+
+        std::vector<ID> link_id{5};
+        std::vector<ID> link_from_node{99};
+        std::vector<ID> link_to_node{3};
+
+        DatasetConst input_dataset{"input", 0, 1};
+
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
+    }
+
+    SUBCASE("Test id for wrong type") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+
+        std::vector<ID> line_id{9};
+        std::vector<ID> line_from_node{1};
+        std::vector<ID> line_to_node{2};
+
+        std::vector<ID> link_id{5};
+        std::vector<ID> link_from_node{2};
+        std::vector<ID> link_to_node{3};
+
+        std::vector<ID> sym_voltage_sensor_id{25};
+        std::vector<ID> sym_voltage_sensor_measured_object{1};
+
+        std::vector<ID> sym_power_sensor_id{28};
+        std::vector<ID> sym_power_sensor_measured_object{3};
+        std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{MeasuredTerminalType::node};
+
+        DatasetConst input_dataset{"input", 0, 1};
+
+        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        input_dataset.add_buffer("line", line_id.size(), line_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("line", "id", line_id.data());
+        input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
+        input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
+
+        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
+
+        input_dataset.add_buffer("sym_voltage_sensor", sym_voltage_sensor_id.size(), sym_voltage_sensor_id.size(),
+                                 nullptr, nullptr);
+        input_dataset.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
+        input_dataset.add_attribute_buffer("sym_voltage_sensor", "measured_object",
+                                           sym_voltage_sensor_measured_object.data());
+
+        input_dataset.add_buffer("sym_power_sensor", sym_power_sensor_id.size(), sym_power_sensor_id.size(), nullptr,
+                                 nullptr);
+        input_dataset.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
+        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_object",
+                                           sym_power_sensor_measured_object.data());
+        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
+                                           sym_power_sensor_measured_terminal_type.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset}; };
+
+        SUBCASE("Correct type") { CHECK_NOTHROW(construct_model()); }
+        SUBCASE("Wrong branch terminal node") {
+            link_from_node[0] = 9;
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 9\n", PowerGridRegularError);
+        }
+        SUBCASE("Wrong voltage sensor measured object") {
+            sym_voltage_sensor_measured_object[0] = 5;
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 5\n", PowerGridRegularError);
+        }
+        SUBCASE("Wrong power sensor measured object type") {
+            using enum MeasuredTerminalType;
+            std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
+
+            for (auto const& mt_type : mt_types) {
+                CAPTURE(mt_type);
+                sym_power_sensor_measured_terminal_type[0] = mt_type;
+                CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 3\n", PowerGridRegularError);
+            }
         }
     }
 }

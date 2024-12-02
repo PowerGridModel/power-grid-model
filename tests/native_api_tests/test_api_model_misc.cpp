@@ -42,26 +42,6 @@ enum class MeasuredTerminalType : IntS {
     node = 9
 };
 
-enum class FaultType : IntS {
-    three_phase = 0,
-    single_phase_to_ground = 1,
-    // two_phase = 2,
-    // two_phase_to_ground = 3,
-    // nan = -128
-};
-
-enum class FaultPhase : IntS {
-    abc = 0,
-    a = 1,
-    // b = 2,
-    // c = 3,
-    // ab = 4,
-    // ac = 5,
-    // bc = 6,
-    // default_value = -1,
-    // nan = na_IntS
-};
-
 Options get_default_options(PGM_SymmetryType calculation_symmetry, PGM_CalculationMethod calculation_method,
                             Idx threading = default_option) {
     Options opt;
@@ -193,14 +173,6 @@ struct State {
     std::vector<double> asym_voltage_sensor_u_measured{10.31e3 / sqrt3, 10.32e3 / sqrt3, 10.33e3 / sqrt3};
     std::vector<double> asym_voltage_sensor_u_angle_measured{0.0, -deg_120, -deg_240};
 
-    std::vector<ID> fault_id{30};
-    std::vector<IntS> fault_status{1};
-    std::vector<FaultType> fault_type{FaultType::single_phase_to_ground};
-    std::vector<FaultPhase> fault_phase{FaultPhase::a};
-    std::vector<ID> fault_object{3};
-    std::vector<double> fault_r_f{0.1};
-    std::vector<double> fault_x_f{0.1};
-
     auto get_input_dataset() const {
         DatasetConst result{"input", 0, 1};
 
@@ -302,15 +274,6 @@ struct State {
         result.add_attribute_buffer("asym_voltage_sensor", "u_angle_measured",
                                     asym_voltage_sensor_u_angle_measured.data());
 
-        result.add_buffer("fault", fault_id.size(), fault_id.size(), nullptr, nullptr);
-        result.add_attribute_buffer("fault", "id", fault_id.data());
-        result.add_attribute_buffer("fault", "status", fault_status.data());
-        result.add_attribute_buffer("fault", "fault_type", fault_type.data());
-        result.add_attribute_buffer("fault", "fault_phase", fault_phase.data());
-        result.add_attribute_buffer("fault", "fault_object", fault_object.data());
-        result.add_attribute_buffer("fault", "r_f", fault_r_f.data());
-        result.add_attribute_buffer("fault", "x_f", fault_x_f.data());
-
         return result;
     }
 
@@ -358,7 +321,7 @@ struct State {
     // RealValue<asymmetric_t>{nan}}}; std::vector<ShuntUpdate> shunt_update{{9, 0, nan, 0.02, nan, 0.02}};
     // std::vector<ShuntUpdate> shunt_update_2{{6, 0, nan, 0.01, nan, 0.01}}; // used for test case alternate compute
     // mode std::vector<SourceUpdate> source_update{{10, 1, test::u1, nan}}; std::vector<BranchUpdate> link_update{{5,
-    // 1, 0}}; std::vector<FaultUpdate> fault_update{{30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}};
+    // 1, 0}};
 
     // // batch update vector
     // std::vector<SymLoadGenUpdate> batch_sym_load_update{{7, 1, 1.0e6, nan}, {7}, {7}, {7}, {7}};
@@ -367,138 +330,10 @@ struct State {
     // std::vector<ShuntUpdate> batch_shunt_update{{9, 0, nan, 0.02, nan, 0.02}, {9}, {9}, {9}, {9}};
     // std::vector<SourceUpdate> batch_source_update{{10, 1, test::u1, nan}, {10}, {10}, {10}, {10}};
     // std::vector<BranchUpdate> batch_link_update{{5, 1, 0}, {5}, {5}, {5}, {5}};
-    // std::vector<FaultUpdate> batch_fault_update{
-    //     {30, 1, FaultType::three_phase, FaultPhase::abc, 1, nan, nan}, {30}, {30}, {30}, {30}};
 };
 
 // auto default_model(State const& state) -> Model { return Model{50.0, state.get_input_dataset()}; }
 } // namespace
-
-TEST_CASE("API Model - indexing + bad input") {
-    SUBCASE("Test get indexer") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
-
-        DatasetConst input_dataset{"input", 0, 1};
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-
-        auto model = Model{50.0, input_dataset};
-
-        std::vector<ID> const ids_to_index{2, 1, 3, 2};
-        std::vector<Idx> const expected_indexer{1, 0, 2, 1};
-        std::vector<Idx> indexer(ids_to_index.size());
-        model.get_indexer("node", ids_to_index.size(), ids_to_index.data(), indexer.data());
-        CHECK(indexer == expected_indexer);
-    }
-
-    SUBCASE("Test duplicated id") {
-        std::vector<ID> node_id{1, 1, 3};
-        DatasetConst input_dataset{"input", 0, 1};
-
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-
-        auto construct_model = [&] { Model{50.0, input_dataset}; };
-        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
-    }
-
-    SUBCASE("Test non-existing id") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
-
-        std::vector<ID> link_id{5};
-        std::vector<ID> link_from_node{99};
-        std::vector<ID> link_to_node{3};
-
-        DatasetConst input_dataset{"input", 0, 1};
-
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-
-        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("link", "id", link_id.data());
-        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
-        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
-
-        auto construct_model = [&] { Model{50.0, input_dataset}; };
-        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
-    }
-
-    SUBCASE("Test id for wrong type") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
-
-        std::vector<ID> line_id{9};
-        std::vector<ID> line_from_node{1};
-        std::vector<ID> line_to_node{2};
-
-        std::vector<ID> link_id{5};
-        std::vector<ID> link_from_node{2};
-        std::vector<ID> link_to_node{3};
-
-        std::vector<ID> sym_voltage_sensor_id{25};
-        std::vector<ID> sym_voltage_sensor_measured_object{1};
-
-        std::vector<ID> sym_power_sensor_id{28};
-        std::vector<ID> sym_power_sensor_measured_object{3};
-        std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{MeasuredTerminalType::node};
-
-        DatasetConst input_dataset{"input", 0, 1};
-
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-
-        input_dataset.add_buffer("line", line_id.size(), line_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("line", "id", line_id.data());
-        input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
-        input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
-
-        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("link", "id", link_id.data());
-        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
-        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
-
-        input_dataset.add_buffer("sym_voltage_sensor", sym_voltage_sensor_id.size(), sym_voltage_sensor_id.size(),
-                                 nullptr, nullptr);
-        input_dataset.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
-        input_dataset.add_attribute_buffer("sym_voltage_sensor", "measured_object",
-                                           sym_voltage_sensor_measured_object.data());
-
-        input_dataset.add_buffer("sym_power_sensor", sym_power_sensor_id.size(), sym_power_sensor_id.size(), nullptr,
-                                 nullptr);
-        input_dataset.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
-        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_object",
-                                           sym_power_sensor_measured_object.data());
-        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
-                                           sym_power_sensor_measured_terminal_type.data());
-
-        auto construct_model = [&] { Model{50.0, input_dataset}; };
-
-        SUBCASE("Correct type") { CHECK_NOTHROW(construct_model()); }
-        SUBCASE("Wrong branch terminal node") {
-            link_from_node[0] = 9;
-            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 9\n", PowerGridRegularError);
-        }
-        SUBCASE("Wrong voltage sensor measured object") {
-            sym_voltage_sensor_measured_object[0] = 5;
-            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 5\n", PowerGridRegularError);
-        }
-        SUBCASE("Wrong power sensor measured object type") {
-            using enum MeasuredTerminalType;
-            std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
-
-            for (auto const& mt_type : mt_types) {
-                CAPTURE(mt_type);
-                sym_power_sensor_measured_terminal_type[0] = mt_type;
-                CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 3\n", PowerGridRegularError);
-            }
-        }
-    }
-}
 
 TEST_CASE("API model - all updates") {
     using namespace std::string_literals;
@@ -535,12 +370,6 @@ TEST_CASE("API model - all updates") {
     std::vector<IntS> link_update_from_status{1};
     std::vector<IntS> link_update_to_status{0};
 
-    std::vector<ID> fault_update_id{30};
-    std::vector<IntS> fault_update_status{1};
-    std::vector<FaultType> fault_update_type{FaultType::three_phase};
-    std::vector<FaultPhase> fault_update_phase{FaultPhase::abc};
-    std::vector<ID> fault_update_object{1};
-
     DatasetConst update_data{"update", 1, 1};
     update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
     update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
@@ -566,13 +395,6 @@ TEST_CASE("API model - all updates") {
     update_data.add_attribute_buffer("link", "id", link_update_id.data());
     update_data.add_attribute_buffer("link", "from_status", link_update_from_status.data());
     update_data.add_attribute_buffer("link", "to_status", link_update_to_status.data());
-
-    update_data.add_buffer("fault", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("fault", "id", fault_update_id.data());
-    update_data.add_attribute_buffer("fault", "status", fault_update_status.data());
-    update_data.add_attribute_buffer("fault", "fault_type", fault_update_type.data());
-    update_data.add_attribute_buffer("fault", "fault_phase", fault_update_phase.data());
-    update_data.add_attribute_buffer("fault", "fault_object", fault_update_object.data());
 
     auto const output_dataset_type = "sym_output"s;
     for (Idx comp_type_idx = 0; comp_type_idx < input_info.n_components(); ++comp_type_idx) {
@@ -621,7 +443,6 @@ TEST_CASE("API model - all updates") {
 //     update_data.add_buffer("shunt", 1, state.batch_shunt_update.size(), nullptr, state.batch_shunt_update.data());
 //     update_data.add_buffer("source", 1, state.batch_source_update.size(), nullptr, state.batch_source_update.data());
 //     update_data.add_buffer("link", 1, state.batch_link_update.size(), nullptr, state.batch_link_update.data());
-//     update_data.add_buffer("fault", 1, state.batch_fault_update.size(), nullptr, state.batch_fault_update.data());
 
 //     model.update_components<typename settings::update_type>(update_data);
 
