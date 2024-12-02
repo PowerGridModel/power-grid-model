@@ -649,7 +649,6 @@ namespace {
 auto get_incomplete_state() -> State {
     State result;
 
-    // std::ranges::fill(result.source_status, 1);  // TODO(mgovers): remove
     std::ranges::fill(result.source_u_ref, nan);
     std::ranges::fill(result.source_u_ref_angle, nan);
     std::ranges::fill(result.sym_load_p_specified, nan);
