@@ -152,10 +152,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    static constexpr Idx ignore_output_v{-1};
-    static constexpr Idx isolated_component_v{-1};
-    static constexpr Idx not_connected_v{-1};
-    static constexpr Idx sequential_v{-1};
+    static constexpr Idx ignore_output{-1};
+    static constexpr Idx isolated_component{-1};
+    static constexpr Idx not_connected{-1};
+    static constexpr Idx sequential{-1};
 
   public:
     using Options = MainModelOptions;
@@ -177,7 +177,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     get_components_to_update(ConstDataset const& update_data) const {
         return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
             [&update_data]<typename CompType>() {
-                return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index_v);
+                return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index);
             });
     }
 
@@ -297,7 +297,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const update_independence =
             main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
         auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            state_, update_data, 0, components_to_update, update_independence);
+            state_, update_data, 0, components_to_update, update_independence, false);
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
@@ -387,8 +387,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
             main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
-        return main_core::update::get_all_sequence_idx_map<ComponentType...>(state_, update_data, 0,
-                                                                             components_to_update, update_independence);
+        return main_core::update::get_all_sequence_idx_map<ComponentType...>(
+            state_, update_data, 0, components_to_update, update_independence, false);
     }
 
   private:
@@ -490,7 +490,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = sequential_v) {
+                                      ConstDataset const& update_data, Idx threading = sequential) {
         // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
@@ -516,7 +516,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                "sym_output",
                                *meta_data_,
                            },
-                           ignore_output_v);
+                           ignore_output);
         } catch (const SparseMatrixError&) {
             // missing entries are provided in the update data
         } catch (const NotObservableError&) {
@@ -555,7 +555,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const update_independence =
             main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
         all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            state_, update_data, 0, components_to_update, update_independence);
+            state_, update_data, 0, components_to_update, update_independence, false);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
                 &all_scenarios_sequence = std::as_const(all_scenarios_sequence), components_to_update,
@@ -673,7 +673,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
              do_update_cache_ = std::move(do_update_cache), &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
                 current_scenario_sequence_cache = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-                    model.state_, update_data, scenario_idx, components_to_store, do_update_cache_, false);
+                    model.state_, update_data, scenario_idx, components_to_store, do_update_cache_, true);
 
                 model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());
             },
@@ -765,7 +765,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Idx pos_) {
                 auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
 
-                if (pos_ != ignore_output_v) {
+                if (pos_ != ignore_output) {
                     main_model_.output_result(math_output, result_data_, pos_);
                 }
             },
@@ -778,8 +778,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return batch_calculation_(
             [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
-                sub_opt.err_tol = pos != ignore_output_v ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output_v ? options.max_iter : 1;
+                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
 
                 model.calculate(sub_opt, target_data, pos);
             },
@@ -920,7 +920,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all branch
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->branch[i];
-            if (math_idx.group == isolated_component_v) {
+            if (math_idx.group == isolated_component) {
                 continue;
             }
             // assign parameters
@@ -930,7 +930,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all branch3
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch3_node_idx.size()); ++i) {
             Idx2DBranch3 const math_idx = state_.topo_comp_coup->branch3[i];
-            if (math_idx.group == isolated_component_v) {
+            if (math_idx.group == isolated_component) {
                 continue;
             }
             // assign parameters, branch3 param consists of three branch parameters
@@ -943,7 +943,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all shunt
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->shunt_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->shunt[i];
-            if (math_idx.group == isolated_component_v) {
+            if (math_idx.group == isolated_component) {
                 continue;
             }
             // assign parameters
@@ -953,7 +953,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // loop all source
         for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->source_node_idx.size()); ++i) {
             Idx2D const math_idx = state_.topo_comp_coup->source[i];
-            if (math_idx.group == isolated_component_v) {
+            if (math_idx.group == isolated_component) {
                 continue;
             }
             // assign parameters
@@ -972,7 +972,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     Idx2D const math_idx =
                         state.topo_comp_coup
                             ->branch[main_core::get_component_sequence_idx<Branch>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component_v) {
+                    if (math_idx.group == isolated_component) {
                         return;
                     }
                     // assign parameters
@@ -981,7 +981,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     Idx2DBranch3 const math_idx =
                         state.topo_comp_coup
                             ->branch3[main_core::get_component_sequence_idx<Branch3>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component_v) {
+                    if (math_idx.group == isolated_component) {
                         return;
                     }
                     // assign parameters, branch3 param consists of three branch parameters
@@ -994,7 +994,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     Idx2D const math_idx =
                         state.topo_comp_coup
                             ->shunt[main_core::get_component_sequence_idx<Shunt>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component_v) {
+                    if (math_idx.group == isolated_component) {
                         return;
                     }
                     // assign parameters
@@ -1076,7 +1076,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
-                if (math_idx.group != isolated_component_v) {
+                if (math_idx.group != isolated_component) {
                     auto const& component = get_component_by_sequence<ComponentIn>(state, i);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
@@ -1096,7 +1096,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
             if (include(i)) {
                 Idx2D const math_idx = components[i];
-                if (math_idx.group != isolated_component_v) {
+                if (math_idx.group != isolated_component) {
                     auto const& component = get_component_by_sequence<ComponentIn>(state, i);
                     CalcStructOut& math_model_input = calc_input[math_idx.group];
                     std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
@@ -1112,7 +1112,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
             Idx2D const math_idx = objects[i];
-            if (math_idx.group == isolated_component_v) {
+            if (math_idx.group == isolated_component) {
                 continue;
             }
             (input[math_idx.group].*component)[math_idx.pos] =
@@ -1221,7 +1221,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         auto fault_coup =
-            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component_v, not_connected_v});
+            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component, not_connected});
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {

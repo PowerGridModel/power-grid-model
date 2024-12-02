@@ -45,15 +45,15 @@ template <typename T> bool check_id_na(T const& obj) {
 
 namespace independence {
 struct UpdateCompProperties {
-    bool has_any_elements{false};                      // whether the component has any elements in the update data
-    bool ids_all_na{false};                            // whether all ids are all NA
-    bool ids_part_na{false};                           // whether some ids are NA but some are not
-    bool dense{false};                                 // whether the component is dense
-    bool uniform{false};                               // whether the component is uniform
-    bool is_columnar{false};                           // whether the component is columnar
-    bool update_ids_match{false};                      // whether the ids match
-    Idx elements_ps_in_update{utils::invalid_index_v}; // count of elements for this component per scenario in update
-    Idx elements_in_base{utils::invalid_index_v};      // count of elements for this component per scenario in input
+    bool has_any_elements{false};                    // whether the component has any elements in the update data
+    bool ids_all_na{false};                          // whether all ids are all NA
+    bool ids_part_na{false};                         // whether some ids are NA but some are not
+    bool dense{false};                               // whether the component is dense
+    bool uniform{false};                             // whether the component is uniform
+    bool is_columnar{false};                         // whether the component is columnar
+    bool update_ids_match{false};                    // whether the ids match
+    Idx elements_ps_in_update{utils::invalid_index}; // count of elements for this component per scenario in update
+    Idx elements_in_base{utils::invalid_index};      // count of elements for this component per scenario in input
 
     constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
     constexpr bool qualify_for_optional_id() const {
@@ -65,7 +65,7 @@ struct UpdateCompProperties {
     constexpr bool is_empty_component() const { return !has_any_elements; }
     constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
     constexpr Idx get_n_elements() const {
-        assert(uniform || elements_ps_in_update == utils::invalid_index_v);
+        assert(uniform || elements_ps_in_update == utils::invalid_index);
 
         return qualify_for_optional_id() ? elements_ps_in_update : na_Idx;
     }
@@ -109,9 +109,9 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
     properties.dense = update_data.is_dense(CompType::name);
     properties.uniform = update_data.is_uniform(CompType::name);
     properties.has_any_elements =
-        component_idx != utils::invalid_index_v && update_data.get_component_info(component_idx).total_elements > 0;
+        component_idx != utils::invalid_index && update_data.get_component_info(component_idx).total_elements > 0;
     properties.elements_ps_in_update =
-        properties.uniform ? update_data.uniform_elements_per_scenario(CompType::name) : utils::invalid_index_v;
+        properties.uniform ? update_data.uniform_elements_per_scenario(CompType::name) : utils::invalid_index;
     properties.elements_in_base = n_component;
 
     if (properties.is_columnar) {
@@ -219,29 +219,23 @@ template <class... ComponentTypes, class ComponentContainer>
 utils::SequenceIdx<ComponentTypes...>
 get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data,
                          Idx scenario_idx, utils::ComponentFlags<ComponentTypes...> const& components_to_store,
-                         independence::UpdateIndependence<ComponentTypes...> const& independence, bool cached = true) {
+                         independence::UpdateIndependence<ComponentTypes...> const& independence, bool cached) {
     return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
         [&state, &update_data, scenario_idx, &components_to_store, &independence, cached]<typename CompType>() {
-            auto const comp_properties = std::get<utils::index_of_component<CompType, ComponentTypes...>>(independence);
-            bool const is_comp_independent =
-                cached ? comp_properties.is_independent() : !comp_properties.is_independent();
-            if (!is_comp_independent ||
+            auto const component_properties =
+                std::get<utils::index_of_component<CompType, ComponentTypes...>>(independence);
+            // The sequence for the independent components is cached (true). For the remaining components, the sequence
+            // cannot be cached (false), so the independence flags are inverted to not return an empty sequence when
+            // this is the case.
+            bool const component_independence =
+                !cached ? component_properties.is_independent() : !component_properties.is_independent();
+            if (!component_independence ||
                 !std::get<utils::index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
-            independence::validate_update_data_independence(comp_properties, CompType::name);
-            return detail::get_component_sequence<CompType>(state, update_data, scenario_idx, comp_properties);
+            independence::validate_update_data_independence(component_properties, CompType::name);
+            return detail::get_component_sequence<CompType>(state, update_data, scenario_idx, component_properties);
         });
-}
-// Get sequence idx map of an entire batch for fast caching of component sequences.
-// The sequence idx map of the batch is the same as that of the first scenario in the batch (assuming homogeneity)
-// This is the entry point for permanent updates.
-template <class... ComponentTypes, class ComponentContainer>
-utils::SequenceIdx<ComponentTypes...>
-get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data,
-                         utils::ComponentFlags<ComponentTypes...> const& components_to_store,
-                         independence::UpdateIndependence<ComponentTypes...> const& independence) {
-    return get_all_sequence_idx_map<ComponentTypes...>(state, update_data, 0, components_to_store, independence);
 }
 
 // template to update components

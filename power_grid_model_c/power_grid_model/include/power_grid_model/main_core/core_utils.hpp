@@ -12,7 +12,7 @@
 
 namespace power_grid_model::main_core::utils {
 
-constexpr Idx invalid_index_v{-1};
+constexpr Idx invalid_index{-1};
 
 template <class... ComponentTypes> constexpr size_t n_types = sizeof...(ComponentTypes);
 template <class CompType, class... ComponentTypes>
