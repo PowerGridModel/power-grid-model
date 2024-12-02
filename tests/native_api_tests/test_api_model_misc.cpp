@@ -479,10 +479,10 @@ TEST_CASE("API model - incomplete input") {
     State complete_state;
     State incomplete_state = get_incomplete_state();
 
-    auto model = Model{50.0, complete_state.get_input_dataset()};
+    auto ref_model = Model{50.0, complete_state.get_input_dataset()};
     auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
 
-    DatasetConst complete_update_data{"update", false, 1};
+    DatasetConst complete_update_data{"update", true, 1};
     complete_update_data.add_buffer("source", complete_state.source_id.size(), complete_state.source_id.size(), nullptr,
                                     nullptr);
     complete_update_data.add_attribute_buffer("source", "id", complete_state.source_id.data());
@@ -499,7 +499,7 @@ TEST_CASE("API model - incomplete input") {
     complete_update_data.add_attribute_buffer("asym_load", "id", complete_state.asym_load_id.data());
     complete_update_data.add_attribute_buffer("asym_load", "p_specified", complete_state.asym_load_p_specified.data());
 
-    DatasetConst incomplete_update_data{"update", false, 1};
+    DatasetConst incomplete_update_data{"update", true, 1};
     incomplete_update_data.add_buffer("source", incomplete_state.source_id.size(), incomplete_state.source_id.size(),
                                       nullptr, nullptr);
     incomplete_update_data.add_attribute_buffer("source", "id", incomplete_state.source_id.data());
@@ -518,89 +518,80 @@ TEST_CASE("API model - incomplete input") {
     incomplete_update_data.add_attribute_buffer("asym_load", "p_specified",
                                                 incomplete_state.asym_load_p_specified.data());
 
-    //     SUBCASE("Symmetrical - Incomplete") { // TODO(mgovers): not tested elsewhere; maybe test in API model?
-    //         MutableDataset test_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
-    //         MutableDataset const ref_result_data{true, 1, "sym_output", meta_data::meta_data_gen::meta_data};
+    for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
+        CAPTURE(symmetry);
 
-    //         std::vector<NodeOutput<symmetric_t>> test_sym_node(state.sym_node.size());
-    //         test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr,
-    //         test_sym_node.data());
+        auto const calculation_symmetry = symmetry == PGM_symmetric ? "Symmetric" : "Asymmetric";
+        auto const output_type = symmetry == PGM_symmetric ? "sym_output" : "asym_output";
 
-    //         SUBCASE("Target dataset") {
-    //             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                                   .calculation_symmetry = symmetric,
-    //                                                   .calculation_method = linear,
-    //                                                   .err_tol = 1e-8,
-    //                                                   .max_iter = 1},
-    //                                                  test_result_data),
-    //                             SparseMatrixError);
-    //         }
-    //         SUBCASE("Empty update dataset") {
-    //             ConstDataset const update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
+        SUBCASE(calculation_symmetry) {
+            DatasetMutable test_result_data{output_type, true, 1};
+            DatasetMutable ref_result_data{output_type, true, 1};
 
-    //             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                                   .calculation_symmetry = symmetric,
-    //                                                   .calculation_method = linear,
-    //                                                   .err_tol = 1e-8,
-    //                                                   .max_iter = 1},
-    //                                                  test_result_data, update_data),
-    //                             SparseMatrixError);
-    //         }
-    //         SUBCASE("Update dataset") {
-    //             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                                   .calculation_symmetry = symmetric,
-    //                                                   .calculation_method = linear,
-    //                                                   .err_tol = 1e-8,
-    //                                                   .max_iter = 1},
-    //                                                  test_result_data, incomplete_update_data),
-    //                             BatchCalculationError);
-    //         }
-    //     }
+            auto n_bytes = complete_state.node_id.size() *
+                           MetaData::component_size(MetaData::get_component_by_name(output_type, "node"));
 
-    //     SUBCASE("Asymmetrical - Incomplete") { // TODO(mgovers): not tested elsewhere; maybe test in API model?
-    //         MutableDataset test_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
-    //         MutableDataset const ref_result_data{true, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+            std::vector<char> test_sym_node(n_bytes);
+            std::vector<char> ref_sym_node(n_bytes);
+            test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr,
+                                        test_sym_node.data());
+            ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr, ref_sym_node.data());
 
-    //         std::vector<NodeOutput<asymmetric_t>> test_sym_node(state.sym_node.size());
-    //         test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr,
-    //         test_sym_node.data());
+            SUBCASE("Target dataset") {
+                CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
+                                     doctest::Contains("Sparse matrix error, possibly singular matrix!"),
+                                     PowerGridRegularError);
+            }
+            SUBCASE("Empty single scenario update dataset") {
+                DatasetConst const empty_update_data{"update", true, 1};
+                SUBCASE("Single update") {
+                    test_model.update(empty_update_data);
+                    CHECK_THROWS_WITH_AS(
+                        test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
+                        doctest::Contains("Sparse matrix error, possibly singular matrix!"), PowerGridRegularError);
+                }
+                SUBCASE("Batch") {
+                    CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear),
+                                                              test_result_data, empty_update_data),
+                                         doctest::Contains("Sparse matrix error, possibly singular matrix!"),
+                                         PowerGridRegularError);
+                }
+            }
+            SUBCASE("Incomplete update dataset") {
+                SUBCASE("Single update") {
+                    CHECK_NOTHROW(test_model.update(incomplete_update_data));
+                    CHECK_THROWS_WITH_AS(
+                        test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
+                        doctest::Contains("Sparse matrix error, possibly singular matrix!"), PowerGridRegularError);
+                }
+                SUBCASE("Batch") {
+                    CHECK_THROWS_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data,
+                                                         incomplete_update_data),
+                                    PowerGridBatchError);
+                }
+            }
+            SUBCASE("Complete update dataset") {
+                CHECK_NOTHROW(ref_model.calculate(get_default_options(symmetry, PGM_linear), ref_result_data,
+                                                  complete_update_data));
+                SUBCASE("Single calculation") {
+                    test_model.update(complete_update_data);
+                    CHECK_NOTHROW(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data,
+                                                       complete_update_data));
+                }
+                SUBCASE("Batch") {
+                    CHECK_NOTHROW(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data,
+                                                       complete_update_data));
+                }
 
-    //         SUBCASE("Target dataset") {
-    //             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                                   .calculation_symmetry = asymmetric,
-    //                                                   .calculation_method = linear,
-    //                                                   .err_tol = 1e-8,
-    //                                                   .max_iter = 1},
-    //                                                  test_result_data),
-    //                             SparseMatrixError);
-    //         }
-    //         SUBCASE("Empty update dataset") {
-    //             ConstDataset const update_data{false, 1, "update", meta_data::meta_data_gen::meta_data};
-
-    //             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                                   .calculation_symmetry = asymmetric,
-    //                                                   .calculation_method = linear,
-    //                                                   .err_tol = 1e-8,
-    //                                                   .max_iter = 1},
-    //                                                  test_result_data, update_data),
-    //                             SparseMatrixError);
-    //         }
-    //         SUBCASE("Update dataset") {
-    //             CHECK_THROWS_AS(test_model.calculate({.calculation_type = power_flow,
-    //                                                   .calculation_symmetry = asymmetric,
-    //                                                   .calculation_method = linear,
-    //                                                   .err_tol = 1e-8,
-    //                                                   .max_iter = 1},
-    //                                                  test_result_data, incomplete_update_data),
-    //                             BatchCalculationError);
-    //         }
-    //     }
-    // }
+                CHECK(test_sym_node == ref_sym_node);
+            }
+        }
+    }
 
     // TEST_CASE("Test main model - Incomplete followed by complete") { // TODO(mgovers): This tests the reset of 2
     // consecutive
-    //                                                                  // batch scenarios and definitely needs to be
-    //                                                                  tested
+    //                                                                  // batch scenarios and definitely needs to
+    //                                                                  be tested
     //     using CalculationMethod::linear;
 
     //     State const state;
@@ -665,8 +656,9 @@ TEST_CASE("API model - incomplete input") {
     //     }
 
     //     SUBCASE("Asymmetrical") {
-    //         MutableDataset test_result_data{true, batch_size, "asym_output", meta_data::meta_data_gen::meta_data};
-    //         MutableDataset ref_result_data{false, 1, "asym_output", meta_data::meta_data_gen::meta_data};
+    //         MutableDataset test_result_data{true, batch_size, "asym_output",
+    //         meta_data::meta_data_gen::meta_data}; MutableDataset ref_result_data{false, 1, "asym_output",
+    //         meta_data::meta_data_gen::meta_data};
 
     //         std::vector<NodeOutput<asymmetric_t>> test_asym_node(
     //             batch_size * state.sym_node.size(),
