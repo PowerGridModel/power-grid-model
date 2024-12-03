@@ -88,8 +88,10 @@ class DatasetWritable {
 
 class DatasetMutable {
   public:
-    explicit DatasetMutable(std::string const& dataset, Idx is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), is_batch, batch_size)},
+    DatasetMutable(std::string const& dataset, std::convertible_to<Idx> auto is_batch, Idx batch_size)
+        requires(!std::same_as<decltype(is_batch), bool>)
+        : handle_{},
+          dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), is_batch, batch_size)},
           info_{handle_.call_with(PGM_dataset_mutable_get_info, get())} {}
     explicit DatasetMutable(std::string const& dataset, std::same_as<bool> auto is_batch, Idx batch_size)
         : DatasetMutable{dataset, is_batch ? Idx{1} : Idx{0}, batch_size} {}
@@ -128,8 +130,10 @@ class DatasetMutable {
 
 class DatasetConst {
   public:
-    explicit DatasetConst(std::string const& dataset, Idx is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)},
+    DatasetConst(std::string const& dataset, std::convertible_to<Idx> auto is_batch, Idx batch_size)
+        requires(!std::same_as<decltype(is_batch), bool>)
+        : handle_{},
+          dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
     explicit DatasetConst(std::string const& dataset, std::same_as<bool> auto is_batch, Idx batch_size)
         : DatasetConst{dataset, is_batch ? Idx{1} : Idx{0}, batch_size} {}

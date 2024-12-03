@@ -17,6 +17,8 @@
 #include <vector>
 
 namespace {
+using namespace std::string_literals;
+
 // Types for template parameters
 struct row_t {};
 struct columnar_t {};
@@ -659,10 +661,10 @@ TEST_CASE("API model - incomplete input") {
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
         CAPTURE(symmetry);
 
-        auto const calculation_symmetry = symmetry == PGM_symmetric ? "Symmetric" : "Asymmetric";
-        auto const output_type = symmetry == PGM_symmetric ? "sym_output" : "asym_output";
+        auto const calculation_symmetry = symmetry == PGM_symmetric ? "Symmetric"s : "Asymmetric"s;
+        auto const output_type = symmetry == PGM_symmetric ? "sym_output"s : "asym_output"s;
 
-        SUBCASE(calculation_symmetry) {
+        SUBCASE(calculation_symmetry.c_str()) {
             auto n_bytes = complete_state.node_id.size() *
                            MetaData::component_size(MetaData::get_component_by_name(output_type, "node"));
 
@@ -846,11 +848,11 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
         CAPTURE(symmetry);
 
-        auto const calculation_symmetry = symmetry == PGM_symmetric ? "Symmetric" : "Asymmetric";
-        auto const output_type = symmetry == PGM_symmetric ? "sym_output" : "asym_output";
+        auto const calculation_symmetry = symmetry == PGM_symmetric ? "Symmetric"s : "Asymmetric"s;
+        auto const output_type = symmetry == PGM_symmetric ? "sym_output"s : "asym_output"s;
         auto const n_phases = symmetry == PGM_symmetric ? 1 : 3;
 
-        SUBCASE(calculation_symmetry) {
+        SUBCASE(calculation_symmetry.c_str()) {
             DatasetMutable test_result_data{output_type, true, batch_size};
             DatasetMutable ref_result_data{output_type, true, 1};
 
