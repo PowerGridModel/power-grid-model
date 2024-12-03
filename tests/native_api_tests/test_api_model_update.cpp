@@ -670,7 +670,7 @@ TEST_CASE("API model - incomplete input") {
 
             std::vector<char> test_sym_node(n_bytes);
             DatasetMutable test_result_data{output_type, true, 1};
-            test_result_data.add_buffer("node", test_sym_node.size(), test_sym_node.size(), nullptr,
+            test_result_data.add_buffer("node", std::ssize(test_sym_node), std::ssize(test_sym_node), nullptr,
                                         test_sym_node.data());
 
             SUBCASE("Target dataset") {
@@ -695,21 +695,21 @@ TEST_CASE("API model - incomplete input") {
             }
             SUBCASE("Incomplete update dataset") {
                 DatasetConst incomplete_update_data{"update", true, 1};
-                incomplete_update_data.add_buffer("source", incomplete_state.source_id.size(),
-                                                  incomplete_state.source_id.size(), nullptr, nullptr);
+                incomplete_update_data.add_buffer("source", std::ssize(incomplete_state.source_id),
+                                                  std::ssize(incomplete_state.source_id), nullptr, nullptr);
                 incomplete_update_data.add_attribute_buffer("source", "id", incomplete_state.source_id.data());
                 incomplete_update_data.add_attribute_buffer("source", "u_ref", incomplete_state.source_u_ref.data());
                 incomplete_update_data.add_attribute_buffer("source", "u_ref_angle",
                                                             incomplete_state.source_u_ref_angle.data());
 
-                incomplete_update_data.add_buffer("sym_load", incomplete_state.sym_load_id.size(),
-                                                  incomplete_state.sym_load_id.size(), nullptr, nullptr);
+                incomplete_update_data.add_buffer("sym_load", std::ssize(incomplete_state.sym_load_id),
+                                                  std::ssize(incomplete_state.sym_load_id), nullptr, nullptr);
                 incomplete_update_data.add_attribute_buffer("sym_load", "id", incomplete_state.sym_load_id.data());
                 incomplete_update_data.add_attribute_buffer("sym_load", "p_specified",
                                                             incomplete_state.sym_load_p_specified.data());
 
-                incomplete_update_data.add_buffer("asym_load", incomplete_state.asym_load_id.size(),
-                                                  incomplete_state.asym_load_id.size(), nullptr, nullptr);
+                incomplete_update_data.add_buffer("asym_load", std::ssize(incomplete_state.asym_load_id),
+                                                  std::ssize(incomplete_state.asym_load_id), nullptr, nullptr);
                 incomplete_update_data.add_attribute_buffer("asym_load", "id", incomplete_state.asym_load_id.data());
                 incomplete_update_data.add_attribute_buffer("asym_load", "p_specified",
                                                             incomplete_state.asym_load_p_specified.data());
@@ -728,21 +728,21 @@ TEST_CASE("API model - incomplete input") {
             }
             SUBCASE("Complete update dataset") {
                 DatasetConst complete_update_data{"update", true, 1};
-                complete_update_data.add_buffer("source", complete_state.source_id.size(),
-                                                complete_state.source_id.size(), nullptr, nullptr);
+                complete_update_data.add_buffer("source", std::ssize(complete_state.source_id),
+                                                std::ssize(complete_state.source_id), nullptr, nullptr);
                 complete_update_data.add_attribute_buffer("source", "id", complete_state.source_id.data());
                 complete_update_data.add_attribute_buffer("source", "u_ref", complete_state.source_u_ref.data());
                 complete_update_data.add_attribute_buffer("source", "u_ref_angle",
                                                           complete_state.source_u_ref_angle.data());
 
-                complete_update_data.add_buffer("sym_load", complete_state.sym_load_id.size(),
-                                                complete_state.sym_load_id.size(), nullptr, nullptr);
+                complete_update_data.add_buffer("sym_load", std::ssize(complete_state.sym_load_id),
+                                                std::ssize(complete_state.sym_load_id), nullptr, nullptr);
                 complete_update_data.add_attribute_buffer("sym_load", "id", complete_state.sym_load_id.data());
                 complete_update_data.add_attribute_buffer("sym_load", "p_specified",
                                                           complete_state.sym_load_p_specified.data());
 
-                complete_update_data.add_buffer("asym_load", complete_state.asym_load_id.size(),
-                                                complete_state.asym_load_id.size(), nullptr, nullptr);
+                complete_update_data.add_buffer("asym_load", std::ssize(complete_state.asym_load_id),
+                                                std::ssize(complete_state.asym_load_id), nullptr, nullptr);
                 complete_update_data.add_attribute_buffer("asym_load", "id", complete_state.asym_load_id.data());
                 complete_update_data.add_attribute_buffer("asym_load", "p_specified",
                                                           complete_state.asym_load_p_specified.data());
@@ -750,7 +750,7 @@ TEST_CASE("API model - incomplete input") {
                 auto ref_model = Model{50.0, complete_state.get_input_dataset()};
                 std::vector<char> ref_sym_node(n_bytes);
                 DatasetMutable ref_result_data{output_type, true, 1};
-                ref_result_data.add_buffer("node", ref_sym_node.size(), ref_sym_node.size(), nullptr,
+                ref_result_data.add_buffer("node", std::ssize(ref_sym_node), std::ssize(ref_sym_node), nullptr,
                                            ref_sym_node.data());
 
                 CHECK_NOTHROW(ref_model.calculate(get_default_options(symmetry, PGM_linear), ref_result_data));
