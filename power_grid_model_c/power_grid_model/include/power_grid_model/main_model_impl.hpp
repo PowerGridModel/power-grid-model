@@ -557,7 +557,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_, update_data, 0, components_to_update, update_independence, false);
 
         return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
-                &all_scenarios_sequence = std::as_const(all_scenarios_sequence), components_to_update,
+                &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence), components_to_update,
                 update_independence](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
@@ -573,7 +573,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             auto current_scenario_sequence_cache = main_core::utils::SequenceIdx<ComponentType...>{};
             auto [setup, winddown] =
                 scenario_update_restore(model, update_data, components_to_update, update_independence,
-                                        all_scenarios_sequence, current_scenario_sequence_cache, infos);
+                                        all_scenarios_sequence_, current_scenario_sequence_cache, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
                 [&model, &calculation_fn, &result_data, &infos](Idx scenario_idx) {

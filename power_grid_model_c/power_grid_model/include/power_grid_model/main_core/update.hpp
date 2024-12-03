@@ -227,8 +227,9 @@ get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstD
             // The sequence for the independent components is cached (true). For the remaining components, the sequence
             // cannot be cached (false), so the independence flags are inverted to not return an empty sequence when
             // this is the case.
-            bool const component_independence = cached != component_properties.is_independent();
-            if (!component_independence ||
+
+            if (bool const component_independence = cached != component_properties.is_independent();
+                !component_independence ||
                 !std::get<utils::index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
