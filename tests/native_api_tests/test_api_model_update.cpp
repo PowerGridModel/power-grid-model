@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <numbers>
 #include <span>
@@ -681,10 +682,10 @@ TEST_CASE("API model - incomplete input") {
             auto n_bytes = complete_state.node_id.size() *
                            MetaData::component_size(MetaData::get_component_by_name(output_type, "node"));
 
-            std::vector<char> test_sym_node(n_bytes);
+            std::vector<char> test_node_output(n_bytes, 0);
             DatasetMutable test_result_data{output_type, true, 1};
-            test_result_data.add_buffer("node", std::ssize(test_sym_node), std::ssize(test_sym_node), nullptr,
-                                        test_sym_node.data());
+            test_result_data.add_buffer("node", std::ssize(test_node_output), std::ssize(test_node_output), nullptr,
+                                        test_node_output.data());
 
             SUBCASE("Target dataset") {
                 CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
@@ -761,10 +762,10 @@ TEST_CASE("API model - incomplete input") {
                                                           complete_state.asym_load_p_specified.data());
 
                 auto ref_model = Model{50.0, complete_state.get_input_dataset()};
-                std::vector<char> ref_sym_node(n_bytes);
+                std::vector<char> ref_node_output(n_bytes, 0);
                 DatasetMutable ref_result_data{output_type, true, 1};
-                ref_result_data.add_buffer("node", std::ssize(ref_sym_node), std::ssize(ref_sym_node), nullptr,
-                                           ref_sym_node.data());
+                ref_result_data.add_buffer("node", std::ssize(ref_node_output), std::ssize(ref_node_output), nullptr,
+                                           ref_node_output.data());
 
                 CHECK_NOTHROW(ref_model.calculate(get_default_options(symmetry, PGM_linear), ref_result_data));
 
@@ -778,7 +779,12 @@ TEST_CASE("API model - incomplete input") {
                                                        complete_update_data));
                 }
 
-                CHECK(test_sym_node == ref_sym_node);
+                CHECK(test_node_output == ref_node_output);
+                std::string_view test_node_output_str{test_node_output.data(), test_node_output.size()};
+                std::string_view ref_node_output_str{ref_node_output.data(), ref_node_output.size()};
+                CHECK(test_node_output_str == ref_node_output_str);
+                std::cout << "test: " << test_node_output_str << std::endl;
+                std::cout << "ref : " << ref_node_output_str << std::endl;
             }
         }
     }
@@ -869,14 +875,14 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
             DatasetMutable test_result_data{output_type, true, batch_size};
             DatasetMutable ref_result_data{output_type, true, 1};
 
-            std::vector<double> test_sym_node_u_pu(batch_size * n_nodes * n_phases, nan);
-            std::vector<double> ref_sym_node_u_pu(n_nodes * n_phases, nan);
+            std::vector<double> test_node_output_u_pu(batch_size * n_nodes * n_phases, nan);
+            std::vector<double> ref_node_output_u_pu(n_nodes * n_phases, nan);
 
             test_result_data.add_buffer("node", n_nodes, batch_size * n_nodes, nullptr, nullptr);
-            test_result_data.add_attribute_buffer("node", "u_pu", test_sym_node_u_pu.data());
+            test_result_data.add_attribute_buffer("node", "u_pu", test_node_output_u_pu.data());
 
             ref_result_data.add_buffer("node", n_nodes, n_nodes, nullptr, nullptr);
-            ref_result_data.add_attribute_buffer("node", "u_pu", ref_sym_node_u_pu.data());
+            ref_result_data.add_attribute_buffer("node", "u_pu", ref_node_output_u_pu.data());
 
             CHECK_THROWS_AS(test_model.calculate(get_default_options(PGM_symmetric, PGM_linear), test_result_data,
                                                  mixed_update_data),
@@ -891,9 +897,9 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
                 for (auto phase_idx = 0; phase_idx < n_phases; ++phase_idx) {
                     CAPTURE(phase_idx);
 
-                    CHECK(is_nan(test_sym_node_u_pu[node_idx * n_phases + phase_idx]));
-                    CHECK(test_sym_node_u_pu[(n_nodes + node_idx) * n_phases + phase_idx] ==
-                          doctest::Approx(ref_sym_node_u_pu[node_idx * n_phases + phase_idx]));
+                    CHECK(is_nan(test_node_output_u_pu[node_idx * n_phases + phase_idx]));
+                    CHECK(test_node_output_u_pu[(n_nodes + node_idx) * n_phases + phase_idx] ==
+                          doctest::Approx(ref_node_output_u_pu[node_idx * n_phases + phase_idx]));
                 }
             }
         }
