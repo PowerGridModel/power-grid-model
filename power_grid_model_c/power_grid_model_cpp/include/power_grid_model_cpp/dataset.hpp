@@ -88,13 +88,20 @@ class DatasetWritable {
 
 class DatasetMutable {
   public:
-    DatasetMutable(std::string const& dataset, std::same_as<Idx> auto is_batch, Idx batch_size)
-        requires(!std::same_as<decltype(is_batch), bool>)
+    template <typename T, typename = std::enable_if_t<std::is_same_v<T, Idx> || std::is_same_v<T, bool>>>
+    DatasetMutable(std::string const& dataset, T is_batch, Idx batch_size)
         : handle_{},
-          dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), is_batch, batch_size)},
+          dataset_{handle_.call_with(
+              PGM_create_dataset_mutable, dataset.c_str(),
+              [is_batch]() -> Idx {
+                  if constexpr (std::is_same_v<T, bool>) {
+                      return is_batch ? Idx{1} : Idx{0};
+                  } else {
+                      return is_batch;
+                  }
+              }(),
+              batch_size)},
           info_{handle_.call_with(PGM_dataset_mutable_get_info, get())} {}
-    explicit DatasetMutable(std::string const& dataset, std::same_as<bool> auto is_batch, Idx batch_size)
-        : DatasetMutable{dataset, is_batch ? Idx{1} : Idx{0}, batch_size} {}
 
     RawMutableDataset const* get() const { return dataset_.get(); }
     RawMutableDataset* get() { return dataset_.get(); }
@@ -130,16 +137,25 @@ class DatasetMutable {
 
 class DatasetConst {
   public:
-    DatasetConst(std::string const& dataset, std::same_as<Idx> auto is_batch, Idx batch_size)
-        requires(!std::same_as<decltype(is_batch), bool>)
+    template <typename T, typename = std::enable_if_t<std::is_same_v<T, Idx> || std::is_same_v<T, bool>>>
+    DatasetConst(std::string const& dataset, T is_batch, Idx batch_size)
         : handle_{},
-          dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)},
+          dataset_{handle_.call_with(
+              PGM_create_dataset_const, dataset.c_str(),
+              [is_batch]() -> Idx {
+                  if constexpr (std::is_same_v<T, bool>) {
+                      return is_batch ? Idx{1} : Idx{0};
+                  } else {
+                      return is_batch;
+                  }
+              }(),
+              batch_size)},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
-    explicit DatasetConst(std::string const& dataset, std::same_as<bool> auto is_batch, Idx batch_size)
-        : DatasetConst{dataset, is_batch ? Idx{1} : Idx{0}, batch_size} {}
+
     DatasetConst(DatasetWritable const& writable_dataset)
         : dataset_{handle_.call_with(PGM_create_dataset_const_from_writable, writable_dataset.get())},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
+
     DatasetConst(DatasetMutable const& mutable_dataset)
         : dataset_{handle_.call_with(PGM_create_dataset_const_from_mutable, mutable_dataset.get())},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
