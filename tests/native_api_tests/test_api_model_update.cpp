@@ -255,8 +255,6 @@ namespace {
 using std::numbers::pi;
 using std::numbers::sqrt3;
 
-constexpr Idx default_option{-1};
-
 enum class CalculationSymmetry : Idx { symmetric = PGM_symmetric, asymmetric = PGM_asymmetric };
 enum class LoadGenType : IntS {
     const_pq = 0, // constant power
