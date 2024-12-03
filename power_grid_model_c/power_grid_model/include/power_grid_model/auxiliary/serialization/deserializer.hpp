@@ -193,7 +193,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     static constexpr bool enable_array =
         std::same_as<map_array, visit_array_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr std::string_view static_err_msg =
-        enable_map ? (enable_array ? "Expected a map or array." : "Expected a map.") : "Expected an array.";
+        enable_map ? (enable_array ? "Expected a map or an array." : "Expected a map.") : "Expected an array.";
 
     Idx size{};
     bool is_map{};
