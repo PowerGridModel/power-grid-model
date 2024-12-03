@@ -848,7 +848,7 @@ TEST_CASE("API Model") {
         std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
 
         DatasetConst input_dataset{"input", 0, 1};
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
         input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
 
@@ -865,7 +865,7 @@ TEST_CASE("API Model") {
         std::vector<ID> node_id{1, 1, 3};
         DatasetConst input_dataset{"input", 0, 1};
 
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
 
         auto construct_model = [&] { Model{50.0, input_dataset}; };
@@ -882,11 +882,11 @@ TEST_CASE("API Model") {
 
         DatasetConst input_dataset{"input", 0, 1};
 
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
         input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
 
-        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("link", "id", link_id.data());
         input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
         input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
@@ -916,7 +916,7 @@ TEST_CASE("API Model") {
 
         DatasetConst input_dataset{"input", 0, 1};
 
-        input_dataset.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
         input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
 
@@ -925,7 +925,7 @@ TEST_CASE("API Model") {
         input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
         input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
 
-        input_dataset.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("link", "id", link_id.data());
         input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
         input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());

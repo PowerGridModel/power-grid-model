@@ -785,7 +785,7 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
     auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
 
     constexpr Idx batch_size = 2;
-    auto const n_nodes = complete_state.node_id.size();
+    auto const n_nodes = static_cast<Idx>(complete_state.node_id.size());
 
     std::vector<ID> mixed_source_update_id{6, 10, 6, 10};
     std::vector<IntS> mixed_source_update_status{1, 1, 1, 1};
