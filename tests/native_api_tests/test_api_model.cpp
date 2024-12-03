@@ -97,7 +97,7 @@ TEST_CASE("API Model") {
     Options options{};
 
     // input data
-    DatasetConst input_dataset{"input", 0, 1};
+    DatasetConst input_dataset{"input", false, 1};
 
     // node buffer
     std::vector<ID> const node_id{0, 4};
@@ -164,11 +164,11 @@ TEST_CASE("API Model") {
     // output data
     Buffer node_output{PGM_def_sym_output_node, 2};
     node_output.set_nan();
-    DatasetMutable single_output_dataset{"sym_output", 0, 1};
+    DatasetMutable single_output_dataset{"sym_output", false, 1};
     single_output_dataset.add_buffer("node", 2, 2, nullptr, node_output);
     Buffer node_batch_output{PGM_def_sym_output_node, 4};
     node_batch_output.set_nan();
-    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
+    DatasetMutable batch_output_dataset{"sym_output", true, 2};
     batch_output_dataset.add_buffer("node", 2, 4, nullptr, node_batch_output);
 
     std::vector<ID> node_result_id(2);
@@ -205,14 +205,14 @@ TEST_CASE("API Model") {
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
     // dataset
-    DatasetConst single_update_dataset{"update", 0, 1};
+    DatasetConst single_update_dataset{"update", false, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
     single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
     single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
     single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
     single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-    DatasetConst batch_update_dataset{"update", 1, 2};
+    DatasetConst batch_update_dataset{"update", true, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
     batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
@@ -343,7 +343,7 @@ TEST_CASE("API Model") {
         SUBCASE("Update error in calculation") {
             ID const bad_load_id = 2;
             load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            DatasetConst bad_batch_update_dataset{"update", 1, 2};
+            DatasetConst bad_batch_update_dataset{"update", true, 2};
             bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
                                                 source_update_buffer.get());
             bad_batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
@@ -477,13 +477,13 @@ TEST_CASE("API Model") {
         input_sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, input_sym_load_q_specified.data(), -1);
 
         // input dataset - row
-        DatasetConst input_dataset_row{"input", 0, 1};
+        DatasetConst input_dataset_row{"input", false, 1};
         input_dataset_row.add_buffer("node", 1, 1, nullptr, input_node_buffer);
         input_dataset_row.add_buffer("source", 1, 1, nullptr, input_source_buffer);
         input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, input_sym_load_buffer);
 
         // input dataset - col
-        DatasetConst input_dataset_col{"input", 0, 1};
+        DatasetConst input_dataset_col{"input", false, 1};
         input_dataset_col.add_buffer("node", 1, 1, nullptr, nullptr);
         input_dataset_col.add_attribute_buffer("node", "id", input_node_id.data());
         input_dataset_col.add_attribute_buffer("node", "u_rated", input_node_u_rated.data());
@@ -532,12 +532,12 @@ TEST_CASE("API Model") {
                                                -1);
 
         // update dataset - row
-        DatasetConst update_dataset_row{"update", 1, 2};
+        DatasetConst update_dataset_row{"update", true, 2};
         update_dataset_row.add_buffer("source", -1, 2, update_source_indptr.data(), update_source_buffer);
         update_dataset_row.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(), update_sym_load_buffer);
 
         // update dataset - col
-        DatasetConst update_dataset_col{"update", 1, 2};
+        DatasetConst update_dataset_col{"update", true, 2};
 
         update_dataset_col.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
@@ -548,13 +548,13 @@ TEST_CASE("API Model") {
         update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // update dataset - row no ids
-        DatasetConst update_dataset_row_no_id{"update", 1, 2};
+        DatasetConst update_dataset_row_no_id{"update", true, 2};
         update_dataset_row_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), update_source_buffer_no_id);
         update_dataset_row_no_id.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(),
                                             update_sym_load_buffer_no_id);
 
         // update dataset - col no ids
-        DatasetConst update_dataset_col_no_id{"update", 1, 2};
+        DatasetConst update_dataset_col_no_id{"update", true, 2};
         update_dataset_col_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
 
         update_dataset_col_no_id.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
@@ -565,7 +565,7 @@ TEST_CASE("API Model") {
         // output data
         Buffer batch_node_output{PGM_def_sym_output_node, 2};
         batch_node_output.set_nan();
-        DatasetMutable batch_output{"sym_output", 1, 2};
+        DatasetMutable batch_output{"sym_output", true, 2};
         batch_output.add_buffer("node", 1, 2, nullptr, batch_node_output);
 
         // options
@@ -659,13 +659,13 @@ TEST_CASE("API Model") {
         input_sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, input_sym_load_q_specified.data(), -1);
 
         // input dataset - row
-        DatasetConst input_dataset_row{"input", 0, 1};
+        DatasetConst input_dataset_row{"input", false, 1};
         input_dataset_row.add_buffer("node", 1, 1, nullptr, input_node_buffer);
         input_dataset_row.add_buffer("source", 1, 1, nullptr, input_source_buffer);
         input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, input_sym_load_buffer);
 
         // input dataset - col
-        DatasetConst input_dataset_col{"input", 0, 1};
+        DatasetConst input_dataset_col{"input", false, 1};
         input_dataset_col.add_buffer("node", 1, 1, nullptr, nullptr);
         input_dataset_col.add_attribute_buffer("node", "id", input_node_id.data());
         input_dataset_col.add_attribute_buffer("node", "u_rated", input_node_u_rated.data());
@@ -704,12 +704,12 @@ TEST_CASE("API Model") {
         update_sym_load_buffer.set_value(PGM_def_update_sym_load_q_specified, update_sym_load_q_specified.data(), -1);
 
         // update dataset - row
-        DatasetConst update_dataset_row{"update", 1, 2};
+        DatasetConst update_dataset_row{"update", true, 2};
         update_dataset_row.add_buffer("source", -1, 1, source_indptr.data(), update_source_buffer);
         update_dataset_row.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), update_sym_load_buffer);
 
         // update dataset - col
-        DatasetConst update_dataset_col{"update", 1, 2};
+        DatasetConst update_dataset_col{"update", true, 2};
 
         update_dataset_col.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
@@ -722,7 +722,7 @@ TEST_CASE("API Model") {
         // output data
         Buffer output_node_batch{PGM_def_sym_output_node, 2};
         output_node_batch.set_nan();
-        DatasetMutable output_batch_dataset{"sym_output", 1, 2};
+        DatasetMutable output_batch_dataset{"sym_output", true, 2};
         output_batch_dataset.add_buffer("node", 1, 2, nullptr, output_node_batch);
 
         // options
@@ -769,7 +769,7 @@ TEST_CASE("API Model") {
             CAPTURE(calculation_type);
             auto const& supported_type_methods = supported_methods.at(calculation_type);
 
-            DatasetMutable const output_dataset{output_dataset_types.at(calculation_type), 0, 1};
+            DatasetMutable const output_dataset{output_dataset_types.at(calculation_type), false, 1};
 
             for (auto calculation_method : all_methods) {
                 CAPTURE(calculation_method);
@@ -792,7 +792,7 @@ TEST_CASE("API Model") {
 
     SUBCASE("Forbid link power measurements") {
         // input data
-        DatasetConst input_dataset_se{"input", 0, 1};
+        DatasetConst input_dataset_se{"input", false, 1};
         auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
         // node buffer
@@ -847,7 +847,7 @@ TEST_CASE("API Model") {
         std::vector<ID> const node_id{1, 2, 3};
         std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
 
-        DatasetConst input_dataset{"input", 0, 1};
+        DatasetConst input_dataset{"input", false, 1};
         input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
         input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
@@ -863,7 +863,7 @@ TEST_CASE("API Model") {
 
     SUBCASE("Test duplicated id") {
         std::vector<ID> node_id{1, 1, 3};
-        DatasetConst input_dataset{"input", 0, 1};
+        DatasetConst input_dataset{"input", false, 1};
 
         input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
@@ -880,7 +880,7 @@ TEST_CASE("API Model") {
         std::vector<ID> link_from_node{99};
         std::vector<ID> link_to_node{3};
 
-        DatasetConst input_dataset{"input", 0, 1};
+        DatasetConst input_dataset{"input", false, 1};
 
         input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
@@ -914,7 +914,7 @@ TEST_CASE("API Model") {
         std::vector<ID> sym_power_sensor_measured_object{3};
         std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{MeasuredTerminalType::node};
 
-        DatasetConst input_dataset{"input", 0, 1};
+        DatasetConst input_dataset{"input", false, 1};
 
         input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("node", "id", node_id.data());

@@ -120,8 +120,8 @@ TEST_CASE_TEMPLATE(
     using sparsity_type = typename T::sparsity_type;
     using id_check_type = typename T::id_check_type;
 
-    DatasetConst input_dataset{"input", 0, 1};
-    DatasetConst update_dataset{"update", 1, 2};
+    DatasetConst input_dataset{"input", false, 1};
+    DatasetConst update_dataset{"update", true, 2};
 
     std::vector<ID> const node_id{0};
     std::vector<double> const node_u_rated{100.0};
@@ -230,7 +230,7 @@ TEST_CASE_TEMPLATE(
     // output dataset
     Buffer batch_node_output{PGM_def_sym_output_node, 2};
     batch_node_output.set_nan();
-    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
+    DatasetMutable batch_output_dataset{"sym_output", true, 2};
     batch_output_dataset.add_buffer("node", 1, 2, nullptr, batch_node_output);
 
     Options const batch_options{};
@@ -348,7 +348,7 @@ struct State {
     std::vector<double> shunt_b0{0.0};
 
     auto get_input_dataset() const {
-        DatasetConst result{"input", 0, 1};
+        DatasetConst result{"input", false, 1};
 
         result.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         result.add_attribute_buffer("node", "id", node_id.data());
@@ -450,7 +450,7 @@ TEST_CASE("API model - all updates") {
     std::vector<IntS> link_update_from_status{1};
     std::vector<IntS> link_update_to_status{0};
 
-    DatasetConst update_data{"update", 1, 1};
+    DatasetConst update_data{"update", true, 1};
     update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
     update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
     update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
@@ -491,7 +491,7 @@ TEST_CASE("API model - all updates") {
         std::vector<char> sym_output_from_batch(n_bytes);
         std::vector<char> sym_output_from_updated_single(n_bytes);
 
-        DatasetMutable output_data_from_batch{output_dataset_type, 1, 1};
+        DatasetMutable output_data_from_batch{output_dataset_type, true, 1};
         DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
 
         output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
@@ -605,7 +605,7 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
     std::vector<double> shunt_update_b1{0.02};
     std::vector<double> shunt_update_b0{0.02};
 
-    DatasetConst update_data{"update", 1, 1};
+    DatasetConst update_data{"update", true, 1};
     update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
     update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
     update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());

@@ -88,7 +88,7 @@ class DatasetWritable {
 
 class DatasetMutable {
   public:
-    DatasetMutable(std::string const& dataset, std::convertible_to<Idx> auto is_batch, Idx batch_size)
+    DatasetMutable(std::string const& dataset, std::same_as<Idx> auto is_batch, Idx batch_size)
         requires(!std::same_as<decltype(is_batch), bool>)
         : handle_{},
           dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), is_batch, batch_size)},
@@ -130,7 +130,7 @@ class DatasetMutable {
 
 class DatasetConst {
   public:
-    DatasetConst(std::string const& dataset, std::convertible_to<Idx> auto is_batch, Idx batch_size)
+    DatasetConst(std::string const& dataset, std::same_as<Idx> auto is_batch, Idx batch_size)
         requires(!std::same_as<decltype(is_batch), bool>)
         : handle_{},
           dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)},
