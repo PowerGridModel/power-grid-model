@@ -485,25 +485,39 @@ TEST_CASE("API model - all updates") {
         auto const* comp_meta = MetaData::get_component_by_name(output_dataset_type, comp_type);
         auto const total_elements = input_info.component_total_elements(comp_type_idx);
         auto const elements_per_scenario = input_info.component_elements_per_scenario(comp_type_idx);
-        auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
 
-        std::vector<char> sym_output_from_batch(n_bytes);
-        std::vector<char> sym_output_from_updated_single(n_bytes);
+        for (Idx attribute_idx = 0; attribute_idx < MetaData::n_attributes(comp_meta); ++attribute_idx) {
+            CAPTURE(attribute_idx);
+            auto const attr_meta = MetaData::get_attribute_by_idx(comp_meta, attribute_idx);
+            auto const attribute_name = MetaData::attribute_name(attr_meta);
+            CAPTURE(attribute_name);
 
-        DatasetMutable output_data_from_batch{output_dataset_type, true, 1};
-        DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
+            pgm_type_func_selector(attr_meta, [&]<typename T>() {
+                std::vector<T> sym_output_from_batch(total_elements);
+                std::vector<T> sym_output_from_updated_single(total_elements);
 
-        output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
-                                          sym_output_from_batch.data());
-        output_data_from_updated_single.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
-                                                   sym_output_from_updated_single.data());
+                DatasetMutable output_data_from_batch{output_dataset_type, true, 1};
+                DatasetMutable output_data_from_updated_single{output_dataset_type, false, 1};
 
-        auto opt = get_default_options(PGM_symmetric, PGM_linear);
-        model.calculate(opt, output_data_from_batch, update_data);
-        model.update(update_data);
-        model.calculate(opt, output_data_from_updated_single);
+                output_data_from_batch.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr, nullptr);
+                output_data_from_updated_single.add_buffer(comp_type, elements_per_scenario, total_elements, nullptr,
+                                                           nullptr);
 
-        CHECK(sym_output_from_batch == sym_output_from_updated_single);
+                output_data_from_batch.add_attribute_buffer(comp_type, attribute_name, sym_output_from_batch.data());
+                output_data_from_updated_single.add_attribute_buffer(comp_type, attribute_name,
+                                                                     sym_output_from_updated_single.data());
+
+                auto opt = get_default_options(PGM_symmetric, PGM_linear);
+                model.calculate(opt, output_data_from_batch, update_data);
+                model.update(update_data);
+                model.calculate(opt, output_data_from_updated_single);
+
+                for (Idx i = 0; i < total_elements; ++i) {
+                    CAPTURE(i);
+                    CHECK(sym_output_from_batch[i] == sym_output_from_updated_single[i]);
+                }
+            });
+        }
     }
 }
 
