@@ -780,11 +780,26 @@ TEST_CASE("API model - incomplete input") {
                 }
 
                 CHECK(test_node_output == ref_node_output);
-                std::string_view test_node_output_str{test_node_output.data(), test_node_output.size()};
-                std::string_view ref_node_output_str{ref_node_output.data(), ref_node_output.size()};
-                CHECK(test_node_output_str == ref_node_output_str);
-                std::cout << "test: " << test_node_output_str << std::endl;
-                std::cout << "ref : " << ref_node_output_str << std::endl;
+                std::vector<int> test_node_output_values(n_bytes, 0);
+                std::vector<int> ref_node_output_values(n_bytes, 0);
+
+                std::ranges::transform(test_node_output, test_node_output_values.begin(),
+                                       [](char c) { return static_cast<int>(c); });
+                std::ranges::transform(ref_node_output, ref_node_output_values.begin(),
+                                       [](char c) { return static_cast<int>(c); });
+
+                CHECK(test_node_output_values == ref_node_output_values);
+                std::cout << "test: ";
+                for (auto i : test_node_output) {
+                    std::cout << static_cast<int>(i) << " ";
+                }
+                std::cout << "\n";
+
+                std::cout << "test: ";
+                for (auto i : ref_node_output) {
+                    std::cout << static_cast<int>(i) << " ";
+                }
+                std::cout << "\n\n";
             }
         }
     }
