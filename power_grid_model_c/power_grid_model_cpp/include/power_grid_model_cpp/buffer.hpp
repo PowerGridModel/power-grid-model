@@ -20,7 +20,6 @@ class Buffer {
     RawDataConstPtr get() const { return buffer_.get(); }
     RawDataPtr get() { return buffer_.get(); }
 
-    MetaComponent const* component() const { return component_; }
     Idx size() const { return size_; }
 
     void set_nan() { set_nan(0, size_); }

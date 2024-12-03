@@ -278,14 +278,38 @@ TEST_CASE("API Model") {
         }
     }
 
-    SUBCASE("Get indexer") {
-        std::array<ID, 2> ids{2, 2};
-        std::array<Idx, 2> indexer{3, 3};
-        model.get_indexer("sym_load", 2, ids.data(), indexer.data());
-        CHECK(indexer[0] == 0);
-        CHECK(indexer[1] == 0);
-        ids[1] = 6;
-        CHECK_THROWS_AS(model.get_indexer("sym_load", 2, ids.data(), indexer.data()), PowerGridRegularError);
+    SUBCASE("Test get indexer") {
+        std::vector<ID> const node_id{1, 2, 3};
+        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+
+        DatasetConst input_dataset{"input", false, 1};
+        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
+        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+
+        auto model2 = Model{50.0, input_dataset};
+
+        SUBCASE("Good weather") {
+            std::vector<ID> const ids_to_index{2, 1, 3, 2};
+            std::vector<Idx> const expected_indexer{1, 0, 2, 1};
+            std::vector<Idx> indexer(ids_to_index.size());
+            model2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data());
+            CHECK(indexer == expected_indexer);
+        }
+        SUBCASE("Bad weather: wrong id") {
+            std::vector<ID> const ids_to_index{2, 1, 3, 4};
+            std::vector<Idx> indexer(ids_to_index.size());
+            CHECK_THROWS_WITH_AS(
+                model2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
+                doctest::Contains("The id cannot be found: 4"), PowerGridRegularError);
+        }
+        SUBCASE("Bad weather: wrong type") {
+            std::vector<ID> const ids_to_index{2, 1, 3, 2};
+            std::vector<Idx> indexer(ids_to_index.size());
+            CHECK_THROWS_WITH_AS(
+                model2.get_indexer("sym_load", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
+                doctest::Contains("Wrong type for object with id 2"), PowerGridRegularError);
+        }
     }
 
     SUBCASE("Batch power flow") {
@@ -841,24 +865,6 @@ TEST_CASE("API Model") {
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
         }
-    }
-
-    SUBCASE("Test get indexer") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
-
-        DatasetConst input_dataset{"input", false, 1};
-        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-
-        auto model = Model{50.0, input_dataset};
-
-        std::vector<ID> const ids_to_index{2, 1, 3, 2};
-        std::vector<Idx> const expected_indexer{1, 0, 2, 1};
-        std::vector<Idx> indexer(ids_to_index.size());
-        model.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data());
-        CHECK(indexer == expected_indexer);
     }
 
     SUBCASE("Test duplicated id") {
