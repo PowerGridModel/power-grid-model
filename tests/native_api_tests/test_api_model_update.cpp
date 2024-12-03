@@ -489,7 +489,7 @@ TEST_CASE("API model - all updates") {
 
         for (Idx attribute_idx = 0; attribute_idx < MetaData::n_attributes(comp_meta); ++attribute_idx) {
             CAPTURE(attribute_idx);
-            auto const attr_meta = MetaData::get_attribute_by_idx(comp_meta, attribute_idx);
+            auto const* attr_meta = MetaData::get_attribute_by_idx(comp_meta, attribute_idx);
             auto const attribute_name = MetaData::attribute_name(attr_meta);
             CAPTURE(attribute_name);
 
@@ -523,7 +523,7 @@ TEST_CASE("API model - all updates") {
 }
 
 TEST_CASE("API model - updates w/ alternating compute mode") {
-    State state;
+    State const state;
     auto const input_dataset = state.get_input_dataset();
     auto model = Model{50.0, input_dataset};
 
@@ -679,13 +679,12 @@ TEST_CASE("API model - incomplete input") {
         auto const output_type = symmetry == PGM_symmetric ? "sym_output"s : "asym_output"s;
 
         SUBCASE(calculation_symmetry.c_str()) {
-            auto n_bytes = complete_state.node_id.size() *
-                           MetaData::component_size(MetaData::get_component_by_name(output_type, "node"));
+            auto const* node_output_meta = MetaData::get_component_by_name(output_type, "node");
 
-            std::vector<char> test_node_output(n_bytes, 0);
+            Buffer test_node_output(node_output_meta, std::ssize(complete_state.node_id));
             DatasetMutable test_result_data{output_type, true, 1};
-            test_result_data.add_buffer("node", std::ssize(test_node_output), std::ssize(test_node_output), nullptr,
-                                        test_node_output.data());
+            test_result_data.add_buffer("node", test_node_output.size(), test_node_output.size(), nullptr,
+                                        test_node_output);
 
             SUBCASE("Target dataset") {
                 CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
@@ -762,10 +761,10 @@ TEST_CASE("API model - incomplete input") {
                                                           complete_state.asym_load_p_specified.data());
 
                 auto ref_model = Model{50.0, complete_state.get_input_dataset()};
-                std::vector<char> ref_node_output(n_bytes, 0);
+                Buffer ref_node_output(node_output_meta, std::ssize(complete_state.node_id));
                 DatasetMutable ref_result_data{output_type, true, 1};
-                ref_result_data.add_buffer("node", std::ssize(ref_node_output), std::ssize(ref_node_output), nullptr,
-                                           ref_node_output.data());
+                ref_result_data.add_buffer("node", ref_node_output.size(), ref_node_output.size(), nullptr,
+                                           ref_node_output);
 
                 CHECK_NOTHROW(ref_model.calculate(get_default_options(symmetry, PGM_linear), ref_result_data));
 
@@ -779,27 +778,29 @@ TEST_CASE("API model - incomplete input") {
                                                        complete_update_data));
                 }
 
-                CHECK(test_node_output == ref_node_output);
-                std::vector<int> test_node_output_values(n_bytes, 0);
-                std::vector<int> ref_node_output_values(n_bytes, 0);
+                for (Idx node_idx = 0; node_idx < complete_state.node_id.size(); ++node_idx) {
+                    CAPTURE(node_idx);
+                    auto const node_offset = node_idx * MetaData::component_size(node_output_meta);
 
-                std::ranges::transform(test_node_output, test_node_output_values.begin(),
-                                       [](char c) { return static_cast<int>(c); });
-                std::ranges::transform(ref_node_output, ref_node_output_values.begin(),
-                                       [](char c) { return static_cast<int>(c); });
+                    for (Idx attr_idx = 0; attr_idx < MetaData::n_attributes(node_output_meta); ++attr_idx) {
+                        auto const* attr_meta = MetaData::get_attribute_by_idx(node_output_meta, attr_idx);
+                        auto const attr_name = MetaData::attribute_name(attr_meta);
+                        CAPTURE(attr_name);
 
-                CHECK(test_node_output_values == ref_node_output_values);
-                std::cout << "test: ";
-                for (auto i : test_node_output) {
-                    std::cout << static_cast<int>(i) << " ";
+                        pgm_type_func_selector(attr_meta, [&]<typename T> {
+                            T test_value{nan_value<T>()};
+                            T ref_value{nan_value<T>()};
+                            test_node_output.get_value(attr_meta, &test_value, node_idx, 0);
+                            ref_node_output.get_value(attr_meta, &ref_value, node_idx, 0);
+
+                            if constexpr (std::is_floating_point_v<T>) {
+                                CHECK(test_value == doctest::Approx(ref_value));
+                            } else {
+                                CHECK(test_value == ref_value);
+                            }
+                        });
+                    }
                 }
-                std::cout << "\n";
-
-                std::cout << "test: ";
-                for (auto i : ref_node_output) {
-                    std::cout << static_cast<int>(i) << " ";
-                }
-                std::cout << "\n\n";
             }
         }
     }

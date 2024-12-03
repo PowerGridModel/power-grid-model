@@ -161,7 +161,6 @@ In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
 * `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
-* `tests/cpp_integration_tests`: the integration test target for the C++ core using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
 * `tests/native_api_tests`: the C API test target using the `doctest` framework
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.

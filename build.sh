@@ -68,7 +68,6 @@ if [[ "${COVERAGE}" ]];  then
 
   PATH=${PATH}:${PWD} lcov -q -c \
     -d ${BUILD_DIR}/tests/cpp_unit_tests/CMakeFiles/power_grid_model_unit_tests.dir \
-    -d ${BUILD_DIR}/tests/cpp_integration_tests/CMakeFiles/power_grid_model_integration_tests.dir \
     -d ${BUILD_DIR}/tests/cpp_validation_tests/CMakeFiles/power_grid_model_validation_tests.dir \
     -d ${BUILD_DIR}/tests/native_api_tests/CMakeFiles/power_grid_model_api_tests.dir \
     -d ${BUILD_DIR}/power_grid_model_c/power_grid_model_c/CMakeFiles/power_grid_model_c.dir \
