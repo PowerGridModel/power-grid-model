@@ -254,7 +254,6 @@ TEST_CASE_TEMPLATE(
 }
 
 namespace {
-using std::numbers::pi;
 using std::numbers::sqrt3;
 
 enum class CalculationSymmetry : Idx { symmetric = PGM_symmetric, asymmetric = PGM_asymmetric };
@@ -418,7 +417,7 @@ struct State {
 TEST_CASE("API model - all updates") {
     using namespace std::string_literals;
 
-    State state;
+    State const state;
     auto const input_dataset = state.get_input_dataset();
     auto const& input_info = input_dataset.get_info();
     auto model = Model{50.0, input_dataset};
@@ -437,10 +436,10 @@ TEST_CASE("API model - all updates") {
     std::vector<double> shunt_update_b0{0.02};
 
     // used for test case alternate compute mode
-    std::vector<ID> shunt_update_2_id{6};
-    std::vector<IntS> source_update_2_status{0};
-    std::vector<double> shunt_update_2_b1{0.01};
-    std::vector<double> shunt_update_2_b0{0.01};
+    std::vector<ID> const shunt_update_2_id{6};
+    std::vector<IntS> const source_update_2_status{0};
+    std::vector<double> const shunt_update_2_b1{0.01};
+    std::vector<double> const shunt_update_2_b0{0.01};
 
     std::vector<ID> source_update_id{10};
     std::vector<IntS> source_update_status{1};
@@ -483,7 +482,7 @@ TEST_CASE("API model - all updates") {
         auto const comp_type = input_info.component_name(comp_type_idx);
         CAPTURE(comp_type);
 
-        auto const comp_meta = MetaData::get_component_by_name(output_dataset_type, comp_type);
+        auto const* comp_meta = MetaData::get_component_by_name(output_dataset_type, comp_type);
         auto const total_elements = input_info.component_total_elements(comp_type_idx);
         auto const elements_per_scenario = input_info.component_elements_per_scenario(comp_type_idx);
         auto const n_bytes = total_elements * MetaData::component_size(comp_meta);
@@ -553,12 +552,12 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
         CHECK(sym_shunt_output_i[0] == doctest::Approx(0.0));
     };
     auto const check_asym = [&] {
-        std::vector<double> asym_node_output_u_pu(3 * 3);
-        std::vector<double> asym_line_output_i_from(1 * 3);
-        std::vector<double> asym_source_output_i(2 * 3);
-        std::vector<double> asym_sym_load_output_i(1 * 3);
-        std::vector<double> asym_asym_load_output_i(1 * 3);
-        std::vector<double> asym_shunt_output_i(1 * 3);
+        std::vector<double> asym_node_output_u_pu(9);
+        std::vector<double> asym_line_output_i_from(3);
+        std::vector<double> asym_source_output_i(6);
+        std::vector<double> asym_sym_load_output_i(3);
+        std::vector<double> asym_asym_load_output_i(3);
+        std::vector<double> asym_shunt_output_i(3);
 
         DatasetMutable asym_output{"asym_output", false, 1};
         asym_output.add_buffer("node", 1, 1, nullptr, nullptr);
