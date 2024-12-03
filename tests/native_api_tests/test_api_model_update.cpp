@@ -778,9 +778,8 @@ TEST_CASE("API model - incomplete input") {
                                                        complete_update_data));
                 }
 
-                for (Idx node_idx = 0; node_idx < complete_state.node_id.size(); ++node_idx) {
+                for (Idx node_idx = 0; node_idx < std::ssize(complete_state.node_id); ++node_idx) {
                     CAPTURE(node_idx);
-                    auto const node_offset = node_idx * MetaData::component_size(node_output_meta);
 
                     for (Idx attr_idx = 0; attr_idx < MetaData::n_attributes(node_output_meta); ++attr_idx) {
                         auto const* attr_meta = MetaData::get_attribute_by_idx(node_output_meta, attr_idx);

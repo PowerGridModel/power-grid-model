@@ -24,7 +24,7 @@ enum class ControlSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3
 
 enum class CalculationType : IntS { power_flow = 0, state_estimation = 1, short_circuit = 2 };
 
-enum class CalculationSymmetry : IntS { symmetric = 1, asymmetric = 2 };
+enum class CalculationSymmetry : IntS { asymmetric = 0, symmetric = 1 };
 
 enum class CalculationMethod : IntS {
     default_method = -128,
