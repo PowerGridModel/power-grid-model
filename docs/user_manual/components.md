@@ -569,6 +569,10 @@ with the highest probability.
 | ----------------- | --------- | ---- | ------------------------- | :------: | :------: | :---------------: |
 | `measured_object` | `int32_t` | -    | ID of the measured object | &#10004; | &#10060; | a valid object ID |
 
+#### Output
+
+A sensor only has output for state estimation. For other calculation types, sensor output is undefined.
+
 ### Generic Voltage Sensor
 
 * type name: `generic_voltage_sensor`
@@ -602,6 +606,10 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 | `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) |              &#10060;              | &#10004; |              |
 
 ##### Steady state output
+
+```{note}
+A sensor only has output for state estimation. For other calculation types, sensor output is undefined.
+```
 
 | name               | data type         | unit     | description                                                                                                              |
 | ------------------ | ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -687,6 +695,10 @@ Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details per method on how the variances are taken into account for both the active and reactive power and for the individual phases.
 
 ##### Steady state output
+
+```{note}
+A sensor only has output for state estimation. For other calculation types, sensor output is undefined.
+```
 
 | name         | data type         | unit                       | description                                                                  |
 | ------------ | ----------------- | -------------------------- | ---------------------------------------------------------------------------- |

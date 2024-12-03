@@ -13,6 +13,10 @@
 #include <algorithm>
 #include <numeric>
 
+TYPE_TO_STRING_AS("ConstDataset", power_grid_model::ConstDataset);
+TYPE_TO_STRING_AS("MutableDataset", power_grid_model::MutableDataset);
+TYPE_TO_STRING_AS("WritableDataset", power_grid_model::WritableDataset);
+
 namespace power_grid_model::meta_data {
 
 namespace {
@@ -140,6 +144,15 @@ constexpr MetaData test_meta_data_all =
                                  // end list of all marks
                                  >::value;
 } // namespace
+
+} // namespace power_grid_model::meta_data
+
+TYPE_TO_STRING_AS("const_range_object<A::InputType>",
+                  power_grid_model::meta_data::const_range_object<power_grid_model::meta_data::A::InputType>);
+TYPE_TO_STRING_AS("mutable_range_object<A::InputType>",
+                  power_grid_model::meta_data::mutable_range_object<power_grid_model::meta_data::A::InputType>);
+
+namespace power_grid_model::meta_data {
 
 namespace test {
 namespace {

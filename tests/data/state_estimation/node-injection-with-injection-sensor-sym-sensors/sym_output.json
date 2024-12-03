@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "p": 1000.0,
+        "q": 100.0
+      },
+      {
+        "id": 2,
+        "p": -1000.0,
+        "q": -100.0
+      }
+    ],
+    "asym_gen" : [
+      {
+        "id": 5,
+        "p": 850.0,
+        "q": 85.0
+      }
+    ],
+    "asym_load" : [
+      {
+        "id": 6,
+        "p": 1850.0,
+        "q": 185.0
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 12,
+        "p_residual": -200.0,
+        "q_residual": -20.0
+      },
+      {
+        "id": 15,
+        "p_residual": 50.0,
+        "q_residual": 5.0
+      },
+      {
+        "id": 16,
+        "p_residual": -50.0,
+        "q_residual": -5.0
+      }
+    ]
+  }
+}

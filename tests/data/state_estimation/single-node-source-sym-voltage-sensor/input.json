@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "u_rated": 10000.0
+      }
+    ],
+    "source": [
+      {
+        "id": 2,
+        "node": 1,
+        "status": 1,
+        "u_ref": 1.0
+      }
+    ],
+    "sym_voltage_sensor": [
+      {
+        "id": 3,
+        "measured_object": 1,
+        "u_sigma": 100.0,
+        "u_measured": 12345.0,
+        "u_angle_measured": 0.1
+      }
+    ]
+  }
+}

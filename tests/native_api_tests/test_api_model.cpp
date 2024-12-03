@@ -8,9 +8,11 @@
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <array>
 #include <exception>
 #include <limits>
+#include <map>
 #include <string>
 
 /*
@@ -74,24 +76,6 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
         check_exception(e, reference_error, reference_err_msg);
     }
 }
-
-// Types for template parameters
-struct row_t {};
-struct columnar_t {};
-struct sparse_t {};
-struct dense_t {};
-struct with_id_t {};
-struct optional_id_t {};
-struct mixed_optional_id_t {};
-struct invalid_id_t {};
-
-template <typename first, typename second, typename third, typename fourth> struct TypeCombo {
-    using input_type = first;
-    using update_type = second;
-    using sparsity_type = third;
-    using id_check_type = fourth;
-};
-
 } // namespace
 
 TEST_CASE("API Model") {
@@ -230,8 +214,11 @@ TEST_CASE("API Model") {
         Model model_dummy{std::move(model)};
         model = std::move(model_dummy);
     }
+    SUBCASE("Test Copyability") {
+        Model const model_dummy{std::move(model)};
+        model = Model{model_dummy};
+    }
     SUBCASE("Single power flow") {
-
         // Common checker used for all single power flow test subcases
         auto check_common_node_results = [&]() {
             node_output.get_value(PGM_def_sym_output_node_id, node_result_id.data(), -1);
@@ -746,175 +733,100 @@ TEST_CASE("API Model") {
             }
         }
     }
-}
 
-/*
+    SUBCASE("Wrong calculation methods") {
+        using namespace std::string_view_literals;
 
-source_1 -- node_0 --load_2
+        constexpr auto invalid_calculation_method_pattern = "The calculation method is invalid for this calculation!";
+        constexpr auto all_types = std::array{PGM_power_flow, PGM_state_estimation, PGM_short_circuit};
+        constexpr auto all_methods =
+            std::array{PGM_default_method,    PGM_linear,           PGM_newton_raphson, PGM_linear_current,
+                       PGM_iterative_current, PGM_iterative_linear, PGM_iec60909};
 
-source and node inputs are row based.
-load input is either row based or columnar.
-load update is row based / columnar and dense / sparse.
+        auto supported_methods = std::map<PGM_CalculationType, std::vector<PGM_CalculationMethod>>{
+            {PGM_power_flow, std::vector{PGM_default_method, PGM_newton_raphson, PGM_linear, PGM_linear_current,
+                                         PGM_iterative_current}},
+            {PGM_state_estimation, std::vector{PGM_default_method, PGM_iterative_linear, PGM_newton_raphson}},
+            {PGM_short_circuit, std::vector{PGM_default_method, PGM_iec60909}}};
 
-invalid_id_t tests are for testing the error handling of the model when the id is not found in the update dataset.
-optional_id_t tests are for testing the model when the id is not added to the update dataset.
+        auto output_dataset_types = std::map<PGM_CalculationType, std::string>{
+            {PGM_power_flow, "sym_output"s}, {PGM_state_estimation, "sym_output"s}, {PGM_short_circuit, "sc_output"s}};
 
-*/
-TEST_CASE_TEMPLATE(
-    "API update id tests", T, TypeCombo<row_t, row_t, dense_t, with_id_t>, TypeCombo<row_t, row_t, sparse_t, with_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, with_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, with_id_t>,
-    TypeCombo<columnar_t, row_t, dense_t, with_id_t>, TypeCombo<columnar_t, row_t, sparse_t, with_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, with_id_t>, TypeCombo<row_t, columnar_t, sparse_t, with_id_t>,
-    TypeCombo<row_t, row_t, dense_t, optional_id_t>, TypeCombo<row_t, row_t, sparse_t, optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<columnar_t, row_t, dense_t, optional_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, optional_id_t>, TypeCombo<row_t, columnar_t, dense_t, optional_id_t>,
-    TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>, TypeCombo<row_t, row_t, dense_t, invalid_id_t>,
-    TypeCombo<row_t, row_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, row_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, columnar_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, row_t, dense_t, mixed_optional_id_t>,
-    TypeCombo<columnar_t, row_t, sparse_t, mixed_optional_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, mixed_optional_id_t>, TypeCombo<row_t, columnar_t, sparse_t, optional_id_t>,
-    TypeCombo<row_t, row_t, dense_t, invalid_id_t>, TypeCombo<row_t, row_t, sparse_t, invalid_id_t>,
-    TypeCombo<columnar_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, columnar_t, sparse_t, invalid_id_t>,
-    TypeCombo<columnar_t, row_t, dense_t, invalid_id_t>, TypeCombo<columnar_t, row_t, sparse_t, invalid_id_t>,
-    TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
+        for (auto calculation_type : all_types) {
+            CAPTURE(calculation_type);
+            auto const& supported_type_methods = supported_methods.at(calculation_type);
 
-    using namespace std::string_literals;
-    using input_type = typename T::input_type;
-    using update_type = typename T::update_type;
-    using sparsity_type = typename T::sparsity_type;
-    using id_check_type = typename T::id_check_type;
+            DatasetMutable const output_dataset{output_dataset_types.at(calculation_type), 0, 1};
 
-    DatasetConst input_dataset{"input", 0, 1};
-    DatasetConst update_dataset{"update", 1, 2};
+            for (auto calculation_method : all_methods) {
+                CAPTURE(calculation_method);
+                options.set_calculation_type(calculation_type);
+                options.set_calculation_method(calculation_method);
 
-    std::vector<ID> const node_id{0};
-    std::vector<double> const node_u_rated{100.0};
-    Buffer node_buffer{PGM_def_input_node, 1};
-    node_buffer.set_nan();
-    node_buffer.set_value(PGM_def_input_node_id, node_id.data(), -1);
-    node_buffer.set_value(PGM_def_input_node_u_rated, node_u_rated.data(), -1);
-    input_dataset.add_buffer("node", 1, 1, nullptr, node_buffer);
-
-    std::vector<ID> const source_id{1};
-    std::vector<ID> const source_node{0};
-    std::vector<int8_t> const source_status{1};
-    std::vector<double> const source_u_ref{1.0};
-    std::vector<double> const source_sk{1000.0};
-    std::vector<double> const source_rx_ratio{0.0};
-    Buffer source_buffer{PGM_def_input_source, 1};
-    source_buffer.set_nan();
-    source_buffer.set_value(PGM_def_input_source_id, source_id.data(), -1);
-    source_buffer.set_value(PGM_def_input_source_node, source_node.data(), -1);
-    source_buffer.set_value(PGM_def_input_source_status, source_status.data(), -1);
-    source_buffer.set_value(PGM_def_input_source_u_ref, source_u_ref.data(), -1);
-    source_buffer.set_value(PGM_def_input_source_sk, source_sk.data(), -1);
-    source_buffer.set_value(PGM_def_input_source_rx_ratio, source_rx_ratio.data(), -1);
-    input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
-
-    std::vector<ID> const sym_load_id{2};
-    std::vector<ID> const sym_load_node{0};
-    std::vector<int8_t> const sym_load_status{1};
-    std::vector<int8_t> const sym_load_type{2};
-    std::vector<double> const sym_load_p_specified{0.0};
-    std::vector<double> const sym_load_q_specified{500.0};
-    Buffer sym_load_buffer{PGM_def_input_sym_load, 1};
-    sym_load_buffer.set_nan();
-
-    if constexpr (std::is_same_v<input_type, row_t>) {
-        sym_load_buffer.set_value(PGM_def_input_sym_load_id, sym_load_id.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_node, sym_load_node.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_status, sym_load_status.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_type, sym_load_type.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_p_specified, sym_load_p_specified.data(), -1);
-        sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, sym_load_q_specified.data(), -1);
-        input_dataset.add_buffer("sym_load", 1, 1, nullptr, sym_load_buffer);
-    } else {
-        input_dataset.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-        input_dataset.add_attribute_buffer("sym_load", "id", sym_load_id.data());
-        input_dataset.add_attribute_buffer("sym_load", "node", sym_load_node.data());
-        input_dataset.add_attribute_buffer("sym_load", "status", sym_load_status.data());
-        input_dataset.add_attribute_buffer("sym_load", "type", sym_load_type.data());
-        input_dataset.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
-        input_dataset.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
-    }
-
-    std::vector<Idx> const sym_load_indptr{0, 1, 2};
-    std::vector<double> const load_updates_q_specified = {100.0, 300.0};
-    auto load_updates_id = [] {
-        if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
-            return std::vector<ID>{99, 2};
-        }
-        return std::vector<ID>{2, 2};
-    }();
-
-    auto source_indptr = [] {
-        if constexpr (std::is_same_v<id_check_type, mixed_optional_id_t>) {
-            return std::vector<Idx>{0, 1, 1};
-        }
-        return std::vector<Idx>{0, 0, 0};
-    }();
-    std::vector<ID> const source_updates_id = {1};
-
-    Buffer source_update_buffer{PGM_def_update_sym_load, 1};
-    source_update_buffer.set_nan();
-    source_update_buffer.set_value(PGM_def_update_source_id, source_updates_id.data(), -1);
-
-    Buffer sym_load_update_buffer{PGM_def_update_sym_load, 2};
-    sym_load_update_buffer.set_nan();
-    if constexpr (!std::is_same_v<id_check_type, optional_id_t>) {
-        sym_load_update_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
-    }
-    sym_load_update_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), -1);
-
-    if constexpr (std::is_same_v<update_type, row_t>) {
-        if constexpr (std::is_same_v<sparsity_type, dense_t>) {
-            update_dataset.add_buffer("sym_load", 1, 2, nullptr, sym_load_update_buffer);
-        } else {
-            update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), sym_load_update_buffer);
-        }
-        // source is always sparse. the sparsity tag affects the sym_load
-        update_dataset.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), source_update_buffer);
-    } else {
-        if constexpr (std::is_same_v<sparsity_type, dense_t>) {
-            update_dataset.add_buffer("sym_load", 1, 2, nullptr, nullptr);
-        } else {
-            update_dataset.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), nullptr);
-        }
-        // source is always sparse. the sparsity tag affects the sym_load
-        update_dataset.add_buffer("source", -1, source_indptr.back(), source_indptr.data(), nullptr);
-
-        if constexpr (std::is_same_v<id_check_type, mixed_optional_id_t>) {
-            update_dataset.add_attribute_buffer("source", "id", source_updates_id.data());
-        } else if constexpr (!std::is_same_v<id_check_type, optional_id_t>) {
-            update_dataset.add_attribute_buffer("sym_load", "id", load_updates_id.data());
-        }
-        update_dataset.add_attribute_buffer("sym_load", "q_specified", load_updates_q_specified.data());
-    }
-
-    // output dataset
-    Buffer batch_node_output{PGM_def_sym_output_node, 2};
-    batch_node_output.set_nan();
-    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
-    batch_output_dataset.add_buffer("node", 1, 2, nullptr, batch_node_output);
-
-    Options const batch_options{};
-    Model model{50.0, input_dataset};
-
-    SUBCASE("Permanent update") {
-        if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
-            CHECK_THROWS_AS(model.update(update_dataset), PowerGridError);
-        } else {
-            CHECK_NOTHROW(model.update(update_dataset));
+                if (std::ranges::find(supported_type_methods, calculation_method) == std::end(supported_type_methods)) {
+                    CHECK_THROWS_WITH_AS(model.calculate(options, output_dataset), invalid_calculation_method_pattern,
+                                         PowerGridRegularError);
+                } else {
+                    try {
+                        model.calculate(options, output_dataset);
+                    } catch (std::exception const& e) {
+                        CHECK(e.what() != doctest::Contains(invalid_calculation_method_pattern));
+                    }
+                }
+            }
         }
     }
-    SUBCASE("Batch update") {
-        if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
-            CHECK_THROWS_AS(model.calculate(batch_options, batch_output_dataset, update_dataset), PowerGridBatchError);
-        } else {
-            CHECK_NOTHROW(model.calculate(batch_options, batch_output_dataset, update_dataset));
+
+    SUBCASE("Forbid link power measurements") {
+        // input data
+        DatasetConst input_dataset_se{"input", 0, 1};
+        auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
+
+        // node buffer
+        std::vector<ID> const node_id_se{1, 2};
+        std::vector<double> const node_u_rated_se{10000.0, 10000.0};
+
+        // link buffer
+        std::vector<ID> const link_id_se{3};
+        std::vector<ID> const link_from_node_se{1};
+        std::vector<ID> const link_to_node_se{2};
+
+        // power sensor
+        std::vector<ID> const power_sensor_id_se{4};
+        std::vector<ID> const power_sensor_measured_object_se{3};
+        std::vector<IntS> const power_sensor_measured_terminal_type_se{0};
+
+        input_dataset_se.add_buffer("node", 2, 2, nullptr, nullptr);
+        input_dataset_se.add_attribute_buffer("node", "id", node_id_se.data());
+        input_dataset_se.add_attribute_buffer("node", "u_rated", node_u_rated_se.data());
+
+        input_dataset_se.add_buffer("link", 1, 1, nullptr, nullptr);
+        input_dataset_se.add_attribute_buffer("link", "id", link_id_se.data());
+        input_dataset_se.add_attribute_buffer("link", "from_node", link_from_node_se.data());
+        input_dataset_se.add_attribute_buffer("link", "to_node", link_to_node_se.data());
+
+        SUBCASE("SymPowerSensor") {
+            input_dataset_se.add_buffer("sym_power_sensor", 1, 1, nullptr, nullptr);
+            input_dataset_se.add_attribute_buffer("sym_power_sensor", "id", power_sensor_id_se.data());
+            input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_object",
+                                                  power_sensor_measured_object_se.data());
+            input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
+                                                  power_sensor_measured_terminal_type_se.data());
+
+            CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
+                                 PowerGridRegularError);
+        }
+
+        SUBCASE("AsymPowerSensor") {
+            input_dataset_se.add_buffer("asym_power_sensor", 2, 2, nullptr, nullptr);
+            input_dataset_se.add_attribute_buffer("asym_power_sensor", "id", power_sensor_id_se.data());
+            input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_object",
+                                                  power_sensor_measured_object_se.data());
+            input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_terminal_type",
+                                                  power_sensor_measured_terminal_type_se.data());
+
+            CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
+                                 PowerGridRegularError);
         }
     }
 }

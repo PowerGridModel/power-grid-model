@@ -5,6 +5,7 @@
 #pragma once
 
 #include "main_model_impl.hpp"
+
 #include <memory>
 
 namespace power_grid_model {
@@ -67,7 +68,7 @@ class MainModel {
     }
 
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
-        impl().update_components<CacheType>(update_data);
+        impl().update_components<CacheType>(update_data.get_individual_scenario(0));
     }
 
     template <typename CompType, typename MathOutputType, typename OutputType>

@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "type": "sc_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "energized": 1,
+        "u_pu": [
+          0.0,
+          1.1,
+          1.1
+        ]
+      },
+      {
+        "id": 2,
+        "energized": 1,
+        "u_pu": [
+          0.0,
+          1.1,
+          1.1
+        ]
+      }
+    ],
+    "fault": [
+      {
+        "id": 5,
+        "energized": 1,
+        "i_f": [
+          63508.52961085883410,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  }
+}
