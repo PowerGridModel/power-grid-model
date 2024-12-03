@@ -857,7 +857,7 @@ TEST_CASE("API Model") {
         std::vector<ID> const ids_to_index{2, 1, 3, 2};
         std::vector<Idx> const expected_indexer{1, 0, 2, 1};
         std::vector<Idx> indexer(ids_to_index.size());
-        model.get_indexer("node", ids_to_index.size(), ids_to_index.data(), indexer.data());
+        model.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data());
         CHECK(indexer == expected_indexer);
     }
 
@@ -920,7 +920,7 @@ TEST_CASE("API Model") {
         input_dataset.add_attribute_buffer("node", "id", node_id.data());
         input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
 
-        input_dataset.add_buffer("line", line_id.size(), line_id.size(), nullptr, nullptr);
+        input_dataset.add_buffer("line", std::ssize(line_id), std::ssize(line_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("line", "id", line_id.data());
         input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
         input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
@@ -930,14 +930,14 @@ TEST_CASE("API Model") {
         input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
         input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
 
-        input_dataset.add_buffer("sym_voltage_sensor", sym_voltage_sensor_id.size(), sym_voltage_sensor_id.size(),
-                                 nullptr, nullptr);
+        input_dataset.add_buffer("sym_voltage_sensor", std::ssize(sym_voltage_sensor_id),
+                                 std::ssize(sym_voltage_sensor_id), nullptr, nullptr);
         input_dataset.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
         input_dataset.add_attribute_buffer("sym_voltage_sensor", "measured_object",
                                            sym_voltage_sensor_measured_object.data());
 
-        input_dataset.add_buffer("sym_power_sensor", sym_power_sensor_id.size(), sym_power_sensor_id.size(), nullptr,
-                                 nullptr);
+        input_dataset.add_buffer("sym_power_sensor", std::ssize(sym_power_sensor_id), std::ssize(sym_power_sensor_id),
+                                 nullptr, nullptr);
         input_dataset.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
         input_dataset.add_attribute_buffer("sym_power_sensor", "measured_object",
                                            sym_power_sensor_measured_object.data());

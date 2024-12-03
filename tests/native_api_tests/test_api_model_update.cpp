@@ -256,8 +256,6 @@ using std::numbers::pi;
 using std::numbers::sqrt3;
 
 constexpr Idx default_option{-1};
-constexpr double deg_120 = 2.0 / 3.0 * pi;
-constexpr double deg_240 = 4.0 / 3.0 * pi;
 
 enum class CalculationSymmetry : Idx { symmetric = PGM_symmetric, asymmetric = PGM_asymmetric };
 enum class LoadGenType : IntS {
@@ -278,15 +276,11 @@ enum class MeasuredTerminalType : IntS {
     node = 9
 };
 
-Options get_default_options(PGM_SymmetryType calculation_symmetry, PGM_CalculationMethod calculation_method,
-                            Idx threading = default_option) {
+Options get_default_options(PGM_SymmetryType calculation_symmetry, PGM_CalculationMethod calculation_method) {
     Options opt;
     opt.set_calculation_type(PGM_power_flow);
     opt.set_symmetric(calculation_symmetry);
     opt.set_calculation_method(calculation_method);
-    if (threading != default_option) {
-        opt.set_threading(threading);
-    }
     return opt;
 }
 
@@ -356,11 +350,11 @@ struct State {
     auto get_input_dataset() const {
         DatasetConst result{"input", 0, 1};
 
-        result.add_buffer("node", node_id.size(), node_id.size(), nullptr, nullptr);
+        result.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
         result.add_attribute_buffer("node", "id", node_id.data());
         result.add_attribute_buffer("node", "u_rated", node_u_rated.data());
 
-        result.add_buffer("line", line_id.size(), line_id.size(), nullptr, nullptr);
+        result.add_buffer("line", std::ssize(line_id), std::ssize(line_id), nullptr, nullptr);
         result.add_attribute_buffer("line", "id", line_id.data());
         result.add_attribute_buffer("line", "from_node", line_from_node.data());
         result.add_attribute_buffer("line", "to_node", line_to_node.data());
@@ -376,14 +370,14 @@ struct State {
         result.add_attribute_buffer("line", "tan0", line_tan0.data());
         result.add_attribute_buffer("line", "i_n", line_i_n.data());
 
-        result.add_buffer("link", link_id.size(), link_id.size(), nullptr, nullptr);
+        result.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
         result.add_attribute_buffer("link", "id", link_id.data());
         result.add_attribute_buffer("link", "from_node", link_from_node.data());
         result.add_attribute_buffer("link", "to_node", link_to_node.data());
         result.add_attribute_buffer("link", "from_status", link_from_status.data());
         result.add_attribute_buffer("link", "to_status", link_to_status.data());
 
-        result.add_buffer("source", source_id.size(), source_id.size(), nullptr, nullptr);
+        result.add_buffer("source", std::ssize(source_id), std::ssize(source_id), nullptr, nullptr);
         result.add_attribute_buffer("source", "id", source_id.data());
         result.add_attribute_buffer("source", "node", source_node.data());
         result.add_attribute_buffer("source", "status", source_status.data());
@@ -391,7 +385,7 @@ struct State {
         result.add_attribute_buffer("source", "u_ref_angle", source_u_ref_angle.data());
         result.add_attribute_buffer("source", "sk", source_sk.data());
 
-        result.add_buffer("sym_load", sym_load_id.size(), sym_load_id.size(), nullptr, nullptr);
+        result.add_buffer("sym_load", std::ssize(sym_load_id), std::ssize(sym_load_id), nullptr, nullptr);
         result.add_attribute_buffer("sym_load", "id", sym_load_id.data());
         result.add_attribute_buffer("sym_load", "node", sym_load_node.data());
         result.add_attribute_buffer("sym_load", "status", sym_load_status.data());
@@ -399,7 +393,7 @@ struct State {
         result.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
         result.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
 
-        result.add_buffer("asym_load", asym_load_id.size(), asym_load_id.size(), nullptr, nullptr);
+        result.add_buffer("asym_load", std::ssize(asym_load_id), std::ssize(asym_load_id), nullptr, nullptr);
         result.add_attribute_buffer("asym_load", "id", asym_load_id.data());
         result.add_attribute_buffer("asym_load", "node", asym_load_node.data());
         result.add_attribute_buffer("asym_load", "status", asym_load_status.data());
@@ -407,7 +401,7 @@ struct State {
         result.add_attribute_buffer("asym_load", "p_specified", asym_load_p_specified.data());
         result.add_attribute_buffer("asym_load", "q_specified", asym_load_q_specified.data());
 
-        result.add_buffer("shunt", shunt_id.size(), shunt_id.size(), nullptr, nullptr);
+        result.add_buffer("shunt", std::ssize(shunt_id), std::ssize(shunt_id), nullptr, nullptr);
         result.add_attribute_buffer("shunt", "id", shunt_id.data());
         result.add_attribute_buffer("shunt", "node", shunt_node.data());
         result.add_attribute_buffer("shunt", "status", shunt_status.data());
