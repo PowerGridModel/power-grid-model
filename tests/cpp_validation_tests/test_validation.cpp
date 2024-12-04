@@ -73,7 +73,7 @@ struct OwningDataset {
 
 OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
-    Idx const is_batch = info.is_batch();
+    bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
@@ -101,7 +101,7 @@ OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
     return owning_dataset;
 }
 
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, Idx is_batch = 0,
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
                                     Idx batch_size = 1) {
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
