@@ -132,7 +132,7 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    Deserializer deserializer{read_file(path), Idx{0}};
+    Deserializer deserializer{read_file(path), PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
     auto dataset = create_owning_dataset(writable_dataset);
     deserializer.parse_to_buffer();
