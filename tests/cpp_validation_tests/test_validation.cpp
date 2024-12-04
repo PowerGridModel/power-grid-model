@@ -589,7 +589,7 @@ void validate_batch_case(CaseParam const& param) {
         auto const& info = validation_case.update_batch.value().const_dataset.value().get_info();
         Idx const batch_size = info.batch_size();
         auto const batch_result =
-            create_result_dataset(validation_case.output_batch.value(), output_prefix, Idx{1}, batch_size);
+            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
 
         // create model
         Model model{50.0, validation_case.input.const_dataset.value()};
