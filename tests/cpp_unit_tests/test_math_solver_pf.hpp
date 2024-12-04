@@ -71,7 +71,7 @@ template <symmetry_tag sym_type> struct PFSolverTestGrid : public SteadyStateSol
 };
 
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_pf_id) {
-    using sym = SolverType::sym;
+    using sym = typename SolverType::sym;
 
     PFSolverTestGrid<sym> grid;
 
