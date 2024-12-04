@@ -5,6 +5,7 @@
 #pragma once
 
 #include "main_model_impl.hpp"
+
 #include <memory>
 
 namespace power_grid_model {
@@ -55,9 +56,6 @@ class MainModel {
     }
 
     void set_construction_complete() { impl().set_construction_complete(); }
-    void restore_components(ConstDataset const& update_data) {
-        impl().restore_components(impl().get_all_sequence_idx_map(update_data));
-    }
 
     template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
         add_component<CompType>(std::span<typename CompType::InputType const>{components});
@@ -67,7 +65,7 @@ class MainModel {
     }
 
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
-        impl().update_components<CacheType>(update_data);
+        impl().update_components<CacheType>(update_data.get_individual_scenario(0));
     }
 
     template <typename CompType, typename MathOutputType, typename OutputType>

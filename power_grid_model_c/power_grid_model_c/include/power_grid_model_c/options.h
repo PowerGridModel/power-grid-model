@@ -66,7 +66,7 @@ PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PG
  *
  * @param handle
  * @param opt The pointer to the option instance.
- * @param sym 1 for symmetric calculation; 0 for asymmetric calculation.
+ * @param sym See #PGM_CalculationSymmetry . 1 for symmetric calculation; 0 for asymmetric calculation.
  */
 PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym);
 
