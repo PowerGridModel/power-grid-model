@@ -75,10 +75,14 @@ constexpr auto get_calculation_type(PGM_Options const& opt) {
 }
 
 constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
-    if (opt.symmetric == 0) {
+    switch (opt.symmetric) {
+    case PGM_asymmetric:
         return CalculationSymmetry::asymmetric;
+    case PGM_symmetric:
+        return CalculationSymmetry::symmetric;
+    default:
+        throw MissingCaseForEnumError{"get_calculation_symmetry", opt.tap_changing_strategy};
     }
-    return CalculationSymmetry::symmetric;
 }
 
 constexpr auto get_calculation_method(PGM_Options const& opt) {

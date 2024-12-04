@@ -167,6 +167,14 @@ enum PGM_CalculationMethod {
 };
 
 /**
+ * @brief Enumeration for calculation and/or component symmetry
+ */
+enum PGM_SymmetryType {
+    PGM_asymmetric = 0, /** < asymmetric calculation and/or component */
+    PGM_symmetric = 1   /** < symmetric calculation and/or component */
+};
+
+/**
  * @brief Enumeration of error codes.
  *
  */

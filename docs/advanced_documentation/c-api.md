@@ -116,7 +116,7 @@ and may vary between power grid model versions, compilers, operating systems and
 <line_0><line_1><line_2>   <-- 3 lines.
 |   |   |   |   |   |   |  <-- alignment: a line may start every 4 bytes.
 iiiift  iiiift  iiiift     <-- data: 6 bytes per line: 4 bytes for the ID, 1 for the from_status and 1 for the to_status.
-|     ..|     ..|     ..|  <-- padding: (6 mod 4 = 2) bytes after every line.
+|     ..|     ..|     ..|  <-- padding: (4 - (6 mod 4) = 2) bytes after every line.
 |       |       |       |  <-- aligned size: (6 + 2 = 8) bytes every line.
 ```
 
