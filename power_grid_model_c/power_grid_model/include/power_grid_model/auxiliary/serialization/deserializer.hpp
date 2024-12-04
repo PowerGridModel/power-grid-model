@@ -193,7 +193,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     static constexpr bool enable_array =
         std::same_as<map_array, visit_array_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr std::string_view static_err_msg =
-        enable_map ? (enable_array ? "Expected a map or array." : "Expected a map.") : "Expected an array.";
+        enable_map ? (enable_array ? "Map or array expected." : "Map expected.") : "Array expected.";
 
     Idx size{};
     bool is_map{};
@@ -226,7 +226,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
 };
 
 struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
-    static constexpr std::string_view static_err_msg = "Expected a string.";
+    static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str{};
     bool visit_str(const char* v, uint32_t size) {
@@ -236,7 +236,7 @@ struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
 };
 
 struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
-    static constexpr std::string_view static_err_msg = "Expected a boolean.";
+    static constexpr std::string_view static_err_msg = "Boolean expected.";
 
     bool value{};
     bool visit_boolean(bool v) {
@@ -248,7 +248,7 @@ struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
 template <class T> struct ValueVisitor;
 
 template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
-    static constexpr std::string_view static_err_msg = "Expected an integer.";
+    static constexpr std::string_view static_err_msg = "Integer expected.";
 
     T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
@@ -270,7 +270,7 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
 };
 
 template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
-    static constexpr std::string_view static_err_msg = "Expected a number.";
+    static constexpr std::string_view static_err_msg = "Number expected.";
 
     double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
@@ -294,7 +294,7 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
 };
 
 template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
-    static constexpr std::string_view static_err_msg = "Expected an array of 3 numbers.";
+    static constexpr std::string_view static_err_msg = "Array of 3 numbers expected.";
 
     RealValue<asymmetric_t>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Idx idx{};
