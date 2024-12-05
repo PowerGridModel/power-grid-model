@@ -279,35 +279,35 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Test get indexer") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+        std::vector<ID> const node_id_2{1, 2, 3};
+        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
 
-        DatasetConst input_dataset{"input", false, 1};
-        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+        DatasetConst input_dataset_2{"input", false, 1};
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
 
-        auto model2 = Model{50.0, input_dataset};
+        auto model_2 = Model{50.0, input_dataset_2};
 
         SUBCASE("Good weather") {
             std::vector<ID> const ids_to_index{2, 1, 3, 2};
             std::vector<Idx> const expected_indexer{1, 0, 2, 1};
             std::vector<Idx> indexer(ids_to_index.size());
-            model2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data());
+            model_2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data());
             CHECK(indexer == expected_indexer);
         }
         SUBCASE("Bad weather: wrong id") {
             std::vector<ID> const ids_to_index{2, 1, 3, 4};
             std::vector<Idx> indexer(ids_to_index.size());
             CHECK_THROWS_WITH_AS(
-                model2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
+                model_2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
                 doctest::Contains("The id cannot be found: 4"), PowerGridRegularError);
         }
         SUBCASE("Bad weather: wrong type") {
             std::vector<ID> const ids_to_index{2, 1, 3, 2};
             std::vector<Idx> indexer(ids_to_index.size());
             CHECK_THROWS_WITH_AS(
-                model2.get_indexer("sym_load", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
+                model_2.get_indexer("sym_load", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
                 doctest::Contains("Wrong type for object with id 2"), PowerGridRegularError);
         }
     }
@@ -868,46 +868,46 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Test duplicated id") {
-        std::vector<ID> node_id{1, 1, 3};
-        DatasetConst input_dataset{"input", false, 1};
+        std::vector<ID> node_id_2{1, 1, 3};
+        DatasetConst input_dataset_2{"input", false, 1};
 
-        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
 
-        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        auto construct_model = [&] { Model{50.0, input_dataset_2}; };
         CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
     }
 
     SUBCASE("Test non-existing id") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+        std::vector<ID> const node_id_2{1, 2, 3};
+        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
 
         std::vector<ID> link_id{5};
         std::vector<ID> link_from_node{99};
         std::vector<ID> link_to_node{3};
 
-        DatasetConst input_dataset{"input", false, 1};
+        DatasetConst input_dataset_2{"input", false, 1};
 
-        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
 
-        input_dataset.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("link", "id", link_id.data());
-        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
-        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
+        input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
 
-        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        auto construct_model = [&] { Model{50.0, input_dataset_2}; };
         CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
     }
 
     SUBCASE("Test id for wrong type") {
-        std::vector<ID> const node_id{1, 2, 3};
-        std::vector<double> const node_u_rated{10.0e3, 10.0e3, 10.0e3};
+        std::vector<ID> const node_id_2{1, 2, 3};
+        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
 
-        std::vector<ID> line_id{9};
-        std::vector<ID> line_from_node{1};
-        std::vector<ID> line_to_node{2};
+        std::vector<ID> line_id_2{9};
+        std::vector<ID> line_from_node_2{1};
+        std::vector<ID> line_to_node_2{2};
 
         std::vector<ID> link_id{5};
         std::vector<ID> link_from_node{2};
@@ -920,37 +920,37 @@ TEST_CASE("API Model") {
         std::vector<ID> sym_power_sensor_measured_object{3};
         std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{MeasuredTerminalType::node};
 
-        DatasetConst input_dataset{"input", false, 1};
+        DatasetConst input_dataset_2{"input", false, 1};
 
-        input_dataset.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("node", "id", node_id.data());
-        input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
 
-        input_dataset.add_buffer("line", std::ssize(line_id), std::ssize(line_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("line", "id", line_id.data());
-        input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
-        input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
+        input_dataset_2.add_buffer("line", std::ssize(line_id_2), std::ssize(line_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("line", "id", line_id_2.data());
+        input_dataset_2.add_attribute_buffer("line", "from_node", line_from_node_2.data());
+        input_dataset_2.add_attribute_buffer("line", "to_node", line_to_node_2.data());
 
-        input_dataset.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("link", "id", link_id.data());
-        input_dataset.add_attribute_buffer("link", "from_node", link_from_node.data());
-        input_dataset.add_attribute_buffer("link", "to_node", link_to_node.data());
+        input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
 
-        input_dataset.add_buffer("sym_voltage_sensor", std::ssize(sym_voltage_sensor_id),
-                                 std::ssize(sym_voltage_sensor_id), nullptr, nullptr);
-        input_dataset.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
-        input_dataset.add_attribute_buffer("sym_voltage_sensor", "measured_object",
-                                           sym_voltage_sensor_measured_object.data());
+        input_dataset_2.add_buffer("sym_voltage_sensor", std::ssize(sym_voltage_sensor_id),
+                                   std::ssize(sym_voltage_sensor_id), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
+        input_dataset_2.add_attribute_buffer("sym_voltage_sensor", "measured_object",
+                                             sym_voltage_sensor_measured_object.data());
 
-        input_dataset.add_buffer("sym_power_sensor", std::ssize(sym_power_sensor_id), std::ssize(sym_power_sensor_id),
-                                 nullptr, nullptr);
-        input_dataset.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
-        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_object",
-                                           sym_power_sensor_measured_object.data());
-        input_dataset.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
-                                           sym_power_sensor_measured_terminal_type.data());
+        input_dataset_2.add_buffer("sym_power_sensor", std::ssize(sym_power_sensor_id), std::ssize(sym_power_sensor_id),
+                                   nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
+        input_dataset_2.add_attribute_buffer("sym_power_sensor", "measured_object",
+                                             sym_power_sensor_measured_object.data());
+        input_dataset_2.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
+                                             sym_power_sensor_measured_terminal_type.data());
 
-        auto construct_model = [&] { Model{50.0, input_dataset}; };
+        auto construct_model = [&] { Model{50.0, input_dataset_2}; };
 
         SUBCASE("Correct type") { CHECK_NOTHROW(construct_model()); }
         SUBCASE("Wrong branch terminal node") {
