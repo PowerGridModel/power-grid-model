@@ -360,7 +360,27 @@ auto const update_json = R"json({
       ]
     }
   ]
-})json";
+})json"s;
+
+auto const update_vector_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_load": [
+        {"id": 7, "status": 1, "p_specified": 2500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 0}
+      ],
+      "shunt": [
+        {"id": 9, "status": 0, "b1": 0.02, "b0": 0.02}
+      ]
+    }
+  ]
+})json"s;
 
 struct State {
     std::vector<ID> node_id{1, 2, 3};
@@ -605,8 +625,9 @@ TEST_CASE("API model - all updates") {
 }
 
 TEST_CASE("API model - updates w/ alternating compute mode") {
-    State const state;
-    auto const input_dataset = state.get_input_dataset();
+    auto const owning_input_dataset = load_dataset(state_json);
+    auto const& input_dataset = owning_input_dataset.dataset;
+
     auto model = Model{50.0, input_dataset};
 
     auto const check_sym = [&model] {
@@ -688,34 +709,41 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
         CHECK(asym_shunt_output_i[2] == doctest::Approx(0.0));
     };
 
-    // update vector
-    std::vector<ID> sym_load_update_id{7};
-    std::vector<IntS> sym_load_update_status{1};
-    std::vector<double> sym_load_update_p_specified{2.5e6};
+    // // update vector
+    // std::vector<ID> sym_load_update_id{7};
+    // std::vector<IntS> sym_load_update_status{1};
+    // std::vector<double> sym_load_update_p_specified{2.5e6};
 
-    std::vector<ID> asym_load_update_id{8};
-    std::vector<IntS> asym_load_update_status{0};
+    // std::vector<ID> asym_load_update_id{8};
+    // std::vector<IntS> asym_load_update_status{0};
 
-    std::vector<ID> shunt_update_id{9};
-    std::vector<IntS> shunt_update_status{0};
-    std::vector<double> shunt_update_b1{0.02};
-    std::vector<double> shunt_update_b0{0.02};
+    // std::vector<ID> shunt_update_id{9};
+    // std::vector<IntS> shunt_update_status{0};
+    // std::vector<double> shunt_update_b1{0.02};
+    // std::vector<double> shunt_update_b0{0.02};
 
-    DatasetConst update_data{"update", true, 1};
-    update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
-    update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
-    update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
+    // DatasetConst update_data{"update", true, 1};
+    // update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
+    // update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
+    // update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
 
-    update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
-    update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
+    // update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
+    // update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
 
-    update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
-    update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
-    update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
-    update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
+    // update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
+    // update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
+    // update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
+    // update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
+    // update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
+
+    // // TODO(mgovers): remove
+    // Serializer serializer{update_data, PGM_json};
+    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+    auto const owning_update_dataset = load_dataset(update_vector_json);
+    auto const& update_data = owning_update_dataset.dataset;
 
     // This will lead to no topo change but param change
     model.update(update_data);
