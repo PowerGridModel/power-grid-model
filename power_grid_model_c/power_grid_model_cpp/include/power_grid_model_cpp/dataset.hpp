@@ -173,6 +173,22 @@ class DatasetConst {
     detail::UniquePtr<RawConstDataset, &PGM_destroy_dataset_const> dataset_;
     DatasetInfo info_;
 };
+
+struct OwningMemory {
+    std::vector<Buffer> buffers;
+    std::vector<std::vector<Idx>> indptrs;
+};
+
+struct OwningDatasetMutable {
+    DatasetMutable dataset;
+    DatasetConst const_dataset;
+    OwningMemory storage{};
+};
+
+struct OwningDatasetConst {
+    DatasetConst const_dataset;
+    OwningMemory storage{};
+};
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_DATASET_HPP
