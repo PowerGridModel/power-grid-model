@@ -62,12 +62,9 @@ auto read_json(std::filesystem::path const& path) {
 
 OwningDatasetMutable create_result_dataset(OwningDatasetConst const& input, std::string const& dataset_name,
                                            bool is_batch = false, Idx batch_size = 1) {
-    DatasetMutable dataset_mutable{dataset_name, is_batch, batch_size};
-    DatasetConst dataset_const{dataset_mutable};
-    OwningDatasetMutable owning_dataset{.dataset{std::move(dataset_mutable)},
-                                        .const_dataset = std::move(dataset_const)};
+    DatasetInfo const& input_info = input.dataset.get_info();
 
-    DatasetInfo const& input_info = input.const_dataset.get_info();
+    OwningDatasetMutable result{.dataset{dataset_name, is_batch, batch_size}, .storage{}};
 
     for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
         auto const& component_name = input_info.component_name(component_idx);
@@ -75,15 +72,14 @@ OwningDatasetMutable create_result_dataset(OwningDatasetConst const& input, std:
         Idx const component_elements_per_scenario = input_info.component_elements_per_scenario(component_idx);
         Idx const component_size = input_info.component_total_elements(component_idx);
 
-        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
+        auto& current_indptr = result.storage.indptrs.emplace_back(
             input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
-        owning_dataset.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
-                                          current_buffer);
+        auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
+        result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
+                                  current_buffer);
     }
-    owning_dataset.const_dataset = owning_dataset.dataset;
-    return owning_dataset;
+    return result;
 }
 
 OwningDatasetConst load_dataset(std::filesystem::path const& path) {
@@ -217,13 +213,13 @@ void assert_result(OwningDatasetMutable const& owning_result, OwningDatasetConst
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
 
-    DatasetConst const& result = owning_result.const_dataset;
+    DatasetConst const result{owning_result.dataset};
     auto const& result_info = result.get_info();
     auto const& result_name = result_info.name();
     Idx const result_batch_size = result_info.batch_size();
     auto const& storage = owning_result.storage;
 
-    DatasetConst const& reference_result = owning_reference_result.const_dataset;
+    DatasetConst const& reference_result = owning_reference_result.dataset;
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
     auto const& reference_storage = owning_reference_result.storage;
@@ -526,7 +522,7 @@ void validate_single_case(CaseParam const& param) {
 
         // create and run model
         auto const& options = get_options(param);
-        Model model{50.0, validation_case.input.const_dataset};
+        Model model{50.0, validation_case.input.dataset};
         model.calculate(options, result.dataset);
 
         // check results
@@ -538,20 +534,20 @@ void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&]() {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const& info = validation_case.update_batch.value().const_dataset.get_info();
+        auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
         auto const batch_result =
             create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
 
         // create model
-        Model model{50.0, validation_case.input.const_dataset};
+        Model model{50.0, validation_case.input.dataset};
 
         // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
             CAPTURE(threading);
             // set options and run
             auto const& options = get_options(param, threading);
-            model.calculate(options, batch_result.dataset, validation_case.update_batch.value().const_dataset);
+            model.calculate(options, batch_result.dataset, validation_case.update_batch.value().dataset);
 
             // check results
             assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);

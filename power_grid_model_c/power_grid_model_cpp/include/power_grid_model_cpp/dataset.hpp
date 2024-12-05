@@ -181,12 +181,11 @@ struct OwningMemory {
 
 struct OwningDatasetMutable {
     DatasetMutable dataset;
-    DatasetConst const_dataset;
     OwningMemory storage{};
 };
 
 struct OwningDatasetConst {
-    DatasetConst const_dataset;
+    DatasetConst dataset;
     OwningMemory storage{};
 };
 } // namespace power_grid_model_cpp

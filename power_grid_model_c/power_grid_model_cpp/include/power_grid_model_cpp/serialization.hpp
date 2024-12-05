@@ -98,7 +98,7 @@ inline OwningDatasetConst create_owning_dataset(DatasetWritable& writable_datase
     auto const& dataset_name = info.name();
     DatasetMutable dataset_mutable{dataset_name, is_batch, batch_size};
     DatasetConst dataset_const{dataset_mutable};
-    OwningDatasetConst owning_dataset{.const_dataset{writable_dataset}};
+    OwningMemory storage{};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
@@ -106,18 +106,17 @@ inline OwningDatasetConst create_owning_dataset(DatasetWritable& writable_datase
         Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
 
-        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
-            info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
+        auto& current_indptr =
+            storage.indptrs.emplace_back(info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         if (!current_indptr.empty()) {
             current_indptr.at(0) = 0;
             current_indptr.at(batch_size) = component_size;
         }
         Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
+        auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
         writable_dataset.set_buffer(component_name, indptr, current_buffer);
     }
-    owning_dataset.const_dataset = writable_dataset;
-    return owning_dataset;
+    return OwningDatasetConst{.dataset = writable_dataset, .storage = std::move(storage)};
 }
 } // namespace power_grid_model_cpp
 
