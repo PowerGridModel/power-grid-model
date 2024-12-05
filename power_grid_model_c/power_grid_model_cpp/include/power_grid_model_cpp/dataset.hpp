@@ -89,9 +89,8 @@ class DatasetWritable {
 class DatasetMutable {
   public:
     explicit DatasetMutable(std::string const& dataset, bool is_batch, Idx batch_size)
-        : handle_{},
-          dataset_{
-              handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}), batch_size)},
+        : dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}),
+                                     batch_size)},
           info_{handle_.call_with(PGM_dataset_mutable_get_info, get())} {}
 
     RawMutableDataset const* get() const { return dataset_.get(); }
@@ -129,9 +128,8 @@ class DatasetMutable {
 class DatasetConst {
   public:
     explicit DatasetConst(std::string const& dataset, bool is_batch, Idx batch_size)
-        : handle_{},
-          dataset_{
-              handle_.call_with(PGM_create_dataset_const, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}), batch_size)},
+        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}),
+                                     batch_size)},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
 
     DatasetConst(DatasetWritable const& writable_dataset)

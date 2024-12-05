@@ -493,7 +493,8 @@ TEST_CASE("API model - all updates") {
             auto const attribute_name = MetaData::attribute_name(attr_meta);
             CAPTURE(attribute_name);
 
-            pgm_type_func_selector(attr_meta, [&]<typename T>() {
+            pgm_type_func_selector(attr_meta, [&model, &update_data, &output_dataset_type, &comp_type, &attribute_name,
+                                               elements_per_scenario, total_elements]<typename T>() {
                 std::vector<T> sym_output_from_batch(total_elements);
                 std::vector<T> sym_output_from_updated_single(total_elements);
 
@@ -527,7 +528,7 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
     auto const input_dataset = state.get_input_dataset();
     auto model = Model{50.0, input_dataset};
 
-    auto const check_sym = [&] {
+    auto const check_sym = [&model] {
         std::vector<double> sym_node_output_u_pu(3);
         std::vector<double> sym_line_output_i_from(1);
         std::vector<double> sym_source_output_i(2);
@@ -566,7 +567,7 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
         CHECK(sym_asym_load_output_i[0] == doctest::Approx(0.0));
         CHECK(sym_shunt_output_i[0] == doctest::Approx(0.0));
     };
-    auto const check_asym = [&] {
+    auto const check_asym = [&model] {
         std::vector<double> asym_node_output_u_pu(9);
         std::vector<double> asym_line_output_i_from(3);
         std::vector<double> asym_source_output_i(6);
@@ -786,18 +787,19 @@ TEST_CASE("API model - incomplete input") {
                         auto const attr_name = MetaData::attribute_name(attr_meta);
                         CAPTURE(attr_name);
 
-                        pgm_type_func_selector(attr_meta, [&]<typename T> {
-                            T test_value{nan_value<T>()};
-                            T ref_value{nan_value<T>()};
-                            test_node_output.get_value(attr_meta, &test_value, node_idx, 0);
-                            ref_node_output.get_value(attr_meta, &ref_value, node_idx, 0);
+                        pgm_type_func_selector(attr_meta,
+                                               [&test_node_output, &ref_node_output, attr_meta, node_idx]<typename T> {
+                                                   T test_value{nan_value<T>()};
+                                                   T ref_value{nan_value<T>()};
+                                                   test_node_output.get_value(attr_meta, &test_value, node_idx, 0);
+                                                   ref_node_output.get_value(attr_meta, &ref_value, node_idx, 0);
 
-                            if constexpr (std::is_floating_point_v<T>) {
-                                CHECK(test_value == doctest::Approx(ref_value));
-                            } else {
-                                CHECK(test_value == ref_value);
-                            }
-                        });
+                                                   if constexpr (std::is_floating_point_v<T>) {
+                                                       CHECK(test_value == doctest::Approx(ref_value));
+                                                   } else {
+                                                       CHECK(test_value == ref_value);
+                                                   }
+                                               });
                     }
                 }
             }
