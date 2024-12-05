@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 0, "energized": 1, "u_pu": 1, "u": 10, "u_angle": 0},
+      {"id": 1, "energized": 1, "u_pu": 0.9, "u": 9, "u_angle": 0}
+    ],
+    "line": [
+      {"id": 2, "energized": 1, "p_from": 10, "q_from": 0, "p_to": -9, "q_to": -0}
+    ],
+    "source": [
+      {"id": 3, "energized": 1, "p": 10, "q": 0}
+    ],
+    "sym_load": [
+      {"id": 4, "energized": 1, "p": 9, "q": 0}
+    ],
+    "sym_power_sensor": [
+      {"id": 5, "energized": 1, "p_residual": 0, "q_residual": 0}
+    ],
+    "sym_voltage_sensor": [
+      {"id": 6, "energized": 1, "u_residual": 0}
+    ]
+  }
+}
