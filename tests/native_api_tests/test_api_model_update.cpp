@@ -1013,12 +1013,76 @@ TEST_CASE("API model - incomplete input") {
     }
 }
 
+auto const mixed_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 6, "status": 1},
+        {"id": 10, "status": 1}
+      ],
+      "sym_load": [
+        {"id": 7, "status": 1, "q_specified": 1}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 1, "q_specified": [1, 1, 1]}
+      ]
+    },
+    {
+      "source": [
+        {"id": 6, "status": 1, "u_ref": 1.05},
+        {"id": 10, "status": 1, "u_ref": 1.05, "u_ref_angle": 0}
+      ],
+      "sym_load": [
+        {"id": 7, "status": 0, "p_specified": 500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 0, "p_specified": [166666.6666666667, 166666.6666666667, 166666.6666666667]}
+      ]
+    }
+  ]
+})json"s;
+
+auto const second_scenario_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 6, "status": 1, "u_ref": 1.05},
+        {"id": 10, "status": 1, "u_ref": 1.05, "u_ref_angle": 0}
+      ],
+      "sym_load": [
+        {"id": 7, "status": 1, "p_specified": 500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 1, "p_specified": [null, null, 166666.6666666667], "q_specified": [1, 1, null]}
+      ]
+    }
+  ]
+})json"s;
+
 TEST_CASE("API model - Incomplete scenario update followed by complete") {
     State const complete_state;
     State const incomplete_state = get_incomplete_state();
 
-    auto ref_model = Model{50.0, complete_state.get_input_dataset()};
-    auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
+    // TODO(mgovers): remove
+    // auto ref_model = Model{50.0, complete_state.get_input_dataset()};
+    // auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
+
+    auto const complete_owning_input_dataset = load_dataset(state_json);
+    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
+
+    auto const& complete_input_data = complete_owning_input_dataset.dataset;
+    auto const& incomplete_input_data = incomplete_owning_input_dataset.dataset;
+
+    auto ref_model = Model{50.0, complete_input_data};
+    auto test_model = Model{50.0, incomplete_input_data};
 
     constexpr Idx batch_size = 2;
     auto const n_nodes = static_cast<Idx>(complete_state.node_id.size());
@@ -1042,50 +1106,64 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
 
     REQUIRE(source_indptr.size() == batch_size + 1);
 
-    DatasetConst mixed_update_data{"update", true, batch_size};
+    // DatasetConst mixed_update_data{"update", true, batch_size};
 
-    mixed_update_data.add_buffer("source", 2, 4, nullptr, nullptr);
-    mixed_update_data.add_attribute_buffer("source", "id", mixed_source_update_id.data());
-    mixed_update_data.add_attribute_buffer("source", "status", mixed_source_update_status.data());
-    mixed_update_data.add_attribute_buffer("source", "u_ref", mixed_source_update_u_ref.data());
-    mixed_update_data.add_attribute_buffer("source", "u_ref_angle", mixed_source_update_u_ref_angle.data());
+    // mixed_update_data.add_buffer("source", 2, 4, nullptr, nullptr);
+    // mixed_update_data.add_attribute_buffer("source", "id", mixed_source_update_id.data());
+    // mixed_update_data.add_attribute_buffer("source", "status", mixed_source_update_status.data());
+    // mixed_update_data.add_attribute_buffer("source", "u_ref", mixed_source_update_u_ref.data());
+    // mixed_update_data.add_attribute_buffer("source", "u_ref_angle", mixed_source_update_u_ref_angle.data());
 
-    mixed_update_data.add_buffer("sym_load", 1, 2, nullptr, nullptr);
-    mixed_update_data.add_attribute_buffer("sym_load", "id", mixed_sym_load_update_id.data());
-    mixed_update_data.add_attribute_buffer("sym_load", "status", mixed_sym_load_update_status.data());
-    mixed_update_data.add_attribute_buffer("sym_load", "p_specified", mixed_sym_load_update_p_specified.data());
-    mixed_update_data.add_attribute_buffer("sym_load", "q_specified", mixed_sym_load_update_q_specified.data());
+    // mixed_update_data.add_buffer("sym_load", 1, 2, nullptr, nullptr);
+    // mixed_update_data.add_attribute_buffer("sym_load", "id", mixed_sym_load_update_id.data());
+    // mixed_update_data.add_attribute_buffer("sym_load", "status", mixed_sym_load_update_status.data());
+    // mixed_update_data.add_attribute_buffer("sym_load", "p_specified", mixed_sym_load_update_p_specified.data());
+    // mixed_update_data.add_attribute_buffer("sym_load", "q_specified", mixed_sym_load_update_q_specified.data());
 
-    mixed_update_data.add_buffer("asym_load", 1, 2, nullptr, nullptr);
-    mixed_update_data.add_attribute_buffer("asym_load", "id", mixed_asym_load_update_id.data());
-    mixed_update_data.add_attribute_buffer("asym_load", "status", mixed_asym_load_update_status.data());
-    mixed_update_data.add_attribute_buffer("asym_load", "p_specified", mixed_asym_load_update_p_specified.data());
-    mixed_update_data.add_attribute_buffer("asym_load", "q_specified", mixed_asym_load_update_q_specified.data());
+    // mixed_update_data.add_buffer("asym_load", 1, 2, nullptr, nullptr);
+    // mixed_update_data.add_attribute_buffer("asym_load", "id", mixed_asym_load_update_id.data());
+    // mixed_update_data.add_attribute_buffer("asym_load", "status", mixed_asym_load_update_status.data());
+    // mixed_update_data.add_attribute_buffer("asym_load", "p_specified", mixed_asym_load_update_p_specified.data());
+    // mixed_update_data.add_attribute_buffer("asym_load", "q_specified", mixed_asym_load_update_q_specified.data());
 
-    DatasetConst second_scenario_update_data{"update", true, 1};
+    // // TODO(mgovers): remove
+    // Serializer serializer{mixed_update_data, PGM_json};
+    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
 
-    second_scenario_update_data.add_buffer("source", 2, 2, nullptr, nullptr);
-    second_scenario_update_data.add_attribute_buffer("source", "id", mixed_source_update_id.data() + 2);
-    second_scenario_update_data.add_attribute_buffer("source", "status", mixed_source_update_status.data() + 2);
-    second_scenario_update_data.add_attribute_buffer("source", "u_ref", mixed_source_update_u_ref.data() + 2);
-    second_scenario_update_data.add_attribute_buffer("source", "u_ref_angle",
-                                                     mixed_source_update_u_ref_angle.data() + 2);
+    auto const mixed_owning_update_dataset = load_dataset(mixed_update_json);
+    auto const& mixed_update_data = mixed_owning_update_dataset.dataset;
 
-    second_scenario_update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "id", mixed_sym_load_update_id.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "status", mixed_sym_load_update_status.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "p_specified",
-                                                     mixed_sym_load_update_p_specified.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "q_specified",
-                                                     mixed_sym_load_update_q_specified.data() + 1);
+    // DatasetConst second_scenario_update_data{"update", true, 1};
 
-    second_scenario_update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "id", mixed_asym_load_update_id.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "status", mixed_asym_load_update_status.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "p_specified",
-                                                     mixed_asym_load_update_p_specified.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "q_specified",
-                                                     mixed_asym_load_update_q_specified.data() + 1);
+    // second_scenario_update_data.add_buffer("source", 2, 2, nullptr, nullptr);
+    // second_scenario_update_data.add_attribute_buffer("source", "id", mixed_source_update_id.data() + 2);
+    // second_scenario_update_data.add_attribute_buffer("source", "status", mixed_source_update_status.data() + 2);
+    // second_scenario_update_data.add_attribute_buffer("source", "u_ref", mixed_source_update_u_ref.data() + 2);
+    // second_scenario_update_data.add_attribute_buffer("source", "u_ref_angle",
+    //                                                  mixed_source_update_u_ref_angle.data() + 2);
+
+    // second_scenario_update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
+    // second_scenario_update_data.add_attribute_buffer("sym_load", "id", mixed_sym_load_update_id.data() + 1);
+    // second_scenario_update_data.add_attribute_buffer("sym_load", "status", mixed_sym_load_update_status.data() + 1);
+    // second_scenario_update_data.add_attribute_buffer("sym_load", "p_specified",
+    //                                                  mixed_sym_load_update_p_specified.data() + 1);
+    // second_scenario_update_data.add_attribute_buffer("sym_load", "q_specified",
+    //                                                  mixed_sym_load_update_q_specified.data() + 1);
+
+    // second_scenario_update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
+    // second_scenario_update_data.add_attribute_buffer("asym_load", "id", mixed_asym_load_update_id.data() + 1);
+    // second_scenario_update_data.add_attribute_buffer("asym_load", "status", mixed_asym_load_update_status.data() +
+    // 1); second_scenario_update_data.add_attribute_buffer("asym_load", "p_specified",
+    //                                                  mixed_asym_load_update_p_specified.data() + 1);
+    // second_scenario_update_data.add_attribute_buffer("asym_load", "q_specified",
+    //                                                  mixed_asym_load_update_q_specified.data() + 1);
+
+    // // TODO(mgovers): remove
+    // Serializer serializer{second_scenario_update_data, PGM_json};
+    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+    auto const second_scenario_owning_update_dataset = load_dataset(second_scenario_update_json);
+    auto const& second_scenario_update_data = second_scenario_owning_update_dataset.dataset;
 
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
         CAPTURE(symmetry);
