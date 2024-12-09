@@ -30,6 +30,7 @@ from power_grid_model.errors import (
     PowerGridBatchError,
     PowerGridError,
     PowerGridSerializationError,
+    SparseMatrixError,
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
@@ -57,6 +58,7 @@ KNOWN_EXCEPTIONS = {
         AutomaticTapInputError,
         InvalidTransformerClock,
         NotObservableError,
+        SparseMatrixError,
         PowerGridSerializationError,
         AssertionError,
         OSError,

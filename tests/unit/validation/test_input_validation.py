@@ -238,12 +238,14 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     asym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.asym_voltage_sensor, 4)
     asym_voltage_sensor["id"] = [7, 8, 9, 10]
     asym_voltage_sensor["measured_object"] = [2, 3, 1, 200]
-    asym_voltage_sensor["u_measured"] = [
-        [10.5e3, 10.4e3, 10.6e3],
-        [np.nan, np.nan, np.nan],
-        [0, 0, 0],
-        [-1e4, 1e4, 1e4],
-    ]
+    asym_voltage_sensor["u_measured"] = np.array(
+        [
+            [10.5e3, 10.4e3, 10.6e3],
+            [np.nan, np.nan, np.nan],
+            [0, 0, 0],
+            [-1e4, 1e4, 1e4],
+        ]
+    )
     asym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0]
 
     sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 4)

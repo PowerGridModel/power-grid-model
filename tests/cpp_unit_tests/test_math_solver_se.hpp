@@ -128,14 +128,14 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
     constexpr auto error_tolerance{1e-10};
     constexpr auto num_iter{20};
 
-    using sym = SolverType::sym;
+    using sym = typename SolverType::sym;
 
-    SESolverTestGrid<sym> grid;
+    SESolverTestGrid<sym> const grid;
 
     // topo and param ptr
     auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
     auto topo_ptr = std::make_shared<MathModelTopology const>(grid.topo());
-    YBus<sym> y_bus{topo_ptr, param_ptr};
+    YBus<sym> const y_bus{topo_ptr, param_ptr};
 
     SUBCASE("Test se with angle") {
         SolverType solver{y_bus, topo_ptr};

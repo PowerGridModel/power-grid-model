@@ -71,9 +71,9 @@ template <symmetry_tag sym_type> struct PFSolverTestGrid : public SteadyStateSol
 };
 
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_pf_id) {
-    using sym = SolverType::sym;
+    using sym = typename SolverType::sym;
 
-    PFSolverTestGrid<sym> grid;
+    PFSolverTestGrid<sym> const grid;
 
     // topo and param ptr
     auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
@@ -90,7 +90,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         CalculationInfo info;
 
         PowerFlowInput<sym> const pf_input = grid.pf_input();
-        SolverOutput<sym> output = run_power_flow(solver, y_bus, pf_input, error_tolerance, num_iter, info);
+        SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, error_tolerance, num_iter, info);
         assert_output(output, grid.output_ref(), false, result_tolerance);
     }
 

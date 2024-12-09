@@ -73,7 +73,7 @@ struct OwningDataset {
 
 OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
     auto const& info = writable_dataset.get_info();
-    Idx const is_batch = info.is_batch();
+    bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
@@ -101,7 +101,7 @@ OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
     return owning_dataset;
 }
 
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, Idx is_batch = 0,
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
                                     Idx batch_size = 1) {
     OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
                                  .const_dataset = std::nullopt};
@@ -132,7 +132,7 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
-    Deserializer deserializer{read_file(path), Idx{0}};
+    Deserializer deserializer{read_file(path), PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
     auto dataset = create_owning_dataset(writable_dataset);
     deserializer.parse_to_buffer();
@@ -384,7 +384,7 @@ Options get_options(CaseParam const& param, Idx threading = -1) {
     Options options{};
     options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
     options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
-    options.set_symmetric(param.sym ? 1 : 0);
+    options.set_symmetric(param.sym ? PGM_symmetric : PGM_asymmetric);
     options.set_err_tol(param.err_tol);
     options.set_max_iter(param.max_iter);
     options.set_threading(threading);
@@ -589,7 +589,7 @@ void validate_batch_case(CaseParam const& param) {
         auto const& info = validation_case.update_batch.value().const_dataset.value().get_info();
         Idx const batch_size = info.batch_size();
         auto const batch_result =
-            create_result_dataset(validation_case.output_batch.value(), output_prefix, Idx{1}, batch_size);
+            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
 
         // create model
         Model model{50.0, validation_case.input.const_dataset.value()};

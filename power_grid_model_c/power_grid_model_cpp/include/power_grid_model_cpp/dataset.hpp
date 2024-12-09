@@ -25,7 +25,7 @@ class DatasetInfo {
 
     std::string name() const { return std::string{handle_.call_with(PGM_dataset_info_name, info_)}; }
 
-    Idx is_batch() const { return handle_.call_with(PGM_dataset_info_is_batch, info_); }
+    bool is_batch() const { return handle_.call_with(PGM_dataset_info_is_batch, info_) != 0; }
 
     Idx batch_size() const { return handle_.call_with(PGM_dataset_info_batch_size, info_); }
 
@@ -88,8 +88,9 @@ class DatasetWritable {
 
 class DatasetMutable {
   public:
-    DatasetMutable(std::string const& dataset, Idx is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), is_batch, batch_size)},
+    explicit DatasetMutable(std::string const& dataset, bool is_batch, Idx batch_size)
+        : dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}),
+                                     batch_size)},
           info_{handle_.call_with(PGM_dataset_mutable_get_info, get())} {}
 
     RawMutableDataset const* get() const { return dataset_.get(); }
@@ -126,12 +127,15 @@ class DatasetMutable {
 
 class DatasetConst {
   public:
-    DatasetConst(std::string const& dataset, Idx is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), is_batch, batch_size)},
+    explicit DatasetConst(std::string const& dataset, bool is_batch, Idx batch_size)
+        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}),
+                                     batch_size)},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
+
     DatasetConst(DatasetWritable const& writable_dataset)
         : dataset_{handle_.call_with(PGM_create_dataset_const_from_writable, writable_dataset.get())},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
+
     DatasetConst(DatasetMutable const& mutable_dataset)
         : dataset_{handle_.call_with(PGM_create_dataset_const_from_mutable, mutable_dataset.get())},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}

@@ -16,7 +16,7 @@ TYPE_TO_STRING_AS("NewtonRaphsonPFSolver<asymmetric_t>",
 namespace power_grid_model::math_solver {
 namespace {
 using newton_raphson_pf::PFJacBlock;
-}
+} // namespace
 
 TEST_CASE("Test block") {
     SUBCASE("symmetric") {

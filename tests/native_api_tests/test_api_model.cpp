@@ -58,6 +58,19 @@ Dataset created with the following buffers:
 
 namespace power_grid_model_cpp {
 namespace {
+enum class MeasuredTerminalType : IntS {
+    branch_from = 0,
+    branch_to = 1,
+    source = 2,
+    shunt = 3,
+    load = 4,
+    generator = 5,
+    branch3_1 = 6,
+    branch3_2 = 7,
+    branch3_3 = 8,
+    node = 9
+};
+
 void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_error,
                      std::string_view reference_err_msg) {
     CHECK(e.error_code() == reference_error);
@@ -84,7 +97,7 @@ TEST_CASE("API Model") {
     Options options{};
 
     // input data
-    DatasetConst input_dataset{"input", 0, 1};
+    DatasetConst input_dataset{"input", false, 1};
 
     // node buffer
     std::vector<ID> const node_id{0, 4};
@@ -151,11 +164,11 @@ TEST_CASE("API Model") {
     // output data
     Buffer node_output{PGM_def_sym_output_node, 2};
     node_output.set_nan();
-    DatasetMutable single_output_dataset{"sym_output", 0, 1};
+    DatasetMutable single_output_dataset{"sym_output", false, 1};
     single_output_dataset.add_buffer("node", 2, 2, nullptr, node_output);
     Buffer node_batch_output{PGM_def_sym_output_node, 4};
     node_batch_output.set_nan();
-    DatasetMutable batch_output_dataset{"sym_output", 1, 2};
+    DatasetMutable batch_output_dataset{"sym_output", true, 2};
     batch_output_dataset.add_buffer("node", 2, 4, nullptr, node_batch_output);
 
     std::vector<ID> node_result_id(2);
@@ -192,14 +205,14 @@ TEST_CASE("API Model") {
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
     load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
     // dataset
-    DatasetConst single_update_dataset{"update", 0, 1};
+    DatasetConst single_update_dataset{"update", false, 1};
     single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
     single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
     single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
     single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
     single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
     single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-    DatasetConst batch_update_dataset{"update", 1, 2};
+    DatasetConst batch_update_dataset{"update", true, 2};
     batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
     batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
     batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
@@ -265,14 +278,38 @@ TEST_CASE("API Model") {
         }
     }
 
-    SUBCASE("Get indexer") {
-        std::array<ID, 2> ids{2, 2};
-        std::array<Idx, 2> indexer{3, 3};
-        model.get_indexer("sym_load", 2, ids.data(), indexer.data());
-        CHECK(indexer[0] == 0);
-        CHECK(indexer[1] == 0);
-        ids[1] = 6;
-        CHECK_THROWS_AS(model.get_indexer("sym_load", 2, ids.data(), indexer.data()), PowerGridRegularError);
+    SUBCASE("Test get indexer") {
+        std::vector<ID> const node_id_2{1, 2, 3};
+        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
+
+        DatasetConst input_dataset_2{"input", false, 1};
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
+
+        auto model_2 = Model{50.0, input_dataset_2};
+
+        SUBCASE("Good weather") {
+            std::vector<ID> const ids_to_index{2, 1, 3, 2};
+            std::vector<Idx> const expected_indexer{1, 0, 2, 1};
+            std::vector<Idx> indexer(ids_to_index.size());
+            model_2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data());
+            CHECK(indexer == expected_indexer);
+        }
+        SUBCASE("Bad weather: wrong id") {
+            std::vector<ID> const ids_to_index{2, 1, 3, 4};
+            std::vector<Idx> indexer(ids_to_index.size());
+            CHECK_THROWS_WITH_AS(
+                model_2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
+                doctest::Contains("The id cannot be found: 4"), PowerGridRegularError);
+        }
+        SUBCASE("Bad weather: wrong type") {
+            std::vector<ID> const ids_to_index{2, 1, 3, 2};
+            std::vector<Idx> indexer(ids_to_index.size());
+            CHECK_THROWS_WITH_AS(
+                model_2.get_indexer("sym_load", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
+                doctest::Contains("Wrong type for object with id 2"), PowerGridRegularError);
+        }
     }
 
     SUBCASE("Batch power flow") {
@@ -330,7 +367,7 @@ TEST_CASE("API Model") {
         SUBCASE("Update error in calculation") {
             ID const bad_load_id = 2;
             load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            DatasetConst bad_batch_update_dataset{"update", 1, 2};
+            DatasetConst bad_batch_update_dataset{"update", true, 2};
             bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
                                                 source_update_buffer.get());
             bad_batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
@@ -464,13 +501,13 @@ TEST_CASE("API Model") {
         input_sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, input_sym_load_q_specified.data(), -1);
 
         // input dataset - row
-        DatasetConst input_dataset_row{"input", 0, 1};
+        DatasetConst input_dataset_row{"input", false, 1};
         input_dataset_row.add_buffer("node", 1, 1, nullptr, input_node_buffer);
         input_dataset_row.add_buffer("source", 1, 1, nullptr, input_source_buffer);
         input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, input_sym_load_buffer);
 
         // input dataset - col
-        DatasetConst input_dataset_col{"input", 0, 1};
+        DatasetConst input_dataset_col{"input", false, 1};
         input_dataset_col.add_buffer("node", 1, 1, nullptr, nullptr);
         input_dataset_col.add_attribute_buffer("node", "id", input_node_id.data());
         input_dataset_col.add_attribute_buffer("node", "u_rated", input_node_u_rated.data());
@@ -519,12 +556,12 @@ TEST_CASE("API Model") {
                                                -1);
 
         // update dataset - row
-        DatasetConst update_dataset_row{"update", 1, 2};
+        DatasetConst update_dataset_row{"update", true, 2};
         update_dataset_row.add_buffer("source", -1, 2, update_source_indptr.data(), update_source_buffer);
         update_dataset_row.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(), update_sym_load_buffer);
 
         // update dataset - col
-        DatasetConst update_dataset_col{"update", 1, 2};
+        DatasetConst update_dataset_col{"update", true, 2};
 
         update_dataset_col.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
@@ -535,13 +572,13 @@ TEST_CASE("API Model") {
         update_dataset_col.add_attribute_buffer("sym_load", "q_specified", update_sym_load_q_specified.data());
 
         // update dataset - row no ids
-        DatasetConst update_dataset_row_no_id{"update", 1, 2};
+        DatasetConst update_dataset_row_no_id{"update", true, 2};
         update_dataset_row_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), update_source_buffer_no_id);
         update_dataset_row_no_id.add_buffer("sym_load", -1, 2, update_sym_load_indptr.data(),
                                             update_sym_load_buffer_no_id);
 
         // update dataset - col no ids
-        DatasetConst update_dataset_col_no_id{"update", 1, 2};
+        DatasetConst update_dataset_col_no_id{"update", true, 2};
         update_dataset_col_no_id.add_buffer("source", -1, 2, update_source_indptr.data(), nullptr);
 
         update_dataset_col_no_id.add_attribute_buffer("source", "u_ref", update_source_u_ref.data());
@@ -552,7 +589,7 @@ TEST_CASE("API Model") {
         // output data
         Buffer batch_node_output{PGM_def_sym_output_node, 2};
         batch_node_output.set_nan();
-        DatasetMutable batch_output{"sym_output", 1, 2};
+        DatasetMutable batch_output{"sym_output", true, 2};
         batch_output.add_buffer("node", 1, 2, nullptr, batch_node_output);
 
         // options
@@ -646,13 +683,13 @@ TEST_CASE("API Model") {
         input_sym_load_buffer.set_value(PGM_def_input_sym_load_q_specified, input_sym_load_q_specified.data(), -1);
 
         // input dataset - row
-        DatasetConst input_dataset_row{"input", 0, 1};
+        DatasetConst input_dataset_row{"input", false, 1};
         input_dataset_row.add_buffer("node", 1, 1, nullptr, input_node_buffer);
         input_dataset_row.add_buffer("source", 1, 1, nullptr, input_source_buffer);
         input_dataset_row.add_buffer("sym_load", 1, 1, nullptr, input_sym_load_buffer);
 
         // input dataset - col
-        DatasetConst input_dataset_col{"input", 0, 1};
+        DatasetConst input_dataset_col{"input", false, 1};
         input_dataset_col.add_buffer("node", 1, 1, nullptr, nullptr);
         input_dataset_col.add_attribute_buffer("node", "id", input_node_id.data());
         input_dataset_col.add_attribute_buffer("node", "u_rated", input_node_u_rated.data());
@@ -691,12 +728,12 @@ TEST_CASE("API Model") {
         update_sym_load_buffer.set_value(PGM_def_update_sym_load_q_specified, update_sym_load_q_specified.data(), -1);
 
         // update dataset - row
-        DatasetConst update_dataset_row{"update", 1, 2};
+        DatasetConst update_dataset_row{"update", true, 2};
         update_dataset_row.add_buffer("source", -1, 1, source_indptr.data(), update_source_buffer);
         update_dataset_row.add_buffer("sym_load", -1, 2, sym_load_indptr.data(), update_sym_load_buffer);
 
         // update dataset - col
-        DatasetConst update_dataset_col{"update", 1, 2};
+        DatasetConst update_dataset_col{"update", true, 2};
 
         update_dataset_col.add_buffer("source", -1, 1, source_indptr.data(), nullptr);
         update_dataset_col.add_attribute_buffer("source", "id", update_source_id.data());
@@ -709,7 +746,7 @@ TEST_CASE("API Model") {
         // output data
         Buffer output_node_batch{PGM_def_sym_output_node, 2};
         output_node_batch.set_nan();
-        DatasetMutable output_batch_dataset{"sym_output", 1, 2};
+        DatasetMutable output_batch_dataset{"sym_output", true, 2};
         output_batch_dataset.add_buffer("node", 1, 2, nullptr, output_node_batch);
 
         // options
@@ -756,7 +793,7 @@ TEST_CASE("API Model") {
             CAPTURE(calculation_type);
             auto const& supported_type_methods = supported_methods.at(calculation_type);
 
-            DatasetMutable const output_dataset{output_dataset_types.at(calculation_type), 0, 1};
+            DatasetMutable const output_dataset{output_dataset_types.at(calculation_type), false, 1};
 
             for (auto calculation_method : all_methods) {
                 CAPTURE(calculation_method);
@@ -779,7 +816,7 @@ TEST_CASE("API Model") {
 
     SUBCASE("Forbid link power measurements") {
         // input data
-        DatasetConst input_dataset_se{"input", 0, 1};
+        DatasetConst input_dataset_se{"input", false, 1};
         auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
         // node buffer
@@ -827,6 +864,112 @@ TEST_CASE("API Model") {
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
+        }
+    }
+
+    SUBCASE("Test duplicated id") {
+        std::vector<ID> node_id_2{1, 1, 3};
+        DatasetConst input_dataset_2{"input", false, 1};
+
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset_2}; };
+        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
+    }
+
+    SUBCASE("Test non-existing id") {
+        std::vector<ID> const node_id_2{1, 2, 3};
+        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
+
+        std::vector<ID> link_id{5};
+        std::vector<ID> link_from_node{99};
+        std::vector<ID> link_to_node{3};
+
+        DatasetConst input_dataset_2{"input", false, 1};
+
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
+
+        input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset_2}; };
+        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
+    }
+
+    SUBCASE("Test id for wrong type") {
+        std::vector<ID> const node_id_2{1, 2, 3};
+        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
+
+        std::vector<ID> line_id_2{9};
+        std::vector<ID> line_from_node_2{1};
+        std::vector<ID> line_to_node_2{2};
+
+        std::vector<ID> link_id{5};
+        std::vector<ID> link_from_node{2};
+        std::vector<ID> link_to_node{3};
+
+        std::vector<ID> sym_voltage_sensor_id{25};
+        std::vector<ID> sym_voltage_sensor_measured_object{1};
+
+        std::vector<ID> sym_power_sensor_id{28};
+        std::vector<ID> sym_power_sensor_measured_object{3};
+        std::vector<MeasuredTerminalType> sym_power_sensor_measured_terminal_type{MeasuredTerminalType::node};
+
+        DatasetConst input_dataset_2{"input", false, 1};
+
+        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
+
+        input_dataset_2.add_buffer("line", std::ssize(line_id_2), std::ssize(line_id_2), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("line", "id", line_id_2.data());
+        input_dataset_2.add_attribute_buffer("line", "from_node", line_from_node_2.data());
+        input_dataset_2.add_attribute_buffer("line", "to_node", line_to_node_2.data());
+
+        input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
+        input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
+        input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
+
+        input_dataset_2.add_buffer("sym_voltage_sensor", std::ssize(sym_voltage_sensor_id),
+                                   std::ssize(sym_voltage_sensor_id), nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("sym_voltage_sensor", "id", sym_voltage_sensor_id.data());
+        input_dataset_2.add_attribute_buffer("sym_voltage_sensor", "measured_object",
+                                             sym_voltage_sensor_measured_object.data());
+
+        input_dataset_2.add_buffer("sym_power_sensor", std::ssize(sym_power_sensor_id), std::ssize(sym_power_sensor_id),
+                                   nullptr, nullptr);
+        input_dataset_2.add_attribute_buffer("sym_power_sensor", "id", sym_power_sensor_id.data());
+        input_dataset_2.add_attribute_buffer("sym_power_sensor", "measured_object",
+                                             sym_power_sensor_measured_object.data());
+        input_dataset_2.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
+                                             sym_power_sensor_measured_terminal_type.data());
+
+        auto construct_model = [&] { Model{50.0, input_dataset_2}; };
+
+        SUBCASE("Correct type") { CHECK_NOTHROW(construct_model()); }
+        SUBCASE("Wrong branch terminal node") {
+            link_from_node[0] = 9;
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 9\n", PowerGridRegularError);
+        }
+        SUBCASE("Wrong voltage sensor measured object") {
+            sym_voltage_sensor_measured_object[0] = 5;
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 5\n", PowerGridRegularError);
+        }
+        SUBCASE("Wrong power sensor measured object type") {
+            using enum MeasuredTerminalType;
+            std::vector<MeasuredTerminalType> const mt_types{branch_from, branch_to, generator, load, shunt, source};
+
+            for (auto const& mt_type : mt_types) {
+                CAPTURE(mt_type);
+                sym_power_sensor_measured_terminal_type[0] = mt_type;
+                CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 3\n", PowerGridRegularError);
+            }
         }
     }
 }

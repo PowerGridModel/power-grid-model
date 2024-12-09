@@ -47,7 +47,7 @@ TEST_CASE("API Serialization and Deserialization") {
 
     Idx const n_components = 2;
     Idx const batch_size = 1;
-    Idx const is_batch = 0;
+    bool const is_batch = false;
     std::vector<Idx> const elements_per_scenario = {1, 2};
     std::vector<Idx> const elements_per_scenario_complete = {1, 1};
     std::vector<Idx> const total_elements = {1, 2};

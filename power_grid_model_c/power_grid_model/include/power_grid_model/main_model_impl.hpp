@@ -300,35 +300,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
-    template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
-        constexpr auto component_index = main_core::utils::index_of_component<CompType, ComponentType...>;
-
-        auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
-        auto const& component_sequence = std::get<component_index>(sequence_idx);
-
-        if (!cached_inverse_update.empty()) {
-            update_component<CompType, permanent_update_t>(cached_inverse_update, component_sequence);
-            cached_inverse_update.clear();
-        }
-    }
-
-    // restore the initial values of all components
-    void restore_components(SequenceIdxView const& sequence_idx) {
-        (restore_component<ComponentType>(sequence_idx), ...);
-
-        update_state(cached_state_changes_);
-        cached_state_changes_ = {};
-    }
-    void restore_components(std::array<std::reference_wrapper<std::vector<Idx2D> const>,
-                                       main_core::utils::n_types<ComponentType...>> const& sequence_idx) {
-        restore_components(std::array{std::span<Idx2D const>{
-            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx).get()}...});
-    }
-    void restore_components(main_core::utils::SequenceIdx<ComponentType...> const& sequence_idx) {
-        restore_components(std::array{std::span<Idx2D const>{
-            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx)}...});
-    }
-
     // set complete construction
     // initialize internal arrays
     void set_construction_complete() {
@@ -397,6 +368,35 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
         is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changes.topo && !changes.param;
         is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
+    }
+
+    template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
+        constexpr auto component_index = main_core::utils::index_of_component<CompType, ComponentType...>;
+
+        auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
+        auto const& component_sequence = std::get<component_index>(sequence_idx);
+
+        if (!cached_inverse_update.empty()) {
+            update_component<CompType, permanent_update_t>(cached_inverse_update, component_sequence);
+            cached_inverse_update.clear();
+        }
+    }
+
+    // restore the initial values of all components
+    void restore_components(SequenceIdxView const& sequence_idx) {
+        (restore_component<ComponentType>(sequence_idx), ...);
+
+        update_state(cached_state_changes_);
+        cached_state_changes_ = {};
+    }
+    void restore_components(std::array<std::reference_wrapper<std::vector<Idx2D> const>,
+                                       main_core::utils::n_types<ComponentType...>> const& sequence_idx) {
+        restore_components(std::array{std::span<Idx2D const>{
+            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx).get()}...});
+    }
+    void restore_components(main_core::utils::SequenceIdx<ComponentType...> const& sequence_idx) {
+        restore_components(std::array{std::span<Idx2D const>{
+            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx)}...});
     }
 
     template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
