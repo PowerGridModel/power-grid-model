@@ -43,6 +43,16 @@ class DatasetInfo {
         return handle_.call_with(PGM_dataset_info_total_elements, info_, component_idx);
     }
 
+    Idx component_idx(std::string_view component) const {
+        Idx const n_comp = n_components();
+        for (Idx idx = 0; idx < n_comp; ++idx) {
+            if (component_name(idx) == component) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
   private:
     Handle handle_{};
     RawDatasetInfo const* info_;
