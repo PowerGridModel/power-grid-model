@@ -1047,52 +1047,102 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Forbid link power measurements") {
-        // input data
-        DatasetConst input_dataset_se{"input", false, 1};
-        auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
+        // // input data
+        // DatasetConst input_dataset_se{"input", false, 1};
+        // auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
-        // node buffer
-        std::vector<ID> const node_id_se{1, 2};
-        std::vector<double> const node_u_rated_se{10000.0, 10000.0};
+        // // node buffer
+        // std::vector<ID> const node_id_se{1, 2};
+        // std::vector<double> const node_u_rated_se{10000.0, 10000.0};
 
-        // link buffer
-        std::vector<ID> const link_id_se{3};
-        std::vector<ID> const link_from_node_se{1};
-        std::vector<ID> const link_to_node_se{2};
+        // // link buffer
+        // std::vector<ID> const link_id_se{3};
+        // std::vector<ID> const link_from_node_se{1};
+        // std::vector<ID> const link_to_node_se{2};
 
-        // power sensor
-        std::vector<ID> const power_sensor_id_se{4};
-        std::vector<ID> const power_sensor_measured_object_se{3};
-        std::vector<IntS> const power_sensor_measured_terminal_type_se{0};
+        // // power sensor
+        // std::vector<ID> const power_sensor_id_se{4};
+        // std::vector<ID> const power_sensor_measured_object_se{3};
+        // std::vector<IntS> const power_sensor_measured_terminal_type_se{0};
 
-        input_dataset_se.add_buffer("node", 2, 2, nullptr, nullptr);
-        input_dataset_se.add_attribute_buffer("node", "id", node_id_se.data());
-        input_dataset_se.add_attribute_buffer("node", "u_rated", node_u_rated_se.data());
+        // input_dataset_se.add_buffer("node", 2, 2, nullptr, nullptr);
+        // input_dataset_se.add_attribute_buffer("node", "id", node_id_se.data());
+        // input_dataset_se.add_attribute_buffer("node", "u_rated", node_u_rated_se.data());
 
-        input_dataset_se.add_buffer("link", 1, 1, nullptr, nullptr);
-        input_dataset_se.add_attribute_buffer("link", "id", link_id_se.data());
-        input_dataset_se.add_attribute_buffer("link", "from_node", link_from_node_se.data());
-        input_dataset_se.add_attribute_buffer("link", "to_node", link_to_node_se.data());
+        // input_dataset_se.add_buffer("link", 1, 1, nullptr, nullptr);
+        // input_dataset_se.add_attribute_buffer("link", "id", link_id_se.data());
+        // input_dataset_se.add_attribute_buffer("link", "from_node", link_from_node_se.data());
+        // input_dataset_se.add_attribute_buffer("link", "to_node", link_to_node_se.data());
 
         SUBCASE("SymPowerSensor") {
-            input_dataset_se.add_buffer("sym_power_sensor", 1, 1, nullptr, nullptr);
-            input_dataset_se.add_attribute_buffer("sym_power_sensor", "id", power_sensor_id_se.data());
-            input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_object",
-                                                  power_sensor_measured_object_se.data());
-            input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
-                                                  power_sensor_measured_terminal_type_se.data());
+            // input_dataset_se.add_buffer("sym_power_sensor", 1, 1, nullptr, nullptr);
+            // input_dataset_se.add_attribute_buffer("sym_power_sensor", "id", power_sensor_id_se.data());
+            // input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_object",
+            //                                       power_sensor_measured_object_se.data());
+            // input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
+            //                                       power_sensor_measured_terminal_type_se.data());
+
+            // // TODO(mgovers): remove
+            // Serializer serializer{input_dataset_se, PGM_json};
+            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+            auto const input_data_se_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000}
+    ],
+    "link": [
+      {"id": 3, "from_node": 1, "to_node": 2}
+    ],
+    "sym_power_sensor": [
+      {"id": 4, "measured_object": 3, "measured_terminal_type": 0}
+    ]
+  }
+})json"s;
+
+            auto const owning_input_dataset_se = load_dataset(input_data_se_json);
+            auto const& input_dataset_se = owning_input_dataset_se.dataset;
+
+            auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
         }
 
         SUBCASE("AsymPowerSensor") {
-            input_dataset_se.add_buffer("asym_power_sensor", 2, 2, nullptr, nullptr);
-            input_dataset_se.add_attribute_buffer("asym_power_sensor", "id", power_sensor_id_se.data());
-            input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_object",
-                                                  power_sensor_measured_object_se.data());
-            input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_terminal_type",
-                                                  power_sensor_measured_terminal_type_se.data());
+            // input_dataset_se.add_buffer("asym_power_sensor", 2, 2, nullptr, nullptr);
+            // input_dataset_se.add_attribute_buffer("asym_power_sensor", "id", power_sensor_id_se.data());
+            // input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_object",
+            //                                       power_sensor_measured_object_se.data());
+            // input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_terminal_type",
+            //                                       power_sensor_measured_terminal_type_se.data());
+            auto const input_data_se_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000}
+    ],
+    "link": [
+      {"id": 3, "from_node": 1, "to_node": 2}
+    ],
+    "asym_power_sensor": [
+      {"id": 4, "measured_object": 3, "measured_terminal_type": 0}
+    ]
+  }
+})json"s;
+
+            auto const owning_input_dataset_se = load_dataset(input_data_se_json);
+            auto const& input_dataset_se = owning_input_dataset_se.dataset;
+
+            auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
                                  PowerGridRegularError);
@@ -1100,34 +1150,71 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Test duplicated id") {
-        std::vector<ID> node_id_2{1, 1, 3};
-        DatasetConst input_dataset_2{"input", false, 1};
+        // std::vector<ID> node_id_2{1, 1, 3};
+        // DatasetConst input_dataset_2{"input", false, 1};
 
-        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
-        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        // input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        // input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        auto const input_data_2_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1},
+      {"id": 1},
+      {"id": 3}
+    ]
+  }
+})json"s;
+
+        auto const owning_input_dataset_2 = load_dataset(input_data_2_json);
+        auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
         auto construct_model = [&] { Model{50.0, input_dataset_2}; };
         CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
     }
 
     SUBCASE("Test non-existing id") {
-        std::vector<ID> const node_id_2{1, 2, 3};
-        std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
+        // std::vector<ID> const node_id_2{1, 2, 3};
+        // std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
 
-        std::vector<ID> link_id{5};
-        std::vector<ID> link_from_node{99};
-        std::vector<ID> link_to_node{3};
+        // std::vector<ID> link_id{5};
+        // std::vector<ID> link_from_node{99};
+        // std::vector<ID> link_to_node{3};
 
-        DatasetConst input_dataset_2{"input", false, 1};
+        // DatasetConst input_dataset_2{"input", false, 1};
 
-        input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
-        input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
-        input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
+        // input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
+        // input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
+        // input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
 
-        input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
-        input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
-        input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
-        input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
+        // input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
+        // input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
+        // input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
+        // input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
+
+        // // TODO(mgovers): remove
+        // Serializer serializer{input_dataset_2, PGM_json};
+        // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+        auto const input_data_2_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000}
+    ],
+    "link": [
+      {"id": 5, "from_node": 99, "to_node": 2}
+    ]
+  }
+})json"s;
+        auto const owning_input_dataset_2 = load_dataset(input_data_2_json);
+        auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
         auto construct_model = [&] { Model{50.0, input_dataset_2}; };
         CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
