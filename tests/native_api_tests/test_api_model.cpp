@@ -118,29 +118,6 @@ auto const state_json = R"json({
   }
 })json"s;
 
-auto const bad_load_id_state_json = R"json({
-  "version": "1.0",
-  "type": "input",
-  "is_batch": false,
-  "attributes": {},
-  "data": {
-    "sym_load": [
-      {"id": 0, "node": 0, "status": 1, "type": 2, "p_specified": 0, "q_specified": 500}
-    ],
-    "source": [
-      {"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1000, "rx_ratio": 0}
-    ],
-    "node": [
-      {"id": 0, "u_rated": 100},
-      {"id": 4, "u_rated": 100}
-    ],
-    "line": [
-      {"id": 5, "from_node": 0, "to_node": 4, "from_status": 0, "to_status": 1},
-      {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
-    ]
-  }
-})json"s;
-
 auto const single_update_json = R"json({
   "version": "1.0",
   "type": "update",
@@ -181,85 +158,6 @@ auto const batch_update_json = R"json({
     {
       "sym_load": [
         {"id": 2, "q_specified": 300}
-      ],
-      "line": [
-        {"id": 5, "from_status": 0, "to_status": 0},
-        {"id": 6, "from_status": 0, "to_status": 0}
-      ]
-    }
-  ]
-})json"s;
-
-auto const bad_source_id_single_update_json = R"json({
-  "version": "1.0",
-  "type": "update",
-  "is_batch": false,
-  "attributes": {},
-  "data": {
-    "source": [
-      {"id": 99, "u_ref": 0.5}
-    ],
-    "sym_load": [
-      {"id": 2, "q_specified": 100}
-    ],
-    "line": [
-      {"id": 5, "from_status": 0, "to_status": 1},
-      {"id": 6, "from_status": 0, "to_status": 0}
-    ]
-  }
-})json"s;
-
-auto const bad_load_id_batch_update_json = R"json({
-  "version": "1.0",
-  "type": "update",
-  "is_batch": true,
-  "attributes": {},
-  "data": [
-    {
-      "source": [
-        {"id": 1, "u_ref": 0.5}
-      ],
-      "sym_load": [
-        {"id": 2, "q_specified": 100}
-      ],
-      "line": [
-        {"id": 99, "from_status": 0, "to_status": 1},
-        {"id": 999, "from_status": 0, "to_status": 0}
-      ]
-    },
-    {
-      "sym_load": [
-        {"id": 2, "q_specified": 300}
-      ],
-      "line": [
-        {"id": 9999, "from_status": 0, "to_status": 0},
-        {"id": 99999, "from_status": 0, "to_status": 0}
-      ]
-    }
-  ]
-})json"s;
-
-auto const bad_line_id_batch_update_json = R"json({
-  "version": "1.0",
-  "type": "update",
-  "is_batch": true,
-  "attributes": {},
-  "data": [
-    {
-      "source": [
-        {"id": 1, "u_ref": 0.5}
-      ],
-      "sym_load": [
-        {"id": 2, "q_specified": 100}
-      ],
-      "line": [
-        {"id": 5, "from_status": 0, "to_status": 1},
-        {"id": 6, "from_status": 0, "to_status": 0}
-      ]
-    },
-    {
-      "sym_load": [
-        {"id": 999, "q_specified": 300}
       ],
       "line": [
         {"id": 5, "from_status": 0, "to_status": 0},
@@ -428,6 +326,29 @@ TEST_CASE("API Model") {
 
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
+            auto const bad_load_id_state_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_load": [
+      {"id": 0, "node": 0, "status": 1, "type": 2, "p_specified": 0, "q_specified": 500}
+    ],
+    "source": [
+      {"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1000, "rx_ratio": 0}
+    ],
+    "node": [
+      {"id": 0, "u_rated": 100},
+      {"id": 4, "u_rated": 100}
+    ],
+    "line": [
+      {"id": 5, "from_node": 0, "to_node": 4, "from_status": 0, "to_status": 1},
+      {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
+    ]
+  }
+})json"s;
+
             auto const bad_owning_input_dataset = load_dataset(bad_load_id_state_json);
             auto const& bad_input_dataset = bad_owning_input_dataset.dataset;
 
@@ -437,6 +358,25 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error") {
+            auto const bad_source_id_single_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "source": [
+      {"id": 99, "u_ref": 0.5}
+    ],
+    "sym_load": [
+      {"id": 2, "q_specified": 100}
+    ],
+    "line": [
+      {"id": 5, "from_status": 0, "to_status": 1},
+      {"id": 6, "from_status": 0, "to_status": 0}
+    ]
+  }
+})json"s;
+
             auto const bad_single_owning_update_dataset = load_dataset(bad_source_id_single_update_json);
             auto const& single_update_dataset = bad_single_owning_update_dataset.dataset;
 
@@ -446,6 +386,36 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error in calculation") {
+            auto const bad_load_id_batch_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 1, "u_ref": 0.5}
+      ],
+      "sym_load": [
+        {"id": 2, "q_specified": 100}
+      ],
+      "line": [
+        {"id": 99, "from_status": 0, "to_status": 1},
+        {"id": 999, "from_status": 0, "to_status": 0}
+      ]
+    },
+    {
+      "sym_load": [
+        {"id": 2, "q_specified": 300}
+      ],
+      "line": [
+        {"id": 9999, "from_status": 0, "to_status": 0},
+        {"id": 99999, "from_status": 0, "to_status": 0}
+      ]
+    }
+  ]
+})json"s;
+
             auto const bad_batch_owning_update_dataset = load_dataset(bad_load_id_batch_update_json);
             auto const& bad_batch_update_dataset = bad_batch_owning_update_dataset.dataset;
 
@@ -499,6 +469,36 @@ TEST_CASE("API Model") {
 
         SUBCASE("Batch calculation error") {
             SUBCASE("Line bad line id") {
+                auto const bad_line_id_batch_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 1, "u_ref": 0.5}
+      ],
+      "sym_load": [
+        {"id": 2, "q_specified": 100}
+      ],
+      "line": [
+        {"id": 5, "from_status": 0, "to_status": 1},
+        {"id": 6, "from_status": 0, "to_status": 0}
+      ]
+    },
+    {
+      "sym_load": [
+        {"id": 999, "q_specified": 300}
+      ],
+      "line": [
+        {"id": 5, "from_status": 0, "to_status": 0},
+        {"id": 6, "from_status": 0, "to_status": 0}
+      ]
+    }
+  ]
+})json"s;
+
                 auto const bad_batch_owning_update_dataset = load_dataset(bad_line_id_batch_update_json);
                 auto const& batch_update_dataset = bad_batch_owning_update_dataset.dataset;
 
