@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "load_dataset.hpp"
+
 #include "power_grid_model_cpp.hpp"
 
 #include <power_grid_model_c/dataset_definitions.h>
@@ -58,6 +60,9 @@ Dataset created with the following buffers:
 
 namespace power_grid_model_cpp {
 namespace {
+using namespace std::string_literals;
+using power_grid_model_cpp_test::load_dataset;
+
 enum class MeasuredTerminalType : IntS {
     branch_from = 0,
     branch_to = 1,
@@ -89,15 +94,186 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
         check_exception(e, reference_error, reference_err_msg);
     }
 }
+
+auto const state_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_load": [
+      {"id": 2, "node": 0, "status": 1, "type": 2, "p_specified": 0, "q_specified": 500}
+    ],
+    "source": [
+      {"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1000, "rx_ratio": 0}
+    ],
+    "node": [
+      {"id": 0, "u_rated": 100},
+      {"id": 4, "u_rated": 100}
+    ],
+    "line": [
+      {"id": 5, "from_node": 0, "to_node": 4, "from_status": 0, "to_status": 1},
+      {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
+    ]
+  }
+})json"s;
+
+auto const bad_load_id_state_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_load": [
+      {"id": 0, "node": 0, "status": 1, "type": 2, "p_specified": 0, "q_specified": 500}
+    ],
+    "source": [
+      {"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1000, "rx_ratio": 0}
+    ],
+    "node": [
+      {"id": 0, "u_rated": 100},
+      {"id": 4, "u_rated": 100}
+    ],
+    "line": [
+      {"id": 5, "from_node": 0, "to_node": 4, "from_status": 0, "to_status": 1},
+      {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
+    ]
+  }
+})json"s;
+
+auto const single_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "source": [
+      {"id": 1, "u_ref": 0.5}
+    ],
+    "sym_load": [
+      {"id": 2, "q_specified": 100}
+    ],
+    "line": [
+      {"id": 5, "from_status": 0, "to_status": 1},
+      {"id": 6, "from_status": 0, "to_status": 0}
+    ]
+  }
+})json"s;
+
+auto const batch_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 1, "u_ref": 0.5}
+      ],
+      "sym_load": [
+        {"id": 2, "q_specified": 100}
+      ],
+      "line": [
+        {"id": 5, "from_status": 0, "to_status": 1},
+        {"id": 6, "from_status": 0, "to_status": 0}
+      ]
+    },
+    {
+      "sym_load": [
+        {"id": 2, "q_specified": 300}
+      ],
+      "line": [
+        {"id": 5, "from_status": 0, "to_status": 0},
+        {"id": 6, "from_status": 0, "to_status": 0}
+      ]
+    }
+  ]
+})json"s;
+
+auto const bad_source_id_single_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "source": [
+      {"id": 99, "u_ref": 0.5}
+    ],
+    "sym_load": [
+      {"id": 2, "q_specified": 100}
+    ],
+    "line": [
+      {"id": 5, "from_status": 0, "to_status": 1},
+      {"id": 6, "from_status": 0, "to_status": 0}
+    ]
+  }
+})json"s;
+
+auto const bad_load_id_batch_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 1, "u_ref": 0.5}
+      ],
+      "sym_load": [
+        {"id": 2, "q_specified": 100}
+      ],
+      "line": [
+        {"id": 99, "from_status": 0, "to_status": 1},
+        {"id": 999, "from_status": 0, "to_status": 0}
+      ]
+    },
+    {
+      "sym_load": [
+        {"id": 2, "q_specified": 300}
+      ],
+      "line": [
+        {"id": 9999, "from_status": 0, "to_status": 0},
+        {"id": 99999, "from_status": 0, "to_status": 0}
+      ]
+    }
+  ]
+})json"s;
+
+auto const bad_line_id_batch_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 1, "u_ref": 0.5}
+      ],
+      "sym_load": [
+        {"id": 2, "q_specified": 100}
+      ],
+      "line": [
+        {"id": 5, "from_status": 0, "to_status": 1},
+        {"id": 6, "from_status": 0, "to_status": 0}
+      ]
+    },
+    {
+      "sym_load": [
+        {"id": 999, "q_specified": 300}
+      ],
+      "line": [
+        {"id": 5, "from_status": 0, "to_status": 0},
+        {"id": 6, "from_status": 0, "to_status": 0}
+      ]
+    }
+  ]
+})json"s;
 } // namespace
 
 TEST_CASE("API Model") {
     using namespace std::string_literals;
 
     Options options{};
-
-    // input data
-    DatasetConst input_dataset{"input", false, 1};
 
     // node buffer
     std::vector<ID> const node_id{0, 4};
@@ -146,6 +322,9 @@ TEST_CASE("API Model") {
     load_buffer.set_value(PGM_def_input_sym_load_p_specified, &load_p_specified, -1);
     load_buffer.set_value(PGM_def_input_sym_load_q_specified, &load_q_specified, -1);
 
+    // input data
+    DatasetConst input_dataset{"input", false, 1};
+
     // add buffers - row
     input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
     input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
@@ -160,6 +339,13 @@ TEST_CASE("API Model") {
     input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
     input_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
     input_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
+
+    // // TODO(mgovers): remove
+    // Serializer serializer{input_dataset, PGM_json};
+    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+    // auto const owning_input_dataset = load_dataset(state_json);
+    // auto const& input_dataset = owning_input_dataset.dataset;
 
     // output data
     Buffer node_output{PGM_def_sym_output_node, 2};
@@ -182,43 +368,53 @@ TEST_CASE("API Model") {
     std::vector<double> batch_node_result_u_pu(4);
     std::vector<double> batch_node_result_u_angle(4);
 
-    // update data
-    ID const source_update_id = 1;
-    int8_t const source_update_status = std::numeric_limits<int8_t>::min();
-    double const source_update_u_ref = 0.5;
-    double const source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
-    Buffer source_update_buffer{PGM_def_update_source, 1};
-    source_update_buffer.set_nan();
-    source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
-    source_update_buffer.set_value(PGM_def_update_source_status, &source_update_status, 0, -1);
-    source_update_buffer.set_value(PGM_def_update_source_u_ref, &source_update_u_ref, 0, -1);
-    source_update_buffer.set_value(PGM_def_update_source_u_ref_angle, &source_update_u_ref_angle, 0, -1);
-    std::array<Idx, 3> source_update_indptr{0, 1, 1};
+    // // update data
+    // ID const source_update_id = 1;
+    // int8_t const source_update_status = std::numeric_limits<int8_t>::min();
+    // double const source_update_u_ref = 0.5;
+    // double const source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
+    // Buffer source_update_buffer{PGM_def_update_source, 1};
+    // source_update_buffer.set_nan();
+    // source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
+    // source_update_buffer.set_value(PGM_def_update_source_status, &source_update_status, 0, -1);
+    // source_update_buffer.set_value(PGM_def_update_source_u_ref, &source_update_u_ref, 0, -1);
+    // source_update_buffer.set_value(PGM_def_update_source_u_ref_angle, &source_update_u_ref_angle, 0, -1);
+    // std::array<Idx, 3> source_update_indptr{0, 1, 1};
 
-    std::vector<ID> load_updates_id = {2, 2};
-    std::vector<double> load_updates_q_specified = {100.0, 300.0};
-    Buffer load_updates_buffer{PGM_def_update_sym_load, 2};
-    // set nan twice with offset
-    load_updates_buffer.set_nan(0);
-    load_updates_buffer.set_nan(1);
-    load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
-    load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
-    load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
-    // dataset
-    DatasetConst single_update_dataset{"update", false, 1};
-    single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
-    single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
-    single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
-    single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
-    single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-    DatasetConst batch_update_dataset{"update", true, 2};
-    batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
-    batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-    batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
-    batch_update_dataset.add_attribute_buffer("line", "id", batch_line_id.data());
-    batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
-    batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
+    // std::vector<ID> load_updates_id = {2, 2};
+    // std::vector<double> load_updates_q_specified = {100.0, 300.0};
+    // Buffer load_updates_buffer{PGM_def_update_sym_load, 2};
+    // // set nan twice with offset
+    // load_updates_buffer.set_nan(0);
+    // load_updates_buffer.set_nan(1);
+    // load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
+    // load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
+    // load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
+    // // dataset
+    // DatasetConst single_update_dataset{"update", false, 1};
+    // single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
+    // single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
+    // single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
+    // single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
+    // single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
+    // single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
+    // DatasetConst batch_update_dataset{"update", true, 2};
+    // batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
+    // batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
+    // batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
+    // batch_update_dataset.add_attribute_buffer("line", "id", batch_line_id.data());
+    // batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
+    // batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
+
+    // // TODO(mgovers): remove
+    // Serializer serializer{batch_update_dataset, PGM_json};
+    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+    auto const single_owning_update_dataset = load_dataset(single_update_json);
+    auto const& single_update_dataset = single_owning_update_dataset.dataset;
+
+    auto const batch_owning_update_dataset = load_dataset(batch_update_json);
+    auto const& batch_update_dataset = batch_owning_update_dataset.dataset;
 
     // create model
     Model model{50.0, input_dataset};
@@ -343,21 +539,42 @@ TEST_CASE("API Model") {
 
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
-            ID const bad_load_id = 0;
-            ID const good_source_update_id = 1;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            source_update_buffer.set_value(PGM_def_update_source_id, &good_source_update_id, 0, -1);
+            // ID const bad_load_id = 0;
+            // ID const good_source_update_id = 1;
+            // load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
+            // source_update_buffer.set_value(PGM_def_update_source_id, &good_source_update_id, 0, -1);
 
-            auto const wrong_model_lambda = [&input_dataset]() { Model const wrong_model{50.0, input_dataset}; };
+            // // TODO(mgovers): remove
+            // Serializer serializer{input_dataset, PGM_json};
+            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
 
-            check_throws_with(wrong_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
+            auto const bad_owning_input_dataset = load_dataset(bad_load_id_state_json);
+            auto const& bad_input_dataset = bad_owning_input_dataset.dataset;
+
+            auto const bad_model_lambda = [&bad_input_dataset]() { Model const wrong_model{50.0, bad_input_dataset}; };
+
+            check_throws_with(bad_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
         }
 
         SUBCASE("Update error") {
-            ID const good_load_id = 2;
-            ID const bad_source_update_id = 99;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &good_load_id, -1);
-            source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
+            // ID const good_load_id = 2;
+            // ID const bad_source_update_id = 99;
+            // load_buffer.set_value(PGM_def_input_sym_load_id, &good_load_id, -1);
+            // source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
+
+            // // TODO(mgovers): remove
+            // Serializer serializer{input_dataset, PGM_json};
+            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+            // auto const owning_input_dataset = load_dataset(bad_source_update_load_id_state_json);
+            // auto const& input_dataset = owning_input_dataset.dataset;
+
+            // // TODO(mgovers): remove
+            // Serializer serializer{single_update_dataset, PGM_json};
+            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+            auto const bad_single_owning_update_dataset = load_dataset(bad_source_id_single_update_json);
+            auto const& single_update_dataset = bad_single_owning_update_dataset.dataset;
 
             auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
 
@@ -365,17 +582,24 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error in calculation") {
-            ID const bad_load_id = 2;
-            load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            DatasetConst bad_batch_update_dataset{"update", true, 2};
-            bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
-                                                source_update_buffer.get());
-            bad_batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-            bad_batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr); // columnar input for line
-            std::vector<ID> const bad_batch_line_id{99, 999, 9999, 99999};
-            bad_batch_update_dataset.add_attribute_buffer("line", "id", bad_batch_line_id.data());
-            bad_batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
-            bad_batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
+            // ID const bad_load_id = 2;
+            // load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
+            // DatasetConst bad_batch_update_dataset{"update", true, 2};
+            // bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
+            //                                     source_update_buffer.get());
+            // bad_batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
+            // bad_batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr); // columnar input for line
+            // std::vector<ID> const bad_batch_line_id{99, 999, 9999, 99999};
+            // bad_batch_update_dataset.add_attribute_buffer("line", "id", bad_batch_line_id.data());
+            // bad_batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
+            // bad_batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
+
+            // // TODO(mgovers): remove
+            // Serializer serializer{bad_batch_update_dataset, PGM_json};
+            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+            auto const bad_batch_owning_update_dataset = load_dataset(bad_load_id_batch_update_json);
+            auto const& bad_batch_update_dataset = bad_batch_owning_update_dataset.dataset;
 
             auto const bad_calc_with_update_lambda = [&model, &options, &batch_output_dataset,
                                                       &bad_batch_update_dataset]() {
@@ -427,10 +651,18 @@ TEST_CASE("API Model") {
 
         SUBCASE("Batch calculation error") {
             SUBCASE("Line bad line id") {
-                // wrong id
-                load_updates_id[1] = 999;
-                load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
-                // failed in batch 1
+                // // wrong id
+                // load_updates_id[1] = 999;
+                // load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
+
+                // // TODO(mgovers): remove
+                // Serializer serializer{batch_update_dataset, PGM_json};
+                // auto const str = serializer.get_to_zero_terminated_string(0, 2);
+
+                auto const bad_batch_owning_update_dataset = load_dataset(bad_line_id_batch_update_json);
+                auto const& batch_update_dataset = bad_batch_owning_update_dataset.dataset;
+
+                // failed in batch scenario 1
                 try {
                     model.calculate(options, batch_output_dataset, batch_update_dataset);
                     FAIL("Expected batch calculation error not thrown.");

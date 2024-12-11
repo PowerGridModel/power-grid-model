@@ -11,6 +11,7 @@
 #include "handle.hpp"
 
 #include "power_grid_model_c/dataset.h"
+
 namespace power_grid_model_cpp {
 
 class DatasetInfo {

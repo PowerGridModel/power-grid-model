@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "load_dataset.hpp"
+
 #include <power_grid_model_c/dataset_definitions.h>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
-#include <power_grid_model_cpp/serialization.hpp>
 #include <power_grid_model_cpp/utils.hpp>
 
 #include <doctest/doctest.h>
@@ -83,6 +84,7 @@ TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, invalid_id_t", TypeCombo<row_t, c
 TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, invalid_id_t", TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>);
 
 namespace power_grid_model_cpp {
+using power_grid_model_cpp_test::load_dataset;
 
 /*
 
@@ -284,14 +286,6 @@ Options get_default_options(PGM_SymmetryType calculation_symmetry, PGM_Calculati
     opt.set_symmetric(calculation_symmetry);
     opt.set_calculation_method(calculation_method);
     return opt;
-}
-
-OwningDatasetConst load_dataset(std::string const& json_string) {
-    Deserializer deserializer{json_string, PGM_json};
-    auto& writable_dataset = deserializer.get_dataset();
-    auto owning_dataset = create_owning_dataset(writable_dataset);
-    deserializer.parse_to_buffer();
-    return owning_dataset;
 }
 
 namespace test {

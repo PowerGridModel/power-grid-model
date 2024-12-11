@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#pragma once
+#ifndef POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_OPTIMIZER_HPP
+#define POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_OPTIMIZER_HPP
+
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
 #include <power_grid_model/container.hpp>
@@ -246,3 +250,5 @@ template <> struct get_attributes_list<optimizer::test::StubTransformerUpdate> {
 };
 } // namespace meta_data
 } // namespace power_grid_model
+
+#endif // POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_OPTIMIZER_HPP
