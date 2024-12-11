@@ -275,77 +275,14 @@ TEST_CASE("API Model") {
 
     Options options{};
 
-    // node buffer
-    std::vector<ID> const node_id{0, 4};
-    std::vector<double> const node_u_rated{100.0, 100.0};
+    auto const owning_input_dataset = load_dataset(state_json);
+    auto const& input_dataset = owning_input_dataset.dataset;
 
-    // line buffer
-    std::vector<ID> const line_id{5, 6};
-    std::vector<ID> const line_from_node{0, 4};
-    std::vector<ID> const line_to_node{4, 0};
-    std::vector<Idx> const line_from_status{0, 1};
-    std::vector<Idx> const line_to_status{1, 0};
-    std::vector<ID> const batch_line_id{5, 6, 5, 6};
-    std::vector<ID> const batch_line_from_node{0, 4, 0, 4};
-    std::vector<ID> const batch_line_to_node{4, 0, 4, 0};
-    std::vector<Idx> const batch_line_from_status{0, 1, 0, 1};
-    std::vector<Idx> const batch_line_to_status{1, 0, 1, 0};
+    auto const single_owning_update_dataset = load_dataset(single_update_json);
+    auto const& single_update_dataset = single_owning_update_dataset.dataset;
 
-    // source buffer
-    ID const source_id = 1;
-    ID const source_node = 0;
-    int8_t const source_status = 1;
-    double const source_u_ref = 1.0;
-    double const source_sk = 1000.0;
-    double const source_rx_ratio = 0.0;
-    Buffer source_buffer{PGM_def_input_source, 1};
-    source_buffer.set_nan();
-    source_buffer.set_value(PGM_def_input_source_id, &source_id, -1);
-    source_buffer.set_value(PGM_def_input_source_node, &source_node, 0, sizeof(ID));
-    source_buffer.set_value(PGM_def_input_source_status, &source_status, -1);
-    source_buffer.set_value(PGM_def_input_source_u_ref, &source_u_ref, -1);
-    source_buffer.set_value(PGM_def_input_source_sk, &source_sk, -1);
-    source_buffer.set_value(PGM_def_input_source_rx_ratio, &source_rx_ratio, -1);
-
-    // load buffer
-    ID const load_id = 2;
-    ID const load_node = 0;
-    int8_t const load_status = 1;
-    int8_t const load_type = 2;
-    double const load_p_specified = 0.0;
-    double const load_q_specified = 500.0;
-    Buffer load_buffer{PGM_def_input_sym_load, 1};
-    load_buffer.set_value(PGM_def_input_sym_load_id, &load_id, -1);
-    load_buffer.set_value(PGM_def_input_sym_load_node, &load_node, -1);
-    load_buffer.set_value(PGM_def_input_sym_load_status, &load_status, -1);
-    load_buffer.set_value(PGM_def_input_sym_load_type, &load_type, -1);
-    load_buffer.set_value(PGM_def_input_sym_load_p_specified, &load_p_specified, -1);
-    load_buffer.set_value(PGM_def_input_sym_load_q_specified, &load_q_specified, -1);
-
-    // input data
-    DatasetConst input_dataset{"input", false, 1};
-
-    // add buffers - row
-    input_dataset.add_buffer("sym_load", 1, 1, nullptr, load_buffer);
-    input_dataset.add_buffer("source", 1, 1, nullptr, source_buffer);
-
-    // add buffers - columnar
-    input_dataset.add_buffer("node", 2, 2, nullptr, nullptr);
-    input_dataset.add_attribute_buffer("node", "id", node_id.data());
-    input_dataset.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-    input_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
-    input_dataset.add_attribute_buffer("line", "id", line_id.data());
-    input_dataset.add_attribute_buffer("line", "from_node", line_from_node.data());
-    input_dataset.add_attribute_buffer("line", "to_node", line_to_node.data());
-    input_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
-    input_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-
-    // // TODO(mgovers): remove
-    // Serializer serializer{input_dataset, PGM_json};
-    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
-    // auto const owning_input_dataset = load_dataset(state_json);
-    // auto const& input_dataset = owning_input_dataset.dataset;
+    auto const batch_owning_update_dataset = load_dataset(batch_update_json);
+    auto const& batch_update_dataset = batch_owning_update_dataset.dataset;
 
     // output data
     Buffer node_output{PGM_def_sym_output_node, 2};
@@ -367,54 +304,6 @@ TEST_CASE("API Model") {
     std::vector<double> batch_node_result_u(4);
     std::vector<double> batch_node_result_u_pu(4);
     std::vector<double> batch_node_result_u_angle(4);
-
-    // // update data
-    // ID const source_update_id = 1;
-    // int8_t const source_update_status = std::numeric_limits<int8_t>::min();
-    // double const source_update_u_ref = 0.5;
-    // double const source_update_u_ref_angle = std::numeric_limits<double>::quiet_NaN();
-    // Buffer source_update_buffer{PGM_def_update_source, 1};
-    // source_update_buffer.set_nan();
-    // source_update_buffer.set_value(PGM_def_update_source_id, &source_update_id, 0, -1);
-    // source_update_buffer.set_value(PGM_def_update_source_status, &source_update_status, 0, -1);
-    // source_update_buffer.set_value(PGM_def_update_source_u_ref, &source_update_u_ref, 0, -1);
-    // source_update_buffer.set_value(PGM_def_update_source_u_ref_angle, &source_update_u_ref_angle, 0, -1);
-    // std::array<Idx, 3> source_update_indptr{0, 1, 1};
-
-    // std::vector<ID> load_updates_id = {2, 2};
-    // std::vector<double> load_updates_q_specified = {100.0, 300.0};
-    // Buffer load_updates_buffer{PGM_def_update_sym_load, 2};
-    // // set nan twice with offset
-    // load_updates_buffer.set_nan(0);
-    // load_updates_buffer.set_nan(1);
-    // load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), -1);
-    // load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 0, -1);
-    // load_updates_buffer.set_value(PGM_def_update_sym_load_q_specified, load_updates_q_specified.data(), 1, -1);
-    // // dataset
-    // DatasetConst single_update_dataset{"update", false, 1};
-    // single_update_dataset.add_buffer("source", 1, 1, nullptr, source_update_buffer);
-    // single_update_dataset.add_buffer("sym_load", 1, 1, nullptr, load_updates_buffer.get());
-    // single_update_dataset.add_buffer("line", 2, 2, nullptr, nullptr);
-    // single_update_dataset.add_attribute_buffer("line", "id", line_id.data());
-    // single_update_dataset.add_attribute_buffer("line", "from_status", line_from_status.data());
-    // single_update_dataset.add_attribute_buffer("line", "to_status", line_to_status.data());
-    // DatasetConst batch_update_dataset{"update", true, 2};
-    // batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(), source_update_buffer.get());
-    // batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-    // batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr);
-    // batch_update_dataset.add_attribute_buffer("line", "id", batch_line_id.data());
-    // batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
-    // batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
-
-    // // TODO(mgovers): remove
-    // Serializer serializer{batch_update_dataset, PGM_json};
-    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
-    auto const single_owning_update_dataset = load_dataset(single_update_json);
-    auto const& single_update_dataset = single_owning_update_dataset.dataset;
-
-    auto const batch_owning_update_dataset = load_dataset(batch_update_json);
-    auto const& batch_update_dataset = batch_owning_update_dataset.dataset;
 
     // create model
     Model model{50.0, input_dataset};
@@ -539,15 +428,6 @@ TEST_CASE("API Model") {
 
     SUBCASE("Input error handling") {
         SUBCASE("Construction error") {
-            // ID const bad_load_id = 0;
-            // ID const good_source_update_id = 1;
-            // load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            // source_update_buffer.set_value(PGM_def_update_source_id, &good_source_update_id, 0, -1);
-
-            // // TODO(mgovers): remove
-            // Serializer serializer{input_dataset, PGM_json};
-            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
             auto const bad_owning_input_dataset = load_dataset(bad_load_id_state_json);
             auto const& bad_input_dataset = bad_owning_input_dataset.dataset;
 
@@ -557,22 +437,6 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error") {
-            // ID const good_load_id = 2;
-            // ID const bad_source_update_id = 99;
-            // load_buffer.set_value(PGM_def_input_sym_load_id, &good_load_id, -1);
-            // source_update_buffer.set_value(PGM_def_update_source_id, &bad_source_update_id, 0, -1);
-
-            // // TODO(mgovers): remove
-            // Serializer serializer{input_dataset, PGM_json};
-            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
-            // auto const owning_input_dataset = load_dataset(bad_source_update_load_id_state_json);
-            // auto const& input_dataset = owning_input_dataset.dataset;
-
-            // // TODO(mgovers): remove
-            // Serializer serializer{single_update_dataset, PGM_json};
-            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
             auto const bad_single_owning_update_dataset = load_dataset(bad_source_id_single_update_json);
             auto const& single_update_dataset = bad_single_owning_update_dataset.dataset;
 
@@ -582,22 +446,6 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("Update error in calculation") {
-            // ID const bad_load_id = 2;
-            // load_buffer.set_value(PGM_def_input_sym_load_id, &bad_load_id, -1);
-            // DatasetConst bad_batch_update_dataset{"update", true, 2};
-            // bad_batch_update_dataset.add_buffer("source", -1, 1, source_update_indptr.data(),
-            //                                     source_update_buffer.get());
-            // bad_batch_update_dataset.add_buffer("sym_load", 1, 2, nullptr, load_updates_buffer);
-            // bad_batch_update_dataset.add_buffer("line", 2, 4, nullptr, nullptr); // columnar input for line
-            // std::vector<ID> const bad_batch_line_id{99, 999, 9999, 99999};
-            // bad_batch_update_dataset.add_attribute_buffer("line", "id", bad_batch_line_id.data());
-            // bad_batch_update_dataset.add_attribute_buffer("line", "from_status", batch_line_from_status.data());
-            // bad_batch_update_dataset.add_attribute_buffer("line", "to_status", batch_line_to_status.data());
-
-            // // TODO(mgovers): remove
-            // Serializer serializer{bad_batch_update_dataset, PGM_json};
-            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
             auto const bad_batch_owning_update_dataset = load_dataset(bad_load_id_batch_update_json);
             auto const& bad_batch_update_dataset = bad_batch_owning_update_dataset.dataset;
 
@@ -651,14 +499,6 @@ TEST_CASE("API Model") {
 
         SUBCASE("Batch calculation error") {
             SUBCASE("Line bad line id") {
-                // // wrong id
-                // load_updates_id[1] = 999;
-                // load_updates_buffer.set_value(PGM_def_update_sym_load_id, load_updates_id.data(), 1, -1);
-
-                // // TODO(mgovers): remove
-                // Serializer serializer{batch_update_dataset, PGM_json};
-                // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
                 auto const bad_batch_owning_update_dataset = load_dataset(bad_line_id_batch_update_json);
                 auto const& batch_update_dataset = bad_batch_owning_update_dataset.dataset;
 
@@ -1047,44 +887,7 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Forbid link power measurements") {
-        // // input data
-        // DatasetConst input_dataset_se{"input", false, 1};
-        // auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
-
-        // // node buffer
-        // std::vector<ID> const node_id_se{1, 2};
-        // std::vector<double> const node_u_rated_se{10000.0, 10000.0};
-
-        // // link buffer
-        // std::vector<ID> const link_id_se{3};
-        // std::vector<ID> const link_from_node_se{1};
-        // std::vector<ID> const link_to_node_se{2};
-
-        // // power sensor
-        // std::vector<ID> const power_sensor_id_se{4};
-        // std::vector<ID> const power_sensor_measured_object_se{3};
-        // std::vector<IntS> const power_sensor_measured_terminal_type_se{0};
-
-        // input_dataset_se.add_buffer("node", 2, 2, nullptr, nullptr);
-        // input_dataset_se.add_attribute_buffer("node", "id", node_id_se.data());
-        // input_dataset_se.add_attribute_buffer("node", "u_rated", node_u_rated_se.data());
-
-        // input_dataset_se.add_buffer("link", 1, 1, nullptr, nullptr);
-        // input_dataset_se.add_attribute_buffer("link", "id", link_id_se.data());
-        // input_dataset_se.add_attribute_buffer("link", "from_node", link_from_node_se.data());
-        // input_dataset_se.add_attribute_buffer("link", "to_node", link_to_node_se.data());
-
         SUBCASE("SymPowerSensor") {
-            // input_dataset_se.add_buffer("sym_power_sensor", 1, 1, nullptr, nullptr);
-            // input_dataset_se.add_attribute_buffer("sym_power_sensor", "id", power_sensor_id_se.data());
-            // input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_object",
-            //                                       power_sensor_measured_object_se.data());
-            // input_dataset_se.add_attribute_buffer("sym_power_sensor", "measured_terminal_type",
-            //                                       power_sensor_measured_terminal_type_se.data());
-
-            // // TODO(mgovers): remove
-            // Serializer serializer{input_dataset_se, PGM_json};
-            // auto const str = serializer.get_to_zero_terminated_string(0, 2);
             auto const input_data_se_json = R"json({
   "version": "1.0",
   "type": "input",
@@ -1114,12 +917,6 @@ TEST_CASE("API Model") {
         }
 
         SUBCASE("AsymPowerSensor") {
-            // input_dataset_se.add_buffer("asym_power_sensor", 2, 2, nullptr, nullptr);
-            // input_dataset_se.add_attribute_buffer("asym_power_sensor", "id", power_sensor_id_se.data());
-            // input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_object",
-            //                                       power_sensor_measured_object_se.data());
-            // input_dataset_se.add_attribute_buffer("asym_power_sensor", "measured_terminal_type",
-            //                                       power_sensor_measured_terminal_type_se.data());
             auto const input_data_se_json = R"json({
   "version": "1.0",
   "type": "input",
@@ -1150,11 +947,6 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Test duplicated id") {
-        // std::vector<ID> node_id_2{1, 1, 3};
-        // DatasetConst input_dataset_2{"input", false, 1};
-
-        // input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
-        // input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
         auto const input_data_2_json = R"json({
   "version": "1.0",
   "type": "input",
@@ -1177,27 +969,6 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Test non-existing id") {
-        // std::vector<ID> const node_id_2{1, 2, 3};
-        // std::vector<double> const node_u_rated_2{10.0e3, 10.0e3, 10.0e3};
-
-        // std::vector<ID> link_id{5};
-        // std::vector<ID> link_from_node{99};
-        // std::vector<ID> link_to_node{3};
-
-        // DatasetConst input_dataset_2{"input", false, 1};
-
-        // input_dataset_2.add_buffer("node", std::ssize(node_id_2), std::ssize(node_id_2), nullptr, nullptr);
-        // input_dataset_2.add_attribute_buffer("node", "id", node_id_2.data());
-        // input_dataset_2.add_attribute_buffer("node", "u_rated", node_u_rated_2.data());
-
-        // input_dataset_2.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
-        // input_dataset_2.add_attribute_buffer("link", "id", link_id.data());
-        // input_dataset_2.add_attribute_buffer("link", "from_node", link_from_node.data());
-        // input_dataset_2.add_attribute_buffer("link", "to_node", link_to_node.data());
-
-        // // TODO(mgovers): remove
-        // Serializer serializer{input_dataset_2, PGM_json};
-        // auto const str = serializer.get_to_zero_terminated_string(0, 2);
         auto const input_data_2_json = R"json({
   "version": "1.0",
   "type": "input",
