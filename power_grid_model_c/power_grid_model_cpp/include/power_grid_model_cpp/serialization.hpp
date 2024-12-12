@@ -97,8 +97,6 @@ inline OwningDatasetConst create_owning_dataset(DatasetWritable& writable_datase
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
-    DatasetMutable dataset_mutable{dataset_name, is_batch, batch_size};
-    DatasetConst dataset_const{dataset_mutable};
     OwningMemory storage{};
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
