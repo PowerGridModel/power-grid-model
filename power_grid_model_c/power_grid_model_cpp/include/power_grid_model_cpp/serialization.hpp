@@ -104,7 +104,6 @@ inline OwningDatasetConst create_owning_dataset(DatasetWritable& writable_datase
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
         auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
         Idx const component_size = info.component_total_elements(component_idx);
 
         auto& current_indptr =
