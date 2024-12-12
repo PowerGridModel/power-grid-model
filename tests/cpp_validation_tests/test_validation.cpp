@@ -60,11 +60,11 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-OwningDatasetMutable create_result_dataset(OwningDatasetConst const& input, std::string const& dataset_name,
-                                           bool is_batch = false, Idx batch_size = 1) {
+OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
+                                    Idx batch_size = 1) {
     DatasetInfo const& input_info = input.dataset.get_info();
 
-    OwningDatasetMutable result{.dataset{dataset_name, is_batch, batch_size}, .storage{}};
+    OwningDataset result{.dataset{dataset_name, is_batch, batch_size}, .storage{}};
 
     for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
         auto const& component_name = input_info.component_name(component_idx);
@@ -82,7 +82,7 @@ OwningDatasetMutable create_result_dataset(OwningDatasetConst const& input, std:
     return result;
 }
 
-OwningDatasetConst load_dataset(std::filesystem::path const& path) {
+OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
@@ -209,7 +209,7 @@ void check_individual_attribute(Buffer const& buffer, Buffer const& ref_buffer,
     }
 }
 
-void assert_result(OwningDatasetMutable const& owning_result, OwningDatasetConst const& owning_reference_result,
+void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
 
@@ -438,10 +438,10 @@ void add_cases(std::filesystem::path const& case_dir, std::string const& calcula
 // test case with parameter
 struct ValidationCase {
     CaseParam param;
-    OwningDatasetConst input;
-    std::optional<OwningDatasetConst> output;
-    std::optional<OwningDatasetConst> update_batch;
-    std::optional<OwningDatasetConst> output_batch;
+    OwningDataset input;
+    std::optional<OwningDataset> output;
+    std::optional<OwningDataset> update_batch;
+    std::optional<OwningDataset> output_batch;
 };
 
 ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {

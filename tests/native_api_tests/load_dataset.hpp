@@ -9,7 +9,7 @@
 #include <power_grid_model_cpp/serialization.hpp>
 
 namespace power_grid_model_cpp_test {
-inline power_grid_model_cpp::OwningDatasetConst load_dataset(std::string const& json_string) {
+inline power_grid_model_cpp::OwningDataset load_dataset(std::string const& json_string) {
     power_grid_model_cpp::Deserializer deserializer{json_string, PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
     auto owning_dataset = power_grid_model_cpp::create_owning_dataset(writable_dataset);

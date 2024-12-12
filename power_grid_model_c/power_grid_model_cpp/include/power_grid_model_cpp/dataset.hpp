@@ -188,13 +188,8 @@ struct OwningMemory {
     std::vector<std::vector<Idx>> indptrs;
 };
 
-struct OwningDatasetMutable {
+struct OwningDataset {
     DatasetMutable dataset;
-    OwningMemory storage{};
-};
-
-struct OwningDatasetConst {
-    DatasetConst dataset;
     OwningMemory storage{};
 };
 } // namespace power_grid_model_cpp
