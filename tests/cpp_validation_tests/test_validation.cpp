@@ -64,7 +64,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
                                     Idx batch_size = 1) {
     DatasetInfo const& input_info = input.dataset.get_info();
 
-    OwningDataset result{.dataset{dataset_name, is_batch, batch_size}, .storage{}};
+    OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
 
     for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
         auto const& component_name = input_info.component_name(component_idx);
