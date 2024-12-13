@@ -30,10 +30,11 @@ def get_required_dependency_include() -> list[str]:
         either empty list or a list of header path
     """
     try:
+        import libboost_headers
         import msgpack_cxx
         import nlohmann_json
 
-        return [str(msgpack_cxx.get_include()), str(nlohmann_json.get_include())]
+        return [str(msgpack_cxx.get_include()), str(nlohmann_json.get_include()), str(libboost_headers.get_include())]
     except ImportError:
         return []
 
@@ -48,7 +49,7 @@ def get_pre_installed_header_include() -> list[str]:
     try:
         from pybuild_header_dependency import HeaderResolver
 
-        resolver = HeaderResolver({"eigen": None, "boost": None})
+        resolver = HeaderResolver({"eigen": None})
         return [str(resolver.get_include())]
     except ImportError:
         return []
