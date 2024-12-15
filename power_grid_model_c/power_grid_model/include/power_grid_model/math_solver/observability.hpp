@@ -66,6 +66,42 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
     return flow_sensors;
 }
 
+// re-organize the flow sensor for radial grid without phasor measurement
+// this mutate the flow sensor vector to try to assign injection sensor to branch sensor
+// all the branch should be measured if the system is observable
+// this is a sufficient condition check
+void assign_injection_sensor(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors) {
+    Idx const n_bus = std::ssize(y_bus_structure.row_indptr) - 1;
+    // loop the row without the last bus
+    for (Idx row = 0; row != n_bus - 1; ++row) {
+        Idx const current_bus = row;
+        Idx const bus_entry_current = y_bus_structure.bus_entry[current_bus];
+        Idx const branch_entry_upstream = bus_entry_current + 1;
+        // there should be only one upstream branch in the upper diagonal
+        // so the next of branch_entry_upstream is already the next row
+        // because the grid is radial
+        assert(y_bus_structure.row_indptr[current_bus + 1] == branch_entry_upstream + 1);
+        Idx const upstream_bus = y_bus_structure.col_indices[branch_entry_upstream];
+        Idx const bus_entry_upstream = y_bus_structure.bus_entry[upstream_bus];
+        // if the upstream branch is not measured
+        if (flow_sensors[branch_entry_upstream] == 0) {
+            if (flow_sensors[bus_entry_current] == 1) {
+                // try to steal from current bus
+                flow_sensors[bus_entry_current] = 0;
+                flow_sensors[branch_entry_upstream] = 1;
+            } else if (flow_sensors[bus_entry_upstream] == 1) {
+                // if not possible, steal from upstream bus
+                flow_sensors[bus_entry_upstream] = 0;
+                flow_sensors[branch_entry_upstream] = 1;
+            }
+        }
+        // remove the current bus injection regardless of the original state
+        flow_sensors[bus_entry_current] = 0;
+    }
+    // set last bus injection to zero
+    flow_sensors[y_bus_structure.bus_entry[n_bus - 1]] = 0;
+}
+
 } // namespace detail
 template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
@@ -74,18 +110,31 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
 
     auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_sensor < 1) {
-        throw NotObservableError{"no voltage sensor found"};
+        throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    auto const flow_sensors = detail::count_flow_sensors(measured_values, topo, y_bus_structure);
+    std::vector<int8_t> flow_sensors = detail::count_flow_sensors(measured_values, topo, y_bus_structure);
     // count flow sensors, note we manually specify the intial value type to avoid overflow
     Idx const n_flow_sensor = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
 
+    // check nessessary condition for observability
     if (n_voltage_phasor_sensor == 0 && n_flow_sensor < n_bus - 1) {
         throw NotObservableError{};
     }
     if (n_voltage_phasor_sensor > 0 && n_flow_sensor + n_voltage_phasor_sensor < n_bus) {
         throw NotObservableError{};
+    }
+
+    // for radial grid without phasor measurement, try to assign injection sensor to branch sensor
+    // we can then check sufficient condition for observability
+    if (topo.is_radial && n_voltage_phasor_sensor == 0) {
+        detail::assign_injection_sensor(y_bus_structure, flow_sensors);
+        // count flow sensors again
+        Idx const n_flow_sensor_new = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
+        if (n_flow_sensor_new < n_bus - 1) {
+            throw NotObservableError{"The number of power sensors seems to be sufficient, but they are not independent "
+                                     "enough. The system is still not observable.\n"};
+        }
     }
 }
 
