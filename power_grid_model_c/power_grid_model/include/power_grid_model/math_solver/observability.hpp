@@ -5,6 +5,7 @@
 #pragma once
 
 #include "measured_values.hpp"
+#include "y_bus.hpp"
 
 #include "../common/exception.hpp"
 
@@ -61,10 +62,10 @@ std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues
 } // namespace detail
 template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values,
-                                          std::shared_ptr<MathModelTopology const> const& topo) {
+                                          MathModelTopology const& topo) {
 
-    Idx const n_bus{topo->n_bus()};
-    std::vector<BranchIdx> const& branch_bus_idx{topo->branch_bus_idx};
+    Idx const n_bus{topo.n_bus()};
+    std::vector<BranchIdx> const& branch_bus_idx{topo.branch_bus_idx};
 
     auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_sensor < 1) {
