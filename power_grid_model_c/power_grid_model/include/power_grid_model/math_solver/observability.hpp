@@ -14,37 +14,6 @@ namespace power_grid_model::math_solver {
 namespace detail {
 
 template <symmetry_tag sym>
-Idx count_branch_sensors(const std::vector<BranchIdx>& branch_bus_idx, const Idx n_bus,
-                         const MeasuredValues<sym>& measured_values) {
-    Idx n_branch_sensor{};
-    std::vector<bool> measured_nodes(n_bus, false);
-    for (Idx branch = 0; branch != static_cast<Idx>(branch_bus_idx.size()); ++branch) {
-        auto const& [node_from, node_to] = branch_bus_idx[branch];
-        if (node_from == -1 || node_to == -1) {
-            continue;
-        }
-        if ((measured_values.has_branch_from(branch) || measured_values.has_branch_to(branch)) &&
-            !(measured_nodes[node_from] && measured_nodes[node_to])) {
-            n_branch_sensor++;
-            measured_nodes[node_from] = true;
-            measured_nodes[node_to] = true;
-        }
-    }
-    return n_branch_sensor;
-}
-
-template <symmetry_tag sym>
-Idx count_bus_injection_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
-    Idx n_injection_sensor{};
-    for (Idx bus = 0; bus != n_bus; ++bus) {
-        if (measured_values.has_bus_injection(bus)) {
-            n_injection_sensor++;
-        }
-    }
-    return n_injection_sensor;
-}
-
-template <symmetry_tag sym>
 std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
     Idx n_voltage_sensor{};
     Idx n_voltage_phasor_sensor{};
@@ -59,27 +28,63 @@ std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues
     return std::make_tuple(n_voltage_sensor, n_voltage_phasor_sensor);
 }
 
+// count flow sensors into ybus structure like
+// lower triangle part is always zero
+// for diagonal part, it will be one if there is bus injection
+// for upper triangle part, it will be one if there is branch flow sensor and the branch is fully connected
+template <symmetry_tag sym>
+std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
+                                       YBusStructure const& y_bus_structure) {
+    Idx const n_bus{topo.n_bus()};
+    std::vector<int8_t> flow_sensors(y_bus_structure.row_indptr.back(), 0); // initialize all to zero
+    for (Idx row = 0; row != n_bus; ++row) {
+        // lower triangle is ignored and kept as zero
+        // diagonal for bus injection measurement
+        if (measured_values.has_bus_injection(row)) {
+            flow_sensors[y_bus_structure.bus_entry[row]] = 1;
+        }
+        // upper triangle for branch flow measurement
+        for (Idx ybus_index = y_bus_structure.bus_entry[row] + 1; ybus_index != y_bus_structure.row_indptr[row + 1];
+             ++ybus_index) {
+            for (Idx element_index = y_bus_structure.y_bus_entry_indptr[ybus_index];
+                 element_index != y_bus_structure.y_bus_entry_indptr[ybus_index + 1]; ++element_index) {
+                YBusElement const& element = y_bus_structure.y_bus_element[element_index];
+                // shunt should not be considered
+                // if the branch is fully connected and measured, we consider it as a valid flow sensor
+                // we only need one flow sensor, so the loop will break
+                if (element.element_type != YBusElementType::shunt) {
+                    Idx const branch = element.idx;
+                    if ((measured_values.has_branch_from(branch) || measured_values.has_branch_to(branch)) &&
+                        topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1) {
+                        flow_sensors[ybus_index] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return flow_sensors;
+}
+
 } // namespace detail
 template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
                                           YBusStructure const& y_bus_structure) {
-    (void)y_bus_structure; // TODO remove when used
     Idx const n_bus{topo.n_bus()};
-    std::vector<BranchIdx> const& branch_bus_idx{topo.branch_bus_idx};
 
     auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_sensor < 1) {
         throw NotObservableError{"no voltage sensor found"};
     }
 
-    Idx const n_injection_sensor = detail::count_bus_injection_sensors(n_bus, measured_values);
-    Idx const n_branch_sensor = detail::count_branch_sensors(branch_bus_idx, n_bus, measured_values);
-    Idx const n_power_sensor = n_injection_sensor + n_branch_sensor;
+    auto const flow_sensors = detail::count_flow_sensors(measured_values, topo, y_bus_structure);
+    // count flow sensors, note we manually specify the intial value type to avoid overflow
+    Idx const n_flow_sensor = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
 
-    if (n_voltage_phasor_sensor == 0 && n_power_sensor < n_bus - 1) {
+    if (n_voltage_phasor_sensor == 0 && n_flow_sensor < n_bus - 1) {
         throw NotObservableError{};
     }
-    if (n_voltage_phasor_sensor > 0 && n_power_sensor + n_voltage_phasor_sensor < n_bus) {
+    if (n_voltage_phasor_sensor > 0 && n_flow_sensor + n_voltage_phasor_sensor < n_bus) {
         throw NotObservableError{};
     }
 }
