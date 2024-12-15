@@ -61,9 +61,9 @@ std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues
 
 } // namespace detail
 template <symmetry_tag sym>
-inline void necessary_observability_check(MeasuredValues<sym> const& measured_values,
-                                          MathModelTopology const& topo) {
-
+inline void necessary_observability_check(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
+                                          YBusStructure const& y_bus_structure) {
+    (void)y_bus_structure; // TODO remove when used
     Idx const n_bus{topo.n_bus()};
     std::vector<BranchIdx> const& branch_bus_idx{topo.branch_bus_idx};
 
