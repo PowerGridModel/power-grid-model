@@ -13,6 +13,15 @@
 #include "power_grid_model_c/dataset.h"
 
 namespace power_grid_model_cpp {
+class ComponentTypeNotFound : public PowerGridError {
+  public:
+    ComponentTypeNotFound(std::string const& component)
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              return "ComponentType"s + component + " not found"s;
+          }()} {}
+    ComponentTypeNotFound(std::string_view component) : ComponentTypeNotFound{std::string{component}} {}
+};
 
 class DatasetInfo {
 
@@ -51,7 +60,7 @@ class DatasetInfo {
                 return idx;
             }
         }
-        return -1;
+        throw ComponentTypeNotFound{component};
     }
 
   private:
