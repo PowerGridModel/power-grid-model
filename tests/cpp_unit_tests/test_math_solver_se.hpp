@@ -5,8 +5,6 @@
 // In this unit test the powerflow solvers are tested
 
 #pragma once
-#ifndef POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_MATH_SOLVER_SE_HPP
-#define POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_MATH_SOLVER_SE_HPP
 
 #include "test_math_solver_common.hpp"
 
@@ -520,5 +518,3 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
 }
 
 } // namespace power_grid_model
-
-#endif // POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_MATH_SOLVER_SE_HPP

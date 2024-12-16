@@ -5,8 +5,6 @@
 // In this unit test the powerflow solvers are tested
 
 #pragma once
-#ifndef POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_MATH_SOLVER_COMMON_HPP
-#define POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_MATH_SOLVER_COMMON_HPP
 
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/exception.hpp>
@@ -269,5 +267,3 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
 };
 
 } // namespace power_grid_model
-
-#endif // POWER_GRID_MODEL_TESTS_CPP_UNIT_TESTS_TEST_MATH_SOLVER_COMMON_HPP
