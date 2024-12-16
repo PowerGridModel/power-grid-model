@@ -35,15 +35,6 @@ class UnsupportedValidationCase : public PowerGridError {
           }()} {}
 };
 
-class OptionalNotInitialized : public PowerGridError {
-  public:
-    OptionalNotInitialized(std::string const& object)
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              return "Optional "s + object + " object not initialized"s;
-          }()} {}
-};
-
 using nlohmann::json;
 
 auto read_file(std::filesystem::path const& path) {
