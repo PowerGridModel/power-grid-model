@@ -4,6 +4,8 @@
 
 // In this unit test the powerflow solvers are tested
 
+#pragma once
+
 #include "test_math_solver_common.hpp"
 
 #include <power_grid_model/common/calculation_info.hpp>

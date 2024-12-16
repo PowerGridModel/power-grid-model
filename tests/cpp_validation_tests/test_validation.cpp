@@ -4,7 +4,7 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
-#include "power_grid_model_cpp.hpp"
+#include <power_grid_model_cpp.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
@@ -35,15 +35,6 @@ class UnsupportedValidationCase : public PowerGridError {
           }()} {}
 };
 
-class OptionalNotInitialized : public PowerGridError {
-  public:
-    OptionalNotInitialized(std::string const& object)
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              return "Optional "s + object + " object not initialized"s;
-          }()} {}
-};
-
 using nlohmann::json;
 
 auto read_file(std::filesystem::path const& path) {
@@ -60,56 +51,11 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-struct OwningMemory {
-    std::vector<Buffer> buffers;
-    std::vector<std::vector<Idx>> indptrs;
-};
-
-struct OwningDataset {
-    std::optional<DatasetMutable> dataset;
-    std::optional<DatasetConst> const_dataset;
-    OwningMemory storage{};
-};
-
-OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
-    auto const& info = writable_dataset.get_info();
-    bool const is_batch = info.is_batch();
-    Idx const batch_size = info.batch_size();
-    auto const& dataset_name = info.name();
-    OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
-                                 .const_dataset = std::nullopt};
-
-    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-        auto const& component_name = info.component_name(component_idx);
-        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_elements_per_scenario = info.component_elements_per_scenario(component_idx);
-        Idx const component_size = info.component_total_elements(component_idx);
-
-        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
-            info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        if (!current_indptr.empty()) {
-            current_indptr.at(0) = 0;
-            current_indptr.at(batch_size) = component_size;
-        }
-        Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
-        writable_dataset.set_buffer(component_name, indptr, current_buffer);
-        owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
-                                                  indptr, current_buffer);
-    }
-    owning_dataset.const_dataset = writable_dataset;
-    return owning_dataset;
-}
-
 OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
                                     Idx batch_size = 1) {
-    OwningDataset owning_dataset{.dataset{DatasetMutable{dataset_name, is_batch, batch_size}},
-                                 .const_dataset = std::nullopt};
+    DatasetInfo const& input_info = input.dataset.get_info();
 
-    if (!input.const_dataset.has_value()) {
-        throw OptionalNotInitialized("DatasetConst");
-    }
-    DatasetInfo const& input_info = input.const_dataset.value().get_info();
+    OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
 
     for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
         auto const& component_name = input_info.component_name(component_idx);
@@ -117,15 +63,14 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
         Idx const component_elements_per_scenario = input_info.component_elements_per_scenario(component_idx);
         Idx const component_size = input_info.component_total_elements(component_idx);
 
-        auto& current_indptr = owning_dataset.storage.indptrs.emplace_back(
+        auto& current_indptr = result.storage.indptrs.emplace_back(
             input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
         Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = owning_dataset.storage.buffers.emplace_back(component_meta, component_size);
-        owning_dataset.dataset.value().add_buffer(component_name, component_elements_per_scenario, component_size,
-                                                  indptr, current_buffer);
+        auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
+        result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
+                                  current_buffer);
     }
-    owning_dataset.const_dataset = owning_dataset.dataset.value();
-    return owning_dataset;
+    return result;
 }
 
 OwningDataset load_dataset(std::filesystem::path const& path) {
@@ -259,19 +204,13 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                    std::map<std::string, double, std::less<>> atol, double rtol) {
     using namespace std::string_literals;
 
-    if (!owning_result.const_dataset.has_value()) {
-        throw OptionalNotInitialized("DatasetConst");
-    }
-    DatasetConst const& result = owning_result.const_dataset.value();
+    DatasetConst const result{owning_result.dataset};
     auto const& result_info = result.get_info();
     auto const& result_name = result_info.name();
     Idx const result_batch_size = result_info.batch_size();
     auto const& storage = owning_result.storage;
 
-    if (!owning_reference_result.const_dataset.has_value()) {
-        throw OptionalNotInitialized("DatasetConst");
-    }
-    DatasetConst const& reference_result = owning_reference_result.const_dataset.value();
+    DatasetConst const& reference_result = owning_reference_result.dataset;
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
     auto const& reference_storage = owning_reference_result.storage;
@@ -574,8 +513,8 @@ void validate_single_case(CaseParam const& param) {
 
         // create and run model
         auto const& options = get_options(param);
-        Model model{50.0, validation_case.input.const_dataset.value()};
-        model.calculate(options, result.dataset.value());
+        Model model{50.0, validation_case.input.dataset};
+        model.calculate(options, result.dataset);
 
         // check results
         assert_result(result, validation_case.output.value(), param.atol, param.rtol);
@@ -586,21 +525,20 @@ void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&]() {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const& info = validation_case.update_batch.value().const_dataset.value().get_info();
+        auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
         auto const batch_result =
             create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
 
         // create model
-        Model model{50.0, validation_case.input.const_dataset.value()};
+        Model model{50.0, validation_case.input.dataset};
 
         // check results after whole update is finished
         for (Idx const threading : {-1, 0, 1, 2}) {
             CAPTURE(threading);
             // set options and run
             auto const& options = get_options(param, threading);
-            model.calculate(options, batch_result.dataset.value(),
-                            validation_case.update_batch.value().const_dataset.value());
+            model.calculate(options, batch_result.dataset, validation_case.update_batch.value().dataset);
 
             // check results
             assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);

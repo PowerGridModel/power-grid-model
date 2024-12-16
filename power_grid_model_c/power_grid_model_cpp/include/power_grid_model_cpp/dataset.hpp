@@ -11,7 +11,17 @@
 #include "handle.hpp"
 
 #include "power_grid_model_c/dataset.h"
+
 namespace power_grid_model_cpp {
+class ComponentTypeNotFound : public PowerGridError {
+  public:
+    ComponentTypeNotFound(std::string const& component)
+        : PowerGridError{[&]() {
+              using namespace std::string_literals;
+              return "ComponentType"s + component + " not found"s;
+          }()} {}
+    ComponentTypeNotFound(std::string_view component) : ComponentTypeNotFound{std::string{component}} {}
+};
 
 class DatasetInfo {
 
@@ -41,6 +51,16 @@ class DatasetInfo {
 
     Idx component_total_elements(Idx component_idx) const {
         return handle_.call_with(PGM_dataset_info_total_elements, info_, component_idx);
+    }
+
+    Idx component_idx(std::string_view component) const {
+        Idx const n_comp = n_components();
+        for (Idx idx = 0; idx < n_comp; ++idx) {
+            if (component_name(idx) == component) {
+                return idx;
+            }
+        }
+        throw ComponentTypeNotFound{component};
     }
 
   private:
@@ -170,6 +190,16 @@ class DatasetConst {
     Handle handle_{};
     detail::UniquePtr<RawConstDataset, &PGM_destroy_dataset_const> dataset_;
     DatasetInfo info_;
+};
+
+struct OwningMemory {
+    std::vector<Buffer> buffers;
+    std::vector<std::vector<Idx>> indptrs;
+};
+
+struct OwningDataset {
+    DatasetMutable dataset;
+    OwningMemory storage{};
 };
 } // namespace power_grid_model_cpp
 
