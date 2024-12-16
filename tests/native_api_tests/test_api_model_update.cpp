@@ -297,7 +297,7 @@ constexpr double i_shunt = 0.015 / 0.025 * i;
 constexpr double i_load = 0.005 / 0.025 * i;
 } // namespace test
 
-auto const state_json = R"json({
+auto const complete_state_json = R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -378,19 +378,11 @@ auto const update_vector_json = R"json({
 } // namespace
 
 TEST_CASE("API model - all updates") {
-    // TODO(mgovers): remove
-    // Serializer serializer{state.get_input_dataset(), PGM_json};
-    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
-
-    auto const owning_input_dataset = load_dataset(state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json);
     auto const& input_dataset = owning_input_dataset.dataset;
 
     auto const& input_info = input_dataset.get_info();
     auto model = Model{50.0, input_dataset};
-
-    // TODO(mgovers): remove
-    // Serializer serializer{update_data, PGM_json};
-    // auto const str = serializer.get_to_zero_terminated_string(0, 2);
 
     auto const owning_update_dataset = load_dataset(update_json);
     auto const& update_data = owning_update_dataset.dataset;
@@ -443,7 +435,7 @@ TEST_CASE("API model - all updates") {
 }
 
 TEST_CASE("API model - updates w/ alternating compute mode") {
-    auto const owning_input_dataset = load_dataset(state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json);
     auto const& input_dataset = owning_input_dataset.dataset;
 
     auto model = Model{50.0, input_dataset};
@@ -626,7 +618,7 @@ auto const complete_update_json = R"json({
 } // namespace
 
 TEST_CASE("API model - incomplete input") {
-    auto const complete_owning_input_dataset = load_dataset(state_json);
+    auto const complete_owning_input_dataset = load_dataset(complete_state_json);
     auto const& complete_input_data = complete_owning_input_dataset.dataset;
 
     auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
@@ -793,7 +785,7 @@ auto const second_scenario_update_json = R"json({
 })json"s;
 
 TEST_CASE("API model - Incomplete scenario update followed by complete") {
-    auto const complete_owning_input_dataset = load_dataset(state_json);
+    auto const complete_owning_input_dataset = load_dataset(complete_state_json);
     auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
 
     auto const& complete_input_data = complete_owning_input_dataset.dataset;

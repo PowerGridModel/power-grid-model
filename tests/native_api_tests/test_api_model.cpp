@@ -95,7 +95,7 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
     }
 }
 
-auto const state_json = R"json({
+auto const complete_state_json = R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -173,7 +173,7 @@ TEST_CASE("API Model") {
 
     Options options{};
 
-    auto const owning_input_dataset = load_dataset(state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json);
     auto const& input_dataset = owning_input_dataset.dataset;
 
     auto const single_owning_update_dataset = load_dataset(single_update_json);
