@@ -378,9 +378,9 @@ TEST_CASE("API Model") {
 })json"s;
 
             auto const bad_single_owning_update_dataset = load_dataset(bad_source_id_single_update_json);
-            auto const& single_update_dataset = bad_single_owning_update_dataset.dataset;
-
-            auto const bad_update_lambda = [&model, &single_update_dataset]() { model.update(single_update_dataset); };
+            auto const bad_update_lambda = [&model, &bad_single_owning_update_dataset]() {
+                model.update(bad_single_owning_update_dataset.dataset);
+            };
 
             check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
         }
@@ -417,11 +417,9 @@ TEST_CASE("API Model") {
 })json"s;
 
             auto const bad_batch_owning_update_dataset = load_dataset(bad_load_id_batch_update_json);
-            auto const& bad_batch_update_dataset = bad_batch_owning_update_dataset.dataset;
-
             auto const bad_calc_with_update_lambda = [&model, &options, &batch_output_dataset,
-                                                      &bad_batch_update_dataset]() {
-                model.calculate(options, batch_output_dataset, bad_batch_update_dataset);
+                                                      &bad_batch_owning_update_dataset]() {
+                model.calculate(options, batch_output_dataset, bad_batch_owning_update_dataset.dataset);
             };
             check_throws_with(bad_calc_with_update_lambda, PGM_batch_error, "The id cannot be found:"s);
         }
@@ -500,11 +498,10 @@ TEST_CASE("API Model") {
 })json"s;
 
                 auto const bad_batch_owning_update_dataset = load_dataset(bad_line_id_batch_update_json);
-                auto const& batch_update_dataset = bad_batch_owning_update_dataset.dataset;
 
                 // failed in batch scenario 1
                 try {
-                    model.calculate(options, batch_output_dataset, batch_update_dataset);
+                    model.calculate(options, batch_output_dataset, bad_batch_owning_update_dataset.dataset);
                     FAIL("Expected batch calculation error not thrown.");
                 } catch (PowerGridBatchError const& e) {
                     CHECK(e.error_code() == PGM_batch_error);
