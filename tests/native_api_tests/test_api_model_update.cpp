@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "load_dataset.hpp"
+
 #include <power_grid_model_c/dataset_definitions.h>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
@@ -82,6 +84,7 @@ TYPE_TO_STRING_AS("row_t, columnar_t, dense_t, invalid_id_t", TypeCombo<row_t, c
 TYPE_TO_STRING_AS("row_t, columnar_t, sparse_t, invalid_id_t", TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>);
 
 namespace power_grid_model_cpp {
+using power_grid_model_cpp_test::load_dataset;
 
 /*
 
@@ -255,6 +258,7 @@ TEST_CASE_TEMPLATE(
 }
 
 namespace {
+using namespace std::string_literals;
 using std::numbers::sqrt3;
 
 enum class CalculationSymmetry : Idx { symmetric = PGM_symmetric, asymmetric = PGM_asymmetric };
@@ -293,188 +297,95 @@ constexpr double i_shunt = 0.015 / 0.025 * i;
 constexpr double i_load = 0.005 / 0.025 * i;
 } // namespace test
 
-struct State {
-    std::vector<ID> node_id{1, 2, 3};
-    std::vector<double> node_u_rated{10e3, 10e3, 10e3};
+auto const complete_state_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000},
+      {"id": 3, "u_rated": 10000}
+    ],
+    "line": [
+      {"id": 4, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "r1": 10, "x1": 0, "c1": 0, "tan1": 0, "r0": 10, "x0": 0, "c0": 0, "tan0": 0, "i_n": 1000}
+    ],
+    "link": [
+      {"id": 5, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1}
+    ],
+    "source": [
+      {"id": 6, "node": 1, "status": 1, "u_ref": 1.05, "sk": 1000000000000},
+      {"id": 10, "node": 3, "status": 0, "u_ref": 1.05, "u_ref_angle": 0, "sk": 1000000000000}
+    ],
+    "sym_load": [
+      {"id": 7, "node": 3, "status": 1, "type": 1, "p_specified": 500000, "q_specified": 0}
+    ],
+    "asym_load": [
+      {"id": 8, "node": 3, "status": 1, "type": 1, "p_specified": [166666.6666666667, 166666.6666666667, 166666.6666666667], "q_specified": [0, 0, 0]}
+    ],
+    "shunt": [
+      {"id": 9, "node": 3, "status": 1, "g1": 0.015, "b1": 0, "g0": 0.015, "b0": 0}
+    ]
+  }
+})json"s;
 
-    std::vector<ID> line_id{4};
-    std::vector<ID> line_from_node{1};
-    std::vector<ID> line_to_node{2};
-    std::vector<IntS> line_from_status{1};
-    std::vector<IntS> line_to_status{1};
-    std::vector<double> line_r1{10.0};
-    std::vector<double> line_x1{0.0};
-    std::vector<double> line_c1{0.0};
-    std::vector<double> line_tan1{0.0};
-    std::vector<double> line_r0{10.0};
-    std::vector<double> line_x0{0.0};
-    std::vector<double> line_c0{0.0};
-    std::vector<double> line_tan0{0.0};
-    std::vector<double> line_i_n{1e3};
-
-    std::vector<ID> link_id{5};
-    std::vector<ID> link_from_node{2};
-    std::vector<ID> link_to_node{3};
-    std::vector<IntS> link_from_status{1};
-    std::vector<IntS> link_to_status{1};
-
-    std::vector<ID> source_id{6, 10};
-    std::vector<ID> source_node{1, 3};
-    std::vector<IntS> source_status{1, 0};
-    std::vector<double> source_u_ref{1.05, 1.05};
-    std::vector<double> source_u_ref_angle{nan, 0.0};
-    std::vector<double> source_sk{1e12, 1e12};
-
-    std::vector<ID> sym_load_id{7};
-    std::vector<ID> sym_load_node{3};
-    std::vector<IntS> sym_load_status{1};
-    std::vector<LoadGenType> sym_load_type{LoadGenType::const_y};
-    std::vector<double> sym_load_p_specified{0.5e6};
-    std::vector<double> sym_load_q_specified{0.0};
-
-    std::vector<ID> asym_load_id{8};
-    std::vector<ID> asym_load_node{3};
-    std::vector<IntS> asym_load_status{1};
-    std::vector<LoadGenType> asym_load_type{LoadGenType::const_y};
-    std::vector<double> asym_load_p_specified{0.5e6 / 3.0, 0.5e6 / 3.0, 0.5e6 / 3.0};
-    std::vector<double> asym_load_q_specified{0.0, 0.0, 0.0};
-
-    std::vector<ID> shunt_id{9};
-    std::vector<ID> shunt_node{3};
-    std::vector<IntS> shunt_status{1};
-    std::vector<double> shunt_g1{0.015};
-    std::vector<double> shunt_b1{0.0};
-    std::vector<double> shunt_g0{0.015};
-    std::vector<double> shunt_b0{0.0};
-
-    auto get_input_dataset() const {
-        DatasetConst result{"input", false, 1};
-
-        result.add_buffer("node", std::ssize(node_id), std::ssize(node_id), nullptr, nullptr);
-        result.add_attribute_buffer("node", "id", node_id.data());
-        result.add_attribute_buffer("node", "u_rated", node_u_rated.data());
-
-        result.add_buffer("line", std::ssize(line_id), std::ssize(line_id), nullptr, nullptr);
-        result.add_attribute_buffer("line", "id", line_id.data());
-        result.add_attribute_buffer("line", "from_node", line_from_node.data());
-        result.add_attribute_buffer("line", "to_node", line_to_node.data());
-        result.add_attribute_buffer("line", "from_status", line_from_status.data());
-        result.add_attribute_buffer("line", "to_status", line_to_status.data());
-        result.add_attribute_buffer("line", "r1", line_r1.data());
-        result.add_attribute_buffer("line", "x1", line_x1.data());
-        result.add_attribute_buffer("line", "c1", line_c1.data());
-        result.add_attribute_buffer("line", "tan1", line_tan1.data());
-        result.add_attribute_buffer("line", "r0", line_r0.data());
-        result.add_attribute_buffer("line", "x0", line_x0.data());
-        result.add_attribute_buffer("line", "c0", line_c0.data());
-        result.add_attribute_buffer("line", "tan0", line_tan0.data());
-        result.add_attribute_buffer("line", "i_n", line_i_n.data());
-
-        result.add_buffer("link", std::ssize(link_id), std::ssize(link_id), nullptr, nullptr);
-        result.add_attribute_buffer("link", "id", link_id.data());
-        result.add_attribute_buffer("link", "from_node", link_from_node.data());
-        result.add_attribute_buffer("link", "to_node", link_to_node.data());
-        result.add_attribute_buffer("link", "from_status", link_from_status.data());
-        result.add_attribute_buffer("link", "to_status", link_to_status.data());
-
-        result.add_buffer("source", std::ssize(source_id), std::ssize(source_id), nullptr, nullptr);
-        result.add_attribute_buffer("source", "id", source_id.data());
-        result.add_attribute_buffer("source", "node", source_node.data());
-        result.add_attribute_buffer("source", "status", source_status.data());
-        result.add_attribute_buffer("source", "u_ref", source_u_ref.data());
-        result.add_attribute_buffer("source", "u_ref_angle", source_u_ref_angle.data());
-        result.add_attribute_buffer("source", "sk", source_sk.data());
-
-        result.add_buffer("sym_load", std::ssize(sym_load_id), std::ssize(sym_load_id), nullptr, nullptr);
-        result.add_attribute_buffer("sym_load", "id", sym_load_id.data());
-        result.add_attribute_buffer("sym_load", "node", sym_load_node.data());
-        result.add_attribute_buffer("sym_load", "status", sym_load_status.data());
-        result.add_attribute_buffer("sym_load", "type", sym_load_type.data());
-        result.add_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
-        result.add_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
-
-        result.add_buffer("asym_load", std::ssize(asym_load_id), std::ssize(asym_load_id), nullptr, nullptr);
-        result.add_attribute_buffer("asym_load", "id", asym_load_id.data());
-        result.add_attribute_buffer("asym_load", "node", asym_load_node.data());
-        result.add_attribute_buffer("asym_load", "status", asym_load_status.data());
-        result.add_attribute_buffer("asym_load", "type", asym_load_type.data());
-        result.add_attribute_buffer("asym_load", "p_specified", asym_load_p_specified.data());
-        result.add_attribute_buffer("asym_load", "q_specified", asym_load_q_specified.data());
-
-        result.add_buffer("shunt", std::ssize(shunt_id), std::ssize(shunt_id), nullptr, nullptr);
-        result.add_attribute_buffer("shunt", "id", shunt_id.data());
-        result.add_attribute_buffer("shunt", "node", shunt_node.data());
-        result.add_attribute_buffer("shunt", "status", shunt_status.data());
-        result.add_attribute_buffer("shunt", "g1", shunt_g1.data());
-        result.add_attribute_buffer("shunt", "b1", shunt_b1.data());
-        result.add_attribute_buffer("shunt", "g0", shunt_g0.data());
-        result.add_attribute_buffer("shunt", "b0", shunt_b0.data());
-
-        return result;
+auto const update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_load": [
+        {"id": 7, "status": 1, "p_specified": 2500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 0}
+      ],
+      "shunt": [
+        {"id": 9, "status": 0, "b1": 0.02, "b0": 0.02}
+      ],
+      "source": [
+        {"id": 10, "status": 1, "u_ref": 0.84}
+      ],
+      "link": [
+        {"id": 5, "from_status": 1, "to_status": 0}
+      ]
     }
-};
+  ]
+})json"s;
+
+auto const update_vector_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_load": [
+        {"id": 7, "status": 1, "p_specified": 2500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 0}
+      ],
+      "shunt": [
+        {"id": 9, "status": 0, "b1": 0.02, "b0": 0.02}
+      ]
+    }
+  ]
+})json"s;
 } // namespace
 
 TEST_CASE("API model - all updates") {
-    using namespace std::string_literals;
+    auto const owning_input_dataset = load_dataset(complete_state_json);
+    auto const& input_dataset = owning_input_dataset.dataset;
 
-    State const state;
-    auto const input_dataset = state.get_input_dataset();
     auto const& input_info = input_dataset.get_info();
     auto model = Model{50.0, input_dataset};
 
-    // update vector
-    std::vector<ID> sym_load_update_id{7};
-    std::vector<IntS> sym_load_update_status{1};
-    std::vector<double> sym_load_update_p_specified{2.5e6};
-
-    std::vector<ID> asym_load_update_id{8};
-    std::vector<IntS> asym_load_update_status{0};
-
-    std::vector<ID> shunt_update_id{9};
-    std::vector<IntS> shunt_update_status{0};
-    std::vector<double> shunt_update_b1{0.02};
-    std::vector<double> shunt_update_b0{0.02};
-
-    // used for test case alternate compute mode
-    std::vector<ID> const shunt_update_2_id{6};
-    std::vector<IntS> const source_update_2_status{0};
-    std::vector<double> const shunt_update_2_b1{0.01};
-    std::vector<double> const shunt_update_2_b0{0.01};
-
-    std::vector<ID> source_update_id{10};
-    std::vector<IntS> source_update_status{1};
-    std::vector<double> source_update_u_ref{test::u1};
-
-    std::vector<ID> link_update_id{5};
-    std::vector<IntS> link_update_from_status{1};
-    std::vector<IntS> link_update_to_status{0};
-
-    DatasetConst update_data{"update", true, 1};
-    update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
-    update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
-    update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
-
-    update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
-    update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
-
-    update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
-    update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
-    update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
-    update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
-
-    update_data.add_buffer("source", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("source", "id", source_update_id.data());
-    update_data.add_attribute_buffer("source", "status", source_update_status.data());
-    update_data.add_attribute_buffer("source", "u_ref", source_update_u_ref.data());
-
-    update_data.add_buffer("link", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("link", "id", link_update_id.data());
-    update_data.add_attribute_buffer("link", "from_status", link_update_from_status.data());
-    update_data.add_attribute_buffer("link", "to_status", link_update_to_status.data());
+    auto const owning_update_dataset = load_dataset(update_json);
+    auto const& update_data = owning_update_dataset.dataset;
 
     auto const output_dataset_type = "sym_output"s;
     for (Idx comp_type_idx = 0; comp_type_idx < input_info.n_components(); ++comp_type_idx) {
@@ -524,8 +435,9 @@ TEST_CASE("API model - all updates") {
 }
 
 TEST_CASE("API model - updates w/ alternating compute mode") {
-    State const state;
-    auto const input_dataset = state.get_input_dataset();
+    auto const owning_input_dataset = load_dataset(complete_state_json);
+    auto const& input_dataset = owning_input_dataset.dataset;
+
     auto model = Model{50.0, input_dataset};
 
     auto const check_sym = [&model] {
@@ -607,34 +519,8 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
         CHECK(asym_shunt_output_i[2] == doctest::Approx(0.0));
     };
 
-    // update vector
-    std::vector<ID> sym_load_update_id{7};
-    std::vector<IntS> sym_load_update_status{1};
-    std::vector<double> sym_load_update_p_specified{2.5e6};
-
-    std::vector<ID> asym_load_update_id{8};
-    std::vector<IntS> asym_load_update_status{0};
-
-    std::vector<ID> shunt_update_id{9};
-    std::vector<IntS> shunt_update_status{0};
-    std::vector<double> shunt_update_b1{0.02};
-    std::vector<double> shunt_update_b0{0.02};
-
-    DatasetConst update_data{"update", true, 1};
-    update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("sym_load", "id", sym_load_update_id.data());
-    update_data.add_attribute_buffer("sym_load", "status", sym_load_update_status.data());
-    update_data.add_attribute_buffer("sym_load", "p_specified", sym_load_update_p_specified.data());
-
-    update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("asym_load", "id", asym_load_update_id.data());
-    update_data.add_attribute_buffer("asym_load", "status", asym_load_update_status.data());
-
-    update_data.add_buffer("shunt", 1, 1, nullptr, nullptr);
-    update_data.add_attribute_buffer("shunt", "id", shunt_update_id.data());
-    update_data.add_attribute_buffer("shunt", "status", shunt_update_status.data());
-    update_data.add_attribute_buffer("shunt", "b1", shunt_update_b1.data());
-    update_data.add_attribute_buffer("shunt", "b0", shunt_update_b0.data());
+    auto const owning_update_dataset = load_dataset(update_vector_json);
+    auto const& update_data = owning_update_dataset.dataset;
 
     // This will lead to no topo change but param change
     model.update(update_data);
@@ -655,23 +541,94 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
 }
 
 namespace {
-auto get_incomplete_state() -> State {
-    State result;
+auto const incomplete_state_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000},
+      {"id": 3, "u_rated": 10000}
+    ],
+    "line": [
+      {"id": 4, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "r1": 10, "x1": 0, "c1": 0, "tan1": 0, "r0": 10, "x0": 0, "c0": 0, "tan0": 0, "i_n": 1000}
+    ],
+    "link": [
+      {"id": 5, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1}
+    ],
+    "source": [
+      {"id": 6, "node": 1, "status": 1, "sk": 1000000000000},
+      {"id": 10, "node": 3, "status": 0, "sk": 1000000000000}
+    ],
+    "sym_load": [
+      {"id": 7, "node": 3, "status": 1, "type": 1, "q_specified": 0}
+    ],
+    "asym_load": [
+      {"id": 8, "node": 3, "status": 1, "type": 1, "q_specified": [0, 0, 0]}
+    ],
+    "shunt": [
+      {"id": 9, "node": 3, "status": 1, "g1": 0.015, "b1": 0, "g0": 0.015, "b0": 0}
+    ]
+  }
+})json"s;
 
-    std::ranges::fill(result.source_u_ref, nan);
-    std::ranges::fill(result.source_u_ref_angle, nan);
-    std::ranges::fill(result.sym_load_p_specified, nan);
-    std::ranges::fill(result.asym_load_p_specified, nan);
+auto const incomplete_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 6},
+        {"id": 10}
+      ],
+      "sym_load": [
+        {"id": 7}
+      ],
+      "asym_load": [
+        {"id": 8}
+      ]
+    }
+  ]
+})json"s;
 
-    return result;
-}
+auto const complete_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 6, "u_ref": 1.05},
+        {"id": 10, "u_ref": 1.05, "u_ref_angle": 0}
+      ],
+      "sym_load": [
+        {"id": 7, "p_specified": 500000}
+      ],
+      "asym_load": [
+        {"id": 8, "p_specified": [166666.6666666667, 166666.6666666667, 166666.6666666667]}
+      ]
+    }
+  ]
+})json"s;
 } // namespace
 
 TEST_CASE("API model - incomplete input") {
-    State const complete_state;
-    State const incomplete_state = get_incomplete_state();
+    auto const complete_owning_input_dataset = load_dataset(complete_state_json);
+    auto const& complete_input_data = complete_owning_input_dataset.dataset;
 
-    auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
+    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
+    auto const& incomplete_input_data = incomplete_owning_input_dataset.dataset;
+
+    auto const& input_info = complete_input_data.get_info();
+    auto const n_nodes = input_info.component_elements_per_scenario(input_info.component_idx("node"));
+    REQUIRE(n_nodes == 3);
+
+    auto test_model = Model{50.0, incomplete_input_data};
 
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
         CAPTURE(symmetry);
@@ -682,7 +639,7 @@ TEST_CASE("API model - incomplete input") {
         SUBCASE(calculation_symmetry.c_str()) {
             auto const* node_output_meta = MetaData::get_component_by_name(output_type, "node");
 
-            Buffer test_node_output(node_output_meta, std::ssize(complete_state.node_id));
+            Buffer test_node_output(node_output_meta, n_nodes);
             DatasetMutable test_result_data{output_type, true, 1};
             test_result_data.add_buffer("node", test_node_output.size(), test_node_output.size(), nullptr,
                                         test_node_output);
@@ -708,25 +665,8 @@ TEST_CASE("API model - incomplete input") {
                 }
             }
             SUBCASE("Incomplete update dataset") {
-                DatasetConst incomplete_update_data{"update", true, 1};
-                incomplete_update_data.add_buffer("source", std::ssize(incomplete_state.source_id),
-                                                  std::ssize(incomplete_state.source_id), nullptr, nullptr);
-                incomplete_update_data.add_attribute_buffer("source", "id", incomplete_state.source_id.data());
-                incomplete_update_data.add_attribute_buffer("source", "u_ref", incomplete_state.source_u_ref.data());
-                incomplete_update_data.add_attribute_buffer("source", "u_ref_angle",
-                                                            incomplete_state.source_u_ref_angle.data());
-
-                incomplete_update_data.add_buffer("sym_load", std::ssize(incomplete_state.sym_load_id),
-                                                  std::ssize(incomplete_state.sym_load_id), nullptr, nullptr);
-                incomplete_update_data.add_attribute_buffer("sym_load", "id", incomplete_state.sym_load_id.data());
-                incomplete_update_data.add_attribute_buffer("sym_load", "p_specified",
-                                                            incomplete_state.sym_load_p_specified.data());
-
-                incomplete_update_data.add_buffer("asym_load", std::ssize(incomplete_state.asym_load_id),
-                                                  std::ssize(incomplete_state.asym_load_id), nullptr, nullptr);
-                incomplete_update_data.add_attribute_buffer("asym_load", "id", incomplete_state.asym_load_id.data());
-                incomplete_update_data.add_attribute_buffer("asym_load", "p_specified",
-                                                            incomplete_state.asym_load_p_specified.data());
+                auto const owning_update_dataset = load_dataset(incomplete_update_json);
+                auto const& incomplete_update_data = owning_update_dataset.dataset;
 
                 SUBCASE("Single update") {
                     CHECK_NOTHROW(test_model.update(incomplete_update_data));
@@ -741,28 +681,11 @@ TEST_CASE("API model - incomplete input") {
                 }
             }
             SUBCASE("Complete update dataset") {
-                DatasetConst complete_update_data{"update", true, 1};
-                complete_update_data.add_buffer("source", std::ssize(complete_state.source_id),
-                                                std::ssize(complete_state.source_id), nullptr, nullptr);
-                complete_update_data.add_attribute_buffer("source", "id", complete_state.source_id.data());
-                complete_update_data.add_attribute_buffer("source", "u_ref", complete_state.source_u_ref.data());
-                complete_update_data.add_attribute_buffer("source", "u_ref_angle",
-                                                          complete_state.source_u_ref_angle.data());
+                auto const owning_update_dataset = load_dataset(complete_update_json);
+                auto const& complete_update_data = owning_update_dataset.dataset;
 
-                complete_update_data.add_buffer("sym_load", std::ssize(complete_state.sym_load_id),
-                                                std::ssize(complete_state.sym_load_id), nullptr, nullptr);
-                complete_update_data.add_attribute_buffer("sym_load", "id", complete_state.sym_load_id.data());
-                complete_update_data.add_attribute_buffer("sym_load", "p_specified",
-                                                          complete_state.sym_load_p_specified.data());
-
-                complete_update_data.add_buffer("asym_load", std::ssize(complete_state.asym_load_id),
-                                                std::ssize(complete_state.asym_load_id), nullptr, nullptr);
-                complete_update_data.add_attribute_buffer("asym_load", "id", complete_state.asym_load_id.data());
-                complete_update_data.add_attribute_buffer("asym_load", "p_specified",
-                                                          complete_state.asym_load_p_specified.data());
-
-                auto ref_model = Model{50.0, complete_state.get_input_dataset()};
-                Buffer ref_node_output(node_output_meta, std::ssize(complete_state.node_id));
+                auto ref_model = Model{50.0, complete_input_data};
+                Buffer ref_node_output(node_output_meta, n_nodes);
                 DatasetMutable ref_result_data{output_type, true, 1};
                 ref_result_data.add_buffer("node", ref_node_output.size(), ref_node_output.size(), nullptr,
                                            ref_node_output);
@@ -779,7 +702,7 @@ TEST_CASE("API model - incomplete input") {
                                                        complete_update_data));
                 }
 
-                for (Idx node_idx = 0; node_idx < std::ssize(complete_state.node_id); ++node_idx) {
+                for (Idx node_idx = 0; node_idx < n_nodes; ++node_idx) {
                     CAPTURE(node_idx);
 
                     for (Idx attr_idx = 0; attr_idx < MetaData::n_attributes(node_output_meta); ++attr_idx) {
@@ -807,79 +730,81 @@ TEST_CASE("API model - incomplete input") {
     }
 }
 
+auto const mixed_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 6, "status": 1},
+        {"id": 10, "status": 1}
+      ],
+      "sym_load": [
+        {"id": 7, "status": 1, "q_specified": 1}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 1, "q_specified": [1, 1, 1]}
+      ]
+    },
+    {
+      "source": [
+        {"id": 6, "status": 1, "u_ref": 1.05},
+        {"id": 10, "status": 1, "u_ref": 1.05, "u_ref_angle": 0}
+      ],
+      "sym_load": [
+        {"id": 7, "status": 0, "p_specified": 500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 0, "p_specified": [166666.6666666667, 166666.6666666667, 166666.6666666667]}
+      ]
+    }
+  ]
+})json"s;
+
+auto const second_scenario_update_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"id": 6, "status": 1, "u_ref": 1.05},
+        {"id": 10, "status": 1, "u_ref": 1.05, "u_ref_angle": 0}
+      ],
+      "sym_load": [
+        {"id": 7, "status": 1, "p_specified": 500000}
+      ],
+      "asym_load": [
+        {"id": 8, "status": 1, "p_specified": [null, null, 166666.6666666667], "q_specified": [1, 1, null]}
+      ]
+    }
+  ]
+})json"s;
+
 TEST_CASE("API model - Incomplete scenario update followed by complete") {
-    State const complete_state;
-    State const incomplete_state = get_incomplete_state();
+    auto const complete_owning_input_dataset = load_dataset(complete_state_json);
+    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
 
-    auto ref_model = Model{50.0, complete_state.get_input_dataset()};
-    auto test_model = Model{50.0, incomplete_state.get_input_dataset()};
+    auto const& complete_input_data = complete_owning_input_dataset.dataset;
+    auto const& incomplete_input_data = incomplete_owning_input_dataset.dataset;
 
-    constexpr Idx batch_size = 2;
-    auto const n_nodes = static_cast<Idx>(complete_state.node_id.size());
+    auto ref_model = Model{50.0, complete_input_data};
+    auto test_model = Model{50.0, incomplete_input_data};
 
-    std::vector<ID> mixed_source_update_id{6, 10, 6, 10};
-    std::vector<IntS> mixed_source_update_status{1, 1, 1, 1};
-    std::vector<double> mixed_source_update_u_ref{nan, nan, 1.05, 1.05};
-    std::vector<double> mixed_source_update_u_ref_angle{nan, nan, nan, 0};
+    auto const& input_info = complete_input_data.get_info();
+    auto const n_nodes = input_info.component_elements_per_scenario(input_info.component_idx("node"));
+    REQUIRE(n_nodes == 3);
 
-    std::vector<ID> mixed_sym_load_update_id{7, 7};
-    std::vector<ID> mixed_sym_load_update_status{1, 1};
-    std::vector<double> mixed_sym_load_update_p_specified{nan, 0.5e6};
-    std::vector<double> mixed_sym_load_update_q_specified{1.0, nan};
+    auto const mixed_owning_update_dataset = load_dataset(mixed_update_json);
+    auto const& mixed_update_data = mixed_owning_update_dataset.dataset;
+    auto const batch_size = mixed_update_data.get_info().batch_size();
+    REQUIRE(batch_size == 2);
 
-    std::vector<ID> mixed_asym_load_update_id{8, 8};
-    std::vector<ID> mixed_asym_load_update_status{1, 1};
-    std::vector<double> mixed_asym_load_update_p_specified{nan, nan, nan, 0.5e6 / 3.0, 0.5e6 / 3.0, 0.5e6 / 3.0};
-    std::vector<double> mixed_asym_load_update_q_specified{1.0, 1.0, 1.0, nan, nan, nan};
-
-    std::vector<Idx> const source_indptr{0, 0, static_cast<Idx>(mixed_source_update_id.size())};
-
-    REQUIRE(source_indptr.size() == batch_size + 1);
-
-    DatasetConst mixed_update_data{"update", true, batch_size};
-
-    mixed_update_data.add_buffer("source", 2, 4, nullptr, nullptr);
-    mixed_update_data.add_attribute_buffer("source", "id", mixed_source_update_id.data());
-    mixed_update_data.add_attribute_buffer("source", "status", mixed_source_update_status.data());
-    mixed_update_data.add_attribute_buffer("source", "u_ref", mixed_source_update_u_ref.data());
-    mixed_update_data.add_attribute_buffer("source", "u_ref_angle", mixed_source_update_u_ref_angle.data());
-
-    mixed_update_data.add_buffer("sym_load", 1, 2, nullptr, nullptr);
-    mixed_update_data.add_attribute_buffer("sym_load", "id", mixed_sym_load_update_id.data());
-    mixed_update_data.add_attribute_buffer("sym_load", "status", mixed_sym_load_update_status.data());
-    mixed_update_data.add_attribute_buffer("sym_load", "p_specified", mixed_sym_load_update_p_specified.data());
-    mixed_update_data.add_attribute_buffer("sym_load", "q_specified", mixed_sym_load_update_q_specified.data());
-
-    mixed_update_data.add_buffer("asym_load", 1, 2, nullptr, nullptr);
-    mixed_update_data.add_attribute_buffer("asym_load", "id", mixed_asym_load_update_id.data());
-    mixed_update_data.add_attribute_buffer("asym_load", "status", mixed_asym_load_update_status.data());
-    mixed_update_data.add_attribute_buffer("asym_load", "p_specified", mixed_asym_load_update_p_specified.data());
-    mixed_update_data.add_attribute_buffer("asym_load", "q_specified", mixed_asym_load_update_q_specified.data());
-
-    DatasetConst second_scenario_update_data{"update", true, 1};
-
-    second_scenario_update_data.add_buffer("source", 2, 2, nullptr, nullptr);
-    second_scenario_update_data.add_attribute_buffer("source", "id", mixed_source_update_id.data() + 2);
-    second_scenario_update_data.add_attribute_buffer("source", "status", mixed_source_update_status.data() + 2);
-    second_scenario_update_data.add_attribute_buffer("source", "u_ref", mixed_source_update_u_ref.data() + 2);
-    second_scenario_update_data.add_attribute_buffer("source", "u_ref_angle",
-                                                     mixed_source_update_u_ref_angle.data() + 2);
-
-    second_scenario_update_data.add_buffer("sym_load", 1, 1, nullptr, nullptr);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "id", mixed_sym_load_update_id.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "status", mixed_sym_load_update_status.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "p_specified",
-                                                     mixed_sym_load_update_p_specified.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("sym_load", "q_specified",
-                                                     mixed_sym_load_update_q_specified.data() + 1);
-
-    second_scenario_update_data.add_buffer("asym_load", 1, 1, nullptr, nullptr);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "id", mixed_asym_load_update_id.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "status", mixed_asym_load_update_status.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "p_specified",
-                                                     mixed_asym_load_update_p_specified.data() + 1);
-    second_scenario_update_data.add_attribute_buffer("asym_load", "q_specified",
-                                                     mixed_asym_load_update_q_specified.data() + 1);
+    auto const second_scenario_owning_update_dataset = load_dataset(second_scenario_update_json);
+    auto const& second_scenario_update_data = second_scenario_owning_update_dataset.dataset;
 
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {
         CAPTURE(symmetry);

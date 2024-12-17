@@ -9,6 +9,7 @@
 #include "basics.hpp"
 #include "dataset.hpp"
 #include "handle.hpp"
+#include "meta_data.hpp"
 
 #include "power_grid_model_c/serialization.h"
 
@@ -90,6 +91,33 @@ class Serializer {
     power_grid_model_cpp::Handle handle_{};
     detail::UniquePtr<RawSerializer, &PGM_destroy_serializer> serializer_;
 };
+
+inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
+    auto const& info = writable_dataset.get_info();
+    bool const is_batch = info.is_batch();
+    Idx const batch_size = info.batch_size();
+    auto const& dataset_name = info.name();
+    DatasetMutable dataset_mutable{dataset_name, is_batch, batch_size};
+    OwningMemory storage{};
+
+    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
+        auto const& component_name = info.component_name(component_idx);
+        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+        Idx const component_size = info.component_total_elements(component_idx);
+        Idx const elements_per_scenario = info.component_elements_per_scenario(component_idx);
+
+        auto& current_indptr = storage.indptrs.emplace_back(elements_per_scenario < 0 ? batch_size + 1 : 0);
+        if (!current_indptr.empty()) {
+            current_indptr.at(0) = 0;
+            current_indptr.at(batch_size) = component_size;
+        }
+        Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
+        auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
+        writable_dataset.set_buffer(component_name, indptr, current_buffer);
+        dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
+    }
+    return OwningDataset{.dataset = std::move(dataset_mutable), .storage = std::move(storage)};
+}
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_SERIALIZATION_HPP
