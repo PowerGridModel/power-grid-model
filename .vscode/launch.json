@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug validation test",
+            "name": "Debug validation test [Unix]",
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:cmake.buildDirectory}/bin/power_grid_model_validation_tests",
@@ -23,6 +23,20 @@
             "osx": {
                 "MIMode": "lldb"
             },
+        },
+        {
+            "name": "Debug validation test [Windows]",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/power_grid_model_validation_tests.exe",
+            "args": [
+                "--test-case=Validation test single",
+                "--subcase=power_flow/1os2msr-sym-newton_raphson"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
         }
     ]
 }
