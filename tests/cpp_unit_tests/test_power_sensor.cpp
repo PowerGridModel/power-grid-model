@@ -571,6 +571,34 @@ TEST_CASE("Test power sensor") {
         CHECK(result.q_residual[2] != r_nan[2]);
     }
 
+    SUBCASE("Construction and update") {
+        PowerSensorInput<symmetric_t> sym_power_sensor_input{.id = 7,
+                                                             .measured_object = 3,
+                                                             .measured_terminal_type =
+                                                                 MeasuredTerminalType::branch_from,
+                                                             .power_sigma = 269258.24035672517,
+                                                             .p_measured = -2e5,
+                                                             .q_measured = -1e6,
+                                                             .p_sigma = 2.5e5,
+                                                             .q_sigma = 1e5};
+        PowerSensorUpdate<symmetric_t> sym_power_sensor_update{.id = 7,
+                                                               .power_sigma = sym_power_sensor_input.power_sigma,
+                                                               .p_measured = sym_power_sensor_input.p_measured,
+                                                               .q_measured = sym_power_sensor_input.q_measured,
+                                                               .p_sigma = sym_power_sensor_input.p_sigma,
+                                                               .q_sigma = sym_power_sensor_input.q_sigma};
+
+        SymPowerSensor sym_power_sensor{sym_power_sensor_input};
+        auto const orig_calc_param = sym_power_sensor.calc_param<symmetric_t>();
+
+        sym_power_sensor.update(sym_power_sensor_update);
+        auto const updated_calc_param = sym_power_sensor.calc_param<symmetric_t>();
+
+        CHECK(orig_calc_param.value == updated_calc_param.value);
+        CHECK(orig_calc_param.p_variance == updated_calc_param.p_variance);
+        CHECK(orig_calc_param.q_variance == updated_calc_param.q_variance);
+    }
+
     SUBCASE("Update inverse - sym") {
         constexpr auto power_sigma = 1.0;
         constexpr auto p_measured = 2.0;

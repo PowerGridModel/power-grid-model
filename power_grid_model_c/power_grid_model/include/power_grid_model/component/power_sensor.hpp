@@ -67,6 +67,8 @@ class GenericPowerSensor : public Sensor {
 };
 
 template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public GenericPowerSensor {
+    static constexpr double inv_base_power = 1.0 / base_power<power_sensor_symmetry_>;
+
   public:
     using power_sensor_symmetry = power_sensor_symmetry_;
 
@@ -78,22 +80,20 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
 
     explicit PowerSensor(PowerSensorInput<power_sensor_symmetry> const& power_sensor_input)
         : GenericPowerSensor{power_sensor_input},
-          apparent_power_sigma_{power_sensor_input.power_sigma / base_power<power_sensor_symmetry>},
-          p_sigma_{power_sensor_input.p_sigma / base_power<power_sensor_symmetry>},
-          q_sigma_{power_sensor_input.q_sigma / base_power<power_sensor_symmetry>} {
+          apparent_power_sigma_{power_sensor_input.power_sigma * inv_base_power},
+          p_sigma_{power_sensor_input.p_sigma * inv_base_power},
+          q_sigma_{power_sensor_input.q_sigma * inv_base_power} {
         set_power(power_sensor_input.p_measured, power_sensor_input.q_measured);
     };
 
     UpdateChange update(PowerSensorUpdate<power_sensor_symmetry> const& update_data) {
-        constexpr double scalar = 1.0 / base_power<power_sensor_symmetry>;
-
         set_power(update_data.p_measured, update_data.q_measured);
 
         if (!is_nan(update_data.power_sigma)) {
-            apparent_power_sigma_ = update_data.power_sigma * scalar;
+            apparent_power_sigma_ = update_data.power_sigma * inv_base_power;
         }
-        update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, scalar);
-        update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, scalar);
+        update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, inv_base_power);
+        update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, inv_base_power);
 
         return {false, false};
     }
@@ -120,7 +120,7 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
 
     void set_power(RealValue<power_sensor_symmetry> const& p_measured,
                    RealValue<power_sensor_symmetry> const& q_measured) {
-        double const scalar = convert_direction() / base_power<power_sensor_symmetry>;
+        double const scalar = convert_direction() * inv_base_power;
         RealValue<power_sensor_symmetry> ps = real(s_measured_);
         RealValue<power_sensor_symmetry> qs = imag(s_measured_);
         update_real_value<power_sensor_symmetry>(p_measured, ps, scalar);
