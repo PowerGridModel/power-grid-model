@@ -978,6 +978,7 @@ def validate_regulator(data: SingleDataset, component: ComponentType) -> list[Va
 def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationError]:
     errors = validate_regulator(data, ComponentType.transformer_tap_regulator)
     errors += _all_boolean(data, ComponentType.transformer_tap_regulator, "status")
+    errors += _all_unique(data, ComponentType.transformer_tap_regulator, "regulated_object")
     errors += _all_valid_enum_values(
         data, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
     )
