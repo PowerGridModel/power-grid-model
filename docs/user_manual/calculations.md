@@ -59,8 +59,8 @@ Output:
 
 In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or 
 a `SparseMatrixError`.
-In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of
-... For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
+In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of unknowns.
+For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
 
 $$
     \begin{eqnarray}
