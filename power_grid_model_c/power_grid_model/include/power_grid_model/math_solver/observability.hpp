@@ -132,7 +132,7 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
         // count flow sensors again
         Idx const n_flow_sensor_new = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
         if (n_flow_sensor_new < n_bus - 1) {
-            throw NotObservableError{"The number of power sensors seems to be sufficient, but they are not independent "
+            throw NotObservableError{"The number of power sensors appears sufficient, but they are not independent "
                                      "enough. The system is still not observable.\n"};
         }
     }
