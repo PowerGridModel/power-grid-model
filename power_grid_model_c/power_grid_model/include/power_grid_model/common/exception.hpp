@@ -106,7 +106,9 @@ class SparseMatrixError : public PowerGridError {
     SparseMatrixError() {
         append_msg("Sparse matrix error, possibly singular matrix!\n" +
                    std::string("If you get this error from state estimation, ") +
-                   "it usually means the system is not fully observable, i.e. not enough measurements.");
+                   "it might mean the system is not fully observable, i.e. not enough measurements.\n" +
+                   "It might also mean that you are running into a corner case where PGM cannot resolve yet." +
+                   "See https://github.com/PowerGridModel/power-grid-model/issues/853.");
     }
 };
 

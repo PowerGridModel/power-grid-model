@@ -28,7 +28,7 @@ std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues
     return std::make_tuple(n_voltage_sensor, n_voltage_phasor_sensor);
 }
 
-// count flow sensors into ybus structure like
+// count flow sensors into integer matrix with ybus structure
 // lower triangle part is always zero
 // for diagonal part, it will be one if there is bus injection
 // for upper triangle part, it will be one if there is branch flow sensor and the branch is fully connected

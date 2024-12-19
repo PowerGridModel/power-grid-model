@@ -76,8 +76,6 @@ $$
     \end{eqnarray}
 $$
 
-Note that the phase angle is a relative value. So the number of unknowns is reduced by one.
-
 The number of measurements can be found by taking the sum of the following:
 
 - number of nodes with a voltage sensor with magnitude only
