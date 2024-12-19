@@ -1,0 +1,12 @@
+{
+  "calculation_method": ["newton_raphson", "iterative_linear"],
+  "rtol": 1e-8,
+  "atol": {
+    "default": 1e-8,
+    ".+_residual": 5e-4
+  },
+  "fail": {
+    "raises": "NotObservableError",
+    "reason": "Power measurements are not independent"
+  }
+}

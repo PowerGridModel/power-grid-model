@@ -57,10 +57,10 @@ Output:
 - Power flow through branches
 - Deviation between measurement values and estimated state
 
-In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will 
-raise a sparse matrix error; the matrix reprensentation of the system is too sparse to solve and particular so when it is
-singular. In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of
-unknowns) or a balanced system (when the number of measurements is equal to the number of unknowns). For each node, there are two unknowns, `u` and `u_angle`, so the following conditions should be met:
+In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or 
+a `SparseMatrixError`.
+In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of unknowns.
+For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
 
 $$
     \begin{eqnarray}
@@ -72,7 +72,7 @@ Where
 
 $$
     \begin{eqnarray}
-        n_{unknowns}    & = & 2 & \cdot & n_{nodes}
+        n_{unknowns}    & = & 2 & \cdot & n_{nodes} - 1
     \end{eqnarray}
 $$
 
@@ -96,7 +96,7 @@ In observable systems this helps better outputting correct results. On the other
 
 ##### Necessary observability condition
 
-Based on the requirements of observability mentioned above, user needs to satisfy  at least the following conditions for state estimation calculation in power-grid-model.
+Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
 - If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
@@ -107,6 +107,16 @@ Based on the requirements of observability mentioned above, user needs to satisf
 - Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
 - Any sensor on a `Branch` for all branches: Parallel branches with either side of measurements count as one.
 - All `Branch3` sensors.
+
+##### Sufficient observability condition
+
+The condition check above only checks the necessary condition for observability. When the measurements are not independent enough, the system may still be unobservable even if the necessary condition is met.
+It is rather complicated to do a full sufficient and necessary observability check in generic cases. However, `power-grid-model` performs the sufficient condition check when the following conditions are met:
+
+1. The system is a radial network.
+2. The system does not have voltage phasor measurements.
+
+In this case, the validation of the independent measurements is rather straightforward. If the system is not observable, the calculation will raise a `NotObservableError` instead of `SparseMatrixError`.
 
 #### Short circuit calculations
 
