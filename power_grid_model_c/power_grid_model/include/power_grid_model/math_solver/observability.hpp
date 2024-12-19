@@ -70,7 +70,8 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
 // this mutate the flow sensor vector to try to assign injection sensor to branch sensor
 // all the branch should be measured if the system is observable
 // this is a sufficient condition check
-inline void assign_injection_sensor(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors) {
+// if the grid is not radial, the behavior is undefined.
+inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors) {
     Idx const n_bus = std::ssize(y_bus_structure.row_indptr) - 1;
     // loop the row without the last bus
     for (Idx row = 0; row != n_bus - 1; ++row) {
