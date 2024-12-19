@@ -294,6 +294,7 @@ template <symmetry_tag sym> class YBus {
     }
 
     // getter
+    YBusStructure const& y_bus_structure() const { return *y_bus_struct_; }
     Idx size() const { return static_cast<Idx>(bus_entry().size()); }
     Idx nnz() const { return row_indptr().back(); }
     Idx nnz_lu() const { return row_indptr_lu().back(); }

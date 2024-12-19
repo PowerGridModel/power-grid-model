@@ -141,6 +141,7 @@ using Branch3Idx = std::array<Idx, 3>;
 
 struct MathModelTopology {
     Idx slack_bus{};
+    bool is_radial{};
     std::vector<double> phase_shift;
     std::vector<BranchIdx> branch_bus_idx;
     std::vector<BranchIdx> fill_in;
