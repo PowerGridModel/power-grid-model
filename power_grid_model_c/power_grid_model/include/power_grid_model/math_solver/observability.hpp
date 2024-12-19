@@ -104,6 +104,7 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
 }
 
 } // namespace detail
+
 template <symmetry_tag sym>
 inline void necessary_observability_check(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
                                           YBusStructure const& y_bus_structure) {
