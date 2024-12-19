@@ -193,7 +193,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 if constexpr (is_block) {
                     LUFactor lu_factor(lu_matrix[pivot_idx]);
                     // set a low threshold, because state estimation can have large differences in eigen values
-                    lu_factor.setThreshold(1e-100);
+                    lu_factor.setThreshold(0.0);
                     if (lu_factor.rank() < block_size) {
                         throw SparseMatrixError{};
                     }
