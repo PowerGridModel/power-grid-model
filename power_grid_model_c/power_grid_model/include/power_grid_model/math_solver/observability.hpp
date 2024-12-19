@@ -88,12 +88,10 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
         if (flow_sensors[branch_entry_upstream] == 0) {
             if (flow_sensors[bus_entry_current] == 1) {
                 // try to steal from current bus
-                flow_sensors[bus_entry_current] = 0;
-                flow_sensors[branch_entry_upstream] = 1;
+                std::swap(flow_sensors[branch_entry_upstream], flow_sensors[bus_entry_current]);
             } else if (flow_sensors[bus_entry_upstream] == 1) {
                 // if not possible, steal from upstream bus
-                flow_sensors[bus_entry_upstream] = 0;
-                flow_sensors[branch_entry_upstream] = 1;
+                std::swap(flow_sensors[branch_entry_upstream], flow_sensors[bus_entry_upstream]);
             }
         }
         // remove the current bus injection regardless of the original state
