@@ -241,10 +241,12 @@ class Topology {
                 // no cycle, the graph is pure tree structure
                 // just reverse the node
                 std::reverse(dfs_node.begin(), dfs_node.end());
+                math_topo_single.is_radial = true;
             } else {
                 // with cycles, meshed graph
                 // use minimum degree
                 math_topo_single.fill_in = reorder_node(dfs_node, back_edges);
+                math_topo_single.is_radial = false;
             }
             // initialize phase shift
             math_topo_single.phase_shift.resize(dfs_node.size());

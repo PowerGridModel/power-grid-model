@@ -18,19 +18,21 @@ void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetri
     YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
     math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
 
-    CHECK_THROWS_AS(math_solver::necessary_observability_check(measured_values, y_bus.shared_topology()),
-                    NotObservableError);
+    CHECK_THROWS_AS(
+        math_solver::necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure()),
+        NotObservableError);
 }
 } // namespace
 
 TEST_CASE("Necessary observability check") {
     /*
-                  /-branch_0-\
+                  /-branch_1-\
             bus_2              bus_1 --branch_0-- bus_0 -- source
-                  \-branch_1-/
+                  \-branch_2-/
     */
     MathModelTopology topo;
     topo.slack_bus = 0;
+    topo.is_radial = true;
     topo.phase_shift = {0.0, 0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}, {1, 2}, {1, 2}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
@@ -41,7 +43,7 @@ TEST_CASE("Necessary observability check") {
     topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.power_sensors_per_load_gen = {from_sparse, {0, 0, 0}};
     topo.power_sensors_per_shunt = {from_sparse, {0}};
-    topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 1, 1}};
     topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0}};
     topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
 
@@ -61,7 +63,8 @@ TEST_CASE("Necessary observability check") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
-        CHECK_NOTHROW(math_solver::necessary_observability_check(measured_values, y_bus.shared_topology()));
+        CHECK_NOTHROW(math_solver::necessary_observability_check(measured_values, y_bus.math_topology(),
+                                                                 y_bus.y_bus_structure()));
     }
 
     SUBCASE("No voltage sensor") {
@@ -86,10 +89,20 @@ TEST_CASE("Necessary observability check") {
 
         SUBCASE("Parallel branch get counted as one sensor") {
             // Add sensor on branch 3 to side. Hence 2 parallel sensors
+            topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
             topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 1}};
             se_input.measured_branch_to_power = {{1.0, 1.0, 1.0}};
             check_not_observable(topo, param, se_input);
         }
+    }
+    SUBCASE("Not independent") {
+        // set branch sensor to bus_1 <-branch_1-> bus_2
+        // it is not independent with injection sensor of bus_2
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
+        // set non phasor measurement
+        se_input.measured_voltage = {{{1.0, nan}, 1.0}};
+        // this will throw NotObservableError
+        check_not_observable(topo, param, se_input);
     }
 }
 

@@ -9,6 +9,7 @@ requires = [
     "pybuild-header-dependency",
     "msgpack-cxx",
     "nlohmann-json",
+    "libboost-headers"
 ]
 build-backend = "setuptools.build_meta"
 

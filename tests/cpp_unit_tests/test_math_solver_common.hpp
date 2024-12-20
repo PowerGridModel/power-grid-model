@@ -4,6 +4,8 @@
 
 // In this unit test the powerflow solvers are tested
 
+#pragma once
+
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>

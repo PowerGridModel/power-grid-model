@@ -40,8 +40,8 @@ class PowerGridBatchError : public PowerGridError {
         std::string error_message;
     };
 
-    PowerGridBatchError(std::string const& message, std::vector<FailedScenario> failed_scenarios_c)
-        : PowerGridError{message}, failed_scenarios_{std::move(failed_scenarios_c)} {}
+    PowerGridBatchError(std::string message, std::vector<FailedScenario> failed_scenarios_c)
+        : PowerGridError{std::move(message)}, failed_scenarios_{std::move(failed_scenarios_c)} {}
     Idx error_code() const noexcept override { return PGM_batch_error; }
     std::vector<FailedScenario> const& failed_scenarios() const { return failed_scenarios_; }
 
