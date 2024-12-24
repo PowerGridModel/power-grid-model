@@ -245,6 +245,23 @@ struct RegulatorShortCircuitOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
+template <symmetry_tag sym_type>
+struct CurrentSensorOutput {
+    using sym = sym_type;
+
+    ID id{na_IntID};  // ID of the object
+    IntS energized{na_IntS};  // whether the object is energized
+    RealValue<sym> i_residual{nan};  // deviation between the measured value and calculated value
+    RealValue<sym> i_angle_residual{nan};  // deviation between the measured value and calculated value
+
+    // implicit conversions to BaseOutput
+    operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
+    operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
+};
+
+using SymCurrentSensorOutput = CurrentSensorOutput<symmetric_t>;
+using AsymCurrentSensorOutput = CurrentSensorOutput<asymmetric_t>;
+
 
 
 } // namespace power_grid_model
