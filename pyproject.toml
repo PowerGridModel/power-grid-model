@@ -103,7 +103,7 @@ ignore_missing_imports = true
 show_column_numbers = true
 non_interactive = true
 install_types = true
-
+disable_error_code = ["call-overload"]  # mypy 1.14.0 does not like PGM's data_types
 
 # CI build options
 [tool.cibuildwheel]
