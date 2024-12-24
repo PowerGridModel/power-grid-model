@@ -510,7 +510,7 @@
                         "i_sigma", 
                         "i_angle_sigma"
                     ],
-                    "description": "sigma of error margin of apparent power measurement"
+                    "description": "sigma of error margin of current (angle) measurement"
                 }
             ]
         },
