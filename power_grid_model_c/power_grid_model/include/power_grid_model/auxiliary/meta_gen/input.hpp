@@ -396,6 +396,36 @@ struct get_attributes_list<TransformerTapRegulatorInput> {
     };
 };
 
+template<>
+struct get_attributes_list<GenericCurrentSensorInput> {
+    static constexpr std::array<MetaAttribute, 5> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::id>(offsetof(GenericCurrentSensorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::measured_object>(offsetof(GenericCurrentSensorInput, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::angle_measurement_type>(offsetof(GenericCurrentSensorInput, angle_measurement_type), "angle_measurement_type"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::i_sigma>(offsetof(GenericCurrentSensorInput, i_sigma), "i_sigma"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::i_angle_sigma>(offsetof(GenericCurrentSensorInput, i_angle_sigma), "i_angle_sigma"),
+    };
+};
+
+template <symmetry_tag sym_type>
+struct get_attributes_list<CurrentSensorInput<sym_type>> {
+    using sym = sym_type;
+
+    static constexpr std::array<MetaAttribute, 7> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::id>(offsetof(CurrentSensorInput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::measured_object>(offsetof(CurrentSensorInput<sym>, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::angle_measurement_type>(offsetof(CurrentSensorInput<sym>, angle_measurement_type), "angle_measurement_type"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_sigma>(offsetof(CurrentSensorInput<sym>, i_sigma), "i_sigma"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_angle_sigma>(offsetof(CurrentSensorInput<sym>, i_angle_sigma), "i_angle_sigma"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_measured>(offsetof(CurrentSensorInput<sym>, i_measured), "i_measured"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_angle_measured>(offsetof(CurrentSensorInput<sym>, i_angle_measured), "i_angle_measured"),
+    };
+};
+
 
 
 
