@@ -500,6 +500,11 @@
             "base": "SensorInput",
             "attributes": [
                 {
+                    "data_type": "MeasuredTerminalType",
+                    "names": "measured_terminal_type",
+                    "description": "type of measured terminal"
+                },
+                {
                     "data_type": "AngleMeasurementType",
                     "names": "angle_measurement_type",
                     "description": "type of angle measurement"
