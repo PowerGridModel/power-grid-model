@@ -251,10 +251,7 @@
             "attributes": [
                 {
                     "data_type": "double",
-                    "names": [
-                        "i_sigma", 
-                        "i_angle_sigma"
-                    ],
+                    "names": "i_sigma",
                     "description": "sigma of error margin of current (angle) measurement"
                 },
                 {

@@ -549,13 +549,11 @@ static_assert(std::same_as<decltype(CurrentSensorInput<symmetric_t>::measured_ob
 static_assert(std::same_as<decltype(CurrentSensorInput<symmetric_t>::measured_terminal_type), decltype(GenericCurrentSensorInput::measured_terminal_type)>);
 static_assert(std::same_as<decltype(CurrentSensorInput<symmetric_t>::angle_measurement_type), decltype(GenericCurrentSensorInput::angle_measurement_type)>);
 static_assert(std::same_as<decltype(CurrentSensorInput<symmetric_t>::i_sigma), decltype(GenericCurrentSensorInput::i_sigma)>);
-static_assert(std::same_as<decltype(CurrentSensorInput<symmetric_t>::i_angle_sigma), decltype(GenericCurrentSensorInput::i_angle_sigma)>);
 static_assert(offsetof(CurrentSensorInput<symmetric_t>, id) == offsetof(GenericCurrentSensorInput, id));
 static_assert(offsetof(CurrentSensorInput<symmetric_t>, measured_object) == offsetof(GenericCurrentSensorInput, measured_object));
 static_assert(offsetof(CurrentSensorInput<symmetric_t>, measured_terminal_type) == offsetof(GenericCurrentSensorInput, measured_terminal_type));
 static_assert(offsetof(CurrentSensorInput<symmetric_t>, angle_measurement_type) == offsetof(GenericCurrentSensorInput, angle_measurement_type));
 static_assert(offsetof(CurrentSensorInput<symmetric_t>, i_sigma) == offsetof(GenericCurrentSensorInput, i_sigma));
-static_assert(offsetof(CurrentSensorInput<symmetric_t>, i_angle_sigma) == offsetof(GenericCurrentSensorInput, i_angle_sigma));
 // static asserts for CurrentSensorInput<asymmetric_t>
 static_assert(std::is_standard_layout_v<CurrentSensorInput<asymmetric_t>>);
 // static asserts for conversion of CurrentSensorInput<asymmetric_t> to BaseInput
@@ -575,13 +573,11 @@ static_assert(std::same_as<decltype(CurrentSensorInput<asymmetric_t>::measured_o
 static_assert(std::same_as<decltype(CurrentSensorInput<asymmetric_t>::measured_terminal_type), decltype(GenericCurrentSensorInput::measured_terminal_type)>);
 static_assert(std::same_as<decltype(CurrentSensorInput<asymmetric_t>::angle_measurement_type), decltype(GenericCurrentSensorInput::angle_measurement_type)>);
 static_assert(std::same_as<decltype(CurrentSensorInput<asymmetric_t>::i_sigma), decltype(GenericCurrentSensorInput::i_sigma)>);
-static_assert(std::same_as<decltype(CurrentSensorInput<asymmetric_t>::i_angle_sigma), decltype(GenericCurrentSensorInput::i_angle_sigma)>);
 static_assert(offsetof(CurrentSensorInput<asymmetric_t>, id) == offsetof(GenericCurrentSensorInput, id));
 static_assert(offsetof(CurrentSensorInput<asymmetric_t>, measured_object) == offsetof(GenericCurrentSensorInput, measured_object));
 static_assert(offsetof(CurrentSensorInput<asymmetric_t>, measured_terminal_type) == offsetof(GenericCurrentSensorInput, measured_terminal_type));
 static_assert(offsetof(CurrentSensorInput<asymmetric_t>, angle_measurement_type) == offsetof(GenericCurrentSensorInput, angle_measurement_type));
 static_assert(offsetof(CurrentSensorInput<asymmetric_t>, i_sigma) == offsetof(GenericCurrentSensorInput, i_sigma));
-static_assert(offsetof(CurrentSensorInput<asymmetric_t>, i_angle_sigma) == offsetof(GenericCurrentSensorInput, i_angle_sigma));
 // static asserts for SymCurrentSensorInput
 static_assert(std::is_standard_layout_v<SymCurrentSensorInput>);
 // static asserts for conversion of SymCurrentSensorInput to BaseInput
@@ -601,13 +597,11 @@ static_assert(std::same_as<decltype(SymCurrentSensorInput::measured_object), dec
 static_assert(std::same_as<decltype(SymCurrentSensorInput::measured_terminal_type), decltype(GenericCurrentSensorInput::measured_terminal_type)>);
 static_assert(std::same_as<decltype(SymCurrentSensorInput::angle_measurement_type), decltype(GenericCurrentSensorInput::angle_measurement_type)>);
 static_assert(std::same_as<decltype(SymCurrentSensorInput::i_sigma), decltype(GenericCurrentSensorInput::i_sigma)>);
-static_assert(std::same_as<decltype(SymCurrentSensorInput::i_angle_sigma), decltype(GenericCurrentSensorInput::i_angle_sigma)>);
 static_assert(offsetof(SymCurrentSensorInput, id) == offsetof(GenericCurrentSensorInput, id));
 static_assert(offsetof(SymCurrentSensorInput, measured_object) == offsetof(GenericCurrentSensorInput, measured_object));
 static_assert(offsetof(SymCurrentSensorInput, measured_terminal_type) == offsetof(GenericCurrentSensorInput, measured_terminal_type));
 static_assert(offsetof(SymCurrentSensorInput, angle_measurement_type) == offsetof(GenericCurrentSensorInput, angle_measurement_type));
 static_assert(offsetof(SymCurrentSensorInput, i_sigma) == offsetof(GenericCurrentSensorInput, i_sigma));
-static_assert(offsetof(SymCurrentSensorInput, i_angle_sigma) == offsetof(GenericCurrentSensorInput, i_angle_sigma));
 // static asserts for AsymCurrentSensorInput
 static_assert(std::is_standard_layout_v<AsymCurrentSensorInput>);
 // static asserts for conversion of AsymCurrentSensorInput to BaseInput
@@ -627,13 +621,11 @@ static_assert(std::same_as<decltype(AsymCurrentSensorInput::measured_object), de
 static_assert(std::same_as<decltype(AsymCurrentSensorInput::measured_terminal_type), decltype(GenericCurrentSensorInput::measured_terminal_type)>);
 static_assert(std::same_as<decltype(AsymCurrentSensorInput::angle_measurement_type), decltype(GenericCurrentSensorInput::angle_measurement_type)>);
 static_assert(std::same_as<decltype(AsymCurrentSensorInput::i_sigma), decltype(GenericCurrentSensorInput::i_sigma)>);
-static_assert(std::same_as<decltype(AsymCurrentSensorInput::i_angle_sigma), decltype(GenericCurrentSensorInput::i_angle_sigma)>);
 static_assert(offsetof(AsymCurrentSensorInput, id) == offsetof(GenericCurrentSensorInput, id));
 static_assert(offsetof(AsymCurrentSensorInput, measured_object) == offsetof(GenericCurrentSensorInput, measured_object));
 static_assert(offsetof(AsymCurrentSensorInput, measured_terminal_type) == offsetof(GenericCurrentSensorInput, measured_terminal_type));
 static_assert(offsetof(AsymCurrentSensorInput, angle_measurement_type) == offsetof(GenericCurrentSensorInput, angle_measurement_type));
 static_assert(offsetof(AsymCurrentSensorInput, i_sigma) == offsetof(GenericCurrentSensorInput, i_sigma));
-static_assert(offsetof(AsymCurrentSensorInput, i_angle_sigma) == offsetof(GenericCurrentSensorInput, i_angle_sigma));
 
 
 
