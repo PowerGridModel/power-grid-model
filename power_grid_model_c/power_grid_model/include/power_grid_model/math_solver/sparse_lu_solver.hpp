@@ -29,7 +29,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         PermutationType q;
     };
 
-    BlockPerm factorize_in_place(Matrix& matrix, double threshold) {
+    static BlockPerm factorize_in_place(Matrix& matrix, double threshold) {
         TranspositionVector row_transpositions{};
         TranspositionVector col_transpositions{};
         double max_pivot{};
@@ -144,11 +144,8 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = typename Tensor::Scalar;
     using Matrix = Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>;
-    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Matrix>>; // LU decomposition with full pivoting in place
-    struct BlockPerm {
-        typename LUFactor::PermutationPType p;
-        typename LUFactor::PermutationQType q;
-    }; // Extract permutation matrices p and q from LUFactor
+    using LUFactor = DenseLUFactor<Matrix>;         // LU decomposition with full pivoting in place
+    using BlockPerm = typename LUFactor::BlockPerm; // Extract permutation matrices p and q from LUFactor
     using BlockPermArray = std::vector<BlockPerm>;
 };
 
@@ -280,14 +277,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // return reference to pivot permutation
             BlockPerm const& block_perm = [&]() -> std::conditional_t<is_block, BlockPerm const&, BlockPerm> {
                 if constexpr (is_block) {
-                    LUFactor lu_factor(lu_matrix[pivot_idx]);
                     // set a low threshold, because state estimation can have large differences in eigen values
-                    lu_factor.setThreshold(1e-100);
-                    if (lu_factor.rank() < block_size) {
-                        throw SparseMatrixError{};
-                    }
                     // record block permutation
-                    block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
+                    block_perm_array[pivot_row_col] = LUFactor::factorize_in_place(lu_matrix[pivot_idx], 1e-100);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (!is_normal(lu_matrix[pivot_idx])) {
