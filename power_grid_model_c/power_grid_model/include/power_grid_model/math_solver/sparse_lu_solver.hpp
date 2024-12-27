@@ -281,10 +281,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // return reference to pivot permutation
             BlockPerm const& block_perm = [&]() -> std::conditional_t<is_block, BlockPerm const&, BlockPerm> {
                 if constexpr (is_block) {
-                    // set a low threshold, because state estimation can have large differences in eigen values
+                    // set threshold to machine precision
                     // record block permutation
-                    block_perm_array[pivot_row_col] =
-                        LUFactor::factorize_in_place(lu_matrix[pivot_idx].matrix(), 1e-100);
+                    block_perm_array[pivot_row_col] = LUFactor::factorize_in_place(
+                        lu_matrix[pivot_idx].matrix(), std::numeric_limits<double>::epsilon());
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (!is_normal(lu_matrix[pivot_idx])) {
