@@ -17,9 +17,9 @@ namespace power_grid_model::math_solver {
 template <rk2_tensor Matrix> class DenseLUFactor {
   public:
     using Scalar = typename Matrix::Scalar;
-    static_assert(std::in_range<int8_t>(Matrix::RowsAtCompileTime));
-    static constexpr int8_t n_rows = Matrix::RowsAtCompileTime;
-    static constexpr int8_t n_cols = Matrix::ColsAtCompileTime;
+    static constexpr Idx n_rows = Matrix::RowsAtCompileTime;
+    static constexpr Idx n_cols = Matrix::ColsAtCompileTime;
+    static_assert(std::in_range<int8_t>(n_rows));
     static_assert(n_rows == n_cols);
     static constexpr int8_t size = n_rows;
     using PermutationType = Eigen::PermutationMatrix<size, size, int8_t>;
@@ -29,7 +29,11 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         PermutationType q;
     };
 
-    static BlockPerm factorize_in_place(Matrix& matrix, double threshold) {
+    template <class Derived>
+    static BlockPerm factorize_in_place(Eigen::MatrixBase<Derived>&& matrix, double threshold)
+        requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
+                 (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
+    {
         TranspositionVector row_transpositions{};
         TranspositionVector col_transpositions{};
         double max_pivot{};
@@ -56,7 +60,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             }
 
             // max pivot
-            double const abs_pivot = cabs(matrix(pivot, pivot));
+            double const abs_pivot = cabs(matrix(row_biggest, col_biggest));
             max_pivot = std::max(max_pivot, abs_pivot);
 
             // swap rows and columns
@@ -72,7 +76,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             // use Gaussian elimination to calculate the bottom right corner
             if (pivot < size - 1) {
                 // calculate the pivot column
-                matrix.col(pivot).tails(size - pivot - 1) /= matrix(pivot, pivot);
+                matrix.col(pivot).tail(size - pivot - 1) /= matrix(pivot, pivot);
                 // calculate the bottom right corner
                 matrix.bottomRightCorner(size - pivot - 1, size - pivot - 1).noalias() -=
                     matrix.col(pivot).tail(size - pivot - 1) * matrix.row(pivot).tail(size - pivot - 1);
@@ -98,7 +102,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             }
         }
 
-        return BlockPerm;
+        return block_perm;
     }
 };
 
@@ -279,7 +283,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 if constexpr (is_block) {
                     // set a low threshold, because state estimation can have large differences in eigen values
                     // record block permutation
-                    block_perm_array[pivot_row_col] = LUFactor::factorize_in_place(lu_matrix[pivot_idx], 1e-100);
+                    block_perm_array[pivot_row_col] =
+                        LUFactor::factorize_in_place(lu_matrix[pivot_idx].matrix(), 1e-100);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (!is_normal(lu_matrix[pivot_idx])) {
