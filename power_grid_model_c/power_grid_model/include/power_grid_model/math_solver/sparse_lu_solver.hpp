@@ -97,7 +97,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         // throw SparseMatrixError if the matrix is singular
         double const pivot_threshold = threshold * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
-            if (cabs(matrix(pivot, pivot)) < pivot_threshold) {
+            if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{};
             }
         }
