@@ -13,6 +13,9 @@
 
 namespace power_grid_model::math_solver {
 
+constexpr double epsilon = std::numeric_limits<double>::epsilon();
+constexpr double epsilon_sqrt = 1.49011745e-8; // sqrt(epsilon), sqrt does not have constexpr
+
 // in-house dense LU factor
 template <rk2_tensor Matrix> class DenseLUFactor {
   public:
@@ -29,14 +32,20 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         PermutationType q;
     };
 
+    // factorize in place
+    // put permutation in block_perm in place
+    // return a boolean to indicate if pivot perturbation is used
+    // if use_pivot_perturbation is false, the return is always false
     template <class Derived>
-    static BlockPerm factorize_in_place(Eigen::MatrixBase<Derived>&& matrix, double threshold)
+    static bool factorize_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm, double perturb_threshold,
+                                   bool use_pivot_perturbation)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
     {
         TranspositionVector row_transpositions{};
         TranspositionVector col_transpositions{};
         double max_pivot{};
+        bool has_perturbation{false};
 
         // main loop
         for (int8_t pivot = 0; pivot != size; ++pivot) {
@@ -50,17 +59,28 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             row_biggest += pivot;
             col_biggest += pivot;
 
-            // check absolute singular matrix, cannot proceed
+            // check absolute singular matrix
             if (biggest_score == 0.0) {
-                for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
-                    row_transpositions[remaining_rows_cols] = remaining_rows_cols;
-                    col_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                // no pivot perturbation, cannot proceed
+                // set identity permutation and break the loop
+                if (!use_pivot_perturbation) {
+                    for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
+                        row_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                        col_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                    }
+                    break;
                 }
-                break;
+                // perturbation used, continue
             }
 
-            // max pivot
-            double const abs_pivot = cabs(matrix(row_biggest, col_biggest));
+            // perturb pivot if needed
+            double abs_pivot = cabs(matrix(row_biggest, col_biggest));
+            if ((abs_pivot < perturb_threshold) && use_pivot_perturbation) {
+                Scalar const scale = (abs_pivot == 0.0) ? Scalar{1.0} : (matrix(row_biggest, col_biggest) / abs_pivot);
+                matrix(row_biggest, col_biggest) = scale * perturb_threshold;
+                has_perturbation = true;
+                abs_pivot = perturb_threshold;
+            }
             max_pivot = std::max(max_pivot, abs_pivot);
 
             // swap rows and columns
@@ -84,7 +104,6 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         }
 
         // accumulate the permutation
-        BlockPerm block_perm{};
         block_perm.p.setIdentity();
         for (int8_t pivot = size - 1; pivot != -1; --pivot) {
             block_perm.p.applyTranspositionOnTheRight(pivot, row_transpositions[pivot]);
@@ -95,14 +114,14 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         }
 
         // throw SparseMatrixError if the matrix is singular
-        double const pivot_threshold = threshold * max_pivot;
+        double const pivot_threshold = epsilon * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{};
             }
         }
 
-        return block_perm;
+        return has_perturbation;
     }
 };
 
@@ -261,7 +280,16 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     // diagonals of U have values
     // fill-ins should be pre-allocated with zero
     // block permutation array should be pre-allocated
-    void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array) {
+    void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array,
+                      bool use_pivot_perturbation = false) {
+        // initialize pivot perturbation if needed
+        has_pivot_perturbation_ = false;
+        if (use_pivot_perturbation){
+            // TODO calculate norm and cache matrix
+            matrix_norm_ = 0.0;
+        }
+        double const perturb_threshold = epsilon_sqrt * matrix_norm_;
+
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
@@ -283,10 +311,15 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 if constexpr (is_block) {
                     // set threshold to machine precision
                     // record block permutation
-                    block_perm_array[pivot_row_col] = LUFactor::factorize_in_place(
-                        lu_matrix[pivot_idx].matrix(), std::numeric_limits<double>::epsilon());
+                    bool const has_pivot_perturbation = LUFactor::factorize_in_place(
+                        lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col], perturb_threshold, use_pivot_perturbation);
+                    has_pivot_perturbation_ = has_pivot_perturbation || has_pivot_perturbation_;
                     return block_perm_array[pivot_row_col];
                 } else {
+                    if (cabs(lu_matrix[pivot_idx]) < perturb_threshold && use_pivot_perturbation) {
+                        
+                        has_pivot_perturbation_ = true;
+                    }
                     if (!is_normal(lu_matrix[pivot_idx])) {
                         throw SparseMatrixError{};
                     }
@@ -414,6 +447,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
+    bool has_pivot_perturbation_{false};
+    double matrix_norm_{};
 };
 
 } // namespace power_grid_model::math_solver
