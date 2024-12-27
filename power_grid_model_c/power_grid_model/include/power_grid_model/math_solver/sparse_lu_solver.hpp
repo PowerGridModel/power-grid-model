@@ -13,7 +13,96 @@
 
 namespace power_grid_model::math_solver {
 
-template <class Tensor, class RHSVector, class XVector, class = void> struct sparse_lu_entry_trait;
+// in-house dense LU factor
+template <rk2_tensor Matrix> class DenseLUFactor {
+  public:
+    using Scalar = typename Matrix::Scalar;
+    static_assert(std::in_range<int8_t>(Matrix::RowsAtCompileTime));
+    static constexpr int8_t n_rows = Matrix::RowsAtCompileTime;
+    static constexpr int8_t n_cols = Matrix::ColsAtCompileTime;
+    static_assert(n_rows == n_cols);
+    static constexpr int8_t size = n_rows;
+    using PermutationType = Eigen::PermutationMatrix<size, size, int8_t>;
+    using TranspositionVector = Eigen::Matrix<int8_t, size, 1>;
+    struct BlockPerm {
+        PermutationType p;
+        PermutationType q;
+    };
+
+    BlockPerm factorize_in_place(Matrix& matrix, double threshold) {
+        TranspositionVector row_transpositions{};
+        TranspositionVector col_transpositions{};
+        double max_pivot{};
+
+        // main loop
+        for (int8_t pivot = 0; pivot != size; ++pivot) {
+            int8_t row_biggest{};
+            int8_t col_biggest{};
+
+            // find biggest score in the bottom right corner
+            double const biggest_score =
+                matrix.bottomRightCorner(size - pivot, size - pivot).cwiseAbs2().maxCoeff(&row_biggest, &col_biggest);
+            // offset with pivot
+            row_biggest += pivot;
+            col_biggest += pivot;
+
+            // check absolute singular matrix, cannot proceed
+            if (biggest_score == 0.0) {
+                for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
+                    row_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                    col_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                }
+                break;
+            }
+
+            // max pivot
+            double const abs_pivot = cabs(matrix(pivot, pivot));
+            max_pivot = std::max(max_pivot, abs_pivot);
+
+            // swap rows and columns
+            row_transpositions[pivot] = row_biggest;
+            col_transpositions[pivot] = col_biggest;
+            if (pivot != row_biggest) {
+                matrix.row(pivot).swap(matrix.row(row_biggest));
+            }
+            if (pivot != col_biggest) {
+                matrix.col(pivot).swap(matrix.col(col_biggest));
+            }
+
+            // use Gaussian elimination to calculate the bottom right corner
+            if (pivot < size - 1) {
+                // calculate the pivot column
+                matrix.col(pivot).tails(size - pivot - 1) /= matrix(pivot, pivot);
+                // calculate the bottom right corner
+                matrix.bottomRightCorner(size - pivot - 1, size - pivot - 1).noalias() -=
+                    matrix.col(pivot).tail(size - pivot - 1) * matrix.row(pivot).tail(size - pivot - 1);
+            }
+        }
+
+        // accumulate the permutation
+        BlockPerm block_perm{};
+        block_perm.p.setIdentity();
+        for (int8_t pivot = size - 1; pivot != -1; --pivot) {
+            block_perm.p.applyTranspositionOnTheRight(pivot, row_transpositions[pivot]);
+        }
+        block_perm.q.setIdentity();
+        for (int8_t pivot = 0; pivot != size; ++pivot) {
+            block_perm.q.applyTranspositionOnTheRight(pivot, col_transpositions[pivot]);
+        }
+
+        // throw SparseMatrixError if the matrix is singular
+        double const pivot_threshold = threshold * max_pivot;
+        for (int8_t pivot = 0; pivot != size; ++pivot) {
+            if (cabs(matrix(pivot, pivot)) < pivot_threshold) {
+                throw SparseMatrixError{};
+            }
+        }
+
+        return BlockPerm;
+    }
+};
+
+template <class Tensor, class RHSVector, class XVector> struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
 concept scalar_value_lu = scalar_value<Tensor> && std::same_as<Tensor, RHSVector> && std::same_as<Tensor, XVector>;
