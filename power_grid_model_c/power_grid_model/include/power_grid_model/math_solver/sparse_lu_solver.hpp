@@ -124,8 +124,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
         // throw SparseMatrixError if the matrix is ill-conditioned
         // only check condition number if pivot perturbation is not used
-        double const pivot_threshold =
-            has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
+        double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{};
@@ -190,7 +189,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using LUFactor = typename entry_trait::LUFactor;
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
-    static constexpr Idx max_iterative_refinement = 5;
+    static constexpr Idx max_iterative_refinement = 20;
 
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr, // indptr including fill-ins
                    std::shared_ptr<IdxVector const> col_indices,       // indices including fill-ins
@@ -236,7 +235,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         if (use_pivot_perturbation) {
             initialize_pivot_perturbation(data);
         }
-        double const perturb_threshold = epsilon_sqrt * matrix_norm_;
+        double const perturb_threshold = epsilon * matrix_norm_;
 
         // local reference
         auto const& row_indptr = *row_indptr_;
@@ -413,21 +412,23 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                                std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // initialize refinement
         initialize_refinement(rhs, x);
-        double backward_error{1.0};
-        double previous_backward_error{std::numeric_limits<double>::infinity()};
+        double backward_error{10.0};
+        solve(data, block_perm_array, rhs_.value(), x);
+        // double previous_backward_error{std::numeric_limits<double>::infinity()};
         Idx num_iter{};
         // iterate until convergence
-        while (backward_error > epsilon && backward_error < 0.5 * previous_backward_error) {
+        // while (backward_error > epsilon && backward_error < 0.5 * previous_backward_error) {
+        while (backward_error > epsilon_sqrt) {
             if (num_iter++ == max_iterative_refinement) {
                 throw SparseMatrixError{};
             }
-            previous_backward_error = backward_error;
-            // solve with residual
-            solve(data, block_perm_array, residual_.value(), dx_.value());
             // calculate residual
             calculate_residual(x);
+            // solve with residual
+            solve(data, block_perm_array, residual_.value(), dx_.value());
             // calculate backward error and then iterate x
             backward_error = iterate_and_backward_error(x);
+            // previous_backward_error = backward_error;
         }
         // reset refinement cache
         reset_refinement_cache();
