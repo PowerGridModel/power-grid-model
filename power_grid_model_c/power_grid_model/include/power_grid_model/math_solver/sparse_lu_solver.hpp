@@ -10,6 +10,7 @@
 #include "../common/typing.hpp"
 
 #include <memory>
+#include <optional>
 
 namespace power_grid_model::math_solver {
 
@@ -290,12 +291,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     // block permutation array should be pre-allocated
     void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array,
                       bool use_pivot_perturbation = false) {
-        // TODO reset cache value
-        // initialize pivot perturbation if needed
-        has_pivot_perturbation_ = false;
+        reset_matrix_cache();
         if (use_pivot_perturbation) {
-            // TODO calculate norm and cache matrix
-            matrix_norm_ = 0.0;
+            initialize_matrix_cache(data);
         }
         double const perturb_threshold = epsilon_sqrt * matrix_norm_;
 
@@ -448,6 +446,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // iterate column position for the pivot
             ++col_position_idx[pivot_row_col];
         }
+        // if no pivot perturbation needed, reset cache
+        if (!has_pivot_perturbation_) {
+            reset_matrix_cache();
+        }
     }
 
   private:
@@ -456,8 +458,46 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
+    // cache value for pivot perturbation for the factorize step
     bool has_pivot_perturbation_{false};
     double matrix_norm_{};
+    std::optional<std::vector<Tensor>> original_matrix_;
+    // cache value for iterative refinement for the solve step
+
+    void initialize_matrix_cache(std::vector<Tensor> const& data) {
+        // save a copy of original matrix
+        original_matrix_ = data;
+        // calculate the block-wise non-diagonal infinite norm of the matrix
+        // that is:
+        // 1. calculate the infinite norm of each individual block
+        // 2. sum all norms of the blocks per row, except the diagonal block
+        // 3. take the maximum of all the sums
+        matrix_norm_ = 0.0;
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        for (Idx row = 0; row != size_; ++row) {
+            // calculate the sum of the norms of the blocks in the row
+            double row_norm = 0.0;
+            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+                // skip diagonal
+                if (col_indices[idx] == row) {
+                    continue;
+                }
+                if constexpr (is_block) {
+                    row_norm += data[idx].abs().rowwise().sum().maxCoeff();
+                } else {
+                    row_norm += cabs(data[idx]);
+                }
+            }
+            matrix_norm_ = std::max(matrix_norm_, row_norm);
+        }
+    }
+
+    void reset_matrix_cache() {
+        has_pivot_perturbation_ = false;
+        matrix_norm_ = 0.0;
+        original_matrix_.reset();
+    }
 };
 
 } // namespace power_grid_model::math_solver
