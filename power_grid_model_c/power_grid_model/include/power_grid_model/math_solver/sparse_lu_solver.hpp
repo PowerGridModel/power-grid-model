@@ -471,7 +471,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
     }
 
-    double iterate_and_backward_error(std::vector<XVector> const& x) {
+    double iterate_and_backward_error(std::vector<XVector>& x) {
         double backward_error = 0.0;
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
@@ -486,14 +486,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             RealValueType row_error_denominator = abs(rhs[row]);
             // then append |A| * |x|
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
-                row_error_denominator += cabs(original_matrix[idx]) * cabs(x[col_indices[idx]]);
+                row_error_denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
             }
             RealValueType row_error_numerator = abs(residual[row]);
             // then |r| / (|rhs| + |A| * |x|)
             RealValueType row_error = row_error_numerator / row_error_denominator;
             backward_error = std::max(backward_error, max_val(row_error));
             // iterate x
-            x[row] = x[row] + dx[row];
+            x[row] += dx[row];
         }
         return backward_error;
     }
