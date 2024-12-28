@@ -253,7 +253,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             data_gain_[data_idx_lu].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
         }
         // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
+        sparse_solver_.prefactorize(data_gain_, perm_, true);
     }
 
     void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,

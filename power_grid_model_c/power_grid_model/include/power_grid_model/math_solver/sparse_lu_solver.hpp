@@ -125,7 +125,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         // throw SparseMatrixError if the matrix is ill-conditioned
         // only check condition number if pivot perturbation is not used
         double const pivot_threshold =
-            has_pivot_perturbation ? std::numeric_limits<double>::infinity() : epsilon * max_pivot;
+            has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{};
@@ -413,7 +413,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                                std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // initialize refinement
         initialize_refinement(rhs, x);
-        double backward_error{};
+        double backward_error{1.0};
         double previous_backward_error{std::numeric_limits<double>::infinity()};
         Idx num_iter{};
         // iterate until convergence
@@ -448,7 +448,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
         // initialize residual to rhs
         // because r = b - A * x = b - 0 = b
-        residual_ = rhs;
+        residual_ = rhs_;
         // initialize dx to zero
         // pre-allocate memory
         dx_ = x;
@@ -483,12 +483,12 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // calculate backward error and then iterate x
         for (Idx row = 0; row != size_; ++row) {
             // start backward error denominator by |rhs|
-            RealValueType row_error_denominator = abs(rhs[row]);
+            RealValueType row_error_denominator = cabs(rhs[row]);
             // then append |A| * |x|
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
                 row_error_denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
             }
-            RealValueType row_error_numerator = abs(residual[row]);
+            RealValueType row_error_numerator = cabs(residual[row]);
             // then |r| / (|rhs| + |A| * |x|)
             RealValueType row_error = row_error_numerator / row_error_denominator;
             backward_error = std::max(backward_error, max_val(row_error));

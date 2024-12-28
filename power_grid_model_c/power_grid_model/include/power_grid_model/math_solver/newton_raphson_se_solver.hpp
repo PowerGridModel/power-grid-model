@@ -175,7 +175,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation");
-            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
+            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_, true);
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values);
         };
