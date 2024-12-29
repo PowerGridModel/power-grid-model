@@ -15,6 +15,7 @@
 namespace power_grid_model::math_solver {
 
 constexpr double epsilon = std::numeric_limits<double>::epsilon();
+constexpr double epsilon_perturbation = 1e-13; // perturbation threshold
 constexpr double epsilon_sqrt = 1.49011745e-8; // sqrt(epsilon), sqrt does not have constexpr
 
 // perturb pivot if needed
@@ -189,7 +190,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using LUFactor = typename entry_trait::LUFactor;
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
-    static constexpr Idx max_iterative_refinement = 20;
+    static constexpr Idx max_iterative_refinement = 5;
 
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr, // indptr including fill-ins
                    std::shared_ptr<IdxVector const> col_indices,       // indices including fill-ins
@@ -235,7 +236,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         if (use_pivot_perturbation) {
             initialize_pivot_perturbation(data);
         }
-        double const perturb_threshold = epsilon * matrix_norm_;
+        double const perturb_threshold = epsilon_perturbation * matrix_norm_;
 
         // local reference
         auto const& row_indptr = *row_indptr_;
@@ -414,11 +415,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         initialize_refinement(rhs, x);
         double backward_error{10.0};
         solve(data, block_perm_array, rhs_.value(), x);
-        // double previous_backward_error{std::numeric_limits<double>::infinity()};
         Idx num_iter{};
         // iterate until convergence
-        // while (backward_error > epsilon && backward_error < 0.5 * previous_backward_error) {
-        while (backward_error > epsilon_sqrt) {
+        while (backward_error > epsilon_perturbation) {
             if (num_iter++ == max_iterative_refinement) {
                 throw SparseMatrixError{};
             }
@@ -428,7 +427,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             solve(data, block_perm_array, residual_.value(), dx_.value());
             // calculate backward error and then iterate x
             backward_error = iterate_and_backward_error(x);
-            // previous_backward_error = backward_error;
         }
         // reset refinement cache
         reset_refinement_cache();
@@ -473,7 +471,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     double iterate_and_backward_error(std::vector<XVector>& x) {
-        double backward_error = 0.0;
+        double backward_error_max_demoniator = 0.0;
+        double backward_error_max_numerator = 0.0;
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
         auto const& original_matrix = original_matrix_.value();
@@ -483,20 +482,20 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         using RealValueType = std::conditional_t<is_block, Eigen::Array<double, block_size, 1>, double>;
         // calculate backward error and then iterate x
         for (Idx row = 0; row != size_; ++row) {
-            // start backward error denominator by |rhs|
-            RealValueType row_error_denominator = cabs(rhs[row]);
+            // error denominator by |rhs|
+            RealValueType denominator = cabs(rhs[row]);
             // then append |A| * |x|
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
-                row_error_denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
+                denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
             }
-            RealValueType row_error_numerator = cabs(residual[row]);
-            // then |r| / (|rhs| + |A| * |x|)
-            RealValueType row_error = row_error_numerator / row_error_denominator;
-            backward_error = std::max(backward_error, max_val(row_error));
+            RealValueType numerator = cabs(residual[row]);
+            backward_error_max_demoniator = std::max(backward_error_max_demoniator, max_val(denominator));
+            backward_error_max_numerator = std::max(backward_error_max_numerator, max_val(numerator));
             // iterate x
             x[row] += dx[row];
         }
-        return backward_error;
+        // then |r|_max / (|rhs| + |A| * |x|)_max
+        return backward_error_max_numerator / backward_error_max_demoniator;
     }
 
     void initialize_pivot_perturbation(std::vector<Tensor> const& data) {
