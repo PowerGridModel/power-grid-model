@@ -34,14 +34,16 @@ std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues
 // for upper triangle part, it will be one if there is branch flow sensor and the branch is fully connected
 template <symmetry_tag sym>
 std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
-                                       YBusStructure const& y_bus_structure) {
+                                       YBusStructure const& y_bus_structure, bool& possibly_ill_conditioned) {
     Idx const n_bus{topo.n_bus()};
     std::vector<int8_t> flow_sensors(y_bus_structure.row_indptr.back(), 0); // initialize all to zero
     for (Idx row = 0; row != n_bus; ++row) {
+        bool has_at_least_one_flow_sensor{false};
         // lower triangle is ignored and kept as zero
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
             flow_sensors[y_bus_structure.bus_entry[row]] = 1;
+            has_at_least_one_flow_sensor = true;
         }
         // upper triangle for branch flow measurement
         for (Idx ybus_index = y_bus_structure.bus_entry[row] + 1; ybus_index != y_bus_structure.row_indptr[row + 1];
@@ -57,11 +59,13 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
                     if ((measured_values.has_branch_from(branch) || measured_values.has_branch_to(branch)) &&
                         topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1) {
                         flow_sensors[ybus_index] = 1;
+                        has_at_least_one_flow_sensor = true;
                         break;
                     }
                 }
             }
         }
+        possibly_ill_conditioned = possibly_ill_conditioned || !has_at_least_one_flow_sensor;
     }
     return flow_sensors;
 }
@@ -120,7 +124,8 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    std::vector<int8_t> flow_sensors = detail::count_flow_sensors(measured_values, topo, y_bus_structure);
+    std::vector<int8_t> flow_sensors =
+        detail::count_flow_sensors(measured_values, topo, y_bus_structure, result.is_possibly_ill_conditioned);
     // count flow sensors, note we manually specify the intial value type to avoid overflow
     Idx const n_flow_sensor = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
 
