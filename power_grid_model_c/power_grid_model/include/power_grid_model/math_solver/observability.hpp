@@ -65,7 +65,8 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
                 }
             }
         }
-        possibly_ill_conditioned = possibly_ill_conditioned || !has_at_least_one_flow_sensor;
+        // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
+        possibly_ill_conditioned = possibly_ill_conditioned || (!has_at_least_one_flow_sensor && row != n_bus - 1);
     }
     return flow_sensors;
 }
@@ -110,7 +111,7 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
 struct ObservabilityResult {
     bool is_sufficiently_observable{false};
     bool is_possibly_ill_conditioned{false};
-    bool use_perturbation() const { return is_possibly_ill_conditioned && !is_sufficiently_observable; }
+    bool use_perturbation() const { return is_possibly_ill_conditioned && is_sufficiently_observable; }
 };
 
 template <symmetry_tag sym>
