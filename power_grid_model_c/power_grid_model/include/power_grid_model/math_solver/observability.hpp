@@ -103,10 +103,17 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
 
 } // namespace detail
 
+struct ObservabilityResult {
+    bool is_sufficiently_observable{false};
+    bool is_possibly_ill_conditioned{false};
+};
+
 template <symmetry_tag sym>
-inline void necessary_observability_check(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
-                                          YBusStructure const& y_bus_structure) {
+inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> const& measured_values,
+                                                         MathModelTopology const& topo,
+                                                         YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
+    ObservabilityResult result{};
 
     auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_sensor < 1) {
@@ -135,7 +142,10 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
             throw NotObservableError{"The number of power sensors appears sufficient, but they are not independent "
                                      "enough. The system is still not observable.\n"};
         }
+        result.is_sufficiently_observable = true;
     }
+
+    return result;
 }
 
 } // namespace power_grid_model::math_solver
