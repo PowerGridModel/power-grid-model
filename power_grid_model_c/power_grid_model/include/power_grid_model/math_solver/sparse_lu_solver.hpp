@@ -518,7 +518,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     continue;
                 }
                 if constexpr (is_block) {
-                    row_norm += data[idx].abs().rowwise().sum().maxCoeff();
+                    row_norm += cabs(data[idx]).rowwise().sum().maxCoeff();
                 } else {
                     row_norm += cabs(data[idx]);
                 }
