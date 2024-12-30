@@ -449,7 +449,8 @@ struct GenericCurrentSensorInput {
     ID measured_object{na_IntID};  // ID of the measured object
     MeasuredTerminalType measured_terminal_type{static_cast<MeasuredTerminalType>(na_IntS)};  // type of measured terminal
     AngleMeasurementType angle_measurement_type{static_cast<AngleMeasurementType>(na_IntS)};  // type of angle measurement
-    double i_sigma{nan};  // sigma of error margin of current measurement
+    double i_sigma{nan};  // sigma of error margin of current (angle) measurement
+    double i_angle_sigma{nan};  // sigma of error margin of current (angle) measurement
 
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
@@ -468,7 +469,8 @@ struct CurrentSensorInput {
     ID measured_object{na_IntID};  // ID of the measured object
     MeasuredTerminalType measured_terminal_type{static_cast<MeasuredTerminalType>(na_IntS)};  // type of measured terminal
     AngleMeasurementType angle_measurement_type{static_cast<AngleMeasurementType>(na_IntS)};  // type of angle measurement
-    double i_sigma{nan};  // sigma of error margin of current measurement
+    double i_sigma{nan};  // sigma of error margin of current (angle) measurement
+    double i_angle_sigma{nan};  // sigma of error margin of current (angle) measurement
     RealValue<sym> i_measured{nan};  // measured current and current angle
     RealValue<sym> i_angle_measured{nan};  // measured current and current angle
 

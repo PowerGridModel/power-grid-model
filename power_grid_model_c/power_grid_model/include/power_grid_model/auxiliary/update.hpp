@@ -215,6 +215,7 @@ struct CurrentSensorUpdate {
 
     ID id{na_IntID};  // ID of the object
     double i_sigma{nan};  // sigma of error margin of current (angle) measurement
+    double i_angle_sigma{nan};  // sigma of error margin of current (angle) measurement
     RealValue<sym> i_measured{nan};  // measured current and current angle
     RealValue<sym> i_angle_measured{nan};  // measured current and current angle
 
