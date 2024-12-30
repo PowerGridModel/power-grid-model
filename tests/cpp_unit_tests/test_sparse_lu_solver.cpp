@@ -167,7 +167,7 @@ TEST_CASE("LU solver with ill-conditioned system") {
         }
     }
 
-    SUBCASE("Black variant") {
+    SUBCASE("Block variant") {
         auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 2, 4});
         auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 0, 1});
         auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 3});
