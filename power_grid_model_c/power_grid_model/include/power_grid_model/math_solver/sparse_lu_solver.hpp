@@ -63,15 +63,15 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
         // main loop
         for (int8_t pivot = 0; pivot != size; ++pivot) {
-            int8_t row_biggest{};
-            int8_t col_biggest{};
-
+            int row_biggest_eigen{};
+            int col_biggest_eigen{};
             // find biggest score in the bottom right corner
-            double const biggest_score =
-                matrix.bottomRightCorner(size - pivot, size - pivot).cwiseAbs2().maxCoeff(&row_biggest, &col_biggest);
+            double const biggest_score = matrix.bottomRightCorner(size - pivot, size - pivot)
+                                             .cwiseAbs2()
+                                             .maxCoeff(&row_biggest_eigen, &col_biggest_eigen);
             // offset with pivot
-            row_biggest += pivot;
-            col_biggest += pivot;
+            int8_t const row_biggest = static_cast<int8_t>(row_biggest_eigen) + pivot;
+            int8_t const col_biggest = static_cast<int8_t>(col_biggest_eigen) + pivot;
 
             // check absolute singular matrix
             if (biggest_score == 0.0) {
@@ -488,7 +488,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
                 denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
             }
-            RealValueType numerator = cabs(residual[row]);
+            RealValueType const numerator = cabs(residual[row]);
             backward_error_max_demoniator = std::max(backward_error_max_demoniator, max_val(denominator));
             backward_error_max_numerator = std::max(backward_error_max_numerator, max_val(numerator));
             // iterate x
