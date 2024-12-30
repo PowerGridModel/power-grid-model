@@ -70,8 +70,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                                              .cwiseAbs2()
                                              .maxCoeff(&row_biggest_eigen, &col_biggest_eigen);
             // offset with pivot
-            int8_t const row_biggest = static_cast<int8_t>(row_biggest_eigen) + pivot;
-            int8_t const col_biggest = static_cast<int8_t>(col_biggest_eigen) + pivot;
+            int8_t const row_biggest = static_cast<int8_t>(row_biggest_eigen + pivot);
+            int8_t const col_biggest = static_cast<int8_t>(col_biggest_eigen + pivot);
 
             // check absolute singular matrix
             if (biggest_score == 0.0) {
