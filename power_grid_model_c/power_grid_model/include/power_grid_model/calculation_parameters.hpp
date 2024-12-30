@@ -94,6 +94,11 @@ template <symmetry_tag sym_type> struct UniformComplexRandomVariable {
 // If the imaginary part is NaN, it means the angle calculation is not correct
 template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
 
+// current sensor calculation parameters for state estimation
+// The value is the complex current
+// If the imaginary part is NaN, it means the angle calculation is not correct
+template <symmetry_tag sym> using CurrentSensorCalcParam = UniformComplexRandomVariable<sym>;
+
 // power sensor calculation parameters for state estimation
 // The value is the complex power
 //   * for appliances, it is always in injection direction
