@@ -128,4 +128,44 @@ TEST_CASE("Test Sparse LU solver") {
     }
 }
 
+TEST_CASE("LU solver with ill-conditioned system") {
+    // test with ill-conditioned matrix if we do not do numerical pivoting
+    // 4*4 matrix, or 2*2 with 2*2 blocks
+    // [                  [         [
+    //   0  0  0  -1       8          0
+    //   0 -1  0   0       0          0
+    //   0  0  5   1    * 10    =    50
+    //  -1  0  1  -9       0          2
+    //               ]    ]             ]
+    //
+
+    SUBCASE("Scalar variant") {
+        auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 4, 8, 12, 16});
+        auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3});
+        auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 5, 10, 15});
+        auto data = std::vector<double>{
+            0,  0,  0, -1, // row 0
+            0,  -1, 0, 0,  // row 1
+            0,  0,  5, 1,  // row 2
+            -1, 0,  1, -9  // row 3
+        };
+        auto const rhs = std::vector<double>{0, 0, 50, 2};
+        auto const x_ref = std::vector<double>{8, 0, 10, 0};
+        auto x = std::vector<double>(4, 0.0);
+
+        SparseLUSolver<double, double, double> solver{row_indptr, col_indices, diag_lu};
+        Idx perm{};
+
+        SUBCASE("Error without perturbation") {
+            CHECK_THROWS_AS(solver.prefactorize(data, perm, false), SparseMatrixError);
+        }
+
+        SUBCASE("Success with perturbation") {
+            solver.prefactorize(data, perm, true);
+            solver.solve_with_prefactorized_matrix(data, perm, rhs, x);
+            check_result(x, x_ref);
+        }
+    }
+}
+
 } // namespace power_grid_model::math_solver
