@@ -166,6 +166,34 @@ TEST_CASE("LU solver with ill-conditioned system") {
             check_result(x, x_ref);
         }
     }
+
+    SUBCASE("Black variant") {
+        auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 2, 4});
+        auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 0, 1});
+        auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 3});
+        auto data = std::vector<Tensor>{
+            {{0, 0}, {0, -1}}, // 0, 0
+            {{0, -1}, {0, 0}}, // 0, 1
+            {{0, 0}, {-1, 0}}, // 1, 0
+            {{5, 1}, {1, -9}}, // 1, 1
+        };
+        auto const rhs = std::vector<Array>{{0, 0}, {50, 2}};
+        auto const x_ref = std::vector<Array>{{8, 0}, {10, 0}};
+        auto x = std::vector<Array>(2, Array::Zero());
+        auto block_perm = std::vector<SparseLUSolver<Tensor, Array, Array>::BlockPerm>(2);
+
+        SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu};
+
+        SUBCASE("Error without perturbation") {
+            CHECK_THROWS_AS(solver.prefactorize(data, block_perm, false), SparseMatrixError);
+        }
+
+        SUBCASE("Success with perturbation") {
+            solver.prefactorize(data, block_perm, true);
+            solver.solve_with_prefactorized_matrix(data, block_perm, rhs, x);
+            check_result(x, x_ref);
+        }
+    }
 }
 
 } // namespace power_grid_model::math_solver
