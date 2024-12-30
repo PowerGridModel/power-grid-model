@@ -82,7 +82,9 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     // TODO: add u_rated to calculate base_current = base_power_3p / u_rated / sqrt3
     explicit CurrentSensor(CurrentSensorInput<current_sensor_symmetry> const& current_sensor_input)
         : GenericCurrentSensor{current_sensor_input},
-          i_sigma_{current_sensor_input.i_sigma / base_power<current_sensor_symmetry>},
+          i_sigma_{current_sensor_input.i_sigma / base_power<current_sensor_symmetry>}, // TODO use base_current
+          i_angle_sigma_{current_sensor_input.i_angle_sigma /
+                         base_power<current_sensor_symmetry>}, // TODO use base_current
           i_angle_measured_{current_sensor_input.i_angle_measured} {
         set_current(current_sensor_input.i_measured);
     };
@@ -102,6 +104,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     ComplexValue<current_sensor_symmetry> i_measured_{};
     RealValue<current_sensor_symmetry> i_angle_measured_{};
     double i_sigma_{};
+    double i_angle_sigma_{};
 
     void set_current(RealValue<current_sensor_symmetry> const& i_measured) {
         // TODO
