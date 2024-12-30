@@ -38,12 +38,12 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
     Idx const n_bus{topo.n_bus()};
     std::vector<int8_t> flow_sensors(y_bus_structure.row_indptr.back(), 0); // initialize all to zero
     for (Idx row = 0; row != n_bus; ++row) {
-        bool has_at_least_one_flow_sensor{false};
+        bool has_at_least_one_sensor{false};
         // lower triangle is ignored and kept as zero
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
             flow_sensors[y_bus_structure.bus_entry[row]] = 1;
-            has_at_least_one_flow_sensor = true;
+            has_at_least_one_sensor = true;
         }
         // upper triangle for branch flow measurement
         for (Idx ybus_index = y_bus_structure.bus_entry[row] + 1; ybus_index != y_bus_structure.row_indptr[row + 1];
@@ -59,14 +59,18 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
                     if ((measured_values.has_branch_from(branch) || measured_values.has_branch_to(branch)) &&
                         topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1) {
                         flow_sensors[ybus_index] = 1;
-                        has_at_least_one_flow_sensor = true;
+                        has_at_least_one_sensor = true;
                         break;
                     }
                 }
             }
         }
+        // check voltage sensor
+        if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
+            has_at_least_one_sensor = true;
+        }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
-        possibly_ill_conditioned = possibly_ill_conditioned || (!has_at_least_one_flow_sensor && row != n_bus - 1);
+        possibly_ill_conditioned = possibly_ill_conditioned || (!has_at_least_one_sensor && row != n_bus - 1);
     }
     return flow_sensors;
 }
