@@ -547,10 +547,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         RealValue<sym> delta_theta{};
         if (measured_values.has_angle_measurement(bus)) {
             delta_theta = RealValue<sym>{arg(measured_values.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
-            w_theta = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{w_v};
         } else if (bus == virtual_angle_measurement_bus && !measured_values.has_angle()) {
             delta_theta = arg(ComplexValue<sym>{1.0}) - RealValue<sym>{x_[bus].theta()};
-            w_theta = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{w_v};
         }
 
         block.g_P_theta() += w_theta;
