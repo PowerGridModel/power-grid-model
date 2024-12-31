@@ -6,4 +6,7 @@
 
 #include <doctest/doctest.h>
 
-namespace power_grid_model {} // namespace power_grid_model
+namespace power_grid_model {
+TEST_CASE("Test current sensor") {}
+
+} // namespace power_grid_model
