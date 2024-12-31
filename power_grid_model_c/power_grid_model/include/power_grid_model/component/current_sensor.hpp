@@ -88,7 +88,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
 
     UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data) {
         // TODO
-        auto const dummy = update_data; // TODO: remove this line
+        (void)update_data; // Suppress unused variable warning
         return {false, false};
     }
 
@@ -131,7 +131,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
         CurrentSensorOutput<sym_calc> output{};
         // TODO
-        auto const dummy = i; // TODO: remove this line
+        (void)i; // Suppress unused variable warning
         return output;
     }
 };
