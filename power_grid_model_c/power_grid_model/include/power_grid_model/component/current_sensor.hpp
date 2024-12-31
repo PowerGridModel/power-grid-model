@@ -39,7 +39,7 @@ class GenericCurrentSensor : public Sensor {
     SensorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
     // getter for calculation param
-    template <symmetry_tag sym> PowerSensorCalcParam<sym> calc_param() const {
+    template <symmetry_tag sym> CurrentSensorCalcParam<sym> calc_param() const {
         if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
         } else {
