@@ -107,7 +107,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         double base_current = base_power_3p / u_rated / sqrt3;
         double scalar = convert_direction() / base_current;
         i_sigma_ = input.i_sigma / base_current;
-        i_measured_ = input.i_measured / base_current;
+        i_measured_ = input.i_measured * scalar;
     }
 
     CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final {
