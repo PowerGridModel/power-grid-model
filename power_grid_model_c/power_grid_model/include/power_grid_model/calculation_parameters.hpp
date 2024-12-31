@@ -94,11 +94,6 @@ template <symmetry_tag sym_type> struct UniformComplexRandomVariable {
 // If the imaginary part is NaN, it means the angle calculation is not correct
 template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
 
-// current sensor calculation parameters for state estimation
-// The value is the complex current
-// If the imaginary part is NaN, it means the angle calculation is not correct
-template <symmetry_tag sym> using CurrentSensorCalcParam = UniformComplexRandomVariable<sym>;
-
 // power sensor calculation parameters for state estimation
 // The value is the complex power
 //   * for appliances, it is always in injection direction
@@ -111,6 +106,20 @@ template <symmetry_tag sym_type> struct PowerSensorCalcParam {
     ComplexValue<sym> value{};
     RealValue<sym> p_variance{}; // variance (sigma^2) of the error range of the active power, in p.u.
     RealValue<sym> q_variance{}; // variance (sigma^2) of the error range of the reactive power, in p.u.
+};
+
+// current sensor calculation parameters for state estimation
+// The value is the complex current
+//   * for appliances, it is always in injection direction
+//   * for branches, the direction is node -> branch
+template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
+    using sym = sym_type;
+
+    static constexpr bool symmetric{is_symmetric_v<sym>};
+
+    ComplexValue<sym> value{};
+    RealValue<sym> i_variance{};       // variance (sigma^2) of the error range of the current, in p.u.
+    RealValue<sym> i_angle_variance{}; // variance (sigma^2) of the error range of the current angle, in p.u.
 };
 
 template <typename T>
