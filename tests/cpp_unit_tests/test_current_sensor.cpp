@@ -17,6 +17,12 @@ void check_nan_preserving_equality(std::floating_point auto actual, std::floatin
         CHECK(actual == doctest::Approx(expected));
     }
 }
+void check_nan_preserving_equality(RealValue<asymmetric_t> const& actual, RealValue<asymmetric_t> const& expected) {
+    for (auto i : {0, 1, 2}) {
+        CAPTURE(i);
+        check_nan_preserving_equality(actual(i), expected(i));
+    }
+}
 } // namespace
 
 TEST_CASE("Test current sensor") {
@@ -137,6 +143,83 @@ TEST_CASE("Test current sensor") {
         check_nan_preserving_equality(inv.i_angle_sigma, expected.i_angle_sigma);
         check_nan_preserving_equality(inv.i_measured, expected.i_measured);
         check_nan_preserving_equality(inv.i_angle_measured, expected.i_angle_measured);
+    }
+
+    SUBCASE("Update inverse - asym") {
+        RealValue<asymmetric_t> i_measured = {1.0, 2.0, 3.0};
+        RealValue<asymmetric_t> i_angle_measured = {4.0, 5.0, 6.0};
+        constexpr auto i_sigma = 3.0;
+        constexpr auto i_angle_sigma = 4.0;
+        constexpr auto u_rated = 10.0e3;
+
+        CurrentSensorUpdate<asymmetric_t> cs_update{1, nan, nan, r_nan, r_nan};
+        auto expected = cs_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("i_sigma") {
+            SUBCASE("same") { cs_update.i_sigma = i_sigma; }
+            SUBCASE("different") { cs_update.i_sigma = 0.0; }
+            expected.i_sigma = i_sigma;
+        }
+
+        SUBCASE("i_angle_sigma") {
+            SUBCASE("same") { cs_update.i_angle_sigma = i_angle_sigma; }
+            SUBCASE("different") { cs_update.i_angle_sigma = 0.0; }
+            expected.i_angle_sigma = i_angle_sigma;
+        }
+
+        SUBCASE("i_measured") {
+            SUBCASE("same") { cs_update.i_measured = i_measured; }
+            SUBCASE("1 different") {
+                cs_update.i_measured = {0.0, nan, nan};
+                expected.i_measured = {i_measured(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                cs_update.i_measured = {0.0, 0.1, 0.2};
+                expected.i_measured = i_measured;
+            }
+        }
+
+        SUBCASE("i_angle_measured") {
+            SUBCASE("same") { cs_update.i_angle_measured = i_angle_measured; }
+            SUBCASE("1 different") {
+                cs_update.i_angle_measured = {0.0, nan, nan};
+                expected.i_angle_measured = {i_angle_measured(0), nan, nan};
+            }
+            SUBCASE("all different") {
+                cs_update.i_angle_measured = {0.0, 0.1, 0.2};
+                expected.i_angle_measured = i_angle_measured;
+            }
+        }
+
+        SUBCASE("multiple") {
+            cs_update.i_sigma = 0.0;
+            cs_update.i_angle_sigma = 0.1;
+            cs_update.i_measured = {0.0, 0.2, 0.4};
+            cs_update.i_angle_measured = {0.0, 0.3, 0.6};
+            expected.i_sigma = i_sigma;
+            expected.i_angle_sigma = i_angle_sigma;
+            expected.i_measured = i_measured;
+            expected.i_angle_measured = i_angle_measured;
+        }
+
+        for (auto const measured_terminal_type :
+             {MeasuredTerminalType::branch_from, MeasuredTerminalType::generator, MeasuredTerminalType::load}) {
+            CurrentSensor<asymmetric_t> const current_sensor{{1, 1, measured_terminal_type, AngleMeasurementType::local,
+                                                              i_sigma, i_angle_sigma, i_measured, i_angle_measured},
+                                                             u_rated};
+
+            auto const inv = current_sensor.inverse(cs_update, u_rated);
+
+            CHECK(inv.id == expected.id);
+            check_nan_preserving_equality(inv.i_sigma, expected.i_sigma);
+            check_nan_preserving_equality(inv.i_angle_sigma, expected.i_angle_sigma);
+            check_nan_preserving_equality(inv.i_measured, expected.i_measured);
+            check_nan_preserving_equality(inv.i_angle_measured, expected.i_angle_measured);
+        }
     }
 }
 
