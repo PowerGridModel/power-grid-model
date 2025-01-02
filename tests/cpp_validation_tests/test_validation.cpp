@@ -85,7 +85,7 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
 #else  // __clang_analyzer__ // issue in msgpack
     (void)path;
     // fallback for https://github.com/msgpack/msgpack-c/issues/1098
-    return OwningDataset{};
+    return OwningDataset{.dataset{"Empty dataset", false, Idx{1}}};
 #endif // __clang_analyzer__ // issue in msgpack
 }
 
