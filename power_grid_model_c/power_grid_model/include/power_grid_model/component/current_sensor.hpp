@@ -89,6 +89,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data, double const& u_rated) {
         double const base_current = base_power_3p / u_rated / sqrt3;
         double const scalar = convert_direction() / base_current;
+
         if (!is_nan(update_data.i_sigma)) {
             i_sigma_ = update_data.i_sigma * scalar;
         }
@@ -100,14 +101,23 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         return {false, false};
     }
 
-    PowerSensorUpdate<current_sensor_symmetry> inverse(PowerSensorUpdate<current_sensor_symmetry> update_data) const {
-        // TODO
+    CurrentSensorUpdate<current_sensor_symmetry> inverse(CurrentSensorUpdate<current_sensor_symmetry> update_data,
+                                                         double const& u_rated) const {
+        assert(update_data.id == this->id() || is_nan(update_data.id));
+
+        double const base_current = base_power_3p / u_rated / sqrt3;
+        double const scalar = convert_direction() * base_current;
+
+        set_if_not_nan(update_data.i_sigma, i_sigma_ * scalar);
+        set_if_not_nan(update_data.i_angle_sigma, i_angle_sigma_);
+        set_if_not_nan(update_data.i_measured, i_measured_ * scalar);
+        set_if_not_nan(update_data.i_angle_measured, i_angle_measured_);
 
         return update_data;
     }
 
   private:
-    ComplexValue<current_sensor_symmetry> i_measured_{};
+    RealValue<current_sensor_symmetry> i_measured_{};
     RealValue<current_sensor_symmetry> i_angle_measured_{};
     double i_sigma_{};
     double i_angle_sigma_{};

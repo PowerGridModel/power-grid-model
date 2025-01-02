@@ -7,6 +7,18 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace {
+auto const r_nan = RealValue<asymmetric_t>{nan};
+
+void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
+    if (is_nan(expected)) {
+        is_nan(actual);
+    } else {
+        CHECK(actual == doctest::Approx(expected));
+    }
+}
+} // namespace
+
 TEST_CASE("Test current sensor") {
     SUBCASE("Symmetric Current Sensor - generator, branch_from, branch_to, source") {
         for (auto const terminal_type : {MeasuredTerminalType::generator, MeasuredTerminalType::branch_from,
@@ -64,6 +76,67 @@ TEST_CASE("Test current sensor") {
 
             CHECK(sym_current_sensor.get_angle_measurement_type() == AngleMeasurementType::local);
         }
+    }
+    SUBCASE("Update inverse - sym") {
+        constexpr auto i_measured = 1.0;
+        constexpr auto i_angle_measured = 2.0;
+        constexpr auto i_sigma = 3.0;
+        constexpr auto i_angle_sigma = 4.0;
+        constexpr auto u_rated = 10.0e3;
+        CurrentSensor<symmetric_t> const current_sensor{{1, 1, MeasuredTerminalType::branch3_1,
+                                                         AngleMeasurementType::local, i_sigma, i_angle_sigma,
+                                                         i_measured, i_angle_measured},
+                                                        u_rated};
+
+        CurrentSensorUpdate<symmetric_t> cs_update{1, nan, nan, nan, nan};
+        auto expected = cs_update;
+
+        SUBCASE("Identical") {
+            // default values
+        }
+
+        SUBCASE("i_sigma") {
+            SUBCASE("same") { cs_update.i_sigma = i_sigma; }
+            SUBCASE("different") { cs_update.i_sigma = 0.0; }
+            expected.i_sigma = i_sigma;
+        }
+
+        SUBCASE("i_angle_sigma") {
+            SUBCASE("same") { cs_update.i_angle_sigma = i_angle_sigma; }
+            SUBCASE("different") { cs_update.i_angle_sigma = 0.0; }
+            expected.i_angle_sigma = i_angle_sigma;
+        }
+
+        SUBCASE("i_measured") {
+            SUBCASE("same") { cs_update.i_measured = i_measured; }
+            SUBCASE("different") { cs_update.i_measured = 0.0; }
+            expected.i_measured = i_measured;
+        }
+
+        SUBCASE("i_angle_measured") {
+            SUBCASE("same") { cs_update.i_angle_measured = i_angle_measured; }
+            SUBCASE("different") { cs_update.i_angle_measured = 0.0; }
+            expected.i_angle_measured = i_angle_measured;
+        }
+
+        SUBCASE("multiple") {
+            cs_update.i_sigma = 0.0;
+            cs_update.i_angle_sigma = 0.0;
+            cs_update.i_measured = 0.0;
+            cs_update.i_angle_measured = 0.0;
+            expected.i_sigma = i_sigma;
+            expected.i_angle_sigma = i_angle_sigma;
+            expected.i_measured = i_measured;
+            expected.i_angle_measured = i_angle_measured;
+        }
+
+        auto const inv = current_sensor.inverse(cs_update, u_rated);
+
+        CHECK(inv.id == expected.id);
+        check_nan_preserving_equality(inv.i_sigma, expected.i_sigma);
+        check_nan_preserving_equality(inv.i_angle_sigma, expected.i_angle_sigma);
+        check_nan_preserving_equality(inv.i_measured, expected.i_measured);
+        check_nan_preserving_equality(inv.i_angle_measured, expected.i_angle_measured);
     }
 }
 
