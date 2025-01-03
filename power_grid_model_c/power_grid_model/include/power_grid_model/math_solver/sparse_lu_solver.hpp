@@ -10,10 +10,131 @@
 #include "../common/typing.hpp"
 
 #include <memory>
+#include <optional>
 
 namespace power_grid_model::math_solver {
 
-template <class Tensor, class RHSVector, class XVector, class = void> struct sparse_lu_entry_trait;
+constexpr double epsilon = std::numeric_limits<double>::epsilon();
+constexpr double epsilon_perturbation = 1e-13; // perturbation threshold
+constexpr double epsilon_sqrt = 1.49011745e-8; // sqrt(epsilon), sqrt does not have constexpr
+
+// perturb pivot if needed
+// return updated abs value
+template <scalar_value Scalar>
+inline double perturb_pivot(Scalar& value, double perturb_threshold, bool& has_pivot_perturbation) {
+    double const abs_value = cabs(value);
+    if (abs_value < perturb_threshold) {
+        Scalar const scale = (abs_value == 0.0) ? Scalar{1.0} : (value / abs_value);
+        value = scale * perturb_threshold;
+        has_pivot_perturbation = true;
+        return perturb_threshold;
+    }
+    return abs_value;
+}
+
+// in-house dense LU factor
+template <rk2_tensor Matrix> class DenseLUFactor {
+  public:
+    using Scalar = typename Matrix::Scalar;
+    static constexpr Idx n_rows = Matrix::RowsAtCompileTime;
+    static constexpr Idx n_cols = Matrix::ColsAtCompileTime;
+    static_assert(std::in_range<int8_t>(n_rows));
+    static_assert(n_rows == n_cols);
+    static constexpr int8_t size = n_rows;
+    using PermutationType = Eigen::PermutationMatrix<size, size, int8_t>;
+    using TranspositionVector = Eigen::Matrix<int8_t, size, 1>;
+    struct BlockPerm {
+        PermutationType p;
+        PermutationType q;
+    };
+
+    // factorize in place
+    // put permutation in block_perm in place
+    // put pivot perturbation in has_pivot_perturbation in place
+    template <class Derived>
+    static void factorize_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm, double perturb_threshold,
+                                   bool use_pivot_perturbation, bool& has_pivot_perturbation)
+        requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
+                 (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
+    {
+        TranspositionVector row_transpositions{};
+        TranspositionVector col_transpositions{};
+        double max_pivot{};
+
+        // main loop
+        for (int8_t pivot = 0; pivot != size; ++pivot) {
+            int row_biggest_eigen{};
+            int col_biggest_eigen{};
+            // find biggest score in the bottom right corner
+            double const biggest_score = matrix.bottomRightCorner(size - pivot, size - pivot)
+                                             .cwiseAbs2()
+                                             .maxCoeff(&row_biggest_eigen, &col_biggest_eigen);
+            // offset with pivot
+            auto const row_biggest = static_cast<int8_t>(row_biggest_eigen + pivot);
+            auto const col_biggest = static_cast<int8_t>(col_biggest_eigen + pivot);
+
+            // check absolute singular matrix
+            if (biggest_score == 0.0) {
+                // no pivot perturbation, cannot proceed
+                // set identity permutation and break the loop
+                if (!use_pivot_perturbation) {
+                    for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
+                        row_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                        col_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                    }
+                    break;
+                }
+                // perturbation used, continue
+            }
+
+            // perturb pivot if needed
+            double const abs_pivot = use_pivot_perturbation ? perturb_pivot(matrix(row_biggest, col_biggest),
+                                                                            perturb_threshold, has_pivot_perturbation)
+                                                            : cabs(matrix(row_biggest, col_biggest));
+            max_pivot = std::max(max_pivot, abs_pivot);
+
+            // swap rows and columns
+            row_transpositions[pivot] = row_biggest;
+            col_transpositions[pivot] = col_biggest;
+            if (pivot != row_biggest) {
+                matrix.row(pivot).swap(matrix.row(row_biggest));
+            }
+            if (pivot != col_biggest) {
+                matrix.col(pivot).swap(matrix.col(col_biggest));
+            }
+
+            // use Gaussian elimination to calculate the bottom right corner
+            if (pivot < size - 1) {
+                // calculate the pivot column
+                matrix.col(pivot).tail(size - pivot - 1) /= matrix(pivot, pivot);
+                // calculate the bottom right corner
+                matrix.bottomRightCorner(size - pivot - 1, size - pivot - 1).noalias() -=
+                    matrix.col(pivot).tail(size - pivot - 1) * matrix.row(pivot).tail(size - pivot - 1);
+            }
+        }
+
+        // accumulate the permutation
+        block_perm.p.setIdentity();
+        for (int8_t pivot = size - 1; pivot != -1; --pivot) {
+            block_perm.p.applyTranspositionOnTheRight(pivot, row_transpositions[pivot]);
+        }
+        block_perm.q.setIdentity();
+        for (int8_t pivot = 0; pivot != size; ++pivot) {
+            block_perm.q.applyTranspositionOnTheRight(pivot, col_transpositions[pivot]);
+        }
+
+        // throw SparseMatrixError if the matrix is ill-conditioned
+        // only check condition number if pivot perturbation is not used
+        double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
+        for (int8_t pivot = 0; pivot != size; ++pivot) {
+            if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
+                throw SparseMatrixError{};
+            }
+        }
+    }
+};
+
+template <class Tensor, class RHSVector, class XVector> struct sparse_lu_entry_trait;
 
 template <class Tensor, class RHSVector, class XVector>
 concept scalar_value_lu = scalar_value<Tensor> && std::same_as<Tensor, RHSVector> && std::same_as<Tensor, XVector>;
@@ -55,11 +176,8 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = typename Tensor::Scalar;
     using Matrix = Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>;
-    using LUFactor = Eigen::FullPivLU<Eigen::Ref<Matrix>>; // LU decomposition with full pivoting in place
-    struct BlockPerm {
-        typename LUFactor::PermutationPType p;
-        typename LUFactor::PermutationQType q;
-    }; // Extract permutation matrices p and q from LUFactor
+    using LUFactor = DenseLUFactor<Matrix>;         // LU decomposition with full pivoting in place
+    using BlockPerm = typename LUFactor::BlockPerm; // Extract permutation matrices p and q from LUFactor
     using BlockPermArray = std::vector<BlockPerm>;
 };
 
@@ -72,6 +190,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using LUFactor = typename entry_trait::LUFactor;
     using BlockPerm = typename entry_trait::BlockPerm;
     using BlockPermArray = typename entry_trait::BlockPermArray;
+    static constexpr Idx max_iterative_refinement = 5;
 
     SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr, // indptr including fill-ins
                    std::shared_ptr<IdxVector const> col_indices,       // indices including fill-ins
@@ -86,8 +205,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     void
     prefactorize_and_solve(std::vector<Tensor>& data,        // matrix data, factorize in-place
                            BlockPermArray& block_perm_array, // pre-allocated permutation array, will be overwritten
-                           std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
-        prefactorize(data, block_perm_array);
+                           std::vector<RHSVector> const& rhs, std::vector<XVector>& x,
+                           bool use_pivot_perturbation = false) {
+        prefactorize(data, block_perm_array, use_pivot_perturbation);
         // call solve with const method
         solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
     }
@@ -97,71 +217,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     solve_with_prefactorized_matrix(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
                                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
-        // local reference
-        auto const& row_indptr = *row_indptr_;
-        auto const& col_indices = *col_indices_;
-        auto const& diag_lu = *diag_lu_;
-        auto const& lu_matrix = data;
-
-        // forward substitution with L
-        for (Idx row = 0; row != size_; ++row) {
-            // permutation if needed
-            if constexpr (is_block) {
-                x[row] = (block_perm_array[row].p * rhs[row].matrix()).array();
-            } else {
-                x[row] = rhs[row];
-            }
-
-            // loop all columns until diagonal
-            for (Idx l_idx = row_indptr[row]; l_idx < diag_lu[row]; ++l_idx) {
-                Idx const col = col_indices[l_idx];
-                // never overshoot
-                assert(col < row);
-                // forward subtract
-                x[row] -= dot(lu_matrix[l_idx], x[col]);
-            }
-            // forward substitution inside block, for block matrix
-            if constexpr (is_block) {
-                XVector& xb = x[row];
-                Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = 0; br < block_size; ++br) {
-                    for (Idx bc = 0; bc < br; ++bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                }
-            }
-        }
-
-        // backward substitution with U
-        for (Idx row = size_ - 1; row != -1; --row) {
-            // loop all columns from diagonal
-            for (Idx u_idx = row_indptr[row + 1] - 1; u_idx > diag_lu[row]; --u_idx) {
-                Idx const col = col_indices[u_idx];
-                // always in upper diagonal
-                assert(col > row);
-                // backward subtract
-                x[row] -= dot(lu_matrix[u_idx], x[col]);
-            }
-            // solve the diagonal pivot
-            if constexpr (is_block) {
-                // backward substitution inside block
-                XVector& xb = x[row];
-                Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = block_size - 1; br != -1; --br) {
-                    for (Idx bc = block_size - 1; bc > br; --bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                    xb(br) = xb(br) / pivot(br, br);
-                }
-            } else {
-                x[row] = x[row] / lu_matrix[diag_lu[row]];
-            }
-        }
-        // restore permutation for block matrix
-        if constexpr (is_block) {
-            for (Idx row = 0; row != size_; ++row) {
-                x[row] = (block_perm_array[row].q * x[row].matrix()).array();
-            }
+        if (has_pivot_perturbation_) {
+            solve_with_refinement(data, block_perm_array, rhs, x);
+        } else {
+            solve(data, block_perm_array, rhs, x);
         }
     }
 
@@ -171,7 +230,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     // diagonals of U have values
     // fill-ins should be pre-allocated with zero
     // block permutation array should be pre-allocated
-    void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array) {
+    void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array,
+                      bool use_pivot_perturbation = false) {
+        reset_matrix_cache();
+        if (use_pivot_perturbation) {
+            initialize_pivot_perturbation(data);
+        }
+        double const perturb_threshold = epsilon_perturbation * matrix_norm_;
+
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
@@ -191,16 +257,17 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // return reference to pivot permutation
             BlockPerm const& block_perm = [&]() -> std::conditional_t<is_block, BlockPerm const&, BlockPerm> {
                 if constexpr (is_block) {
-                    LUFactor lu_factor(lu_matrix[pivot_idx]);
-                    // set a low threshold, because state estimation can have large differences in eigen values
-                    lu_factor.setThreshold(1e-100);
-                    if (lu_factor.rank() < block_size) {
-                        throw SparseMatrixError{};
-                    }
+                    // set threshold to machine precision
                     // record block permutation
-                    block_perm_array[pivot_row_col] = {lu_factor.permutationP(), lu_factor.permutationQ()};
+                    LUFactor::factorize_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
+                                                 perturb_threshold, use_pivot_perturbation, has_pivot_perturbation_);
                     return block_perm_array[pivot_row_col];
                 } else {
+                    if (use_pivot_perturbation) {
+                        // set threshold to machine precision
+                        // record pivot perturbation
+                        perturb_pivot(lu_matrix[pivot_idx], perturb_threshold, has_pivot_perturbation_);
+                    }
                     if (!is_normal(lu_matrix[pivot_idx])) {
                         throw SparseMatrixError{};
                     }
@@ -320,6 +387,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // iterate column position for the pivot
             ++col_position_idx[pivot_row_col];
         }
+        // if no pivot perturbation needed, reset cache
+        if (!has_pivot_perturbation_) {
+            reset_matrix_cache();
+        }
     }
 
   private:
@@ -328,6 +399,210 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::shared_ptr<IdxVector const> row_indptr_;
     std::shared_ptr<IdxVector const> col_indices_;
     std::shared_ptr<IdxVector const> diag_lu_;
+    // cache value for pivot perturbation for the factorize step
+    bool has_pivot_perturbation_{false};
+    double matrix_norm_{};
+    std::optional<std::vector<Tensor>> original_matrix_;
+    // cache value for iterative refinement for the solve step
+    std::optional<std::vector<XVector>> dx_;
+    std::optional<std::vector<RHSVector>> residual_;
+    std::optional<std::vector<RHSVector>> rhs_;
+
+    void solve_with_refinement(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+                               BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
+                               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+        // initialize refinement
+        initialize_refinement(rhs, x);
+        double backward_error{10.0};
+        solve(data, block_perm_array, rhs_.value(), x);
+        Idx num_iter{};
+        // iterate until convergence
+        while (backward_error > epsilon_perturbation) {
+            if (num_iter++ == max_iterative_refinement) {
+                throw SparseMatrixError{};
+            }
+            // calculate residual
+            calculate_residual(x);
+            // solve with residual
+            solve(data, block_perm_array, residual_.value(), dx_.value());
+            // calculate backward error and then iterate x
+            backward_error = iterate_and_backward_error(x);
+        }
+        // reset refinement cache
+        reset_refinement_cache();
+    }
+
+    void reset_refinement_cache() {
+        dx_.reset();
+        residual_.reset();
+        rhs_.reset();
+    }
+
+    void initialize_refinement(std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+        // save a copy of rhs
+        rhs_ = rhs;
+        // initialize x to zero
+        for (Idx row = 0; row != size_; ++row) {
+            x[row] = XVector{};
+        }
+        // initialize residual to rhs
+        // because r = b - A * x = b - 0 = b
+        residual_ = rhs_;
+        // initialize dx to zero
+        // pre-allocate memory
+        dx_ = x;
+    }
+
+    void calculate_residual(std::vector<XVector> const& x) {
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        auto const& original_matrix = original_matrix_.value();
+        auto const& rhs = rhs_.value();
+        auto& residual = residual_.value();
+        // calculate residual
+        for (Idx row = 0; row != size_; ++row) {
+            residual[row] = rhs[row];
+            // loop all columns
+            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+                // subtract
+                residual[row] -= dot(original_matrix[idx], x[col_indices[idx]]);
+            }
+        }
+    }
+
+    double iterate_and_backward_error(std::vector<XVector>& x) {
+        double backward_error_max_demoniator = 0.0;
+        double backward_error_max_numerator = 0.0;
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        auto const& original_matrix = original_matrix_.value();
+        auto const& rhs = rhs_.value();
+        auto const& residual = residual_.value();
+        auto const& dx = dx_.value();
+        using RealValueType = std::conditional_t<is_block, Eigen::Array<double, block_size, 1>, double>;
+        // calculate backward error and then iterate x
+        for (Idx row = 0; row != size_; ++row) {
+            // error denominator by |rhs|
+            RealValueType denominator = cabs(rhs[row]);
+            // then append |A| * |x|
+            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+                denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
+            }
+            RealValueType const numerator = cabs(residual[row]);
+            backward_error_max_demoniator = std::max(backward_error_max_demoniator, max_val(denominator));
+            backward_error_max_numerator = std::max(backward_error_max_numerator, max_val(numerator));
+            // iterate x
+            x[row] += dx[row];
+        }
+        // then |r|_max / (|rhs| + |A| * |x|)_max
+        return backward_error_max_numerator / backward_error_max_demoniator;
+    }
+
+    void initialize_pivot_perturbation(std::vector<Tensor> const& data) {
+        // save a copy of original matrix
+        original_matrix_ = data;
+        // calculate the block-wise non-diagonal infinite norm of the matrix
+        // that is:
+        // 1. calculate the infinite norm of each individual block
+        // 2. sum all norms of the blocks per row, except the diagonal block
+        // 3. take the maximum of all the sums
+        matrix_norm_ = 0.0;
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        for (Idx row = 0; row != size_; ++row) {
+            // calculate the sum of the norms of the blocks in the row
+            double row_norm = 0.0;
+            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+                // skip diagonal
+                if (col_indices[idx] == row) {
+                    continue;
+                }
+                if constexpr (is_block) {
+                    row_norm += cabs(data[idx]).rowwise().sum().maxCoeff();
+                } else {
+                    row_norm += cabs(data[idx]);
+                }
+            }
+            matrix_norm_ = std::max(matrix_norm_, row_norm);
+        }
+    }
+
+    void reset_matrix_cache() {
+        has_pivot_perturbation_ = false;
+        matrix_norm_ = 0.0;
+        original_matrix_.reset();
+    }
+
+    void solve(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+               BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
+               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+        // local reference
+        auto const& row_indptr = *row_indptr_;
+        auto const& col_indices = *col_indices_;
+        auto const& diag_lu = *diag_lu_;
+        auto const& lu_matrix = data;
+
+        // forward substitution with L
+        for (Idx row = 0; row != size_; ++row) {
+            // permutation if needed
+            if constexpr (is_block) {
+                x[row] = (block_perm_array[row].p * rhs[row].matrix()).array();
+            } else {
+                x[row] = rhs[row];
+            }
+
+            // loop all columns until diagonal
+            for (Idx l_idx = row_indptr[row]; l_idx < diag_lu[row]; ++l_idx) {
+                Idx const col = col_indices[l_idx];
+                // never overshoot
+                assert(col < row);
+                // forward subtract
+                x[row] -= dot(lu_matrix[l_idx], x[col]);
+            }
+            // forward substitution inside block, for block matrix
+            if constexpr (is_block) {
+                XVector& xb = x[row];
+                Tensor const& pivot = lu_matrix[diag_lu[row]];
+                for (Idx br = 0; br < block_size; ++br) {
+                    for (Idx bc = 0; bc < br; ++bc) {
+                        xb(br) -= pivot(br, bc) * xb(bc);
+                    }
+                }
+            }
+        }
+
+        // backward substitution with U
+        for (Idx row = size_ - 1; row != -1; --row) {
+            // loop all columns from diagonal
+            for (Idx u_idx = row_indptr[row + 1] - 1; u_idx > diag_lu[row]; --u_idx) {
+                Idx const col = col_indices[u_idx];
+                // always in upper diagonal
+                assert(col > row);
+                // backward subtract
+                x[row] -= dot(lu_matrix[u_idx], x[col]);
+            }
+            // solve the diagonal pivot
+            if constexpr (is_block) {
+                // backward substitution inside block
+                XVector& xb = x[row];
+                Tensor const& pivot = lu_matrix[diag_lu[row]];
+                for (Idx br = block_size - 1; br != -1; --br) {
+                    for (Idx bc = block_size - 1; bc > br; --bc) {
+                        xb(br) -= pivot(br, bc) * xb(bc);
+                    }
+                    xb(br) = xb(br) / pivot(br, br);
+                }
+            } else {
+                x[row] = x[row] / lu_matrix[diag_lu[row]];
+            }
+        }
+        // restore permutation for block matrix
+        if constexpr (is_block) {
+            for (Idx row = 0; row != size_; ++row) {
+                x[row] = (block_perm_array[row].q * x[row].matrix()).array();
+            }
+        }
+    }
 };
 
 } // namespace power_grid_model::math_solver

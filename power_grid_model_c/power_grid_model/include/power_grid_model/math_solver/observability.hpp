@@ -34,14 +34,16 @@ std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues
 // for upper triangle part, it will be one if there is branch flow sensor and the branch is fully connected
 template <symmetry_tag sym>
 std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
-                                       YBusStructure const& y_bus_structure) {
+                                       YBusStructure const& y_bus_structure, bool& possibly_ill_conditioned) {
     Idx const n_bus{topo.n_bus()};
     std::vector<int8_t> flow_sensors(y_bus_structure.row_indptr.back(), 0); // initialize all to zero
     for (Idx row = 0; row != n_bus; ++row) {
+        bool has_at_least_one_sensor{false};
         // lower triangle is ignored and kept as zero
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
             flow_sensors[y_bus_structure.bus_entry[row]] = 1;
+            has_at_least_one_sensor = true;
         }
         // upper triangle for branch flow measurement
         for (Idx ybus_index = y_bus_structure.bus_entry[row] + 1; ybus_index != y_bus_structure.row_indptr[row + 1];
@@ -57,11 +59,18 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
                     if ((measured_values.has_branch_from(branch) || measured_values.has_branch_to(branch)) &&
                         topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1) {
                         flow_sensors[ybus_index] = 1;
+                        has_at_least_one_sensor = true;
                         break;
                     }
                 }
             }
         }
+        // check voltage sensor
+        if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
+            has_at_least_one_sensor = true;
+        }
+        // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
+        possibly_ill_conditioned = possibly_ill_conditioned || (!has_at_least_one_sensor && row != n_bus - 1);
     }
     return flow_sensors;
 }
@@ -103,17 +112,26 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
 
 } // namespace detail
 
+struct ObservabilityResult {
+    bool is_sufficiently_observable{false};
+    bool is_possibly_ill_conditioned{false};
+    bool use_perturbation() const { return is_possibly_ill_conditioned && is_sufficiently_observable; }
+};
+
 template <symmetry_tag sym>
-inline void necessary_observability_check(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
-                                          YBusStructure const& y_bus_structure) {
+inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> const& measured_values,
+                                                         MathModelTopology const& topo,
+                                                         YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
+    ObservabilityResult result{};
 
     auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
     if (n_voltage_sensor < 1) {
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    std::vector<int8_t> flow_sensors = detail::count_flow_sensors(measured_values, topo, y_bus_structure);
+    std::vector<int8_t> flow_sensors =
+        detail::count_flow_sensors(measured_values, topo, y_bus_structure, result.is_possibly_ill_conditioned);
     // count flow sensors, note we manually specify the intial value type to avoid overflow
     Idx const n_flow_sensor = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
 
@@ -135,7 +153,10 @@ inline void necessary_observability_check(MeasuredValues<sym> const& measured_va
             throw NotObservableError{"The number of power sensors appears sufficient, but they are not independent "
                                      "enough. The system is still not observable.\n"};
         }
+        result.is_sufficiently_observable = true;
     }
+
+    return result;
 }
 
 } // namespace power_grid_model::math_solver
