@@ -444,6 +444,52 @@ struct TransformerTapRegulatorInput {
     operator RegulatorInput const&() const { return reinterpret_cast<RegulatorInput const&>(*this); }
 };
 
+struct GenericCurrentSensorInput {
+    ID id{na_IntID};  // ID of the object
+    ID measured_object{na_IntID};  // ID of the measured object
+    MeasuredTerminalType measured_terminal_type{static_cast<MeasuredTerminalType>(na_IntS)};  // type of measured terminal
+    AngleMeasurementType angle_measurement_type{static_cast<AngleMeasurementType>(na_IntS)};  // type of angle measurement
+    double i_sigma{nan};  // sigma of error margin of current (angle) measurement
+    double i_angle_sigma{nan};  // sigma of error margin of current (angle) measurement
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to SensorInput
+    operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
+    operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
+};
+
+template <symmetry_tag sym_type>
+struct CurrentSensorInput {
+    using sym = sym_type;
+
+    ID id{na_IntID};  // ID of the object
+    ID measured_object{na_IntID};  // ID of the measured object
+    MeasuredTerminalType measured_terminal_type{static_cast<MeasuredTerminalType>(na_IntS)};  // type of measured terminal
+    AngleMeasurementType angle_measurement_type{static_cast<AngleMeasurementType>(na_IntS)};  // type of angle measurement
+    double i_sigma{nan};  // sigma of error margin of current (angle) measurement
+    double i_angle_sigma{nan};  // sigma of error margin of current (angle) measurement
+    RealValue<sym> i_measured{nan};  // measured current and current angle
+    RealValue<sym> i_angle_measured{nan};  // measured current and current angle
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to SensorInput
+    operator SensorInput&() { return reinterpret_cast<SensorInput&>(*this); }
+    operator SensorInput const&() const { return reinterpret_cast<SensorInput const&>(*this); }
+
+    // implicit conversions to GenericCurrentSensorInput
+    operator GenericCurrentSensorInput&() { return reinterpret_cast<GenericCurrentSensorInput&>(*this); }
+    operator GenericCurrentSensorInput const&() const { return reinterpret_cast<GenericCurrentSensorInput const&>(*this); }
+};
+
+using SymCurrentSensorInput = CurrentSensorInput<symmetric_t>;
+using AsymCurrentSensorInput = CurrentSensorInput<asymmetric_t>;
+
 
 
 } // namespace power_grid_model

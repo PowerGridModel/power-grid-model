@@ -108,6 +108,21 @@ template <symmetry_tag sym_type> struct PowerSensorCalcParam {
     RealValue<sym> q_variance{}; // variance (sigma^2) of the error range of the reactive power, in p.u.
 };
 
+// current sensor calculation parameters for state estimation
+// The value is the complex current
+//   * for appliances, it is always in injection direction
+//   * for branches, the direction is node -> branch
+template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
+    using sym = sym_type;
+
+    static constexpr bool symmetric{is_symmetric_v<sym>};
+
+    AngleMeasurementType angle_measurement_type{};
+    ComplexValue<sym> value{};
+    double i_variance{};       // variance (sigma^2) of the error range of the current, in p.u.
+    double i_angle_variance{}; // variance (sigma^2) of the error range of the current angle, in p.u.
+};
+
 template <typename T>
 concept sensor_calc_param_type =
     std::derived_from<T, VoltageSensorCalcParam<symmetric_t>> ||

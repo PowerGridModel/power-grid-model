@@ -494,6 +494,45 @@
                     "description": "line drop compensation reactance"
                 }
             ]
+        },
+        {
+            "name": "GenericCurrentSensorInput",
+            "base": "SensorInput",
+            "attributes": [
+                {
+                    "data_type": "MeasuredTerminalType",
+                    "names": "measured_terminal_type",
+                    "description": "type of measured terminal"
+                },
+                {
+                    "data_type": "AngleMeasurementType",
+                    "names": "angle_measurement_type",
+                    "description": "type of angle measurement"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "i_sigma", 
+                        "i_angle_sigma"
+                    ],
+                    "description": "sigma of error margin of current (angle) measurement"
+                }
+            ]
+        },
+        {
+            "name": "CurrentSensorInput",
+            "base": "GenericCurrentSensorInput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "i_measured",
+                        "i_angle_measured"
+                    ],
+                    "description": "measured current and current angle"
+                }
+            ]
         }
     ]
 }

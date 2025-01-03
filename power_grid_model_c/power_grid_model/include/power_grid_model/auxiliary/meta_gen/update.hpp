@@ -197,6 +197,21 @@ struct get_attributes_list<TransformerTapRegulatorUpdate> {
     };
 };
 
+template <symmetry_tag sym_type>
+struct get_attributes_list<CurrentSensorUpdate<sym_type>> {
+    using sym = sym_type;
+
+    static constexpr std::array<MetaAttribute, 5> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&CurrentSensorUpdate<sym>::id>(offsetof(CurrentSensorUpdate<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorUpdate<sym>::i_sigma>(offsetof(CurrentSensorUpdate<sym>, i_sigma), "i_sigma"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorUpdate<sym>::i_angle_sigma>(offsetof(CurrentSensorUpdate<sym>, i_angle_sigma), "i_angle_sigma"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorUpdate<sym>::i_measured>(offsetof(CurrentSensorUpdate<sym>, i_measured), "i_measured"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorUpdate<sym>::i_angle_measured>(offsetof(CurrentSensorUpdate<sym>, i_angle_measured), "i_angle_measured"),
+    };
+};
+
 
 
 

@@ -295,6 +295,39 @@ static_assert(std::same_as<decltype(RegulatorShortCircuitOutput::energized), dec
 static_assert(offsetof(RegulatorShortCircuitOutput, id) == offsetof(BaseOutput, id));
 static_assert(offsetof(RegulatorShortCircuitOutput, energized) == offsetof(BaseOutput, energized));
 
+// static asserts for CurrentSensorOutput<symmetric_t>
+static_assert(std::is_standard_layout_v<CurrentSensorOutput<symmetric_t>>);
+// static asserts for conversion of CurrentSensorOutput<symmetric_t> to BaseOutput
+static_assert(std::alignment_of_v<CurrentSensorOutput<symmetric_t>> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(CurrentSensorOutput<symmetric_t>::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(CurrentSensorOutput<symmetric_t>::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(CurrentSensorOutput<symmetric_t>, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(CurrentSensorOutput<symmetric_t>, energized) == offsetof(BaseOutput, energized));
+// static asserts for CurrentSensorOutput<asymmetric_t>
+static_assert(std::is_standard_layout_v<CurrentSensorOutput<asymmetric_t>>);
+// static asserts for conversion of CurrentSensorOutput<asymmetric_t> to BaseOutput
+static_assert(std::alignment_of_v<CurrentSensorOutput<asymmetric_t>> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(CurrentSensorOutput<asymmetric_t>::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(CurrentSensorOutput<asymmetric_t>::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(CurrentSensorOutput<asymmetric_t>, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(CurrentSensorOutput<asymmetric_t>, energized) == offsetof(BaseOutput, energized));
+// static asserts for SymCurrentSensorOutput
+static_assert(std::is_standard_layout_v<SymCurrentSensorOutput>);
+// static asserts for conversion of SymCurrentSensorOutput to BaseOutput
+static_assert(std::alignment_of_v<SymCurrentSensorOutput> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(SymCurrentSensorOutput::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(SymCurrentSensorOutput::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(SymCurrentSensorOutput, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(SymCurrentSensorOutput, energized) == offsetof(BaseOutput, energized));
+// static asserts for AsymCurrentSensorOutput
+static_assert(std::is_standard_layout_v<AsymCurrentSensorOutput>);
+// static asserts for conversion of AsymCurrentSensorOutput to BaseOutput
+static_assert(std::alignment_of_v<AsymCurrentSensorOutput> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(AsymCurrentSensorOutput::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(AsymCurrentSensorOutput::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(AsymCurrentSensorOutput, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(AsymCurrentSensorOutput, energized) == offsetof(BaseOutput, energized));
+
 
 
 } // namespace power_grid_model::test

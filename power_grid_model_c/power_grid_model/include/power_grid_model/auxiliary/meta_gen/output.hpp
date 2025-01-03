@@ -247,6 +247,20 @@ struct get_attributes_list<RegulatorShortCircuitOutput> {
     };
 };
 
+template <symmetry_tag sym_type>
+struct get_attributes_list<CurrentSensorOutput<sym_type>> {
+    using sym = sym_type;
+
+    static constexpr std::array<MetaAttribute, 4> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&CurrentSensorOutput<sym>::id>(offsetof(CurrentSensorOutput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorOutput<sym>::energized>(offsetof(CurrentSensorOutput<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorOutput<sym>::i_residual>(offsetof(CurrentSensorOutput<sym>, i_residual), "i_residual"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorOutput<sym>::i_angle_residual>(offsetof(CurrentSensorOutput<sym>, i_angle_residual), "i_angle_residual"),
+    };
+};
+
 
 
 

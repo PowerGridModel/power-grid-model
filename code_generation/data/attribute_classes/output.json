@@ -293,6 +293,21 @@
             "base": "BaseOutput",
             "is_template": false,
             "attributes": []
+        },
+        {
+            "name": "CurrentSensorOutput",
+            "base": "BaseOutput",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "i_residual",
+                        "i_angle_residual"
+                    ],
+                    "description": "deviation between the measured value and calculated value"
+                }
+            ]
         }
     ]
 }
