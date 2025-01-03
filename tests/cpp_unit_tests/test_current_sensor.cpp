@@ -68,8 +68,8 @@ TEST_CASE("Test current sensor") {
             CHECK(is_nan(sym_sensor_output.i_angle_residual));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.i_variance[0] == doctest::Approx(0.0));
-            CHECK(asym_sensor_param.i_angle_variance[1] == doctest::Approx(0.0));
+            CHECK(asym_sensor_param.i_variance == doctest::Approx(0.0));
+            CHECK(asym_sensor_param.i_angle_variance == doctest::Approx(0.0));
             CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(0.0));
             CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(0.0));
 
