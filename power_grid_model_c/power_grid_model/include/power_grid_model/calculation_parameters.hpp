@@ -117,6 +117,7 @@ template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
 
     static constexpr bool symmetric{is_symmetric_v<sym>};
 
+    AngleMeasurementType angle_measurement_type{};
     ComplexValue<sym> value{};
     double i_variance{};       // variance (sigma^2) of the error range of the current, in p.u.
     double i_angle_variance{}; // variance (sigma^2) of the error range of the current angle, in p.u.

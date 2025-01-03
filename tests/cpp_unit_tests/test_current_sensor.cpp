@@ -57,6 +57,7 @@ TEST_CASE("Test current sensor") {
                 sym_current_sensor.get_output<asymmetric_t>(i_asym);
 
             // Check symmetric sensor output for symmetric parameters
+            CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::local);
             CHECK(sym_sensor_param.i_variance == doctest::Approx(0.0));
             CHECK(sym_sensor_param.i_angle_variance == doctest::Approx(0.0));
             CHECK(real(sym_sensor_param.value) == doctest::Approx(0.0));
