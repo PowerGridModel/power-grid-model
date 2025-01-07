@@ -9,6 +9,7 @@
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
+#include "../common/exception.hpp"
 
 namespace power_grid_model {
 
@@ -75,6 +76,17 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
           i_angle_measured_{current_sensor_input.i_angle_measured},
           i_angle_sigma_{current_sensor_input.i_angle_sigma} {
         set_current(current_sensor_input, u_rated);
+
+        switch (current_sensor_input.measured_terminal_type) {
+        case MeasuredTerminalType::branch_from:
+        case MeasuredTerminalType::branch_to:
+        case MeasuredTerminalType::branch3_1:
+        case MeasuredTerminalType::branch3_2:
+        case MeasuredTerminalType::branch3_3:
+            break;
+        default:
+            throw InvalidMeasuredTerminalType{current_sensor_input.measured_terminal_type, "Current sensor"};
+        }
     };
 
     UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data, double const& u_rated) {
