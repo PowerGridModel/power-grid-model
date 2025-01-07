@@ -152,6 +152,7 @@ TEST_CASE("Test current sensor") {
         constexpr auto i_sigma = 3.0;
         constexpr auto i_angle_sigma = 4.0;
         constexpr auto u_rated = 10.0e3;
+        MeasuredTerminalType const measured_terminal_type = MeasuredTerminalType::branch_from;
 
         CurrentSensorUpdate<asymmetric_t> cs_update{1, nan, nan, r_nan, r_nan};
         auto expected = cs_update;
@@ -207,20 +208,17 @@ TEST_CASE("Test current sensor") {
             expected.i_angle_measured = i_angle_measured;
         }
 
-        for (auto const measured_terminal_type :
-             {MeasuredTerminalType::branch_from, MeasuredTerminalType::generator, MeasuredTerminalType::load}) {
-            CurrentSensor<asymmetric_t> const current_sensor{{1, 1, measured_terminal_type, AngleMeasurementType::local,
-                                                              i_sigma, i_angle_sigma, i_measured, i_angle_measured},
-                                                             u_rated};
+        CurrentSensor<asymmetric_t> const current_sensor{{1, 1, measured_terminal_type, AngleMeasurementType::local,
+                                                          i_sigma, i_angle_sigma, i_measured, i_angle_measured},
+                                                         u_rated};
 
-            auto const inv = current_sensor.inverse(cs_update, u_rated);
+        auto const inv = current_sensor.inverse(cs_update, u_rated);
 
-            CHECK(inv.id == expected.id);
-            check_nan_preserving_equality(inv.i_sigma, expected.i_sigma);
-            check_nan_preserving_equality(inv.i_angle_sigma, expected.i_angle_sigma);
-            check_nan_preserving_equality(inv.i_measured, expected.i_measured);
-            check_nan_preserving_equality(inv.i_angle_measured, expected.i_angle_measured);
-        }
+        CHECK(inv.id == expected.id);
+        check_nan_preserving_equality(inv.i_sigma, expected.i_sigma);
+        check_nan_preserving_equality(inv.i_angle_sigma, expected.i_angle_sigma);
+        check_nan_preserving_equality(inv.i_measured, expected.i_measured);
+        check_nan_preserving_equality(inv.i_angle_measured, expected.i_angle_measured);
     }
 }
 

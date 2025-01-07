@@ -47,15 +47,6 @@ class GenericCurrentSensor : public Sensor {
         }
     }
 
-  protected:
-    double convert_direction() const {
-        if (terminal_type_ == MeasuredTerminalType::load || terminal_type_ == MeasuredTerminalType::shunt) {
-            return -1.0; // For shunt and load the direction in the math model is opposite to the direction in the
-                         // physical model
-        }
-        return 1.0;
-    }
-
   private:
     MeasuredTerminalType terminal_type_;
     AngleMeasurementType angle_measurement_type_;
@@ -88,7 +79,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
 
     UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data, double const& u_rated) {
         double const base_current = base_power_3p * inv_sqrt3 / u_rated;
-        double const scalar = convert_direction() / base_current;
+        double const scalar = 1.0 / base_current;
 
         if (!is_nan(update_data.i_sigma)) {
             i_sigma_ = update_data.i_sigma / base_current;
@@ -106,11 +97,10 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
         double const base_current = base_power_3p * inv_sqrt3 / u_rated;
-        double const scalar = convert_direction() * base_current;
 
         set_if_not_nan(update_data.i_sigma, i_sigma_ * base_current);
         set_if_not_nan(update_data.i_angle_sigma, i_angle_sigma_);
-        set_if_not_nan(update_data.i_measured, i_measured_ * scalar);
+        set_if_not_nan(update_data.i_measured, i_measured_ * base_current);
         set_if_not_nan(update_data.i_angle_measured, i_angle_measured_);
 
         return update_data;
@@ -124,7 +114,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
 
     void set_current(CurrentSensorInput<current_sensor_symmetry> const& input, double const& u_rated) {
         double const base_current = base_power_3p * inv_sqrt3 / u_rated;
-        double const scalar = convert_direction() / base_current;
+        double const scalar = 1.0 / base_current;
         i_sigma_ = input.i_sigma / base_current;
         i_measured_ = input.i_measured * scalar;
     }
