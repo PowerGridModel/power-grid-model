@@ -79,11 +79,12 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         set_current(current_sensor_input);
 
         switch (current_sensor_input.measured_terminal_type) {
-        case MeasuredTerminalType::branch_from:
-        case MeasuredTerminalType::branch_to:
-        case MeasuredTerminalType::branch3_1:
-        case MeasuredTerminalType::branch3_2:
-        case MeasuredTerminalType::branch3_3:
+            using enum MeasuredTerminalType;
+        case branch_from:
+        case branch_to:
+        case branch3_1:
+        case branch3_2:
+        case branch3_3:
             break;
         default:
             throw InvalidMeasuredTerminalType{current_sensor_input.measured_terminal_type, "Current sensor"};
