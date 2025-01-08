@@ -95,7 +95,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         double const scalar = 1.0 / base_current_;
 
         if (!is_nan(update_data.i_sigma)) {
-            i_sigma_ = update_data.i_sigma / base_current_;
+            i_sigma_ = update_data.i_sigma * scalar;
         }
         if (!is_nan(update_data.i_angle_sigma)) {
             i_angle_sigma_ = update_data.i_angle_sigma;
