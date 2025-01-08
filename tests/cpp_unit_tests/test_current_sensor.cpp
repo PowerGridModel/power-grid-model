@@ -148,7 +148,7 @@ TEST_CASE("Test current sensor") {
             expected.i_angle_measured = i_angle_measured;
         }
 
-        auto const inv = current_sensor.inverse(cs_update, u_rated);
+        auto const inv = current_sensor.inverse(cs_update);
 
         CHECK(inv.id == expected.id);
         check_nan_preserving_equality(inv.i_sigma, expected.i_sigma);
@@ -223,7 +223,7 @@ TEST_CASE("Test current sensor") {
                                                           i_sigma, i_angle_sigma, i_measured, i_angle_measured},
                                                          u_rated};
 
-        auto const inv = current_sensor.inverse(cs_update, u_rated);
+        auto const inv = current_sensor.inverse(cs_update);
 
         CHECK(inv.id == expected.id);
         check_nan_preserving_equality(inv.i_sigma, expected.i_sigma);

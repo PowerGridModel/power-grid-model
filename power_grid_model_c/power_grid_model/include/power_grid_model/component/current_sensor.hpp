@@ -74,8 +74,9 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     explicit CurrentSensor(CurrentSensorInput<current_sensor_symmetry> const& current_sensor_input, double u_rated)
         : GenericCurrentSensor{current_sensor_input},
           i_angle_measured_{current_sensor_input.i_angle_measured},
-          i_angle_sigma_{current_sensor_input.i_angle_sigma} {
-        set_current(current_sensor_input, u_rated);
+          i_angle_sigma_{current_sensor_input.i_angle_sigma},
+          base_current_{base_power_3p * inv_sqrt3 / u_rated} {
+        set_current(current_sensor_input);
 
         switch (current_sensor_input.measured_terminal_type) {
         case MeasuredTerminalType::branch_from:
@@ -89,12 +90,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         }
     };
 
-    UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data, double const& u_rated) {
-        double const base_current = base_power_3p * inv_sqrt3 / u_rated;
-        double const scalar = 1.0 / base_current;
+    UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data) {
+        double const scalar = 1.0 / base_current_;
 
         if (!is_nan(update_data.i_sigma)) {
-            i_sigma_ = update_data.i_sigma / base_current;
+            i_sigma_ = update_data.i_sigma / base_current_;
         }
         if (!is_nan(update_data.i_angle_sigma)) {
             i_angle_sigma_ = update_data.i_angle_sigma;
@@ -104,15 +104,13 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         return {false, false};
     }
 
-    CurrentSensorUpdate<current_sensor_symmetry> inverse(CurrentSensorUpdate<current_sensor_symmetry> update_data,
-                                                         double const& u_rated) const {
+    CurrentSensorUpdate<current_sensor_symmetry>
+    inverse(CurrentSensorUpdate<current_sensor_symmetry> update_data) const {
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
-        double const base_current = base_power_3p * inv_sqrt3 / u_rated;
-
-        set_if_not_nan(update_data.i_sigma, i_sigma_ * base_current);
+        set_if_not_nan(update_data.i_sigma, i_sigma_ * base_current_);
         set_if_not_nan(update_data.i_angle_sigma, i_angle_sigma_);
-        set_if_not_nan(update_data.i_measured, i_measured_ * base_current);
+        set_if_not_nan(update_data.i_measured, i_measured_ * base_current_);
         set_if_not_nan(update_data.i_angle_measured, i_angle_measured_);
 
         return update_data;
@@ -123,12 +121,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     RealValue<current_sensor_symmetry> i_angle_measured_{};
     double i_sigma_{};
     double i_angle_sigma_{};
+    double base_current_{};
 
-    void set_current(CurrentSensorInput<current_sensor_symmetry> const& input, double const& u_rated) {
-        double const base_current = base_power_3p * inv_sqrt3 / u_rated;
-        double const scalar = 1.0 / base_current;
-        i_sigma_ = input.i_sigma / base_current;
-        i_measured_ = input.i_measured * scalar;
+    void set_current(CurrentSensorInput<current_sensor_symmetry> const& input) {
+        i_sigma_ = input.i_sigma / base_current_;
+        i_measured_ = input.i_measured / base_current_;
     }
 
     // TODO when filling the functions below take in mind that i_angle_sigma is optional
