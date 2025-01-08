@@ -83,15 +83,14 @@ TEST_CASE("Test current sensor") {
             CHECK(sym_current_sensor.get_terminal_type() == terminal_type);
 
             CHECK(sym_current_sensor.get_angle_measurement_type() == AngleMeasurementType::local);
-
-            SUBCASE("Wrong measured terminal type") {
-                for (auto const terminal_type :
-                     {MeasuredTerminalType::source, MeasuredTerminalType::shunt, MeasuredTerminalType::load,
-                      MeasuredTerminalType::generator, MeasuredTerminalType::node}) {
-                    CHECK_THROWS_AS((CurrentSensor<symmetric_t>{
-                                        {1, 1, terminal_type, AngleMeasurementType::local, 1.0, 1.0, 1.0, 1.0}, 1.0}),
-                                    InvalidMeasuredTerminalType);
-                }
+        }
+        SUBCASE("Wrong measured terminal type") {
+            for (auto const terminal_type :
+                 {MeasuredTerminalType::source, MeasuredTerminalType::shunt, MeasuredTerminalType::load,
+                  MeasuredTerminalType::generator, MeasuredTerminalType::node}) {
+                CHECK_THROWS_AS((CurrentSensor<symmetric_t>{
+                                    {1, 1, terminal_type, AngleMeasurementType::local, 1.0, 1.0, 1.0, 1.0}, 1.0}),
+                                InvalidMeasuredTerminalType);
             }
         }
     }
