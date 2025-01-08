@@ -75,7 +75,8 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         : GenericCurrentSensor{current_sensor_input},
           i_angle_measured_{current_sensor_input.i_angle_measured},
           i_angle_sigma_{current_sensor_input.i_angle_sigma},
-          base_current_{base_power_3p * inv_sqrt3 / u_rated} {
+          base_current_{base_power_3p * inv_sqrt3 / u_rated},
+          base_current_inv_{1.0 / base_current_} {
         set_current(current_sensor_input);
 
         switch (current_sensor_input.measured_terminal_type) {
@@ -92,15 +93,13 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     };
 
     UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data) {
-        double const scalar = 1.0 / base_current_;
-
         if (!is_nan(update_data.i_sigma)) {
-            i_sigma_ = update_data.i_sigma * scalar;
+            i_sigma_ = update_data.i_sigma * base_current_inv_;
         }
         if (!is_nan(update_data.i_angle_sigma)) {
             i_angle_sigma_ = update_data.i_angle_sigma;
         }
-        update_real_value<current_sensor_symmetry>(update_data.i_measured, i_measured_, scalar);
+        update_real_value<current_sensor_symmetry>(update_data.i_measured, i_measured_, base_current_inv_);
         update_real_value<current_sensor_symmetry>(update_data.i_angle_measured, i_angle_measured_, 1.0);
         return {false, false};
     }
@@ -123,10 +122,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     double i_sigma_{};
     double i_angle_sigma_{};
     double base_current_{};
+    double base_current_inv_{};
 
     void set_current(CurrentSensorInput<current_sensor_symmetry> const& input) {
-        i_sigma_ = input.i_sigma / base_current_;
-        i_measured_ = input.i_measured / base_current_;
+        i_sigma_ = input.i_sigma * base_current_inv_;
+        i_measured_ = input.i_measured * base_current_inv_;
     }
 
     // TODO when filling the functions below take in mind that i_angle_sigma is optional
