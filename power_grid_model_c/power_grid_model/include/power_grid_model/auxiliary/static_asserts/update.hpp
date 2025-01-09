@@ -221,6 +221,31 @@ static_assert(std::same_as<decltype(TransformerTapRegulatorUpdate::status), decl
 static_assert(offsetof(TransformerTapRegulatorUpdate, id) == offsetof(RegulatorUpdate, id));
 static_assert(offsetof(TransformerTapRegulatorUpdate, status) == offsetof(RegulatorUpdate, status));
 
+// static asserts for CurrentSensorUpdate<symmetric_t>
+static_assert(std::is_standard_layout_v<CurrentSensorUpdate<symmetric_t>>);
+// static asserts for conversion of CurrentSensorUpdate<symmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<CurrentSensorUpdate<symmetric_t>> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(CurrentSensorUpdate<symmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(CurrentSensorUpdate<symmetric_t>, id) == offsetof(BaseUpdate, id));
+// static asserts for CurrentSensorUpdate<asymmetric_t>
+static_assert(std::is_standard_layout_v<CurrentSensorUpdate<asymmetric_t>>);
+// static asserts for conversion of CurrentSensorUpdate<asymmetric_t> to BaseUpdate
+static_assert(std::alignment_of_v<CurrentSensorUpdate<asymmetric_t>> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(CurrentSensorUpdate<asymmetric_t>::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(CurrentSensorUpdate<asymmetric_t>, id) == offsetof(BaseUpdate, id));
+// static asserts for SymCurrentSensorUpdate
+static_assert(std::is_standard_layout_v<SymCurrentSensorUpdate>);
+// static asserts for conversion of SymCurrentSensorUpdate to BaseUpdate
+static_assert(std::alignment_of_v<SymCurrentSensorUpdate> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(SymCurrentSensorUpdate::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(SymCurrentSensorUpdate, id) == offsetof(BaseUpdate, id));
+// static asserts for AsymCurrentSensorUpdate
+static_assert(std::is_standard_layout_v<AsymCurrentSensorUpdate>);
+// static asserts for conversion of AsymCurrentSensorUpdate to BaseUpdate
+static_assert(std::alignment_of_v<AsymCurrentSensorUpdate> >= std::alignment_of_v<BaseUpdate>);
+static_assert(std::same_as<decltype(AsymCurrentSensorUpdate::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(AsymCurrentSensorUpdate, id) == offsetof(BaseUpdate, id));
+
 
 
 } // namespace power_grid_model::test
