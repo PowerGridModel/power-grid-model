@@ -52,6 +52,7 @@ doc = [
     "numpydoc",
     "pandas",
     "gitpython",
+    "pylint",
 ]
 
 [project.urls]
