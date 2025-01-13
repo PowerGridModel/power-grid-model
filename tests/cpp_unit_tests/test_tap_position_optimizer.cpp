@@ -184,7 +184,7 @@ TEST_CASE("Test Transformer ranking") {
         CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 2, 1, 4, 5)));
     }
 
-    SUBCASE("Full grid 1") {
+    SUBCASE("Full grid 1 - For graph construction steps") {
         // =====Test Grid=====
         // ________[0]________
         // ||           |    |
@@ -330,7 +330,7 @@ TEST_CASE("Test Transformer ranking") {
     }
 
     // The test grid 2 is compatible with the updated logic for step up transformers
-    SUBCASE("Full grid 2") {
+    SUBCASE("Full grid 2 - For transformer ranking only") {
         // =====Test Grid=====
         // ________[0]________
         // ||           |    |
