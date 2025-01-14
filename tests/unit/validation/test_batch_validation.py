@@ -180,6 +180,7 @@ def test_validate_batch_data_transformer_tap_nom():
     assert result is not None
     assert len(result) == test_update_data[ComponentType.sym_load].shape[0]
     assert len(result[0]) == test_input_data[ComponentType.transformer].shape[0]
+    assert len(result[1]) == test_input_data[ComponentType.transformer].shape[0]
 
     error = NotBetweenOrAtError(ComponentType.transformer, "tap_nom", [3], ("tap_min", "tap_max"))
     assert result == {0: [error], 1: [error]}
