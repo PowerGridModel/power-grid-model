@@ -163,6 +163,14 @@ class InvalidMeasuredObject : public PowerGridError {
     }
 };
 
+class InvalidMeasuredTerminalType : public PowerGridError {
+  public:
+    InvalidMeasuredTerminalType(MeasuredTerminalType const terminal_type, std::string const& sensor) {
+        append_msg(sensor + " measurement is not supported for object of type " +
+                   detail::to_string(static_cast<IntS>(terminal_type)));
+    }
+};
+
 class InvalidRegulatedObject : public PowerGridError {
   public:
     InvalidRegulatedObject(std::string const& object, std::string const& regulator) {
