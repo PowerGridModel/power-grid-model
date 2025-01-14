@@ -35,7 +35,8 @@ inline double perturb_pivot(Scalar& value, double perturb_threshold, bool& has_p
 // Dense LU factorization class
 // The implementation of the Dense LU factorization was derived from the Eigen library
 // https://gitlab.com/libeigen/eigen/-/blob/3.4/Eigen/src/LU/FullPivLU.h
-// The original license remains: MPL-2.0 
+// Copyright (C) 2006-2009 Benoit Jacob <jacob.benoit.1@gmail.com>
+// The original license remains: MPL-2.0
 // We modified the implementation to add the pivot perturbation
 template <rk2_tensor Matrix> class DenseLUFactor {
   public:
