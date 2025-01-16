@@ -57,8 +57,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     // put permutation in block_perm in place
     // put pivot perturbation in has_pivot_perturbation in place
     template <class Derived>
-    static void factorize_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm, double perturb_threshold,
-                                   bool use_pivot_perturbation, bool& has_pivot_perturbation)
+    static void factorize_block_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm,
+                                         double perturb_threshold, bool use_pivot_perturbation,
+                                         bool& has_pivot_perturbation)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
     {
@@ -80,7 +81,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
             // check absolute singular matrix
             if (biggest_score == 0.0) {
-                // no pivot perturbation, cannot proceed
+                // pivot perturbation not possible, cannot proceed
                 // set identity permutation and break the loop
                 if (!use_pivot_perturbation) {
                     for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
@@ -89,7 +90,6 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                     }
                     break;
                 }
-                // perturbation used, continue
             }
 
             // perturb pivot if needed
@@ -133,7 +133,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
-                throw SparseMatrixError{};
+                throw SparseMatrixError{}; // can not specify error code
             }
         }
     }
@@ -225,7 +225,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         if (has_pivot_perturbation_) {
             solve_with_refinement(data, block_perm_array, rhs, x);
         } else {
-            solve(data, block_perm_array, rhs, x);
+            solve_once(data, block_perm_array, rhs, x);
         }
     }
 
@@ -264,8 +264,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 if constexpr (is_block) {
                     // set threshold to machine precision
                     // record block permutation
-                    LUFactor::factorize_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
-                                                 perturb_threshold, use_pivot_perturbation, has_pivot_perturbation_);
+                    LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
+                                                       perturb_threshold, use_pivot_perturbation,
+                                                       has_pivot_perturbation_);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (use_pivot_perturbation) {
@@ -419,7 +420,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // initialize refinement
         initialize_refinement(rhs, x);
         double backward_error{10.0};
-        solve(data, block_perm_array, rhs_.value(), x);
+        solve_once(data, block_perm_array, rhs_.value(), x);
         Idx num_iter{};
         // iterate until convergence
         while (backward_error > epsilon_perturbation) {
@@ -429,7 +430,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // calculate residual
             calculate_residual(x);
             // solve with residual
-            solve(data, block_perm_array, residual_.value(), dx_.value());
+            solve_once(data, block_perm_array, residual_.value(), dx_.value());
             // calculate backward error and then iterate x
             backward_error = iterate_and_backward_error(x);
         }
@@ -533,14 +534,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     void reset_matrix_cache() {
-        has_pivot_perturbation_ = false;
+        // has_pivot_perturbation_ is already false
         matrix_norm_ = 0.0;
         original_matrix_.reset();
     }
 
-    void solve(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
-               BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
-               std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+    void solve_once(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+                    BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
+                    std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
