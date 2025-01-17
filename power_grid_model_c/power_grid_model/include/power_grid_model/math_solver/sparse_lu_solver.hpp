@@ -534,7 +534,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     void reset_matrix_cache() {
-        // has_pivot_perturbation_ is already false
+        has_pivot_perturbation_ = false;
         matrix_norm_ = 0.0;
         original_matrix_.reset();
     }
