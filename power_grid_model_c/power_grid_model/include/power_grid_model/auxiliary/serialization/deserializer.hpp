@@ -775,6 +775,15 @@ class Deserializer {
         auto const reordered_attribute_buffers = detail::is_columnar_v<row_or_column_t>
                                                      ? detail::reordered_attribute_buffers(buffer, attributes)
                                                      : std::vector<AttributeBuffer<void>>{};
+        // for columnar buffer
+        // if there is no intersection between the attributes and the usered provied buffer
+        // skip the whole component for all scenarios and elements
+        if constexpr (std::same_as<row_or_column_t, detail::row_based_t>) {
+            if (info.has_attribute_indications && reordered_attribute_buffers.empty()) {
+                component_key_ = "";
+                return;
+            }
+        }
 
         BufferView const buffer_view{
             .buffer = &buffer, .idx = 0, .reordered_attribute_buffers = reordered_attribute_buffers};
