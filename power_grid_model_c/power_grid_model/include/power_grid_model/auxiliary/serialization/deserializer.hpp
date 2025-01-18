@@ -152,6 +152,14 @@ struct DefaultNullVisitor : msgpack::null_visitor {
     }
 };
 
+struct NullVisitorCheckMap : DefaultNullVisitor {
+    bool has_map{false};
+    bool start_map(uint32_t /*num_kv_pairs*/) {
+        has_map = true;
+        return true;
+    }
+};
+
 template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
     static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
 
