@@ -356,6 +356,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
 
 class Deserializer {
     using DefaultNullVisitor = detail::DefaultNullVisitor;
+    using NullVisitorCheckMap = detail::NullVisitorCheckMap;
     template <class map_array> using MapArrayVisitor = detail::MapArrayVisitor<map_array>;
     using StringVisitor = detail::StringVisitor;
     using BoolVisitor = detail::BoolVisitor;
@@ -371,6 +372,7 @@ class Deserializer {
         std::string_view component;
         Idx size;
         size_t offset;
+        bool has_map;
     };
     using DataByteMeta = std::vector<std::vector<ComponentByteMeta>>;
     using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;
@@ -497,6 +499,12 @@ class Deserializer {
     void parse_skip() {
         DefaultNullVisitor visitor{};
         msgpack::parse(data_, size_, offset_, visitor);
+    }
+
+    bool parse_skip_check_map() {
+        NullVisitorCheckMap visitor{};
+        msgpack::parse(data_, size_, offset_, visitor);
+        return visitor.has_map;
     }
 
     WritableDataset pre_parse() {
@@ -636,9 +644,9 @@ class Deserializer {
         while (n_components-- != 0) {
             component_key_ = parse_string();
             Idx const component_size = parse_map_array<visit_array_t, stay_offset>().size;
-            count_per_scenario.push_back({component_key_, component_size, offset_});
-            // skip all the real content
-            parse_skip();
+            // skip all the real content but check if it has map
+            bool const has_map = parse_skip_check_map();
+            count_per_scenario.push_back({component_key_, component_size, offset_, has_map});
         }
         component_key_ = {};
         return count_per_scenario;
