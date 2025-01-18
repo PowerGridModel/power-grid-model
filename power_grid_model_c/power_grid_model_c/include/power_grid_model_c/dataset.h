@@ -84,6 +84,46 @@ PGM_API PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_D
 PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx);
 
 /**
+ * @brief Return if a component has attribute indications.
+ *
+ * Attribute indications are used to indicate the presence of meaningful attributes for a certain component in the
+ * dataset.
+ *
+ * @param handle
+ * @param info A pointer to the info object.
+ * @param component_idx The index number of the component.
+ * @return 1 if the component has attribute indications, 0 if it does not.
+ */
+PGM_API PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                                           PGM_Idx component_idx);
+
+/**
+ * @brief Return the number of attribute indications for a component.s
+ *
+ * @param handle
+ * @param info A pointer to the info object.
+ * @param component_idx The index number of the component.
+ * @return The number of attribute indications for the component.
+ * It is UB if PGM_dataset_info_has_attribute_indications() returns zero.
+ */
+PGM_API PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                                         PGM_Idx component_idx);
+
+/**
+ * @brief Return the name of the i-th attribute indication for a component.
+ *
+ * @param handle
+ * @param info A pointer to the info object.
+ * @param component_idx The index number of the component.
+ * @param attribute_idx The index number of attribute indication.
+ * @return A pointer to the null-terminated string of the attribute indication.
+ * The pointer has the same lifetime as the input info pointer.
+ * It is UB if PGM_dataset_info_has_attribute_indications() returns zero, or if attribute_idx is out of bounds.
+ */
+PGM_API char const* PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                                             PGM_Idx component_idx, PGM_Idx attribute_idx);
+
+/**
  * @brief Create an instance of PGM_ConstDataset.
  * @param handle
  * @param dataset The name of the dataset.
