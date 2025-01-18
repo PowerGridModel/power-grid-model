@@ -120,7 +120,7 @@ PGM_API PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM
  * The pointer has the same lifetime as the input info pointer.
  * It is UB if PGM_dataset_info_has_attribute_indications() returns zero, or if attribute_idx is out of bounds.
  */
-PGM_API char const* PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
+PGM_API char const* PGM_dataset_info_name_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
                                                              PGM_Idx component_idx, PGM_Idx attribute_idx);
 
 /**
