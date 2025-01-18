@@ -699,11 +699,12 @@ class Deserializer {
             elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
                 elements_per_scenario * batch_size;                                     // multiply
         handler.add_component_info(component_key_, elements_per_scenario, total_elements);
-        msg_data_offsets_.push_back(component_byte_meta);
         // check if all scenarios does not have any map
-        // if yes, enable attribute indications
-        if (std::none_of(component_byte_meta.cbegin(), component_byte_meta.cend(),
-                         [](auto const& x) { return x.has_map; })) {
+        bool const has_attribute_indications = std::none_of(component_byte_meta.cbegin(), component_byte_meta.cend(),
+                                                            [](auto const& x) { return x.has_map; });
+        msg_data_offsets_.push_back(std::move(component_byte_meta));
+        // enable attribute indications if possible
+        if (has_attribute_indications) {
             handler.enable_atrribute_indications(component_key_);
         }
         component_key_ = {};
