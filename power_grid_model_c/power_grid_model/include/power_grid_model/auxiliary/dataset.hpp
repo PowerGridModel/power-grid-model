@@ -346,6 +346,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
         dataset_info_.component_info[idx].has_attribute_indications = true;
     }
 
+    void set_attribute_indications(std::string_view component, std::span<MetaAttribute const*> attribute_indications)
+        requires is_indptr_mutable_v<dataset_type>
+    {
+        Idx const idx = find_component(component, true);
+        dataset_info_.component_info[idx].attribute_indications = {attribute_indications.begin(),
+                                                                   attribute_indications.end()};
+    }
+
     void add_buffer(std::string_view component, std::integral auto elements_per_scenario_,
                     std::integral auto total_elements_, Indptr* indptr, Data* data)
         requires(!is_indptr_mutable_v<dataset_type>)

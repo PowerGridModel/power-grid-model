@@ -579,7 +579,7 @@ class Deserializer {
 
         WritableDataset handler{is_batch_, batch_size, dataset, *meta_data_};
         count_data(handler, data_counts);
-        parse_predefined_attributes(handler.dataset(), attributes);
+        parse_predefined_attributes(handler, attributes);
         return handler;
     }
 
@@ -600,8 +600,9 @@ class Deserializer {
         return attributes;
     }
 
-    void parse_predefined_attributes(MetaDataset const& dataset, AttributeByteMeta const& attributes) {
+    void parse_predefined_attributes(WritableDataset& handler, AttributeByteMeta const& attributes) {
         root_key_ = "attributes";
+        MetaDataset const& dataset = handler.dataset();
         for (auto const& single_component : attributes) {
             component_key_ = single_component.first;
             MetaComponent const* const component = &dataset.get_component(component_key_);
@@ -611,6 +612,10 @@ class Deserializer {
                 attributes_per_component.push_back(&component->get_attribute(single_component.second[element_number_]));
             }
             attributes_[component] = std::move(attributes_per_component);
+            // set attribute intidation if enabled
+            if (handler.get_component_info(component_key_).has_attribute_indications) {
+                handler.set_attribute_indications(component_key_, attributes_[component]);
+            }
             element_number_ = -1;
         }
         component_key_ = {};
