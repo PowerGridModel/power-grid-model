@@ -776,9 +776,10 @@ class Deserializer {
                                                      ? detail::reordered_attribute_buffers(buffer, attributes)
                                                      : std::vector<AttributeBuffer<void>>{};
         // for columnar buffer
-        // if there is no intersection between the attributes and the usered provied buffer
+        // if there is no intersection between the pre-defined attributes and the user provied buffer
+        // and the whole component does not have map
         // skip the whole component for all scenarios and elements
-        if constexpr (std::same_as<row_or_column_t, detail::row_based_t>) {
+        if constexpr (std::same_as<row_or_column_t, columnar_t>) {
             if (info.has_attribute_indications && reordered_attribute_buffers.empty()) {
                 component_key_ = "";
                 return;
@@ -815,6 +816,16 @@ class Deserializer {
         // skip for empty scenario
         if (msg_data.size == 0) {
             return;
+        }
+
+        // for columnar buffer
+        // if there is no intersection between the pre-defined attributes and the usered provied buffer
+        // and this scenario does not have map
+        // skip the whole component scenario for all elements
+        if constexpr (std::same_as<decltype(row_or_column_tag), columnar_t>) {
+            if (buffer_view.reordered_attribute_buffers.empty() && !msg_data.has_map) {
+                return;
+            }
         }
 
         // set offset and skip array header
