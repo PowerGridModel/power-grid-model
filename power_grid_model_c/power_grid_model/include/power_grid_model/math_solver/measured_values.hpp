@@ -499,10 +499,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     // process one object
     struct DefaultStatusChecker {
-        template<class T>
-        bool operator()(T x) const {
-            return x;
-        }
+        template <class T> bool operator()(T x) const { return x; }
     };
 
     static constexpr DefaultStatusChecker default_status_checker{};
