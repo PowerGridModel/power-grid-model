@@ -276,6 +276,9 @@
       ],
       "cacheVariables": {
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_odr_violation=0"
       }
     },
     {
