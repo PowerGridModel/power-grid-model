@@ -498,9 +498,16 @@ template <symmetry_tag sym> class MeasuredValues {
     }
 
     // process one object
-    static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
+    struct DefaultStatusChecker {
+        template<class T>
+        bool operator()(T x) const {
+            return x;
+        }
+    };
 
-    template <class TS, class StatusChecker = decltype(default_status_checker)>
+    static constexpr DefaultStatusChecker default_status_checker{};
+
+    template <class TS, class StatusChecker = DefaultStatusChecker>
     static Idx process_one_object(Idx const object, grouped_idx_vector_type auto const& sensors_per_object,
                                   std::vector<TS> const& object_status,
                                   std::vector<PowerSensorCalcParam<sym>> const& input_data,
