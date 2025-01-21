@@ -115,7 +115,7 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
 struct ObservabilityResult {
     bool is_sufficiently_observable{false};
     bool is_possibly_ill_conditioned{false};
-    bool use_perturbation() const { return is_possibly_ill_conditioned && is_sufficiently_observable; }
+    constexpr bool use_perturbation() const { return is_possibly_ill_conditioned && is_sufficiently_observable; }
 };
 
 template <symmetry_tag sym>
