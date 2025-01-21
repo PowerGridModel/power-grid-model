@@ -161,7 +161,7 @@ TEST_CASE("LU solver with ill-conditioned system") {
         }
 
         SUBCASE("Success with perturbation") {
-            solver.prefactorize(data, perm, true);
+            CHECK_NOTHROW(solver.prefactorize(data, perm, true));
             solver.solve_with_prefactorized_matrix(data, perm, rhs, x);
             check_result(x, x_ref);
         }
