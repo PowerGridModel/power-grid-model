@@ -129,11 +129,7 @@
         "CMAKE_C_CLANG_TIDY": "clang-tidy",
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy",
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
-      },
-      "environment": {
-        "ASAN_OPTIONS": "detect_odr_violation=0"
+        "CMAKE_CXX_COMPILER": "clang++"
       },
       "inherits": "unix-base",
       "hidden": true
