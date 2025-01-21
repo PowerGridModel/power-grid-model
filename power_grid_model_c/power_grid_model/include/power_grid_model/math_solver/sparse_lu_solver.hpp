@@ -19,17 +19,18 @@ constexpr double epsilon_perturbation = 1e-13; // perturbation threshold
 constexpr double epsilon_sqrt = 1.49011745e-8; // sqrt(epsilon), sqrt does not have constexpr
 
 // perturb pivot if needed
-// return updated abs value
+// pass the value and abs_value by reference
+// it will get modified if perturbation happens
+// also has_pivot_perturbation will be updated if perturbation happens
 template <scalar_value Scalar>
-inline double perturb_pivot(Scalar& value, double perturb_threshold, bool& has_pivot_perturbation) {
-    double const abs_value = cabs(value);
+inline void perturb_pivot_if_needed(double perturb_threshold, Scalar& value, double& abs_value,
+                                    bool& has_pivot_perturbation) {
     if (abs_value < perturb_threshold) {
         Scalar const scale = (abs_value == 0.0) ? Scalar{1.0} : (value / abs_value);
         value = scale * perturb_threshold;
         has_pivot_perturbation = true;
-        return perturb_threshold;
+        abs_value = perturb_threshold;
     }
-    return abs_value;
 }
 
 // Dense LU factorization class
@@ -95,9 +96,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             }
 
             // perturb pivot if needed
-            double const abs_pivot = use_pivot_perturbation ? perturb_pivot(matrix(row_biggest, col_biggest),
-                                                                            perturb_threshold, has_pivot_perturbation)
-                                                            : cabs(matrix(row_biggest, col_biggest));
+            double abs_pivot = sqrt(biggest_score);
+            perturb_pivot_if_needed(perturb_threshold, matrix(row_biggest, col_biggest), abs_pivot,
+                                    has_pivot_perturbation);
             max_pivot = std::max(max_pivot, abs_pivot);
 
             // swap rows and columns
@@ -274,7 +275,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     if (use_pivot_perturbation) {
                         // use machine precision by default
                         // record pivot perturbation
-                        perturb_pivot(lu_matrix[pivot_idx], perturb_threshold, has_pivot_perturbation_);
+                        double abs_pivot = cabs(lu_matrix[pivot_idx]);
+                        perturb_pivot_if_needed(perturb_threshold, lu_matrix[pivot_idx], abs_pivot,
+                                                has_pivot_perturbation_);
                     }
                     if (!is_normal(lu_matrix[pivot_idx])) {
                         throw SparseMatrixError{};
