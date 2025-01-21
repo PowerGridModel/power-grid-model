@@ -477,8 +477,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     double iterate_and_backward_error(std::vector<XVector>& x) {
-        double backward_error_max_demoniator = 0.0;
-        double backward_error_max_numerator = 0.0;
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
         auto const& original_matrix = original_matrix_.value();
@@ -486,7 +484,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         auto const& residual = residual_.value();
         auto const& dx = dx_.value();
         using RealValueType = std::conditional_t<is_block, Eigen::Array<double, block_size, 1>, double>;
-        // calculate backward error and then iterate x
+        std::vector<RealValueType> all_denominators(size_);
+        double max_denominator{};
+
+        // calculate denominator and get the max value
         for (Idx row = 0; row != size_; ++row) {
             // error denominator by |rhs|
             RealValueType denominator = cabs(rhs[row]);
@@ -494,14 +495,31 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
                 denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
             }
+            all_denominators[row] = denominator;
+            max_denominator = std::max(max_denominator, max_val(denominator));
+        }
+        // cap min denominator
+        double const min_denominator = epsilon_perturbation * max_denominator;
+
+        // calculate backward error and then iterate x
+        double max_berr{};
+        for (Idx row = 0; row != size_; ++row) {
             RealValueType const numerator = cabs(residual[row]);
-            backward_error_max_demoniator = std::max(backward_error_max_demoniator, max_val(denominator));
-            backward_error_max_numerator = std::max(backward_error_max_numerator, max_val(numerator));
+            // cap denominator to min_denominator
+            if constexpr (is_block) {
+                for (Idx br = 0; br != block_size; ++br) {
+                    all_denominators[row](br) = std::max(all_denominators[row](br), min_denominator);
+                }
+            } else {
+                all_denominators[row] = std::max(all_denominators[row], min_denominator);
+            }
+            // piecewise backward error and get max
+            RealValueType const berr = numerator / all_denominators[row];
+            max_berr = std::max(max_berr, max_val(berr));
             // iterate x
             x[row] += dx[row];
         }
-        // then |r|_max / (|rhs| + |A| * |x|)_max
-        return backward_error_max_numerator / backward_error_max_demoniator;
+        return max_berr;
     }
 
     void initialize_pivot_perturbation(std::vector<Tensor> const& data) {
