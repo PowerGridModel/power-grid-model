@@ -48,12 +48,13 @@ TEST_CASE("Test current sensor") {
             ComplexValue<symmetric_t> const i_sym = (1.0 * 1e3 + 1i * 0.0) / base_current;
             ComplexValue<asymmetric_t> const i_asym = i_sym * RealValue<asymmetric_t>{1.0};
 
-            CurrentSensor<symmetric_t> sym_current_sensor{sym_current_sensor_input, u_rated};
+            CurrentSensor<symmetric_t> const sym_current_sensor{sym_current_sensor_input, u_rated};
 
             CurrentSensorCalcParam<symmetric_t> sym_sensor_param = sym_current_sensor.calc_param<symmetric_t>();
             CurrentSensorCalcParam<asymmetric_t> asym_sensor_param = sym_current_sensor.calc_param<asymmetric_t>();
 
-            CurrentSensorOutput<symmetric_t> sym_sensor_output = sym_current_sensor.get_output<symmetric_t>(i_sym);
+            CurrentSensorOutput<symmetric_t> const sym_sensor_output =
+                sym_current_sensor.get_output<symmetric_t>(i_sym);
             CurrentSensorOutput<asymmetric_t> sym_sensor_output_asym_param =
                 sym_current_sensor.get_output<asymmetric_t>(i_asym);
 
