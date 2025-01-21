@@ -428,7 +428,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         solve_once(data, block_perm_array, rhs_.value(), x);
         Idx num_iter{};
         // iterate until convergence
-        // convergence criteria is two order of magnitude bigger than the perturbation threshold
+        // convergence criteria is two orders of magnitude bigger than the perturbation threshold
+        // NOTE: that this is still much smaller than in literature because of the nature of the problem
         double const epsilon_converge = epsilon_perturbation * 1e2;
         while (backward_error > epsilon_converge) {
             if (num_iter++ == max_iterative_refinement) {
