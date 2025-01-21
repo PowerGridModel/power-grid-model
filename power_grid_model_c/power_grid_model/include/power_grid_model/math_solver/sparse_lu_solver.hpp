@@ -457,7 +457,11 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         rhs_ = rhs;
         // initialize x to zero
         for (Idx row = 0; row != size_; ++row) {
-            x[row] = XVector{};
+            if constexpr (is_block) {
+                x[row] = XVector::Zero();
+            } else {
+                x[row] = 0.0;
+            }
         }
         // initialize residual to rhs
         // because r = b - A * x = b - 0 = b
