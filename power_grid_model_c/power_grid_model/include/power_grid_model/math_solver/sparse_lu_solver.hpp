@@ -264,7 +264,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // return reference to pivot permutation
             BlockPerm const& block_perm = [&]() -> std::conditional_t<is_block, BlockPerm const&, BlockPerm> {
                 if constexpr (is_block) {
-                    // set threshold to machine precision
+                    // use machine precision by default
                     // record block permutation
                     LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
                                                        perturb_threshold, use_pivot_perturbation,
@@ -272,7 +272,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (use_pivot_perturbation) {
-                        // set threshold to machine precision
+                        // use machine precision by default
                         // record pivot perturbation
                         perturb_pivot(lu_matrix[pivot_idx], perturb_threshold, has_pivot_perturbation_);
                     }
