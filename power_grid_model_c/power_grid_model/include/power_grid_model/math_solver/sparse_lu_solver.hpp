@@ -393,7 +393,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // iterate column position for the pivot
             ++col_position_idx[pivot_row_col];
         }
-        // if no pivot perturbation needed, reset cache
+        // if no pivot perturbation happened, reset cache
         if (!has_pivot_perturbation_) {
             reset_matrix_cache();
         }
