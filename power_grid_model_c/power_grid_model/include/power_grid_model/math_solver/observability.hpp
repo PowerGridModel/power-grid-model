@@ -70,7 +70,9 @@ std::vector<int8_t> count_flow_sensors(MeasuredValues<sym> const& measured_value
             has_at_least_one_sensor = true;
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
-        possibly_ill_conditioned = possibly_ill_conditioned || (!has_at_least_one_sensor && row != n_bus - 1);
+        if (!has_at_least_one_sensor && row != n_bus - 1) {
+            possibly_ill_conditioned = true;
+        }
     }
     return flow_sensors;
 }
