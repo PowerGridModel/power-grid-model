@@ -521,7 +521,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// eta(row) += w_k . (z_k - f_k(x))
     ///
     /// In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
-    /// angle measurement of zero. w_theta = 1.0 by default for all measurements
+    /// angle measurement of zero. w_theta = w_k by default for all measurements
+    ///    angle_error = u_error / u_rated (1.0) = w_k
     ///
     /// @param block LHS(row, col), ie. LHS(row, row)
     /// @param rhs_block RHS(row)
