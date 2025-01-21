@@ -419,7 +419,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                                std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // initialize refinement
         initialize_refinement(rhs, x);
-        double backward_error{10.0};
+        double backward_error{std::numeric_limits<double>::max()};
         solve_once(data, block_perm_array, rhs_.value(), x);
         Idx num_iter{};
         // iterate until convergence
