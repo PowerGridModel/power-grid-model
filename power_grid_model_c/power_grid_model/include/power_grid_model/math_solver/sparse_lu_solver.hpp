@@ -425,22 +425,22 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // initialize refinement
         initialize_refinement(rhs, x);
         double backward_error{std::numeric_limits<double>::max()};
-        solve_once(data, block_perm_array, rhs_.value(), x);
         Idx num_iter{};
         // iterate until convergence
         // convergence criteria is two orders of magnitude bigger than the perturbation threshold
         // NOTE: that this is still much smaller than in literature because of the nature of the problem
-        double const epsilon_converge = epsilon_perturbation * 1e2;
+        static constexpr double epsilon_converge = epsilon_perturbation * 1e2;
         while (backward_error > epsilon_converge) {
-            if (num_iter++ == max_iterative_refinement) {
+            // check maximum iteration, including one initial run
+            if (num_iter++ == max_iterative_refinement + 1) {
                 throw SparseMatrixError{};
             }
-            // calculate residual
-            calculate_residual(x);
-            // solve with residual
+            // solve with residual (first time it is the b vector)
             solve_once(data, block_perm_array, residual_.value(), dx_.value());
             // calculate backward error and then iterate x
             backward_error = iterate_and_backward_error(x);
+            // calculate residual
+            calculate_residual(x);
         }
         // reset refinement cache
         reset_refinement_cache();
