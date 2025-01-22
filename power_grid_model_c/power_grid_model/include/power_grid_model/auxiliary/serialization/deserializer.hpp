@@ -649,9 +649,10 @@ class Deserializer {
         while (n_components-- != 0) {
             component_key_ = parse_string();
             Idx const component_size = parse_map_array<visit_array_t, stay_offset>().size;
+            size_t const scenario_offset = offset_;
             // skip all the real content but check if it has map
             bool const has_map = parse_skip_check_map();
-            count_per_scenario.push_back({component_key_, component_size, offset_, has_map});
+            count_per_scenario.push_back({component_key_, component_size, scenario_offset, has_map});
         }
         component_key_ = {};
         return count_per_scenario;
