@@ -6,7 +6,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from power_grid_model._core.buffer_handling import (
     BufferProperties,
@@ -27,7 +27,15 @@ from power_grid_model._core.power_grid_core import (
 )
 from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
 from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, is_sparse, process_data_filter
-from power_grid_model.data_types import AttributeType, ComponentData, Dataset
+from power_grid_model.data_types import (
+    AttributeType,
+    ColumnarData,
+    ComponentData,
+    Dataset,
+    DenseBatchColumnarData,
+    SingleColumnarData,
+    SparseBatchColumnarData,
+)
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -455,11 +463,12 @@ class CWritableDataset:
             if component in self._data_filter
         }
 
-    def _filter_attributes(self, buffer):
+    def _filter_attributes(self, buffer: ColumnarData):
         if is_sparse(buffer):
-            attributes = buffer["data"]
+            attributes = cast(SparseBatchColumnarData, buffer)["data"]
         else:
-            attributes = buffer
+            attributes = cast(SingleColumnarData | DenseBatchColumnarData, buffer)
+
         keys_to_remove = []
         for attr, array in attributes.items():
             if is_nan_or_equivalent(array):

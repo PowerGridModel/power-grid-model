@@ -11,7 +11,7 @@ import pytest
 
 from power_grid_model import DatasetType
 from power_grid_model._utils import get_dataset_type, is_columnar, is_sparse
-from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
+from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
 
@@ -617,7 +617,7 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         )
 
 
-def _check_only_relevant_attributes_present(component_values) -> bool:
+def _check_only_relevant_attributes_present(component_values: SingleComponentData | DenseBatchData) -> bool:
     if isinstance(component_values, np.ndarray):
         return True
     for array in component_values.values():
