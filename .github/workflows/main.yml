@@ -188,7 +188,7 @@ jobs:
             os: ubuntu-24.04
             cibw_build: "*_x86_64"
           - platform: linux-aarch64
-            os: ubuntu-24.04
+            os: ubuntu-24.04-arm
             cibw_build: "*_aarch64"
           - platform: macos
             os: macos-14
@@ -207,10 +207,6 @@ jobs:
         with:
           name: version
           path: .
-
-      - name: Set up QEMU
-        if: matrix.os == 'ubuntu-24.04'
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up XCode
         if: matrix.os == 'macos-14'

@@ -41,6 +41,7 @@ Currently, it supports the following calculations:
 
 See the [power-grid-model documentation](https://power-grid-model.readthedocs.io/en/stable/) for more information.
 For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For an extended python interface to the the power-grid-model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
 
 ```{note}
 Want to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
