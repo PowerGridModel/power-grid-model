@@ -158,8 +158,9 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
     if (topo.is_radial && n_voltage_phasor_sensor == 0) {
         detail::assign_injection_sensor_radial(y_bus_structure, flow_sensors);
         // count flow sensors again
-        Idx const n_flow_sensor_new = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
-        if (n_flow_sensor_new < n_bus - 1) {
+        if (Idx const n_flow_sensor_new =
+                std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
+            n_flow_sensor_new < n_bus - 1) {
             throw NotObservableError{"The number of power sensors appears sufficient, but they are not independent "
                                      "enough. The system is still not observable.\n"};
         }

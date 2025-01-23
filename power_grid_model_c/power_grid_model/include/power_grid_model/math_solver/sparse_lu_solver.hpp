@@ -83,16 +83,14 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             assert(col_biggest_eigen + pivot < size);
 
             // check absolute singular matrix
-            if (biggest_score == 0.0) {
+            if (biggest_score == 0.0 && !use_pivot_perturbation) {
                 // pivot perturbation not possible, cannot proceed
                 // set identity permutation and break the loop
-                if (!use_pivot_perturbation) {
-                    for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
-                        row_transpositions[remaining_rows_cols] = remaining_rows_cols;
-                        col_transpositions[remaining_rows_cols] = remaining_rows_cols;
-                    }
-                    break;
+                for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
+                    row_transpositions[remaining_rows_cols] = remaining_rows_cols;
+                    col_transpositions[remaining_rows_cols] = remaining_rows_cols;
                 }
+                break;
             }
 
             // perturb pivot if needed
@@ -571,7 +569,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
 
     void solve_once(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
-                    std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+                    std::vector<RHSVector> const& rhs, std::vector<XVector>& x) const {
         // local reference
         auto const& row_indptr = *row_indptr_;
         auto const& col_indices = *col_indices_;
