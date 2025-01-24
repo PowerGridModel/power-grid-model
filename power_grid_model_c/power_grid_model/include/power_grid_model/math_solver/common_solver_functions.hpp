@@ -167,6 +167,7 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }
+    (void)std::forward<LoadGenFunc>(load_gen_func);
 }
 
 template <symmetry_tag sym, typename LoadGenFunc>
