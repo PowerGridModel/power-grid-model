@@ -70,8 +70,8 @@ using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
 struct RegulatedObjects {
-    std::set<Idx> transformers{};
-    std::set<Idx> transformers3w{};
+    std::set<Idx> transformers;
+    std::set<Idx> transformers3w;
 };
 
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
@@ -603,7 +603,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
-    std::vector<uint64_t> max_tap_ranges_per_rank{};
+    std::vector<uint64_t> max_tap_ranges_per_rank;
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;

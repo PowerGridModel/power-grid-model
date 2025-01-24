@@ -78,8 +78,8 @@ struct JsonConverter : msgpack::null_visitor {
 
     Idx indent;
     Idx max_indent_level;
-    std::stringstream ss{};
-    std::stack<MapArray> map_array{};
+    std::stringstream ss;
+    std::stack<MapArray> map_array;
 
     void print_indent() {
         if (indent < 0) {
@@ -293,7 +293,7 @@ class Serializer {
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
 
     // msgpack pakcer
-    msgpack::sbuffer msgpack_buffer_{};
+    msgpack::sbuffer msgpack_buffer_;
     msgpack::packer<msgpack::sbuffer> packer_;
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
@@ -606,9 +606,8 @@ class Serializer {
         });
     }
     void pack_attribute(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
-        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<class T> {
-            packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx));
-        });
+        ctype_func_selector(attribute_buffer.meta_attribute->ctype,
+                            [&]<class T> { packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx)); });
     }
 
     static constexpr BufferView advance(BufferView buffer_view, Idx offset) {

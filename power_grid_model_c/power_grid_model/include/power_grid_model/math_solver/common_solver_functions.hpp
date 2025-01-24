@@ -191,6 +191,7 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
         calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
         calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens);
     }
+    (void)std::forward<LoadGenFunc>(load_gen_func);
 }
 
 template <symmetry_tag sym>
