@@ -15,8 +15,9 @@
 namespace power_grid_model::math_solver {
 
 constexpr double epsilon = std::numeric_limits<double>::epsilon();
-constexpr double epsilon_perturbation = 1e-13; // perturbation threshold
-constexpr double epsilon_sqrt = 1.49011745e-8; // sqrt(epsilon), sqrt does not have constexpr
+constexpr double epsilon_perturbation = 1e-13;      // perturbation threshold
+constexpr double cap_back_error_denominator = 1e-4; // denominator for cap back error
+constexpr double epsilon_sqrt = 1.49011745e-8;      // sqrt(epsilon), sqrt does not have constexpr
 
 // perturb pivot if needed
 // pass the value and abs_value by reference
@@ -425,9 +426,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         double backward_error{std::numeric_limits<double>::max()};
         Idx num_iter{};
         // iterate until convergence
-        // convergence criteria is two orders of magnitude bigger than the perturbation threshold
-        // NOTE: that this is still much smaller than in literature because of the nature of the problem
-        static constexpr double epsilon_converge = epsilon_perturbation * 1e2;
+        // convergence criteria is the same as the perturbation threshold
+        static constexpr double epsilon_converge = epsilon_perturbation;
         while (backward_error > epsilon_converge) {
             // check maximum iteration, including one initial run
             if (num_iter++ == max_iterative_refinement + 1) {
@@ -509,7 +509,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             max_denominator = std::max(max_denominator, max_val(denominator));
         }
         // cap min denominator
-        double const min_denominator = epsilon_perturbation * max_denominator;
+        double const min_denominator = cap_back_error_denominator * max_denominator;
 
         // calculate backward error and then iterate x
         double max_berr{};
