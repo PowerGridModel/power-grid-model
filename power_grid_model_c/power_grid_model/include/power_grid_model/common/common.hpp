@@ -93,7 +93,10 @@ concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
 
 // functor to include all
 struct IncludeAll {
-    template <class... T> constexpr bool operator()(T&&... /*ignored*/) const { return true; }
+    template <class... T> constexpr bool operator()(T&&... ignored) const {
+        ((void)std::forward<T>(ignored), ...);
+        return true;
+    }
 };
 constexpr IncludeAll include_all{};
 
