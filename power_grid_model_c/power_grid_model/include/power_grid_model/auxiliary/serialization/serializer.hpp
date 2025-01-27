@@ -606,8 +606,9 @@ class Serializer {
         });
     }
     void pack_attribute(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
-        ctype_func_selector(attribute_buffer.meta_attribute->ctype,
-                            [&]<class T> { packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx)); });
+        ctype_func_selector(attribute_buffer.meta_attribute->ctype, [this, &attribute_buffer, idx]<class T> {
+            packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx));
+        });
     }
 
     static constexpr BufferView advance(BufferView buffer_view, Idx offset) {
