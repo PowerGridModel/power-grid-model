@@ -76,12 +76,10 @@ struct MapArray {
 struct JsonConverter : msgpack::null_visitor {
     static constexpr char sep_char = ' ';
 
-    // NOLINTBEGIN(readability-redundant-member-init)
     Idx indent{};
     Idx max_indent_level{};
-    std::stringstream ss{};
-    std::stack<MapArray> map_array{};
-    // NOLINTEND(readability-redundant-member-init)
+    std::stringstream ss{};           // NOLINT(readability-redundant-member-init)
+    std::stack<MapArray> map_array{}; // NOLINT(readability-redundant-member-init)
 
     void print_indent() {
         if (indent < 0) {
