@@ -418,21 +418,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
-        auto const& input = [this, &prepare_input] {
+        auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer(calculation_info_, 2100, "Prepare");
             prepare_solvers<sym>();
             assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-            return prepare_input(n_math_solvers_);
+            return prepare_input_(n_math_solvers_);
         }();
         // calculate
-        return [this, &input, &solve] {
+        return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
             Timer const timer(calculation_info_, 2200, "Math Calculation");
             auto& solvers = get_solvers<sym>();
             auto& y_bus_vec = get_y_bus<sym>();
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(n_math_solvers_);
             for (Idx i = 0; i != n_math_solvers_; ++i) {
-                solver_output.emplace_back(solve(solvers[i], y_bus_vec[i], input[i]));
+                solver_output.emplace_back(solve_(solvers[i], y_bus_vec[i], input[i]));
             }
             return solver_output;
         }();
@@ -499,7 +499,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
-            calculation_fn(*this, result_data, 0);
+            std::forward<Calculate>(calculation_fn)(*this, result_data, 0);
             return BatchParameter{};
         }
 
@@ -522,9 +522,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                *meta_data_,
                            },
                            ignore_output);
-        } catch (const SparseMatrixError&) {
+        } catch (const SparseMatrixError&) { // NOLINT(bugprone-empty-catch)
             // missing entries are provided in the update data
-        } catch (const NotObservableError&) {
+        } catch (const NotObservableError&) { // NOLINT(bugprone-empty-catch)
             // missing entries are provided in the update data
         }
 
@@ -534,8 +534,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // lambda for sub batch calculation
         main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence;
-        auto sub_batch =
-            sub_batch_calculation_(calculation_fn, result_data, update_data, all_scenarios_sequence, exceptions, infos);
+        auto sub_batch = sub_batch_calculation_(std::forward<Calculate>(calculation_fn), result_data, update_data,
+                                                all_scenarios_sequence, exceptions, infos);
 
         batch_dispatch(sub_batch, n_scenarios, threading);
 
@@ -562,9 +562,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
             state_, update_data, 0, components_to_update, update_independence, false);
 
-        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
-                &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence), components_to_update,
-                update_independence](Idx start, Idx stride, Idx n_scenarios) {
+        return [&base_model, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
+                &result_data, &update_data, &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence),
+                components_to_update, update_independence](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
 
@@ -582,8 +582,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                         all_scenarios_sequence_, current_scenario_sequence_cache, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
-                [&model, &calculation_fn, &result_data, &infos](Idx scenario_idx) {
-                    calculation_fn(model, result_data, scenario_idx);
+                [&model, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
+                    calculation_fn_(model, result_data, scenario_idx);
                     infos[scenario_idx].merge(model.calculation_info_);
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
