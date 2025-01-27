@@ -34,7 +34,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["numpy>=1.21.0"]
 dynamic = ["version"]
 
@@ -88,7 +88,7 @@ xfail_strict = true
 
 [tool.black]
 line-length = 120
-target-version = ['py310']
+target-version = ['py311']
 
 [tool.isort]
 profile = "black"
