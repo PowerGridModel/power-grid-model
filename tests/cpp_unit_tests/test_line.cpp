@@ -57,9 +57,9 @@ TEST_CASE("Test line") {
 
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
-    DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
+    DoubleComplex const it_sc{2.0, 2.0 * sqrt3};
     ComplexValue<asymmetric_t> const if_sc_asym{1.0 + 1.0i};
-    ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
+    ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt3)};
 
     CHECK(line.math_model_type() == ComponentType::branch);
 

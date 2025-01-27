@@ -13,6 +13,8 @@ TYPE_TO_STRING_AS("AsymLoad", power_grid_model::AsymLoad);
 
 namespace power_grid_model {
 namespace {
+using std::numbers::sqrt2;
+
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
     if (is_nan(expected)) {
         is_nan(actual);
@@ -48,16 +50,16 @@ TEST_CASE("Test load generator") {
     double const base_i = base_power_1p / (10e3 / sqrt3);
     DoubleComplex const u{1.1 * std::exp(1.0i * 10.0)};
     ComplexValue<asymmetric_t> const ua{1.1 * std::exp(1.0i * 10.0)};
-    double const pf = 1 / sqrt(2.0);
-    double const s_pq = sqrt(2.0) * 3e6;
+    double const pf = 1 / sqrt2;
+    double const s_pq = sqrt2 * 3e6;
     double const p_pq = 3e6;
     double const q_pq = 3e6;
     double const i_pq = s_pq / (1.1 * 10e3) / sqrt3;
-    double const s_y = sqrt(2.0) * 3e6 * 1.1 * 1.1;
+    double const s_y = sqrt2 * 3e6 * 1.1 * 1.1;
     double const p_y = 3e6 * 1.1 * 1.1;
     double const q_y = 3e6 * 1.1 * 1.1;
     double const i_y = s_y / (1.1 * 10e3) / sqrt3;
-    double const s_i = sqrt(2.0) * 3e6 * 1.1;
+    double const s_i = sqrt2 * 3e6 * 1.1;
     double const p_i = 3e6 * 1.1;
     double const q_i = 3e6 * 1.1;
     double const i_i = s_i / (1.1 * 10e3) / sqrt3;

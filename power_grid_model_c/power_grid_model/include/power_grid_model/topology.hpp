@@ -329,7 +329,7 @@ class Topology {
             permuted_node_indices[reordered[idx]] = n_non_cyclic_nodes + idx;
         }
 
-        std::ranges::copy(reordered, std::back_inserter(dfs_node));
+        dfs_node.insert(dfs_node.end(), reordered.begin(), reordered.end());
         for (auto [from, to] : fills) {
             auto from_reordered = permuted_node_indices[from];
             auto to_reordered = permuted_node_indices[to];
@@ -530,6 +530,7 @@ class Topology {
                 coupling[topo_comp_i] = Idx2D{topo_idx, new_math_comp_i};
             }
         }
+        (void)std::forward<GetMathTopoComponent>(get_component_topo);
     }
 
     void couple_all_appliance() {
