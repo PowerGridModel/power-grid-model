@@ -172,6 +172,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data)
         : system_frequency_{system_frequency}, meta_data_{&meta_data} {}
 
+  private:
     // helper function to get what components are present in the update data
     std::array<bool, main_core::utils::n_types<ComponentType...>>
     get_components_to_update(ConstDataset const& update_data) const {
@@ -255,6 +256,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
+
     template <class CompType, cache_type_c CacheType>
     void update_component(ConstDataset::RangeObject<typename CompType::UpdateType const> components,
                           std::span<Idx2D const> sequence_idx) {
@@ -290,6 +292,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     std::get<main_core::utils::index_of_component<CT, ComponentType...>>(sequence_idx_map));
             });
     }
+
+  public:
     // overload to update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
@@ -300,6 +304,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
+  private:
     // set complete construction
     // initialize internal arrays
     void set_construction_complete() {
@@ -338,6 +343,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         state_.comp_coup = {};
     }
 
+  public:
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
@@ -352,6 +358,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
     }
 
+  private:
     // Entry point for main_model.hpp
     main_core::utils::SequenceIdx<ComponentType...> get_all_sequence_idx_map(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
@@ -361,7 +368,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_, update_data, 0, components_to_update, update_independence, false);
     }
 
-  private:
     void update_state(const UpdateChange& changes) {
         // if topology changed, everything is not up to date
         // if only param changed, set param to not up to date
@@ -718,7 +724,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-  public:
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
@@ -771,6 +776,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             *this, options, result_data, pos);
     }
 
+  public:
     // Batch calculation, propagating the results to result_data
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
@@ -785,6 +791,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, options.threading);
     }
 
+    CalculationInfo calculation_info() const { return calculation_info_; }
+
+  private:
     template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
@@ -818,9 +827,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(output_func);
     }
 
-    CalculationInfo calculation_info() const { return calculation_info_; }
-
-  private:
     mutable CalculationInfo calculation_info_; // needs to be first due to padding override
                                                // may be changed in const functions for metrics
 
