@@ -78,7 +78,7 @@ struct JsonConverter : msgpack::null_visitor {
 
     Idx indent;
     Idx max_indent_level;
-    std::stringstream ss;
+    std::stringstream ss{}; // NOLINT(readability-redundant-member-init) // libc++ requires it
     std::stack<MapArray> map_array;
 
     void print_indent() {
