@@ -95,11 +95,14 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
-        necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+        auto const observability_result =
+            necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
-        // prepare matrix, including pre-factorization
+        // prepare matrix
         sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");
         prepare_matrix(y_bus, measured_values);
+        // prefactorize
+        sparse_solver_.prefactorize(data_gain_, perm_, observability_result.use_perturbation());
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
@@ -252,8 +255,6 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
             data_gain_[data_idx_lu].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
         }
-        // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
     void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
