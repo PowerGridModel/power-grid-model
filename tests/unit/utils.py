@@ -25,6 +25,7 @@ from power_grid_model.errors import (
     InvalidMeasuredObject,
     InvalidRegulatedObject,
     InvalidTransformerClock,
+    MaxIterationReached,
     NotObservableError,
     PowerGridBatchError,
     PowerGridError,
@@ -60,6 +61,7 @@ KNOWN_EXCEPTIONS = {
         PowerGridSerializationError,
         AssertionError,
         OSError,
+        MaxIterationReached,
     )
 }
 
