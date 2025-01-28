@@ -396,11 +396,17 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
 // higher voltage at control side => lower voltage at tap side => lower tap pos
-constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer) {
+constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer, bool const& control_at_tap_side) {
+    if (control_at_tap_side) {
+        return one_step_tap_up(transformer);
+    }
     return one_step_tap_down(transformer);
 }
 // lower voltage at control side => higher voltage at tap side => higher tap pos
-constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer) {
+constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer, bool const& control_at_tap_side) {
+    if (control_at_tap_side) {
+        return one_step_tap_down(transformer);
+    }
     return one_step_tap_up(transformer);
 }
 
@@ -426,6 +432,9 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
     }
+    std::variant<typename TransformerTypes::SideType...> tap_side() const {
+        return apply([](auto const& t) { return t.tap_side(); });
+    }
     int64_t tap_range() const {
         return apply([](auto const& t) {
             return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
@@ -447,8 +456,14 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
     std::reference_wrapper<const TransformerTapRegulator> regulator;
     TransformerWrapper<TransformerTypes...> transformer;
+    bool control_at_tap_side() const {
+        return std::visit(
+            [this](auto const& side) {
+                return static_cast<IntS>(regulator.get().control_side()) == static_cast<IntS>(side);
+            },
+            transformer.tap_side());
+    }
 };
-
 template <typename State>
     requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
 TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
@@ -1014,13 +1029,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
+            bool control_at_tap_side = regulator.control_at_tap_side();
+
             auto const cmp = node_state <=> param;
-            auto new_tap_pos = [&transformer, &cmp] {
+            auto new_tap_pos = [&transformer, &cmp, &control_at_tap_side] {
                 if (cmp > 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_control_voltage_down(transformer);
+                    return one_step_control_voltage_down(transformer, control_at_tap_side);
                 }
                 if (cmp < 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_control_voltage_up(transformer);
+                    return one_step_control_voltage_up(transformer, control_at_tap_side);
                 }
                 return transformer.tap_pos();
             }();
@@ -1119,13 +1136,21 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
-        constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+        // constexpr auto max_voltage_pos = [](transformer_c auto const& transformer, bool /*unused*/) -> IntS {
+        //     // max voltage at control side => min voltage at tap side => min tap pos
+        //     return transformer.tap_min();
+        // };
+        // constexpr auto min_voltage_pos = [](transformer_c auto const& transformer, bool /*unused*/) -> IntS {
+        //     // min voltage at control side => max voltage at tap side => max tap pos
+        //     return transformer.tap_max();
+        // };
+        constexpr auto max_voltage_pos = [](RegulatedTransformer const& reg_transformer) -> IntS {
             // max voltage at control side => min voltage at tap side => min tap pos
-            return transformer.tap_min();
+            return reg_transformer.transformer.tap_min();
         };
-        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+        constexpr auto min_voltage_pos = [](RegulatedTransformer const& reg_transformer) -> IntS {
             // min voltage at control side => max voltage at tap side => max tap pos
-            return transformer.tap_max();
+            return reg_transformer.transformer.tap_max();
         };
 
         switch (strategy_) {
@@ -1154,11 +1179,19 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void exploit_neighborhood(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
-        constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_control_voltage_up(transformer);
+        // constexpr auto increment_voltage = [](transformer_c auto const& transformer, bool control_at_tap_side) ->
+        // IntS {
+        //     return one_step_control_voltage_up(transformer, control_at_tap_side);
+        // };
+        // constexpr auto decrement_voltage = [](transformer_c auto const& transformer, bool control_at_tap_side) ->
+        // IntS {
+        //     return one_step_control_voltage_down(transformer, control_at_tap_side);
+        // };
+        constexpr auto increment_voltage = [](RegulatedTransformer const& reg_transformer) -> IntS {
+            return one_step_control_voltage_up(reg_transformer.transformer, reg_transformer.control_at_tap_side());
         };
-        constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_control_voltage_down(transformer);
+        constexpr auto decrement_voltage = [](RegulatedTransformer const& reg_transformer) -> IntS {
+            return one_step_control_voltage_down(reg_transformer.transformer, reg_transformer.control_at_tap_side());
         };
 
         switch (strategy_) {
@@ -1169,12 +1202,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            regulate_transformers(one_step_up, regulator_order);
+            regulate_transformers(increment_voltage, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            regulate_transformers(one_step_down, regulator_order);
+            regulate_transformers(decrement_voltage, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
@@ -1189,27 +1222,25 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     template <typename Func>
-        requires((std::invocable<Func, TransformerTypes const&> &&
-                  std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
-                 ...)
+        requires(std::invocable<Func, RegulatedTransformer const&> &&
+                 std::same_as<std::invoke_result_t<Func, RegulatedTransformer const&>, IntS>)
     auto regulate_transformers(Func to_new_tap_pos,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
         auto const get_update = [to_new_tap_pos_func = std::move(to_new_tap_pos),
-                                 &update_data](transformer_c auto const& transformer) {
-            add_tap_pos_update(to_new_tap_pos_func(transformer), transformer, update_data);
+                                 &update_data](RegulatedTransformer const& reg_transformer) {
+            add_tap_pos_update(to_new_tap_pos_func(reg_transformer), reg_transformer.transformer, update_data);
         };
 
         for (auto const& sub_order : regulator_order) {
             for (auto const& regulator : sub_order) {
-                regulator.transformer.apply(get_update);
+                regulator.apply(get_update);
             }
         }
 
         update_state(update_data);
     }
-
     static constexpr auto component_cache_update(transformer_c auto const& transformer) {
         auto result = get_nan_update(transformer);
 
