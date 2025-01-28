@@ -128,4 +128,9 @@ enum class SearchMethod : IntS { // Which type of tap search method for finite e
     binary_search = 1,           // use binary search: half a tap range at a time
 };
 
+enum class AngleMeasurementType : IntS { // The type of the angle measurement for current sensors
+    local = 0,                           // local = 0, the angle is relative to the local voltage angle
+    global = 1,                          // global = 1, the angle is relative to the global voltage angle
+};
+
 } // namespace power_grid_model
