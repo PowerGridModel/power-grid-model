@@ -25,12 +25,12 @@ from power_grid_model.errors import (
     InvalidMeasuredObject,
     InvalidRegulatedObject,
     InvalidTransformerClock,
+    MaxIterationReached,
     NotObservableError,
     PowerGridBatchError,
     PowerGridError,
     PowerGridSerializationError,
     SparseMatrixError,
-    MaxIterationReached
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
