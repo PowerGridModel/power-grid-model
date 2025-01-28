@@ -135,7 +135,7 @@ class IterationDiverge : public PowerGridError {
 class MaxIterationReached : public IterationDiverge {
   public:
     MaxIterationReached(std::string const& msg = "") {
-        append_msg("Maximum iterations reached, no solution. " + msg + "\n");
+        append_msg("Maximum number of iterations reached" + msg + "\n");
     }
 };
 
