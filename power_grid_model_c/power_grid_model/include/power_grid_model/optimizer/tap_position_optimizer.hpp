@@ -899,13 +899,14 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                         adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
                 }
                 if (tap_changed) {
+                    iterations_per_rank[rank_index + 1] = 0;
+                    ++iterations_per_rank[rank_index];
                     break;
                 }
-                iterations_per_rank[++rank_index] = 0; // NOSONAR
+                ++rank_index;
             }
             if (tap_changed) {
-                if (static_cast<uint64_t>(++iterations_per_rank[rank_index]) >
-                    2 * max_tap_ranges_per_rank[rank_index]) {
+                if (static_cast<uint64_t>(iterations_per_rank[rank_index]) > 2 * max_tap_ranges_per_rank[rank_index]) {
                     throw MaxIterationReached{"TapPositionOptimizer::iterate"};
                 }
                 update_state(update_data);
