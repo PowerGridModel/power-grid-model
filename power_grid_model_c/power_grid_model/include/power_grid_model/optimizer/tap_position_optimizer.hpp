@@ -900,7 +900,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 }
                 if (tap_changed) {
                     iterations_per_rank[rank_index + 1] = 0;
-                    iterations_per_rank[rank_index] += 1;
+                    ++iterations_per_rank[rank_index];
                     break;
                 }
                 ++rank_index;
