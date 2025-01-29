@@ -396,7 +396,7 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
 // higher voltage at control side => lower voltage at tap side => lower tap pos
-constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer, bool const& control_at_tap_side) {
+constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer, bool control_at_tap_side) {
     if (control_at_tap_side) {
         // control side is tap side, voltage up requires tap up
         return one_step_tap_up(transformer);
@@ -404,7 +404,7 @@ constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer
     return one_step_tap_down(transformer);
 }
 // lower voltage at control side => higher voltage at tap side => higher tap pos
-constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer, bool const& control_at_tap_side) {
+constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer, bool control_at_tap_side) {
     if (control_at_tap_side) {
         // control side is tap side, voltage down requires tap down
         return one_step_tap_down(transformer);
