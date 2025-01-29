@@ -87,11 +87,11 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
     };
 
     UpdateChange update(PowerSensorUpdate<power_sensor_symmetry> const& update_data) {
+        assert(update_data.id == this->id() || is_nan(update_data.id));
+
         set_power(update_data.p_measured, update_data.q_measured);
 
-        if (!is_nan(update_data.power_sigma)) {
-            apparent_power_sigma_ = update_data.power_sigma * inv_base_power;
-        }
+        update_real_value<symmetric_t>(update_data.power_sigma, apparent_power_sigma_, inv_base_power);
         update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, inv_base_power);
         update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, inv_base_power);
 
