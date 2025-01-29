@@ -94,6 +94,34 @@ TEST_CASE("Test current sensor") {
                                 InvalidMeasuredTerminalType);
             }
         }
+        SUBCASE("Symmetric calculation parameters") {
+            CurrentSensor<symmetric_t> sym_current_sensor{
+                {1, 1, MeasuredTerminalType::branch3_1, AngleMeasurementType::local}, 1.0};
+
+            SUBCASE("No phase shift") {
+                sym_current_sensor.update(
+                    {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = 0.0});
+                auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
+
+                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
+                CHECK(sym_param.i_real_variance == doctest::Approx(1.0));
+                CHECK(sym_param.i_imag_variance == doctest::Approx(0.2));
+                CHECK(real(sym_param.value) == doctest::Approx(1.0));
+                CHECK(imag(sym_param.value) == doctest::Approx(0.0));
+            }
+
+            SUBCASE("Perpendicular phase shift") {
+                sym_current_sensor.update(
+                    {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = pi / 2});
+                auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
+
+                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
+                CHECK(sym_param.i_real_variance == doctest::Approx(0.2));
+                CHECK(sym_param.i_imag_variance == doctest::Approx(1.0));
+                CHECK(real(sym_param.value) == doctest::Approx(0.0));
+                CHECK(imag(sym_param.value) == doctest::Approx(1.0));
+            }
+        }
     }
     SUBCASE("Update inverse - sym") {
         constexpr auto i_measured = 1.0;
