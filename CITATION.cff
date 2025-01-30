@@ -18,6 +18,11 @@ authors:
     given-names: "Peter"
     email: "Peter.Salemink@Alliander.com"
     affiliation: "Alliander"
+  - family-names: "Westering"
+    name-particle: "van"
+    given-names: "Werner"
+    email: Werner.van.Westering@Alliander.com
+    affiliation: "Alliander"
   - family-names: "Bharambe"
     given-names: "Nitish"
     email: "Nitish.Bharambe@Alliander.com"
@@ -83,6 +88,8 @@ references:
       - family-names: "Westering"
         name-particle: "van"
         given-names: "Werner"
+        email: Werner.van.Westering@Alliander.com
+        affiliation: "Alliander"
     conference:
       name: "CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution"
     type: conference-paper
