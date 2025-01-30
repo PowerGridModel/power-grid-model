@@ -737,7 +737,8 @@ TEST_CASE("Test Tap position optimizer") {
     };
 
     // auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
-    //     if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>()) {
+    //     if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>())
+    //     {
     //         return false;
     //     }
     //     std::vector<std::pair<IntS, IntS>> trafo_state_1;
