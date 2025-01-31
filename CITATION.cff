@@ -106,6 +106,28 @@ references:
     volume: 2023
     pages: "1-5"
 
+  - title: "PowerGridModel/power-grid-model-ds"
+    repository-code: "https://github.com/PowerGridModel/power-grid-model-ds"
+    license: "MPL-2.0"
+    type: software-code
+    authors:
+      - family-names: "Schouten"
+        given-names: "Jaap"
+        email: Jaap.Schouten@Alliander.com
+        affiliation: "Alliander"
+      - family-names: "Baaijen"
+        given-names: "Thijs"
+        email: Thijs.Baaijen@Alliander.com
+        affiliation: "Alliander"
+      - family-names: "Koppen"
+        given-names: "Vincent"
+        email: Vincent.Koppen@Alliander.com
+      - family-names: "Voort"
+        name-particle: "van der"
+        given-names: "Sven"
+        email: Sven.van.der.Voort@Alliander.com
+      - name: "Contributors to the LF Energy project Power Grid Model"
+
   - title: "PowerGridModel/power-grid-model-io"
     repository-code: "https://github.com/PowerGridModel/power-grid-model-io"
     doi: "10.5281/zenodo.8059257"
