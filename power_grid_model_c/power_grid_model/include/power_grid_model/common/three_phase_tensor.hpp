@@ -62,8 +62,7 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
     // additional constructors
     explicit Tensor(T const& x) { (*this) << x, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, x; }
     explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
-    explicit Tensor(T const& x1, T const& x2, T const& x3, T const& x4, T const& x5, T const& x6) { (*this) << x1, x2, x4, x2, x3, x5, x4, x5, x6; }
-    explicit Tensor(T const& x1, T const& x2, T const& x3, T const& x4, T const& x5, T const& x6, T const& x7, T const& x8, T const& x9) { (*this) << x1, x2, x3, x4, x5, x6, x7, x8, x9; }
+    explicit Tensor(T const& s1, T const& s2, T const& s3, T const& m12, T const& m13, T const& m23) { (*this) << s1, m12, m13, m12, s2, m23, m13, m23, s3; }
     explicit Tensor(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2); }
     // eigen expression
     template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
@@ -79,7 +78,7 @@ template <scalar_value T> class Tensor4 : public Eigen4Tensor<T> {
     // additional constructors
     explicit Tensor4(T const& x) { (*this) << x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x; }
     explicit Tensor4(T const& s, T const& m) { (*this) << s, m, m, m, m, s, m, m, m, m, s, m, m, m, m, s; }
-    explicit Tensor4(T const& x1, T const& x2, T const& x3, T const& x4, T const& x5, T const& x6, T const& x7, T const& x8, T const& x9, T const& x10) { (*this) << x1, x2, x4, x7, x2, x3, x5, x8, x4, x5, x6, x9, x7, x8, x9, x10; }
+    explicit Tensor4(T const& s1, T const& s2, T const& s3, T const& s4, const& m12, T const& m13, T const& m14, T const& m23, T const& m24, T const& m34) { (*this) << s1, m12, m13, m14, m12, s2, m23, m24, m13, m23, s3, m34, m14, m24, m34, s4; }
     explicit Tensor4(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, 0.0, v(2), 0.0, 0.0, 0.0, 0.0, v(3); }
     // eigen expression
     template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : Eigen4Tensor<T>{other} {}
