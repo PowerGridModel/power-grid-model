@@ -138,7 +138,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
             auto const i_polar = PolarComplexRandomVariable<symmetric_t>{
                 .magnitude = {.value = i_measured_, .variance = i_sigma_ * i_sigma_},
                 .angle = {.value = i_angle_measured_, .variance = i_angle_sigma_ * i_angle_sigma_}};
-            auto const i_decomposed = static_cast<DecomposedIndependentComplexRandomVariable<symmetric_t>>(i_polar);
+            auto const i_decomposed = static_cast<DecomposedComplexRandomVariable<symmetric_t>>(i_polar);
 
             return CurrentSensorCalcParam<symmetric_t>{.angle_measurement_type = angle_measurement_type(),
                                                        .value = i_decomposed.value(),
