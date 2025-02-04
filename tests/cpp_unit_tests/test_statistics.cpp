@@ -78,7 +78,6 @@ TEST_CASE("Test statistics") {
             }
             SUBCASE("Conversion to IndependentRealRandomVariable<asymmetric_t>") {
                 auto const asymmetric = static_cast<IndependentRealRandomVariable<asymmetric_t>>(independent);
-                auto const symmetric = static_cast<IndependentRealRandomVariable<symmetric_t>>(asymmetric);
 
                 CHECK(asymmetric.value(0) == doctest::Approx(independent.value));
                 CHECK(asymmetric.value(1) == doctest::Approx(independent.value));
@@ -113,7 +112,6 @@ TEST_CASE("Test statistics") {
             }
             SUBCASE("Conversion to IndependentRealRandomVariable<symmetric_t>") {
                 auto const symmetric = static_cast<IndependentRealRandomVariable<symmetric_t>>(independent);
-                auto const asymmetric = static_cast<IndependentRealRandomVariable<asymmetric_t>>(symmetric);
 
                 CHECK(symmetric.value == doctest::Approx(mean_val(independent.value)));
                 CHECK(symmetric.variance == doctest::Approx(mean_val(independent.variance) / 3.0));
