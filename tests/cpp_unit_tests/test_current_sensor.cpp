@@ -40,7 +40,7 @@ TEST_CASE("Test current sensor") {
             sym_current_sensor_input.i_sigma = 1.0;
             sym_current_sensor_input.i_measured = 1.0 * 1e3;
             sym_current_sensor_input.i_angle_measured = 0.0;
-            sym_current_sensor_input.i_angle_sigma = nan;
+            sym_current_sensor_input.i_angle_sigma = 0.2;
 
             double const u_rated = 10.0e3;
             double const base_current = base_power_3p / u_rated / sqrt3;
@@ -60,10 +60,10 @@ TEST_CASE("Test current sensor") {
 
             // Check symmetric sensor output for symmetric parameters
             CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::local);
-            CHECK(sym_sensor_param.i_real_variance == doctest::Approx(0.0));
-            CHECK(sym_sensor_param.i_imag_variance == doctest::Approx(0.0));
-            CHECK(real(sym_sensor_param.value) == doctest::Approx(0.0));
-            CHECK(imag(sym_sensor_param.value) == doctest::Approx(0.0));
+            CHECK(sym_sensor_param.i_real_variance == doctest::Approx(pow(1.0 / base_current, 2)));
+            CHECK(sym_sensor_param.i_imag_variance == doctest::Approx(pow(0.2 * 1.0e3 / base_current, 2)));
+            CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0e3 / base_current));
+            CHECK(imag(sym_sensor_param.value) == doctest::Approx(0.0 / base_current));
 
             CHECK(is_nan(sym_sensor_output.id));
             CHECK(is_nan(sym_sensor_output.energized));
@@ -95,8 +95,11 @@ TEST_CASE("Test current sensor") {
             }
         }
         SUBCASE("Symmetric calculation parameters") {
+            double const u_rated = 10.0e3;
+            double const base_current = base_power_3p / u_rated / sqrt3;
+
             CurrentSensor<symmetric_t> sym_current_sensor{
-                {1, 1, MeasuredTerminalType::branch3_1, AngleMeasurementType::local}, 1.0};
+                {1, 1, MeasuredTerminalType::branch3_1, AngleMeasurementType::local}, u_rated};
 
             SUBCASE("No phase shift") {
                 sym_current_sensor.update(
@@ -104,10 +107,10 @@ TEST_CASE("Test current sensor") {
                 auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
                 CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
-                CHECK(sym_param.i_real_variance == doctest::Approx(1.0));
-                CHECK(sym_param.i_imag_variance == doctest::Approx(0.2));
-                CHECK(real(sym_param.value) == doctest::Approx(1.0));
-                CHECK(imag(sym_param.value) == doctest::Approx(0.0));
+                CHECK(sym_param.i_real_variance == doctest::Approx(pow(1.0 / base_current, 2)));
+                CHECK(sym_param.i_imag_variance == doctest::Approx(pow(0.2 / base_current, 2)));
+                CHECK(real(sym_param.value) == doctest::Approx(1.0 / base_current));
+                CHECK(imag(sym_param.value) == doctest::Approx(0.0 / base_current));
             }
 
             SUBCASE("Perpendicular phase shift") {
@@ -116,10 +119,25 @@ TEST_CASE("Test current sensor") {
                 auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
                 CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
-                CHECK(sym_param.i_real_variance == doctest::Approx(0.2));
-                CHECK(sym_param.i_imag_variance == doctest::Approx(1.0));
-                CHECK(real(sym_param.value) == doctest::Approx(0.0));
-                CHECK(imag(sym_param.value) == doctest::Approx(1.0));
+                CHECK(sym_param.i_real_variance == doctest::Approx(pow(0.2 / base_current, 2)));
+                CHECK(sym_param.i_imag_variance == doctest::Approx(pow(1.0 / base_current, 2)));
+                CHECK(real(sym_param.value) == doctest::Approx(0.0 / base_current));
+                CHECK(imag(sym_param.value) == doctest::Approx(1.0 / base_current));
+            }
+
+            SUBCASE("45deg phase shift") {
+                using std::numbers::sqrt2;
+                constexpr auto inv_sqrt2 = sqrt2 / 2;
+
+                sym_current_sensor.update(
+                    {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = pi / 4});
+                auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
+
+                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
+                CHECK(sym_param.i_real_variance == doctest::Approx(1.04 / 2.0 / (base_current * base_current)));
+                CHECK(sym_param.i_imag_variance == doctest::Approx(sym_param.i_real_variance));
+                CHECK(real(sym_param.value) == doctest::Approx(inv_sqrt2 / base_current));
+                CHECK(imag(sym_param.value) == doctest::Approx(real(sym_param.value)));
             }
         }
     }

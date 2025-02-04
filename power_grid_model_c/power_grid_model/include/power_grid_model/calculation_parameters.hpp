@@ -7,6 +7,7 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
+#include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
@@ -76,17 +77,6 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
     using sym = sym_type;
 
     ComplexValue<sym> i{};
-};
-
-// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
-// (circularly symmetric)
-template <symmetry_tag sym_type> struct UniformComplexRandomVariable {
-    using sym = sym_type;
-
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
-    ComplexValue<sym> value{};
-    double variance{}; // variance (sigma^2) of the error range, in p.u.
 };
 
 // voltage sensor calculation parameters for state estimation
