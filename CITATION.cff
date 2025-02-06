@@ -109,7 +109,7 @@ references:
 
   - title: "PowerGridModel/power-grid-model-ds"
     repository-code: "https://github.com/PowerGridModel/power-grid-model-ds"
-    doi: "10.5281/zenodo.8054429"
+    doi: "10.5281/zenodo.14825565"
     license: "MPL-2.0"
     type: software-code
     authors:
