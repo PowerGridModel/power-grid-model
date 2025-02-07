@@ -43,9 +43,12 @@ extensions = [
     "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",
+    "sphinxcontrib.tikz",
 ]
 
 templates_path = ["_templates"]
+
+tikz_latex_preamble = "\\usepackage{circuitikz}"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -55,6 +58,7 @@ html_static_path = ["_static"]
 
 exclude_patterns = [
     "*/.ipynb_checkpoints/*",
+    "_build/**/*",
 ]
 
 # -- myst parser and myst_nb config ------------------------------------------------------
@@ -65,10 +69,7 @@ nb_execution_mode = "off"
 nb_execution_excludepatterns = ["*/_build/*"]
 
 # Extentions in myst
-myst_enable_extensions = [
-    "dollarmath",
-    "substitution",
-]
+myst_enable_extensions = ["dollarmath", "substitution", "amsmath"]
 # Global substitutions
 myst_substitutions = {
     "gh_link_head_blob": link_head_gh_blob,
