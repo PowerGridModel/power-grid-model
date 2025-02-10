@@ -69,7 +69,10 @@ nb_execution_mode = "off"
 nb_execution_excludepatterns = ["*/_build/*"]
 
 # Extentions in myst
-myst_enable_extensions = ["dollarmath", "substitution", "amsmath"]
+myst_enable_extensions = [
+    "dollarmath",
+    "substitution",
+]
 # Global substitutions
 myst_substitutions = {
     "gh_link_head_blob": link_head_gh_blob,
