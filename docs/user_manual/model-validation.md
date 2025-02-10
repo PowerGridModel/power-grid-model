@@ -7,7 +7,7 @@ SPDX-License-Identifier: MPL-2.0
 # Model validation
 
 The implementation of power-grid-model is validated using multiple test cases present in {{ "[tests/data]({}/tests/data)".format(gh_link_head_tree) }} folder.
-There are 2 simple grid test case examples of power-grid-model validated Vision and GAIA.
+There are 2 simple grid test case examples of power-grid-model validated using Vision and GAIA.
 A thorough validation is done using minimal test cases of each component and 2 test networks described in the following sections.
 
 ## Minimal test cases in pandapower
@@ -27,19 +27,22 @@ All the test cases can be found in {{ "[/tests/data/power_flow/pandapower]({}/te
 ### Node
 
 A node can have 2 states: energized and non-energized which is presented in the first grid.
-The second grid example uses a line to validate node operation for voltages other than 0 or 1 p.u.
-The circuit diagram for test cases of the 2 grids is as follows:
+The circuit diagram for the test case is as follows:
 
 ```{tikz}
 :alt: basic node
+:width: 100px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
 \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
 \draw [black, ultra thick] (2.5,-3) -- (3.5,-3);
 ```
 
+The second grid example uses a line to validate node operation for voltages other than 0 or 1 p.u.:
+
 ```{tikz}
 :alt: node
+:width: 100px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
@@ -53,6 +56,7 @@ The circuit diagram for the test case is as follows:
 
 ```{tikz}
 :alt: line
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
 \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
@@ -78,6 +82,7 @@ because only 'T' transformer model is available in pandapower while power-grid-m
 
 ```{tikz}
 :alt: transformer
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
 \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
@@ -95,6 +100,7 @@ A shunt can be in 2 states: open or closed.
 
 ```{tikz}
 :alt: shunt
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -109,6 +115,7 @@ While source is present in all cases, this case tests two sources being used tog
 
 ```{tikz}
 :alt: source
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-4) node[gridnode, anchor=north]{};
 \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
@@ -122,6 +129,7 @@ A symmetrical load can be in open or closed state. It can be of 3 types: constan
 
 ```{tikz}
 :alt: sym_load
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -138,6 +146,7 @@ A symmetrical generator can be in open or closed state. It can be of 3 types: co
 
 ```{tikz}
 :alt: sym_gen
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -159,6 +168,7 @@ An asymmetrical load can be in open or closed state.
 
 ```{tikz}
 :alt: asym_load
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -173,6 +183,7 @@ An asymmetrical generator can be in open or closed state.
 
 ```{tikz}
 :alt: asym_gen
+:width: 250px
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -256,6 +267,7 @@ The test grid is as follows:
 
 ```{tikz}
 :alt: short circuit case
+:width: 250px
 
 \draw [red, ultra thick] (4,7) -- (4,2);
 \draw (0,6) node[gridnode, anchor=east]{} to (1,6);
