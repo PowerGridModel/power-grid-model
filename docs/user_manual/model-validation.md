@@ -31,7 +31,7 @@ The circuit diagram for the test case is as follows:
 
 ```{tikz}
 :alt: basic node
-:width: 5em
+:width: 4em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
 \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
@@ -42,7 +42,7 @@ The second grid example uses a line to validate node operation for voltages othe
 
 ```{tikz}
 :alt: node
-:width: 5em
+:width: 4em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
@@ -56,7 +56,7 @@ The circuit diagram for the test case is as follows:
 
 ```{tikz}
 :alt: line
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
 \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
@@ -82,7 +82,7 @@ because only 'T' transformer model is available in pandapower while power-grid-m
 
 ```{tikz}
 :alt: transformer
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-1);
 \draw [black, ultra thick] (0.5,-1) -- (5.5,-1);
@@ -100,7 +100,7 @@ A shunt can be in 2 states: open or closed.
 
 ```{tikz}
 :alt: shunt
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -115,7 +115,7 @@ While source is present in all cases, this case tests two sources being used tog
 
 ```{tikz}
 :alt: source
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-4) node[gridnode, anchor=north]{};
 \draw [black, ultra thick] (2.5,-1) -- (3.5,-1);
@@ -129,7 +129,7 @@ A symmetrical load can be in open or closed state. It can be of 3 types: constan
 
 ```{tikz}
 :alt: sym_load
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -146,7 +146,7 @@ A symmetrical generator can be in open or closed state. It can be of 3 types: co
 
 ```{tikz}
 :alt: sym_gen
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -168,7 +168,7 @@ An asymmetrical load can be in open or closed state.
 
 ```{tikz}
 :alt: asym_load
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -183,7 +183,7 @@ An asymmetrical generator can be in open or closed state.
 
 ```{tikz}
 :alt: asym_gen
-:width: 10em
+:width: 8em
 
 \draw (3,0) node[gridnode, anchor=south]{} to (3,-3);
 \draw (2.5,-1) [black, ultra thick] to ++(1,0);
@@ -267,7 +267,7 @@ The test grid is as follows:
 
 ```{tikz}
 :alt: short circuit case
-:width: 10em
+:width: 6em
 
 \draw [red, ultra thick] (4,7) -- (4,2);
 \draw (0,6) node[gridnode, anchor=east]{} to (1,6);
