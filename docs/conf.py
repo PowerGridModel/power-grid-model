@@ -66,6 +66,7 @@ nb_execution_excludepatterns = ["*/_build/*"]
 
 # Extentions in myst
 myst_enable_extensions = [
+    "amsmath",
     "dollarmath",
     "substitution",
 ]
