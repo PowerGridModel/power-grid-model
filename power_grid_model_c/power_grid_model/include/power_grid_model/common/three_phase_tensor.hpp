@@ -78,7 +78,7 @@ template <scalar_value T> class Tensor4 : public Eigen4Tensor<T> {
     // additional constructors
     explicit Tensor4(T const& x) { (*this) << x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x; }
     explicit Tensor4(T const& s, T const& m) { (*this) << s, m, m, m, m, s, m, m, m, m, s, m, m, m, m, s; }
-    explicit Tensor4(T const& s1, T const& s2, T const& s3, T const& s4, const& m12, T const& m13, T const& m14, T const& m23, T const& m24, T const& m34) { (*this) << s1, m12, m13, m14, m12, s2, m23, m24, m13, m23, s3, m34, m14, m24, m34, s4; }
+    explicit Tensor4(T const& s1, T const& s2, T const& s3, T const& s4, T const& m12, T const& m13, T const& m14, T const& m23, T const& m24, T const& m34) { (*this) << s1, m12, m13, m14, m12, s2, m23, m24, m13, m23, s3, m34, m14, m24, m34, s4; }
     explicit Tensor4(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, 0.0, v(2), 0.0, 0.0, 0.0, 0.0, v(3); }
     // eigen expression
     template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : Eigen4Tensor<T>{other} {}

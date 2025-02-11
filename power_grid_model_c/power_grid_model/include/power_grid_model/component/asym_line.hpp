@@ -36,11 +36,11 @@ class AsymLine : public Branch {
     }
 
     // override getter
-    double base_i_from() const override { return base_i_; }
-    double base_i_to() const override { return base_i_; }
-    double loading(double /* max_s */, double max_i) const override { return max_i / i_n_; };
-    double phase_shift() const override { return 0.0; }
-    bool is_param_mutable() const override { return false; }
+    constexpr double base_i_from() const override { return base_i_; }
+    constexpr double base_i_to() const override { return base_i_; }
+    constexpr double loading(double /* max_s */, double max_i) const override { return max_i / i_n_; };
+    constexpr double phase_shift() const override { return 0.0; }
+    constexpr bool is_param_mutable() const override { return false; }
 
   private:
     double i_n_;
