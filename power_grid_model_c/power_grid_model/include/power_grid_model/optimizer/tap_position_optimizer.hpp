@@ -890,13 +890,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             UpdateBuffer update_data;
             Idx rank_index = 0;
 
+            auto const adjust_transformer_in_rank = [&](Idx const& rank_idx, Idx const& transformer_idx,
+                                                        std::vector<RegulatedTransformer> const& same_rank_regulators) {
+                auto const& regulator = same_rank_regulators[transformer_idx];
+                BinarySearchOptions const options{strategy_max, Idx2D{rank_idx, transformer_idx}};
+                tap_changed = adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
+                return tap_changed;
+            };
+
             for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
                 auto const& same_rank_regulators = regulator_order[i];
                 for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
-                    auto const& regulator = same_rank_regulators[j];
-                    BinarySearchOptions const options{strategy_max, Idx2D{i, j}};
-                    tap_changed =
-                        adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
+                    tap_changed = adjust_transformer_in_rank(i, j, same_rank_regulators);
                 }
                 if (tap_changed) {
                     iterations_per_rank[rank_index + 1] = 0;
