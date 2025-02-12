@@ -751,22 +751,22 @@ TEST_CASE("Test Tap position optimizer") {
             state, transformers_dataset.begin(), transformers_dataset.end(), std::back_inserter(changed_components));
     };
 
-    // auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
-    //     if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>())
-    //     {
-    //         return false;
-    //     }
-    //     std::vector<std::pair<IntS, IntS>> trafo_state_1;
-    //     std::vector<std::pair<IntS, IntS>> trafo_state_2;
-    //     for (auto const& transformer : state1.components.template citer<MockTransformer>()) {
-    //         trafo_state_1.emplace_back(transformer.id(), transformer.tap_pos());
-    //     }
-    //     for (auto const& transformer : state2.components.template citer<MockTransformer>()) {
-    //         trafo_state_2.emplace_back(transformer.id(), transformer.tap_pos());
-    //     }
+    auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
+        if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>())
+        {
+            return false;
+        }
+        std::vector<std::pair<IntS, IntS>> trafo_state_1;
+        std::vector<std::pair<IntS, IntS>> trafo_state_2;
+        for (auto const& transformer : state1.components.template citer<MockTransformer>()) {
+            trafo_state_1.emplace_back(transformer.id(), transformer.tap_pos());
+        }
+        for (auto const& transformer : state2.components.template citer<MockTransformer>()) {
+            trafo_state_2.emplace_back(transformer.id(), transformer.tap_pos());
+        }
 
-    //     return trafo_state_1 == trafo_state_2;
-    // };
+        return trafo_state_1 == trafo_state_2;
+    };
 
     auto const get_optimizer = [&](OptimizerStrategy strategy, SearchMethod tap_search) {
         return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
@@ -1172,40 +1172,42 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
-        // SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
-        //     state_b.rank = 0;
-        //     state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
-        //         CHECK(side == regulator_b.control_side());
-        //
-        //         // tap pos closer to tap_max at tap side <=> lower voltage at control side
-        //         return static_cast<DoubleComplex>(
-        //             test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
-        //     };
-        //
-        //     auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
-        //
-        //     // tap pos will jump between 3 and 4 in linear_search method
-        //     state_b.tap_min = 1;
-        //     state_b.tap_max = 5;
-        //     state_b.tap_pos = 5;
-        //
-        //     regulator_b.update(update_data);
-        //
-        //     for (auto strategy_side : test::strategies_and_sides) {
-        //         auto strategy = strategy_side.strategy;
-        //         auto tap_side = strategy_side.side;
-        //         CAPTURE(strategy);
-        //         CAPTURE(tap_side);
-        //
-        //         state_b.tap_side = tap_side;
-        //         state_a.tap_side = tap_side;
-        //
-        //         auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
-        //         auto const cached_state = MockState{state}; // explicit copy
-        //         CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
-        //         CHECK(twoStatesEqual(cached_state, state));
-        //     }
-        // }
+        SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
+            state_b.rank = 0;
+            state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+                if(state_b.tap_side == regulator_b.control_side()){
+                    return static_cast<DoubleComplex>(
+                        test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
+                }
+                // tap pos closer to tap_max at tap side <=> lower voltage at control side
+                return static_cast<DoubleComplex>(
+                    test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+            };
+        
+            auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
+        
+            // tap pos will jump between 3 and 4 in linear_search method
+            state_b.tap_min = 1;
+            state_b.tap_max = 5;
+            state_b.tap_pos = 5;
+        
+            regulator_b.update(update_data);
+        
+            for (auto strategy_side : test::strategies_and_sides) {
+                auto strategy = strategy_side.strategy;
+                auto tap_side = strategy_side.side;
+                CAPTURE(strategy);
+                CAPTURE(tap_side);
+        
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
+        
+                auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
+                auto const cached_state = MockState{state}; // explicit copy
+                CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                CHECK(twoStatesEqual(cached_state, state));
+            }
+        }
     }
 }
 
