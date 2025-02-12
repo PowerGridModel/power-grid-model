@@ -22,6 +22,7 @@ Currently, it supports both symmetric and asymmetric calculations for the follow
 * Short Circuit
 
 For conversions from various data format to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For an extended python interface to the the power-grid-model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
 
 ```{note}
 Do you wish to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
@@ -100,6 +101,7 @@ advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
 advanced_documentation/core-design
+advanced_documentation/python-wrapper-design
 ```
 ```{toctree}
 :caption: "Contribution"

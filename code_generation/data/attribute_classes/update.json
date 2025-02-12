@@ -243,6 +243,29 @@
                     "description": "line drop compensation reactance"
                 }
             ]
+        },
+        {
+            "name": "CurrentSensorUpdate",
+            "base": "BaseUpdate",
+            "is_template": true,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "i_sigma", 
+                        "i_angle_sigma"
+                    ],
+                    "description": "sigma of error margin of current (angle) measurement"
+                },
+                {
+                    "data_type": "RealValue<sym>",
+                    "names": [
+                        "i_measured",
+                        "i_angle_measured"
+                    ],
+                    "description": "measured current and current angle"
+                }
+            ]
         }
     ]
 }
