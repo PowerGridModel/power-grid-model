@@ -20,7 +20,8 @@
       {"id": 4, "energized": 1, "p": 9, "q": 0}
     ],
     "sym_power_sensor": [
-      {"id": 5, "energized": 1, "p_residual": 0, "q_residual": 0}
+      {"id": 5, "energized": 1, "p_residual": 0, "q_residual": 0},
+      {"id": 9, "energized": 1, "p_residual": 0, "q_residual": 0}
     ],
     "sym_voltage_sensor": [
       {"id": 6, "energized": 1, "u_residual": 0}

@@ -55,6 +55,7 @@ readability-*,
 -readability-function-cognitive-complexity,
 -readability-identifier-length,
 -readability-magic-numbers,
+-bugprone-unchecked-optional-access,
 '
 
 WarningsAsErrors: '*'
