@@ -952,10 +952,10 @@ TEST_CASE("Test Tap position optimizer") {
                 }
             }
 
-            SUBCASE("voltage band") { // xx // needs update to take into account the control side
+            SUBCASE("voltage band") { 
                 state_b.rank = 0;
                 state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
-                    if (side == regulator_b.control_side()) {
+                    if (state_b.tap_side == regulator_b.control_side()) {
                         return static_cast<DoubleComplex>(
                             test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
                     }
@@ -969,10 +969,10 @@ TEST_CASE("Test Tap position optimizer") {
 
                 SUBCASE("normal tap range") {
                     checkNormalTapRange(state_b, update_data, check_b, control_at_tap_side);
-                } // xx needs dual case
-                // SUBCASE("inverted tap range") {
-                //     checkInvertedTapRange(state_b, update_data, check_b, control_at_tap_side);
-                // } // xx
+                } 
+                SUBCASE("inverted tap range") {
+                    checkInvertedTapRange(state_b, update_data, check_b, control_at_tap_side);
+                } 
 
                 regulator_b.update(update_data);
             }
