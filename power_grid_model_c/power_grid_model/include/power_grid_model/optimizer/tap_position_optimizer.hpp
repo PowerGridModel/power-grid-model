@@ -690,7 +690,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     class BinarySearch {
       public:
         BinarySearch() = default;
-        BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max) { reset(tap_pos, tap_min, tap_max); }
+        BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
+            reset(tap_pos, tap_min, tap_max, control_at_tap_side);
+        }
 
         constexpr IntS get_current_tap() const { return current_; }
         constexpr bool get_last_down() const { return last_down_; }
@@ -709,7 +711,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             //  - tap_max > tap_min && strategy_max == true
             //  - tap_max < tap_min && strategy_max == false
             // Upper bound should be updated to the current tap position if the rest is the case.
-            if (tap_reverse_ == strategy_max) {
+            bool const invert_strategy = control_at_tap_side_ ? !strategy_max : strategy_max;
+            if (tap_reverse_ == invert_strategy) {
                 lower_bound_ = current_;
                 last_down_ = false;
             } else {
@@ -719,7 +722,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         void propose_new_pos(bool strategy_max, bool above_range) {
-            bool const is_down = above_range == tap_reverse_;
+            bool const is_down = (above_range == tap_reverse_) ^ control_at_tap_side_;
             if (last_check_) {
                 current_ = is_down ? lower_bound_ : upper_bound_;
                 inevitable_run_ = true;
@@ -733,7 +736,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // __prefer_higher__ indicates a preference towards higher voltage
             // that is a result of both the strategy as well as whether the current
             // transformer has a reversed tap_max and tap_min
-            bool const prefer_higher = strategy_max != tap_reverse_;
+            bool const prefer_higher = (strategy_max != tap_reverse_) ^ control_at_tap_side_;
             auto const tap_pos = search(prefer_higher);
             auto const tap_diff = tap_pos - get_current_tap();
             if (tap_diff == 0) {
@@ -754,7 +757,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
       private:
-        void reset(IntS tap_pos, IntS tap_min, IntS tap_max) {
+        void reset(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
             last_down_ = false;
             last_check_ = false;
             current_ = tap_pos;
@@ -762,6 +765,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             lower_bound_ = std::min(tap_min, tap_max);
             upper_bound_ = std::max(tap_min, tap_max);
             tap_reverse_ = tap_max < tap_min;
+            control_at_tap_side_ = control_at_tap_side;
         }
 
         void adjust(bool strategy_max = true) {
@@ -777,25 +781,27 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
         }
 
-        IntS search(bool prefer_higher = true) const {
+        IntS search(bool prefer_higher_) const {
             // This logic is used to determin which of the middle points could be of interest
             // given strategy used in optimization:
             // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
             // find the corresponding mid point. std::midpoint returns always the lower mid point
             // if the range is of even length. This is why we need to adjust bounds accordingly.
             // Not because upper bound and lower bound might be reversed, which is not possible.
+            bool const prefer_higher = control_at_tap_side_ ? !prefer_higher_ : prefer_higher_;
             auto const primary_bound = prefer_higher ? upper_bound_ : lower_bound_;
             auto const secondary_bound = prefer_higher ? lower_bound_ : upper_bound_;
             return std::midpoint(primary_bound, secondary_bound);
         }
 
-        IntS lower_bound_{};         // tap position lower bound
-        IntS upper_bound_{};         // tap position upper bound
-        IntS current_{0};            // current tap position
-        bool last_down_{false};      // last direction
-        bool last_check_{false};     // last run checked
-        bool tap_reverse_{false};    // tap range normal or reversed
-        bool inevitable_run_{false}; // inevitable run
+        IntS lower_bound_{};              // tap position lower bound
+        IntS upper_bound_{};              // tap position upper bound
+        IntS current_{0};                 // current tap position
+        bool last_down_{false};           // last direction
+        bool last_check_{false};          // last run checked
+        bool tap_reverse_{false};         // tap range normal or reversed
+        bool inevitable_run_{false};      // inevitable run
+        bool control_at_tap_side_{false}; // regulator control side is at tap side
     };
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct BinarySearchOptions {
@@ -896,7 +902,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             std::vector<BinarySearch> binary_search_group(same_rank_regulators.size());
             std::ranges::transform(same_rank_regulators, binary_search_group.begin(), [](auto const& regulator) {
                 return BinarySearch{regulator.transformer.tap_pos(), regulator.transformer.tap_min(),
-                                    regulator.transformer.tap_max()};
+                                    regulator.transformer.tap_max(), regulator.control_at_tap_side()};
             });
             binary_search_.push_back(std::move(binary_search_group));
         }
