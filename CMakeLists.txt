@@ -29,8 +29,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(GNUInstallDirs)
 
-find_package(Eigen3 CONFIG REQUIRED)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30.0") 
+#  libboost-headers packaged by conda does not come with BoostConfig.cmake
+cmake_policy(SET CMP0167 OLD)  
+endif()
+
 find_package(Boost REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(msgpack-cxx REQUIRED)
 

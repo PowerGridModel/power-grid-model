@@ -7,6 +7,6 @@
   },
   "fail": {
     "raises": "SparseMatrixError",
-    "reason": "Bug in Sparse LU solver found in #853"
+    "reason": "Bug in Sparse LU solver found in #864"
   }
 }

@@ -209,6 +209,24 @@ struct TransformerTapRegulatorUpdate {
     operator RegulatorUpdate const&() const { return reinterpret_cast<RegulatorUpdate const&>(*this); }
 };
 
+template <symmetry_tag sym_type>
+struct CurrentSensorUpdate {
+    using sym = sym_type;
+
+    ID id{na_IntID};  // ID of the object
+    double i_sigma{nan};  // sigma of error margin of current (angle) measurement
+    double i_angle_sigma{nan};  // sigma of error margin of current (angle) measurement
+    RealValue<sym> i_measured{nan};  // measured current and current angle
+    RealValue<sym> i_angle_measured{nan};  // measured current and current angle
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+};
+
+using SymCurrentSensorUpdate = CurrentSensorUpdate<symmetric_t>;
+using AsymCurrentSensorUpdate = CurrentSensorUpdate<asymmetric_t>;
+
 
 
 } // namespace power_grid_model
