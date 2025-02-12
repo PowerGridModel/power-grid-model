@@ -954,9 +954,13 @@ TEST_CASE("Test Tap position optimizer") {
 
             SUBCASE("voltage band") { // xx // needs update to take into account the control side
                 state_b.rank = 0;
-                state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
+                state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+                    if (side == regulator_b.control_side()) {
+                        return static_cast<DoubleComplex>(
+                            test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
+                    }
                     return static_cast<DoubleComplex>(
-                        test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
+                        test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
                 };
 
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
