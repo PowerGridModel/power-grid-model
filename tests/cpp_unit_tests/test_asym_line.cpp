@@ -44,12 +44,11 @@ TEST_CASE("Test asym line") {
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     double const base_y = base_i * base_i / base_power_1p;
     Branch& branch = asym_line;
-    ComplexTensor<asymmetric_t> const y_series = ComplexTensor<asymmetric_t>(0.66303418-0.34266364i, -0.02971114+0.03783535i, 0.04762194+0.00681293i, 0.04762194+0.00681293i, 2.48612768-0.46271628i, 0.05942228-0.07567069i, -0.02971114+0.03783535i, -0.09524388-0.01362585i, 2.48612768-0.46271628i);
+    ComplexTensor<asymmetric_t> const y_series = ComplexTensor<asymmetric_t>(1.87842984-0.42269873i, 1.87842984-0.42269873i, 1.87842984-0.42269873i, -0.62560863-0.00463073i, -0.57187623+0.12931409i, -0.62560863-0.00463073i);
+    ComplexTensor<asymmetric_t> const y_shunt = 2 * pi * system_frequency * ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0 } * 1.0i;
 
-    ComplexTensor<asymmetric_t> const y_shunt = 2 * pi * system_frequency * ComplexTensor<asymmetric_t>(input.c0 + input.c1, -input.c1) * 1.0i;
-
-    DoubleComplex const y1_series = (y_series(0,0) + y_series(1,1) + y_series(2,2)) / 3.0 - (y_series(0,2) + y_series(1,1) + y_series(2,0)) / 3.0;
-    DoubleComplex const y1_shunt = (y_shunt(0,0) + y_shunt(1,1) + y_shunt(2,2)) / 3.0 - (y_shunt(0,2) + y_shunt(1,1) + y_shunt(2,0)) / 3.0;
+    DoubleComplex const y1_series = (y_series(0,0) + y_series(1,1) + y_series(2,2)) / 3.0 - (y_series(0,1) + y_series(1,2) + y_series(1,0) + y_series(1,2) + y_series(2,0) + y_series(2,1)) / 6.0;
+    DoubleComplex const y1_shunt = (y_shunt(0,0) + y_shunt(1,1) + y_shunt(2,2)) / 3.0 - (y_shunt(0,1) + y_shunt(1,2) + y_shunt(1,0) + y_shunt(1,2) + y_shunt(2,0) + y_shunt(2,1)) / 6.0;
 
     // symmetric
     DoubleComplex const yff1 = y1_series + 0.5 * y1_shunt;
@@ -58,28 +57,7 @@ TEST_CASE("Test asym line") {
 
     // asymmetric
     ComplexTensor<asymmetric_t> ytt = y_series + 0.5 * y_shunt;
-    DoubleComplex const yff0 = ytt(0,0);
-    DoubleComplex const yft0 = -y_series(0,0);
-    DoubleComplex const ys0 = 0.5 * y_shunt(0,0) + 1.0 / (1.0 / y_series(0,0) + 2.0 / y_shunt(0,0));
-    ComplexTensor<asymmetric_t> const yffa{(2.0 * yff1 + yff0) / 3.0, (yff0 - yff1) / 3.0};
-    ComplexTensor<asymmetric_t> const yfta{(2.0 * yft1 + yft0) / 3.0, (yft0 - yft1) / 3.0};
-    ComplexTensor<asymmetric_t> const ysa{(2.0 * ys1 + ys0) / 3.0, (ys0 - ys1) / 3.0};
-
-    DoubleComplex const u1f = 1.0;
-    DoubleComplex const u1t = 0.9;
-    ComplexValue<asymmetric_t> const uaf{1.0};
-    ComplexValue<asymmetric_t> const uat{0.9};
-    DoubleComplex const i1f = (yff1 * u1f + yft1 * u1t) * base_i;
-    DoubleComplex const i1t = (yft1 * u1f + yff1 * u1t) * base_i;
-    DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
-    DoubleComplex const s_t = conj(i1t) * u1t * 10e3 * sqrt3;
-    double const loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
-
-    // Short circuit results
-    DoubleComplex const if_sc{1.0, 1.0};
-    DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
-    ComplexValue<asymmetric_t> const if_sc_asym{1.0 + 1.0i};
-    ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
+    ComplexTensor<asymmetric_t> branch_shunt = 0.5 * inv(y_shunt) + inv(inv(y_series) + 2.0 * inv(y_shunt));
 
     CHECK(asym_line.math_model_type() == ComponentType::branch);
 
@@ -134,10 +112,10 @@ TEST_CASE("Test asym line") {
     SUBCASE("Asymmetric parameters") {
         // double connected
         BranchCalcParam<asymmetric_t> param = asym_line.calc_param<asymmetric_t>();
-        CHECK((cabs(param.yff() - yffa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytt() - yffa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytf() - yfta) < numerical_tolerance).all());
-        CHECK((cabs(param.yft() - yfta) < numerical_tolerance).all());
+        CHECK((cabs(param.yff() - ytt) < numerical_tolerance).all());
+        CHECK((cabs(param.ytt() - ytt) < numerical_tolerance).all());
+        CHECK((cabs(param.ytf() - y_series) < numerical_tolerance).all());
+        CHECK((cabs(param.yft() - y_series) < numerical_tolerance).all());
         // no source
         param = branch.calc_param<asymmetric_t>(false);
         CHECK((cabs(param.yff() - 0.0) < numerical_tolerance).all());
@@ -147,7 +125,7 @@ TEST_CASE("Test asym line") {
         // from connected
         CHECK(branch.set_status(na_IntS, false));
         param = asym_line.calc_param<asymmetric_t>();
-        CHECK((cabs(param.yff() - ysa) < numerical_tolerance).all());
+        CHECK((cabs(param.yff() - branch_shunt) < numerical_tolerance).all()); // Fail
         CHECK((cabs(param.ytt() - 0.0) < numerical_tolerance).all());
         CHECK((cabs(param.ytf() - 0.0) < numerical_tolerance).all());
         CHECK((cabs(param.yft() - 0.0) < numerical_tolerance).all());
