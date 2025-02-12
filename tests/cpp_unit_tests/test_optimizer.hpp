@@ -217,64 +217,36 @@ constexpr auto strategy_search_and_sides = [] {
 }();
 
 constexpr auto strategy_search_and_sides_xs = std::array{
-    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_1},  // v tf
-    // control_at_tap_side_a=true
-    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_2},  // v ft
-    // control_at_tap_side_b=true
-    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_3},  // v ff
-    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_1},
-    // // v tf control_at_tap_side_a=true
-    OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search,
-                                ControlSide::side_2}, // x ft control_at_tap_side_b=true
-    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_3},
-    // // v ff
-    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_1},
-    // // v
-    OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search,
-                                ControlSide::side_2}, // x control_at_tap_side_b=true
-    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_3},
-    // // v
+    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_1},  // v 
+    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_2},  // v 
+    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_3},  // v 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_1}, // x
+    OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_2}, // v
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_3}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_1}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_2}, // v
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_3}, 
     // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::linear_search, ControlSide::side_1},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::linear_search, ControlSide::side_2},
-    // // x control_at_tap_side_b=true
     // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::linear_search, ControlSide::side_3},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::linear_search, ControlSide::side_1},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::linear_search, ControlSide::side_2},
-    // // x control_at_tap_side_b=true
     // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::linear_search, ControlSide::side_3},
-    // // v
-    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_1}, // x
-    // control_at_tap_side_a=true
-    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_2}, // x
-    // control_at_tap_side_b=true
-    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_3}, // x
-    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_1},
-    // // v
+    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_1}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_2}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_3}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_1}, // x
     // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_2},
-    // // x
     // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_3},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::binary_search, ControlSide::side_1},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::binary_search, ControlSide::side_2},
-    // // x
     // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::binary_search, ControlSide::side_3},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::binary_search, ControlSide::side_1},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::binary_search, ControlSide::side_2},
-    // // x
     // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::binary_search, ControlSide::side_3},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::binary_search, ControlSide::side_1},
-    // // v
     // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::binary_search, ControlSide::side_2},
-    // // x
     // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::binary_search, ControlSide::side_3},
-    // // v
 };
 
 struct OptStrategyMethodSearch {

@@ -711,7 +711,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             //  - tap_max > tap_min && strategy_max == true
             //  - tap_max < tap_min && strategy_max == false
             // Upper bound should be updated to the current tap position if the rest is the case.
-            bool invert_strategy = control_at_tap_side_ ? !strategy_max : strategy_max;
+            bool const invert_strategy = control_at_tap_side_ ? !strategy_max : strategy_max;
             if (tap_reverse_ == invert_strategy) {
                 lower_bound_ = current_;
                 last_down_ = false;
