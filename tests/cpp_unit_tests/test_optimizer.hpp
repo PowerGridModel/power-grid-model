@@ -146,7 +146,8 @@ static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstData
 
 constexpr auto strategies = [] {
     using enum OptimizerStrategy;
-    return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
+    // return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
+    return std::array{any, local_maximum, local_minimum, global_maximum, global_minimum};
 }();
 
 constexpr auto calculation_methods = [] {
@@ -214,6 +215,39 @@ constexpr auto strategy_search_and_sides = [] {
     }
     return result;
 }();
+
+constexpr auto strategy_search_and_sides_xs = std::array{
+    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_1},  // v 
+    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_2},  // v 
+    // OptimizerStrategySearchSide{OptimizerStrategy::any, SearchMethod::linear_search, ControlSide::side_3},  // v 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_1}, // x
+    OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_2}, // v
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::linear_search, ControlSide::side_3}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_1}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_2}, // v
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::linear_search, ControlSide::side_3}, 
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::linear_search, ControlSide::side_1},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::linear_search, ControlSide::side_2},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::linear_search, ControlSide::side_3},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::linear_search, ControlSide::side_1},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::linear_search, ControlSide::side_2},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::linear_search, ControlSide::side_3},
+    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_1}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_2}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::fast_any, SearchMethod::binary_search, ControlSide::side_3}, // 
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_1}, // x
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_2},
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_maximum, SearchMethod::binary_search, ControlSide::side_3},
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::binary_search, ControlSide::side_1},
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::binary_search, ControlSide::side_2},
+    // OptimizerStrategySearchSide{OptimizerStrategy::local_minimum, SearchMethod::binary_search, ControlSide::side_3},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::binary_search, ControlSide::side_1},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::binary_search, ControlSide::side_2},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_maximum, SearchMethod::binary_search, ControlSide::side_3},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::binary_search, ControlSide::side_1},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::binary_search, ControlSide::side_2},
+    // OptimizerStrategySearchSide{OptimizerStrategy::global_minimum, SearchMethod::binary_search, ControlSide::side_3},
+};
 
 struct OptStrategyMethodSearch {
     OptimizerStrategy strategy{};
