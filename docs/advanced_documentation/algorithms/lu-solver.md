@@ -276,14 +276,15 @@ uses the following backward error in the [iterative refinement algorithm](#itera
 
 $$
 \begin{align*}
-\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|r[i]\right|}{\sum_j \left|A[i,j]\right| \left|x[j]\right| + \left|b[i]\right|} \\
-&= \max_i \frac{\left|b[i] - \sum_j A[i,j] x[j]\right|}{\sum_j \left|A[i,j]\right| \left|x[j]\right| + \left|b[i]\right|} \\
-&= \max_i \frac{\left|r[i]\right|}{\left(\left|A\right| \cdot \left|x\right| + \left|b\right|\right)\left[i\right]}
+\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|r_i\right|}{\sum_j \left|A_{i,j}\right| \left|x_j\right| + \left|b_i\right|} \\
+&= \max_i \frac{\left|b_i - \sum_j A_{i,j} x_j\right|}{\sum_j \left|A_{i,j}\right| \left|x_j\right| + \left|b_i\right|} \\
+&= \max_i \frac{\left|r_i\right|}{\left(\left|A\right| \cdot \left|x\right| + \left|b\right|\right)_i}
 \end{align*}
 $$
 
-In this equation, the symbolic notation
-$\left(\left|A\right|\cdot \left|x\right|\right)\left[i\right] := \sum_j |A[i,j]| |x[j]|$, as
+In this equation, the symbolic notation $\left|A\right|$ and $\left|x\right|$ are the matrix and
+vector with absolute values of the elements of $A$ and $x$ as elements, i.e.,
+$\left|A\right|_{i,j} := \left|a_{i,j}\right|$ and $\left|x\right|_i := \left|x_i\right|$, as
 defined in [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
 Due to aforementioned, this is prone to rounding errors, and a single row with rounding errors may
@@ -293,16 +294,24 @@ denominators:
 
 $$
 \begin{align*}
-D_{\max} &= \max_i {(|A||x| + |b|)_i} \\
-berr &= \max_{ i } {\frac{|r|_i}{\max ( (|A||x| + |b|)_i,  \epsilon_{berr} D_{\max}) }}
+D_{\text{max}} &= \max_i\left\{\left(\left|A\right|\cdot\left|x\right| + \left|b\right|\right)_i\right\} \\
+\text{backward_error} &= \max_i \left\{
+   \frac{\left|r\right|_i}{
+      \max\left\{
+         \left(\left|A\right|\cdot\left|x\right| + \left|b\right|\right)_i,
+         \epsilon_{\text{backward_error}} D_{\text{max}}
+      \right\}
+   }
+\right\}
 \end{align*}
 $$
 
-$\epsilon$ may be chosen. $\epsilon = 0$ means no cut-off, while $\epsilon = 1$ means maximum
-cut-off. The former is prone to rounding errors, while the latter may hide issues in rows with small
-coefficients by supressing them in the backward error, even if that row's residual is relatively
-large, in favor of other rows with larger absolute, but smaller relative, residuals. In conclusion,
-$\epsilon$ should be chosen not too large and not too small.
+$\epsilon$ may be chosen. $\epsilon = 0$ means no cut-off, while $\epsilon = 1$ means that only the
+absolute values of the residuals are relevant - not the relative values. The former is prone to
+rounding errors, while the latter may hide issues in rows with small coefficients by supressing them
+in the backward error, even if that row's residual is relatively large compared to the other
+entries, in favor of other rows with larger absolute, but smaller relative, residuals. In
+conclusion, $\epsilon$ should be chosen not too large and not too small.
 
 ```{note}
 $\epsilon = 10^{-4}$ was experimentally determined to be a reasonably good value on a number of
