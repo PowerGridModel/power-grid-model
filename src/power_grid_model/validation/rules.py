@@ -754,6 +754,53 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
     return errors
 
 
+def subset_of_fields_are_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
+    """
+    Helper function that generates missing value errors if a subset of the supplied fields are missing.
+    If for an instance of component type all fields are missing or all fields are not missing then no error is returned for that instance.
+    In any other case an error for that id is returned.
+
+    Args:
+        data: SingleDataset, pgm data
+        fields: List of fields
+        component_type: component type to check
+    """
+    errors = []
+    if component_type in data:
+        asym_line_data = data[component_type]
+        instances_with_nan_data = np.array([False for i in range(0, len(asym_line_data))])
+        instances_with_non_nan_data = np.array([False for i in range(0, len(asym_line_data))])
+        for field in fields:
+            asym_axes = tuple(range(asym_line_data.ndim, asym_line_data[field].ndim))
+            instances_with_nan_data = np.logical_or(instances_with_nan_data, np.any(np.isnan(asym_line_data[field]), axis=asym_axes)) 
+
+            instances_with_non_nan_data = np.logical_or(instances_with_non_nan_data, np.any(np.logical_not(np.isnan(asym_line_data[field])), axis=asym_axes))
+
+        instances_with_invalid_data = np.logical_and(instances_with_nan_data, instances_with_non_nan_data)
+
+        ids = asym_line_data["id"][instances_with_invalid_data]
+        if len(ids) > 0:
+            errors.append(MissingValueError(component_type, ",".join(fields), ids))
+
+    return errors
+
+
+def all_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
+    errors = []
+    if component_type in data:
+        asym_line_data = data[component_type]
+        instances_with_all_nan_data = np.array([True for i in range(0, len(asym_line_data))])
+        for field in fields:
+            asym_axes = tuple(range(asym_line_data.ndim, asym_line_data[field].ndim))
+            instances_with_all_nan_data = np.logical_and(instances_with_all_nan_data, np.any(np.isnan(asym_line_data[field]), axis=asym_axes))
+
+        ids = asym_line_data["id"][instances_with_all_nan_data]
+        if len(ids) > 0:
+            errors.append(MissingValueError(component_type, ",".join(fields), ids))
+
+    return errors
+
+
 def none_missing(data: SingleDataset, component: ComponentType, fields: str | list[str]) -> list[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
