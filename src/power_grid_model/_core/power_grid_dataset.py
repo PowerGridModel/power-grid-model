@@ -140,7 +140,7 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             A map of component to its attribute indications.
             None means no attribute indications
         """
-        result_dict = {}
+        result_dict: dict[ComponentType, None | list[AttributeType]] = {}
         components = self.components()
         for component_idx, component_name in enumerate(components):
             has_indications = pgc.dataset_info_has_attribute_indications(self._info, component_idx)
