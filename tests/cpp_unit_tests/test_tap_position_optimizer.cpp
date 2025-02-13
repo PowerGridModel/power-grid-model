@@ -392,7 +392,6 @@ using power_grid_model::optimizer::test::search_methods;
 using power_grid_model::optimizer::test::strategies_and_methods;
 using power_grid_model::optimizer::test::strategies_and_sides;
 using power_grid_model::optimizer::test::strategy_search_and_sides;
-using power_grid_model::optimizer::test::strategy_search_and_sides_xs;
 using power_grid_model::optimizer::test::StubTransformer;
 using power_grid_model::optimizer::test::StubTransformerInput;
 using power_grid_model::optimizer::test::StubTransformerUpdate;
@@ -642,40 +641,40 @@ auto check_compensated_exact(IntS tap_pos, IntS tap_pos_comp) -> TapPositionChec
         }
     };
 };
-auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max, bool control_at_tap_side)
-    -> TapPositionCheckFunc {
-    return [tap_pos_any, tap_range_min, tap_range_max](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
-        using enum OptimizerStrategy;
+auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max) -> TapPositionCheckFunc {
+    return
+        [tap_pos_any, tap_range_min, tap_range_max](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
+            using enum OptimizerStrategy;
 
-        switch (strategy) {
-        case any:
-        case fast_any:
-            CHECK(value == tap_pos_any);
-            break;
-        case local_maximum:
-        case global_maximum:
-            if (control_at_tap_side) {
-                CHECK(value == tap_range_min);
-            } else {
-                CHECK(value == tap_range_max);
+            switch (strategy) {
+            case any:
+            case fast_any:
+                CHECK(value == tap_pos_any);
+                break;
+            case local_maximum:
+            case global_maximum:
+                if (control_at_tap_side) {
+                    CHECK(value == tap_range_min);
+                } else {
+                    CHECK(value == tap_range_max);
+                }
+                break;
+            case local_minimum:
+            case global_minimum:
+                if (control_at_tap_side) {
+                    CHECK(value == tap_range_max);
+                } else {
+                    CHECK(value == tap_range_min);
+                }
+                break;
+            default:
+                FAIL("Unreachable");
             }
-            break;
-        case local_minimum:
-        case global_minimum:
-            if (control_at_tap_side) {
-                CHECK(value == tap_range_max);
-            } else {
-                CHECK(value == tap_range_min);
-            }
-            break;
-        default:
-            FAIL("Unreachable");
-        }
-    };
+        };
 }
-auto check_compensated_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_any_comp, IntS tap_range_min, IntS tap_range_max,
-                                          IntS tap_range_min_comp, IntS tap_range_max_comp, bool control_at_tap_side)
-    -> TapPositionCheckFunc {
+auto check_compensated_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_any_comp, IntS tap_range_min,
+                                          IntS tap_range_max, IntS tap_range_min_comp,
+                                          IntS tap_range_max_comp) -> TapPositionCheckFunc {
     return [tap_pos_any, tap_pos_any_comp, tap_range_min, tap_range_max, tap_range_min_comp,
             tap_range_max_comp](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
         using enum OptimizerStrategy;
@@ -715,8 +714,7 @@ auto normalized_lerp(IntS value, IntS start, IntS stop) {
     return (static_cast<double>(value) - static_cast<double>(start)) /
            (static_cast<double>(stop) - static_cast<double>(start));
 }
-void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulatorUpdate& update_data, auto& check_b,
-                         bool control_at_tap_side) {
+void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulatorUpdate& update_data, auto& check_b) {
     state_b.tap_min = 1;
     state_b.tap_max = 5;
     state_b.tap_pos = 3;
@@ -727,16 +725,15 @@ void checkNormalTapRange(MockTransformerState& state_b, TransformerTapRegulatorU
     }
     SUBCASE("large compact band") {
         update_data.u_band = 1.01;
-        check_b = test::check_exact_per_strategy(3, 5, 1, control_at_tap_side);
+        check_b = test::check_exact_per_strategy(3, 5, 1);
     }
     SUBCASE("small open band") {
         update_data.u_band = 0.76;
-        check_b = test::check_exact_per_strategy(3, 4, 2, control_at_tap_side);
+        check_b = test::check_exact_per_strategy(3, 4, 2);
     }
 }
 
-void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulatorUpdate& update_data, auto& check_b,
-                           bool control_at_tap_side) {
+void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulatorUpdate& update_data, auto& check_b) {
     state_b.tap_min = 5;
     state_b.tap_max = 1;
     state_b.tap_pos = 3;
@@ -747,11 +744,11 @@ void checkInvertedTapRange(MockTransformerState& state_b, TransformerTapRegulato
     }
     SUBCASE("large compact band") {
         update_data.u_band = 1.01;
-        check_b = test::check_exact_per_strategy(3, 1, 5, control_at_tap_side);
+        check_b = test::check_exact_per_strategy(3, 1, 5);
     }
     SUBCASE("small open band") {
         update_data.u_band = 0.76;
-        check_b = test::check_exact_per_strategy(3, 2, 4, control_at_tap_side);
+        check_b = test::check_exact_per_strategy(3, 2, 4);
     }
 }
 } // namespace
@@ -1010,20 +1007,15 @@ TEST_CASE("Test Tap position optimizer") {
 
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
 
-                bool const control_at_tap_side = regulator_b.control_side() == state_b.tap_side;
-
-                SUBCASE("normal tap range") { checkNormalTapRange(state_b, update_data, check_b, control_at_tap_side); }
-                SUBCASE("inverted tap range") {
-                    checkInvertedTapRange(state_b, update_data, check_b, control_at_tap_side);
-                }
+                SUBCASE("normal tap range") { checkNormalTapRange(state_b, update_data, check_b); }
+                SUBCASE("inverted tap range") { checkInvertedTapRange(state_b, update_data, check_b); }
 
                 regulator_b.update(update_data);
             }
 
             SUBCASE("line drop compensation") {
                 state_b.rank = 0;
-                state_b.u_pu = [&state_b, &regulator_b](
-                                   ControlSide side) { 
+                state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
                     if (state_b.tap_side == regulator_b.control_side()) {
                         return static_cast<DoubleComplex>(
                             test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
@@ -1046,22 +1038,18 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_max = 5;
                 state_b.tap_pos = 3;
 
-                bool const control_at_tap_side = regulator_b.control_side() == state_b.tap_side;
-
-                SUBCASE("no line drop compensation") {
-                    check_b = test::check_exact_per_strategy(3, 4, 2, control_at_tap_side);
-                }
+                SUBCASE("no line drop compensation") { check_b = test::check_exact_per_strategy(3, 4, 2); }
                 SUBCASE("resistance") {
                     update_data.line_drop_compensation_r = 0.5 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1, control_at_tap_side);
+                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1);
                 }
                 SUBCASE("positive reactance") {
                     update_data.line_drop_compensation_x = 0.125 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 2, 4, 1, control_at_tap_side);
+                    check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 2, 4, 1);
                 }
                 SUBCASE("negative reactance") {
                     update_data.line_drop_compensation_x = -0.5 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1, control_at_tap_side);
+                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1);
                 }
 
                 regulator_b.update(update_data);
@@ -1087,10 +1075,10 @@ TEST_CASE("Test Tap position optimizer") {
                         }
                         return static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
                     };
-                    
+
                     state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
                         CHECK(side == regulator_b.control_side());
-                        
+
                         // u_2b = f(tap_pos_a, tap_pos_b) when rank is 1
                         // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
                         // consider n_2 = 1. Also u_1a = u_2b
@@ -1106,13 +1094,13 @@ TEST_CASE("Test Tap position optimizer") {
                         regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
                         regulator_b.update({.id = 4, .u_set = 0.9, .u_band = 0.5});
                         check_a = test::check_exact(-2);
-                        check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 1, 5, -1, control_at_tap_side);
+                        check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 1, 5, -1);
                     }
                     SUBCASE("Situation 2") {
                         regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
                         regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
                         check_a = test::check_exact(-1);
-                        check_b = test::check_compensated_exact_per_strategy(-3, 5, 5, -3, -3, 5, control_at_tap_side);
+                        check_b = test::check_compensated_exact_per_strategy(-3, 5, 5, -3, -3, 5);
                     }
                     SUBCASE("Situation 3") {
                         regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
@@ -1121,11 +1109,13 @@ TEST_CASE("Test Tap position optimizer") {
                         check_b = test::check_exact(0);
                     }
                 }
+
+                //// The following test is no longer making sense
                 // SUBCASE("multiple transformers with generic control function") {
                 //     state_a.tap_min = 0;
-                //     state_a.tap_max = 2;
+                //     state_a.tap_max = 3;
                 //     state_b.tap_min = 0;
-                //     state_b.tap_max = 2;
+                //     state_b.tap_max = 3;
                 //     regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.2});
                 //     regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.2});
 
@@ -1137,23 +1127,27 @@ TEST_CASE("Test Tap position optimizer") {
                 //     // 2         | 1.0  | 0.75 | 0.5  | 0.25
                 //     // 3         | 0.75 | 0.5  | 0.25 | 0.0
 
-                //     state_a.u_pu = [&state_a, &state_b, &regulator_a](ControlSide side) {
+                //     state_a.u_pu = [&state_a, &state_b, &regulator_a, &regulator_b](ControlSide side) {
                 //         CHECK(side == regulator_a.control_side());
-                //         auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
-                //         return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+                //         auto const tap_a_sign = state_a.tap_side == regulator_a.control_side() ? -1.0 : 1.0;
+                //         auto const tap_b_sign = state_b.tap_side == regulator_b.control_side() ? -1.0 : 1.0;
+                //         auto const tap_sum = static_cast<double>(tap_a_sign * state_a.tap_pos + tap_b_sign *
+                //         state_b.tap_pos); return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
                 //     };
 
-                //     state_b.u_pu = [&state_a, &state_b, &regulator_b](ControlSide side) {
+                //     state_b.u_pu = [&state_a, &state_b, &regulator_a, &regulator_b](ControlSide side) {
                 //         CHECK(side == regulator_b.control_side());
-                //         auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
-                //         return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+                //         auto const tap_a_sign = state_a.tap_side == regulator_a.control_side() ? -1.0 : 1.0;
+                //         auto const tap_b_sign = state_b.tap_side == regulator_b.control_side() ? -1.0 : 1.0;
+                //         auto const tap_sum = static_cast<double>(tap_a_sign * state_a.tap_pos + tap_b_sign *
+                //         state_b.tap_pos); return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
                 //     };
 
                 //     SUBCASE("Rank a < Rank b") {
                 //         state_a.rank = 0;
                 //         state_b.rank = 1;
-                //         check_a = test::check_exact_per_strategy(2, 0, 2);
-                //         check_b = test::check_exact_per_strategy(0, 2, 0);
+                //         check_a = test::check_compensated_exact(0, 3);
+                //         check_b = test::check_compensated_exact(2, 1);
                 //     }
                 //     SUBCASE("Rank a > Rank b") {
                 //         state_a.rank = 1;
@@ -1172,8 +1166,8 @@ TEST_CASE("Test Tap position optimizer") {
             auto const initial_tap_pos_a{transformer_a.tap_pos()};
             auto const initial_tap_pos_b{transformer_b.tap_pos()};
 
-            // for (auto strategy_search_side : test::strategy_search_and_sides) {
-            for (auto strategy_search_side : test::strategy_search_and_sides_xs) {
+            for (auto strategy_search_side : test::strategy_search_and_sides) {
+                // for (auto strategy_search_side : test::strategy_search_and_sides_xs) {
                 auto strategy = strategy_search_side.strategy;
                 auto search = strategy_search_side.search;
                 auto tap_side = strategy_search_side.side;
@@ -1182,8 +1176,7 @@ TEST_CASE("Test Tap position optimizer") {
                 CAPTURE(tap_side);
 
                 state_b.tap_side = tap_side;
-                // state_a.tap_side = tap_side;
-                state_a.tap_side = ControlSide::to;
+                state_a.tap_side = ControlSide::to; // no need to make tap side of a a variable
 
                 auto optimizer = get_optimizer(strategy, search);
                 auto const result = optimizer.optimize(state, CalculationMethod::default_method);
