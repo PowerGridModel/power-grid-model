@@ -31,8 +31,10 @@ class AsymLine : public Branch {
         ComplexTensor<asymmetric_t> c_matrix = compute_c_matrix_from_input(asym_line_input);
         ComplexTensor<asymmetric_t> z_series = compute_z_series_from_input(asym_line_input);
 
-        y_series_abc_ = inv(z_series);
-        y_shunt_abc_ = 2 * pi * system_frequency * c_matrix * 1.0i;
+        double const base_y = base_i_ / (u1 / sqrt3); 
+
+        y_series_abc_ = 1 / base_y * inv(z_series);
+        y_shunt_abc_ = 1 / base_y * (2 * pi * system_frequency * c_matrix * 1.0i);
 
     }
 
