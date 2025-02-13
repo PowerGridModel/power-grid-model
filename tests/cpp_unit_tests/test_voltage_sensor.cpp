@@ -496,6 +496,25 @@ TEST_CASE("Test voltage sensor") {
         }
     }
 
+    SUBCASE("Construction and update") {
+        VoltageSensorInput<symmetric_t> const sym_voltage_sensor_input{
+            .id = 7, .measured_object = 3, .u_sigma = 1.0, .u_measured = 25000, .u_angle_measured = -0.2};
+        VoltageSensorUpdate<symmetric_t> const sym_voltage_sensor_update{
+            .id = 7,
+            .u_sigma = sym_voltage_sensor_input.u_sigma,
+            .u_measured = sym_voltage_sensor_input.u_measured,
+            .u_angle_measured = sym_voltage_sensor_input.u_angle_measured};
+
+        SymVoltageSensor sym_voltage_sensor{sym_voltage_sensor_input, 31250};
+        auto const orig_calc_param = sym_voltage_sensor.calc_param<symmetric_t>();
+
+        sym_voltage_sensor.update(sym_voltage_sensor_update);
+        auto const updated_calc_param = sym_voltage_sensor.calc_param<symmetric_t>();
+
+        CHECK(orig_calc_param.value == updated_calc_param.value);
+        CHECK(orig_calc_param.variance == updated_calc_param.variance);
+    }
+
     SUBCASE("Update inverse - sym") {
         constexpr auto u_sigma = 1.0;
         constexpr auto u_measured = 2.0;

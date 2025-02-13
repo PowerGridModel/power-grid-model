@@ -48,6 +48,7 @@ set(PROJECT_SOURCES
     "test_math_solver_se_newton_raphson.cpp"
     "test_math_solver_se_iterative_linear.cpp"
     "test_math_solver_sc.cpp"
+    "test_current_sensor.cpp"
 )
 
 add_executable(power_grid_model_unit_tests ${PROJECT_SOURCES})
