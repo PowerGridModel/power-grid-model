@@ -53,8 +53,8 @@ PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* /* handle */, PGM_D
     return static_cast<PGM_Idx>(info->component_info[component_idx].attribute_indications.size());
 }
 
-char const* PGM_dataset_info_name_attribute_indications(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
-                                                        PGM_Idx component_idx, PGM_Idx attribute_idx) {
+char const* PGM_dataset_info_attribute_name(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                            PGM_Idx component_idx, PGM_Idx attribute_idx) {
     return info->component_info[component_idx].attribute_indications[attribute_idx]->name;
 }
 
