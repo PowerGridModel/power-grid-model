@@ -152,8 +152,17 @@ inline ComplexValue<asymmetric_t> piecewise_complex_value(ComplexValue<asymmetri
 inline double cabs(double x) { return std::abs(x); }
 inline double cabs(DoubleComplex const& x) { return std::sqrt(std::norm(x)); }
 inline double abs2(DoubleComplex const& x) { return std::norm(x); }
-template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
+template <column_vector_or_tensor DerivedA>
+inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
+    requires(std::same_as<typename DerivedA::Scalar, DoubleComplex>)
+{
     return sqrt(abs2(m));
+}
+template <column_vector_or_tensor DerivedA>
+inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
+    requires(std::same_as<typename DerivedA::Scalar, double>)
+{
+    return m.abs();
 }
 
 // phase_shift(x) = e^{i arg(x)} = x / |x|
