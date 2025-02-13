@@ -51,12 +51,16 @@ candidate.
 #### Pivot operations
 
 Pivoting of blocks is expensive, both computationally and memory-wise, as it interferes with the
-sparse block structure of the matrix equations. To this end, a pre-fixed permutation can be chosen
-to avoid bock pivoting at a later stage.
+sparse block structure of the matrix equations by introducing new potentially non-zero elements,
+called _fill-ins_, during the process of Gaussian elimination. To this end, a pre-fixed permutation
+can be chosen to avoid bock pivoting at a later stage.
 
 The [topological structure](#topological-structure) of the grid does not change during the
 solving phase, so the permutation can be obtained by the minimum degree algorithm from just the
-topology alone, at the cost of potential [ill-conditioned pivot elements](#pivot-perturbation).
+topology alone, which seeks to minimize the amount of fill-ins. Note that even if a matrix block
+is topologically relevant does not imply that it is always non-zero. This may result in potentially
+[ill-conditioned pivot elements](#pivot-perturbation), which will be discussed in a different
+section.
 
 ### Power system equation properties
 
@@ -112,6 +116,46 @@ The power grid model uses a modified version of the
 (credits go to the original author). The modification adds opt-in support for
 [pivot perturbation](#pivot-perturbation).
 
+#### Dense LU factorization process
+
+The Gaussian elimination process itself is as usual. Let
+$M_p\equiv\begin{bmatrix}m_p && \vec{r}_p^T \\ \vec{q}_p && \hat{M}_p\end{bmatrix}$, where $p$ is
+the current pivot element at the top left of the matrix, $\vec{q}$ and $\vec{r}_p^T$ are the
+associated column and row vectors containing the rest of the pivot column and row and $\hat{M}_p$ is
+the bottom-right block of the matrix. Gaussian elimination constructs the matrices
+
+$$
+\begin{align*}
+L_p &= \begin{bmatrix} 1 && \vec{0}^T \\ m_p^{-1} \vec{q}_p && \hat{D}_p\end{bmatrix}
+Q_p &= \begin{bmatrix} m_p && \vec{r}_p^T \\ \vec{0} && \hat{M}_p - m_p^{-1} \vec{q}_p \vec{r}_p^T\end{bmatrix} \equiv \begin{bmatrix} 1 && \tilde{\vec{r}}_p^T \\ \vec{0} && M_{p+1} \end{bmatrix}
+\end{align*}
+$$
+
+where $\hat{D}$ is the matrix with ones on the diagonal and zeros as off-diagonal elements.
+
+Iterating this process yields the matrices
+
+$$
+\begin{align*}
+L = L_0 L_1 \cdots L_{N-1} &= \begin{bmatrix}
+1 && 0 && \cdots \\
+m_0^{-1} \vec{q}_0 && 1 && \ddots \\
+&& m_1^{-1} \vec{q}_1 && \ddots \\
+&& && \ddots
+\end{bmatrix} \\
+Q = Q_0 Q_1 \cdots Q_{N-1} &= \begin{bmatrix}
+m_0 && \vec{r}_0^T && && \\
+0 && m_1 && \vec{r}_1^T && \\
+\vdots && \ddots && \ddots && \ddots
+\end{bmatrix}
+\end{align*}
+$$
+
+The process described in the above assumes no pivot permutations were necessary. If permutations
+are required, they are kept track of in a separate permution matrix, so that $A = LUP$.
+
+#### Dense LU factorization algorithm
+
 Let $M\equiv M\left[0:N, 0:N\right]$ be the $N\times N$-matrix and $M\left[i,j\right]$ its element
 at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
 
@@ -144,9 +188,82 @@ the `SparseMatrixError` immediately, we break from the loop and throw after that
 change the functional behavior.
 ```
 
-### Block-sparse LU decomposition
+### Block-sparse LU factorization
 
-TODO
+The LU factorization process for block-sparse matrices is similar to that for dense matrices.
+
+#### Block-sparse indices
+
+The structure of the block-sparse matrices is as follows.
+
+* The $N\times N$ block matrix $M$ is interpreted as $M\equiv M\left[0:N, 0:N\right]$, with
+  $M\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
+* In turn, let $M[i,j] \equiv M_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense block with
+  dimensions $N_i\times N_j$.
+
+This can be graphically represented as
+
+$$
+\begin{align*}
+M &\equiv \begin{pmatrix}
+M_{0,0}   && \cdots && M_{0,N-1} \\
+\vdots    && \ddots && \vdots \\
+M_{N-1,0} && \cdots && M_{N-1,N-1}
+\end{pmatrix} \\
+&\equiv \begin{pmatrix}
+\begin{pmatrix}
+   M_{0,0}\left[0,0\right]     && \cdots && M_{0,0}\left[0,N_j-1\right] \\
+   \vdots                      && \ddots && \vdots \\
+   M_{0,0}\left[N_i-1,0\right] && \cdots && M_{0,0}\left[N_i-1,N_j-1\right]
+\end{pmatrix} && \cdots && \begin{pmatrix}
+   M_{0,N-1}\left[0,0\right]     && \cdots && M_{0,N-1}\left[0,N_j-1\right] \\
+   \vdots                        && \ddots && \vdots \\
+   M_{0,N-1}\left[N_i-1,0\right] && \cdots && M_{0,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix} \\
+\vdots && \ddots && \vdots \\
+\begin{pmatrix}
+   M_{N-1,0}\left[0,0\right]     && \cdots && M_{N-1,0}\left[0,N_j-1\right] \\
+   \vdots                        && \ddots && \vdots \\
+   M_{N-1,0}\left[N_i-1,0\right] && \cdots && M_{N-1,0}\left[N_i-1,N_j-1\right]
+\end{pmatrix} && \cdots && \begin{pmatrix}
+   M_{N-1,N-1}\left[0,0\right]     && \cdots && M_{N-1,N-1}\left[0,N_j-1\right] \\
+   \vdots                          && \ddots && \vdots \\
+   M_{N-1,N-1}\left[N_i-1,0\right] && \cdots && M_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix}
+\end{pmatrix}
+\end{align*}
+$$
+
+Because of the sparse structure and the fact that all $M_{i,j}$ have the same shape, it is much more
+efficient to store the blocks $M_{i,j}$ in a vector $M_{\tilde{k}}$ where $\tilde{k}$ is a reordered
+index from $(i,j) \mapsto \tilde{k}$. This mapping, in turn, is stored as an index pointer, i.e., a
+vector of vectors of indices, with the outer index given by the row-index $i$, and the inner vector
+containing the values of $j$ for which $M_{i,j}$ may be non-zero. All topologically relevant matrix
+elements, as well as [fill-ins](#pivot-operations), are included in this mapping. The following
+illustrates this mapping.
+
+$$
+\begin{align*}
+\begin{pmatrix}
+M_{0,0} &&         &&         && M_{0,3} \\
+        && M_{1,1} && M_{1,2} &&         \\
+        && M_{2,1} && M_{2,2} && M_{2,3} \\
+M_{3,0} &&         && M_{3,2} && M_{3,3}
+\end{pmatrix} &\equiv
+\begin{bmatrix}
+M_{0,0} && M_{0,3} && M_{1,1} && M_{1,2} && M_{2,1} && M_{2,2} && M_{2,3} && M_{3,0} && M_{3,2} && M_{3,3} && \\
+[[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] && \\
+[0 && && 2 && && 4 && && 7 && && 10]
+\end{bmatrix}
+\end{align*}
+$$
+
+In the right-hand side, the upper row contains the present block entries and the bottom row their
+column indices. The row indices are implied by the index of the inner vector in the outer one.
+
+Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the nested list of column
+indices. The double loop becomes:
+
+1. Loop all rows: $i=0..(N-1)$:
+   1. The list of indices for this row is 
 
 ### Pivot perturbation
 
@@ -346,6 +463,7 @@ The algorithm is as follows:
 Let $M\equiv M\left[0:N, 0:N\right]$ be the $N\times N$-matrix with a block-sparse structure and
 $M\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$. In turn,
 let $M[i,j] \equiv M_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense block with dimensions
+$N_i\times N_j$.
 
 1. Set $\text{norm} \gets 0$.
 2. Loop over all block-rows: $i = 0..(N-1)$:
