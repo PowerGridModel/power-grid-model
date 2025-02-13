@@ -307,6 +307,7 @@ def validate_required_values(
     required["branch"] = required["base"] + ["from_node", "to_node", "from_status", "to_status"]
     required["link"] = required["branch"].copy()
     required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1"]
+    required["asym_line"] = required["branch"] + ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
     required["transformer"] = required["branch"] + [
         "u1",
         "u2",
@@ -477,6 +478,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     component_validators = {
         "node": validate_node,
         "line": validate_line,
+        "asym_line": validate_asym_line,
         "link": lambda d: validate_branch(d, ComponentType.link),
         "generic_branch": validate_generic_branch,
         "transformer": validate_transformer,
@@ -541,6 +543,44 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
     errors += _all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
     errors += _all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
     errors += _all_greater_than_zero(data, ComponentType.line, "i_n")
+    return errors
+
+
+def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
+    errors = validate_branch(data, ComponentType.line)
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_aa")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_ba")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_bb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_ca")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_cb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_cc")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_na")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_nb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_nc")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_nn")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_aa")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_ba")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_bb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_ca")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_cb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_cc")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_na")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_nb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_nc")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_nn")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_aa")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_ba")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_bb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_ca")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_cb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_cc")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_na")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_nb")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_nc")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_nn")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c0")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c1")
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "i_n")
     return errors
 
 
