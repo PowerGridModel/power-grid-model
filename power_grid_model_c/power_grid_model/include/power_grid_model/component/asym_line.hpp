@@ -31,8 +31,9 @@ class AsymLine : public Branch {
         ComplexTensor<asymmetric_t> c_matrix = compute_c_matrix_from_input(asym_line_input);
         ComplexTensor<asymmetric_t> z_series = compute_z_series_from_input(asym_line_input);
 
-        _y_series_abc = inv(z_series);
-        _y_shunt_abc = 2 * pi * system_frequency * c_matrix * 1.0i;
+        y_series_abc_ = inv(z_series);
+        y_shunt_abc_ = 2 * pi * system_frequency * c_matrix * 1.0i;
+
     }
 
     // override getter
@@ -45,21 +46,21 @@ class AsymLine : public Branch {
   private:
     double i_n_;
     double base_i_;
-    ComplexTensor<asymmetric_t> _y_series_abc;
-    ComplexTensor<asymmetric_t> _y_shunt_abc;
+    ComplexTensor<asymmetric_t> y_series_abc_;
+    ComplexTensor<asymmetric_t> y_shunt_abc_;
 
     ComplexTensor<asymmetric_t> compute_z_series_from_input(const power_grid_model::AsymLineInput& asym_line_input) {
         ComplexTensor<asymmetric_t> z_series_abc;
         if (is_nan(asym_line_input.r_na) && is_nan(asym_line_input.x_na)) {
             ComplexTensor<asymmetric_t> r_matrix = ComplexTensor<asymmetric_t>(asym_line_input.r_aa, asym_line_input.r_bb, asym_line_input.r_cc, asym_line_input.r_ba, asym_line_input.r_ca, asym_line_input.r_cb);
             ComplexTensor<asymmetric_t> x_matrix = ComplexTensor<asymmetric_t>(asym_line_input.x_aa, asym_line_input.x_bb, asym_line_input.x_cc, asym_line_input.x_ba, asym_line_input.x_ca, asym_line_input.x_cb);
-            z_series_abc = r_matrix + x_matrix * 1.0i;
+            z_series_abc = r_matrix + 1.0i * x_matrix;
         } 
         else {
             ComplexTensor4 r_matrix = ComplexTensor4(asym_line_input.r_aa, asym_line_input.r_bb, asym_line_input.r_cc, asym_line_input.r_nn, asym_line_input.r_ba, asym_line_input.r_ca, asym_line_input.r_na, asym_line_input.r_cb, asym_line_input.r_nb, asym_line_input.r_nc);
             ComplexTensor4 x_matrix = ComplexTensor4(asym_line_input.x_aa, asym_line_input.x_bb, asym_line_input.x_cc, asym_line_input.x_nn, asym_line_input.x_ba, asym_line_input.x_ca, asym_line_input.x_na, asym_line_input.x_cb, asym_line_input.x_nb, asym_line_input.x_nc);
-            ComplexTensor4 y = r_matrix + 1.0i * x_matrix;
-            z_series_abc = kron_reduction(y);
+            ComplexTensor4 z = r_matrix + 1.0i * x_matrix;
+            z_series_abc = kron_reduction(z);
         }
         return z_series_abc;
     }
@@ -79,13 +80,13 @@ class AsymLine : public Branch {
         return c_matrix;
     }
 
-    BranchCalcParam<symmetric_t> sym_calc_param() const override {
-        DoubleComplex y1_series_ = average_of_diagonal_of_matrix(_y_series_abc) - average_of_off_diagonal_of_matrix(_y_series_abc);
-        DoubleComplex y1_shunt_ = average_of_diagonal_of_matrix(_y_shunt_abc) - average_of_off_diagonal_of_matrix(_y_shunt_abc);
-        return calc_param_y_sym(y1_series_, y1_shunt_, 1.0);
+    BranchCalcParam<symmetric_t> sym_calc_param() const override final {
+        DoubleComplex y1_series = average_of_diagonal_of_matrix(y_series_abc_) - average_of_off_diagonal_of_matrix(y_series_abc_);
+        DoubleComplex y1_shunt = average_of_diagonal_of_matrix(y_shunt_abc_) - average_of_off_diagonal_of_matrix(y_shunt_abc_);
+        return calc_param_y_sym(y1_series, y1_shunt, 1.0);
     }
 
-    BranchCalcParam<asymmetric_t> asym_calc_param() const override {
+    BranchCalcParam<asymmetric_t> asym_calc_param() const override final {
         BranchCalcParam<asymmetric_t> param{};
         // not both connected
         if (!branch_status()) {
@@ -93,8 +94,8 @@ class AsymLine : public Branch {
             if (from_status() || to_status()) {
                 // branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 ComplexTensor<asymmetric_t> branch_shunt = ComplexTensor<asymmetric_t>();
-                if ((cabs(_y_shunt_abc) >= numerical_tolerance).all()) {
-                    branch_shunt = 0.5 * inv(_y_shunt_abc) + inv(inv(_y_series_abc) + 2.0 * inv(_y_shunt_abc));
+                if ((cabs(y_shunt_abc_) >= numerical_tolerance).all()) {
+                    branch_shunt = 0.5 * inv(y_shunt_abc_) + inv(inv(y_series_abc_) + 2.0 * inv(y_shunt_abc_));
                 }
                 // from or to connected
                 param.yff() = from_status() ? branch_shunt : ComplexTensor<asymmetric_t>();
@@ -103,10 +104,10 @@ class AsymLine : public Branch {
         }
         // both connected
         else {
-            param.ytt() = _y_series_abc + 0.5 * _y_shunt_abc;
+            param.ytt() = y_series_abc_ + 0.5 * y_shunt_abc_;
             param.yff() = param.ytt();
-            param.yft() = _y_series_abc;
-            param.ytf() = _y_series_abc;
+            param.yft() = -y_series_abc_;
+            param.ytf() = -y_series_abc_;
         }
         return param;
     }
