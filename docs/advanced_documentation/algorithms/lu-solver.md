@@ -120,14 +120,15 @@ The power grid model uses a modified version of the
 
 The Gaussian elimination process itself is as usual. Let
 $M_p\equiv\begin{bmatrix}m_p && \vec{r}_p^T \\ \vec{q}_p && \hat{M}_p\end{bmatrix}$, where $p$ is
-the current pivot element at the top left of the matrix, $\vec{q}$ and $\vec{r}_p^T$ are the
-associated column and row vectors containing the rest of the pivot column and row and $\hat{M}_p$ is
-the bottom-right block of the matrix. Gaussian elimination constructs the matrices
+the current pivot element at the top left of the matrix, $m_p$ its matrix element value, $\vec{q}$
+and $\vec{r}_p^T$ are the associated column and row vectors containing the rest of the pivot column
+and row and $\hat{M}_p$ is the bottom-right block of the matrix. Gaussian elimination constructs the
+matrices
 
 $$
 \begin{align*}
-L_p &= \begin{bmatrix} 1 && \vec{0}^T \\ m_p^{-1} \vec{q}_p && \hat{D}_p\end{bmatrix}
-Q_p &= \begin{bmatrix} m_p && \vec{r}_p^T \\ \vec{0} && \hat{M}_p - m_p^{-1} \vec{q}_p \vec{r}_p^T\end{bmatrix} \equiv \begin{bmatrix} 1 && \tilde{\vec{r}}_p^T \\ \vec{0} && M_{p+1} \end{bmatrix}
+L_p &= \begin{bmatrix} 1 && \vec{0}^T \\ m_p^{-1} \vec{q}_p && \hat{D}_p\end{bmatrix} \\
+Q_p &= \begin{bmatrix} m_p && \vec{r}_p^T \\ \vec{0} && \hat{M}_p - m_p^{-1} \vec{q}_p \vec{r}_p^T\end{bmatrix} \equiv \begin{bmatrix} 1 && \vec{r}_p^T \\ \vec{0} && M_{p+1} \end{bmatrix}
 \end{align*}
 $$
 
@@ -152,14 +153,23 @@ m_0 && \vec{r}_0^T && && \\
 $$
 
 The process described in the above assumes no pivot permutations were necessary. If permutations
-are required, they are kept track of in a separate permution matrix, so that $A = LUP$.
+are required, they are kept track of in separate row-permution and column-permutation matrices $P$
+and $Q$, such that $PAQ = LU$, which can be rewritten as
+
+$$
+A = P^{-1}LUQ^{-1}
+$$
 
 #### Dense LU factorization algorithm
+
+The power grid model uses an in-place approach. Permutations are
 
 Let $M\equiv M\left[0:N, 0:N\right]$ be the $N\times N$-matrix and $M\left[i,j\right]$ its element
 at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
 
-1. Loop over all rows: $p = 0..(N-1)$:
+1. Initialize the permutations $P$ and $Q$ to the identity permutation.
+2. Initialize fill-in elements to $0$.
+3. Loop over all rows: $p = 0..(N-1)$:
    1. Set the remaining matrix: $M_p \gets M\left[p:N,p:N\right]$ with size $N_p\times N_p$.
    2. Find largest element $M_p\left[i_p,j_p\right]$ in $M_p$ by magnitude. This is the pivot
       element.
@@ -180,7 +190,15 @@ at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
    6. Apply Gaussian elimination for the current pivot element:
       1. $M_p\left[0,0:N_p\right] \gets \frac{1}{M_p[0,0]}M_p\left[0,0:N_p\right]$
       2. $M_p\left[1:N_p,0:N_p\right] \gets M_p\left[1:N_p,0:N_p\right] - M_p\left[1:N_p,0\right] \otimes M_p\left[0,0:N_p\right]$
-   7. Continue with the next $p$ to factorize the the bottom-right block.
+   7. Accumulate the permutation matrices:
+      1. In $P$: swap $p \leftrightarrow p + i_p$
+      2. In $Q$: swap $p \leftrightarrow p + j_p$
+   8. Continue with the next $p$ to factorize the the bottom-right block.
+
+$L$ is now the matrix composed of ones on the diagonal and the bottom-left off-diagonal triangle of
+$M$ and zeros in the upper-right off-diagonal triangle. $Q$ is the matrix composed of the
+upper-right triangle of $M$ including the diagonal elements and zeros in the lower-left off-diagonal
+triangle.
 
 ```{note}
 In the actual implementation, we use a slightly different order of operations: instead of raising
@@ -190,7 +208,57 @@ change the functional behavior.
 
 ### Block-sparse LU factorization
 
-The LU factorization process for block-sparse matrices is similar to that for dense matrices.
+The LU factorization process for block-sparse matrices is similar to that for
+[dense matrices](#dense-lu-factorization), but in this case, $m_p$ is a block element, and
+$\vec{q}_p$, $\vec{r}_p^T$ and $\hat{M}_p$ consist of block elements as well. Notice that the
+inverse $m_p^{-1}$ can be calculated from is LU decomposition, which can be obtained from the
+[dense LU factorization process](#dense-lu-factorization-process).
+
+#### Block-sparse LU factorization process
+
+The Gaussian elimination process itself is as usual. Completely analogously to and following the
+same conventions as [before](#dense-lu-factorization-process), let
+$\underline{M}_p\equiv\begin{bmatrix}\underline{m}_p && \vec{\underline{r}}_p^T \\ \vec{\underline{q}}_p && \hat{\underline{M}}_p\end{bmatrix}$
+be the block-sparse matrix to decompose. $\underline{m}_p$ is a dense block that can be
+[LU-factorized](#dense-lu-factorization-process):
+$\underline{m}_p = \underline{p}_p^{-1} \underline{l}_p \underline{u}_p \underline{q}_p^{-1}$, where
+he lower-case helps avoiding confusion with the block-sparse matrix components. Gaussian elimination
+constructs the matrices
+
+$$
+\begin{align*}
+\underline{L}_p &= \begin{bmatrix} 1 && \vec{\underline{0}}^T \\ \overrightarrow{\underline{m}_p^{-1}\underline{q}_p} && \hat{\underline{D}}_p\end{bmatrix}
+\underline{Q}_p &= \begin{bmatrix} \underline{m}_p && \vec{\underline{r}}_p^T \\ \vec{\underline{0}} && \hat{\underline{M}}_p - \widehat{\underline{m}_p^{-1}\underline{q}_p \underline{r}_p^T}\end{bmatrix} \equiv \begin{bmatrix} \underline{1} && \vec{\underline{r}}_p^T \\ \vec{0} && \underline{M}_{p+1} \end{bmatrix}
+\end{align*}
+$$
+
+Here, $\overrightarrow{\underline{m}_p^{-1}\underline{q}_p}$ is symbolic notation for the
+block-vector of solutions of the equation $\underline{m}_p x_{k;p} = \underline{q}_{k;p}$, where
+$k = 0..(p-1)$. Similarly, $\widehat{\underline{m}_p^{-1}\underline{q}_p \underline{r}_p^T}$ is
+symbolic notation for the block-matrix of solutions of the equation
+$\underline{m}_p^{-1} x_{k,l;p} = \underline{q}_{k,p} \underline{r}_{p,l}^T$, where
+$k,l = 0..(p-1)$. That is:
+
+$$
+\begin{align*}
+\overrightarrow{\underline{m}_p^{-1}\underline{q}_p}
+&= \begin{bmatrix}\underline{m}_p^{-1}\underline{q}_{0,p} \\
+\vdots \\
+\underline{m}_p^{-1} \underline{q}_{N-1,p} \end{bmatrix} \\
+\widehat{\underline{m}_p^{-1}\underline{q}_p \underline{r}_p^T}
+&= \begin{bmatrix}\underline{m}_p^{-1} \underline{q}_{0,p} \underline{r}_{p,0}^T && \cdots &&
+\underline{m}_p^{-1} \underline{q}_{0,p} \underline{r}_{p,N-1}^T \\
+\vdots && \ddots && \vdots \\
+\underline{m}_p^{-1} \underline{q}_{0,p} \underline{r}_{p,0}^T && \cdots &&
+\underline{m}_p^{-1} \underline{q}_{N-1,p} \underline{r}_{p,N-1}^T \end{bmatrix}
+\end{align*}
+$$
+
+Instead of calculating $\underline{m}_p^{-1}$ to obtain $\underline{m}_p^{-1} x_p$, the power grid
+model first solves the matrix equation $l_p y_p = p_p a_p$, followed by solving $u_p z_p = y_p$. The
+end-result is then $\underline{m}_p^{-1} x_p = q_p z_p$.
+
+Iteratively applying above factorization process yields $L$ and $U$, as well as $P$ and $Q$.
 
 #### Block-sparse indices
 
@@ -249,21 +317,89 @@ M_{0,0} &&         &&         && M_{0,3} \\
 M_{3,0} &&         && M_{3,2} && M_{3,3}
 \end{pmatrix} &\equiv
 \begin{bmatrix}
+M_{0,0} && M_{0,3} && M_{1,1} && M_{1,2} && M_{2,1} && M_{2,2} && M_{2,3} && M_{3,0} && M_{3,2} && M_{3,3} \\
+[[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] \\
+\end{bmatrix} \\
+&\equiv
+\begin{bmatrix}
 M_{0,0} && M_{0,3} && M_{1,1} && M_{1,2} && M_{2,1} && M_{2,2} && M_{2,3} && M_{3,0} && M_{3,2} && M_{3,3} && \\
-[[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] && \\
-[0 && && 2 && && 4 && && 7 && && 10]
+[0 && 3 && 1 && 2 && 1 && 2 && 3 && 0 && 2 && 3] && \\
+[0 && && 2 && && 4 && && && 7 && && && && 10]
 \end{bmatrix}
 \end{align*}
 $$
 
-In the right-hand side, the upper row contains the present block entries and the bottom row their
-column indices. The row indices are implied by the index of the inner vector in the outer one.
+In the first equation, the upper row contains the present block entries and the bottom row their
+column indices per row to obtain a flattened representation of the matrix. In the last equivalence,
+the column indices, in turn, are also flattened into a separate flattened representation of the
+column indices and the start indices of each row - the index pointer (`indptr`). Note that the size
+of `indptr` is 1 greater than the amount of rows. This enables describing the amount of elements
+in each row as the difference between its element in `indptr` and the next element.
 
-Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the nested list of column
-indices. The double loop becomes:
+Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the start. The double loop becomes:
 
 1. Loop all rows: $i=0..(N-1)$:
-   1. The list of indices for this row is 
+   1. The column indices for this row start at $\text{indptr}\left[i\right]$.
+   2. The column indices for this row stop at $\text{indptr}\left[i+1\right]$.
+   3. Loop all columns:
+      $j=\left(\text{indptr}\left[i\right]\right)..\left(\text{indptr}\left[i+1\right]\right)$:
+      1. The current row index is $i$.
+      2. The current column index is $j$.
+
+### Block-sparse LU solving
+
+Solving an equation $M x = b$ using a
+[pre-factored LU-factorization](#block-sparse-lu-factorization) is done using the regular forward
+and backward substitutions. It starts by permuting the rows: $b^{\prime} = PB$. After that, the
+forward substitution step essentially amounts to solving the matrix equation $Ly = b^{\prime}$,
+followed by the backwards substitution by solving $Uz = y$. The final result is then obtained by
+applying the column permutation: $x = Qz$.
+
+#### Forward substitution
+
+The row permutation is applied as follows.
+
+1. Loop over all block-rows: $i=0..(N-1)$:
+   1. If the matrix is a block matrix:
+      1. Apply the current row's block permutation: $b[i] \gets P[i] b[i]$.
+      2. Proceed.
+   2. Else:
+      1. Proceed.
+
+The equation $Ly = Pb$ is solved as follows.
+
+1. Loop over all block-rows: $i=0..(N-1)$:
+   1. Loop over all lower-triangle off-diagonal columns (beware of sparsity): $j=0..(i-1)$:
+      1. $b[i] \gets b[i] - L[i,j] \cdot b[i]$.
+      2. Continue with next block-column.
+   2. If the matrix is a block matrix:
+      1. Follow the same steps within the block.
+      2. Proceed.
+   3. Else:
+      1. Proceed.
+
+The equation $Uz = y$ is solved as follows.
+
+1. Loop over all block-rows in reverse order: $i=(N-1)..0$:
+   1. Loop over all upper-triangle off-diagonal columns (beware of sparsity): $j=(i+1)..0$:
+      1. $b[i] \gets b[i] - U[i,j] \cdot b[i]$.
+      2. Continue with next block-column.
+   2. Handle the diagonal element:
+      1. If the matrix is a block matrix:
+         1. Follow the same steps within the block.
+         2. Proceed.
+      2. Else:
+         1. $b[i] \gets b[i] / U[i,i]$.
+         2. Proceed.
+
+Apply the column permutation as follows.
+
+1. Loop over all block-rows: $i=0..(N-1)$:
+   1. If the matrix is a block matrix:
+      1. Apply the current row's block permutation: $b[i] \gets Q[i] b[i]$.
+      2. Proceed.
+   2. Else:
+      1. Proceed.
 
 ### Pivot perturbation
 
@@ -300,20 +436,24 @@ be the matrix, $\left\|M\right\|_{\infty ,\text{bwod}}$ the
 $\text{direction}$ ensures that the complex phase of the pivot element is preserved, with a fallback
 the positive real axis when the pivot element is identically zero.
 
-#### Iterative refinement
+### Iterative refinement of LU solvers
 
 This algorithm is heavily inspired by the GESP algorithm described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761).
 
-The refinement process improves the solution to the matrix equation $A \cdot x = b$ as follows:
-In iteration step $i$, it assumes an existing approximation $x_i$ for $x$. It then defines
-the difference between the current best and the actual solution $\Delta x = x - x_i$.
-Substiting in the original equation yields $A \cdot (x_i + \Delta x) = b$, so that
-$A \cdot \Delta x = b - A \cdot x_i =: r$, where the residual $r$ can be calculated.
-An estimation for the left-hand side can be obtained by using the pivot-perturbed matrix
-$\tilde{A}$ instead of the original matrix A. Convergence can be reached if $r \to 0$, since then
-also $\left\|\Delta x\right\| \to 0$. Solving for $\Delta x$ and substituting back into
-$x_{i+1} = x_i + \Delta x$ provides the next best approximation $x_{i+1}$ for $x$.
+[LU solving](#block-sparse-lu-solving) with an [LU-decomposition](#block-sparse-lu-factorization)
+obtained using [pivot perturbation](#pivot-perturbation) yields only approximate results, because
+the LU-decomposition itself is only approximate. Because of that, an iterative refinement process
+is required to improve the solution to the matrix equation $A \cdot x = b$.
+
+The iterative refinement process is as follows: in iteration step $i$, it assumes an existing
+approximation $x_i$ for $x$. It then defines the difference between the current best and the actual
+solution $\Delta x = x - x_i$. Substiting in the original equation yields
+$A \cdot (x_i + \Delta x) = b$, so that $A \cdot \Delta x = b - A \cdot x_i =: r$, where the
+residual $r$ can be calculated. An estimation for the left-hand side can be obtained by using the
+pivot-perturbed matrix $\tilde{A}$ instead of the original matrix A. Convergence can be reached if
+$r \to 0$, since then also $\left\|\Delta x\right\| \to 0$. Solving for $\Delta x$ and substituting
+back into $x_{i+1} = x_i + \Delta x$ provides the next best approximation $x_{i+1}$ for $x$.
 
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
 [backward error formula](#improved-backward-error-calculation)).
@@ -389,7 +529,8 @@ $\sum_j \left|A[i,j]\right| \left|x[j]\right|$ are small and, therefore, their s
 rounding errors, which may be several orders larger than machine precision.
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
-uses the following backward error in the [iterative refinement algorithm](#iterative-refinement):
+uses the following backward error in the
+[iterative refinement algorithm](#iterative-refinement-of-lu-solvers):
 
 $$
 \begin{align*}
