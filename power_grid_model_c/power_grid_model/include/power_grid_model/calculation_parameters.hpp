@@ -82,7 +82,7 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
 // voltage sensor calculation parameters for state estimation
 // The value is the complex voltage
 // If the imaginary part is NaN, it means the angle calculation is not correct
-template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
+template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRDV<sym>;
 
 // power sensor calculation parameters for state estimation
 // The value is the complex power
