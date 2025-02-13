@@ -10,17 +10,13 @@ namespace power_grid_model {
 
 using namespace std::complex_literals;
 
-void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric_t>& y_series)
+void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric_t>& y_series, const double base_i, const double base_y, const double system_frequency, const double voltage_lvl)
 {
     CAPTURE(input.id);
     CAPTURE(y_series);
-    double system_frequency = 50.0;
-    double voltage_lvl = 10.0e3;
     AsymLine asym_line{input, system_frequency, voltage_lvl, voltage_lvl};
-    double const base_i = base_power_1p / (voltage_lvl / sqrt3);
-    double const base_y = base_i * base_i / base_power_1p;
     Branch& branch = asym_line;
-    ComplexTensor<asymmetric_t> const y_shunt = 2 * pi * system_frequency * ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0 } * 1.0i;
+    ComplexTensor<asymmetric_t> const y_shunt = 1 / base_y * (2 * pi * system_frequency * ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0 } * 1.0i);
 
     DoubleComplex const y1_series = (y_series(0,0) + y_series(1,1) + y_series(2,2)) / 3.0 - (y_series(0,1) + y_series(1,2) + y_series(1,0) + y_series(1,2) + y_series(2,0) + y_series(2,1)) / 6.0;
     DoubleComplex const y1_shunt = (y_shunt(0,0) + y_shunt(1,1) + y_shunt(2,2)) / 3.0 - (y_shunt(0,1) + y_shunt(1,2) + y_shunt(1,0) + y_shunt(1,2) + y_shunt(2,0) + y_shunt(2,1)) / 6.0;
@@ -32,18 +28,40 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
 
     // asymmetric
     ComplexTensor<asymmetric_t> ytt = y_series + 0.5 * y_shunt;
-    ComplexTensor<asymmetric_t> branch_shunt = 0.5 * inv(y_shunt) + inv(inv(y_series) + 2.0 * inv(y_shunt));
+    ComplexTensor<asymmetric_t> branch_shunt = 0.5 * y_shunt + inv(inv(y_series) + 2.0 * inv(y_shunt));
 
+    double constexpr nominal_current = 216.0;
     DoubleComplex const u1f = 1.0;
     DoubleComplex const u1t = 0.9;
     ComplexValue<asymmetric_t> const uaf{1.0};
     ComplexValue<asymmetric_t> const uat{0.9};
+
+    // Symmetric results
     DoubleComplex const i1f = (yff1 * u1f + yft1 * u1t) * base_i;
     DoubleComplex const i1t = (yft1 * u1f + yff1 * u1t) * base_i;
     DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
     DoubleComplex const s_t = conj(i1t) * u1t * 10e3 * sqrt3;
-    double const loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
+    double const loading_sym = std::max(cabs(i1f), cabs(i1t)) / nominal_current;
 
+    // Asymmetric results
+    ComplexValue<asymmetric_t> i_f = dot(ytt, uaf) + dot(-y_series, uat);
+    ComplexValue<asymmetric_t> i_t = dot(-y_series, uaf) + dot(ytt, uat);
+    ComplexValue<asymmetric_t> const i3pf = base_i * cabs(i_f);
+    ComplexValue<asymmetric_t> const i3pt = base_i * cabs(i_t);
+
+    ComplexValue<asymmetric_t> s_f_asym = uaf * conj(i_f);
+    ComplexValue<asymmetric_t> s_t_asym = uat * conj(i_t);
+    
+    RealValue<asymmetric_t> i_from_asym = base_i * cabs(i_f);
+    RealValue<asymmetric_t> i_to_asym = base_i * cabs(i_t);
+
+    ComplexValue<asymmetric_t> const p3pf = base_power<asymmetric_t> * real(s_f_asym);
+    ComplexValue<asymmetric_t> const p3pt = base_power<asymmetric_t> * real(s_t_asym);
+    ComplexValue<asymmetric_t> const q3pf = base_power<asymmetric_t> * imag(s_f_asym);
+    ComplexValue<asymmetric_t> const q3pt = base_power<asymmetric_t> * imag(s_t_asym);
+
+    double const max_i = std::max(max_val(i_from_asym), max_val(i_to_asym));
+    double const loading_asym = max_i / nominal_current;
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
     DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
@@ -126,7 +144,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
         BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == doctest::Approx(loading));
+        CHECK(output.loading == doctest::Approx(loading_sym));
         CHECK(output.i_from == doctest::Approx(cabs(i1f)));
         CHECK(output.i_to == doctest::Approx(cabs(i1t)));
         CHECK(output.s_from == doctest::Approx(cabs(s_f)));
@@ -186,15 +204,13 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
         BranchOutput<asymmetric_t> output = branch.get_output<asymmetric_t>(uaf, uat);
         CHECK(output.id == 1);
         CHECK(output.energized);
-        CHECK(output.loading == doctest::Approx(loading));
-        CHECK(output.i_from(0) == doctest::Approx(cabs(i1f)));
-        CHECK(output.i_to(1) == doctest::Approx(cabs(i1t)));
-        CHECK(output.s_from(2) == doctest::Approx(cabs(s_f) / 3.0));
-        CHECK(output.s_to(0) == doctest::Approx(cabs(s_t) / 3.0));
-        CHECK(output.p_from(1) == doctest::Approx(real(s_f) / 3.0));
-        CHECK(output.p_to(2) == doctest::Approx(real(s_t) / 3.0));
-        CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
-        CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
+        CHECK(output.loading == doctest::Approx(loading_asym));
+        CHECK((cabs(output.i_from - i3pf) < numerical_tolerance).all());
+        CHECK((cabs(output.i_to - i3pt) < numerical_tolerance).all());
+        CHECK((cabs(output.p_from - p3pf) < numerical_tolerance).all());
+        CHECK((cabs(output.p_to - p3pt) < numerical_tolerance).all());
+        CHECK((cabs(output.q_from - q3pf) < numerical_tolerance).all());
+        CHECK((cabs(output.q_to - q3pt) < numerical_tolerance).all());
     }
 
     SUBCASE("Asym short circuit results") {
@@ -263,6 +279,11 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
 
 TEST_CASE("Test asym line") {
 
+    double system_frequency = 50.0;
+    double voltage_lvl = 10.0e3;
+    double const base_i = base_power_1p / (voltage_lvl / sqrt3);
+    double const base_y = base_i * base_i / base_power_1p;
+
     SUBCASE("R and X matrix c0, c1 including neutral") { 
         AsymLineInput input =  {.id = 1,
                                 .from_node = 2,
@@ -293,12 +314,15 @@ TEST_CASE("Test asym line") {
                                 .c1 = 0.308,
                                 .i_n = 216.0};
 
-        ComplexTensor<asymmetric_t> const y_series = ComplexTensor<asymmetric_t>(1.87842984-0.42269873i, 1.87842984-0.42269873i, 1.87842984-0.42269873i, -0.62560863-0.00463073i, -0.57187623+0.12931409i, -0.62560863-0.00463073i);
-        execute_subcases(input, y_series);
+        ComplexTensor4 r_matrix = ComplexTensor4(input.r_aa, input.r_bb, input.r_cc, input.r_nn, input.r_ba, input.r_ca, input.r_na, input.r_cb, input.r_nb, input.r_nc);
+        ComplexTensor4 x_matrix = ComplexTensor4(input.x_aa, input.x_bb, input.x_cc, input.x_nn, input.x_ba, input.x_ca, input.x_na, input.x_cb, input.x_nb, input.x_nc);
+        ComplexTensor4 z = r_matrix + 1.0i * x_matrix;
+        ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(kron_reduction(z));
+        execute_subcases(input, y_series, base_i, base_y, system_frequency, voltage_lvl);
     }
 
     SUBCASE("R and X matrix, c0, c1 excluding neutral") { 
-        AsymLineInput input =  {.id = 2,
+        AsymLineInput input =  {.id = 1,
                                 .from_node = 2,
                                 .to_node = 3,
                                 .from_status = 1,
@@ -318,8 +342,10 @@ TEST_CASE("Test asym line") {
                                 .c0 = 0.18,
                                 .c1 = 0.308,
                                 .i_n = 216.0};
-        ComplexTensor<asymmetric_t> const y_series = ComplexTensor<asymmetric_t>(1.68079-0.470259i, 1.70433-0.383139i, 1.68079-0.470259i, -0.816117-0.00584238i, -0.769521+0.0817541i, -0.816117-0.00584238i);
-        execute_subcases(input, y_series);
+        ComplexTensor<asymmetric_t> r_matrix = ComplexTensor<asymmetric_t>(input.r_aa, input.r_bb, input.r_cc, input.r_ba, input.r_ca, input.r_cb);
+        ComplexTensor<asymmetric_t> x_matrix = ComplexTensor<asymmetric_t>(input.x_aa, input.x_bb, input.x_cc, input.x_ba, input.x_ca, input.x_cb);
+        ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(r_matrix + 1.0i * x_matrix);
+        execute_subcases(input, y_series, base_i, base_y, system_frequency, voltage_lvl);
     }
 }
 

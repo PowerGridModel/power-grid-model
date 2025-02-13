@@ -31,8 +31,10 @@ class AsymLine : public Branch {
         ComplexTensor<asymmetric_t> c_matrix = compute_c_matrix_from_input(asym_line_input);
         ComplexTensor<asymmetric_t> z_series = compute_z_series_from_input(asym_line_input);
 
-        y_series_abc_ = inv(z_series);
-        y_shunt_abc_ = 2 * pi * system_frequency * c_matrix * 1.0i;
+        double const base_y = base_i_ / (u1 / sqrt3); 
+
+        y_series_abc_ = 1 / base_y * inv(z_series);
+        y_shunt_abc_ = 1 / base_y * (2.0i * pi * system_frequency * c_matrix);
 
     }
 
@@ -44,10 +46,10 @@ class AsymLine : public Branch {
     constexpr bool is_param_mutable() const override { return false; }
 
   private:
-    double i_n_;
-    double base_i_;
-    ComplexTensor<asymmetric_t> y_series_abc_;
-    ComplexTensor<asymmetric_t> y_shunt_abc_;
+    double i_n_{};
+    double base_i_{};
+    ComplexTensor<asymmetric_t> y_series_abc_{};
+    ComplexTensor<asymmetric_t> y_shunt_abc_{};
 
     ComplexTensor<asymmetric_t> compute_z_series_from_input(const power_grid_model::AsymLineInput& asym_line_input) {
         ComplexTensor<asymmetric_t> z_series_abc;
@@ -95,7 +97,7 @@ class AsymLine : public Branch {
                 // branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 ComplexTensor<asymmetric_t> branch_shunt = ComplexTensor<asymmetric_t>();
                 if ((cabs(y_shunt_abc_) >= numerical_tolerance).all()) {
-                    branch_shunt = 0.5 * inv(y_shunt_abc_) + inv(inv(y_series_abc_) + 2.0 * inv(y_shunt_abc_));
+                    branch_shunt = 0.5 * y_shunt_abc_ + inv(inv(y_series_abc_) + 2.0 * inv(y_shunt_abc_));
                 }
                 // from or to connected
                 param.yff() = from_status() ? branch_shunt : ComplexTensor<asymmetric_t>();
