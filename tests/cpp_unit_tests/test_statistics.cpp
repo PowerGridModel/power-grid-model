@@ -456,38 +456,35 @@ TEST_CASE("Test statistics") {
 
                     CHECK(real(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0)));
                     CHECK(imag(polar.value()(0)) == doctest::Approx(0.0));
-                    CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * sqrt3 / 2));
-                    CHECK(imag(polar.value()(1)) == doctest::Approx(0.0));
-                    CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -1 * sqrt3 / 2));
-                    CHECK(imag(polar.value()(2)) == doctest::Approx(0.0));
+                    CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -0.5));
+                    CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -sqrt3 / 2));
+                    CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.5));
+                    CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * sqrt3 / 2));
                 }
-                // SUBCASE("Perpendicular phase shift") { // TODO change value
-                //     PolarComplexRDV<asymmetric_t> const polar{
-                //         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance =
-                //         magnitude_variance}, .angle = {.value = {pi / 2, deg_240 + pi / 2, deg_120 + pi / 2},
-                //         .variance = angle_variance}};
+                SUBCASE("Perpendicular phase shift") {
+                    PolarComplexRDV<asymmetric_t> const polar{
+                        .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
+                        .angle = {.value = {pi / 2, deg_240 + pi / 2, deg_120 + pi / 2}, .variance = angle_variance}};
 
-                //     CHECK(real(polar.value()(0)) == doctest::Approx(0.0));
-                //     CHECK(imag(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0)));
-                //     CHECK(real(polar.value()(1)) == doctest::Approx(0.0));
-                //     CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1)));
-                //     CHECK(real(polar.value()(2)) == doctest::Approx(0.0));
-                //     CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2)));
-                // }
-                // SUBCASE("45deg phase shift") { // TODO change value
-                //     PolarComplexRDV<asymmetric_t> const polar{
-                //         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance =
-                //         magnitude_variance}, .angle = {.value = {pi / 4, deg_240 + pi / 4, deg_120 + pi / 4},
-                //         .variance = angle_variance}};
+                    CHECK(real(polar.value()(0)) == doctest::Approx(0.0));
+                    CHECK(imag(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0)));
+                    CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * sqrt3 / 2));
+                    CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -0.5));
+                    CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -sqrt3 / 2));
+                    CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.5));
+                }
+                SUBCASE("45deg phase shift") {
+                    PolarComplexRDV<asymmetric_t> const polar{
+                        .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
+                        .angle = {.value = {pi / 4, deg_240 + pi / 4, deg_120 + pi / 4}, .variance = angle_variance}};
 
-                //     CHECK(real(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
-                //     CHECK(imag(polar.value()(0)) == doctest::Approx(real(polar.value()(0))));
-                //     CHECK(real(polar.value()(1)) ==
-                //           doctest::Approx(polar.magnitude.value(1) * inv_sqrt2));
-                //     CHECK(imag(polar.value()(1)) == doctest::Approx(real(polar.value()(1))));
-                //     CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * inv_sqrt2));
-                //     CHECK(imag(polar.value()(2)) == doctest::Approx(real(polar.value()(2))));
-                // }
+                    CHECK(real(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
+                    CHECK(imag(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
+                    CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * 0.2588190451));
+                    CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -0.9659258263));
+                    CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.9659258263));
+                    CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * 0.2588190451));
+                }
             }
         }
     }
