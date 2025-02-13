@@ -633,6 +633,15 @@ auto check_exact(IntS tap_pos) -> TapPositionCheckFunc {
         CHECK(value == tap_pos);
     };
 };
+auto check_compensated_exact(IntS tap_pos, IntS tap_pos_comp) -> TapPositionCheckFunc {
+    return [tap_pos, tap_pos_comp](IntS value, OptimizerStrategy /*strategy*/, bool control_at_tap_side) {
+        if (control_at_tap_side) {
+            CHECK(value == tap_pos_comp);
+        } else {
+            CHECK(value == tap_pos);
+        }
+    };
+};
 auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max, bool control_at_tap_side)
     -> TapPositionCheckFunc {
     return [tap_pos_any, tap_range_min, tap_range_max](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
@@ -664,17 +673,21 @@ auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_ran
         }
     };
 }
-auto check_compensated_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max,
+auto check_compensated_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_any_comp, IntS tap_range_min, IntS tap_range_max,
                                           IntS tap_range_min_comp, IntS tap_range_max_comp, bool control_at_tap_side)
     -> TapPositionCheckFunc {
-    return [tap_pos_any, tap_range_min, tap_range_max, tap_range_min_comp,
+    return [tap_pos_any, tap_pos_any_comp, tap_range_min, tap_range_max, tap_range_min_comp,
             tap_range_max_comp](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
         using enum OptimizerStrategy;
 
         switch (strategy) {
         case any:
         case fast_any:
-            CHECK(value == tap_pos_any);
+            if (control_at_tap_side) {
+                CHECK(value == tap_pos_any_comp);
+            } else {
+                CHECK(value == tap_pos_any);
+            }
             break;
         case local_maximum:
         case global_maximum:
@@ -1040,69 +1053,74 @@ TEST_CASE("Test Tap position optimizer") {
                 }
                 SUBCASE("resistance") {
                     update_data.line_drop_compensation_r = 0.5 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 4, 1, control_at_tap_side);
+                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1, control_at_tap_side);
                 }
                 SUBCASE("positive reactance") {
                     update_data.line_drop_compensation_x = 0.125 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 4, 2, 4, 1, control_at_tap_side);
+                    check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 2, 4, 1, control_at_tap_side);
                 }
                 SUBCASE("negative reactance") {
                     update_data.line_drop_compensation_x = -0.5 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 4, 1, control_at_tap_side);
+                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1, control_at_tap_side);
                 }
 
                 regulator_b.update(update_data);
-{ // ==
-                // SUBCASE("multiple transformers with control function based on ranking") {
-                //     state_a.rank = 0;
-                //     state_b.rank = 1;
-                //     state_a.tap_min = -5;
-                //     state_a.tap_max = 5;
-                //     state_b.tap_min = -5;
-                //     state_b.tap_max = 5;
 
-                //     state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
-                //         CHECK(side == regulator_a.control_side());
+                SUBCASE("multiple transformers with control function based on ranking") {
+                    state_a.rank = 0;
+                    state_b.rank = 1;
+                    state_a.tap_min = -5;
+                    state_a.tap_max = 5;
+                    state_b.tap_min = -5;
+                    state_b.tap_max = 5;
 
-                //         // u_2a = f(tap_pos_a) when rank is 0
-                //         // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
-                //         // consider u_1a = n_1 = 1.0
-                //         // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
-                //         auto const relative_tap_a = static_cast<double>(state_a.tap_pos) * 0.1;
-                //         return static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
-                //     };
+                    state_a.u_pu = [&state_a, &regulator_a](ControlSide side) {
+                        CHECK(side == regulator_a.control_side());
 
-                //     state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
-                //         CHECK(side == regulator_b.control_side());
+                        // u_2a = f(tap_pos_a) when rank is 0
+                        // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
+                        // consider u_1a = n_1 = 1.0
+                        // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
+                        auto const relative_tap_a = static_cast<double>(state_a.tap_pos) * 0.1;
+                        if (state_a.tap_side == regulator_a.control_side()) {
+                            return static_cast<DoubleComplex>(1.0 + relative_tap_a);
+                        }
+                        return static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
+                    };
+                    
+                    state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
+                        CHECK(side == regulator_b.control_side());
+                        
+                        // u_2b = f(tap_pos_a, tap_pos_b) when rank is 1
+                        // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
+                        // consider n_2 = 1. Also u_1a = u_2b
+                        // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
+                        auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
+                        if (state_b.tap_side == regulator_b.control_side()) {
+                            return (1.0 + relative_tap_b) / state_a.u_pu(regulator_a.control_side());
+                        }
+                        return state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
+                    };
 
-                //         // u_2b = f(tap_pos_a, tap_pos_b) when rank is 1
-                //         // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
-                //         // consider n_2 = 1. Also u_1a = u_2b
-                //         // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
-                //         auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
-                //         return state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
-                //     };
-
-                //     SUBCASE("Situation 1") {
-                //         regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
-                //         regulator_b.update({.id = 4, .u_set = 1.13636, .u_band = 0.01});
-                //         check_a = test::check_exact(-2);
-                //         check_b = test::check_exact(1);
-                //     }
-                //     SUBCASE("Situation 2") {
-                //         regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
-                //         regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
-                //         check_a = test::check_exact(-1);
-                //         check_b = test::check_exact(-3);
-                //     }
-                //     SUBCASE("Situation 3") {
-                //         regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
-                //         regulator_b.update({.id = 4, .u_set = 0.7142, .u_band = 0.01});
-                //         check_a = test::check_exact(0);
-                //         check_b = test::check_exact(4);
-                //     }
-                // }
-
+                    SUBCASE("Situation 1") {
+                        regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
+                        regulator_b.update({.id = 4, .u_set = 0.9, .u_band = 0.5});
+                        check_a = test::check_exact(-2);
+                        check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 1, 5, -1, control_at_tap_side);
+                    }
+                    SUBCASE("Situation 2") {
+                        regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
+                        regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
+                        check_a = test::check_exact(-1);
+                        check_b = test::check_compensated_exact_per_strategy(-3, 5, 5, -3, -3, 5, control_at_tap_side);
+                    }
+                    SUBCASE("Situation 3") {
+                        regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
+                        regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.01});
+                        check_a = test::check_exact(0);
+                        check_b = test::check_exact(0);
+                    }
+                }
                 // SUBCASE("multiple transformers with generic control function") {
                 //     state_a.tap_min = 0;
                 //     state_a.tap_max = 2;
@@ -1150,7 +1168,6 @@ TEST_CASE("Test Tap position optimizer") {
                 //         check_b = test::check_exact(1);
                 //     }
                 // }
-} // ==
             }
             auto const initial_tap_pos_a{transformer_a.tap_pos()};
             auto const initial_tap_pos_b{transformer_b.tap_pos()};
