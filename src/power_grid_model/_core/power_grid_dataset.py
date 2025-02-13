@@ -132,6 +132,28 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             for idx, component_name in enumerate(self.components())
         }
 
+    def attribute_indications(self) -> Mapping[ComponentType, None | list[str]]:
+        """
+        The attribute indications in the dataset.
+
+        Returns:
+            A map of component to its attribute indications.
+            None means no attribute indications
+        """
+        result_dict = {}
+        components = self.components()
+        for component_idx, component_name in enumerate(components):
+            has_indications = pgc.dataset_info_has_attribute_indications(self._info, component_idx)
+            if has_indications == 0:
+                result_dict[component_name] = None
+            else:
+                n_indications = pgc.dataset_info_n_attribute_indications(self._info, component_idx)
+                result_dict[component_name] = [
+                    pgc.dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    for attribute_idx in range(n_indications)
+                ]
+        return result_dict
+
 
 class CMutableDataset:
     """
