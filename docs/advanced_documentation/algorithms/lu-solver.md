@@ -58,18 +58,18 @@ can be chosen to avoid bock pivoting at a later stage.
 
 The [topological structure](#topological-structure) of the grid does not change during the
 solving phase, so the permutation can be obtained by the minimum degree algorithm from just the
-topology alone, which seeks to minimize the amount of fill-ins. Note that even if a matrix block
-is topologically relevant does not imply that it is always non-zero. This may result in potentially
-[ill-conditioned pivot elements](#pivot-perturbation), which will be discussed in a different
-section.
+topology alone, which seeks to minimize the amount of fill-ins. Note that matrix blocks that
+contributes topologically to the matrix equation can still contain zeros. It is possible that such
+zeros result in [ill-conditioned pivot elements](#pivot-perturbation). Handling of such
+ill-conditioned cases is discussed in the [section on pivot perturbation](#pivot-perturbation).
 
 ### Power system equation properties
 
 #### Matrix properties of power system equations
 
 [Power flow equations](../../user_manual/calculations.md#power-flow-algorithms) are not Hermitian
-and also not positive (semi-)definite. As a result, methods that depend on these properties cannot
-be used.
+and also not positive (semi-)definite. As a result, methods that depend on that property cannot be
+used.
 
 [State estimation equations](../../user_manual/calculations.md#state-estimation-algorithms) are
 intrinsically positive definite and Hermitian, but for
@@ -120,60 +120,76 @@ The power grid model uses a modified version of the
 #### Dense LU-factorization process
 
 The Gaussian elimination process itself is as usual. Let
-$M_p\equiv\begin{bmatrix}m_p && \vec{r}_p^T \\ \vec{q}_p && \hat{M}_p\end{bmatrix}$, where $p$ is
-the current pivot element at the top left of the matrix, $m_p$ its matrix element value, $\vec{q}$
-and $\vec{r}_p^T$ are the associated column and row vectors containing the rest of the pivot column
-and row and $\hat{M}_p$ is the bottom-right block of the matrix. Gaussian elimination constructs the
-matrices
+$\mathbb{M}_p\equiv\begin{bmatrix}m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
+where $p$ is the current pivot element at the top left of the matrix, $m_p$ its matrix element
+value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are the associated column and row vectors
+containing the rest of the pivot column and row and $\hat{\mathbb{M}}_p$ is the bottom-right block
+of the matrix. Gaussian elimination constructs the matrices
 
 $$
 \begin{align*}
-L_p &= \begin{bmatrix} 1 && \vec{0}^T \\ m_p^{-1} \vec{q}_p && \hat{D}_p\end{bmatrix} \\
-Q_p &= \begin{bmatrix} m_p && \vec{r}_p^T \\ \vec{0} && \hat{M}_p - m_p^{-1} \vec{q}_p \vec{r}_p^T\end{bmatrix} \equiv \begin{bmatrix} 1 && \vec{r}_p^T \\ \vec{0} && M_{p+1} \end{bmatrix}
+\mathbb{L}_p &= \begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbb{1}_p\end{bmatrix} \\
+\mathbb{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \hat{\mathbb{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T\end{bmatrix}
+\equiv \begin{bmatrix} 1 && \boldsymbol{r}_p^T \\ \boldsymbol{0} && \mathbb{M}_{p+1} \end{bmatrix}
 \end{align*}
 $$
 
-where $\hat{D}$ is the matrix with ones on the diagonal and zeros as off-diagonal elements.
+where $\mathbb{1}$ is the matrix with ones on the diagonal and zeros as off-diagonal elements.
 
 Iterating this process yields the matrices
 
 $$
 \begin{align*}
-L = L_0 L_1 \cdots L_{N-1} &= \begin{bmatrix}
+\mathbb{L} = \begin{bmatrix}
+\boldsymbol{l}_0 && 0 && \cdots && 0 \\
+ && \boldsymbol{l}_1 && \ddots && \vdots \\
+ && && \ddots && 0 \\
+ && && && \boldsymbol{l}_{N-1}
+\end{bmatrix} &= \begin{bmatrix}
 1 && 0 && \cdots \\
-m_0^{-1} \vec{q}_0 && 1 && \ddots \\
-&& m_1^{-1} \vec{q}_1 && \ddots \\
+m_0^{-1} \boldsymbol{q}_0 && 1 && \ddots \\
+&& m_1^{-1} \boldsymbol{q}_1 && \ddots \\
 && && \ddots
 \end{bmatrix} \\
-Q = Q_0 Q_1 \cdots Q_{N-1} &= \begin{bmatrix}
-m_0 && \vec{r}_0^T && && \\
-0 && m_1 && \vec{r}_1^T && \\
+\mathbb{U} = \begin{bmatrix}
+\boldsymbol{u}_0 && 0 && \cdots && 0 \\
+ && \boldsymbol{u}_1 && \ddots && \vdots \\
+ && && \ddots && 0 \\
+ && && && \boldsymbol{u}_{N-1}
+\end{bmatrix} &= \begin{bmatrix}
+m_0 && \boldsymbol{r}_0^T && && \\
+0 && m_1 && \boldsymbol{r}_1^T && \\
 \vdots && \ddots && \ddots && \ddots
 \end{bmatrix}
 \end{align*}
 $$
 
+in which $\boldsymbol{l}_p$ and $\boldsymbol{u}_p$ are the first column of $\mathbb{L}_p$ and
+$\mathbb{U}_p$, respectively.
+
 The process described in the above assumes no pivot permutations were necessary. If permutations
-are required, they are kept track of in separate row-permution and column-permutation matrices $P$
-and $Q$, such that $PAQ = LU$, which can be rewritten as
+are required, they are kept track of in separate row-permution and column-permutation matrices
+$\mathbb{P}$ and $\mathbb{Q}$, such that $\mathbb{P}\mathbb{M}\mathbb{Q} = \mathbb{L}\mathbb{U}$,
+which can be rewritten as
 
 $$
-A = P^{-1}LUQ^{-1}
+\mathbb{M} = \mathbb{P}^{-1}\mathbb{L}\mathbb{U}\mathbb{Q}^{-1}
 $$
 
 #### Dense LU-factorization algorithm
 
-The power grid model uses an in-place approach. Permutations are
+The power grid model uses an in-place approach. Permutations are separately stored.
 
-Let $M\equiv M\left[0:N, 0:N\right]$ be the $N\times N$-matrix and $M\left[i,j\right]$ its element
-at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
+Let $\mathbb{M}\equiv \mathbb{M}\left[0:N, 0:N\right]$ be the $N\times N$-matrix and
+$\mathbb{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
 
-1. Initialize the permutations $P$ and $Q$ to the identity permutation.
+1. Initialize the permutations $\mathbb{P}$ and $\mathbb{Q}$ to the identity permutation.
 2. Initialize fill-in elements to $0$.
 3. Loop over all rows: $p = 0..(N-1)$:
-   1. Set the remaining matrix: $M_p \gets M\left[p:N,p:N\right]$ with size $N_p\times N_p$.
-   2. Find largest element $M_p\left[i_p,j_p\right]$ in $M_p$ by magnitude. This is the pivot
-      element.
+   1. Set the remaining matrix: $\mathbb{M}_p \gets \mathbb{M}\left[p:N,p:N\right]$ with size
+      $N_p\times N_p$.
+   2. Find largest element $\mathbb{M}_p\left[i_p,j_p\right]$ in $\mathbb{M}_p$ by magnitude. This
+      is the pivot element.
    3. If the magnitude of the pivot element is too small:
       1. If pivot perturbation is enabled, then:
          1. Apply [pivot perturbation](#pivot-perturbation).
@@ -184,22 +200,22 @@ at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
          1. Proceed.
    4. Else:
       1. Proceed.
-   5. Swap the first and pivot row and column of $M_p$, so that the pivot element is in the
+   5. Swap the first and pivot row and column of $\mathbb{M}_p$, so that the pivot element is in the
       top-left corner of the remaining matrix:
-      1. $M_p\left[0,0:N_p\right] \leftrightarrow M\left[i_p,0:N_p\right]$
-      2. $M_p\left[0:N_p,0\right] \leftrightarrow M\left[0:N_p,j_p\right]$
+      1. $\mathbb{M}_p\left[0,0:N_p\right] \leftrightarrow \mathbb{M}\left[i_p,0:N_p\right]$
+      2. $\mathbb{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbb{M}\left[0:N_p,j_p\right]$
    6. Apply Gaussian elimination for the current pivot element:
-      1. $M_p\left[0,0:N_p\right] \gets \frac{1}{M_p[0,0]}M_p\left[0,0:N_p\right]$
-      2. $M_p\left[1:N_p,0:N_p\right] \gets M_p\left[1:N_p,0:N_p\right] - M_p\left[1:N_p,0\right] \otimes M_p\left[0,0:N_p\right]$
+      1. $\mathbb{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbb{M}_p[0,0]}\mathbb{M}_p\left[0,0:N_p\right]$
+      2. $\mathbb{M}_p\left[1:N_p,0:N_p\right] \gets \mathbb{M}_p\left[1:N_p,0:N_p\right] - \mathbb{M}_p\left[1:N_p,0\right] \otimes \mathbb{M}_p\left[0,0:N_p\right]$
    7. Accumulate the permutation matrices:
-      1. In $P$: swap $p \leftrightarrow p + i_p$
-      2. In $Q$: swap $p \leftrightarrow p + j_p$
+      1. In $\mathbb{P}$: swap $p \leftrightarrow p + i_p$
+      2. In $\mathbb{Q}$: swap $p \leftrightarrow p + j_p$
    8. Continue with the next $p$ to factorize the the bottom-right block.
 
-$L$ is now the matrix composed of ones on the diagonal and the bottom-left off-diagonal triangle of
-$M$ and zeros in the upper-right off-diagonal triangle. $Q$ is the matrix composed of the
-upper-right triangle of $M$ including the diagonal elements and zeros in the lower-left off-diagonal
-triangle.
+$\mathbb{L}$ is now the matrix composed of ones on the diagonal and the bottom-left off-diagonal
+triangle of $\mathbb{M}$ and zeros in the upper-right off-diagonal triangle. $\mathbb{U}$ is the
+matrix composed of the upper-right triangle of $\mathbb{M}$ including the diagonal elements and
+zeros in the lower-left off-diagonal triangle.
 
 ```{note}
 In the actual implementation, we use a slightly different order of operations: instead of raising
@@ -211,119 +227,124 @@ change the functional behavior.
 
 The LU-factorization process for block-sparse matrices is similar to that for
 [dense matrices](#dense-lu-factorization), but in this case, $m_p$ is a block element, and
-$\vec{q}_p$, $\vec{r}_p^T$ and $\hat{M}_p$ consist of block elements as well. Notice that the
-inverse $m_p^{-1}$ can be calculated from is LU-decomposition, which can be obtained from the
-[dense LU-factorization process](#dense-lu-factorization-process).
+$\boldsymbol{q}_p$, $\boldsymbol{r}_p^T$ and $\hat{\mathbb{M}}_p$ consist of block elements as well.
+Notice that the inverse $m_p^{-1}$ can be calculated from is LU-decomposition, which can be obtained
+from the [dense LU-factorization process](#dense-lu-factorization-process).
 
 #### Block-sparse LU-factorization process
 
 The Gaussian elimination process itself is as usual. Completely analogously to and following the
 same conventions as [before](#dense-lu-factorization-process), let
-$\underline{M}_p\equiv\begin{bmatrix}\underline{m}_p && \vec{\underline{r}}_p^T \\ \vec{\underline{q}}_p && \hat{\underline{M}}_p\end{bmatrix}$
-be the block-sparse matrix to decompose. $\underline{m}_p$ is a dense block that can be
+$\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
+be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
 [LU-factorized](#dense-lu-factorization-process):
-$\underline{m}_p = \underline{p}_p^{-1} \underline{l}_p \underline{u}_p \underline{q}_p^{-1}$, where
-he lower-case helps avoiding confusion with the block-sparse matrix components. Gaussian elimination
-constructs the matrices
+$\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$, where
+the lower-case helps avoiding confusion with the block-sparse matrix components. Gaussian
+elimination constructs the matrices
 
 $$
 \begin{align*}
-\underline{L}_p &= \begin{bmatrix} 1 && \vec{\underline{0}}^T \\ \overrightarrow{\underline{m}_p^{-1}\underline{q}_p} && \hat{\underline{D}}_p\end{bmatrix}
-\underline{Q}_p &= \begin{bmatrix} \underline{m}_p && \vec{\underline{r}}_p^T \\ \vec{\underline{0}} && \hat{\underline{M}}_p - \widehat{\underline{m}_p^{-1}\underline{q}_p \underline{r}_p^T}\end{bmatrix} \equiv \begin{bmatrix} \underline{1} && \vec{\underline{r}}_p^T \\ \vec{0} && \underline{M}_{p+1} \end{bmatrix}
+\mathbb{L}_p &= \begin{bmatrix} 1 && \pmb{\mathbb{0}}^T \\ \overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
+\mathbb{Q}_p &= \begin{bmatrix} \mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}\end{bmatrix}
+\equiv \begin{bmatrix} \mathbb{1} && \pmb{\mathbb{r}}_p^T \\ \boldsymbol{0} && \pmb{\mathbb{M}}_{p+1} \end{bmatrix}
 \end{align*}
 $$
 
-Here, $\overrightarrow{\underline{m}_p^{-1}\underline{q}_p}$ is symbolic notation for the
-block-vector of solutions of the equation $\underline{m}_p x_{k;p} = \underline{q}_{k;p}$, where
-$k = 0..(p-1)$. Similarly, $\widehat{\underline{m}_p^{-1}\underline{q}_p \underline{r}_p^T}$ is
+Here, $\overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p}$ is symbolic notation for the
+block-vector of solutions of the equation $\mathbb{m}_p x_{p;k} = \mathbb{q}_{p;k}$, where
+$k = 0..(p-1)$. Similarly, $\widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}$ is
 symbolic notation for the block-matrix of solutions of the equation
-$\underline{m}_p^{-1} x_{k,l;p} = \underline{q}_{k,p} \underline{r}_{p,l}^T$, where
+$\mathbb{m}_p x_{p;k,l} = \mathbb{q}_{p;k} \mathbb{r}_{p;l}^T$, where
 $k,l = 0..(p-1)$. That is:
 
 $$
 \begin{align*}
-\overrightarrow{\underline{m}_p^{-1}\underline{q}_p}
-&= \begin{bmatrix}\underline{m}_p^{-1}\underline{q}_{0,p} \\
+\overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p}
+&= \begin{bmatrix}\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_{p;0} \\
 \vdots \\
-\underline{m}_p^{-1} \underline{q}_{N-1,p} \end{bmatrix} \\
-\widehat{\underline{m}_p^{-1}\underline{q}_p \underline{r}_p^T}
-&= \begin{bmatrix}\underline{m}_p^{-1} \underline{q}_{0,p} \underline{r}_{p,0}^T && \cdots &&
-\underline{m}_p^{-1} \underline{q}_{0,p} \underline{r}_{p,N-1}^T \\
+\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;N-1} \end{bmatrix} \\
+\widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}
+&= \begin{bmatrix}\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;0} \pmb{\mathbb{r}}_{p;0}^T && \cdots &&
+\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;0} \pmb{\mathbb{r}}_{p;N-1}^T \\
 \vdots && \ddots && \vdots \\
-\underline{m}_p^{-1} \underline{q}_{0,p} \underline{r}_{p,0}^T && \cdots &&
-\underline{m}_p^{-1} \underline{q}_{N-1,p} \underline{r}_{p,N-1}^T \end{bmatrix}
+\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;0} \pmb{\mathbb{r}}_{p;0}^T && \cdots &&
+\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;N-1} \pmb{\mathbb{r}}_{p;N-1}^T \end{bmatrix}
 \end{align*}
 $$
 
-Instead of calculating $\underline{m}_p^{-1}$ to obtain $\underline{m}_p^{-1} x_p$, the power grid
-model first solves the matrix equation $l_p y_p = p_p a_p$, followed by solving $u_p z_p = y_p$. The
-end-result is then $\underline{m}_p^{-1} x_p = q_p z_p$.
+Calculating $\mathbb{m}_p^{-1}$ to obtain $\mathbb{m}_p^{-1} \boldsymbol{x}_p$ is numerically
+unstable. Instead, the power grid model first solves the matrix equation
+$\mathbb{l}_p \boldsymbol{y}_p = \mathbb{p}_p \boldsymbol{x}_p$, followed by solving
+$\mathbb{u}_p \boldsymbol{z}_p = \boldsymbol{y}_p$. The end-result is then
+$\mathbb{m}_p^{-1} \boldsymbol{x}_p = \mathbb{q}_p \boldsymbol{z}_p$.
 
-Iteratively applying above factorization process yields $L$ and $U$, as well as $P$ and $Q$.
+Iteratively applying above factorization process yields $\mathbb{L}$ and $\mathbb{U}$, as well as
+$\mathbb{P}$ and $\mathbb{Q}$.
 
 #### Block-sparse indices
 
 The structure of the block-sparse matrices is as follows.
 
-* The $N\times N$ block matrix $M$ is interpreted as $M\equiv M\left[0:N, 0:N\right]$, with
-  $M\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
-* In turn, let $M[i,j] \equiv M_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense block with
-  dimensions $N_i\times N_j$.
+* The $N\times N$ block matrix $\mathbb{M}$ is interpreted as
+  $\mathbb{M}\equiv \mathbb{M}\left[0:N, 0:N\right]$, with $\mathbb{M}\left[i,j\right]$ its block
+  element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
+* In turn, let $\mathbb{M}\left[i,j\right] \equiv \mathbb{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$
+  be the dense block with dimensions $N_i\times N_j$.
 
 This can be graphically represented as
 
 $$
 \begin{align*}
-M &\equiv \begin{pmatrix}
-M_{0,0}   && \cdots && M_{0,N-1} \\
+\mathbb{M} &\equiv \begin{pmatrix}
+\mathbb{M}_{0,0}   && \cdots && \mathbb{M}_{0,N-1} \\
 \vdots    && \ddots && \vdots \\
-M_{N-1,0} && \cdots && M_{N-1,N-1}
+\mathbb{M}_{N-1,0} && \cdots && \mathbb{M}_{N-1,N-1}
 \end{pmatrix} \\
 &\equiv \begin{pmatrix}
 \begin{pmatrix}
-   M_{0,0}\left[0,0\right]     && \cdots && M_{0,0}\left[0,N_j-1\right] \\
+   \mathbb{M}_{0,0}\left[0,0\right]     && \cdots && \mathbb{M}_{0,0}\left[0,N_j-1\right] \\
    \vdots                      && \ddots && \vdots \\
-   M_{0,0}\left[N_i-1,0\right] && \cdots && M_{0,0}\left[N_i-1,N_j-1\right]
+   \mathbb{M}_{0,0}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,0}\left[N_i-1,N_j-1\right]
 \end{pmatrix} && \cdots && \begin{pmatrix}
-   M_{0,N-1}\left[0,0\right]     && \cdots && M_{0,N-1}\left[0,N_j-1\right] \\
+   \mathbb{M}_{0,N-1}\left[0,0\right]     && \cdots && \mathbb{M}_{0,N-1}\left[0,N_j-1\right] \\
    \vdots                        && \ddots && \vdots \\
-   M_{0,N-1}\left[N_i-1,0\right] && \cdots && M_{0,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix} \\
+   \mathbb{M}_{0,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix} \\
 \vdots && \ddots && \vdots \\
 \begin{pmatrix}
-   M_{N-1,0}\left[0,0\right]     && \cdots && M_{N-1,0}\left[0,N_j-1\right] \\
+   \mathbb{M}_{N-1,0}\left[0,0\right]     && \cdots && \mathbb{M}_{N-1,0}\left[0,N_j-1\right] \\
    \vdots                        && \ddots && \vdots \\
-   M_{N-1,0}\left[N_i-1,0\right] && \cdots && M_{N-1,0}\left[N_i-1,N_j-1\right]
+   \mathbb{M}_{N-1,0}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,0}\left[N_i-1,N_j-1\right]
 \end{pmatrix} && \cdots && \begin{pmatrix}
-   M_{N-1,N-1}\left[0,0\right]     && \cdots && M_{N-1,N-1}\left[0,N_j-1\right] \\
+   \mathbb{M}_{N-1,N-1}\left[0,0\right]     && \cdots && \mathbb{M}_{N-1,N-1}\left[0,N_j-1\right] \\
    \vdots                          && \ddots && \vdots \\
-   M_{N-1,N-1}\left[N_i-1,0\right] && \cdots && M_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix}
+   \mathbb{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix}
 \end{pmatrix}
 \end{align*}
 $$
 
-Because of the sparse structure and the fact that all $M_{i,j}$ have the same shape, it is much more
-efficient to store the blocks $M_{i,j}$ in a vector $M_{\tilde{k}}$ where $\tilde{k}$ is a reordered
-index from $(i,j) \mapsto \tilde{k}$. This mapping, in turn, is stored as an index pointer, i.e., a
-vector of vectors of indices, with the outer index given by the row-index $i$, and the inner vector
-containing the values of $j$ for which $M_{i,j}$ may be non-zero. All topologically relevant matrix
-elements, as well as [fill-ins](#pivot-operations), are included in this mapping. The following
-illustrates this mapping.
+Because of the sparse structure and the fact that all $\mathbb{M}_{i,j}$ have the same shape, it is
+much more efficient to store the blocks $\mathbb{M}_{i,j}$ in a vector $\mathbb{M}_{\tilde{k}}$
+where $\tilde{k}$ is a reordered index from $(i,j) \mapsto \tilde{k}$. This mapping, in turn, is
+stored as an index pointer, i.e., a vector of vectors of indices, with the outer index given by the
+row-index $i$, and the inner vector containing the values of $j$ for which $\mathbb{M}_{i,j}$ may be
+non-zero. All topologically relevant matrix elements, as well as [fill-ins](#pivot-operations), are
+included in this mapping. The following illustrates this mapping.
 
 $$
 \begin{align*}
 \begin{pmatrix}
-M_{0,0} &&         &&         && M_{0,3} \\
-        && M_{1,1} && M_{1,2} &&         \\
-        && M_{2,1} && M_{2,2} && M_{2,3} \\
-M_{3,0} &&         && M_{3,2} && M_{3,3}
+\mathbb{M}_{0,0} &&         &&         && \mathbb{M}_{0,3} \\
+        && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} &&         \\
+        && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} \\
+\mathbb{M}_{3,0} &&         && \mathbb{M}_{3,2} && \mathbb{M}_{3,3}
 \end{pmatrix} &\equiv
 \begin{bmatrix}
-M_{0,0} && M_{0,3} && M_{1,1} && M_{1,2} && M_{2,1} && M_{2,2} && M_{2,3} && M_{3,0} && M_{3,2} && M_{3,3} \\
+\mathbb{M}_{0,0} && \mathbb{M}_{0,3} && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} && \mathbb{M}_{3,0} && \mathbb{M}_{3,2} && \mathbb{M}_{3,3} \\
 [[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] \\
 \end{bmatrix} \\
 &\equiv
 \begin{bmatrix}
-M_{0,0} && M_{0,3} && M_{1,1} && M_{1,2} && M_{2,1} && M_{2,2} && M_{2,3} && M_{3,0} && M_{3,2} && M_{3,3} && \\
+\mathbb{M}_{0,0} && \mathbb{M}_{0,3} && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} && \mathbb{M}_{3,0} && \mathbb{M}_{3,2} && \mathbb{M}_{3,3} && \\
 [0 && 3 && 1 && 2 && 1 && 2 && 3 && 0 && 2 && 3] && \\
 [0 && && 2 && && 4 && && && 7 && && && && 10]
 \end{bmatrix}
@@ -337,7 +358,8 @@ column indices and the start indices of each row - the index pointer (`indptr`).
 of `indptr` is 1 greater than the amount of rows. This enables describing the amount of elements
 in each row as the difference between its element in `indptr` and the next element.
 
-Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the start. The double loop becomes:
+Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the start. The double loop
+becomes:
 
 1. Loop all rows: $i=0..(N-1)$:
    1. The column indices for this row start at $\text{indptr}\left[i\right]$.
@@ -349,12 +371,14 @@ Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the st
 
 ### Block-sparse LU solving
 
-Solving an equation $M x = b$ using a
+Solving an equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ using a
 [pre-factored LU-factorization](#block-sparse-lu-factorization) is done using the regular forward
-and backward substitutions. It starts by permuting the rows: $b^{\prime} = PB$. After that, the
-forward substitution step essentially amounts to solving the matrix equation $Ly = b^{\prime}$,
-followed by the backwards substitution by solving $Uz = y$. The final result is then obtained by
-applying the column permutation: $x = Qz$.
+and backward substitutions. It starts by permuting the rows:
+$\boldsymbol{b}^{\prime} = \mathbb{P}\boldsymbol{b}$. After that, the forward substitution step
+essentially amounts to solving the matrix equation
+$\mathbb{L}\boldsymbol{y} = \boldsymbol{b}^{\prime}$, followed by the backwards substitution by
+solving $\mathbb{U}\boldsymbol{z} = \mathbb{y}$. The final result is then obtained by applying the
+column permutation: $\boldsymbol{x} = \mathbb{Q}\boldsymbol{z}$.
 
 #### Forward substitution
 
@@ -362,7 +386,8 @@ The row permutation is applied as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. If the matrix is a block matrix:
-      1. Apply the current row's block permutation: $b[i] \gets P[i] \cdot b[i]$.
+      1. Apply the current row's block permutation:
+         $\boldsymbol{b}\left[i\right] \gets \mathbb{P}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
       2. Proceed.
    2. Else:
       1. Proceed.
@@ -371,7 +396,7 @@ The equation $Ly = Pb$ is solved as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. Loop over all lower-triangle off-diagonal columns (beware of sparsity): $j=0..(i-1)$:
-      1. $b[i] \gets b[i] - L[i,j] \cdot b[i]$.
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbb{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
       2. Continue with next block-column.
    2. If the matrix is a block matrix:
       1. Follow the same steps within the block.
@@ -383,21 +408,22 @@ The equation $Uz = y$ is solved as follows.
 
 1. Loop over all block-rows in reverse order: $i=(N-1)..0$:
    1. Loop over all upper-triangle off-diagonal columns (beware of sparsity): $j=(i+1)..0$:
-      1. $b[i] \gets b[i] - U[i,j] \cdot b[i]$.
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbb{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
       2. Continue with next block-column.
    2. Handle the diagonal element:
       1. If the matrix is a block matrix:
          1. Follow the same steps within the block.
          2. Proceed.
       2. Else:
-         1. $b[i] \gets b[i] / U[i,i]$.
+         1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] / \mathbb{U}\left[i,i\right]$.
          2. Proceed.
 
 Apply the column permutation as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. If the matrix is a block matrix:
-      1. Apply the current row's block permutation: $b[i] \gets Q[i] \cdot b[i]$.
+      1. Apply the current row's block permutation:
+         $\boldsymbol{b}\left[i\right] \gets \mathbb{Q}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
       2. Proceed.
    2. Else:
       1. Proceed.
@@ -426,11 +452,12 @@ slightly different matrix that is then iteratively refined.
 
 #### Pivot perturbation algorithm
 
-The following pivot perturbation algorithm works for both real and complex matrix equations. Let $M$
-be the matrix, $\left\|M\right\|_{\infty ,\text{bwod}}$ the
-[block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the matrix.
+The following pivot perturbation algorithm works for both real and complex matrix equations. Let
+$\mathbb{M}$ be the matrix, $\left\|\mathbb{M}\right\|_{\infty ,\text{bwod}}$ the
+[block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the
+matrix.
 
-1. Set $\epsilon \gets \text{perturbation_threshold} * \left\|M\right\|_{\text{bwod}}$
+1. Set $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbb{M}\right\|_{\text{bwod}}$
 2. If $|\text{pivot_element}| \lt \epsilon$, then:
    1. If $|\text{pivot_element}| = 0$, then:
       1. Set $\text{direction} = 1$.
@@ -451,30 +478,35 @@ This algorithm is heavily inspired by the GESP algorithm described in
 [LU solving](#block-sparse-lu-solving) with an [LU-decomposition](#block-sparse-lu-factorization)
 obtained using [pivot perturbation](#pivot-perturbation) yields only approximate results, because
 the LU-decomposition itself is only approximate. Because of that, an iterative refinement process
-is required to improve the solution to the matrix equation $A \cdot x = b$.
+is required to improve the solution to the matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$.
 
 The iterative refinement process is as follows: in iteration step $i$, it assumes an existing
-approximation $x_i$ for $x$. It then defines the difference between the current best and the actual
-solution $\Delta x = x - x_i$. Substiting in the original equation yields
-$A \cdot (x_i + \Delta x) = b$, so that $A \cdot \Delta x = b - A \cdot x_i =: r$, where the
-residual $r$ can be calculated. An estimation for the left-hand side can be obtained by using the
-pivot-perturbed matrix $\tilde{A}$ instead of the original matrix A. Convergence can be reached if
-$r \to 0$, since then also $\left\|\Delta x\right\| \to 0$. Solving for $\Delta x$ and substituting
-back into $x_{i+1} = x_i + \Delta x$ provides the next best approximation $x_{i+1}$ for $x$.
+approximation $\boldsymbol{x}_i$ for $\boldsymbol{x}$. It then defines the difference between the
+current best and the actual solution $\boldsymbol{\Delta x} = \boldsymbol{x} - \boldsymbol{x}_i$.
+Substiting in the original equation yields
+$\mathbb{M} \cdot (\boldsymbol{x}_i + \boldsymbol{\Delta x}) = \boldsymbol{b}$, so that
+$\mathbb{M} \cdot \boldsymbol{\Delta x} = \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}_i =: \boldsymbol{r}$, where the residual
+$\boldsymbol{r}$ can be calculated. An estimation for the left-hand side can be obtained by using
+the pivot-perturbed matrix $\tilde{A}$ instead of the original matrix A. Convergence can be reached
+if $\boldsymbol{r} \to \boldsymbol{0}$, since then also
+$\left\|\boldsymbol{\Delta x}\right\| \to 0$. Solving for $\boldsymbol{\Delta x}$ and substituting
+back into $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ provides the next best
+approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
 
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
 [backward error formula](#improved-backward-error-calculation)).
 
-Since the matrix $A$ does not change during this process, the LU-decomposition remains valid
-throughout the process, so that this iterative refinement can be done at a reasonably low cost.
+Since the matrix $\mathbb{M}$ does not change during this process, the LU-decomposition remains
+valid throughout the process, so that this iterative refinement can be done at a reasonably low
+cost.
 
-Given the original matrix equation $A \cdot x = b$ to solve, the pivot perturbated matrix
-$\tilde{A}$ with a pre-calculated LU-decomposition, and the convergence threshold $\epsilon$,
-the algorithm is as follows:
+Given the original matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$ to solve, the
+pivot perturbated matrix $\tilde{\mathbb{M}}$ with a pre-calculated LU-decomposition, and the
+convergence threshold $\epsilon$, the algorithm is as follows:
 
 1. Initialize:
-   1. Set the initial estimate: $x_{\text{est}} = 0$.
-   2. Set the initial residual: $r \gets b$.
+   1. Set the initial estimate: $\boldsymbol{x}_{\text{est}} = \boldsymbol{0}$.
+   2. Set the initial residual: $\boldsymbol{r} \gets \boldsymbol{b}$.
    3. Set the initial backward error: $\text{backward_error} = \infty$.
    4. Set the number of iterations to 0.
 2. Iteratively refine; loop:
@@ -487,13 +519,16 @@ the algorithm is as follows:
       3. Else:
          1. Increase the number of iterations.
          2. Proceed.
-   2. Solve $\tilde{A} \cdot \Delta x = r$ for $\Delta x$.
-   3. Calculate the backward error with the original $x$ and $r$ using the [backward error formula](#improved-backward-error-calculation).
-   4. Set the next estimation of $x$: $x_{\text{est}} \gets x_{\text{est}} + \Delta x$.
-   5. Set the residual: $r \gets b - A \cdot x$.
+   2. Solve $\tilde{\mathbb{M}} \cdot \boldsymbol{\Delta x} = \boldsymbol{r}$ for
+      $\boldsymbol{\Delta x}$.
+   3. Calculate the backward error with the original $\boldsymbol{x}$ and $\boldsymbol{r}$ using the
+      [backward error formula](#improved-backward-error-calculation).
+   4. Set the next estimation of
+      $\boldsymbol{x}$: $\boldsymbol{x}_{\text{est}} \gets \boldsymbol{x}_{\text{est}} + \boldsymbol{\Delta x}$.
+   5. Set the residual: $\boldsymbol{r} \gets \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}$.
 
-Because the backward error is calculated on the $x$ and $r$ from the previous iteration, the
-iterative refinement loop will always be executed twice.
+Because the backward error is calculated on the $\boldsymbol{x}$ and $\boldsymbol{r}$ from the
+previous iteration, the iterative refinement loop will always be executed twice.
 
 The reason a sparse matrix error is raised and not an iteration diverge error, is that it is the
 iterative refinement of the matrix equation solution that cannot be solved in the set amount of
@@ -524,16 +559,19 @@ In power systems, however, the fact that the matrix may contain elements
 [spanning several orders of magnitude](#element-size-properties-of-power-system-equations) may cause
 slow convergence far away from the optimum. The diminishing return criterion would cause the
 algorithm to exit before the actual solution is found. Multiple refinement iterations may still
-yield better results. The power grid model therefore does not stop on deminishing returns. Instead, a maximum amount of iterations is used in combination with the error tolerance.
+yield better results. The power grid model therefore does not stop on deminishing returns. Instead,
+a maximum amount of iterations is used in combination with the error tolerance.
 
 ##### Improved backward error calculation
 
-In power system equations, the matrix equation $A x = b$ can be very unbalanced: some entries
-in the matrix $A$ may be very large while others are zero or very small. The same may be true for
-the right-hand side of the equation $b$, as well as its solution $x$. In fact, there may be
-certain rows $i$ for which both $\left|b[i]\right|$ and
-$\sum_j \left|A[i,j]\right| \left|x[j]\right|$ are small and, therefore, their sum is prone to
-rounding errors, which may be several orders larger than machine precision.
+In power system equations, the matrix equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can be
+very unbalanced: some entries in the matrix $\mathbb{M}$ may be very large while others are zero or
+very small. The same may be true for the right-hand side of the equation $\boldsymbol{b}$, as well
+as its solution $\boldsymbol{x}$. In fact, there may be certain rows $i$ for which both
+$\left|\boldsymbol{b}\left[i\right]\right|$ and
+$\sum_j \left|\mathbb{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small
+and, therefore, their sum is prone to rounding errors, which may be several orders larger than
+machine precision.
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 uses the following backward error in the
@@ -541,15 +579,16 @@ uses the following backward error in the
 
 $$
 \begin{align*}
-\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|r_i\right|}{\sum_j \left|A_{i,j}\right| \left|x_j\right| + \left|b_i\right|} \\
-&= \max_i \frac{\left|b_i - \sum_j A_{i,j} x_j\right|}{\sum_j \left|A_{i,j}\right| \left|x_j\right| + \left|b_i\right|} \\
-&= \max_i \frac{\left|r_i\right|}{\left(\left|A\right| \cdot \left|x\right| + \left|b\right|\right)_i}
+\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\sum_j \left|\mathbb{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
+&= \max_i \frac{\left|\boldsymbol{b}_i - \sum_j \mathbb{M}_{i,j} \boldsymbol{x}_j\right|}{\sum_j \left|\mathbb{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
+&= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\left(\left|\mathbb{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i}
 \end{align*}
 $$
 
-In this equation, the symbolic notation $\left|A\right|$ and $\left|x\right|$ are the matrix and
-vector with absolute values of the elements of $A$ and $x$ as elements, i.e.,
-$\left|A\right|_{i,j} := \left|a_{i,j}\right|$ and $\left|x\right|_i := \left|x_i\right|$, as
+In this equation, the symbolic notation $\left|\mathbb{M}\right|$ and $\left|\boldsymbol{x}\right|$
+are the matrix and vector with absolute values of the elements of $\mathbb{M}$ and $\boldsymbol{x}$
+as elements, i.e., $\left|\mathbb{M}\right|_{i,j} := \left|\mathbb{M}_{i,j}\right|$ and
+$\left|\boldsymbol{x}\right|_i := \left|\boldsymbol{x}_i\right|$, as
 defined in [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
 Due to aforementioned, this is prone to rounding errors, and a single row with rounding errors may
@@ -559,11 +598,11 @@ denominators:
 
 $$
 \begin{align*}
-D_{\text{max}} &= \max_i\left\{\left(\left|A\right|\cdot\left|x\right| + \left|b\right|\right)_i\right\} \\
+D_{\text{max}} &= \max_i\left\{\left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
 \text{backward_error} &= \max_i \left\{
-   \frac{\left|r\right|_i}{
+   \frac{\left|\boldsymbol{r}\right|_i}{
       \max\left\{
-         \left(\left|A\right|\cdot\left|x\right| + \left|b\right|\right)_i,
+         \left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
          \epsilon_{\text{backward_error}} D_{\text{max}}
       \right\}
    }
@@ -608,10 +647,11 @@ are skipped at the block-level.
 
 The algorithm is as follows:
 
-Let $M\equiv M\left[0:N, 0:N\right]$ be the $N\times N$-matrix with a block-sparse structure and
-$M\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$. In turn,
-let $M[i,j] \equiv M_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense block with dimensions
-$N_i\times N_j$.
+Let $\mathbb{M}\equiv \mathbb{M}\left[0:N, 0:N\right]$ be the $N\times N$-matrix with a block-sparse
+structure and $\mathbb{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where
+$i,j = 0..(N-1)$. In turn, let
+$\mathbb{M}\left[i,j\right] \equiv \mathbb{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense
+block with dimensions $N_i\times N_j$.
 
 1. Set $\text{norm} \gets 0$.
 2. Loop over all block-rows: $i = 0..(N-1)$:
@@ -620,12 +660,12 @@ $N_i\times N_j$.
       1. If $i = j$, then:
          1. Skip this block: continue with the next block-column.
       2. Else, calculate the $L_{\infty}$ norm of the current block and add to the current row norm:
-         1. Set the current block: $M_{i,j} \gets M[i,j]$.
+         1. Set the current block: $\mathbb{M}_{i,j} \gets \mathbb{M}\left[i,j\right]$.
          2. Set $\text{block_norm} \gets 0$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
             1. Set $\text{block_row_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. Set $\text{block_row_norm} \gets \text{block_row_norm} + \left\|M_{i,j}\left[k,l\right]\right\|$.
+               1. Set $\text{block_row_norm} \gets \text{block_row_norm} + \left\|\mathbb{M}_{i,j}\left[k,l\right]\right\|$.
             3. Calculate the new block norm: set
                $\text{block_norm} \gets \max\left\{\text{block_norm}, \text{block_row_norm}\right\}$.
             4. Continue with the next row of the current block.
