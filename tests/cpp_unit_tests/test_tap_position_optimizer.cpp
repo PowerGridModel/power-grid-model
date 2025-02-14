@@ -1167,6 +1167,35 @@ TEST_CASE("Test tap position optmizer I/O") {
     }
 }
 
+TEST_CASE("Test RankIterator") {
+    optimizer::tap_position_optimizer::RankIterator rank_iterator{};
+    std::vector<std::vector<IntS>> regulator_order = {{0, 0, 0}, {0, 0, 0}};
+    bool tap_changed{false};
+    std::vector<IntS> iterations_per_rank = {0, 3, 6};
+    Idx rank_index{0};
+    bool update{false};
+
+    auto const mock_lambda = [&](Idx const& /*rank_idx*/, Idx const& /*transformer_idx*/,
+                                 std::vector<IntS> const& /*same_rank_regulators*/) { return update; };
+    SUBCASE("Test tap not changed") {
+        // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
+        rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed, iterations_per_rank, rank_index);
+        CHECK(iterations_per_rank[0] == 0);
+        CHECK(iterations_per_rank[1] == 3);
+        CHECK(iterations_per_rank[2] == 6);
+        CHECK(rank_index == 2);
+    }
+    SUBCASE("Test tap changed") {
+        // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
+        update = true;
+        rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed, iterations_per_rank, rank_index);
+        CHECK(iterations_per_rank[0] == 1);
+        CHECK(iterations_per_rank[1] == 0);
+        CHECK(iterations_per_rank[2] == 6);
+        CHECK(rank_index == 0);
+    }
+}
+
 } // namespace power_grid_model
 
 TEST_SUITE_END();
