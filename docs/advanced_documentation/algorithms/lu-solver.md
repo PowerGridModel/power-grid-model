@@ -361,7 +361,7 @@ The row permutation is applied as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. If the matrix is a block matrix:
-      1. Apply the current row's block permutation: $b[i] \gets P[i] b[i]$.
+      1. Apply the current row's block permutation: $b[i] \gets P[i] \cdot b[i]$.
       2. Proceed.
    2. Else:
       1. Proceed.
@@ -396,10 +396,16 @@ Apply the column permutation as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. If the matrix is a block matrix:
-      1. Apply the current row's block permutation: $b[i] \gets Q[i] b[i]$.
+      1. Apply the current row's block permutation: $b[i] \gets Q[i] \cdot b[i]$.
       2. Proceed.
    2. Else:
       1. Proceed.
+
+```{note}
+If [pivot perturbation](#pivot-perturbation) was used to obtain the LU-decomposition, the solution
+obtained here is an approximation of the exact solution. The approximation can be improved using
+[iterative refinement](#iterative-refinement-of-lu-solver-solutions).
+```
 
 ### Pivot perturbation
 
@@ -436,7 +442,7 @@ be the matrix, $\left\|M\right\|_{\infty ,\text{bwod}}$ the
 $\text{direction}$ ensures that the complex phase of the pivot element is preserved, with a fallback
 the positive real axis when the pivot element is identically zero.
 
-### Iterative refinement of LU solvers
+### Iterative refinement of LU solver solutions
 
 This algorithm is heavily inspired by the GESP algorithm described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761).
@@ -530,7 +536,7 @@ rounding errors, which may be several orders larger than machine precision.
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 uses the following backward error in the
-[iterative refinement algorithm](#iterative-refinement-of-lu-solvers):
+[iterative refinement algorithm](#iterative-refinement-of-lu-solver-solutions):
 
 $$
 \begin{align*}
