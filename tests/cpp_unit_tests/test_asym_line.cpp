@@ -293,7 +293,10 @@ TEST_CASE("Test asym line") {
                                 .c1 = 0.308,
                                 .i_n = 216.0};
 
-        ComplexTensor<asymmetric_t> const y_series = ComplexTensor<asymmetric_t>(1.87842984-0.42269873i, 1.87842984-0.42269873i, 1.87842984-0.42269873i, -0.62560863-0.00463073i, -0.57187623+0.12931409i, -0.62560863-0.00463073i);
+        ComplexTensor4 r_matrix = ComplexTensor4(input.r_aa, input.r_bb, input.r_cc, input.r_nn, input.r_ba, input.r_ca, input.r_na, input.r_cb, input.r_nb, input.r_nc);
+        ComplexTensor4 x_matrix = ComplexTensor4(input.x_aa, input.x_bb, input.x_cc, input.x_nn, input.x_ba, input.x_ca, input.x_na, input.x_cb, input.x_nb, input.x_nc);
+        ComplexTensor4 z = r_matrix + 1.0i * x_matrix;
+        ComplexTensor<asymmetric_t> y_series = inv(kron_reduction(z));
         execute_subcases(input, y_series);
     }
 
@@ -318,7 +321,9 @@ TEST_CASE("Test asym line") {
                                 .c0 = 0.18,
                                 .c1 = 0.308,
                                 .i_n = 216.0};
-        ComplexTensor<asymmetric_t> const y_series = ComplexTensor<asymmetric_t>(1.68079-0.470259i, 1.70433-0.383139i, 1.68079-0.470259i, -0.816117-0.00584238i, -0.769521+0.0817541i, -0.816117-0.00584238i);
+        ComplexTensor<asymmetric_t> r_matrix = ComplexTensor<asymmetric_t>(input.r_aa, input.r_bb, input.r_cc, input.r_ba, input.r_ca, input.r_cb);
+        ComplexTensor<asymmetric_t> x_matrix = ComplexTensor<asymmetric_t>(input.x_aa, input.x_bb, input.x_cc, input.x_ba, input.x_ca, input.x_cb);
+        ComplexTensor<asymmetric_t> const y_series = inv(r_matrix + 1.0i * x_matrix);
         execute_subcases(input, y_series);
     }
 }
