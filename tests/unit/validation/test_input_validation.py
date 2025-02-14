@@ -24,6 +24,7 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
+    MissingValueError,
     MultiComponentNotUniqueError,
     NotBetweenError,
     NotBetweenOrAtError,
@@ -56,6 +57,46 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     line["r0"] = [10, 0, 0]
     line["x0"] = [0, 0, 50]
     line["i_n"] = [-3, 0, 50]
+
+    asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 2)
+    asym_line["id"] = [52, 53]
+    asym_line["from_node"] = [0, 1]
+    asym_line["to_node"] = [1, 2]
+    asym_line["from_status"] = [1, 1]
+    asym_line["to_status"] = [1, 1]
+    asym_line["r_aa"] = [-1, 2]
+    asym_line["r_ba"] = [-1, 2]
+    asym_line["r_bb"] = [-1, 2]
+    asym_line["r_ca"] = [-1, 2]
+    asym_line["r_cb"] = [-1, 2]
+    asym_line["r_cc"] = [-1, 2]
+    asym_line["r_na"] = [-1, 2]
+    asym_line["r_nb"] = [-1, 2]
+    asym_line["r_nc"] = [-1, 2]
+    asym_line["r_nn"] = [-1, 2]
+    asym_line["x_aa"] = [-1, 2]
+    asym_line["x_ba"] = [-1, 2]
+    asym_line["x_bb"] = [-1, 2]
+    asym_line["x_ca"] = [-1, 2]
+    asym_line["x_cb"] = [-1, 2]
+    asym_line["x_cc"] = [-1, 2]
+    asym_line["x_na"] = [-1, 2]
+    asym_line["x_nb"] = [-1, 2]
+    asym_line["x_nc"] = [-1, 2]
+    asym_line["x_nn"] = [-1, 2]
+    asym_line["c_aa"] = [-1, np.nan]
+    asym_line["c_ba"] = [-1, np.nan]
+    asym_line["c_bb"] = [-1, np.nan]
+    asym_line["c_ca"] = [-1, np.nan]
+    asym_line["c_cb"] = [-1, np.nan]
+    asym_line["c_cc"] = [-1, np.nan]
+    asym_line["c_na"] = [-1, np.nan]
+    asym_line["c_nb"] = [-1, np.nan]
+    asym_line["c_nc"] = [-1, np.nan]
+    asym_line["c_nn"] = [-1, np.nan]
+    asym_line["c0"]   = [-1, np.nan]
+    asym_line["c1"]   = [-1, np.nan]
+    asym_line["i_n"] =  [50, 50]
 
     generic_branch = initialize_array(DatasetType.input, ComponentType.generic_branch, 1)
     generic_branch["id"] = [6]
@@ -692,3 +733,51 @@ def test_generic_branch_input_data(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
     assert NotGreaterThanError("generic_branch", "k", [6], 0) in validation_errors
     assert NotGreaterOrEqualError("generic_branch", "sn", [6], 0) in validation_errors
+
+
+def test_asym_line_input_data(input_data):
+    validation_errors = validate_input_data(input_data, symmetric=True)
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_aa", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_ba", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_bb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_ca", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_cb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_cc", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_na", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_nb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_nc", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_nn", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_aa", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_ba", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_bb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_ca", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_cb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_cc", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_na", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_nb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_nc", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_nn", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_aa", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_ba", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_bb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_ca", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_cb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_cc", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_na", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_nb", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_nc", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_nn", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c0", [52], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.asym_line, "c1", [52], 0) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_aa", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_ba", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_bb", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_ca", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_cb", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_cc", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_na", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_nb", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_nc", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_nn", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c0", [53]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c1", [53]) in validation_errors

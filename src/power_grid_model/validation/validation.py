@@ -547,40 +547,32 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
 
 
 def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
-    errors = validate_branch(data, ComponentType.line)
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_aa")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_ba")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_bb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_ca")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_cb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_cc")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_na")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_nb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_nc")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "r_nn")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_aa")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_ba")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_bb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_ca")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_cb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_cc")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_na")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_nb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_nc")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "x_nn")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_aa")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_ba")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_bb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_ca")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_cb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_cc")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_na")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_nb")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_nc")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c_nn")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c0")
-    errors += _all_greater_than_zero(data, ComponentType.asym_line, "c1")
+    errors = validate_branch(data, ComponentType.asym_line)
     errors += _all_greater_than_zero(data, ComponentType.asym_line, "i_n")
+    required_fields = ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
+    optional_fields = ["r_na", "r_nb", "r_nc", "r_nn", "x_na", "x_nb", "x_nc", "x_nn"]
+    required_c_matrix_fields = ["c_na", "c_nb", "c_nc"]
+    c_fields = ["c0", "c1"]
+    for field in required_fields + optional_fields + required_c_matrix_fields + c_fields:
+        errors += _all_greater_than_zero(data, ComponentType.asym_line, field)
+
+    for i_data_record in range(0,len(data)):
+        new_errors = _none_missing(data, ComponentType.asym_line, optional_fields, i_data_record)
+        if 0 < len(new_errors) < len(optional_fields):
+            errors += new_errors
+
+        new_errors_c_matrix = _none_missing(data, ComponentType.asym_line, required_c_matrix_fields, i_data_record)
+        if 0 < len(new_errors_c_matrix) < len(required_c_matrix_fields):
+            errors += new_errors_c_matrix
+
+        new_errors_c1_c0 = _none_missing(data, ComponentType.asym_line, field, i_data_record)
+        if 0 < len(new_errors_c1_c0) < len(c_fields):
+            errors += new_errors_c1_c0
+
+        if len(new_errors_c_matrix) == len(required_c_matrix_fields) and len(new_errors_c1_c0) == len(c_fields):
+            errors += new_errors_c_matrix
+            errors += new_errors_c1_c0
+
     return errors
 
 
