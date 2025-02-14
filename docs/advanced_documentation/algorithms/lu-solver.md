@@ -9,7 +9,7 @@ SPDX-License-Identifier: MPL-2.0
 Power system equations can be modeled as matrix equations. A matrix equation solver is therefore
 key to the power grid model.
 
-This section documents the need for a custom sparse LU solver and its implementation.
+This section documents the need for a custom sparse LU-solver and its implementation.
 
 ## Background
 
@@ -25,10 +25,11 @@ imposes some constraints on the algorithms that can be used.
 
 * Highly accurate and fast calculations are needed for very large grids. This means that direct
   methods are strongly preferred, and approximate methods can only be used when there is no other
-  alternative, and only if can be iteratively refined with a fast convergence rate.
+  alternative, and only if they can be iteratively refined with a fast convergence rate.
 * Sometimes, very many repetitive calculations are required, e.g., for time series. In those cases,
-  separating the decomposition of a matrix and solving two systems of equations separately can give
-  major performance boosts.
+  separating the decomposition (also known as factorization) of a matrix and solving two systems of
+  equations separately can give major performance boosts, because the decomposition remains the same
+  across the entire set of calculations.
 
 ### Topological structure
 
@@ -45,7 +46,7 @@ and, as a result, extremely sparse matrix equations with a block structure.
 
 Sparse matrix equations can be solved efficiently: they can be solved in linear time complexity, as
 opposed to the cubic complexity of naive Gaussian elimination. As a result, a sparse matrix solver
-is key to the performance of the power grid model. QR decomposition therefore is not a good
+is key to the performance of the power grid model. QR-decomposition therefore is not a good
 candidate.
 
 #### Pivot operations
@@ -90,33 +91,33 @@ dense blocks need to be inverted separately. To make matters worse, the dense bl
 heavily in structure and contents between different nodes, and are often not solvable without
 pivoting.
 
-### Custom sparse LU solver
+### Custom sparse LU-solver
 
-The choice for a custom LU solver implementation comes from a number of considerations:
+The choice for a custom LU-solver implementation comes from a number of considerations:
 
-* LU-decomposition is the best choice, because QR-decomposition and Cholesky decomposition cannot
+* LU-decomposition is the best choice, because QR-decomposition and Cholesky-decomposition cannot
   solve the power system equations efficiently as a consequence of the properties
-* Alternative LU solver implementations are optimized for a variety of use cases that are less
+* Alternative LU-solver implementations are optimized for a variety of use cases that are less
   sparse than the ones encountered in power systems.
-* Alternative LU solver implementations do not have good block-sparse matrix equation solvers.
+* Alternative LU-solver implementations do not have good block-sparse matrix equation solvers.
 
 ## Implementation
 
-The LU solver implemented in the power grid model consists of 3 components:
+The LU-solver implemented in the power grid model consists of 3 components:
 
-* A block-sparse LU solver that:
+* A block-sparse LU-solver that:
   * handles factorization using the topological structure up to block-level
   * solves the sparse matrix equation given the factorization
-* A dense LU factor that handles individual blocks within the matrix equation
+* A dense LU-factor that handles individual blocks within the matrix equation
 
-### Dense LU factorization
+### Dense LU-factorization
 
 The power grid model uses a modified version of the
 [`LUFullPiv` defined in Eigen](https://gitlab.com/libeigen/eigen/-/blob/3.4/Eigen/src/LU/FullPivLU.h)
 (credits go to the original author). The modification adds opt-in support for
 [pivot perturbation](#pivot-perturbation).
 
-#### Dense LU factorization process
+#### Dense LU-factorization process
 
 The Gaussian elimination process itself is as usual. Let
 $M_p\equiv\begin{bmatrix}m_p && \vec{r}_p^T \\ \vec{q}_p && \hat{M}_p\end{bmatrix}$, where $p$ is
@@ -160,7 +161,7 @@ $$
 A = P^{-1}LUQ^{-1}
 $$
 
-#### Dense LU factorization algorithm
+#### Dense LU-factorization algorithm
 
 The power grid model uses an in-place approach. Permutations are
 
@@ -206,15 +207,15 @@ the `SparseMatrixError` immediately, we break from the loop and throw after that
 change the functional behavior.
 ```
 
-### Block-sparse LU factorization
+### Block-sparse LU-factorization
 
-The LU factorization process for block-sparse matrices is similar to that for
+The LU-factorization process for block-sparse matrices is similar to that for
 [dense matrices](#dense-lu-factorization), but in this case, $m_p$ is a block element, and
 $\vec{q}_p$, $\vec{r}_p^T$ and $\hat{M}_p$ consist of block elements as well. Notice that the
-inverse $m_p^{-1}$ can be calculated from is LU decomposition, which can be obtained from the
-[dense LU factorization process](#dense-lu-factorization-process).
+inverse $m_p^{-1}$ can be calculated from is LU-decomposition, which can be obtained from the
+[dense LU-factorization process](#dense-lu-factorization-process).
 
-#### Block-sparse LU factorization process
+#### Block-sparse LU-factorization process
 
 The Gaussian elimination process itself is as usual. Completely analogously to and following the
 same conventions as [before](#dense-lu-factorization-process), let
@@ -409,7 +410,7 @@ obtained here is an approximation of the exact solution. The approximation can b
 
 ### Pivot perturbation
 
-The LU solver implemented in the power grid model has support for pivot perturbation. The methods
+The LU-solver implemented in the power grid model has support for pivot perturbation. The methods
 are described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 and
@@ -442,7 +443,7 @@ be the matrix, $\left\|M\right\|_{\infty ,\text{bwod}}$ the
 $\text{direction}$ ensures that the complex phase of the pivot element is preserved, with a fallback
 the positive real axis when the pivot element is identically zero.
 
-### Iterative refinement of LU solver solutions
+### Iterative refinement of LU-solver solutions
 
 This algorithm is heavily inspired by the GESP algorithm described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761).
@@ -464,7 +465,7 @@ back into $x_{i+1} = x_i + \Delta x$ provides the next best approximation $x_{i+
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
 [backward error formula](#improved-backward-error-calculation)).
 
-Since the matrix $A$ does not change during this process, the LU decomposition remains valid
+Since the matrix $A$ does not change during this process, the LU-decomposition remains valid
 throughout the process, so that this iterative refinement can be done at a reasonably low cost.
 
 Given the original matrix equation $A \cdot x = b$ to solve, the pivot perturbated matrix
