@@ -717,11 +717,11 @@ TEST_CASE("Test statistics") {
                 CHECK(imag(uniform.value(1)) == doctest::Approx(imag(polar.value()(1))));
                 CHECK(real(uniform.value(2)) == doctest::Approx(real(polar.value()(2))));
                 CHECK(imag(uniform.value(2)) == doctest::Approx(imag(polar.value()(2))));
-                // CHECK(uniform.variance ==
-                //       doctest::Approx((magnitude_variance + magnitude_a * magnitude_a * angle_variance +
-                //                        magnitude_variance + magnitude_b * magnitude_b * angle_variance +
-                //                        magnitude_variance + magnitude_c * magnitude_c * angle_variance) /
-                //                       3.0));
+
+                CHECK(uniform.variance ==
+                      doctest::Approx(magnitude_variance + magnitude_a * magnitude_a * angle_variance +
+                                      magnitude_variance + magnitude_b * magnitude_b * angle_variance +
+                                      magnitude_variance + magnitude_c * magnitude_c * angle_variance));
             }
         }
     }
@@ -782,9 +782,8 @@ TEST_CASE("Test statistics") {
                 CHECK(imag(uniform.value(1)) == doctest::Approx(imag(decomposed.value()(1))));
                 CHECK(real(uniform.value(2)) == doctest::Approx(real(decomposed.value()(2))));
                 CHECK(imag(uniform.value(2)) == doctest::Approx(imag(decomposed.value()(2))));
-                // CHECK(uniform.variance == doctest::Approx((real_variance_a + real_variance_b + real_variance_c +
-                //                                            imag_variance_a + imag_variance_b + imag_variance_c) /
-                //                                           3.0));
+                CHECK(uniform.variance == doctest::Approx(real_variance_a + real_variance_b + real_variance_c +
+                                                          imag_variance_a + imag_variance_b + imag_variance_c));
             }
             SUBCASE("Conversion to IndependentComplexRDV") {
                 auto const independent = static_cast<IndependentComplexRDV<asymmetric_t>>(decomposed);
