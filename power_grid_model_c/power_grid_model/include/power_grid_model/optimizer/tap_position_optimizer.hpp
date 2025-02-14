@@ -874,6 +874,23 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
+    void iterate_ranks(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                       auto adjust_transformer_in_rank, bool& tap_changed, std::vector<IntS>& iterations_per_rank,
+                       Idx& rank_index) {
+        for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
+            auto const& same_rank_regulators = regulator_order[i];
+            for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
+                tap_changed = adjust_transformer_in_rank(i, j, same_rank_regulators);
+            }
+            if (tap_changed) {
+                iterations_per_rank[rank_index + 1] = 0;
+                ++iterations_per_rank[rank_index];
+                break;
+            }
+            ++rank_index;
+        }
+    };
+
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                  CalculationMethod method, SearchMethod search) -> ResultType {
         auto result = calculate_(state, method);
@@ -898,18 +915,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return tap_changed;
             };
 
-            for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
-                auto const& same_rank_regulators = regulator_order[i];
-                for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
-                    tap_changed = adjust_transformer_in_rank(i, j, same_rank_regulators);
-                }
-                if (tap_changed) {
-                    iterations_per_rank[rank_index + 1] = 0;
-                    ++iterations_per_rank[rank_index];
-                    break;
-                }
-                ++rank_index;
-            }
+            iterate_ranks(regulator_order, adjust_transformer_in_rank, tap_changed, iterations_per_rank, rank_index);
+
             if (tap_changed) {
                 if (static_cast<uint64_t>(iterations_per_rank[rank_index]) > 2 * max_tap_ranges_per_rank[rank_index]) {
                     throw MaxIterationReached{"TapPositionOptimizer::iterate"};
