@@ -19,7 +19,7 @@ TEST_SUITE_BEGIN("Statistics module tests");
 
 TEST_CASE("Test statistics") {
     SUBCASE("UniformRealRDV<symmetric_t>") {
-        for (auto const [value, variance] :
+        for (auto const& [value, variance] :
              std::array{std::tuple{1.0, 1.0}, std::tuple{2.0, 3.0}, std::tuple{0.0, 1.0}, std::tuple{2.0, 3.0}}) {
             CAPTURE(value);
             CAPTURE(variance);
@@ -42,7 +42,7 @@ TEST_CASE("Test statistics") {
         }
     }
     SUBCASE("UniformRealRDV<asymmetric_t>") {
-        for (auto const [value_a, value_b, value_c, variance] :
+        for (auto const& [value_a, value_b, value_c, variance] :
              std::array{std::tuple{1.0, 2.0, 3.0, 1.0}, std::tuple{2.0, 2.1, 2.2, 3.0}, std::tuple{0.0, 0.1, 0.2, 1.0},
                         std::tuple{2.0, 0.0, 0.0, 3.0}}) {
             CAPTURE(value_a);
@@ -68,7 +68,7 @@ TEST_CASE("Test statistics") {
     }
 
     SUBCASE("IndependentRealRDV<symmetric_t>") {
-        for (auto const [value, variance] :
+        for (auto const& [value, variance] :
              std::array{std::tuple{1.0, 1.0}, std::tuple{2.0, 3.0}, std::tuple{0.0, 1.0}, std::tuple{2.0, 3.0}}) {
             CAPTURE(value);
             CAPTURE(variance);
@@ -92,7 +92,7 @@ TEST_CASE("Test statistics") {
         }
     }
     SUBCASE("IndependentRealRDV<asymmetric_t>") {
-        for (auto const [value_a, value_b, value_c, variance_a, variance_b, variance_c] :
+        for (auto const& [value_a, value_b, value_c, variance_a, variance_b, variance_c] :
              std::array{std::tuple{1.0, 2.0, 3.0, 1.0, 2.0, 3.0}, std::tuple{2.0, 2.1, 2.2, 3.0, 1.0, 2.0},
                         std::tuple{0.0, 0.1, 0.2, 1.0, 1.0, 1.0}, std::tuple{2.0, 0.0, 0.0, 3.0, 3.0, 3.0}}) {
             CAPTURE(value_a);
@@ -135,7 +135,7 @@ TEST_CASE("Test statistics") {
     }
 
     SUBCASE("UniformComplexRDV<symmetric_t>") {
-        for (auto const [real_value, imag_value, variance] :
+        for (auto const& [real_value, imag_value, variance] :
              std::array{std::tuple{1.0, 0.0, 1.0}, std::tuple{2.0, 0.0, 3.0}, std::tuple{0.0, 1.0, 1.0},
                         std::tuple{0.0, 2.0, 1.0}, std::tuple{1.0, 1.0, 1.0}, std::tuple{2.0, 2.0, 3.0}}) {
             CAPTURE(real_value);
@@ -196,7 +196,7 @@ TEST_CASE("Test statistics") {
         }
     }
     SUBCASE("IndependentComplexRDV<symmetric_t>") {
-        for (auto const [real_value, imag_value, variance] :
+        for (auto const& [real_value, imag_value, variance] :
              std::array{std::tuple{1.0, 0.0, 1.0}, std::tuple{2.0, 0.0, 3.0}, std::tuple{0.0, 1.0, 1.0},
                         std::tuple{0.0, 2.0, 1.0}, std::tuple{1.0, 1.0, 1.0}, std::tuple{2.0, 2.0, 3.0}}) {
             CAPTURE(real_value);
@@ -221,7 +221,7 @@ TEST_CASE("Test statistics") {
         }
     }
     SUBCASE("DecomposedComplexRDV<symmetric_t>") {
-        for (auto const [real_value, real_variance, imag_value, imag_variance] : std::array{
+        for (auto const& [real_value, real_variance, imag_value, imag_variance] : std::array{
                  std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2}, std::tuple{0.0, 1.0, 1.0, 0.2},
                  std::tuple{0.0, 1.0, 2.0, 0.2}, std::tuple{1.0, 1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 2.0, 0.2}}) {
             CAPTURE(real_value);
@@ -262,7 +262,7 @@ TEST_CASE("Test statistics") {
 
     SUBCASE("PolarComplexRDV<symmetric_t>") {
         SUBCASE("Constructor") {
-            for (auto const [magnitude, magnitude_variance, angle, angle_variance] :
+            for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
                 CAPTURE(magnitude);
@@ -281,7 +281,7 @@ TEST_CASE("Test statistics") {
             }
         }
         SUBCASE("Aggregate value") {
-            for (auto const [magnitude, magnitude_variance, angle_variance] :
+            for (auto const& [magnitude, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 0.2}, std::tuple{1.0, 3.0, 0.2},
                             std::tuple{1.0, 2.0, 0.4}}) {
                 CAPTURE(magnitude);
@@ -316,7 +316,7 @@ TEST_CASE("Test statistics") {
         }
 
         SUBCASE("Conversion to DecomposedComplexRDV<symmetric_t>") {
-            for (auto const [magnitude, magnitude_variance, angle_variance] :
+            for (auto const& [magnitude, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 0.2}, std::tuple{1.0, 3.0, 0.2},
                             std::tuple{1.0, 2.0, 0.4}}) {
                 CAPTURE(magnitude);
@@ -371,7 +371,7 @@ TEST_CASE("Test statistics") {
         }
 
         SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
-            for (auto const [magnitude, magnitude_variance, angle, angle_variance] :
+            for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
                 CAPTURE(magnitude);
@@ -393,7 +393,7 @@ TEST_CASE("Test statistics") {
         }
 
         SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
-            for (auto const [magnitude, magnitude_variance, angle, angle_variance] :
+            for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
                 CAPTURE(magnitude);
@@ -417,9 +417,9 @@ TEST_CASE("Test statistics") {
 
     SUBCASE("PolarComplexRDV<asymmetric_t>") {
         SUBCASE("Constructor") {
-            for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
-                             angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
-                                                          std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
+            for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
+                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
+                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
                 CAPTURE(magnitude_c);
@@ -444,7 +444,7 @@ TEST_CASE("Test statistics") {
             }
         }
         SUBCASE("Aggregate value") {
-            for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
+            for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 1.0, 1.0, 0.2}, std::tuple{2.0, 2.0, 2.0, 1.0, 0.2},
                             std::tuple{1.0, 1.0, 1.0, 3.0, 0.2}, std::tuple{1.0, 1.0, 1.0, 2.0, 0.4}}) {
                 CAPTURE(magnitude_a);
@@ -493,7 +493,7 @@ TEST_CASE("Test statistics") {
         }
 
         SUBCASE("Conversion to DecomposedComplexRDV<asymmetric_t>") {
-            for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
+            for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.2}, std::tuple{2.0, 3.0, 4.0, 0.3, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
@@ -645,9 +645,9 @@ TEST_CASE("Test statistics") {
         }
 
         SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
-            for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
-                             angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
-                                                          std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
+            for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
+                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
+                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
                 CAPTURE(magnitude_c);
@@ -679,9 +679,9 @@ TEST_CASE("Test statistics") {
         }
 
         SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
-            for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
-                             angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
-                                                          std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
+            for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
+                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
+                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
                 CAPTURE(magnitude_c);
