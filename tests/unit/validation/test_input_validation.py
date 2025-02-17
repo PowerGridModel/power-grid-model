@@ -59,7 +59,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     line["i_n"] = [-3, 0, 50]
 
     asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 2)
-    asym_line["id"] = [52, 53]
+    asym_line["id"] = [55, 56]
     asym_line["from_node"] = [0, 1]
     asym_line["to_node"] = [1, 2]
     asym_line["from_status"] = [1, 1]
@@ -311,10 +311,10 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
     fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "r_f")]
     fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "x_f")]
-
     data = {
         ComponentType.node: node,
         ComponentType.line: line,
+        ComponentType.asym_line: asym_line,
         ComponentType.generic_branch: generic_branch,
         ComponentType.link: link,
         ComponentType.transformer: transformer,
@@ -737,47 +737,47 @@ def test_generic_branch_input_data(input_data):
 
 def test_asym_line_input_data(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_aa", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_ba", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_bb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_ca", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_cb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_cc", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_na", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_nb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_nc", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "r_nn", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_aa", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_ba", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_bb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_ca", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_cb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_cc", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_na", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_nb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_nc", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "x_nn", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_aa", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_ba", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_bb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_ca", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_cb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_cc", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_na", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_nb", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_nc", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c_nn", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c0", [52], 0) in validation_errors
-    assert NotGreaterOrEqualError(ComponentType.asym_line, "c1", [52], 0) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_aa", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_ba", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_bb", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_ca", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_cb", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_cc", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_na", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_nb", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_nc", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_nn", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c0", [53]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c1", [53]) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_na", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_nb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_nc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_nn", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_na", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_nb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_nc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_nn", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_na", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_nb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_nc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_nn", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c0", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c1", [55], 0) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_aa", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_ba", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_bb", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_ca", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_cb", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_cc", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_na", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_nb", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_nc", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c_nn", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c0", [56]) in validation_errors
+    assert MissingValueError(ComponentType.asym_line, "c1", [56]) in validation_errors
