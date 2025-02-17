@@ -6,7 +6,7 @@
     "cmake.configureSettings": {
         "POWER_GRID_MODEL_SANITIZER": 1
     },
-    "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests.exe",
+    "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests*",
     "testMate.cpp.debug.configTemplate": {
         "type": "cppvsdbg",
         "linux": { "type": "cppdbg", "MIMode": "gdb" },
