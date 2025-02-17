@@ -13,22 +13,9 @@ using AsymRealValue = RealValue<asymmetric_t>;
 using std::numbers::sqrt2;
 constexpr auto inv_sqrt2 = sqrt2 / 2;
 
-void check_asym_real_value(AsymRealValue const& actual, AsymRealValue const& expected) {
-    CHECK(actual(0) == doctest::Approx(expected(0)));
-    CHECK(actual(1) == doctest::Approx(expected(1)));
-    CHECK(actual(2) == doctest::Approx(expected(2)));
-}
-
-void check_complex_value(ComplexValue<asymmetric_t> const& actual, ComplexValue<asymmetric_t> const& expected) {
-    CHECK(real(actual(0)) == doctest::Approx(real(expected(0))));
-    CHECK(imag(actual(0)) == doctest::Approx(imag(expected(0))));
-    CHECK(real(actual(1)) == doctest::Approx(real(expected(1))));
-    CHECK(imag(actual(1)) == doctest::Approx(imag(expected(1))));
-    CHECK(real(actual(2)) == doctest::Approx(real(expected(2))));
-    CHECK(imag(actual(2)) == doctest::Approx(imag(expected(2))));
-}
-
 } // namespace
+
+TEST_SUITE_BEGIN("Statistics module tests");
 
 TEST_CASE("Test statistics") {
     SUBCASE("UniformRealRDV<symmetric_t>") {
@@ -47,7 +34,6 @@ TEST_CASE("Test statistics") {
                 auto const asymmetric = static_cast<UniformRealRDV<asymmetric_t>>(uniform);
 
                 // TODO remove
-                check_asym_real_value(asymmetric.value, AsymRealValue{value, value, value});
                 CHECK(asymmetric.value(0) == doctest::Approx(uniform.value));
                 CHECK(asymmetric.value(1) == doctest::Approx(uniform.value));
                 CHECK(asymmetric.value(2) == doctest::Approx(uniform.value));
@@ -209,7 +195,7 @@ TEST_CASE("Test statistics") {
             }
         }
     }
-    SUBCASE("IndependentComplexRDV") {
+    SUBCASE("IndependentComplexRDV<symmetric_t>") {
         for (auto const [real_value, imag_value, variance] :
              std::array{std::tuple{1.0, 0.0, 1.0}, std::tuple{2.0, 0.0, 3.0}, std::tuple{0.0, 1.0, 1.0},
                         std::tuple{0.0, 2.0, 1.0}, std::tuple{1.0, 1.0, 1.0}, std::tuple{2.0, 2.0, 3.0}}) {
@@ -225,7 +211,7 @@ TEST_CASE("Test statistics") {
                 CHECK(imag(independent.value) == imag_value);
                 CHECK(independent.variance == variance);
             }
-            SUBCASE("Conversion to UniformComplexRDV") {
+            SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
                 auto const uniform = static_cast<UniformComplexRDV<symmetric_t>>(independent);
 
                 CHECK(real(uniform.value) == doctest::Approx(real(independent.value)));
@@ -234,7 +220,7 @@ TEST_CASE("Test statistics") {
             }
         }
     }
-    SUBCASE("DecomposedComplexRDV") {
+    SUBCASE("DecomposedComplexRDV<symmetric_t>") {
         for (auto const [real_value, real_variance, imag_value, imag_variance] : std::array{
                  std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2}, std::tuple{0.0, 1.0, 1.0, 0.2},
                  std::tuple{0.0, 1.0, 2.0, 0.2}, std::tuple{1.0, 1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 2.0, 0.2}}) {
@@ -257,14 +243,14 @@ TEST_CASE("Test statistics") {
                 CHECK(real(decomposed.value()) == doctest::Approx(real_value));
                 CHECK(imag(decomposed.value()) == doctest::Approx(imag_value));
             }
-            SUBCASE("Conversion to UniformComplexRDV") {
+            SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
                 auto const uniform = static_cast<UniformComplexRDV<symmetric_t>>(decomposed);
 
                 CHECK(real(uniform.value) == doctest::Approx(real(decomposed.value())));
                 CHECK(imag(uniform.value) == doctest::Approx(imag(decomposed.value())));
                 CHECK(uniform.variance == doctest::Approx(real_variance + imag_variance));
             }
-            SUBCASE("Conversion to IndependentComplexRDV") {
+            SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
                 auto const independent = static_cast<IndependentComplexRDV<symmetric_t>>(decomposed);
 
                 CHECK(real(independent.value) == doctest::Approx(real(decomposed.value())));
@@ -274,7 +260,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("PolarComplexRDV") {
+    SUBCASE("PolarComplexRDV<symmetric_t>") {
         SUBCASE("Constructor") {
             for (auto const [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
@@ -329,7 +315,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to DecomposedComplexRDV") {
+        SUBCASE("Conversion to DecomposedComplexRDV<symmetric_t>") {
             for (auto const [magnitude, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 0.2}, std::tuple{1.0, 3.0, 0.2},
                             std::tuple{1.0, 2.0, 0.4}}) {
@@ -384,7 +370,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to IndependentComplexRDV") {
+        SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
             for (auto const [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
@@ -406,7 +392,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to UniformComplexRDV") {
+        SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
             for (auto const [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
@@ -429,7 +415,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("PolarComplexRDV Asym") {
+    SUBCASE("PolarComplexRDV<asymmetric_t>") {
         SUBCASE("Constructor") {
             for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
@@ -506,7 +492,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to DecomposedComplexRDV") {
+        SUBCASE("Conversion to DecomposedComplexRDV<asymmetric_t>") {
             for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.2}, std::tuple{2.0, 3.0, 4.0, 0.3, 0.3}}) {
                 CAPTURE(magnitude_a);
@@ -658,7 +644,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to IndependentComplexRDV") {
+        SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
             for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
@@ -692,7 +678,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to UniformComplexRDV") {
+        SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
             for (auto const [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
@@ -727,7 +713,7 @@ TEST_CASE("Test statistics") {
     }
 
     // TODO whole
-    SUBCASE("DecomposedComplexRDV Asym") {
+    SUBCASE("DecomposedComplexRDV<asymmetric_t>") {
         for (auto const& [real_value_a, real_value_b, real_value_c, real_variance_a, real_variance_b, real_variance_c,
                           imag_value_a, imag_value_b, imag_value_c, imag_variance_a, imag_variance_b, imag_variance_c] :
              std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.2, 0.3, 0.4},
@@ -773,7 +759,7 @@ TEST_CASE("Test statistics") {
                 CHECK(real(decomposed.value()(2)) == doctest::Approx(real_value_c));
                 CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag_value_c));
             }
-            SUBCASE("Conversion to UniformComplexRDV") {
+            SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
                 auto const uniform = static_cast<UniformComplexRDV<asymmetric_t>>(decomposed);
 
                 CHECK(real(uniform.value(0)) == doctest::Approx(real(decomposed.value()(0))));
@@ -785,7 +771,7 @@ TEST_CASE("Test statistics") {
                 CHECK(uniform.variance == doctest::Approx(real_variance_a + real_variance_b + real_variance_c +
                                                           imag_variance_a + imag_variance_b + imag_variance_c));
             }
-            SUBCASE("Conversion to IndependentComplexRDV") {
+            SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
                 auto const independent = static_cast<IndependentComplexRDV<asymmetric_t>>(decomposed);
 
                 CHECK(real(independent.value(0)) == doctest::Approx(real(decomposed.value()(0))));
@@ -801,5 +787,7 @@ TEST_CASE("Test statistics") {
         }
     }
 }
+
+TEST_SUITE_END();
 
 } // namespace power_grid_model
