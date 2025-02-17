@@ -33,7 +33,6 @@ TEST_CASE("Test statistics") {
             SUBCASE("Conversion to UniformRealRDV<asymmetric_t>") {
                 auto const asymmetric = static_cast<UniformRealRDV<asymmetric_t>>(uniform);
 
-                // TODO remove
                 CHECK(asymmetric.value(0) == doctest::Approx(uniform.value));
                 CHECK(asymmetric.value(1) == doctest::Approx(uniform.value));
                 CHECK(asymmetric.value(2) == doctest::Approx(uniform.value));
@@ -712,7 +711,6 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    // TODO whole
     SUBCASE("DecomposedComplexRDV<asymmetric_t>") {
         for (auto const& [real_value_a, real_value_b, real_value_c, real_variance_a, real_variance_b, real_variance_c,
                           imag_value_a, imag_value_b, imag_value_c, imag_variance_a, imag_variance_b, imag_variance_c] :
