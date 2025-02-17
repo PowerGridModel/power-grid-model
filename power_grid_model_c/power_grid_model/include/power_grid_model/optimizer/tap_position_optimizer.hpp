@@ -585,14 +585,14 @@ template <symmetry_tag sym> struct NodeState {
 
 class RankIteration {
   public:
-    void iterate_ranks(auto const& regulator_order, auto adjust_transformer_in_rank, bool& tap_changed,
+    void iterate_ranks(auto const& ranked_order, auto apply_single_object_in_rank, bool& adjusted,
                        std::vector<IntS>& iterations_per_rank, Idx& rank_index) {
-        for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
-            auto const& same_rank_regulators = regulator_order[i];
+        for (Idx i = 0; i < static_cast<Idx>(ranked_order.size()); ++i) {
+            auto const& same_rank_regulators = ranked_order[i];
             for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
-                tap_changed = adjust_transformer_in_rank(i, j, same_rank_regulators);
+                adjusted = apply_single_object_in_rank(i, j, same_rank_regulators);
             }
-            if (tap_changed) {
+            if (adjusted) {
                 iterations_per_rank[rank_index + 1] = 0;
                 ++iterations_per_rank[rank_index];
                 break;
