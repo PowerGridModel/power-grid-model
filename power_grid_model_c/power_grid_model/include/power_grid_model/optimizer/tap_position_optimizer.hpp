@@ -583,7 +583,7 @@ template <symmetry_tag sym> struct NodeState {
     }
 };
 
-class RankIterator {
+class RankIteration {
   public:
     void iterate_ranks(auto const& regulator_order, auto adjust_transformer_in_rank, bool& tap_changed,
                        std::vector<IntS>& iterations_per_rank, Idx& rank_index) {
@@ -917,7 +917,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return tap_changed;
             };
 
-            RankIterator rank_iterator;
+            RankIteration rank_iterator;
             rank_iterator.iterate_ranks(regulator_order, adjust_transformer_in_rank, tap_changed, iterations_per_rank,
                                         rank_index);
 
