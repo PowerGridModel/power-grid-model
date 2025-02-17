@@ -585,8 +585,6 @@ template <symmetry_tag sym> struct NodeState {
 
 class RankIterator {
   public:
-    RankIterator() = default;
-
     void iterate_ranks(auto const& regulator_order, auto adjust_transformer_in_rank, bool& tap_changed,
                        std::vector<IntS>& iterations_per_rank, Idx& rank_index) {
         for (Idx i = 0; i < static_cast<Idx>(regulator_order.size()); ++i) {
