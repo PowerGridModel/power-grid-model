@@ -11,6 +11,9 @@ key to the power grid model.
 
 This section documents the need for a custom sparse LU-solver and its implementation.
 
+```{contents}
+```
+
 ## Background
 
 The choice for the matrix equation solver type heavily leans on the need for
@@ -404,6 +407,8 @@ The equation $Ly = Pb$ is solved as follows.
    3. Else:
       1. Proceed.
 
+#### Backward substitution
+
 The equation $Uz = y$ is solved as follows.
 
 1. Loop over all block-rows in reverse order: $i=(N-1)..0$:
@@ -468,7 +473,7 @@ matrix.
    3. Set $\text{pivot_element} \gets \epsilon * \text{direction}\left(\text{pivot_element}\right)$.
 
 $\text{direction}$ ensures that the complex phase of the pivot element is preserved, with a fallback
-the positive real axis when the pivot element is identically zero.
+to the positive real axis when the pivot element is identically zero.
 
 ### Iterative refinement of LU-solver solutions
 
@@ -494,7 +499,7 @@ back into $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ prov
 approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
 
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
-[backward error formula](#improved-backward-error-calculation)).
+[backward error formula](#backward-error-calculation)).
 
 Since the matrix $\mathbb{M}$ does not change during this process, the LU-decomposition remains
 valid throughout the process, so that this iterative refinement can be done at a reasonably low
@@ -527,16 +532,50 @@ convergence threshold $\epsilon$, the algorithm is as follows:
       $\boldsymbol{x}$: $\boldsymbol{x}_{\text{est}} \gets \boldsymbol{x}_{\text{est}} + \boldsymbol{\Delta x}$.
    5. Set the residual: $\boldsymbol{r} \gets \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}$.
 
-Because the backward error is calculated on the $\boldsymbol{x}$ and $\boldsymbol{r}$ from the
-previous iteration, the iterative refinement loop will always be executed twice.
+As a result, we effectively always do:
 
-The reason a sparse matrix error is raised and not an iteration diverge error, is that it is the
-iterative refinement of the matrix equation solution that cannot be solved in the set amount of
-iterations - not the set of power system equations. This will only happen when the matrix
-equation requires iterative refinement in the first place, which happens only when pivot
-perturbation is needed, namely in the case of an ill-conditioned matrix equation.
+1. A solve step; and
+2. At least one iterative refinement step.
 
-#### Differences with literature
+The reason a sparse matrix error is raised, and not an iteration diverge error, when the maximum
+allowed amount of iterations is exceeded, is the following. It is the iterative refinement of the
+matrix equation solution that cannot be solved in the set amount of iterations - not the set of
+power system equations. This will only happen when the matrix equation requires iterative refinement
+in the first place, which happens only when pivot perturbation is needed, namely in the case of an
+ill-conditioned matrix equation. A matrix equation that is both ill-conditioned and not iteratively
+refinable is underdetermined and cannot be solved.
+
+#### Backward error calculation
+
+The [iterative refinement algorithm](#iterative-refinement-of-lu-solver-solutions) uses a backward
+error as a convergence criterion. We use the following backward error calculation, inspired by
+[Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761),
+with a few modifications described [below](#improved-backward-error-calculation).
+
+$$
+\begin{align*}
+D_{\text{max}} &= \max_i\left\{\left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
+\text{backward_error} &= \max_i \left\{
+   \frac{\left|\boldsymbol{r}\right|_i}{
+      \max\left\{
+         \left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
+         \epsilon_{\text{backward_error}} D_{\text{max}}
+      \right\}
+   }
+\right\}
+\end{align*}
+$$
+
+$0 \leq \epsilon \leq 1$ is a value that introduces a
+[cut-off value to improve stability](#improved-backward-error-calculation) of the algorithm and
+should ideally be small.
+
+```{note}
+$\epsilon = 10^{-4}$ was experimentally determined to be a reasonably good value on a number of
+real-world MV grids.
+```
+
+### Differences with literature
 
 There are several differences between our implementation and the ones described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
@@ -544,11 +583,12 @@ and
 [Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179).
 They are summarized below.
 
-##### No check for diminishing returns
+#### No check for diminishing returns
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
-contains an early-out criterion for the iterative refinement that checks for deminishing returns in
-consecutive iterations. It amounts to (in reverse order):
+contains an early-out criterion for the
+[iterative refinement](#iterative-refinement-of-lu-solver-solutions) that checks for deminishing
+returns in consecutive iterations. It amounts to (in reverse order):
 
 1. If $\text{backward_error} \gt \frac{1}{2}\text{last_backward_error}$, then:
    1. Stop iterative refinement.
@@ -562,7 +602,7 @@ algorithm to exit before the actual solution is found. Multiple refinement itera
 yield better results. The power grid model therefore does not stop on deminishing returns. Instead,
 a maximum amount of iterations is used in combination with the error tolerance.
 
-##### Improved backward error calculation
+#### Improved backward error calculation
 
 In power system equations, the matrix equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can be
 very unbalanced: some entries in the matrix $\mathbb{M}$ may be very large while others are zero or
@@ -615,14 +655,9 @@ absolute values of the residuals are relevant - not the relative values. The for
 rounding errors, while the latter may hide issues in rows with small coefficients by supressing them
 in the backward error, even if that row's residual is relatively large compared to the other
 entries, in favor of other rows with larger absolute, but smaller relative, residuals. In
-conclusion, $\epsilon$ should be chosen not too large and not too small.
+conclusion, $\epsilon$ should be chosen small, but large enough to suppress numerical instabilities.
 
-```{note}
-$\epsilon = 10^{-4}$ was experimentally determined to be a reasonably good value on a number of
-real-world MV grids.
-```
-
-##### Block-wise off-diagonal infinite matrix norm
+#### Block-wise off-diagonal infinite matrix norm
 
 For the [pivot perturbation algorithm](#pivot-perturbation-algorithm), a matrix norm is used to
 determine the relative size of the current pivot element compared to the rest of the matrix as a
@@ -643,7 +678,7 @@ In short, the $L_{\infty ,\text{bwod}}$-norm it is the $L_{\infty}$ norm of the 
 with the $L_{\infty}$ norm of the individual blocks as elements, where the block-diagonal elements
 are skipped at the block-level.
 
-###### Block-wise off-diagonal infinite matrix norm algorithm
+##### Block-wise off-diagonal infinite matrix norm algorithm
 
 The algorithm is as follows:
 
@@ -675,7 +710,7 @@ block with dimensions $N_i\times N_j$.
       $\text{norm} \gets \max\left\{\text{norm}, \text{row_norm}\right\}$.
    4. Continue with the next block-row.
 
-###### Illustration of the block-wise off-diagonal infinite matrix norm calculation
+##### Illustration of the block-wise off-diagonal infinite matrix norm calculation
 
 This section aims to illustrate how the $L_{\infty ,\text{bwod}}$-norm differs from a regular
 $L_{\infty}$-norm using the following examples.
