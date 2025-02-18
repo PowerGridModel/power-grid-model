@@ -563,7 +563,6 @@ def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
             errors += new_errors
 
         new_errors_c_matrix_req = _none_missing(data, ComponentType.asym_line, required_c_matrix_fields, i_data_record)
-        print(f"{len(new_errors_c_matrix_req)} of missing value erros for data with index: {i_data_record} and id: {data[ComponentType.asym_line]["id"][i_data_record]}")
         if 0 < len(new_errors_c_matrix_req) < len(new_errors_c_matrix_req):
             errors += new_errors_c_matrix_req
 
@@ -572,7 +571,6 @@ def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
             errors += new_errors_c_matrix_opt
 
         new_errors_c1_c0 = _none_missing(data, ComponentType.asym_line, c_fields, i_data_record)
-        print(f"{len(new_errors_c1_c0)} of missing value erros for data with index: {i_data_record} and id: {data[ComponentType.asym_line]["id"][i_data_record]}")
         if 0 < len(new_errors_c1_c0) < len(c_fields):
             errors += new_errors_c1_c0
 
