@@ -135,7 +135,14 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final {
         auto const i_polar = PolarComplexRDV<current_sensor_symmetry>(
             {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
-        auto const i_decomposed = static_cast<DecomposedComplexRDV<symmetric_t>>(i_polar);
+        auto const i_decomposed = [&i_polar]() {
+            if constexpr (is_symmetric_v<current_sensor_symmetry>) {
+                return static_cast<DecomposedComplexRDV<symmetric_t>>(i_polar);
+            } else {
+                return static_cast<DecomposedComplexRDV<symmetric_t>>(
+                    static_cast<DecomposedComplexRDV<asymmetric_t>>(i_polar));
+            }
+        }();
         return CurrentSensorCalcParam<symmetric_t>{.angle_measurement_type = angle_measurement_type(),
                                                    .value = i_decomposed.value(),
                                                    .i_real_variance = i_decomposed.real_component.variance,
@@ -144,7 +151,14 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final {
         auto const i_polar = PolarComplexRDV<current_sensor_symmetry>(
             {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
-        auto const i_decomposed = static_cast<DecomposedComplexRDV<asymmetric_t>>(i_polar);
+        auto const i_decomposed = [&i_polar]() {
+            if constexpr (is_symmetric_v<current_sensor_symmetry>) {
+                return static_cast<DecomposedComplexRDV<asymmetric_t>>(
+                    static_cast<DecomposedComplexRDV<symmetric_t>>(i_polar));
+            } else {
+                return static_cast<DecomposedComplexRDV<asymmetric_t>>(i_polar);
+            }
+        }();
         return CurrentSensorCalcParam<asymmetric_t>{.angle_measurement_type = angle_measurement_type(),
                                                     .value = i_decomposed.value(),
                                                     .i_real_variance = i_decomposed.real_component.variance,
@@ -159,11 +173,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     template <symmetry_tag sym_calc>
     CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
         CurrentSensorOutput<sym_calc> output{};
-        output.id = id();
-        ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
-        output.energized = 1; // power sensor is always energized
-        output.i_residual = cabs(i_residual);
-        output.i_angle_residual = arg(i_residual);
+        // output.id = id();
+        // ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
+        // output.energized = 1; // current sensor is always energized
+        // output.i_residual = cabs(i_residual);
+        // output.i_angle_residual = arg(i_residual);
         return output;
     }
 };
