@@ -6,6 +6,8 @@
 
 #include <doctest/doctest.h>
 
+TEST_SUITE_BEGIN("test_current_sensor");
+
 namespace power_grid_model {
 namespace {
 auto const r_nan = RealValue<asymmetric_t>{nan};
@@ -280,3 +282,5 @@ TEST_CASE("Test current sensor") {
 }
 
 } // namespace power_grid_model
+
+TEST_SUITE_END();

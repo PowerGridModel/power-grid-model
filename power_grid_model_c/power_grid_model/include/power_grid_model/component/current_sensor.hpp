@@ -10,6 +10,7 @@
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/statistics.hpp"
 
 #include <algorithm>
 
@@ -132,24 +133,22 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     // TODO(mgovers) when filling the functions below take in mind that i_angle_sigma is optional
 
     CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final {
-        if constexpr (is_asymmetric_v<current_sensor_symmetry>) {
-            return {}; // TODO
-        } else {
-            auto const i_polar = PolarComplexRandomVariable<symmetric_t>{
-                .magnitude = {.value = i_measured_, .variance = i_sigma_ * i_sigma_},
-                .angle = {.value = i_angle_measured_, .variance = i_angle_sigma_ * i_angle_sigma_}};
-            auto const i_decomposed = static_cast<DecomposedComplexRandomVariable<symmetric_t>>(i_polar);
-
-            return CurrentSensorCalcParam<symmetric_t>{.angle_measurement_type = angle_measurement_type(),
-                                                       .value = i_decomposed.value(),
-                                                       .i_real_variance = i_decomposed.real_component.variance,
-                                                       .i_imag_variance = i_decomposed.imag_component.variance};
-        }
+        auto const i_polar = PolarComplexRDV<current_sensor_symmetry>(
+            {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
+        auto const i_decomposed = static_cast<DecomposedComplexRDV<symmetric_t>>(i_polar);
+        return CurrentSensorCalcParam<symmetric_t>{.angle_measurement_type = angle_measurement_type(),
+                                                   .value = i_decomposed.value(),
+                                                   .i_real_variance = i_decomposed.real_component.variance,
+                                                   .i_imag_variance = i_decomposed.imag_component.variance};
     }
     CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final {
-        CurrentSensorCalcParam<asymmetric_t> calc_param{};
-        // TODO
-        return calc_param;
+        auto const i_polar = PolarComplexRDV<current_sensor_symmetry>(
+            {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
+        auto const i_decomposed = static_cast<DecomposedComplexRDV<asymmetric_t>>(i_polar);
+        return CurrentSensorCalcParam<asymmetric_t>{.angle_measurement_type = angle_measurement_type(),
+                                                    .value = i_decomposed.value(),
+                                                    .i_real_variance = i_decomposed.real_component.variance,
+                                                    .i_imag_variance = i_decomposed.imag_component.variance};
     }
     CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i) const final {
         return get_generic_output<symmetric_t>(i);
@@ -160,8 +159,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     template <symmetry_tag sym_calc>
     CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
         CurrentSensorOutput<sym_calc> output{};
-        // TODO
-        (void)i; // Suppress unused variable warning
+        output.id = id();
+        ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
+        output.energized = 1; // power sensor is always energized
+        output.i_residual = cabs(i_residual);
+        output.i_angle_residual = arg(i_residual);
         return output;
     }
 };
