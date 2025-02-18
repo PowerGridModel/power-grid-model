@@ -256,6 +256,109 @@ TEST_CASE("Test statistics") {
                 CHECK(imag(independent.value) == doctest::Approx(imag(decomposed.value())));
                 CHECK(independent.variance == doctest::Approx(real_variance + imag_variance));
             }
+            SUBCASE("Conversion to DecomposedComplexRDV<asymmetric_t>") {
+                auto const decomposed_asym = static_cast<DecomposedComplexRDV<asymmetric_t>>(decomposed);
+                // TODO verify if correct
+                CHECK(decomposed_asym.real_component.value(0) == doctest::Approx(real_value));
+                CHECK(decomposed_asym.imag_component.value(0) == doctest::Approx(imag_value));
+                CHECK(decomposed_asym.real_component.value(1) == doctest::Approx(real_value));
+                CHECK(decomposed_asym.imag_component.value(1) == doctest::Approx(imag_value));
+                CHECK(decomposed_asym.real_component.value(2) == doctest::Approx(real_value));
+                CHECK(decomposed_asym.imag_component.value(2) == doctest::Approx(imag_value));
+                CHECK(decomposed_asym.real_component.variance(0) == doctest::Approx(real_variance));
+                CHECK(decomposed_asym.real_component.variance(1) == doctest::Approx(real_variance));
+                CHECK(decomposed_asym.real_component.variance(2) == doctest::Approx(real_variance));
+                CHECK(decomposed_asym.imag_component.variance(0) == doctest::Approx(imag_variance));
+                CHECK(decomposed_asym.imag_component.variance(1) == doctest::Approx(imag_variance));
+                CHECK(decomposed_asym.imag_component.variance(2) == doctest::Approx(imag_variance));
+            }
+        }
+    }
+
+    SUBCASE("DecomposedComplexRDV<asymmetric_t>") {
+        for (auto const& [real_value_a, real_value_b, real_value_c, real_variance_a, real_variance_b, real_variance_c,
+                          imag_value_a, imag_value_b, imag_value_c, imag_variance_a, imag_variance_b, imag_variance_c] :
+             std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.2, 0.3, 0.4},
+                        std::tuple{2.0, 3.0, 4.0, 0.3, 0.4, 0.5, 0.0, 1.0, 1.0, 0.3, 0.4, 0.5}}) {
+            CAPTURE(real_value_a);
+            CAPTURE(real_value_b);
+            CAPTURE(real_value_c);
+            CAPTURE(real_variance_a);
+            CAPTURE(real_variance_b);
+            CAPTURE(real_variance_c);
+            CAPTURE(imag_value_a);
+            CAPTURE(imag_value_b);
+            CAPTURE(imag_value_c);
+            CAPTURE(imag_variance_a);
+            CAPTURE(imag_variance_b);
+            CAPTURE(imag_variance_c);
+
+            DecomposedComplexRDV<asymmetric_t> const decomposed{
+                .real_component = {.value = {real_value_a, real_value_b, real_value_c},
+                                   .variance = {real_variance_a, real_variance_b, real_variance_c}},
+                .imag_component = {.value = {imag_value_a, imag_value_b, imag_value_c},
+                                   .variance = {imag_variance_a, imag_variance_b, imag_variance_c}}};
+
+            SUBCASE("Constructor") {
+                CHECK(decomposed.real_component.value(0) == real_value_a);
+                CHECK(decomposed.real_component.value(1) == real_value_b);
+                CHECK(decomposed.real_component.value(2) == real_value_c);
+                CHECK(decomposed.real_component.variance(0) == real_variance_a);
+                CHECK(decomposed.real_component.variance(1) == real_variance_b);
+                CHECK(decomposed.real_component.variance(2) == real_variance_c);
+                CHECK(decomposed.imag_component.value(0) == imag_value_a);
+                CHECK(decomposed.imag_component.value(1) == imag_value_b);
+                CHECK(decomposed.imag_component.value(2) == imag_value_c);
+                CHECK(decomposed.imag_component.variance(0) == imag_variance_a);
+                CHECK(decomposed.imag_component.variance(1) == imag_variance_b);
+                CHECK(decomposed.imag_component.variance(2) == imag_variance_c);
+            }
+            SUBCASE("Aggregate value") {
+                CHECK(real(decomposed.value()(0)) == doctest::Approx(real_value_a));
+                CHECK(imag(decomposed.value()(0)) == doctest::Approx(imag_value_a));
+                CHECK(real(decomposed.value()(1)) == doctest::Approx(real_value_b));
+                CHECK(imag(decomposed.value()(1)) == doctest::Approx(imag_value_b));
+                CHECK(real(decomposed.value()(2)) == doctest::Approx(real_value_c));
+                CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag_value_c));
+            }
+            SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
+                auto const uniform = static_cast<UniformComplexRDV<asymmetric_t>>(decomposed);
+
+                CHECK(real(uniform.value(0)) == doctest::Approx(real(decomposed.value()(0))));
+                CHECK(imag(uniform.value(0)) == doctest::Approx(imag(decomposed.value()(0))));
+                CHECK(real(uniform.value(1)) == doctest::Approx(real(decomposed.value()(1))));
+                CHECK(imag(uniform.value(1)) == doctest::Approx(imag(decomposed.value()(1))));
+                CHECK(real(uniform.value(2)) == doctest::Approx(real(decomposed.value()(2))));
+                CHECK(imag(uniform.value(2)) == doctest::Approx(imag(decomposed.value()(2))));
+                CHECK(uniform.variance == doctest::Approx(real_variance_a + real_variance_b + real_variance_c +
+                                                          imag_variance_a + imag_variance_b + imag_variance_c));
+            }
+            SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
+                auto const independent = static_cast<IndependentComplexRDV<asymmetric_t>>(decomposed);
+
+                CHECK(real(independent.value(0)) == doctest::Approx(real(decomposed.value()(0))));
+                CHECK(imag(independent.value(0)) == doctest::Approx(imag(decomposed.value()(0))));
+                CHECK(real(independent.value(1)) == doctest::Approx(real(decomposed.value()(1))));
+                CHECK(imag(independent.value(1)) == doctest::Approx(imag(decomposed.value()(1))));
+                CHECK(real(independent.value(2)) == doctest::Approx(real(decomposed.value()(2))));
+                CHECK(imag(independent.value(2)) == doctest::Approx(imag(decomposed.value()(2))));
+                CHECK(independent.variance(0) == doctest::Approx(real_variance_a + imag_variance_a));
+                CHECK(independent.variance(1) == doctest::Approx(real_variance_b + imag_variance_b));
+                CHECK(independent.variance(2) == doctest::Approx(real_variance_c + imag_variance_c));
+            }
+            SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
+                auto const decomposed_sym = static_cast<DecomposedComplexRDV<symmetric_t>>(decomposed);
+
+                // TODO verify if correct
+                CHECK(decomposed_sym.real_component.value ==
+                      doctest::Approx((real_value_a + real_value_b + real_value_c) / 3.0));
+                CHECK(decomposed_sym.imag_component.value ==
+                      doctest::Approx((imag_value_a + imag_value_b + imag_value_c) / 3.0));
+                CHECK(decomposed_sym.real_component.variance ==
+                      doctest::Approx((real_variance_a + real_variance_b + real_variance_c) / 9.0));
+                CHECK(decomposed_sym.imag_component.variance ==
+                      doctest::Approx((imag_variance_a + imag_variance_b + imag_variance_c) / 9.0));
+            }
         }
     }
 
@@ -707,80 +810,6 @@ TEST_CASE("Test statistics") {
                       doctest::Approx(magnitude_variance + magnitude_a * magnitude_a * angle_variance +
                                       magnitude_variance + magnitude_b * magnitude_b * angle_variance +
                                       magnitude_variance + magnitude_c * magnitude_c * angle_variance));
-            }
-        }
-    }
-
-    SUBCASE("DecomposedComplexRDV<asymmetric_t>") {
-        for (auto const& [real_value_a, real_value_b, real_value_c, real_variance_a, real_variance_b, real_variance_c,
-                          imag_value_a, imag_value_b, imag_value_c, imag_variance_a, imag_variance_b, imag_variance_c] :
-             std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.2, 0.3, 0.4},
-                        std::tuple{2.0, 3.0, 4.0, 0.3, 0.4, 0.5, 0.0, 1.0, 1.0, 0.3, 0.4, 0.5}}) {
-            CAPTURE(real_value_a);
-            CAPTURE(real_value_b);
-            CAPTURE(real_value_c);
-            CAPTURE(real_variance_a);
-            CAPTURE(real_variance_b);
-            CAPTURE(real_variance_c);
-            CAPTURE(imag_value_a);
-            CAPTURE(imag_value_b);
-            CAPTURE(imag_value_c);
-            CAPTURE(imag_variance_a);
-            CAPTURE(imag_variance_b);
-            CAPTURE(imag_variance_c);
-
-            DecomposedComplexRDV<asymmetric_t> const decomposed{
-                .real_component = {.value = {real_value_a, real_value_b, real_value_c},
-                                   .variance = {real_variance_a, real_variance_b, real_variance_c}},
-                .imag_component = {.value = {imag_value_a, imag_value_b, imag_value_c},
-                                   .variance = {imag_variance_a, imag_variance_b, imag_variance_c}}};
-
-            SUBCASE("Constructor") {
-                CHECK(decomposed.real_component.value(0) == real_value_a);
-                CHECK(decomposed.real_component.value(1) == real_value_b);
-                CHECK(decomposed.real_component.value(2) == real_value_c);
-                CHECK(decomposed.real_component.variance(0) == real_variance_a);
-                CHECK(decomposed.real_component.variance(1) == real_variance_b);
-                CHECK(decomposed.real_component.variance(2) == real_variance_c);
-                CHECK(decomposed.imag_component.value(0) == imag_value_a);
-                CHECK(decomposed.imag_component.value(1) == imag_value_b);
-                CHECK(decomposed.imag_component.value(2) == imag_value_c);
-                CHECK(decomposed.imag_component.variance(0) == imag_variance_a);
-                CHECK(decomposed.imag_component.variance(1) == imag_variance_b);
-                CHECK(decomposed.imag_component.variance(2) == imag_variance_c);
-            }
-            SUBCASE("Aggregate value") {
-                CHECK(real(decomposed.value()(0)) == doctest::Approx(real_value_a));
-                CHECK(imag(decomposed.value()(0)) == doctest::Approx(imag_value_a));
-                CHECK(real(decomposed.value()(1)) == doctest::Approx(real_value_b));
-                CHECK(imag(decomposed.value()(1)) == doctest::Approx(imag_value_b));
-                CHECK(real(decomposed.value()(2)) == doctest::Approx(real_value_c));
-                CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag_value_c));
-            }
-            SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
-                auto const uniform = static_cast<UniformComplexRDV<asymmetric_t>>(decomposed);
-
-                CHECK(real(uniform.value(0)) == doctest::Approx(real(decomposed.value()(0))));
-                CHECK(imag(uniform.value(0)) == doctest::Approx(imag(decomposed.value()(0))));
-                CHECK(real(uniform.value(1)) == doctest::Approx(real(decomposed.value()(1))));
-                CHECK(imag(uniform.value(1)) == doctest::Approx(imag(decomposed.value()(1))));
-                CHECK(real(uniform.value(2)) == doctest::Approx(real(decomposed.value()(2))));
-                CHECK(imag(uniform.value(2)) == doctest::Approx(imag(decomposed.value()(2))));
-                CHECK(uniform.variance == doctest::Approx(real_variance_a + real_variance_b + real_variance_c +
-                                                          imag_variance_a + imag_variance_b + imag_variance_c));
-            }
-            SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
-                auto const independent = static_cast<IndependentComplexRDV<asymmetric_t>>(decomposed);
-
-                CHECK(real(independent.value(0)) == doctest::Approx(real(decomposed.value()(0))));
-                CHECK(imag(independent.value(0)) == doctest::Approx(imag(decomposed.value()(0))));
-                CHECK(real(independent.value(1)) == doctest::Approx(real(decomposed.value()(1))));
-                CHECK(imag(independent.value(1)) == doctest::Approx(imag(decomposed.value()(1))));
-                CHECK(real(independent.value(2)) == doctest::Approx(real(decomposed.value()(2))));
-                CHECK(imag(independent.value(2)) == doctest::Approx(imag(decomposed.value()(2))));
-                CHECK(independent.variance(0) == doctest::Approx(real_variance_a + imag_variance_a));
-                CHECK(independent.variance(1) == doctest::Approx(real_variance_b + imag_variance_b));
-                CHECK(independent.variance(2) == doctest::Approx(real_variance_c + imag_variance_c));
             }
         }
     }
