@@ -256,6 +256,22 @@ TEST_CASE("Test statistics") {
                 CHECK(imag(independent.value) == doctest::Approx(imag(decomposed.value())));
                 CHECK(independent.variance == doctest::Approx(real_variance + imag_variance));
             }
+            SUBCASE("Conversion to DecomposedComplexRDV<asymmetric_t>") {
+                auto const decomposed_asym = static_cast<DecomposedComplexRDV<asymmetric_t>>(decomposed);
+                // TODO verify if correct
+                CHECK(decomposed_asym.real_component.value(0) == doctest::Approx(real_value));
+                CHECK(decomposed_asym.imag_component.value(0) == doctest::Approx(imag_value));
+                CHECK(decomposed_asym.real_component.value(1) == doctest::Approx(real_value));
+                CHECK(decomposed_asym.imag_component.value(1) == doctest::Approx(imag_value));
+                CHECK(decomposed_asym.real_component.value(2) == doctest::Approx(real_value));
+                CHECK(decomposed_asym.imag_component.value(2) == doctest::Approx(imag_value));
+                CHECK(decomposed_asym.real_component.variance(0) == doctest::Approx(real_variance));
+                CHECK(decomposed_asym.real_component.variance(1) == doctest::Approx(real_variance));
+                CHECK(decomposed_asym.real_component.variance(2) == doctest::Approx(real_variance));
+                CHECK(decomposed_asym.imag_component.variance(0) == doctest::Approx(imag_variance));
+                CHECK(decomposed_asym.imag_component.variance(1) == doctest::Approx(imag_variance));
+                CHECK(decomposed_asym.imag_component.variance(2) == doctest::Approx(imag_variance));
+            }
         }
     }
 
@@ -781,6 +797,19 @@ TEST_CASE("Test statistics") {
                 CHECK(independent.variance(0) == doctest::Approx(real_variance_a + imag_variance_a));
                 CHECK(independent.variance(1) == doctest::Approx(real_variance_b + imag_variance_b));
                 CHECK(independent.variance(2) == doctest::Approx(real_variance_c + imag_variance_c));
+            }
+            SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
+                auto const decomposed_sym = static_cast<DecomposedComplexRDV<symmetric_t>>(decomposed);
+
+                // TODO verify if correct
+                CHECK(decomposed_sym.real_component.value ==
+                      doctest::Approx((real_value_a + real_value_b + real_value_c) / 3.0));
+                CHECK(decomposed_sym.imag_component.value ==
+                      doctest::Approx((imag_value_a + imag_value_b + imag_value_c) / 3.0));
+                CHECK(decomposed_sym.real_component.variance ==
+                      doctest::Approx((real_variance_a + real_variance_b + real_variance_c) / 9.0));
+                CHECK(decomposed_sym.imag_component.variance ==
+                      doctest::Approx((imag_variance_a + imag_variance_b + imag_variance_c) / 9.0));
             }
         }
     }

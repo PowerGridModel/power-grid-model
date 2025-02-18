@@ -129,6 +129,20 @@ template <symmetry_tag sym_type> struct DecomposedComplexRDV {
         return IndependentComplexRDV<sym>{.value = value(),
                                           .variance = real_component.variance + imag_component.variance};
     }
+    explicit operator DecomposedComplexRDV<asymmetric_t>() const
+        requires(is_symmetric_v<sym>)
+    {
+        return DecomposedComplexRDV<asymmetric_t>{
+            .real_component = static_cast<IndependentRealRDV<asymmetric_t>>(real_component),
+            .imag_component = static_cast<IndependentRealRDV<asymmetric_t>>(imag_component)};
+    }
+    explicit operator DecomposedComplexRDV<symmetric_t>() const
+        requires(is_asymmetric_v<sym>)
+    {
+        return DecomposedComplexRDV<symmetric_t>{
+            .real_component = static_cast<IndependentRealRDV<symmetric_t>>(real_component),
+            .imag_component = static_cast<IndependentRealRDV<symmetric_t>>(imag_component)};
+    }
 };
 
 // Complex measured value of a sensor in p.u. in polar coordinates (magnitude and angle)
