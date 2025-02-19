@@ -28,7 +28,7 @@ jobs:
     permissions:
       contents: write
     with:
-      release: ${{ inputs.release }}
+      create_release: ${{ inputs.release }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
