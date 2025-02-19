@@ -590,7 +590,7 @@ class RankIteration {
         for (Idx i = 0; i < static_cast<Idx>(ranked_order.size()); ++i) {
             auto const& same_rank_regulators = ranked_order[i];
             for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
-                adjusted = apply_single_object_in_rank(i, j, same_rank_regulators);
+                adjusted = apply_single_object_in_rank(i, j, same_rank_regulators) || adjusted;
             }
             if (adjusted) {
                 iterations_per_rank[rank_index + 1] = 0;
