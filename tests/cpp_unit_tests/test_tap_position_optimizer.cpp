@@ -1184,6 +1184,7 @@ TEST_CASE("Test RankIterator") {
         CHECK(iterations_per_rank[1] == 3);
         CHECK(iterations_per_rank[2] == 6);
         CHECK(rank_index == 2);
+        CHECK(tap_changed == false);
     }
     SUBCASE("Test tap changed") {
         // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
@@ -1193,6 +1194,7 @@ TEST_CASE("Test RankIterator") {
         CHECK(iterations_per_rank[1] == 0);
         CHECK(iterations_per_rank[2] == 6);
         CHECK(rank_index == 0);
+        CHECK(tap_changed == true);
     }
 }
 
