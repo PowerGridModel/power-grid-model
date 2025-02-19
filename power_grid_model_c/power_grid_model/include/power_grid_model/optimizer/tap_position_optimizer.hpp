@@ -593,7 +593,7 @@ class RankIteration {
                 adjusted = apply_single_object_in_rank(i, j, same_rank_regulators);
             }
             if (adjusted) {
-                iterations_per_rank[rank_index + 1] = 0;
+                std::fill(iterations_per_rank.begin() + rank_index + 1, iterations_per_rank.end(), 0);
                 ++iterations_per_rank[rank_index];
                 break;
             }
