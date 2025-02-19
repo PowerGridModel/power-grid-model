@@ -93,6 +93,7 @@ examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
 examples/Asymmetric Calculation Example.ipynb
 examples/Transformer Examples.ipynb
+examples/Generic Branch Example.ipynb
 ```
 
 ```{toctree}
