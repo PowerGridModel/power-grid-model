@@ -29,7 +29,6 @@ jobs:
       contents: write
     with:
       release: ${{ inputs.release }}
-      clang-tidy-target: ${{ inputs.clang-tidy-target }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
