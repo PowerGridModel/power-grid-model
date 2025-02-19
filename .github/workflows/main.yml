@@ -40,7 +40,7 @@ jobs:
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
-      target: inputs.clang-tidy-target
+      target: ${{ inputs.clang-tidy-target }}
 
   citations:
     uses: "./.github/workflows/citations.yml"
