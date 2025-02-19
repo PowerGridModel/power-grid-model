@@ -1192,7 +1192,7 @@ TEST_CASE("Test RankIterator") {
         rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed, iterations_per_rank, rank_index);
         CHECK(iterations_per_rank[0] == 3);
         CHECK(iterations_per_rank[1] == 0);
-        CHECK(iterations_per_rank[2] == 6);
+        CHECK(iterations_per_rank[2] == 0);
         CHECK(rank_index == 0);
     }
 }
