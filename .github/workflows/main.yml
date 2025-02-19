@@ -32,8 +32,8 @@ jobs:
     permissions:
       contents: write
     with:
-      release: false
-      clang-tidy-target: "all power_grid_model_benchmark_cpp"
+      release: ${{ inputs.release }}
+      clang-tidy-target: ${{ inputs.clang-tidy-target }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
