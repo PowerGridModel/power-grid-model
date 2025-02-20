@@ -21,8 +21,8 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
-    MultiFieldValidationError,
     NotUniqueError,
+    PQSigmaPairError,
     UnsupportedTransformerRegulationError,
 )
 from power_grid_model.validation.validation import (
@@ -486,12 +486,12 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
         (
             "sym_power_sensor",
             [[0.1, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "sym_power_sensor",
             [[np.nan, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "sym_power_sensor",
@@ -506,37 +506,37 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [0.1, np.nan, 0.1], [np.nan, 0.1, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [0.1, np.nan, np.nan], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, 0.1, 0.1]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
             [[np.nan, np.nan], [0.1, np.nan, np.nan], [0.1, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
@@ -574,19 +574,19 @@ def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
         ([[np.nan, np.nan], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]], [InvalidIdError]),
         (
             [[0.1, np.nan], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         (
             [[np.nan, np.nan], [[np.nan, 0.1, np.nan], [np.nan, np.nan, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         (
             [[np.nan, np.nan], [[np.nan, 0.1, np.nan], [np.nan, 0.1, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         (
             [[0.1, 0.1], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         ([[0.1, 0.1], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]], [InvalidIdError]),
         ([[np.nan, np.nan], [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]], [InvalidIdError]),
@@ -636,8 +636,8 @@ def test_validate_values__bad_p_q_sigma_single_component_twice():
     data = single_component_twice_data()
     all_errors = validate_values(data)
     for error in all_errors:
-        assert any(isinstance(error, error_type) for error_type in [InvalidIdError, MultiFieldValidationError])
-        if isinstance(error, MultiFieldValidationError):
+        assert any(isinstance(error, error_type) for error_type in [InvalidIdError, PQSigmaPairError])
+        if isinstance(error, PQSigmaPairError):
             assert error.ids[0] == 789
 
 
@@ -765,17 +765,17 @@ def test_power_sigma_or_p_q_sigma():
     # bad weather
     sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
     sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
-    sym_power_sensor["q_sigma"] = [1e9, np.nan, np.nan]
+    sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
     errors = validate_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
     assert len(errors) == 2
     assert errors == [
-        MissingValueError("sym_power_sensor", "power_sigma", [6, 7, 8]),
-        MultiFieldValidationError("sym_power_sensor", ("p_sigma", "q_sigma"), [6, 8]),
+        MissingValueError("sym_power_sensor", "power_sigma", [6]),
+        PQSigmaPairError("sym_power_sensor", ("p_sigma", "q_sigma"), [7, 8]),
     ]
 
     np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9])
     np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [np.nan, np.nan, 1e4])
-    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [1e9, np.nan, np.nan])
+    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [np.nan, 1e9, np.nan])
 
 
 def test_all_default_values():
