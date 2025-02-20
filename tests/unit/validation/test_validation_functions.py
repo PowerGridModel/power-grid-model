@@ -758,6 +758,10 @@ def test_power_sigma_or_p_q_sigma():
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
 
+    np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9])
+    np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [1e4, np.nan, 1e4])
+    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [1e9, np.nan, 1e9])
+
     # bad weather
     sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
     sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
@@ -768,6 +772,10 @@ def test_power_sigma_or_p_q_sigma():
         MissingValueError("sym_power_sensor", "power_sigma", [6, 7, 8]),
         MultiFieldValidationError("sym_power_sensor", ("p_sigma", "q_sigma"), [6, 8]),
     ]
+
+    np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9])
+    np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [np.nan, np.nan, 1e4])
+    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [1e9, np.nan, np.nan])
 
 
 def test_all_default_values():
