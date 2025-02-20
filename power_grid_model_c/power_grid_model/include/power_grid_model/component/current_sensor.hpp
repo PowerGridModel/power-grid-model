@@ -12,8 +12,6 @@
 #include "../common/exception.hpp"
 #include "../common/statistics.hpp"
 
-#include <algorithm>
-
 namespace power_grid_model {
 
 class GenericCurrentSensor : public Sensor {
@@ -173,11 +171,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     template <symmetry_tag sym_calc>
     CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
         CurrentSensorOutput<sym_calc> output{};
-        // output.id = id();
-        // ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
-        // output.energized = 1; // current sensor is always energized
-        // output.i_residual = cabs(i_residual);
-        // output.i_angle_residual = arg(i_residual);
+        output.id = id();
+        ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
+        output.energized = 1; // current sensor is always energized
+        output.i_residual = cabs(i_residual);
+        output.i_angle_residual = arg(i_residual);
         return output;
     }
 };

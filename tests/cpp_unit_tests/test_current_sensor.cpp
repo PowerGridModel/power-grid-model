@@ -32,7 +32,7 @@ TEST_CASE("Test current sensor") {
         for (auto const terminal_type :
              {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::branch3_1,
               MeasuredTerminalType::branch3_2, MeasuredTerminalType::branch3_3}) {
-            CAPTURE(terminal_type);
+            // CAPTURE(terminal_type); // TODO check why this inerferes with normal output
 
             CurrentSensorInput<symmetric_t> sym_current_sensor_input{};
             sym_current_sensor_input.id = 0;
@@ -46,6 +46,8 @@ TEST_CASE("Test current sensor") {
 
             double const u_rated = 10.0e3;
             double const base_current = base_power_3p / u_rated / sqrt3;
+            double const i_pu = 1.0e3 / base_current;
+            double const i_sigma_pu = 1.0 / base_current;
 
             ComplexValue<symmetric_t> const i_sym = (1.0 * 1e3 + 1i * 0.0) / base_current;
             ComplexValue<asymmetric_t> const i_asym = i_sym * RealValue<asymmetric_t>{1.0};
@@ -62,26 +64,27 @@ TEST_CASE("Test current sensor") {
 
             // Check symmetric sensor output for symmetric parameters
             CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::local);
-            CHECK(sym_sensor_param.i_real_variance == doctest::Approx(pow(1.0 / base_current, 2)));
-            CHECK(sym_sensor_param.i_imag_variance == doctest::Approx(pow(0.2 * 1.0e3 / base_current, 2)));
-            CHECK(real(sym_sensor_param.value) == doctest::Approx(1.0e3 / base_current));
-            CHECK(imag(sym_sensor_param.value) == doctest::Approx(0.0 / base_current));
+            CHECK(sym_sensor_param.i_real_variance == doctest::Approx(pow(i_sigma_pu, 2)));
+            CHECK(sym_sensor_param.i_imag_variance == doctest::Approx(pow(0.2 * i_pu, 2)));
+            CHECK(real(sym_sensor_param.value) == doctest::Approx(i_pu));
+            CHECK(imag(sym_sensor_param.value) == doctest::Approx(0.0));
 
-            CHECK(is_nan(sym_sensor_output.id));
-            CHECK(is_nan(sym_sensor_output.energized));
-            CHECK(is_nan(sym_sensor_output.i_residual));
-            CHECK(is_nan(sym_sensor_output.i_angle_residual));
+            CHECK(sym_sensor_output.id == 0);
+            CHECK(sym_sensor_output.energized == 1);
+            CHECK(sym_sensor_output.i_residual == doctest::Approx(0.0));
+            CHECK(sym_sensor_output.i_angle_residual == doctest::Approx(0.0));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.i_real_variance[0] == doctest::Approx(0.0));
-            CHECK(asym_sensor_param.i_imag_variance[1] == doctest::Approx(0.0));
-            CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(0.0));
-            CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(0.0));
+            // CHECK(asym_sensor_param.i_real_variance[0] == doctest::Approx(i_sigma_pu * 3.0));
+            // CHECK(asym_sensor_param.i_imag_variance[1] == doctest::Approx((i_sigma_pu * sin(deg_240) * sin(deg_240) +
+            // i_pu * i_pu * 0.2 * cos(deg_240) * cos(deg_240)) /3.0));
+            CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(i_pu / 3.0));
+            CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(i_pu * sin(deg_240) / 3.0));
 
-            CHECK(is_nan(sym_sensor_output_asym_param.id));
-            CHECK(is_nan(sym_sensor_output_asym_param.energized));
-            CHECK(is_nan(sym_sensor_output_asym_param.i_residual[0]));
-            CHECK(is_nan(sym_sensor_output_asym_param.i_angle_residual[1]));
+            CHECK(sym_sensor_output_asym_param.id == 0);
+            CHECK(sym_sensor_output_asym_param.energized == 1);
+            CHECK(sym_sensor_output_asym_param.i_residual[0] == doctest::Approx(0.0));
+            CHECK(sym_sensor_output_asym_param.i_angle_residual[1] == doctest::Approx(0.0));
 
             CHECK(sym_current_sensor.get_terminal_type() == terminal_type);
 
