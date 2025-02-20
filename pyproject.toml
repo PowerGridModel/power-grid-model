@@ -49,6 +49,7 @@ doc = [
     "readthedocs-sphinx-search",
     "sphinx-hoverxref",
     "sphinxcontrib-mermaid>=1.0.0",
+    "sphinxcontrib-tikz",
     "numpydoc",
     "pandas",
     "gitpython",
