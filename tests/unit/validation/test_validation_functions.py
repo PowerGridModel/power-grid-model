@@ -29,6 +29,7 @@ from power_grid_model.validation.validation import (
     assert_valid_data_structure,
     validate_generic_power_sensor,
     validate_ids,
+    validate_input_data,
     validate_required_values,
     validate_unique_ids_across_components,
     validate_values,
@@ -756,6 +757,17 @@ def test_power_sigma_or_p_q_sigma():
     }
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
+
+    # bad weather
+    sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
+    sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
+    sym_power_sensor["q_sigma"] = [1e9, np.nan, np.nan]
+    errors = validate_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
+    assert len(errors) == 2
+    assert errors == [
+        MissingValueError("sym_power_sensor", "power_sigma", [6, 7, 8]),
+        MultiFieldValidationError("sym_power_sensor", ("p_sigma", "q_sigma"), [6, 8]),
+    ]
 
 
 def test_all_default_values():
