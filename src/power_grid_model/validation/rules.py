@@ -805,13 +805,15 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[PQSig
     q_nan = np.isnan(q_sigma)
     p_inf = np.isinf(p_sigma)
     q_inf = np.isinf(q_sigma)
-    if p_sigma.ndim > 1:  # if component == 'asym_power_sensor':
-        p_nan = p_nan.any(axis=-1)
-        q_nan = q_nan.any(axis=-1)
-        p_inf = p_inf.any(axis=-1)
-        q_inf = q_inf.any(axis=-1)
     mis_match = p_nan != q_nan
-    mis_match |= np.logical_or(p_inf, q_inf)
+    mis_match |= np.logical_xor(p_inf, q_inf)  # infinite sigmas are supported if they are both infinite
+    if p_sigma.ndim > 1:  # if component == 'asym_power_sensor':
+        mis_match = mis_match.any(axis=-1)
+        mis_match |= np.logical_xor(p_nan.any(axis=-1), p_nan.all(axis=-1))
+        mis_match |= np.logical_xor(q_nan.any(axis=-1), q_nan.all(axis=-1))
+        mis_match |= np.logical_xor(p_inf.any(axis=-1), p_inf.all(axis=-1))
+        mis_match |= np.logical_xor(q_inf.any(axis=-1), q_inf.all(axis=-1))
+
     if mis_match.any():
         ids = data[component]["id"][mis_match].flatten().tolist()
         errors.append(PQSigmaPairError(component, ["p_sigma", "q_sigma"], ids))

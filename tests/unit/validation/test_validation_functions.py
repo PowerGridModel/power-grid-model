@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import copy
 from itertools import product
 from unittest.mock import ANY, MagicMock, patch
 
@@ -520,6 +521,11 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
         ),
         (
             "asym_power_sensor",
+            [[np.nan, np.nan], [0.1, 0.1, np.nan], [np.nan, np.nan, 0.1]],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
+        ),
+        (
+            "asym_power_sensor",
             [[np.nan, np.nan], [0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
@@ -746,6 +752,22 @@ def test_power_sigma_or_p_q_sigma():
     sym_power_sensor["p_sigma"] = [1e4, np.nan, 1e4]
     sym_power_sensor["q_sigma"] = [1e9, np.nan, 1e9]
 
+    # power sensor
+    asym_power_sensor = initialize_array("input", "asym_power_sensor", 4)
+    asym_power_sensor["id"] = [66, 77, 88, 99]
+    asym_power_sensor["measured_object"] = [2, 4, 9, 9]
+    asym_power_sensor["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.load,
+        MeasuredTerminalType.load,
+        MeasuredTerminalType.load,
+    ]
+    asym_power_sensor["p_measured"] = [[1e6, 1e6, 1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6]]
+    asym_power_sensor["q_measured"] = [[1e6, 1e6, 1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6]]
+    asym_power_sensor["power_sigma"] = [np.nan, 1e9, 1e9, 1e9]
+    asym_power_sensor["p_sigma"] = [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]]
+    asym_power_sensor["q_sigma"] = [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]]
+
     # all
     input_data = {
         "node": node,
@@ -754,6 +776,7 @@ def test_power_sigma_or_p_q_sigma():
         "source": source,
         "sym_voltage_sensor": voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
+        "asym_power_sensor": asym_power_sensor,
     }
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
@@ -761,21 +784,63 @@ def test_power_sigma_or_p_q_sigma():
     np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9])
     np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [1e4, np.nan, 1e4])
     np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [1e9, np.nan, 1e9])
+    np.testing.assert_array_equal(asym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9, 1e9])
+    np.testing.assert_array_equal(
+        asym_power_sensor["p_sigma"], [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]]
+    )
+    np.testing.assert_array_equal(
+        asym_power_sensor["q_sigma"], [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]]
+    )
 
     # bad weather
-    sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
-    sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
-    sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
-    errors = validate_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
+    bad_input_data = copy.deepcopy(input_data)
+    bad_sym_power_sensor = bad_input_data["sym_power_sensor"]
+    bad_sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
+    bad_sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
+    bad_sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
+    errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
     assert len(errors) == 2
     assert errors == [
         MissingValueError("sym_power_sensor", "power_sigma", [6]),
         PQSigmaPairError("sym_power_sensor", ("p_sigma", "q_sigma"), [7, 8]),
     ]
 
-    np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9])
-    np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [np.nan, np.nan, 1e4])
-    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [np.nan, 1e9, np.nan])
+    np.testing.assert_array_equal(bad_sym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9])
+    np.testing.assert_array_equal(bad_sym_power_sensor["p_sigma"], [np.nan, np.nan, 1e4])
+    np.testing.assert_array_equal(bad_sym_power_sensor["q_sigma"], [np.nan, 1e9, np.nan])
+
+    # bad weather
+    bad_input_data = copy.deepcopy(input_data)
+    bad_asym_power_sensor = bad_input_data["asym_power_sensor"]
+    bad_asym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9, np.nan]
+    bad_asym_power_sensor["p_sigma"] = [
+        [np.nan, np.nan, np.nan],
+        [np.nan, np.nan, np.nan],
+        [1e4, np.nan, np.nan],
+        [1e4, np.nan, np.nan],
+    ]
+    bad_asym_power_sensor["q_sigma"] = [
+        [np.nan, np.nan, np.nan],
+        [1e9, 1e9, 1e9],
+        [np.nan, 1e4, 1e4],
+        [np.nan, 1e4, 1e4],
+    ]
+    errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
+    assert len(errors) == 2
+    assert errors == [
+        MissingValueError("asym_power_sensor", "power_sigma", [66]),
+        PQSigmaPairError("asym_power_sensor", ("p_sigma", "q_sigma"), [77, 88, 99]),
+    ]
+
+    np.testing.assert_array_equal(bad_asym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9, np.nan])
+    np.testing.assert_array_equal(
+        bad_asym_power_sensor["p_sigma"],
+        [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan], [1e4, np.nan, np.nan], [1e4, np.nan, np.nan]],
+    )
+    np.testing.assert_array_equal(
+        bad_asym_power_sensor["q_sigma"],
+        [[np.nan, np.nan, np.nan], [1e9, 1e9, 1e9], [np.nan, 1e4, 1e4], [np.nan, 1e4, 1e4]],
+    )
 
 
 def test_all_default_values():
