@@ -47,3 +47,5 @@ jobs:
   
   sonar:
     uses: "./.github/workflows/sonar.yml"
+    with:
+      sonarToken: ${{ secrets.SONAR_TOKEN }}
