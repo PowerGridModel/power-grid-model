@@ -481,72 +481,96 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
     [
         (
             "sym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[np.nan, np.nan], [], []],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "sym_power_sensor",
-            [[0.1, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[0.1, np.nan], [], []],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "sym_power_sensor",
-            [[np.nan, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[np.nan, 0.1], [], []],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "sym_power_sensor",
-            [[0.1, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[0.1, 0.1], [], []],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[], [[np.nan, np.nan, np.nan]] * 3, [[np.nan, np.nan, np.nan]] * 3],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, np.nan, 0.1], [np.nan, 0.1, np.nan]],
+            [
+                [],
+                [[0.1, np.nan, 0.1], [0.1, np.nan, 0.1], [0.1, 0.1, 0.1]],
+                [[np.nan, 0.1, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[], [[0.1, np.nan, np.nan]] * 3, [[np.nan, np.nan, np.nan]] * 3],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [[], [[np.nan, np.nan, np.nan]] * 3, [[0.1, np.nan, np.nan]] * 3],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, 0.1, np.nan], [np.nan, np.nan, 0.1]],
+            [
+                [],
+                [[0.1, 0.1, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[np.nan, np.nan, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
+            [
+                [],
+                [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, 0.1, 0.1]],
+            [
+                [],
+                [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [
+                [],
+                [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, np.nan, np.nan], [0.1, np.nan, np.nan]],
+            [
+                [],
+                [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            [[], [[0.1, 0.1, 0.1]] * 3, [[0.1, 0.1, 0.1]] * 3],
             [InvalidIdError, NotUniqueError],
         ),
     ],
