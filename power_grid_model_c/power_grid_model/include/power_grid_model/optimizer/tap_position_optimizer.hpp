@@ -722,7 +722,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         void propose_new_pos(bool strategy_max, bool above_range) {
-            bool const is_down = (above_range == tap_reverse_) ^ control_at_tap_side_;
+            bool const is_down = (above_range == tap_reverse_) != control_at_tap_side_;
             if (last_check_) {
                 current_ = is_down ? lower_bound_ : upper_bound_;
                 inevitable_run_ = true;
@@ -782,13 +782,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         IntS search(bool prefer_higher_) const {
-            // This logic is used to determin which of the middle points could be of interest
+            // This logic is used to determine which of the middle points could be of interest
             // given strategy used in optimization:
             // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
             // find the corresponding mid point. std::midpoint returns always the lower mid point
             // if the range is of even length. This is why we need to adjust bounds accordingly.
             // Not because upper bound and lower bound might be reversed, which is not possible.
-            bool const prefer_higher = control_at_tap_side_ ? !prefer_higher_ : prefer_higher_;
+            bool const prefer_higher = control_at_tap_side_ != prefer_higher_;
             auto const primary_bound = prefer_higher ? upper_bound_ : lower_bound_;
             auto const secondary_bound = prefer_higher ? lower_bound_ : upper_bound_;
             return std::midpoint(primary_bound, secondary_bound);
