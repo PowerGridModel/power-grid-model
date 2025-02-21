@@ -5,10 +5,6 @@
 name: Clang Tidy
 
 on:
-  # run pipeline on push event of main branch
-  push:
-    branches:
-      - main
   # run pipeline from another workflow
   workflow_call:
     inputs:

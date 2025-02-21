@@ -6,10 +6,6 @@ name: Build and Test C++ and Python
 
 # Controls when the workflow will run
 on:
-  # run pipeline on push event of main branch
-  push:
-    branches:
-      - main
   # run pipeline from another workflow
   workflow_call:
     inputs:
