@@ -632,15 +632,15 @@ auto check_exact(IntS tap_pos) -> TapPositionCheckFunc {
         CHECK(value == tap_pos);
     };
 };
-auto check_compensated_exact(IntS tap_pos, IntS tap_pos_comp) -> TapPositionCheckFunc {
-    return [tap_pos, tap_pos_comp](IntS value, OptimizerStrategy /*strategy*/, bool control_at_tap_side) {
-        if (control_at_tap_side) {
-            CHECK(value == tap_pos_comp);
-        } else {
-            CHECK(value == tap_pos);
-        }
-    };
-};
+// auto check_compensated_exact(IntS tap_pos, IntS tap_pos_comp) -> TapPositionCheckFunc {
+//     return [tap_pos, tap_pos_comp](IntS value, OptimizerStrategy /*strategy*/, bool control_at_tap_side) {
+//         if (control_at_tap_side) {
+//             CHECK(value == tap_pos_comp);
+//         } else {
+//             CHECK(value == tap_pos);
+//         }
+//     };
+// };
 auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max) -> TapPositionCheckFunc {
     return
         [tap_pos_any, tap_range_min, tap_range_max](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
@@ -996,7 +996,7 @@ TEST_CASE("Test Tap position optimizer") {
 
             SUBCASE("voltage band") {
                 state_b.rank = 0;
-                state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+                state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
                     if (state_b.tap_side == regulator_b.control_side()) {
                         return static_cast<DoubleComplex>(
                             test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
@@ -1015,7 +1015,7 @@ TEST_CASE("Test Tap position optimizer") {
 
             SUBCASE("line drop compensation") {
                 state_b.rank = 0;
-                state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+                state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
                     if (state_b.tap_side == regulator_b.control_side()) {
                         return static_cast<DoubleComplex>(
                             test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
@@ -1219,7 +1219,7 @@ TEST_CASE("Test Tap position optimizer") {
 
         SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
             state_b.rank = 0;
-            state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
+            state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
                 if (state_b.tap_side == regulator_b.control_side()) {
                     return static_cast<DoubleComplex>(
                         test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
