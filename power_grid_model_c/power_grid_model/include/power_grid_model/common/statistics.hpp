@@ -17,7 +17,7 @@
  * with different types of variances. These structures support both symmetric and asymmetric representations and
  * provide conversion operators to transform between these representations.
  *
- * A Randomly distributed variable in PGM can have following characteristics:
+ * A random variable in PGM can have following characteristics:
  *  - Uniform: Single Variance for all phases
  *  - Independent: Unique Variance for each phase
  *  - Real: The Real value without direction, eg. real axis: RealValue (* 1), imaginary axis: RealValue (* 1i).
