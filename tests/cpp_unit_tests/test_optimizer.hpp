@@ -146,7 +146,6 @@ static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstData
 
 constexpr auto strategies = [] {
     using enum OptimizerStrategy;
-    // return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
     return std::array{any, local_maximum, local_minimum, global_maximum, global_minimum};
 }();
 
