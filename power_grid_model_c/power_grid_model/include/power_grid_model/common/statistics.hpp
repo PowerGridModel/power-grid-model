@@ -163,5 +163,39 @@ template <symmetry_tag sym_type> struct PolarComplexRDV {
                                .variance = magnitude.variance * sin_theta * sin_theta +
                                            real_component * real_component * angle.variance}};
     }
+
+    explicit operator DecomposedComplexRDV<asymmetric_t>() const
+        requires(is_symmetric_v<sym>)
+    {
+        ComplexValue<asymmetric_t> const unit_complex{exp(1.0i * angle.value)};
+        ComplexValue<asymmetric_t> const complex = magnitude.value * unit_complex;
+        return DecomposedComplexRDV<asymmetric_t>{
+            .real_component = {.value = real(complex),
+                               .variance = magnitude.variance * real(unit_complex) * real(unit_complex) +
+                                           imag(complex) * imag(complex) * angle.variance},
+            .imag_component = {.value = imag(complex),
+                               .variance = magnitude.variance * imag(unit_complex) * imag(unit_complex) +
+                                           real(complex) * real(complex) * angle.variance}};
+    }
+
+    explicit operator DecomposedComplexRDV<symmetric_t>() const
+        requires(is_asymmetric_v<sym>)
+    {
+        ComplexValue<asymmetric_t> const unit_complex{exp(1.0i * angle.value)};
+        ComplexValue<asymmetric_t> const unit_pos_seq_per_phase{unit_complex(0) / 3.0, a * unit_complex(1) / 3.0,
+                                                                a2 * unit_complex(2) / 3.0};
+        DoubleComplex const pos_seq_value = sum_val(unit_pos_seq_per_phase);
+        return DecomposedComplexRDV<symmetric_t>{
+            .real_component = {.value = real(pos_seq_value),
+                               .variance = mean_val(magnitude.variance * real(unit_pos_seq_per_phase) *
+                                                        real(unit_pos_seq_per_phase) +
+                                                    imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) *
+                                                        magnitude.value * magnitude.value * angle.variance)},
+            .imag_component = {
+                .value = imag(pos_seq_value),
+                .variance = mean_val(magnitude.variance * imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) +
+                                     real(unit_pos_seq_per_phase) * real(unit_pos_seq_per_phase) * magnitude.value *
+                                         magnitude.value * angle.variance)}};
+    }
 };
 } // namespace power_grid_model

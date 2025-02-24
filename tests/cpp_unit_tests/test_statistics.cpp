@@ -443,6 +443,8 @@ TEST_CASE("Test statistics") {
             }
         }
 
+        // TODO: Add Conversion to DecomposedComplexRDV<asymmetric_t>
+
         SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
@@ -716,6 +718,8 @@ TEST_CASE("Test statistics") {
                 }
             }
         }
+
+        // TODO: Add Conversion to DecomposedComplexRDV<symmetric_t>
 
         SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
