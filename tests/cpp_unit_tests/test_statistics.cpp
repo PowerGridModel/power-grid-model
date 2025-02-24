@@ -13,6 +13,11 @@ using AsymRealValue = RealValue<asymmetric_t>;
 using std::numbers::sqrt2;
 constexpr auto inv_sqrt2 = sqrt2 / 2;
 
+constexpr auto sqrt3_2 = std::numbers::sqrt3 * 0.5;
+constexpr auto deg_90 = std::numbers::pi / 2.0;
+constexpr auto deg_45 = deg_90 / 2.0;
+constexpr auto deg_60 = deg_30 * 2.0;
+
 } // namespace
 
 TEST_SUITE_BEGIN("Statistics module tests");
@@ -337,7 +342,7 @@ TEST_CASE("Test statistics") {
         SUBCASE("Constructor") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
-                            std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
+                            std::tuple{1.0, 1.0, deg_90, 0.2}, std::tuple{1.0, 1.0, deg_45, 0.2}}) {
                 CAPTURE(magnitude);
                 CAPTURE(magnitude_variance);
                 CAPTURE(angle);
@@ -372,7 +377,7 @@ TEST_CASE("Test statistics") {
                 SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude_variance},
-                        .angle = {.value = pi / 2, .variance = angle_variance}};
+                        .angle = {.value = deg_90, .variance = angle_variance}};
 
                     CHECK(real(polar.value()) == doctest::Approx(0.0));
                     CHECK(imag(polar.value()) == doctest::Approx(polar.magnitude.value));
@@ -380,7 +385,7 @@ TEST_CASE("Test statistics") {
                 SUBCASE("45deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude_variance},
-                        .angle = {.value = pi / 4, .variance = angle_variance}};
+                        .angle = {.value = deg_45, .variance = angle_variance}};
 
                     CHECK(real(polar.value()) == doctest::Approx(polar.magnitude.value * inv_sqrt2));
                     CHECK(imag(polar.value()) == doctest::Approx(real(polar.value())));
@@ -415,7 +420,7 @@ TEST_CASE("Test statistics") {
                 SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude},
-                        .angle = {.value = pi / 2, .variance = angle_variance}};
+                        .angle = {.value = deg_90, .variance = angle_variance}};
 
                     auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
 
@@ -431,7 +436,7 @@ TEST_CASE("Test statistics") {
                 SUBCASE("45deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude},
-                        .angle = {.value = pi / 4, .variance = angle_variance}};
+                        .angle = {.value = deg_45, .variance = angle_variance}};
 
                     auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
                     auto const uniform = static_cast<UniformComplexRandVar<symmetric_t>>(polar);
@@ -451,7 +456,7 @@ TEST_CASE("Test statistics") {
         SUBCASE("Conversion to IndependentComplexRandVar<symmetric_t>") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
-                            std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
+                            std::tuple{1.0, 1.0, deg_90, 0.2}, std::tuple{1.0, 1.0, deg_45, 0.2}}) {
                 CAPTURE(magnitude);
                 CAPTURE(magnitude_variance);
                 CAPTURE(angle);
@@ -473,7 +478,7 @@ TEST_CASE("Test statistics") {
         SUBCASE("Conversion to UniformComplexRandVar<symmetric_t>") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
-                            std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
+                            std::tuple{1.0, 1.0, deg_90, 0.2}, std::tuple{1.0, 1.0, deg_45, 0.2}}) {
                 CAPTURE(magnitude);
                 CAPTURE(magnitude_variance);
                 CAPTURE(angle);
@@ -496,8 +501,8 @@ TEST_CASE("Test statistics") {
     SUBCASE("PolarComplexRandVar<asymmetric_t>") {
         SUBCASE("Constructor") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
-                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
-                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
+                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, deg_45, deg_90, 0.2},
+                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, deg_30, deg_60, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
                 CAPTURE(magnitude_c);
@@ -539,26 +544,26 @@ TEST_CASE("Test statistics") {
                     CHECK(real(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0)));
                     CHECK(imag(polar.value()(0)) == doctest::Approx(0.0));
                     CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -0.5));
-                    CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -sqrt3 / 2));
+                    CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -sqrt3_2));
                     CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.5));
-                    CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * sqrt3 / 2));
+                    CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * sqrt3_2));
                 }
                 SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
-                        .angle = {.value = {pi / 2, deg_240 + pi / 2, deg_120 + pi / 2}, .variance = angle_variance}};
+                        .angle = {.value = {deg_90, deg_240 + deg_90, deg_120 + deg_90}, .variance = angle_variance}};
 
                     CHECK(real(polar.value()(0)) == doctest::Approx(0.0));
                     CHECK(imag(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0)));
-                    CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * sqrt3 / 2));
+                    CHECK(real(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * sqrt3_2));
                     CHECK(imag(polar.value()(1)) == doctest::Approx(polar.magnitude.value(1) * -0.5));
-                    CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -sqrt3 / 2));
+                    CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -sqrt3_2));
                     CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.5));
                 }
                 SUBCASE("45deg phase shift") {
                     PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
-                        .angle = {.value = {pi / 4, deg_240 + pi / 4, deg_120 + pi / 4}, .variance = angle_variance}};
+                        .angle = {.value = {deg_45, deg_240 + deg_45, deg_120 + deg_45}, .variance = angle_variance}};
 
                     CHECK(real(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
                     CHECK(imag(polar.value()(0)) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
@@ -589,9 +594,9 @@ TEST_CASE("Test statistics") {
                     CHECK(decomposed.real_component.value(0) == doctest::Approx(polar.magnitude.value(0)));
                     CHECK(decomposed.imag_component.value(0) == doctest::Approx(0.0));
                     CHECK(decomposed.real_component.value(1) == doctest::Approx(polar.magnitude.value(1) * -0.5));
-                    CHECK(decomposed.imag_component.value(1) == doctest::Approx(polar.magnitude.value(1) * -sqrt3 / 2));
+                    CHECK(decomposed.imag_component.value(1) == doctest::Approx(polar.magnitude.value(1) * -sqrt3_2));
                     CHECK(decomposed.real_component.value(2) == doctest::Approx(polar.magnitude.value(2) * -0.5));
-                    CHECK(decomposed.imag_component.value(2) == doctest::Approx(polar.magnitude.value(2) * sqrt3 / 2));
+                    CHECK(decomposed.imag_component.value(2) == doctest::Approx(polar.magnitude.value(2) * sqrt3_2));
 
                     CHECK(real(decomposed.value()(0)) == doctest::Approx(real(polar.value()(0))));
                     CHECK(imag(decomposed.value()(0)) == doctest::Approx(imag(polar.value()(0))));
@@ -624,7 +629,7 @@ TEST_CASE("Test statistics") {
                 }
 
                 SUBCASE("90deg phase shift") {
-                    auto const shift = pi / 2;
+                    auto const shift = deg_90;
                     PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {shift, shift + deg_240, shift + deg_120}, .variance = angle_variance}};
@@ -633,9 +638,9 @@ TEST_CASE("Test statistics") {
 
                     CHECK(decomposed.real_component.value(0) == doctest::Approx(0.0));
                     CHECK(decomposed.imag_component.value(0) == doctest::Approx(polar.magnitude.value(0)));
-                    CHECK(decomposed.real_component.value(1) == doctest::Approx(polar.magnitude.value(1) * sqrt3 / 2));
+                    CHECK(decomposed.real_component.value(1) == doctest::Approx(polar.magnitude.value(1) * sqrt3_2));
                     CHECK(decomposed.imag_component.value(1) == doctest::Approx(polar.magnitude.value(1) * -0.5));
-                    CHECK(decomposed.real_component.value(2) == doctest::Approx(polar.magnitude.value(2) * -sqrt3 / 2));
+                    CHECK(decomposed.real_component.value(2) == doctest::Approx(polar.magnitude.value(2) * -sqrt3_2));
                     CHECK(decomposed.imag_component.value(2) == doctest::Approx(polar.magnitude.value(2) * -0.5));
 
                     CHECK(real(decomposed.value()(0)) == doctest::Approx(real(polar.value()(0))));
@@ -669,7 +674,7 @@ TEST_CASE("Test statistics") {
                 }
 
                 SUBCASE("45deg phase shift") {
-                    auto const shift = pi / 4;
+                    auto const shift = deg_45;
                     PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {shift, deg_240 + shift, deg_120 + shift}, .variance = angle_variance}};
@@ -726,8 +731,8 @@ TEST_CASE("Test statistics") {
 
         SUBCASE("Conversion to IndependentComplexRandVar<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
-                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
-                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
+                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, deg_45, deg_90, 0.2},
+                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, deg_30, deg_60, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
                 CAPTURE(magnitude_c);
@@ -760,8 +765,8 @@ TEST_CASE("Test statistics") {
 
         SUBCASE("Conversion to UniformComplexRandVar<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
-                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
-                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
+                              angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, deg_45, deg_90, 0.2},
+                                                           std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, deg_30, deg_60, 0.3}}) {
                 CAPTURE(magnitude_a);
                 CAPTURE(magnitude_b);
                 CAPTURE(magnitude_c);
