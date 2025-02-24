@@ -369,7 +369,7 @@ TEST_CASE("Test statistics") {
                     CHECK(real(polar.value()) == doctest::Approx(polar.magnitude.value));
                     CHECK(imag(polar.value()) == doctest::Approx(0.0));
                 }
-                SUBCASE("Perpendicular phase shift") {
+                SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = pi / 2, .variance = angle_variance}};
@@ -412,7 +412,7 @@ TEST_CASE("Test statistics") {
                     CHECK(imag(decomposed.value()) == doctest::Approx(imag(polar.value())));
                 }
 
-                SUBCASE("Perpendicular phase shift") {
+                SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude},
                         .angle = {.value = pi / 2, .variance = angle_variance}};
@@ -543,7 +543,7 @@ TEST_CASE("Test statistics") {
                     CHECK(real(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.5));
                     CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * sqrt3 / 2));
                 }
-                SUBCASE("Perpendicular phase shift") {
+                SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {pi / 2, deg_240 + pi / 2, deg_120 + pi / 2}, .variance = angle_variance}};
@@ -623,7 +623,7 @@ TEST_CASE("Test statistics") {
                     CHECK(decomposed.imag_component.variance(2) == doctest::Approx(imag_variance_c));
                 }
 
-                SUBCASE("Perpendicular phase shift") {
+                SUBCASE("90deg phase shift") {
                     auto const shift = pi / 2;
                     PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},

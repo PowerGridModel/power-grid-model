@@ -34,10 +34,8 @@ namespace power_grid_model {
 template <symmetry_tag sym_type> struct UniformRealRandVar {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
     RealValue<sym> value{};
-    double variance{}; // variance (sigma^2) of the error range, in p.u.
+    double variance{}; // variance (sigma^2) of the error range
 
     explicit operator UniformRealRandVar<asymmetric_t>() const
         requires(is_symmetric_v<sym>)
@@ -54,10 +52,8 @@ template <symmetry_tag sym_type> struct UniformRealRandVar {
 template <symmetry_tag sym_type> struct IndependentRealRandVar {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
     RealValue<sym> value{};
-    RealValue<sym> variance{}; // variance (sigma^2) of the error range, in p.u.
+    RealValue<sym> variance{}; // variance (sigma^2) of the error range
 
     explicit operator UniformRealRandVar<symmetric_t>() const {
         constexpr auto scale = is_asymmetric_v<sym> ? 3.0 : 1.0;
@@ -79,15 +75,13 @@ template <symmetry_tag sym_type> struct IndependentRealRandVar {
     }
 };
 
-// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
+// Complex measured value of a sensor with a uniform variance across all phases and axes of the complex plane
 // (rotationally symmetric)
 template <symmetry_tag sym_type> struct UniformComplexRandVar {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
     ComplexValue<sym> value{};
-    double variance{}; // variance (sigma^2) of the error range, in p.u.
+    double variance{}; // variance (sigma^2) of the error range
 };
 
 inline UniformComplexRandVar<symmetric_t> pos_seq(UniformComplexRandVar<asymmetric_t> const& var) {
@@ -97,27 +91,23 @@ inline UniformComplexRandVar<asymmetric_t> three_phase(UniformComplexRandVar<sym
     return {.value = ComplexValue<asymmetric_t>{var.value}, .variance = var.variance};
 }
 
-// Complex measured value of a sensor in p.u. with separate variances per phase (but rotationally symmetric in the
+// Complex measured value of a sensor with separate variances per phase (but rotationally symmetric in the
 // complex plane)
 template <symmetry_tag sym_type> struct IndependentComplexRandVar {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
     ComplexValue<sym> value{};
-    RealValue<sym> variance{}; // variance (sigma^2) of the error range, in p.u.
+    RealValue<sym> variance{}; // variance (sigma^2) of the error range
 
     explicit operator UniformComplexRandVar<sym>() const {
         return UniformComplexRandVar<sym>{.value = value, .variance = sum_val(variance)};
     }
 };
 
-// Complex measured value of a sensor in p.u. modeled as separate real and imaginary components with independent
+// Complex measured value of a sensor modeled as separate real and imaginary components with independent
 // variances (rotationally symmetric)
 template <symmetry_tag sym_type> struct DecomposedComplexRandVar {
     using sym = sym_type;
-
-    static constexpr bool symmetric{is_symmetric_v<sym>};
 
     IndependentRealRandVar<sym> real_component;
     IndependentRealRandVar<sym> imag_component;
@@ -133,12 +123,10 @@ template <symmetry_tag sym_type> struct DecomposedComplexRandVar {
     }
 };
 
-// Complex measured value of a sensor in p.u. in polar coordinates (magnitude and angle)
+// Complex measured value of a sensor in polar coordinates (magnitude and angle)
 // (rotationally symmetric)
 template <symmetry_tag sym_type> struct PolarComplexRandVar {
     using sym = sym_type;
-
-    static constexpr bool symmetric{is_symmetric_v<sym>};
 
     UniformRealRandVar<sym> magnitude;
     UniformRealRandVar<sym> angle;
