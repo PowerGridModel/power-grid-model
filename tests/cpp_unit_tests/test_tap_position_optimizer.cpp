@@ -1167,7 +1167,6 @@ TEST_CASE("Test Tap position optimizer") {
             auto const initial_tap_pos_b{transformer_b.tap_pos()};
 
             for (auto strategy_search_side : test::strategy_search_and_sides) {
-                // for (auto strategy_search_side : test::strategy_search_and_sides_xs) {
                 auto strategy = strategy_search_side.strategy;
                 auto search = strategy_search_side.search;
                 auto tap_side = strategy_search_side.side;
