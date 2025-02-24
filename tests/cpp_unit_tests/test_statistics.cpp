@@ -18,20 +18,20 @@ constexpr auto inv_sqrt2 = sqrt2 / 2;
 TEST_SUITE_BEGIN("Statistics module tests");
 
 TEST_CASE("Test statistics") {
-    SUBCASE("UniformRealRDV<symmetric_t>") {
+    SUBCASE("UniformRealRandVar<symmetric_t>") {
         for (auto const& [value, variance] :
              std::array{std::tuple{1.0, 1.0}, std::tuple{2.0, 3.0}, std::tuple{0.0, 1.0}, std::tuple{2.0, 3.0}}) {
             CAPTURE(value);
             CAPTURE(variance);
 
-            UniformRealRDV<symmetric_t> const uniform{.value = value, .variance = variance};
+            UniformRealRandVar<symmetric_t> const uniform{.value = value, .variance = variance};
 
             SUBCASE("Constructor") {
                 CHECK(uniform.value == value);
                 CHECK(uniform.variance == variance);
             }
-            SUBCASE("Conversion to UniformRealRDV<asymmetric_t>") {
-                auto const asymmetric = static_cast<UniformRealRDV<asymmetric_t>>(uniform);
+            SUBCASE("Conversion to UniformRealRandVar<asymmetric_t>") {
+                auto const asymmetric = static_cast<UniformRealRandVar<asymmetric_t>>(uniform);
 
                 CHECK(asymmetric.value(0) == doctest::Approx(uniform.value));
                 CHECK(asymmetric.value(1) == doctest::Approx(uniform.value));
@@ -40,7 +40,7 @@ TEST_CASE("Test statistics") {
             }
         }
     }
-    SUBCASE("UniformRealRDV<asymmetric_t>") {
+    SUBCASE("UniformRealRandVar<asymmetric_t>") {
         for (auto const& [value_a, value_b, value_c, variance] :
              std::array{std::tuple{1.0, 2.0, 3.0, 1.0}, std::tuple{2.0, 2.1, 2.2, 3.0}, std::tuple{0.0, 0.1, 0.2, 1.0},
                         std::tuple{2.0, 0.0, 0.0, 3.0}}) {
@@ -49,7 +49,7 @@ TEST_CASE("Test statistics") {
             CAPTURE(value_c);
             CAPTURE(variance);
 
-            UniformRealRDV<asymmetric_t> const uniform{.value = {value_a, value_b, value_c}, .variance = variance};
+            UniformRealRandVar<asymmetric_t> const uniform{.value = {value_a, value_b, value_c}, .variance = variance};
 
             SUBCASE("Constructor") {
                 CHECK(uniform.value(0) == value_a);
@@ -57,8 +57,8 @@ TEST_CASE("Test statistics") {
                 CHECK(uniform.value(2) == value_c);
                 CHECK(uniform.variance == variance);
             }
-            SUBCASE("Conversion to UniformRealRDV<symmetric_t>") {
-                auto const symmetric = static_cast<UniformRealRDV<symmetric_t>>(uniform);
+            SUBCASE("Conversion to UniformRealRandVar<symmetric_t>") {
+                auto const symmetric = static_cast<UniformRealRandVar<symmetric_t>>(uniform);
 
                 CHECK(symmetric.value == doctest::Approx(mean_val(uniform.value)));
                 CHECK(symmetric.variance == doctest::Approx(variance / 3));
@@ -66,20 +66,20 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("IndependentRealRDV<symmetric_t>") {
+    SUBCASE("IndependentRealRandVar<symmetric_t>") {
         for (auto const& [value, variance] :
              std::array{std::tuple{1.0, 1.0}, std::tuple{2.0, 3.0}, std::tuple{0.0, 1.0}, std::tuple{2.0, 3.0}}) {
             CAPTURE(value);
             CAPTURE(variance);
 
-            IndependentRealRDV<symmetric_t> const independent{.value = value, .variance = variance};
+            IndependentRealRandVar<symmetric_t> const independent{.value = value, .variance = variance};
 
             SUBCASE("Constructor") {
                 CHECK(independent.value == value);
                 CHECK(independent.variance == variance);
             }
-            SUBCASE("Conversion to IndependentRealRDV<asymmetric_t>") {
-                auto const asymmetric = static_cast<IndependentRealRDV<asymmetric_t>>(independent);
+            SUBCASE("Conversion to IndependentRealRandVar<asymmetric_t>") {
+                auto const asymmetric = static_cast<IndependentRealRandVar<asymmetric_t>>(independent);
 
                 CHECK(asymmetric.value(0) == doctest::Approx(independent.value));
                 CHECK(asymmetric.value(1) == doctest::Approx(independent.value));
@@ -90,7 +90,7 @@ TEST_CASE("Test statistics") {
             }
         }
     }
-    SUBCASE("IndependentRealRDV<asymmetric_t>") {
+    SUBCASE("IndependentRealRandVar<asymmetric_t>") {
         for (auto const& [value_a, value_b, value_c, variance_a, variance_b, variance_c] :
              std::array{std::tuple{1.0, 2.0, 3.0, 1.0, 2.0, 3.0}, std::tuple{2.0, 2.1, 2.2, 3.0, 1.0, 2.0},
                         std::tuple{0.0, 0.1, 0.2, 1.0, 1.0, 1.0}, std::tuple{2.0, 0.0, 0.0, 3.0, 3.0, 3.0}}) {
@@ -101,8 +101,8 @@ TEST_CASE("Test statistics") {
             CAPTURE(variance_b);
             CAPTURE(variance_c);
 
-            IndependentRealRDV<asymmetric_t> const independent{.value = {value_a, value_b, value_c},
-                                                               .variance = {variance_a, variance_b, variance_c}};
+            IndependentRealRandVar<asymmetric_t> const independent{.value = {value_a, value_b, value_c},
+                                                                   .variance = {variance_a, variance_b, variance_c}};
 
             SUBCASE("Constructor") {
                 CHECK(independent.value(0) == value_a);
@@ -112,18 +112,18 @@ TEST_CASE("Test statistics") {
                 CHECK(independent.variance(1) == variance_b);
                 CHECK(independent.variance(2) == variance_c);
             }
-            SUBCASE("Conversion to IndependentRealRDV<symmetric_t>") {
-                auto const symmetric = static_cast<IndependentRealRDV<symmetric_t>>(independent);
+            SUBCASE("Conversion to IndependentRealRandVar<symmetric_t>") {
+                auto const symmetric = static_cast<IndependentRealRandVar<symmetric_t>>(independent);
 
                 CHECK(symmetric.value == doctest::Approx(mean_val(independent.value)));
                 CHECK(symmetric.variance == doctest::Approx(mean_val(independent.variance) / 3.0));
             }
-            SUBCASE("Conversion to UniformRealRDV<symmetric_t>") {
-                auto const uniform = static_cast<UniformRealRDV<symmetric_t>>(independent);
-                auto const via_asym_uniform =
-                    static_cast<UniformRealRDV<symmetric_t>>(static_cast<UniformRealRDV<asymmetric_t>>(independent));
-                auto const via_sym_independent =
-                    static_cast<UniformRealRDV<symmetric_t>>(static_cast<IndependentRealRDV<symmetric_t>>(independent));
+            SUBCASE("Conversion to UniformRealRandVar<symmetric_t>") {
+                auto const uniform = static_cast<UniformRealRandVar<symmetric_t>>(independent);
+                auto const via_asym_uniform = static_cast<UniformRealRandVar<symmetric_t>>(
+                    static_cast<UniformRealRandVar<asymmetric_t>>(independent));
+                auto const via_sym_independent = static_cast<UniformRealRandVar<symmetric_t>>(
+                    static_cast<IndependentRealRandVar<symmetric_t>>(independent));
 
                 CHECK(uniform.value == doctest::Approx(via_asym_uniform.value));
                 CHECK(uniform.variance == doctest::Approx(via_asym_uniform.variance));
@@ -133,7 +133,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("UniformComplexRDV<symmetric_t>") {
+    SUBCASE("UniformComplexRandVar<symmetric_t>") {
         for (auto const& [real_value, imag_value, variance] :
              std::array{std::tuple{1.0, 0.0, 1.0}, std::tuple{2.0, 0.0, 3.0}, std::tuple{0.0, 1.0, 1.0},
                         std::tuple{0.0, 2.0, 1.0}, std::tuple{1.0, 1.0, 1.0}, std::tuple{2.0, 2.0, 3.0}}) {
@@ -141,7 +141,7 @@ TEST_CASE("Test statistics") {
             CAPTURE(imag_value);
             CAPTURE(variance);
 
-            UniformComplexRDV<symmetric_t> const uniform{.value = {real_value, imag_value}, .variance = variance};
+            UniformComplexRandVar<symmetric_t> const uniform{.value = {real_value, imag_value}, .variance = variance};
 
             SUBCASE("Constructor") {
                 CHECK(real(uniform.value) == real_value);
@@ -162,7 +162,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("UniformComplexRDV<asymmetric_t>") {
+    SUBCASE("UniformComplexRandVar<asymmetric_t>") {
         for (auto const& [real_value, imag_value, variance] :
              std::array{std::tuple{AsymRealValue{1.0, 2.0, 3.0}, AsymRealValue{0.0, 0.0, 0.0}, 1.0},
                         std::tuple{AsymRealValue{2.0, 0.0, 0.0}, AsymRealValue{0.0, 3.0, 3.0}, 3.0},
@@ -174,7 +174,7 @@ TEST_CASE("Test statistics") {
             CAPTURE(imag_value);
             CAPTURE(variance);
 
-            UniformComplexRDV<asymmetric_t> const uniform{.value = {real_value, imag_value}, .variance = variance};
+            UniformComplexRandVar<asymmetric_t> const uniform{.value = {real_value, imag_value}, .variance = variance};
 
             SUBCASE("Constructor") {
                 CHECK(real(uniform.value(0)) == real_value(0));
@@ -194,7 +194,7 @@ TEST_CASE("Test statistics") {
             }
         }
     }
-    SUBCASE("IndependentComplexRDV<symmetric_t>") {
+    SUBCASE("IndependentComplexRandVar<symmetric_t>") {
         for (auto const& [real_value, imag_value, variance] :
              std::array{std::tuple{1.0, 0.0, 1.0}, std::tuple{2.0, 0.0, 3.0}, std::tuple{0.0, 1.0, 1.0},
                         std::tuple{0.0, 2.0, 1.0}, std::tuple{1.0, 1.0, 1.0}, std::tuple{2.0, 2.0, 3.0}}) {
@@ -202,16 +202,16 @@ TEST_CASE("Test statistics") {
             CAPTURE(imag_value);
             CAPTURE(variance);
 
-            IndependentComplexRDV<symmetric_t> const independent{.value = {real_value, imag_value},
-                                                                 .variance = variance};
+            IndependentComplexRandVar<symmetric_t> const independent{.value = {real_value, imag_value},
+                                                                     .variance = variance};
 
             SUBCASE("Constructor") {
                 CHECK(real(independent.value) == real_value);
                 CHECK(imag(independent.value) == imag_value);
                 CHECK(independent.variance == variance);
             }
-            SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
-                auto const uniform = static_cast<UniformComplexRDV<symmetric_t>>(independent);
+            SUBCASE("Conversion to UniformComplexRandVar<symmetric_t>") {
+                auto const uniform = static_cast<UniformComplexRandVar<symmetric_t>>(independent);
 
                 CHECK(real(uniform.value) == doctest::Approx(real(independent.value)));
                 CHECK(imag(uniform.value) == doctest::Approx(imag(independent.value)));
@@ -219,7 +219,7 @@ TEST_CASE("Test statistics") {
             }
         }
     }
-    SUBCASE("DecomposedComplexRDV<symmetric_t>") {
+    SUBCASE("DecomposedComplexRandVar<symmetric_t>") {
         for (auto const& [real_value, real_variance, imag_value, imag_variance] : std::array{
                  std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2}, std::tuple{0.0, 1.0, 1.0, 0.2},
                  std::tuple{0.0, 1.0, 2.0, 0.2}, std::tuple{1.0, 1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 2.0, 0.2}}) {
@@ -228,7 +228,7 @@ TEST_CASE("Test statistics") {
             CAPTURE(imag_value);
             CAPTURE(imag_variance);
 
-            DecomposedComplexRDV<symmetric_t> const decomposed{
+            DecomposedComplexRandVar<symmetric_t> const decomposed{
                 .real_component = {.value = real_value, .variance = real_variance},
                 .imag_component = {.value = imag_value, .variance = imag_variance}};
 
@@ -242,15 +242,15 @@ TEST_CASE("Test statistics") {
                 CHECK(real(decomposed.value()) == doctest::Approx(real_value));
                 CHECK(imag(decomposed.value()) == doctest::Approx(imag_value));
             }
-            SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
-                auto const uniform = static_cast<UniformComplexRDV<symmetric_t>>(decomposed);
+            SUBCASE("Conversion to UniformComplexRandVar<symmetric_t>") {
+                auto const uniform = static_cast<UniformComplexRandVar<symmetric_t>>(decomposed);
 
                 CHECK(real(uniform.value) == doctest::Approx(real(decomposed.value())));
                 CHECK(imag(uniform.value) == doctest::Approx(imag(decomposed.value())));
                 CHECK(uniform.variance == doctest::Approx(real_variance + imag_variance));
             }
-            SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
-                auto const independent = static_cast<IndependentComplexRDV<symmetric_t>>(decomposed);
+            SUBCASE("Conversion to IndependentComplexRandVar<symmetric_t>") {
+                auto const independent = static_cast<IndependentComplexRandVar<symmetric_t>>(decomposed);
 
                 CHECK(real(independent.value) == doctest::Approx(real(decomposed.value())));
                 CHECK(imag(independent.value) == doctest::Approx(imag(decomposed.value())));
@@ -259,7 +259,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("DecomposedComplexRDV<asymmetric_t>") {
+    SUBCASE("DecomposedComplexRandVar<asymmetric_t>") {
         for (auto const& [real_value_a, real_value_b, real_value_c, real_variance_a, real_variance_b, real_variance_c,
                           imag_value_a, imag_value_b, imag_value_c, imag_variance_a, imag_variance_b, imag_variance_c] :
              std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.2, 0.3, 0.4},
@@ -277,7 +277,7 @@ TEST_CASE("Test statistics") {
             CAPTURE(imag_variance_b);
             CAPTURE(imag_variance_c);
 
-            DecomposedComplexRDV<asymmetric_t> const decomposed{
+            DecomposedComplexRandVar<asymmetric_t> const decomposed{
                 .real_component = {.value = {real_value_a, real_value_b, real_value_c},
                                    .variance = {real_variance_a, real_variance_b, real_variance_c}},
                 .imag_component = {.value = {imag_value_a, imag_value_b, imag_value_c},
@@ -305,8 +305,8 @@ TEST_CASE("Test statistics") {
                 CHECK(real(decomposed.value()(2)) == doctest::Approx(real_value_c));
                 CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag_value_c));
             }
-            SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
-                auto const uniform = static_cast<UniformComplexRDV<asymmetric_t>>(decomposed);
+            SUBCASE("Conversion to UniformComplexRandVar<asymmetric_t>") {
+                auto const uniform = static_cast<UniformComplexRandVar<asymmetric_t>>(decomposed);
 
                 CHECK(real(uniform.value(0)) == doctest::Approx(real(decomposed.value()(0))));
                 CHECK(imag(uniform.value(0)) == doctest::Approx(imag(decomposed.value()(0))));
@@ -317,8 +317,8 @@ TEST_CASE("Test statistics") {
                 CHECK(uniform.variance == doctest::Approx(real_variance_a + real_variance_b + real_variance_c +
                                                           imag_variance_a + imag_variance_b + imag_variance_c));
             }
-            SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
-                auto const independent = static_cast<IndependentComplexRDV<asymmetric_t>>(decomposed);
+            SUBCASE("Conversion to IndependentComplexRandVar<asymmetric_t>") {
+                auto const independent = static_cast<IndependentComplexRandVar<asymmetric_t>>(decomposed);
 
                 CHECK(real(independent.value(0)) == doctest::Approx(real(decomposed.value()(0))));
                 CHECK(imag(independent.value(0)) == doctest::Approx(imag(decomposed.value()(0))));
@@ -333,7 +333,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("PolarComplexRDV<symmetric_t>") {
+    SUBCASE("PolarComplexRandVar<symmetric_t>") {
         SUBCASE("Constructor") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
@@ -343,7 +343,7 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle);
                 CAPTURE(angle_variance);
 
-                PolarComplexRDV<symmetric_t> const polar{
+                PolarComplexRandVar<symmetric_t> const polar{
                     .magnitude = {.value = magnitude, .variance = magnitude_variance},
                     .angle = {.value = angle, .variance = angle_variance}};
 
@@ -362,7 +362,7 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_variance);
 
                 SUBCASE("No phase shift") {
-                    PolarComplexRDV<symmetric_t> const polar{
+                    PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = 0.0, .variance = angle_variance}};
 
@@ -370,7 +370,7 @@ TEST_CASE("Test statistics") {
                     CHECK(imag(polar.value()) == doctest::Approx(0.0));
                 }
                 SUBCASE("Perpendicular phase shift") {
-                    PolarComplexRDV<symmetric_t> const polar{
+                    PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = pi / 2, .variance = angle_variance}};
 
@@ -378,7 +378,7 @@ TEST_CASE("Test statistics") {
                     CHECK(imag(polar.value()) == doctest::Approx(polar.magnitude.value));
                 }
                 SUBCASE("45deg phase shift") {
-                    PolarComplexRDV<symmetric_t> const polar{
+                    PolarComplexRandVar<symmetric_t> const polar{
                         .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = pi / 4, .variance = angle_variance}};
 
@@ -388,7 +388,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to DecomposedComplexRDV<symmetric_t>") {
+        SUBCASE("Conversion to DecomposedComplexRandVar<symmetric_t>") {
             for (auto const& [magnitude, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 0.2}, std::tuple{1.0, 3.0, 0.2},
                             std::tuple{1.0, 2.0, 0.4}}) {
@@ -397,10 +397,11 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_variance);
 
                 SUBCASE("No phase shift") {
-                    PolarComplexRDV<symmetric_t> const polar{.magnitude = {.value = magnitude, .variance = magnitude},
-                                                             .angle = {.value = 0.0, .variance = angle_variance}};
+                    PolarComplexRandVar<symmetric_t> const polar{
+                        .magnitude = {.value = magnitude, .variance = magnitude},
+                        .angle = {.value = 0.0, .variance = angle_variance}};
 
-                    auto const decomposed = static_cast<DecomposedComplexRDV<symmetric_t>>(polar);
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
 
                     CHECK(decomposed.real_component.value == doctest::Approx(polar.magnitude.value));
                     CHECK(decomposed.imag_component.value == doctest::Approx(0.0));
@@ -412,10 +413,11 @@ TEST_CASE("Test statistics") {
                 }
 
                 SUBCASE("Perpendicular phase shift") {
-                    PolarComplexRDV<symmetric_t> const polar{.magnitude = {.value = magnitude, .variance = magnitude},
-                                                             .angle = {.value = pi / 2, .variance = angle_variance}};
+                    PolarComplexRandVar<symmetric_t> const polar{
+                        .magnitude = {.value = magnitude, .variance = magnitude},
+                        .angle = {.value = pi / 2, .variance = angle_variance}};
 
-                    auto const decomposed = static_cast<DecomposedComplexRDV<symmetric_t>>(polar);
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
 
                     CHECK(decomposed.real_component.value == doctest::Approx(0.0));
                     CHECK(decomposed.imag_component.value == doctest::Approx(polar.magnitude.value));
@@ -427,11 +429,12 @@ TEST_CASE("Test statistics") {
                 }
 
                 SUBCASE("45deg phase shift") {
-                    PolarComplexRDV<symmetric_t> const polar{.magnitude = {.value = magnitude, .variance = magnitude},
-                                                             .angle = {.value = pi / 4, .variance = angle_variance}};
+                    PolarComplexRandVar<symmetric_t> const polar{
+                        .magnitude = {.value = magnitude, .variance = magnitude},
+                        .angle = {.value = pi / 4, .variance = angle_variance}};
 
-                    auto const decomposed = static_cast<DecomposedComplexRDV<symmetric_t>>(polar);
-                    auto const uniform = static_cast<UniformComplexRDV<symmetric_t>>(polar);
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
+                    auto const uniform = static_cast<UniformComplexRandVar<symmetric_t>>(polar);
 
                     CHECK(decomposed.real_component.value == doctest::Approx(real(uniform.value)));
                     CHECK(decomposed.imag_component.value == doctest::Approx(imag(uniform.value)));
@@ -443,9 +446,9 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        // TODO: Add Conversion to DecomposedComplexRDV<asymmetric_t>
+        // TODO: Add Conversion to DecomposedComplexRandVar<asymmetric_t>
 
-        SUBCASE("Conversion to IndependentComplexRDV<symmetric_t>") {
+        SUBCASE("Conversion to IndependentComplexRandVar<symmetric_t>") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
@@ -454,11 +457,11 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle);
                 CAPTURE(angle_variance);
 
-                PolarComplexRDV<symmetric_t> const polar{
+                PolarComplexRandVar<symmetric_t> const polar{
                     .magnitude = {.value = magnitude, .variance = magnitude_variance},
                     .angle = {.value = angle, .variance = angle_variance}};
 
-                auto const independent = static_cast<IndependentComplexRDV<symmetric_t>>(polar);
+                auto const independent = static_cast<IndependentComplexRandVar<symmetric_t>>(polar);
 
                 CHECK(real(independent.value) == doctest::Approx(real(polar.value())));
                 CHECK(imag(independent.value) == doctest::Approx(imag(polar.value())));
@@ -467,7 +470,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to UniformComplexRDV<symmetric_t>") {
+        SUBCASE("Conversion to UniformComplexRandVar<symmetric_t>") {
             for (auto const& [magnitude, magnitude_variance, angle, angle_variance] :
                  std::array{std::tuple{1.0, 1.0, 0.0, 0.2}, std::tuple{2.0, 3.0, 0.0, 0.2},
                             std::tuple{1.0, 1.0, pi / 2, 0.2}, std::tuple{1.0, 1.0, pi / 4, 0.2}}) {
@@ -476,11 +479,11 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle);
                 CAPTURE(angle_variance);
 
-                PolarComplexRDV<symmetric_t> const polar{
+                PolarComplexRandVar<symmetric_t> const polar{
                     .magnitude = {.value = magnitude, .variance = magnitude_variance},
                     .angle = {.value = angle, .variance = angle_variance}};
 
-                auto const uniform = static_cast<UniformComplexRDV<symmetric_t>>(polar);
+                auto const uniform = static_cast<UniformComplexRandVar<symmetric_t>>(polar);
 
                 CHECK(real(uniform.value) == doctest::Approx(real(polar.value())));
                 CHECK(imag(uniform.value) == doctest::Approx(imag(polar.value())));
@@ -490,7 +493,7 @@ TEST_CASE("Test statistics") {
         }
     }
 
-    SUBCASE("PolarComplexRDV<asymmetric_t>") {
+    SUBCASE("PolarComplexRandVar<asymmetric_t>") {
         SUBCASE("Constructor") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
                               angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
@@ -504,7 +507,7 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_c);
                 CAPTURE(angle_variance);
 
-                PolarComplexRDV<asymmetric_t> const polar{
+                PolarComplexRandVar<asymmetric_t> const polar{
                     .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                     .angle = {.value = {angle_a, angle_b, angle_c}, .variance = angle_variance}};
 
@@ -529,7 +532,7 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_variance);
 
                 SUBCASE("No phase shift") {
-                    PolarComplexRDV<asymmetric_t> const polar{
+                    PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {0.0, deg_240, deg_120}, .variance = angle_variance}};
 
@@ -541,7 +544,7 @@ TEST_CASE("Test statistics") {
                     CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * sqrt3 / 2));
                 }
                 SUBCASE("Perpendicular phase shift") {
-                    PolarComplexRDV<asymmetric_t> const polar{
+                    PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {pi / 2, deg_240 + pi / 2, deg_120 + pi / 2}, .variance = angle_variance}};
 
@@ -553,7 +556,7 @@ TEST_CASE("Test statistics") {
                     CHECK(imag(polar.value()(2)) == doctest::Approx(polar.magnitude.value(2) * -0.5));
                 }
                 SUBCASE("45deg phase shift") {
-                    PolarComplexRDV<asymmetric_t> const polar{
+                    PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {pi / 4, deg_240 + pi / 4, deg_120 + pi / 4}, .variance = angle_variance}};
 
@@ -567,7 +570,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to DecomposedComplexRDV<asymmetric_t>") {
+        SUBCASE("Conversion to DecomposedComplexRandVar<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
                  std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.2}, std::tuple{2.0, 3.0, 4.0, 0.3, 0.3}}) {
                 CAPTURE(magnitude_a);
@@ -577,11 +580,11 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_variance);
 
                 SUBCASE("No phase shift") {
-                    PolarComplexRDV<asymmetric_t> const polar{
+                    PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {0.0, deg_240, deg_120}, .variance = angle_variance}};
 
-                    auto const decomposed = static_cast<DecomposedComplexRDV<asymmetric_t>>(polar);
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<asymmetric_t>>(polar);
 
                     CHECK(decomposed.real_component.value(0) == doctest::Approx(polar.magnitude.value(0)));
                     CHECK(decomposed.imag_component.value(0) == doctest::Approx(0.0));
@@ -622,11 +625,11 @@ TEST_CASE("Test statistics") {
 
                 SUBCASE("Perpendicular phase shift") {
                     auto const shift = pi / 2;
-                    PolarComplexRDV<asymmetric_t> const polar{
+                    PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {shift, shift + deg_240, shift + deg_120}, .variance = angle_variance}};
 
-                    auto const decomposed = static_cast<DecomposedComplexRDV<asymmetric_t>>(polar);
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<asymmetric_t>>(polar);
 
                     CHECK(decomposed.real_component.value(0) == doctest::Approx(0.0));
                     CHECK(decomposed.imag_component.value(0) == doctest::Approx(polar.magnitude.value(0)));
@@ -667,11 +670,11 @@ TEST_CASE("Test statistics") {
 
                 SUBCASE("45deg phase shift") {
                     auto const shift = pi / 4;
-                    PolarComplexRDV<asymmetric_t> const polar{
+                    PolarComplexRandVar<asymmetric_t> const polar{
                         .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                         .angle = {.value = {shift, deg_240 + shift, deg_120 + shift}, .variance = angle_variance}};
 
-                    auto const decomposed = static_cast<DecomposedComplexRDV<asymmetric_t>>(polar);
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<asymmetric_t>>(polar);
 
                     CHECK(decomposed.real_component.value(0) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
                     CHECK(decomposed.imag_component.value(0) == doctest::Approx(polar.magnitude.value(0) * inv_sqrt2));
@@ -719,9 +722,9 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        // TODO: Add Conversion to DecomposedComplexRDV<symmetric_t>
+        // TODO: Add Conversion to DecomposedComplexRandVar<symmetric_t>
 
-        SUBCASE("Conversion to IndependentComplexRDV<asymmetric_t>") {
+        SUBCASE("Conversion to IndependentComplexRandVar<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
                               angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
                                                            std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
@@ -734,11 +737,11 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_c);
                 CAPTURE(angle_variance);
 
-                PolarComplexRDV<asymmetric_t> const polar{
+                PolarComplexRandVar<asymmetric_t> const polar{
                     .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                     .angle = {.value = {angle_a, angle_b, angle_c}, .variance = angle_variance}};
 
-                auto const independent = static_cast<IndependentComplexRDV<asymmetric_t>>(polar);
+                auto const independent = static_cast<IndependentComplexRandVar<asymmetric_t>>(polar);
 
                 CHECK(real(independent.value(0)) == doctest::Approx(real(polar.value()(0))));
                 CHECK(imag(independent.value(0)) == doctest::Approx(imag(polar.value()(0))));
@@ -755,7 +758,7 @@ TEST_CASE("Test statistics") {
             }
         }
 
-        SUBCASE("Conversion to UniformComplexRDV<asymmetric_t>") {
+        SUBCASE("Conversion to UniformComplexRandVar<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
                               angle_variance] : std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.0, pi / 4, pi / 2, 0.2},
                                                            std::tuple{2.0, 3.0, 4.0, 0.3, 0.0, pi / 6, pi / 3, 0.3}}) {
@@ -768,11 +771,11 @@ TEST_CASE("Test statistics") {
                 CAPTURE(angle_c);
                 CAPTURE(angle_variance);
 
-                PolarComplexRDV<asymmetric_t> const polar{
+                PolarComplexRandVar<asymmetric_t> const polar{
                     .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
                     .angle = {.value = {angle_a, angle_b, angle_c}, .variance = angle_variance}};
 
-                auto const uniform = static_cast<UniformComplexRDV<asymmetric_t>>(polar);
+                auto const uniform = static_cast<UniformComplexRandVar<asymmetric_t>>(polar);
 
                 CHECK(real(uniform.value(0)) == doctest::Approx(real(polar.value()(0))));
                 CHECK(imag(uniform.value(0)) == doctest::Approx(imag(polar.value()(0))));
