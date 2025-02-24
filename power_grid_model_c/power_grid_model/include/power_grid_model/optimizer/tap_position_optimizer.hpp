@@ -592,6 +592,9 @@ class RankIteration {
     constexpr auto iterations_per_rank() const { return iterations_per_rank_; }
     constexpr auto rank_index() const { return rank_index_; }
 
+    // Setters
+    void set_rank_index(Idx rank_index) { rank_index_ = rank_index; }
+
     void iterate_ranks(auto const& ranked_order, auto apply_single_object_in_rank, bool& adjusted) {
         for (Idx i = 0; i < static_cast<Idx>(ranked_order.size()); ++i) {
             auto const& same_rank_regulators = ranked_order[i];
@@ -913,11 +916,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool const strategy_max =
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
+        Idx rank_index = 0;
+        RankIteration rank_iterator(iterations_per_rank, rank_index);
 
         while (tap_changed) {
             tap_changed = false;
             UpdateBuffer update_data;
-            Idx rank_index = 0;
+            rank_iterator.set_rank_index(0);
 
             auto const adjust_transformer_in_rank = [&](Idx const& rank_idx, Idx const& transformer_idx,
                                                         std::vector<RegulatedTransformer> const& same_rank_regulators) {
@@ -927,7 +932,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return tap_changed;
             };
 
-            RankIteration rank_iterator(iterations_per_rank, rank_index);
             rank_iterator.iterate_ranks(regulator_order, adjust_transformer_in_rank, tap_changed);
             iterations_per_rank = rank_iterator.iterations_per_rank();
             rank_index = rank_iterator.rank_index();
