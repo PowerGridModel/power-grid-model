@@ -1199,6 +1199,10 @@ TEST_CASE("Test RankIterator") {
         CHECK(iterations_per_rank[2] == 6);
         CHECK(rank_index == 0);
     }
+    SUBCASE("Test set rank_index") {
+        rank_iterator.set_rank_index(1);
+        CHECK(rank_iterator.rank_index() == 1);
+    }
 }
 
 } // namespace power_grid_model
