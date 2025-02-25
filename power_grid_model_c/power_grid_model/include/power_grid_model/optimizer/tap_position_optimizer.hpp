@@ -602,7 +602,9 @@ class RankIteration {
                 adjusted = apply_single_object_in_rank(i, j, same_rank_regulators) || adjusted;
             }
             if (adjusted) {
-                iterations_per_rank_[rank_index_ + 1] = 0;
+                if (rank_index_ < static_cast<Idx>(iterations_per_rank_.size()) - 1) {
+                    std::fill(iterations_per_rank_.begin() + rank_index_ + 1, iterations_per_rank_.end(), 0);
+                }
                 ++iterations_per_rank_[rank_index_];
                 return adjusted;
             }
@@ -912,13 +914,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto result = calculate_(state, method);
         ++total_iterations;
 
-        std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size() + 1),
-                                              static_cast<IntS>(0));
         bool const strategy_max =
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
         Idx rank_index = 0;
-        RankIteration rank_iterator(std::move(iterations_per_rank), rank_index);
+        RankIteration rank_iterator(std::vector<IntS>(regulator_order.size()), rank_index);
 
         while (tap_changed) {
             tap_changed = false;
@@ -934,7 +934,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             };
 
             tap_changed = rank_iterator.iterate_ranks(regulator_order, adjust_transformer_in_rank, tap_changed);
-            iterations_per_rank = rank_iterator.iterations_per_rank();
+            auto const& iterations_per_rank = rank_iterator.iterations_per_rank();
             rank_index = rank_iterator.rank_index();
 
             if (tap_changed) {
@@ -946,7 +946,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 ++total_iterations;
             }
         }
-
         return result;
     }
 
