@@ -1168,18 +1168,20 @@ TEST_CASE("Test tap position optmizer I/O") {
 }
 
 TEST_CASE("Test RankIterator") {
-    optimizer::tap_position_optimizer::RankIteration rank_iterator{};
     std::vector<std::vector<IntS>> regulator_order = {{0, 0, 0}, {0, 0, 0}};
     bool tap_changed{false};
     std::vector<IntS> iterations_per_rank = {2, 4, 6};
     Idx rank_index{0};
     bool update{false};
+    optimizer::tap_position_optimizer::RankIteration rank_iterator(iterations_per_rank, rank_index);
 
     auto const mock_lambda = [&](Idx const& /*rank_idx*/, Idx const& /*transformer_idx*/,
                                  std::vector<IntS> const& /*same_rank_regulators*/) { return update; };
     SUBCASE("Test tap not changed") {
         // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
-        rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed, iterations_per_rank, rank_index);
+        tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
+        iterations_per_rank = rank_iterator.iterations_per_rank();
+        rank_index = rank_iterator.rank_index();
         CHECK(iterations_per_rank[0] == 2);
         CHECK(iterations_per_rank[1] == 4);
         CHECK(iterations_per_rank[2] == 6);
@@ -1189,11 +1191,17 @@ TEST_CASE("Test RankIterator") {
     SUBCASE("Test tap changed") {
         // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
         update = true;
-        rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed, iterations_per_rank, rank_index);
+        tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
+        iterations_per_rank = rank_iterator.iterations_per_rank();
+        rank_index = rank_iterator.rank_index();
         CHECK(iterations_per_rank[0] == 3);
         CHECK(iterations_per_rank[1] == 0);
         CHECK(iterations_per_rank[2] == 0);
         CHECK(rank_index == 0);
+    }
+    SUBCASE("Test set rank_index") {
+        rank_iterator.set_rank_index(1);
+        CHECK(rank_iterator.rank_index() == 1);
     }
 }
 
