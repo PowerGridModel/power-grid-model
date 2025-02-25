@@ -596,9 +596,9 @@ class RankIteration {
     void set_rank_index(Idx rank_index) { rank_index_ = rank_index; }
 
     bool iterate_ranks(auto const& ranked_order, auto apply_single_object_in_rank, bool adjusted) {
-        for (Idx i = 0; i < ranked_order.ssize(); ++i) {
+        for (Idx i = 0; i < static_cast<Idx>(ranked_order.size()); ++i) {
             auto const& same_rank_regulators = ranked_order[i];
-            for (Idx j = 0; j < same_rank_regulators.ssize(); ++j) {
+            for (Idx j = 0; j < static_cast<Idx>(same_rank_regulators.size()); ++j) {
                 adjusted = apply_single_object_in_rank(i, j, same_rank_regulators) || adjusted;
             }
             if (adjusted) {
