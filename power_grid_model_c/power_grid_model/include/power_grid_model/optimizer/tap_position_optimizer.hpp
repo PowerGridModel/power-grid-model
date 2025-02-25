@@ -914,12 +914,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto result = calculate_(state, method);
         ++total_iterations;
 
-        std::vector<IntS> iterations_per_rank(regulator_order.size());
         bool const strategy_max =
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
         Idx rank_index = 0;
-        RankIteration rank_iterator(std::move(iterations_per_rank), rank_index);
+        RankIteration rank_iterator(std::vector<IntS>(regulator_order.size()), rank_index);
 
         while (tap_changed) {
             tap_changed = false;
@@ -935,7 +934,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             };
 
             tap_changed = rank_iterator.iterate_ranks(regulator_order, adjust_transformer_in_rank, tap_changed);
-            iterations_per_rank = rank_iterator.iterations_per_rank();
+            auto const& iterations_per_rank = rank_iterator.iterations_per_rank();
             rank_index = rank_iterator.rank_index();
 
             if (tap_changed) {
@@ -947,7 +946,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 ++total_iterations;
             }
         }
-
         return result;
     }
 
