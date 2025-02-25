@@ -608,7 +608,6 @@ class RankIteration {
                 ++iterations_per_rank_[rank_index_];
                 return adjusted;
             }
-
             ++rank_index_;
         }
         return adjusted;
