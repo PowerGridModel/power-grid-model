@@ -589,7 +589,7 @@ class RankIteration {
         : iterations_per_rank_{std::move(iterations_per_rank)}, rank_index_{rank_index} {}
 
     // Getters
-    constexpr auto iterations_per_rank() const { return iterations_per_rank_; }
+    constexpr auto const& iterations_per_rank() const { return iterations_per_rank_; }
     constexpr auto rank_index() const { return rank_index_; }
 
     // Setters
