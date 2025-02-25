@@ -1178,7 +1178,6 @@ TEST_CASE("Test RankIterator") {
     auto const mock_lambda = [&](Idx const& /*rank_idx*/, Idx const& /*transformer_idx*/,
                                  std::vector<IntS> const& /*same_rank_regulators*/) { return update; };
     SUBCASE("Test tap not changed") {
-        // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
@@ -1189,7 +1188,6 @@ TEST_CASE("Test RankIterator") {
         CHECK(tap_changed == false);
     }
     SUBCASE("Test tap changed") {
-        // std::vector<IntS> iterations_per_rank_original = iterations_per_rank;
         update = true;
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
@@ -1198,6 +1196,17 @@ TEST_CASE("Test RankIterator") {
         CHECK(iterations_per_rank[1] == 0);
         CHECK(iterations_per_rank[2] == 0);
         CHECK(rank_index == 0);
+    }
+    SUBCASE("Test tap changed last rank") {
+        update = true;
+        rank_iterator.set_rank_index(2);
+        tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
+        iterations_per_rank = rank_iterator.iterations_per_rank();
+        rank_index = rank_iterator.rank_index();
+        CHECK(iterations_per_rank[0] == 2);
+        CHECK(iterations_per_rank[1] == 4);
+        CHECK(iterations_per_rank[2] == 7);
+        CHECK(rank_index == 2);
     }
     SUBCASE("Test set rank_index") {
         rank_iterator.set_rank_index(1);
