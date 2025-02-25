@@ -914,7 +914,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         auto result = calculate_(state, method);
         ++total_iterations;
 
-        std::vector<IntS> iterations_per_rank(static_cast<signed char>(regulator_order.size()), static_cast<IntS>(0));
+        std::vector<IntS> iterations_per_rank(regulator_order.size());
         bool const strategy_max =
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
