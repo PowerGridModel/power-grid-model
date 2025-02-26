@@ -656,25 +656,35 @@ auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_ran
             }
         };
 }
-auto check_compensated_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_any_comp, IntS tap_range_min,
-                                          IntS tap_range_max, IntS tap_range_min_comp,
-                                          IntS tap_range_max_comp) -> TapPositionCheckFunc {
-    return [tap_pos_any, tap_pos_any_comp, tap_range_min, tap_range_max, tap_range_min_comp,
-            tap_range_max_comp](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
+struct CompensatedResultPerStratety {
+    IntS tap_pos_any;
+    IntS tap_pos_any_comp;
+    IntS tap_range_min;
+    IntS tap_range_max;
+    IntS tap_range_min_comp;
+    IntS tap_range_max_comp;
+    IntS get_any(bool control_at_tap_side) const { return control_at_tap_side ? tap_pos_any_comp : tap_pos_any; }
+    IntS get_min(bool control_at_tap_side) const {
+        return control_at_tap_side ? tap_range_max_comp : tap_range_min_comp;
+    }
+    IntS get_max(bool control_at_tap_side) const { return control_at_tap_side ? tap_range_min : tap_range_max; }
+};
+auto check_compensated_exact_per_strategy(CompensatedResultPerStratety const& comp_result) -> TapPositionCheckFunc {
+    return [comp_result](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
         using enum OptimizerStrategy;
 
         switch (strategy) {
         case any:
         case fast_any:
-            CHECK(value == (control_at_tap_side ? tap_pos_any_comp : tap_pos_any));
+            CHECK(value == comp_result.get_any(control_at_tap_side));
             break;
         case local_maximum:
         case global_maximum:
-            CHECK(value == (control_at_tap_side ? tap_range_min : tap_range_max));
+            CHECK(value == comp_result.get_max(control_at_tap_side));
             break;
         case local_minimum:
         case global_minimum:
-            CHECK(value == (control_at_tap_side ? tap_range_max_comp : tap_range_min_comp));
+            CHECK(value == comp_result.get_min(control_at_tap_side));
             break;
         default:
             FAIL("Unreachable");
@@ -1011,15 +1021,30 @@ TEST_CASE("Test Tap position optimizer") {
                 SUBCASE("no line drop compensation") { check_b = test::check_exact_per_strategy(3, 4, 2); }
                 SUBCASE("resistance") {
                     update_data.line_drop_compensation_r = 0.5 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 3,
+                                                                          .tap_pos_any_comp = 3,
+                                                                          .tap_range_min = 3,
+                                                                          .tap_range_max = 3,
+                                                                          .tap_range_min_comp = 4,
+                                                                          .tap_range_max_comp = 1});
                 }
                 SUBCASE("positive reactance") {
                     update_data.line_drop_compensation_x = 0.125 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 4, 2, 4, 1);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 3,
+                                                                          .tap_pos_any_comp = 3,
+                                                                          .tap_range_min = 4,
+                                                                          .tap_range_max = 2,
+                                                                          .tap_range_min_comp = 4,
+                                                                          .tap_range_max_comp = 1});
                 }
                 SUBCASE("negative reactance") {
                     update_data.line_drop_compensation_x = -0.5 / base_power_3p;
-                    check_b = test::check_compensated_exact_per_strategy(3, 3, 3, 3, 4, 1);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 3,
+                                                                          .tap_pos_any_comp = 3,
+                                                                          .tap_range_min = 3,
+                                                                          .tap_range_max = 3,
+                                                                          .tap_range_min_comp = 4,
+                                                                          .tap_range_max_comp = 1});
                 }
 
                 regulator_b.update(update_data);
@@ -1065,7 +1090,12 @@ TEST_CASE("Test Tap position optimizer") {
                     regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
                     regulator_b.update({.id = 4, .u_set = 0.9, .u_band = 0.5});
                     check_a = test::check_exact(-2);
-                    check_b = test::check_compensated_exact_per_strategy(1, -1, -1, 1, 5, -4);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 1,
+                                                                          .tap_pos_any_comp = -1,
+                                                                          .tap_range_min = -1,
+                                                                          .tap_range_max = 1,
+                                                                          .tap_range_min_comp = 5,
+                                                                          .tap_range_max_comp = -4});
                 }
                 SUBCASE("Situation 2") {
                     regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
