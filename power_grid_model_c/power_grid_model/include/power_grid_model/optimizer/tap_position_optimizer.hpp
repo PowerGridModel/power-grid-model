@@ -1235,8 +1235,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         for (auto const& sub_order : regulator_order) {
             for (auto const& regulator : sub_order) {
                 bool const control_at_tap_side = regulator.control_at_tap_side();
-                regulator.transformer.apply(
-                    [&](auto const& transformer) { get_update(transformer, control_at_tap_side); });
+                regulator.transformer.apply([&get_update, &control_at_tap_side](auto const& transformer) {
+                    get_update(transformer, control_at_tap_side);
+                });
             }
         }
 

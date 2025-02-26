@@ -997,12 +997,11 @@ TEST_CASE("Test Tap position optimizer") {
             SUBCASE("voltage band") {
                 state_b.rank = 0;
                 state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
-                    if (state_b.tap_side == regulator_b.control_side()) {
-                        return static_cast<DoubleComplex>(
-                            test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
-                    }
-                    return static_cast<DoubleComplex>(
-                        test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+                    return state_b.tap_side == regulator_b.control_side()
+                               ? static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max))
+                               : static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
                 };
 
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
@@ -1016,12 +1015,11 @@ TEST_CASE("Test Tap position optimizer") {
             SUBCASE("line drop compensation") {
                 state_b.rank = 0;
                 state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
-                    if (state_b.tap_side == regulator_b.control_side()) {
-                        return static_cast<DoubleComplex>(
-                            test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
-                    }
-                    return static_cast<DoubleComplex>(
-                        test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+                    return state_b.tap_side == regulator_b.control_side()
+                               ? static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max))
+                               : static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
                 };
                 state_b.i_pu = [&state_b, &regulator_b](ControlSide side) {
                     bool const control_at_tap = side == regulator_b.control_side();
@@ -1068,13 +1066,13 @@ TEST_CASE("Test Tap position optimizer") {
 
                     // u_2a = f(tap_pos_a) when rank is 0
                     // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
+                    // u_2a = 1.0 + relative_tap_pos_a, when control side is at tap side
                     // consider u_1a = n_1 = 1.0
                     // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
                     auto const relative_tap_a = static_cast<double>(state_a.tap_pos) * 0.1;
-                    if (state_a.tap_side == regulator_a.control_side()) {
-                        return static_cast<DoubleComplex>(1.0 + relative_tap_a);
-                    }
-                    return static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
+                    return state_a.tap_side == regulator_a.control_side()
+                               ? static_cast<DoubleComplex>(1.0 + relative_tap_a)
+                               : static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
                 };
 
                 state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
@@ -1082,13 +1080,13 @@ TEST_CASE("Test Tap position optimizer") {
 
                     // u_2b = f(tap_pos_a, tap_pos_b) when rank is 1
                     // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
+                    // u_2b = (1.0 + relative_tap_pos_b) / (u_1b * n_2), when control side is at tap side
                     // consider n_2 = 1. Also u_1a = u_2b
                     // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
                     auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
-                    if (state_b.tap_side == regulator_b.control_side()) {
-                        return (1.0 + relative_tap_b) * state_a.u_pu(regulator_a.control_side());
-                    }
-                    return state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
+                    return state_b.tap_side == regulator_b.control_side()
+                               ? (1.0 + relative_tap_b) * state_a.u_pu(regulator_a.control_side())
+                               : state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
                 };
 
                 SUBCASE("Situation 1") {
@@ -1220,13 +1218,13 @@ TEST_CASE("Test Tap position optimizer") {
         SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
             state_b.rank = 0;
             state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
-                if (state_b.tap_side == regulator_b.control_side()) {
-                    return static_cast<DoubleComplex>(
-                        test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max));
-                }
-                // tap pos closer to tap_max at tap side <=> lower voltage at control side
-                return static_cast<DoubleComplex>(
-                    test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+                return state_b.tap_side == regulator_b.control_side()
+                           ? static_cast<DoubleComplex>(
+                                 test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max))
+                           :
+                           // tap pos closer to tap_max at tap side <=> lower voltage at control side
+                           static_cast<DoubleComplex>(
+                               test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
             };
 
             auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
