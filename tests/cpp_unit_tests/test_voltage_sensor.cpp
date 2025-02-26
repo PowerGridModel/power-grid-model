@@ -114,8 +114,8 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensorCalcParam<asymmetric_t> param = voltage_sensor.calc_param<asymmetric_t>();
         CHECK(param.variance == doctest::Approx(6.75));
 
-        ComplexValue<asymmetric_t> expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
-                                                        0.6 * sqrt(3) * exp(1i * 2.2)};
+        ComplexValue<asymmetric_t> expected_param_value{0.5 * sqrt3 * exp(1i * 2.0), 0.55 * sqrt3 * exp(1i * 2.1),
+                                                        0.6 * sqrt3 * exp(1i * 2.2)};
         CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
         CHECK(cabs(param.value[2]) == doctest::Approx(cabs(expected_param_value[2])));
@@ -126,8 +126,7 @@ TEST_CASE("Test voltage sensor") {
 
         update = voltage_sensor.update(vs_update);
         param = voltage_sensor.calc_param<asymmetric_t>();
-        expected_param_value = {1.5 * sqrt(3) * exp(1i * 4.0), 0.55 * sqrt(3) * exp(1i * 4.1),
-                                1.6 * sqrt(3) * exp(1i * 2.2)};
+        expected_param_value = {1.5 * sqrt3 * exp(1i * 4.0), 0.55 * sqrt3 * exp(1i * 4.1), 1.6 * sqrt3 * exp(1i * 2.2)};
 
         CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));

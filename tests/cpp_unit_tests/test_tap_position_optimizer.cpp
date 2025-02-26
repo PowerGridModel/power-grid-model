@@ -712,8 +712,9 @@ TEST_CASE("Test Tap position optimizer") {
     };
 
     auto const get_optimizer = [&](OptimizerStrategy strategy, SearchMethod tap_search) {
-        return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
-            test::mock_state_calculator, updater, strategy, meta_data, tap_search};
+        return pgm_tap::TapPositionOptimizer<MockStateCalculator, std::remove_const_t<decltype(updater)>, MockState,
+                                             MockTransformerRanker>{test::mock_state_calculator, updater, strategy,
+                                                                    meta_data, tap_search};
     };
 
     SUBCASE("empty state") {

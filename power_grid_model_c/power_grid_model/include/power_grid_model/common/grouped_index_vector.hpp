@@ -161,7 +161,7 @@ class DenseGroupedIdxVector {
 
         IdxVector const* dense_vector_{};
         Idx group_{};
-        std::pair<group_iterator, group_iterator> group_range_{};
+        std::pair<group_iterator, group_iterator> group_range_;
 
         friend class boost::iterator_core_access;
 

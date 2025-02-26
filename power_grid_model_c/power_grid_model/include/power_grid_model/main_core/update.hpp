@@ -29,6 +29,7 @@ inline void iterate_component_sequence(Func&& func, ForwardIterator begin, Forwa
         // get component directly using sequence id
         func(*it, sequence_idx[seq]);
     }
+    (void)std::forward<Func>(func);
 }
 
 template <typename T> bool check_id_na(T const& obj) {

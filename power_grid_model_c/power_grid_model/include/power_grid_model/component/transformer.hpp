@@ -193,7 +193,7 @@ class Transformer : public Branch {
         y_series = (1.0 / z_series) / base_y_to;
         // shunt
         DoubleComplex y_shunt;
-        // Y = I0_2 / (U2/sqrt(3)) = i0 * (S / sqrt(3) / U2) / (U2/sqrt(3)) = i0 * S * / U2 / U2
+        // Y = I0_2 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);
