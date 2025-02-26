@@ -925,21 +925,11 @@ TEST_CASE("Test Tap position optimizer") {
                         break;
                     case local_maximum:
                     case global_maximum:
-                        // Max voltage depends on control_at_tap_side
-                        if (control_at_tap_side) {
-                            CHECK(value == state_b.tap_max); // Max tap pos for max voltage
-                        } else {
-                            CHECK(value == state_b.tap_min); // Min tap pos for max voltage
-                        }
+                        CHECK(value == (control_at_tap_side ? state_b.tap_max : state_b.tap_min));
                         break;
                     case local_minimum:
                     case global_minimum:
-                        // Min voltage depends on control_at_tap_side
-                        if (control_at_tap_side) {
-                            CHECK(value == state_b.tap_min); // Min tap pos for min voltage
-                        } else {
-                            CHECK(value == state_b.tap_max); // Max tap pos for min voltage
-                        }
+                        CHECK(value == (control_at_tap_side ? state_b.tap_min : state_b.tap_max));
                         break;
                     default:
                         FAIL("unreachable");
