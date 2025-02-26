@@ -17,6 +17,7 @@ constexpr auto sqrt3_2 = std::numbers::sqrt3 * 0.5;
 constexpr auto deg_90 = std::numbers::pi / 2.0;
 constexpr auto deg_45 = deg_90 / 2.0;
 constexpr auto deg_60 = deg_30 * 2.0;
+const ComplexValue<asymmetric_t> unit_sym_phasor{1.0};
 
 } // namespace
 
@@ -403,7 +404,7 @@ TEST_CASE("Test statistics") {
 
                 SUBCASE("No phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
-                        .magnitude = {.value = magnitude, .variance = magnitude},
+                        .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = 0.0, .variance = angle_variance}};
 
                     auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
@@ -419,7 +420,7 @@ TEST_CASE("Test statistics") {
 
                 SUBCASE("90deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
-                        .magnitude = {.value = magnitude, .variance = magnitude},
+                        .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = deg_90, .variance = angle_variance}};
 
                     auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
@@ -435,7 +436,7 @@ TEST_CASE("Test statistics") {
 
                 SUBCASE("45deg phase shift") {
                     PolarComplexRandVar<symmetric_t> const polar{
-                        .magnitude = {.value = magnitude, .variance = magnitude},
+                        .magnitude = {.value = magnitude, .variance = magnitude_variance},
                         .angle = {.value = deg_45, .variance = angle_variance}};
 
                     auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
@@ -447,6 +448,162 @@ TEST_CASE("Test statistics") {
                     CHECK(decomposed.imag_component.variance == doctest::Approx(decomposed.real_component.variance));
                     CHECK(real(decomposed.value()) == doctest::Approx(real(polar.value())));
                     CHECK(imag(decomposed.value()) == doctest::Approx(imag(polar.value())));
+                }
+            }
+        }
+        SUBCASE("Conversion to DecomposedComplexRandVar<asymmetric_t>") {
+            for (auto const& [magnitude, magnitude_variance, angle_variance] :
+                 std::array{std::tuple{1.0, 1.0, 0.2}, std::tuple{2.0, 1.0, 0.2}, std::tuple{1.0, 3.0, 0.2},
+                            std::tuple{1.0, 2.0, 0.4}}) {
+                CAPTURE(magnitude);
+                CAPTURE(magnitude_variance);
+                CAPTURE(angle_variance);
+
+                SUBCASE("No phase shift") {
+                    auto const shift = 0.0;
+                    PolarComplexRandVar<symmetric_t> const polar{
+                        .magnitude = {.value = magnitude, .variance = magnitude_variance},
+                        .angle = {.value = shift, .variance = angle_variance}};
+
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<asymmetric_t>>(polar);
+
+                    ComplexValue<asymmetric_t> const three_phase_value{polar.value()};
+                    CHECK(decomposed.real_component.value(0) == doctest::Approx(real(three_phase_value(0))));
+                    CHECK(decomposed.imag_component.value(0) == doctest::Approx(imag(three_phase_value(0))));
+                    CHECK(decomposed.real_component.value(1) == doctest::Approx(real(three_phase_value(1))));
+                    CHECK(decomposed.imag_component.value(1) == doctest::Approx(imag(three_phase_value(1))));
+                    CHECK(decomposed.real_component.value(2) == doctest::Approx(real(three_phase_value(2))));
+                    CHECK(decomposed.imag_component.value(2) == doctest::Approx(imag(three_phase_value(2))));
+
+                    CHECK(real(decomposed.value()(0)) == doctest::Approx(real(three_phase_value(0))));
+                    CHECK(imag(decomposed.value()(0)) == doctest::Approx(imag(three_phase_value(0))));
+                    CHECK(real(decomposed.value()(1)) == doctest::Approx(real(three_phase_value(1))));
+                    CHECK(imag(decomposed.value()(1)) == doctest::Approx(imag(three_phase_value(1))));
+                    CHECK(real(decomposed.value()(2)) == doctest::Approx(real(three_phase_value(2))));
+                    CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag(three_phase_value(2))));
+
+                    // One value of variance to 3 phase
+                    auto const real_variance_a = magnitude_variance * cos(shift) * cos(shift) +
+                                                 magnitude * magnitude * sin(shift) * sin(shift) * angle_variance;
+                    CHECK(decomposed.real_component.variance(0) == doctest::Approx(real_variance_a));
+                    auto const real_variance_b =
+                        magnitude_variance * cos(shift - deg_120) * cos(shift - deg_120) +
+                        magnitude * magnitude * sin(shift - deg_120) * sin(shift - deg_120) * angle_variance;
+                    CHECK(decomposed.real_component.variance(1) == doctest::Approx(real_variance_b));
+                    auto const real_variance_c =
+                        magnitude_variance * cos(shift - deg_240) * cos(shift - deg_240) +
+                        magnitude * magnitude * sin(shift - deg_240) * sin(shift - deg_240) * angle_variance;
+                    CHECK(decomposed.real_component.variance(2) == doctest::Approx(real_variance_c));
+
+                    auto const imag_variance_a = magnitude_variance * sin(shift) * sin(shift) +
+                                                 magnitude * magnitude * cos(shift) * cos(shift) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(0) == doctest::Approx(imag_variance_a));
+                    auto const imag_variance_b =
+                        magnitude_variance * sin(shift - deg_120) * sin(shift - deg_120) +
+                        magnitude * magnitude * cos(shift - deg_120) * cos(shift - deg_120) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(1) == doctest::Approx(imag_variance_b));
+                    auto const imag_variance_c =
+                        magnitude_variance * sin(shift - deg_240) * sin(shift - deg_240) +
+                        magnitude * magnitude * cos(shift - deg_240) * cos(shift - deg_240) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(2) == doctest::Approx(imag_variance_c));
+                }
+
+                SUBCASE("90deg phase shift") {
+                    auto const shift = deg_90;
+                    PolarComplexRandVar<symmetric_t> const polar{
+                        .magnitude = {.value = magnitude, .variance = magnitude_variance},
+                        .angle = {.value = shift, .variance = angle_variance}};
+
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<asymmetric_t>>(polar);
+
+                    ComplexValue<asymmetric_t> const three_phase_value{polar.value()};
+                    CHECK(decomposed.real_component.value(0) == doctest::Approx(real(three_phase_value(0))));
+                    CHECK(decomposed.imag_component.value(0) == doctest::Approx(imag(three_phase_value(0))));
+                    CHECK(decomposed.real_component.value(1) == doctest::Approx(real(three_phase_value(1))));
+                    CHECK(decomposed.imag_component.value(1) == doctest::Approx(imag(three_phase_value(1))));
+                    CHECK(decomposed.real_component.value(2) == doctest::Approx(real(three_phase_value(2))));
+                    CHECK(decomposed.imag_component.value(2) == doctest::Approx(imag(three_phase_value(2))));
+
+                    CHECK(real(decomposed.value()(0)) == doctest::Approx(real(three_phase_value(0))));
+                    CHECK(imag(decomposed.value()(0)) == doctest::Approx(imag(three_phase_value(0))));
+                    CHECK(real(decomposed.value()(1)) == doctest::Approx(real(three_phase_value(1))));
+                    CHECK(imag(decomposed.value()(1)) == doctest::Approx(imag(three_phase_value(1))));
+                    CHECK(real(decomposed.value()(2)) == doctest::Approx(real(three_phase_value(2))));
+                    CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag(three_phase_value(2))));
+
+                    // One value of variance to 3 phase
+                    auto const real_variance_a = magnitude_variance * cos(shift) * cos(shift) +
+                                                 magnitude * magnitude * sin(shift) * sin(shift) * angle_variance;
+                    CHECK(decomposed.real_component.variance(0) == doctest::Approx(real_variance_a));
+                    auto const real_variance_b =
+                        magnitude_variance * cos(shift - deg_120) * cos(shift - deg_120) +
+                        magnitude * magnitude * sin(shift - deg_120) * sin(shift - deg_120) * angle_variance;
+                    CHECK(decomposed.real_component.variance(1) == doctest::Approx(real_variance_b));
+                    auto const real_variance_c =
+                        magnitude_variance * cos(shift - deg_240) * cos(shift - deg_240) +
+                        magnitude * magnitude * sin(shift - deg_240) * sin(shift - deg_240) * angle_variance;
+                    CHECK(decomposed.real_component.variance(2) == doctest::Approx(real_variance_c));
+
+                    auto const imag_variance_a = magnitude_variance * sin(shift) * sin(shift) +
+                                                 magnitude * magnitude * cos(shift) * cos(shift) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(0) == doctest::Approx(imag_variance_a));
+                    auto const imag_variance_b =
+                        magnitude_variance * sin(shift - deg_120) * sin(shift - deg_120) +
+                        magnitude * magnitude * cos(shift - deg_120) * cos(shift - deg_120) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(1) == doctest::Approx(imag_variance_b));
+                    auto const imag_variance_c =
+                        magnitude_variance * sin(shift - deg_240) * sin(shift - deg_240) +
+                        magnitude * magnitude * cos(shift - deg_240) * cos(shift - deg_240) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(2) == doctest::Approx(imag_variance_c));
+                }
+
+                SUBCASE("45deg phase shift") {
+                    auto const shift = deg_45;
+                    PolarComplexRandVar<symmetric_t> const polar{
+                        .magnitude = {.value = magnitude, .variance = magnitude_variance},
+                        .angle = {.value = shift, .variance = angle_variance}};
+
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<asymmetric_t>>(polar);
+
+                    ComplexValue<asymmetric_t> const three_phase_value{polar.value()};
+                    CHECK(decomposed.real_component.value(0) == doctest::Approx(real(three_phase_value(0))));
+                    CHECK(decomposed.imag_component.value(0) == doctest::Approx(imag(three_phase_value(0))));
+                    CHECK(decomposed.real_component.value(1) == doctest::Approx(real(three_phase_value(1))));
+                    CHECK(decomposed.imag_component.value(1) == doctest::Approx(imag(three_phase_value(1))));
+                    CHECK(decomposed.real_component.value(2) == doctest::Approx(real(three_phase_value(2))));
+                    CHECK(decomposed.imag_component.value(2) == doctest::Approx(imag(three_phase_value(2))));
+
+                    CHECK(real(decomposed.value()(0)) == doctest::Approx(real(three_phase_value(0))));
+                    CHECK(imag(decomposed.value()(0)) == doctest::Approx(imag(three_phase_value(0))));
+                    CHECK(real(decomposed.value()(1)) == doctest::Approx(real(three_phase_value(1))));
+                    CHECK(imag(decomposed.value()(1)) == doctest::Approx(imag(three_phase_value(1))));
+                    CHECK(real(decomposed.value()(2)) == doctest::Approx(real(three_phase_value(2))));
+                    CHECK(imag(decomposed.value()(2)) == doctest::Approx(imag(three_phase_value(2))));
+
+                    // One value of variance to 3 phase
+                    auto const real_variance_a = magnitude_variance * cos(shift) * cos(shift) +
+                                                 magnitude * magnitude * sin(shift) * sin(shift) * angle_variance;
+                    CHECK(decomposed.real_component.variance(0) == doctest::Approx(real_variance_a));
+                    auto const real_variance_b =
+                        magnitude_variance * cos(shift - deg_120) * cos(shift - deg_120) +
+                        magnitude * magnitude * sin(shift - deg_120) * sin(shift - deg_120) * angle_variance;
+                    CHECK(decomposed.real_component.variance(1) == doctest::Approx(real_variance_b));
+                    auto const real_variance_c =
+                        magnitude_variance * cos(shift - deg_240) * cos(shift - deg_240) +
+                        magnitude * magnitude * sin(shift - deg_240) * sin(shift - deg_240) * angle_variance;
+                    CHECK(decomposed.real_component.variance(2) == doctest::Approx(real_variance_c));
+
+                    auto const imag_variance_a = magnitude_variance * sin(shift) * sin(shift) +
+                                                 magnitude * magnitude * cos(shift) * cos(shift) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(0) == doctest::Approx(imag_variance_a));
+                    auto const imag_variance_b =
+                        magnitude_variance * sin(shift - deg_120) * sin(shift - deg_120) +
+                        magnitude * magnitude * cos(shift - deg_120) * cos(shift - deg_120) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(1) == doctest::Approx(imag_variance_b));
+                    auto const imag_variance_c =
+                        magnitude_variance * sin(shift - deg_240) * sin(shift - deg_240) +
+                        magnitude * magnitude * cos(shift - deg_240) * cos(shift - deg_240) * angle_variance;
+                    CHECK(decomposed.imag_component.variance(2) == doctest::Approx(imag_variance_c));
                 }
             }
         }
@@ -728,6 +885,113 @@ TEST_CASE("Test statistics") {
         }
 
         // TODO: Add Conversion to DecomposedComplexRandVar<symmetric_t>
+        SUBCASE("Conversion to DecomposedComplexRandVar<symmetric_t>") {
+            for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_variance] :
+                 std::array{std::tuple{1.0, 2.0, 3.0, 0.2, 0.2}, std::tuple{2.0, 3.0, 4.0, 0.3, 0.3}}) {
+                CAPTURE(magnitude_a);
+                CAPTURE(magnitude_b);
+                CAPTURE(magnitude_c);
+                CAPTURE(magnitude_variance);
+                CAPTURE(angle_variance);
+
+                SUBCASE("No phase shift") {
+                    PolarComplexRandVar<asymmetric_t> const polar{
+                        .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
+                        .angle = {.value = {0.0, deg_240, deg_120}, .variance = angle_variance}};
+
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
+
+                    auto const pos_seq_value = pos_seq(polar.value());
+
+                    CHECK(decomposed.real_component.value == doctest::Approx(real(pos_seq_value)));
+                    CHECK(decomposed.imag_component.value == doctest::Approx(imag(pos_seq_value)));
+
+                    CHECK(real(decomposed.value()) == doctest::Approx(real(pos_seq_value)));
+                    CHECK(imag(decomposed.value()) == doctest::Approx(imag(pos_seq_value)));
+
+                    // One value of variance to 3 phase
+                    auto const real_variance = 3.0 * magnitude_variance / 9.0;
+                    CHECK(decomposed.real_component.variance == doctest::Approx(real_variance));
+
+                    auto const imag_variance =
+                        angle_variance *
+                        (magnitude_a * magnitude_a + magnitude_b * magnitude_b + magnitude_c * magnitude_c) / 9.0;
+                    CHECK(decomposed.imag_component.variance == doctest::Approx(imag_variance));
+                }
+
+                SUBCASE("90deg phase shift") {
+                    auto const shift = deg_90;
+                    PolarComplexRandVar<asymmetric_t> const polar{
+                        .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
+                        .angle = {.value = {shift, shift + deg_240, shift + deg_120}, .variance = angle_variance}};
+
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
+
+                    auto const pos_seq_value = pos_seq(polar.value());
+
+                    CHECK(decomposed.real_component.value == doctest::Approx(real(pos_seq_value)));
+                    CHECK(decomposed.imag_component.value == doctest::Approx(imag(pos_seq_value)));
+
+                    CHECK(real(decomposed.value()) == doctest::Approx(real(pos_seq_value)));
+                    CHECK(imag(decomposed.value()) == doctest::Approx(imag(pos_seq_value)));
+
+                    // One value of variance to 3 phase
+                    auto const real_variance = (magnitude_variance * cos(shift) * cos(shift) +
+                                                magnitude_a * magnitude_a * sin(shift) * sin(shift) * angle_variance +
+                                                magnitude_variance * cos(shift) * cos(shift) +
+                                                magnitude_b * magnitude_b * sin(shift) * sin(shift) * angle_variance +
+                                                magnitude_variance * cos(shift) * cos(shift) +
+                                                magnitude_c * magnitude_c * sin(shift) * sin(shift) * angle_variance) /
+                                               9.0;
+                    CHECK(decomposed.real_component.variance == doctest::Approx(real_variance));
+
+                    auto const imag_variance = (magnitude_variance * sin(shift) * sin(shift) +
+                                                magnitude_a * magnitude_a * cos(shift) * cos(shift) * angle_variance +
+                                                magnitude_variance * sin(shift) * sin(shift) +
+                                                magnitude_b * magnitude_b * cos(shift) * cos(shift) * angle_variance +
+                                                magnitude_variance * sin(shift) * sin(shift) +
+                                                magnitude_c * magnitude_c * cos(shift) * cos(shift) * angle_variance) /
+                                               9.0;
+                    CHECK(decomposed.imag_component.variance == doctest::Approx(imag_variance));
+                }
+
+                SUBCASE("45deg phase shift") {
+                    auto const shift = deg_45;
+                    PolarComplexRandVar<asymmetric_t> const polar{
+                        .magnitude = {.value = {magnitude_a, magnitude_b, magnitude_c}, .variance = magnitude_variance},
+                        .angle = {.value = {shift, deg_240 + shift, deg_120 + shift}, .variance = angle_variance}};
+
+                    auto const decomposed = static_cast<DecomposedComplexRandVar<symmetric_t>>(polar);
+
+                    auto const pos_seq_value = pos_seq(polar.value());
+
+                    CHECK(decomposed.real_component.value == doctest::Approx(real(pos_seq_value)));
+                    CHECK(decomposed.imag_component.value == doctest::Approx(imag(pos_seq_value)));
+
+                    CHECK(real(decomposed.value()) == doctest::Approx(real(pos_seq_value)));
+                    CHECK(imag(decomposed.value()) == doctest::Approx(imag(pos_seq_value)));
+
+                    // One value of variance to 3 phase
+                    auto const real_variance = (magnitude_variance * cos(shift) * cos(shift) +
+                                                magnitude_a * magnitude_a * sin(shift) * sin(shift) * angle_variance +
+                                                magnitude_variance * cos(shift) * cos(shift) +
+                                                magnitude_b * magnitude_b * sin(shift) * sin(shift) * angle_variance +
+                                                magnitude_variance * cos(shift) * cos(shift) +
+                                                magnitude_c * magnitude_c * sin(shift) * sin(shift) * angle_variance) /
+                                               9.0;
+                    CHECK(decomposed.real_component.variance == doctest::Approx(real_variance));
+
+                    auto const imag_variance = (magnitude_variance * sin(shift) * sin(shift) +
+                                                magnitude_a * magnitude_a * cos(shift) * cos(shift) * angle_variance +
+                                                magnitude_variance * sin(shift) * sin(shift) +
+                                                magnitude_b * magnitude_b * cos(shift) * cos(shift) * angle_variance +
+                                                magnitude_variance * sin(shift) * sin(shift) +
+                                                magnitude_c * magnitude_c * cos(shift) * cos(shift) * angle_variance) /
+                                               9.0;
+                    CHECK(decomposed.imag_component.variance == doctest::Approx(imag_variance));
+                }
+            }
+        }
 
         SUBCASE("Conversion to IndependentComplexRandVar<asymmetric_t>") {
             for (auto const& [magnitude_a, magnitude_b, magnitude_c, magnitude_variance, angle_a, angle_b, angle_c,
