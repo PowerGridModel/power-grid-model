@@ -632,15 +632,7 @@ auto check_exact(IntS tap_pos) -> TapPositionCheckFunc {
         CHECK(value == tap_pos);
     };
 };
-// auto check_compensated_exact(IntS tap_pos, IntS tap_pos_comp) -> TapPositionCheckFunc {
-//     return [tap_pos, tap_pos_comp](IntS value, OptimizerStrategy /*strategy*/, bool control_at_tap_side) {
-//         if (control_at_tap_side) {
-//             CHECK(value == tap_pos_comp);
-//         } else {
-//             CHECK(value == tap_pos);
-//         }
-//     };
-// };
+
 auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max) -> TapPositionCheckFunc {
     return
         [tap_pos_any, tap_range_min, tap_range_max](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
@@ -653,19 +645,11 @@ auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_ran
                 break;
             case local_maximum:
             case global_maximum:
-                if (control_at_tap_side) {
-                    CHECK(value == tap_range_min);
-                } else {
-                    CHECK(value == tap_range_max);
-                }
+                CHECK(value == (control_at_tap_side ? tap_range_min : tap_range_max));
                 break;
             case local_minimum:
             case global_minimum:
-                if (control_at_tap_side) {
-                    CHECK(value == tap_range_max);
-                } else {
-                    CHECK(value == tap_range_min);
-                }
+                CHECK(value == (control_at_tap_side ? tap_range_max : tap_range_min));
                 break;
             default:
                 FAIL("Unreachable");
@@ -682,27 +666,15 @@ auto check_compensated_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_any_com
         switch (strategy) {
         case any:
         case fast_any:
-            if (control_at_tap_side) {
-                CHECK(value == tap_pos_any_comp);
-            } else {
-                CHECK(value == tap_pos_any);
-            }
+            CHECK(value == (control_at_tap_side ? tap_pos_any_comp : tap_pos_any));
             break;
         case local_maximum:
         case global_maximum:
-            if (control_at_tap_side) {
-                CHECK(value == tap_range_min);
-            } else {
-                CHECK(value == tap_range_max);
-            }
+            CHECK(value == (control_at_tap_side ? tap_range_min : tap_range_max));
             break;
         case local_minimum:
         case global_minimum:
-            if (control_at_tap_side) {
-                CHECK(value == tap_range_max_comp);
-            } else {
-                CHECK(value == tap_range_min_comp);
-            }
+            CHECK(value == (control_at_tap_side ? tap_range_max_comp : tap_range_min_comp));
             break;
         default:
             FAIL("Unreachable");
@@ -1194,10 +1166,8 @@ TEST_CASE("Test Tap position optimizer") {
 
                 // check optimal state
                 CHECK(result.solver_output.size() == 1);
-                auto const control_at_tap_side_a =
-                    regulator_a.control_side() == static_cast<ControlSide>(state_a.tap_side);
-                auto const control_at_tap_side_b =
-                    regulator_b.control_side() == static_cast<ControlSide>(state_b.tap_side);
+                auto const control_at_tap_side_a = regulator_a.control_side() == state_a.tap_side;
+                auto const control_at_tap_side_b = regulator_b.control_side() == state_b.tap_side;
                 check_a(get_state_tap_pos(state_a.id), strategy, control_at_tap_side_a);
                 check_b(get_state_tap_pos(state_b.id), strategy, control_at_tap_side_b);
 

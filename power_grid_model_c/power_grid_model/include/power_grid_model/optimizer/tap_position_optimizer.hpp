@@ -435,7 +435,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
         return apply([](auto const& t) { return t.tap_max(); });
     }
     IntS tap_side() const {
-        return std::visit([](auto const& t) -> IntS { return static_cast<IntS>(t.get().tap_side()); }, transformer_);
+        return std::visit([](auto const& t) { return static_cast<IntS>(t.get().tap_side()); }, transformer_);
     }
     int64_t tap_range() const {
         return apply([](auto const& t) {
@@ -736,7 +736,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // __prefer_higher__ indicates a preference towards higher voltage
             // that is a result of both the strategy as well as whether the current
             // transformer has a reversed tap_max and tap_min
-            bool const prefer_higher = (strategy_max != tap_reverse_) ^ control_at_tap_side_;
+            bool const prefer_higher = (strategy_max != tap_reverse_) != control_at_tap_side_;
             auto const tap_pos = search(prefer_higher);
             auto const tap_diff = tap_pos - get_current_tap();
             if (tap_diff == 0) {
