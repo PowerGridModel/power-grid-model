@@ -40,6 +40,9 @@ struct ComponentInfo {
     // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
     Idx elements_per_scenario{};
     Idx total_elements{};
+    // does the dataset contain only a subset of attributes with meaningful value
+    bool has_attribute_indications{false};
+    std::vector<MetaAttribute const*> attribute_indications{};
 };
 
 struct DatasetInfo {
@@ -334,6 +337,21 @@ template <dataset_type_tag dataset_type_> class Dataset {
         requires is_indptr_mutable_v<dataset_type>
     {
         add_component_info_impl(component, elements_per_scenario, total_elements);
+    }
+
+    void enable_atrribute_indications(std::string_view component)
+        requires is_indptr_mutable_v<dataset_type>
+    {
+        Idx const idx = find_component(component, true);
+        dataset_info_.component_info[idx].has_attribute_indications = true;
+    }
+
+    void set_attribute_indications(std::string_view component, std::span<MetaAttribute const*> attribute_indications)
+        requires is_indptr_mutable_v<dataset_type>
+    {
+        Idx const idx = find_component(component, true);
+        dataset_info_.component_info[idx].attribute_indications = {attribute_indications.begin(),
+                                                                   attribute_indications.end()};
     }
 
     void add_buffer(std::string_view component, std::integral auto elements_per_scenario_,
