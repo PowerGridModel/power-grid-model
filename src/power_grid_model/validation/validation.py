@@ -307,6 +307,7 @@ def validate_required_values(
     required["branch"] = required["base"] + ["from_node", "to_node", "from_status", "to_status"]
     required["link"] = required["branch"].copy()
     required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1"]
+    required["asym_line"] = required["branch"] + ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
     required["transformer"] = required["branch"] + [
         "u1",
         "u2",
@@ -477,6 +478,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     component_validators = {
         "node": validate_node,
         "line": validate_line,
+        "asym_line": validate_asym_line,
         "link": lambda d: validate_branch(d, ComponentType.link),
         "generic_branch": validate_generic_branch,
         "transformer": validate_transformer,
@@ -541,6 +543,41 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
     errors += _all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
     errors += _all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
     errors += _all_greater_than_zero(data, ComponentType.line, "i_n")
+    return errors
+
+
+def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
+    errors = validate_branch(data, ComponentType.asym_line)
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "i_n")
+    required_fields = ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
+    optional_fields = ["r_na", "r_nb", "r_nc", "r_nn", "x_na", "x_nb", "x_nc", "x_nn"]
+    required_c_matrix_fields = ["c_aa", "c_ba", "c_bb", "c_ca", "c_cb", "c_cc"]
+    optional_c_matrix_fields = ["c_na", "c_nb", "c_nc", "c_nn"]
+    c_fields = ["c0", "c1"]
+    for field in required_fields + optional_fields + required_c_matrix_fields + c_fields + optional_c_matrix_fields:
+        errors += _all_greater_than_zero(data, ComponentType.asym_line, field)
+
+    for i_data_record in range(0,len(data[ComponentType.asym_line])):
+        new_errors = _none_missing(data, ComponentType.asym_line, optional_fields, i_data_record)
+        if 0 < len(new_errors) < len(optional_fields):
+            errors += new_errors
+
+        new_errors_c_matrix_req = _none_missing(data, ComponentType.asym_line, required_c_matrix_fields, i_data_record)
+        if 0 < len(new_errors_c_matrix_req) < len(new_errors_c_matrix_req):
+            errors += new_errors_c_matrix_req
+
+        new_errors_c_matrix_opt = _none_missing(data, ComponentType.asym_line, optional_c_matrix_fields, i_data_record)
+        if 0 < len(new_errors_c_matrix_opt) < len(new_errors_c_matrix_opt):
+            errors += new_errors_c_matrix_opt
+
+        new_errors_c1_c0 = _none_missing(data, ComponentType.asym_line, c_fields, i_data_record)
+        if 0 < len(new_errors_c1_c0) < len(c_fields):
+            errors += new_errors_c1_c0
+
+        if len(required_c_matrix_fields) == len(new_errors_c_matrix_req) and len(new_errors_c1_c0) == len(c_fields):
+            errors += new_errors_c_matrix_req
+            errors += new_errors_c1_c0
+
     return errors
 
 
