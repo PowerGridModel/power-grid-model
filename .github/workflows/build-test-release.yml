@@ -296,20 +296,20 @@ jobs:
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
 
-      # - name: Upload wheels
-      #   if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
-      #   run: |
-      #     pip install twine
-      #     echo "Publish to PyPI..."
-      #     twine upload --verbose wheelhouse/*
+      - name: Upload wheels
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        run: |
+          pip install twine
+          echo "Publish to PyPI..."
+          twine upload --verbose wheelhouse/*
 
-      # - name: Release
-      #   uses: softprops/action-gh-release@v2
-      #   if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
-      #   with:
-      #     files: |
-      #       ./wheelhouse/*
-      #     tag_name: ${{ steps.tag.outputs.tag }}
-      #     prerelease: ${{ github.ref != 'refs/heads/main'}}
-      #     generate_release_notes: true
-      #     target_commitish: ${{ github.sha }}
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        with:
+          files: |
+            ./wheelhouse/*
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ github.ref != 'refs/heads/main'}}
+          generate_release_notes: true
+          target_commitish: ${{ github.sha }}

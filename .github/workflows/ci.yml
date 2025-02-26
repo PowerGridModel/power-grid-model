@@ -46,12 +46,13 @@ jobs:
   citations:
     uses: "./.github/workflows/citations.yml"
 
+  sonar:
+    uses: "./.github/workflows/sonar.yml"
+    secrets: inherit
+
   ci-passed:
     runs-on: ubuntu-latest
-    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy, citations]
+    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy, citations, sonar]
 
     steps:
       - run: echo "ci passed"
-  # sonar:
-  #   uses: "./.github/workflows/sonar.yml"
-  #   secrets: inherit
