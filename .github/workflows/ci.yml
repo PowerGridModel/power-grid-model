@@ -55,4 +55,4 @@ jobs:
     needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy, citations, sonar]
 
     steps:
-      - run: echo "deploy"
+      - run: echo "ci passed"
