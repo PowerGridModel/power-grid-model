@@ -219,7 +219,7 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.11 python3.11-dev python3.11-venv python3-pip
 ```
 
 ### C++ packages
@@ -245,7 +245,7 @@ Go to a root folder you prefer to save the repositories.
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
-python3.10 -m venv .venv
+python3.11 -m venv .venv
 source ./.venv/bin/activate
 ```
 
@@ -342,7 +342,7 @@ git clone https://github.com/PowerGridModel/power-grid-model.git
 Then open a Miniforge PowerShell Prompt (or equivalent if you use a different `conda` provider), go to the repository folder.
 
 ```shell
-conda create -n power-grid-env python=3.10
+conda create -n power-grid-env python=3.11
 conda activate power-grid-env
 ```
 
@@ -379,7 +379,7 @@ The IDE should be able to automatically detect the Visual Studio cmake configura
 
 ## Example Setup for macOS (Big Sur)
 
-In this section an example is given for setup in macOS Big Sur and Python 3.10.
+In this section an example is given for setup in macOS Big Sur and Python 3.11.
 
 ### Environment variables
 
@@ -407,7 +407,7 @@ install the build dependency. go to a root folder you prefer to save the reposit
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git 
 cd power-grid-model
-python3.10 -m venv .venv
+python3.11 -m venv .venv
 source ./.venv/bin/activate
 ```
 
