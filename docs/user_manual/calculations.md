@@ -628,7 +628,7 @@ Power flow calculations that take the behavior of these regulators into account 
 
 The following control logic is used:
 
-- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of transformers inbetween.
+- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers inbetween.
   - Transformers are regulated in order according to their ranks.
 - Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
 - Find the optimal state using the following procedure
