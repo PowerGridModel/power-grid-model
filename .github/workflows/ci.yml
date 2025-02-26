@@ -24,6 +24,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # testing whether this will help make CI visible
+  ci-build:
+    name: CI Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        
   build-test-release:
     name: build-test-release
     uses: "./.github/workflows/build-test-release.yml"
