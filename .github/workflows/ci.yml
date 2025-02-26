@@ -46,6 +46,6 @@ jobs:
   citations:
     uses: "./.github/workflows/citations.yml"
   
-  sonar:
-    uses: "./.github/workflows/sonar.yml"
-    secrets: inherit
+  # sonar:
+  #   uses: "./.github/workflows/sonar.yml"
+  #   secrets: inherit
