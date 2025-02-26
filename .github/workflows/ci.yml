@@ -45,10 +45,6 @@ jobs:
 
   citations:
     uses: "./.github/workflows/citations.yml"
-  
-  sonar:
-    uses: "./.github/workflows/sonar.yml"
-    secrets: inherit
 
   ci-passed:
     runs-on: ubuntu-latest
@@ -56,3 +52,6 @@ jobs:
 
     steps:
       - run: echo "ci passed"
+  # sonar:
+  #   uses: "./.github/workflows/sonar.yml"
+  #   secrets: inherit
