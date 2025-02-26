@@ -20,5 +20,18 @@ jobs:
     permissions:
       contents: write
     with:
-      release: false
-      clang-tidy-target: "all power_grid_model_benchmark_cpp"
+      create_release: false
+
+  check-code-quality:
+    uses: "./.github/workflows/check-code-quality.yml"
+
+  reuse-compliance:
+    uses: "./.github/workflows/reuse-compliance.yml"
+
+  clang-tidy:
+    uses: "./.github/workflows/clang-tidy.yml"
+    with:
+      target: "all power_grid_model_benchmark_cpp"
+
+  citations:
+    uses: "./.github/workflows/citations.yml"
