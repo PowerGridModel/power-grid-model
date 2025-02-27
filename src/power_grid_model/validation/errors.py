@@ -472,6 +472,14 @@ class FaultPhaseError(MultiFieldValidationError):
     _message = "The fault phase is not applicable to the corresponding fault type for {n} {objects}."
 
 
+class PQSigmaPairError(MultiFieldValidationError):
+    """
+    The combination of p_sigma and q_sigma is not valid. They should be both present or both absent.
+    """
+
+    _message = "The combination of p_sigma and q_sigma is not valid for {n} {objects}."
+
+
 class InvalidAssociatedEnumValueError(MultiFieldValidationError):
     """
     The value is not a valid value in combination with the other specified attributes.
