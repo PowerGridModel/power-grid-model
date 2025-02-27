@@ -43,7 +43,7 @@ See [Regulated power flow calculations](#regulated-power-flow-calculations) for 
 #### State estimation
 
 State estimation is a statistical calculation method that determines the most probable state of the grid, based on
-network data and measurements. Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were 
+network data and measurements. Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were
 either measured, estimated or forecasted.
 
 Input:
@@ -57,7 +57,7 @@ Output:
 - Power flow through branches
 - Deviation between measurement values and estimated state
 
-In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or 
+In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or
 a `SparseMatrixError`.
 In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of unknowns.
 For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
@@ -147,10 +147,10 @@ $$
 
 These quantities are in complex form. Hence, they can be constructed by PGM output attributes in the following way:
 
-* For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle. Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
+- For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle. Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
 
-* For  $\underline{I}$ of branches, `i_side` is the magnitude. Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
-The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for {hoverxreftooltip}`user_manual/components:Branch3`s. 
+- For  $\underline{I}$ of branches, `i_side` is the magnitude. Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
+The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for {hoverxreftooltip}`user_manual/components:Branch3`s.
 
 ### Power flow algorithms
 
@@ -221,7 +221,7 @@ $$
         x    =  \begin{bmatrix}
                 \delta \\
                 U
-                \end{bmatrix} = 
+                \end{bmatrix} =
                 \begin{bmatrix}
                 \delta_2 \\
                 \vdots \\
@@ -234,7 +234,7 @@ $$
         y    =  \begin{bmatrix}
                 P \\
                 Q
-                \end{bmatrix} = 
+                \end{bmatrix} =
                 \begin{bmatrix}
                 P_2 \\
                 \vdots \\
@@ -247,7 +247,7 @@ $$
         f(x) =  \begin{bmatrix}
                 P(x) \\
                 Q(x)
-                \end{bmatrix} = 
+                \end{bmatrix} =
                 \begin{bmatrix}
                 P_{2}(x) \\
                 \vdots \\
@@ -278,11 +278,12 @@ $$
     \end{eqnarray}
 $$
 
-$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
+$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial
 derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial U}$, $\dfrac{\partial Q}{\partial \delta}$
 and $\dfrac{\partial Q}{\partial U}$.
 
 For each iteration the following steps are executed:
+
 - Compute $\Delta y(i)$
 - Compute the Jacobian $J(i)$
 - Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
@@ -298,22 +299,22 @@ Additionally, [Newton-Raphson](#newton-raphson-power-flow) will be more robust c
 
 The algorithm is as follows:
 
-1. Build $Y_{bus}$ matrix 
+1. Build $Y_{bus}$ matrix
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
-3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
+3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$.
    $
        \begin{eqnarray}
            I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
        \end{eqnarray}
    $
-4. Solve linear equation: $YU_N^i = I_N^i$ 
-5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
+4. Solve linear equation: $YU_N^i = I_N^i$
+5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3.
 
-The iterative current algorithm only needs to calculate injected currents before solving linear equations. 
+The iterative current algorithm only needs to calculate injected currents before solving linear equations.
 This is more straightforward than calculating the Jacobian, which was done in the Newton-Raphson algorithm.
 
-Factorizing the matrix of linear equation is the most computationally heavy task. 
-The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations. 
+Factorizing the matrix of linear equation is the most computationally heavy task.
+The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations.
 The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like timeseries calculations.
 
 #### Linear power flow
@@ -323,8 +324,8 @@ Algorithm call: {py:class}`CalculationMethod.linear <power_grid_model.enum.Calcu
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
 It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
-When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy. 
-Therefore power-grid-model will use this method regardless of the input provided by the user in this case. 
+When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy.
+Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 
 The algorithm is as follows:
 
@@ -356,14 +357,14 @@ $$
     \begin{eqnarray}
             \underline{U}     =     \begin{bmatrix}
                             \underline{U}_1 \\
-                            \underline{U}_2 \\ 
+                            \underline{U}_2 \\
                             \vdots \\
                             \underline{U}_{N_{b}}
-                        \end{bmatrix} 
+                        \end{bmatrix}
     \end{eqnarray}
 $$
 
-Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus. 
+Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus.
 
 The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
 by solving:
@@ -383,7 +384,7 @@ $$
                 \underline{x}_2 \\
                 \vdots \\
                 \underline{x}_{N_{m}}
-                \end{bmatrix} = 
+                \end{bmatrix} =
                 f(\underline{U})
         \quad\text{and}\quad
         \underline{z}     =  \begin{bmatrix}
@@ -391,14 +392,14 @@ $$
                 \underline{z}_2 \\
                 \vdots \\
                 \underline{z}_{N_{m}}
-                \end{bmatrix} 
+                \end{bmatrix}
         \quad\text{and}\quad
         W  = \Sigma^{-1} =  \begin{bmatrix}
                 \sigma_1^2 & 0 & \cdots & 0 \\
                 0 & \sigma_2^2 & \cdots & 0 \\
                 \vdots & \vdots & \ddots & \vdots \\
                 0 & 0 & \cdots & \sigma_{N_{m}}^2
-                \end{bmatrix} ^{-1} = 
+                \end{bmatrix} ^{-1} =
                 \begin{bmatrix}
                 w_1 & 0 & \cdots & 0 \\
                 0 & w_2 & \cdots & 0 \\
@@ -428,7 +429,7 @@ voltage sensors on the same bus. The measurement data can be merged into one vir
 
 $$
     \begin{eqnarray}
-            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}} 
+            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}}
     \end{eqnarray}
 $$
 
@@ -466,7 +467,7 @@ $$
 $$
 
 - Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
-also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage 
+also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage
 phasor, the current phasor is calculated as follows:
 
 $$
@@ -486,9 +487,9 @@ $$
 
 The aggregated apparent power flow is considered as a single measurement, with variance $\sigma_S^2 = \sigma_P^2 + \sigma_Q^2$.
 
-The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of 
-bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS 
-algorithm. In each iteration, the resulted voltage phase angle will be applied as the phase shift of the measured voltage phasor 
+The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of
+bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS
+algorithm. In each iteration, the resulted voltage phase angle will be applied as the phase shift of the measured voltage phasor
 for the next iteration:
 
 - Initialization: let $\underline{U}^{(k)}$ be the column vector of the estimated voltage phasor in the k-th iteration. Let Bus $s$
@@ -504,7 +505,7 @@ be the slack bus, which is connected to the external network (source). $\underli
   - Compute the temporary new voltage phasor $\underline{\tilde{U}}^{(k)}$ using the pre-factorized matrix. See also [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
   - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
   - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
-  stop the iteration. Otherwise, continue until the maximum number of iterations is reached. 
+  stop the iteration. Otherwise, continue until the maximum number of iterations is reached.
   
 In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
 the system error of the phase shift converges to zero. Because the matrix is pre-built and
@@ -555,7 +556,7 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 ### Short circuit calculation algorithms
 
-In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
+In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints.
 
 $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 
@@ -577,9 +578,9 @@ The assumptions used for calculations in power-grid-model are aligned to the one
 - The state of the grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
 - The pre-fault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
 - The calculations are assumed to be time-independent. (Voltages are sine throughout with the fault occurring at a zero crossing of the voltage, the complexity of rotating machines and harmonics are neglected, etc.)
-- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. 
-  The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents. 
-  The table to derive `c` according to IEC 60909 is shown below. 
+- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function.
+  The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents.
+  The table to derive `c` according to IEC 60909 is shown below.
 
 | Algorithm      | c_max | c_min |
 | -------------- | ----- | ----- |
@@ -691,11 +692,10 @@ Given the discrete nature of the finite tap ranges, we use the following search 
 | linear search | Start with an initial guess and do a local search with step size 1 for each iteration step.     |
 | binary search | Start with a large search region and reduce the search region by half for every iteration step. |
 
-
 ## Batch Calculations
 
-Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
-Any form of multiple calculations can be carried out in power-grid-model using batch calculations. 
+Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid.
+Any form of multiple calculations can be carried out in power-grid-model using batch calculations.
 Batches are not restricted to any particular type of calculations, like timeseries or contingency analysis or their combination.
 They can be used for determining hosting/loading capacity, determining optimal tap positions, estimating system losses, monte-carlo simulations or any other form of multiple calculations required in a power-flow study.
 The framework for creating the batches is the same for all types of calculations.
@@ -703,7 +703,7 @@ For every component, the attributes that can be updated in a batch scenario are 
 Examples of batch calculations for timeseries and contingency analysis are given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
 The same method as for single calculations, {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`, can be used to calculate a number of scenarios in one go.
-To do this, you need to supply an `update_data` keyword argument. 
+To do this, you need to supply an `update_data` keyword argument.
 This keyword argument contains a dictionary of 2D update arrays (one array per component type).
 
 The performance for different batches vary. power-grid-model automatically makes efficient calculations whenever possible. See the [Performance Guide](performance-guide.md#topology-caching) for ways to optimally use the performance optimizations.
@@ -760,7 +760,7 @@ independent_update_data = {'line': line_update}
 
 ### Parallel Computing
 
-The batch calculation supports shared memory multi-threading parallel computing. 
+The batch calculation supports shared memory multi-threading parallel computing.
 The common internal states and variables are shared as much as possible to save memory usage and avoid copy.
 
 You can set the `threading` keyword argument in the `calculate_*` functions (like {py:class}`calculate_power_flow() <power_grid_model.PowerGridModel.calculate_power_flow>`) to enable/disable parallel computing.

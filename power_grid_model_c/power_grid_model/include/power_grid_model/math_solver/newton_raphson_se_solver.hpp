@@ -159,7 +159,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
-        necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+        auto const observability_result =
+            necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
@@ -175,7 +176,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation");
-            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
+            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_,
+                                                  observability_result.use_perturbation());
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values);
         };
@@ -519,7 +521,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// eta(row) += w_k . (z_k - f_k(x))
     ///
     /// In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
-    /// angle measurement of zero. w_theta = 1.0 by default for all measurements
+    /// angle measurement of zero. w_theta = w_k by default for all measurements
+    ///    angle_error = u_error / u_rated (1.0) = w_k
     ///
     /// @param block LHS(row, col), ie. LHS(row, row)
     /// @param rhs_block RHS(row)
@@ -545,10 +548,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         RealValue<sym> delta_theta{};
         if (measured_values.has_angle_measurement(bus)) {
             delta_theta = RealValue<sym>{arg(measured_values.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
-            w_theta = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{w_v};
         } else if (bus == virtual_angle_measurement_bus && !measured_values.has_angle()) {
             delta_theta = arg(ComplexValue<sym>{1.0}) - RealValue<sym>{x_[bus].theta()};
-            w_theta = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{w_v};
         }
 
         block.g_P_theta() += w_theta;

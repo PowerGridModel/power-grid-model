@@ -51,7 +51,9 @@ class PowerGridModel:
     @property
     def batch_error(self) -> PowerGridBatchError | None:
         """
-        Get the batch error object, if present
+        Get the batch error object, if present, after a batch calculation with errors.
+
+        Also works when continue_on_batch_error was set to True during the calculation.
 
         Returns:
             Batch error object, or None
@@ -474,8 +476,9 @@ class PowerGridModel:
                         - None: Row based data for the specified component types.
                         - ComponentAttributeFilterOptions: Columnar data for the specified component types.
                         - set[str] | list[str]: Columnar data for the specified component types and attributes.
-            continue_on_batch_error (bool, optional): Continue the program (instead of throwing error) if some
-                scenarios fail.
+            continue_on_batch_error (bool, optional):
+                Continue the program (instead of throwing error) if some scenarios fail.
+                You can still retrieve the errors and succeeded/failed scenarios via the batch_error.
             decode_error (bool, optional):
                 Decode error messages to their derived types if possible.
 
@@ -568,8 +571,9 @@ class PowerGridModel:
                         - None: Row based data for the specified component types.
                         - ComponentAttributeFilterOptions: Columnar data for the specified component types.
                         - set[str] | list[str]: Columnar data for the specified component types and attributes.
-            continue_on_batch_error (bool, optional): Continue the program (instead of throwing error) if some
-                scenarios fail.
+            continue_on_batch_error (bool, optional):
+                Continue the program (instead of throwing error) if some scenarios fail.
+                You can still retrieve the errors and succeeded/failed scenarios via the batch_error.
             decode_error (bool, optional):
                 Decode error messages to their derived types if possible.
 
@@ -653,6 +657,7 @@ class PowerGridModel:
                         - set[str] | list[str]: Columnar data for the specified component types and attributes.
             continue_on_batch_error (bool, optional):
                 Continue the program (instead of throwing error) if some scenarios fail.
+                You can still retrieve the errors and succeeded/failed scenarios via the batch_error.
             decode_error (bool, optional):
                 Decode error messages to their derived types if possible.
             short_circuit_voltage_scaling ({ShortCircuitVoltageSaling, str}, optional):

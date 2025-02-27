@@ -41,6 +41,7 @@ Currently, it supports the following calculations:
 
 See the [power-grid-model documentation](https://power-grid-model.readthedocs.io/en/stable/) for more information.
 For various conversions to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For an extended python interface to the the power-grid-model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
 
 ```{note}
 Want to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
@@ -99,7 +100,7 @@ If you are using Power Grid Model in your research work, please consider citing 
 
 ```bibtex
 @software{Xiang_PowerGridModel_power-grid-model,
-  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Wang, Zhen and Guo, Jerry and Jagutis, Laurynas and Wang, Chenguang and van Raalte, Marc and {Contributors to the LF Energy project Power Grid Model}},
+  author = {Xiang, Yu and Salemink, Peter and van Westering, Werner and Bharambe, Nitish and Govers, Martinus G.H. and van den Bogaard, Jonas and Stoeller, Bram and Wang, Zhen and Guo, Jerry Jinfeng and Figueroa Manrique, Santiago and Jagutis, Laurynas and Wang, Chenguang and van Raalte, Marc and {Contributors to the LF Energy project Power Grid Model}},
   doi = {10.5281/zenodo.8054429},
   license = {MPL-2.0},
   title = {{PowerGridModel/power-grid-model}},
@@ -107,12 +108,14 @@ If you are using Power Grid Model in your research work, please consider citing 
 }
 @inproceedings{Xiang2023,
   author = {Xiang, Yu and Salemink, Peter and Stoeller, Bram and Bharambe, Nitish and van Westering, Werner},
-  booktitle = {CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution},
-  title = {Power grid model: A high-performance distribution grid calculation library},
-  year = {2023},
+  booktitle={27th International Conference on Electricity Distribution (CIRED 2023)},
+  title={Power grid model: a high-performance distribution grid calculation library},
+  year={2023},
   volume={2023},
-  number = {},
-  pages={1-5}
+  number={},
+  pages={1089-1093},
+  keywords={},
+  doi={10.1049/icp.2023.0633}
 }
 ```
 

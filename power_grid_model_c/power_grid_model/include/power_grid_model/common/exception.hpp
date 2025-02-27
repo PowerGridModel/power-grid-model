@@ -108,7 +108,7 @@ class SparseMatrixError : public PowerGridError {
                    std::string("If you get this error from state estimation, ") +
                    "it might mean the system is not fully observable, i.e. not enough measurements.\n" +
                    "It might also mean that you are running into a corner case where PGM cannot resolve yet." +
-                   "See https://github.com/PowerGridModel/power-grid-model/issues/853.");
+                   "See https://github.com/PowerGridModel/power-grid-model/issues/864.");
     }
 };
 
@@ -135,7 +135,7 @@ class IterationDiverge : public PowerGridError {
 class MaxIterationReached : public IterationDiverge {
   public:
     MaxIterationReached(std::string const& msg = "") {
-        append_msg("Maximum iterations reached, no solution. " + msg + "\n");
+        append_msg("Maximum number of iterations reached" + msg + "\n");
     }
 };
 
@@ -160,6 +160,14 @@ class InvalidMeasuredObject : public PowerGridError {
   public:
     InvalidMeasuredObject(std::string const& object, std::string const& sensor) {
         append_msg(sensor + " measurement is not supported for object of type " + object);
+    }
+};
+
+class InvalidMeasuredTerminalType : public PowerGridError {
+  public:
+    InvalidMeasuredTerminalType(MeasuredTerminalType const terminal_type, std::string const& sensor) {
+        append_msg(sensor + " measurement is not supported for object of type " +
+                   detail::to_string(static_cast<IntS>(terminal_type)));
     }
 };
 

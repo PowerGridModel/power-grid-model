@@ -43,9 +43,12 @@ extensions = [
     "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",
+    "sphinxcontrib.tikz",
 ]
 
 templates_path = ["_templates"]
+
+tikz_latex_preamble = "\\usepackage{circuitikz}"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -55,6 +58,7 @@ html_static_path = ["_static"]
 
 exclude_patterns = [
     "*/.ipynb_checkpoints/*",
+    "_build/**/*",
 ]
 
 # -- myst parser and myst_nb config ------------------------------------------------------

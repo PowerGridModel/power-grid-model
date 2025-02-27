@@ -13,6 +13,7 @@
 		"ms-toolsai.jupyter-renderers",
 		"ms-toolsai.vscode-jupyter-cell-tags",
 		"ms-toolsai.vscode-jupyter-slideshow",
+		"ms-toolsai.datawrangler",
 		"ms-vscode.cmake-tools",
 		"ms-vscode.cpptools",
 		"ms-vscode.cpptools-extension-pack",

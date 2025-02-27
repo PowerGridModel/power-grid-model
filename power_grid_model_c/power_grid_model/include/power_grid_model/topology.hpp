@@ -429,8 +429,6 @@ class Topology {
         }
     }
 
-    static constexpr auto include_all = [](Idx) { return true; };
-
     // proxy class to find the coupled object in math model in the coupling process to a single type object
     //    given a particular component index
     struct SingleTypeObjectFinder {
@@ -481,7 +479,7 @@ class Topology {
     // The coupling element should be pre-allocated in coupling
     // Only connect the component if include(component_i) returns true
     template <Idx (MathModelTopology::*n_obj_fn)() const, typename GetMathTopoComponent,
-              typename ObjectFinder = SingleTypeObjectFinder, typename Predicate = decltype(include_all)>
+              typename ObjectFinder = SingleTypeObjectFinder, typename Predicate = IncludeAll>
         requires std::invocable<std::remove_cvref_t<GetMathTopoComponent>, MathModelTopology&> &&
                  grouped_idx_vector_type<
                      std::remove_reference_t<std::invoke_result_t<GetMathTopoComponent, MathModelTopology&>>>

@@ -254,7 +254,10 @@
     },
     {
       "name": "ci-clang-release",
-      "inherits": "clang-release"
+      "inherits": "clang-release",
+      "cacheVariables": {
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
+      }
     },
     {
       "name": "ci-gcc-debug",
@@ -270,7 +273,13 @@
       "name": "ci-gcc-release",
       "inherits": [
         "gcc-release"
-      ]
+      ],
+      "cacheVariables": {
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_odr_violation=0"
+      }
     },
     {
       "name": "ci-sonar",

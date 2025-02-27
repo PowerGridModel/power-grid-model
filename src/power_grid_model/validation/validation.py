@@ -158,7 +158,6 @@ def validate_batch_data(
         batch_errors = input_errors + id_errors
 
         if not id_errors:
-            batch_errors = input_errors
             merged_data = _update_input_data(input_data_copy, row_update_data)
             batch_errors += validate_required_values(merged_data, calculation_type, symmetric)
             batch_errors += validate_values(merged_data, calculation_type)

@@ -572,21 +572,21 @@ TEST_CASE("Test power sensor") {
     }
 
     SUBCASE("Construction and update") {
-        PowerSensorInput<symmetric_t> sym_power_sensor_input{.id = 7,
-                                                             .measured_object = 3,
-                                                             .measured_terminal_type =
-                                                                 MeasuredTerminalType::branch_from,
-                                                             .power_sigma = 269258.24035672517,
-                                                             .p_measured = -2e5,
-                                                             .q_measured = -1e6,
-                                                             .p_sigma = 2.5e5,
-                                                             .q_sigma = 1e5};
-        PowerSensorUpdate<symmetric_t> sym_power_sensor_update{.id = 7,
-                                                               .power_sigma = sym_power_sensor_input.power_sigma,
-                                                               .p_measured = sym_power_sensor_input.p_measured,
-                                                               .q_measured = sym_power_sensor_input.q_measured,
-                                                               .p_sigma = sym_power_sensor_input.p_sigma,
-                                                               .q_sigma = sym_power_sensor_input.q_sigma};
+        PowerSensorInput<symmetric_t> const sym_power_sensor_input{.id = 7,
+                                                                   .measured_object = 3,
+                                                                   .measured_terminal_type =
+                                                                       MeasuredTerminalType::branch_from,
+                                                                   .power_sigma = 269258.24035672517,
+                                                                   .p_measured = -2e5,
+                                                                   .q_measured = -1e6,
+                                                                   .p_sigma = 2.5e5,
+                                                                   .q_sigma = 1e5};
+        PowerSensorUpdate<symmetric_t> const sym_power_sensor_update{.id = 7,
+                                                                     .power_sigma = sym_power_sensor_input.power_sigma,
+                                                                     .p_measured = sym_power_sensor_input.p_measured,
+                                                                     .q_measured = sym_power_sensor_input.q_measured,
+                                                                     .p_sigma = sym_power_sensor_input.p_sigma,
+                                                                     .q_sigma = sym_power_sensor_input.q_sigma};
 
         SymPowerSensor sym_power_sensor{sym_power_sensor_input};
         auto const orig_calc_param = sym_power_sensor.calc_param<symmetric_t>();

@@ -91,4 +91,10 @@ using IntSVector = std::vector<IntS>;
 template <class T, class... Ts>
 concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
 
+// functor to include all
+struct IncludeAll {
+    template <class... T> constexpr bool operator()(T&&... /*ignored*/) const { return true; }
+};
+constexpr IncludeAll include_all{};
+
 } // namespace power_grid_model

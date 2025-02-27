@@ -6,7 +6,7 @@
 Power grid model raw dataset handler
 """
 
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 from power_grid_model._core.buffer_handling import (
     BufferProperties,
@@ -26,8 +26,16 @@ from power_grid_model._core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
-from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, process_data_filter
-from power_grid_model.data_types import AttributeType, ComponentData, Dataset
+from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, is_sparse, process_data_filter
+from power_grid_model.data_types import (
+    AttributeType,
+    ColumnarData,
+    ComponentData,
+    Dataset,
+    DenseBatchColumnarData,
+    SingleColumnarData,
+    SparseBatchColumnarData,
+)
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
@@ -455,22 +463,25 @@ class CWritableDataset:
             if component in self._data_filter
         }
 
-    def _filter_attributes(self, attributes):
+    def _filter_attributes(self, buffer: ColumnarData):
+        if is_sparse(buffer):
+            attributes = cast(SparseBatchColumnarData, buffer)["data"]
+        else:
+            attributes = cast(SingleColumnarData | DenseBatchColumnarData, buffer)
+
         keys_to_remove = []
         for attr, array in attributes.items():
-            if is_columnar(array):
-                continue
             if is_nan_or_equivalent(array):
                 keys_to_remove.append(attr)
         for key in keys_to_remove:
             del attributes[key]
 
     def _filter_with_mapping(self):
-        for component_type, attributes in self._data.items():
+        for component_type, component_buffer in self._data.items():
             if component_type in self._data_filter:
                 filter_option = self._data_filter[component_type]
-                if filter_option is ComponentAttributeFilterOptions.relevant:
-                    self._filter_attributes(attributes)
+                if filter_option is ComponentAttributeFilterOptions.relevant and is_columnar(component_buffer):
+                    self._filter_attributes(component_buffer)
 
     def _post_filtering(self):
         if isinstance(self._data_filter, dict):

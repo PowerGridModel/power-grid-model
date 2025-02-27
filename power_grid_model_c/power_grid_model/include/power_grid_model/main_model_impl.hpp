@@ -1014,8 +1014,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return math_param_increment;
     }
 
-    static constexpr auto include_all = [](Idx) { return true; };
-
     /** This is a heavily templated member function because it operates on many different variables of many
      *different types, but the essence is ever the same: filling one member (vector) of the calculation calc_input
      *struct (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as
@@ -1068,7 +1066,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
-              std::invocable<Idx> PredicateIn = decltype(include_all)>
+              std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
                               std::vector<CalcStructOut>& calc_input, PredicateIn include = include_all) {
@@ -1087,7 +1085,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
               std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
-              std::invocable<Idx> PredicateIn = decltype(include_all)>
+              std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
                               std::vector<CalcStructOut>& calc_input,
