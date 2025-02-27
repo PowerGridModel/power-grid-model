@@ -252,6 +252,10 @@ def _process_power_sigma_and_p_q_sigma(
     and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
     `p_sigma` and `q_sigma` in this case. Happens only on proxy data (not the original data).
     However, note that this value is eventually not used in the calculation.
+
+    Args:
+        data: SingleDataset, pgm data
+        sensor: only of types ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
     """
     if sensor in data:
         sensor_data = data[sensor]
