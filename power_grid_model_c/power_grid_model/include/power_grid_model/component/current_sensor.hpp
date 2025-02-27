@@ -128,8 +128,6 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     double i_sigma_{};
     RealValue<current_sensor_symmetry> i_measured_{};
 
-    // TODO(mgovers) when filling the functions below take in mind that i_angle_sigma is optional
-
     CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final { return calc_decomposed_param<symmetric_t>(); }
     CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final { return calc_decomposed_param<asymmetric_t>(); }
 

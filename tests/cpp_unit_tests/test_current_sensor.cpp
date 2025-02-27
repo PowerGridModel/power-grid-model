@@ -32,7 +32,7 @@ TEST_CASE("Test current sensor") {
         for (auto const terminal_type :
              {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::branch3_1,
               MeasuredTerminalType::branch3_2, MeasuredTerminalType::branch3_3}) {
-            // CAPTURE(terminal_type); // TODO check why this inerferes with normal output
+            CAPTURE(terminal_type);
 
             CurrentSensorInput<symmetric_t> sym_current_sensor_input{};
             sym_current_sensor_input.id = 0;
