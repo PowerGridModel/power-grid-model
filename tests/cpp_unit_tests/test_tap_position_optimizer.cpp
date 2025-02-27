@@ -708,12 +708,14 @@ struct GenericResultPerStratety {
     IntS tap_range_max_3;
 
     IntS get_any(ControlSide const& tap_side) const {
+        using enum ControlSide;
+
         switch (tap_side) {
-        case ControlSide::side_1:
+        case side_1:
             return tap_pos_any_1;
-        case ControlSide::side_2:
+        case side_2:
             return tap_pos_any_2;
-        case ControlSide::side_3:
+        case side_3:
             return tap_pos_any_3;
         default:
             FAIL("Unreachable in get_any");
@@ -722,24 +724,28 @@ struct GenericResultPerStratety {
     }
 
     IntS get_min(ControlSide const& tap_side) const {
+        using enum ControlSide;
+
         switch (tap_side) {
-        case ControlSide::side_1:
+        case side_1:
             return tap_range_min_1;
-        case ControlSide::side_2:
+        case side_2:
             return tap_range_min_2;
-        case ControlSide::side_3:
+        case side_3:
             return tap_range_min_3;
         default:
             FAIL("Unreachable in get_min");
         }
     }
     IntS get_max(ControlSide const& tap_side) const {
+        using enum ControlSide;
+
         switch (tap_side) {
-        case ControlSide::side_1:
+        case side_1:
             return tap_range_max_1;
-        case ControlSide::side_2:
+        case side_2:
             return tap_range_max_2;
-        case ControlSide::side_3:
+        case side_3:
             return tap_range_max_3;
         default:
             FAIL("Unreachable in get_max");
@@ -1253,7 +1259,7 @@ TEST_CASE("Test Tap position optimizer") {
                 CHECK(side == regulator_a.control_side());
                 auto const tap_a_sign = state_a.tap_side == regulator_a.control_side() ? -1.0 : 1.0;
                 auto const tap_b_sign = state_b.tap_side == regulator_b.control_side() ? -1.0 : 1.0;
-                auto const tap_sum = static_cast<double>(tap_a_sign * state_a.tap_pos + tap_b_sign * state_b.tap_pos);
+                auto const tap_sum = tap_a_sign * state_a.tap_pos + tap_b_sign * state_b.tap_pos;
                 return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
             };
 
@@ -1261,7 +1267,7 @@ TEST_CASE("Test Tap position optimizer") {
                 CHECK(side == regulator_b.control_side());
                 auto const tap_a_sign = state_a.tap_side == regulator_a.control_side() ? -1.0 : 1.0;
                 auto const tap_b_sign = state_b.tap_side == regulator_b.control_side() ? -1.0 : 1.0;
-                auto const tap_sum = static_cast<double>(tap_a_sign * state_a.tap_pos + tap_b_sign * state_b.tap_pos);
+                auto const tap_sum = tap_a_sign * state_a.tap_pos + tap_b_sign * state_b.tap_pos;
                 return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
             };
 
