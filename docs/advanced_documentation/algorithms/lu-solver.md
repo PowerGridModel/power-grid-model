@@ -236,8 +236,16 @@ from the [dense LU-factorization process](#dense-lu-factorization-process).
 
 #### Block-sparse LU-factorization process
 
-<!-- The Gaussian elimination process itself is as usual. Completely analogously to and following the
-same conventions as [before](#dense-lu-factorization-process), let
+The block-sparse LU-factorization process is a little bit different from
+[before](#dense-lu-factorization-process). Below, we first
+[describe the naive approach](#naive-block-sparse-lu-factorization-process), followed by the
+rationale and proof of the alternative approach.
+
+##### Naive block-sparse LU-factorization process
+
+A naive first attempt at block-sparse LU-factorization is done as follows. The
+[dense LU-factorization process](#dense-lu-factorization-process) is followed but on blocks instead
+of single elements. Let
 $\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
 be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
 [LU-factorized](#dense-lu-factorization-process):
@@ -248,7 +256,7 @@ elimination constructs the matrices
 $$
 \begin{align*}
 \mathbb{L}_p &= \begin{bmatrix} 1 && \pmb{\mathbb{0}}^T \\ \overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
-\mathbb{Q}_p &= \begin{bmatrix} \mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}\end{bmatrix}
+\mathbb{U}_p &= \begin{bmatrix} \mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}\end{bmatrix}
 \equiv \begin{bmatrix} \mathbb{1} && \pmb{\mathbb{r}}_p^T \\ \boldsymbol{0} && \pmb{\mathbb{M}}_{p+1} \end{bmatrix}
 \end{align*}
 $$
@@ -275,14 +283,39 @@ $$
 \end{align*}
 $$
 
-Calculating $\mathbb{m}_p^{-1}$ to obtain $\mathbb{m}_p^{-1} \boldsymbol{x}_p$ is numerically
-unstable. Instead, the power grid model first solves the matrix equation
-$\mathbb{l}_p \boldsymbol{y}_p = \mathbb{p}_p \boldsymbol{x}_p$, followed by solving
-$\mathbb{u}_p \boldsymbol{z}_p = \boldsymbol{y}_p$. The end-result is then
-$\mathbb{m}_p^{-1} \boldsymbol{x}_p = \mathbb{q}_p \boldsymbol{z}_p$.
-
 Iteratively applying above factorization process yields $\mathbb{L}$ and $\mathbb{U}$, as well as
-$\mathbb{P}$ and $\mathbb{Q}$. -->
+$\mathbb{P}$ and $\mathbb{Q}$.
+
+Unfortunately, obtaining $\mathbb{m}_p^{-1} \boldsymbol{x}_p$ is numerically unstable, even if it
+is split into multiple solving steps. Instead, the process below is used.
+
+##### Partially solved block-sparse LU-factorization process
+
+A more numerically stable approach compared to the
+[naive approach](#naive-block-sparse-lu-factorization-process) is equivalent to single-element
+pivot. Here, we describe the results. Instead of applying the full pivot decomposition in the
+$L$-matrix and delaying the solve process all the way to after the solving phase, we only apply a
+partial pivot to the $L$ matrix, and the other half in the $U$ matrix. This is equivalent to single-
+element pivoting instead of block-pivoting. For the
+[rationale](#rationale-of-the-block-sparse-lu-factorization-process) and
+[proof](#proof-of-block-sparse-lu-factorization-process), see below. Here, only the results are
+presented.
+
+Using the same conventions as [before](#naive-block-sparse-lu-factorization-process), Let
+$\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
+be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
+[LU-factorized](#dense-lu-factorization-process):
+$\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$, where
+the lower-case helps avoiding confusion with the block-sparse matrix components. Partial Gaussian
+elimination constructs the matrices
+
+$$
+\begin{align*}
+\mathbb{L}_p &= \begin{bmatrix} \mathbb{l}_p && \pmb{\mathbb{0}}^T \\ \overrightarrow{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
+\mathbb{U}_p &= \begin{bmatrix} \mathbb{u}_p && \overrightarrow{\mathbb{l}_p\mathbb{p}_p\pmb{\mathbb{r}}_p}^T \\ \pmb{\mathbb{0}} && \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}\mathbb{l}_p^{-1}\mathbb{p}_p\pmb{\mathbb{r}}_p^T}\end{bmatrix}
+\equiv \begin{bmatrix} \mathbb{u}_p && \mathbb{p}_p\mathbb{l}_p\pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \pmb{\mathbb{M}}_{p+1} \end{bmatrix}
+\end{align*}
+$$
 
 ##### Rationale of the block-sparse LU-factorization process
 
