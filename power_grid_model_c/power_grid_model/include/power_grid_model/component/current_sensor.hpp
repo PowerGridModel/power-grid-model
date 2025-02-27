@@ -123,10 +123,10 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
   private:
     double base_current_{};
     double base_current_inv_{};
-    RealValue<current_sensor_symmetry> i_measured_{};
     RealValue<current_sensor_symmetry> i_angle_measured_{};
-    double i_sigma_{};
     double i_angle_sigma_{};
+    double i_sigma_{};
+    RealValue<current_sensor_symmetry> i_measured_{};
 
     // TODO(mgovers) when filling the functions below take in mind that i_angle_sigma is optional
 
