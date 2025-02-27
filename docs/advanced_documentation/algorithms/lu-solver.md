@@ -236,7 +236,7 @@ from the [dense LU-factorization process](#dense-lu-factorization-process).
 
 #### Block-sparse LU-factorization process
 
-The Gaussian elimination process itself is as usual. Completely analogously to and following the
+<!-- The Gaussian elimination process itself is as usual. Completely analogously to and following the
 same conventions as [before](#dense-lu-factorization-process), let
 $\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
 be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
@@ -282,7 +282,183 @@ $\mathbb{u}_p \boldsymbol{z}_p = \boldsymbol{y}_p$. The end-result is then
 $\mathbb{m}_p^{-1} \boldsymbol{x}_p = \mathbb{q}_p \boldsymbol{z}_p$.
 
 Iteratively applying above factorization process yields $\mathbb{L}$ and $\mathbb{U}$, as well as
-$\mathbb{P}$ and $\mathbb{Q}$.
+$\mathbb{P}$ and $\mathbb{Q}$. -->
+
+##### Rationale of the block-sparse LU-factorization process
+
+Full matrix solving (without using blocks)
+
+$$
+\begin{align*}
+\begin{pmatrix}
+\mathbb{a} && \mathbb{b} \\
+\mathbb{c} && \mathbb{d}
+\end{pmatrix}
+&=
+\begin{pmatrix}
+a_{11} && a_{12} && b_{11} && b_{12} \\
+a_{21} && a_{22} && b_{21} && b_{22} \\
+c_{11} && c_{12} && d_{11} && d_{12} \\
+c_{21} && c_{22} && d_{21} && d_{22}
+\end{pmatrix} \\
+& \mapsto
+\begin{pmatrix}
+a_{11} && a_{12} && b_{11} && b_{12} \\
+\frac{a_{21}}{a_{11}} && a_{22} - a_{12} \frac{a_{21}}{a_{11}} && b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}} \\
+\frac{c_{11}}{a_{11}} && c_{12} - a_{12} \frac{c_{11}}{a_{11}} && d_{11} - b_{11}\frac{c_{11}}{a_{11}} && d_{12} - b_{12}\frac{c_{11}}{a_{11}} \\
+\frac{c_{21}}{a_{11}} && c_{22} - a_{12} \frac{c_{21}}{a_{11}} && d_{21} - b_{11}\frac{c_{21}}{a_{11}} && d_{22} - b_{12}\frac{c_{21}}{a_{11}}
+\end{pmatrix} \\
+& \mapsto
+\begin{pmatrix}
+a_{11} && a_{12} && b_{11} && b_{12} \\
+\frac{a_{21}}{a_{11}} &&
+    a_{22} - a_{12} \frac{a_{21}}{a_{11}} &&
+    b_{21} - b_{11}\frac{a_{21}}{a_{11}} &&
+    b_{22} - b_{12}\frac{a_{21}}{a_{11}} \\
+\frac{c_{11}}{a_{11}} &&
+    \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
+\frac{c_{21}}{a_{11}} &&
+    \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix} \\
+&\equiv
+\begin{pmatrix}
+\mathbb{l}_a \mathbb{u}_a && \mathbb{u}_b \\
+\mathbb{l}_c              && \mathbb{l}_d \mathbb{u}_d
+\end{pmatrix}
+\end{align*}
+$$
+
+so that
+
+$$
+\begin{align*}
+\mathbb{l}_a &= \begin{pmatrix}
+    1                     && 0 \\
+    \frac{a_{21}}{a_{11}} && 1
+\end{pmatrix} \\
+\mathbb{u}_a &= \begin{pmatrix}
+    a_{11} && a_{12} \\
+    0 && a_{22} - a_{12} \frac{a_{21}}{a_{11}}
+\end{pmatrix} \\
+\mathbb{l}_c &= \begin{pmatrix}
+    \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix} \\
+\mathbb{u}_b &= \begin{pmatrix}
+    b_{11}                               && b_{12} \\
+    b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
+\end{pmatrix} \\
+\mathbb{l}_d\mathbb{u}_d &= \begin{pmatrix}
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+        d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
+    d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+        d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix}
+\end{align*}
+$$
+
+Interestingly, the matrices $\mathbb{l}_c$, $\mathbb{u}_b$ and $\mathbb{l}_d\mathbb{u}_d$ can be
+obtained without doing full pivoting on the sub-block level:
+
+* $\mathbb{l}_c$ is the solution to the right-multiplication matrix equation
+  $\mathbb{l}_c \mathbb{u}_a = \mathbb{c}$
+* $\mathbb{u}_b$ is the solution to the left-multiplication matrix equation
+  $\mathbb{l}_a \mathbb{u}_b = \mathbb{b}$.
+* $\mathbb{l}_d\mathbb{u}_d$ denotes the start matrix of the decomposition of the next iteration and
+  is equal to $\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$.
+
+This process generalizes to block matrices of any size and block-invertible matrices of any size:
+$\mathbb{c}$ and $\mathbb{b}$ become a column- and row-vector of block-matrices for which the
+individual block-elements of the vectorized decompositions $\mathbb{l}_c$ and $\mathbb{u}_b$ can be
+obtained by solving above equations.
+
+If, during the LU-decomposition of the pivot block, a row- and column-permutation was used,
+$\mathbb{a} = \mathbb{p}_a^{-1} \mathbb{l}_a \mathbb{u}_p \mathbb{q}_a^{-1}$, and the columns of
+$\mathbb{c}$ and the rows of $\mathbb{b}$ are permuted: $\mathbb{c}\mapsto\mathbb{c}\mathbb{q}_a$
+and $\mathbb{b}\mapsto\mathbb{p}_a\mathbb{b}$. As a result, the equations generalize as follows.
+
+* $\mathbb{l}_c$ is the solution to the right-multiplication matrix equation
+  $\mathbb{l}_c \mathbb{u}_a = \mathbb{c} \mathbb{q}_a$.
+* $\mathbb{u}_b$ is the solution to the left-multiplication matrix equation
+  $\mathbb{l}_a \mathbb{u}_b = \mathbb{p}_a \mathbb{b}$.
+* $\mathbb{l}_d\mathbb{u}_d$ denotes the start matrix of the decomposition of the next iteration and
+  is equal to $\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$.
+
+##### Proof of block-sparse LU-factorization process
+
+The following proves the equations $\mathbb{l}_c \mathbb{u}_a = \mathbb{c}$,
+$\mathbb{l}_a \mathbb{u}_b = \mathbb{b}$ and
+$\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$ mentioned in the
+[previous section](#rationale-of-the-block-sparse-lu-factorization-process).
+
+$$
+\begin{align*}
+\mathbb{l}_c \mathbb{u}_a
+&=
+\begin{pmatrix}
+    \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix} \begin{pmatrix}
+    a_{11} && a_{12} \\
+    0 && a_{22} - a_{12} \frac{a_{21}}{a_{11}}
+\end{pmatrix} \\
+&= \begin{pmatrix}
+    a_{11} \frac{c_{11}}{a_{11}} && a_{12} \frac{c_{11}}{a_{11}} + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)\frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    a_{11} \frac{c_{21}}{a_{11}} && a_{12} \frac{c_{21}}{a_{11}} + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)\frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix} \\
+&= \begin{pmatrix}
+    c_{11} && c_{11} + \left(c_{12} - c_{11}\right) \\
+    c_{21} && c_{21} + \left(c_{22} - c_{21}\right)
+\end{pmatrix} \\
+&= \begin{pmatrix}
+    c_{11} && c_{12} \\
+    c_{21} && c_{22}
+\end{pmatrix} \\
+&= \mathbb{c} \\
+\mathbb{l}_a \mathbb{u}_b
+&= \begin{pmatrix}
+    1                     && 0 \\
+    \frac{a_{21}}{a_{11}} && 1
+\end{pmatrix} \begin{pmatrix}
+    b_{11}                               && b_{12} \\
+    b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
+\end{pmatrix} \\
+&= \begin{pmatrix}
+    b_{11}                                                               && b_{12} \\
+    b_{11} \frac{a_{21}}{a_{11}} + b_{21} - b_{11} \frac{a_{21}}{a_{11}} && b_{12} \frac{a_{21}}{a_{11}} + b_{22} - b_{12}\frac{a_{21}}{a_{11}}
+\end{pmatrix} \\
+&= \begin{pmatrix}
+    b_{11} && b_{12} \\
+    b_{21} && b_{22}
+\end{pmatrix} \\
+&= \mathbb{b} \\
+\mathbb{l}_d\mathbb{u}_d
+&= \mathbb{d} - \mathbb{l}_c \mathbb{u}_b \\
+&= \begin{pmatrix}d_{11} && d_{12} \\ d_{21} && d_{22} \end{pmatrix} - \begin{pmatrix}
+    \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix} \begin{pmatrix}
+    b_{11}                               && b_{12} \\
+    b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
+\end{pmatrix} \\
+&= \begin{pmatrix}
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+        d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    d{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+        d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+\end{pmatrix} \\
+&= \mathbb{l}_d\mathbb{u}_d
+\end{align*}
+$$
+
+Generalizability to larger block sizes and block-matrix sizes follows from fhe fact that
+$\mathbb{l}_c$ and $\mathbb{u}_b$ only depend on the in-block LU-decomposition of the pivot block
+$(\mathbb{l}_a,\mathbb{u}_a)$ and the data in the respective blocks ($\mathbb{c}$ and $\mathbb{b}$)
+in the original matrix by varying $c$ and $b$ over other blocks.
 
 #### Block-sparse indices
 
