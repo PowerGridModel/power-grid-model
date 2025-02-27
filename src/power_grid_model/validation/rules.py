@@ -779,7 +779,7 @@ def none_missing(data: SingleDataset, component: ComponentType, fields: str | li
             invalid = np.equal(data[component][field], nan)
 
         if invalid.any():
-            # handle asymmetric values
+            # handle both symmetric and asymmetric values
             invalid = np.any(invalid, axis=tuple(range(1, invalid.ndim)))
             ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
