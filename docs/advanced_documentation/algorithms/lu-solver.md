@@ -122,32 +122,80 @@ The power grid model uses a modified version of the
 
 #### Dense LU-factorization process
 
-The Gaussian elimination process itself is as usual. Let
-$\mathbb{M}_p\equiv\begin{bmatrix}m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
-where $p$ is the current pivot element at the top left of the matrix, $m_p$ its matrix element
-value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are the associated column and row vectors
-containing the rest of the pivot column and row and $\hat{\mathbb{M}}_p$ is the bottom-right block
-of the matrix. Gaussian elimination constructs the matrices
+The Gaussian elimination process itself is, as usual, by iterating over all pivot elements $p$. Let
+$\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
+be the matrix block at some iteration step where $p$ is the current pivot element at the top
+left of the matrix, $m_p$ its matrix element value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are
+the associated column and row vectors containing the rest of the pivot column and row and
+$\hat{\mathbb{M}}_p$ is the bottom-right block of the matrix. Note that in the bigger picture of the
+full matrix, this looks as follows, where the $m_k$, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$
+($k < p$) denote sections of the matrix that already have been decomposed in previous iteration
+steps (see below).
+
+$$
+\begin{bmatrix}
+    m_0 && \boldsymbol{u}_0^T && && \\
+    \boldsymbol{l}_0 && \ddots && \ddots && \\
+    \vdots && \ddots && \ddots && \\
+    && && && \mathbb{M}_p
+\end{bmatrix}\equiv\begin{bmatrix}
+    m_0 && \boldsymbol{u}_0^T && && && \\
+    \boldsymbol{l}_0 && \ddots && \ddots && && \\
+    \vdots && \ddots && m_{p-1} && \boldsymbol{u}_{p-1}^T && \\
+    && && \boldsymbol{l}_{p-1} && m_p && \boldsymbol{r}_p^T \\
+    && && && \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}
+$$
+
+Gaussian elimination constructs the matrices
 
 $$
 \begin{align*}
 \mathbb{L}_p &= \begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbb{1}_p\end{bmatrix} \\
-\mathbb{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \hat{\mathbb{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T\end{bmatrix}
-\equiv \begin{bmatrix} 1 && \boldsymbol{r}_p^T \\ \boldsymbol{0} && \mathbb{M}_{p+1} \end{bmatrix}
+\mathbb{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbb{1}_p\end{bmatrix} \\
+\mathbb{M}_{p+1} &= \hat{\mathbb{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
 \end{align*}
 $$
 
-where $\mathbb{1}$ is the matrix with ones on the diagonal and zeros as off-diagonal elements.
+where $\mathbb{1}$ is the matrix with ones on the diagonal and zeros as off-diagonal elements and
+$\mathbb{M}_{p+1}$ is the start of the next iteration. They together form the LU-decomposition as
+
+$$
+\mathbb{M}_p \equiv
+\begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbb{1}_p\end{bmatrix}\begin{bmatrix}
+    1 && \boldsymbol{0}^T \\
+    \boldsymbol{0} && \hat{\mathbb{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
+\end{bmatrix}\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbb{1}_p\end{bmatrix}
+\equiv \mathbb{L}_p \begin{bmatrix}
+    1 && \boldsymbol{0}^T \\
+    \boldsymbol{0} && \mathbb{M}_{p+1}
+\end{bmatrix} \mathbb{U}_p
+$$
+
+or, with the previous iteration also shown,
+
+$$
+\mathbb{M}_{p-1} \equiv \mathbb{L}_{p-1} \begin{bmatrix}
+    1 && \boldsymbol{0}^T \\
+    \boldsymbol{0} && \mathbb{L}_p
+\end{bmatrix}\begin{bmatrix}
+    1 && 0 && \boldsymbol{0}^T \\
+    0 && 1 && \boldsymbol{0}^T \\
+    \boldsymbol{0} && \boldsymbol{0} && \mathbb{M}_{p+1}
+\end{bmatrix} \begin{bmatrix}
+    1 && \boldsymbol{0}^T \\
+    \boldsymbol{0} && \mathbb{U}_p
+\end{bmatrix}\mathbb{U}_{p-1}
+$$
 
 Iterating this process yields the matrices
 
 $$
 \begin{align*}
 \mathbb{L} = \begin{bmatrix}
-\boldsymbol{l}_0 && 0 && \cdots && 0 \\
- && \boldsymbol{l}_1 && \ddots && \vdots \\
- && && \ddots && 0 \\
- && && && \boldsymbol{l}_{N-1}
+1 && 0 && \cdots && 0 \\
+\boldsymbol{l}_0 && \ddots && \ddots && \vdots \\
+ && \ddots && \ddots && 0 \\
+ && && \boldsymbol{l}_{N-2} && 1
 \end{bmatrix} &= \begin{bmatrix}
 1 && 0 && \cdots \\
 m_0^{-1} \boldsymbol{q}_0 && 1 && \ddots \\
@@ -155,10 +203,10 @@ m_0^{-1} \boldsymbol{q}_0 && 1 && \ddots \\
 && && \ddots
 \end{bmatrix} \\
 \mathbb{U} = \begin{bmatrix}
-\boldsymbol{u}_0 && 0 && \cdots && 0 \\
- && \boldsymbol{u}_1 && \ddots && \vdots \\
- && && \ddots && 0 \\
- && && && \boldsymbol{u}_{N-1}
+m_0 && \boldsymbol{u}_0^T && && \\
+0 && m_1 && \ddots && \\
+\vdots && \ddots && \ddots && \boldsymbol{u}_{N-2}^T \\
+0 && \cdots && 0 && m_{N-1}
 \end{bmatrix} &= \begin{bmatrix}
 m_0 && \boldsymbol{r}_0^T && && \\
 0 && m_1 && \boldsymbol{r}_1^T && \\
@@ -167,8 +215,8 @@ m_0 && \boldsymbol{r}_0^T && && \\
 \end{align*}
 $$
 
-in which $\boldsymbol{l}_p$ and $\boldsymbol{u}_p$ are the first column of $\mathbb{L}_p$ and
-$\mathbb{U}_p$, respectively.
+in which $\boldsymbol{l}_p$ is the first column of the lower triangle of $\mathbb{L}_p$ and
+$\boldsymbol{u}_p^T$ is the first row of the upper triangle of $\mathbb{U}_p$.
 
 The process described in the above assumes no pivot permutations were necessary. If permutations
 are required, they are kept track of in separate row-permution and column-permutation matrices
@@ -256,8 +304,8 @@ elimination constructs the matrices
 $$
 \begin{align*}
 \mathbb{L}_p &= \begin{bmatrix} 1 && \pmb{\mathbb{0}}^T \\ \overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
-\mathbb{U}_p &= \begin{bmatrix} \mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}\end{bmatrix}
-\equiv \begin{bmatrix} \mathbb{1} && \pmb{\mathbb{r}}_p^T \\ \boldsymbol{0} && \pmb{\mathbb{M}}_{p+1} \end{bmatrix}
+\mathbb{U}_p &= \begin{bmatrix} \mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \pmb{\mathbb{1}}_p \end{bmatrix} \\
+\pmb{\mathbb{M}}_{p+1} &= \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}
 \end{align*}
 $$
 
@@ -312,10 +360,13 @@ elimination constructs the matrices
 $$
 \begin{align*}
 \mathbb{L}_p &= \begin{bmatrix} \mathbb{l}_p && \pmb{\mathbb{0}}^T \\ \overrightarrow{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
-\mathbb{U}_p &= \begin{bmatrix} \mathbb{u}_p && \overrightarrow{\mathbb{l}_p\mathbb{p}_p\pmb{\mathbb{r}}_p}^T \\ \pmb{\mathbb{0}} && \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}\mathbb{l}_p^{-1}\mathbb{p}_p\pmb{\mathbb{r}}_p^T}\end{bmatrix}
-\equiv \begin{bmatrix} \mathbb{u}_p && \mathbb{p}_p\mathbb{l}_p\pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \pmb{\mathbb{M}}_{p+1} \end{bmatrix}
+\mathbb{U}_p &= \begin{bmatrix} \mathbb{u}_p && \overrightarrow{\mathbb{l}_p\mathbb{p}_p\pmb{\mathbb{r}}_p}^T \\ \pmb{\mathbb{0}} && \pmb{\mathbb{1}}_p \end{bmatrix} \\
+\pmb{\mathbb{M}}_{p+1} &= \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}\mathbb{l}_p^{-1}\mathbb{p}_p\pmb{\mathbb{r}}_p^T}
 \end{align*}
 $$
+
+Note that the first column of $\mathbb{L}_p$ can be obtained by applying a right-solve procedure,
+instead of the regular left-solve procedure, as is the case for the $\mathbb{U}_p$.
 
 ##### Rationale of the block-sparse LU-factorization process
 
