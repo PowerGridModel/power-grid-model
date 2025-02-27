@@ -140,6 +140,13 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
         return IndependentComplexRandVar<sym>{
             .value = value(), .variance = magnitude.variance + magnitude.value * magnitude.value * angle.variance};
     }
+
+    // For sym to sym conversion:
+    // Var(I_Re) ≈ Var(I) * cos^2(θ) + Var(θ) * I^2 * sin^2(θ)
+    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)
+    // For asym to asym conversion:
+    // Var(I_Re,p) ≈ Var(I_p) * cos^2(θ_p) + Var(θ_p) * I_p^2 * sin^2(θ_p)
+    // Var(I_Im,p) ≈ Var(I_p) * sin^2(θ_p) + Var(θ_p) * I_p^2 * cos^2(θ_p)
     explicit operator DecomposedComplexRandVar<sym>() const {
         auto const cos_theta = cos(angle.value);
         auto const sin_theta = sin(angle.value);
@@ -154,6 +161,8 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                                            real_component * real_component * angle.variance}};
     }
 
+    // Var(I_Re,p) ≈ Var(I) * cos^2(θ - 2πp/3) + Var(θ) * I^2 * sin^2(θ - 2πp/3)
+    // Var(I_Im,p) ≈ Var(I) * sin^2(θ - 2πp/3) + Var(θ) * I^2 * cos^2(θ - 2πp/3)
     explicit operator DecomposedComplexRandVar<asymmetric_t>() const
         requires(is_symmetric_v<sym>)
     {
@@ -168,6 +177,10 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                                            real(complex) * real(complex) * angle.variance}};
     }
 
+    // Var(I_Re) ≈ (1 / 9) * sum_p(Var(I_p) * cos^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 * sin^2(theta_p + 2
+    // * pi * p / 3))
+    // Var(I_Im) ≈ (1 / 9) * sum_p(Var(I_p) * sin^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 *
+    // cos^2(theta_p + 2 * pi * p / 3))
     explicit operator DecomposedComplexRandVar<symmetric_t>() const
         requires(is_asymmetric_v<sym>)
     {
