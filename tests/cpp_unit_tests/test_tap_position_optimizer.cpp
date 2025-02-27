@@ -1368,7 +1368,7 @@ TEST_CASE("Test Tap position optimizer") {
                     REQUIRE(!result.solver_output.empty());
                     return result.solver_output.front().state_tap_positions.at(id);
                 };
-                
+
                 // check optimal state
                 CHECK(result.solver_output.size() == 1);
                 check_a(get_state_tap_pos(state_a.id), strategy, tap_side);
