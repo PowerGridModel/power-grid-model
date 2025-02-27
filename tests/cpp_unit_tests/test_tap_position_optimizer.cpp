@@ -1368,15 +1368,7 @@ TEST_CASE("Test Tap position optimizer") {
                     REQUIRE(!result.solver_output.empty());
                     return result.solver_output.front().state_tap_positions.at(id);
                 };
-                auto const get_output_tap_pos = [&](ID const id) {
-                    REQUIRE(!result.optimizer_output.transformer_tap_positions.empty());
-                    auto const it = std::ranges::find_if(result.optimizer_output.transformer_tap_positions,
-                                                         [id](auto const& x) { return x.transformer_id == id; });
-                    REQUIRE(it != std::end(result.optimizer_output.transformer_tap_positions));
-                    CHECK(it->transformer_id == id);
-                    return it->tap_position;
-                };
-
+                
                 // check optimal state
                 CHECK(result.solver_output.size() == 1);
                 check_a(get_state_tap_pos(state_a.id), strategy, tap_side);
