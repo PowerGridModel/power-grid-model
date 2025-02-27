@@ -108,8 +108,8 @@ template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
 
     AngleMeasurementType angle_measurement_type{};
     ComplexValue<sym> value{};
-    double i_real_variance{}; // variance (sigma^2) of the error range of real part of the current, in p.u.
-    double i_imag_variance{}; // variance (sigma^2) of the error range of imaginary part of the current, in p.u.
+    RealValue<sym> i_real_variance{}; // variance (sigma^2) of the error range of real part of the current, in p.u.
+    RealValue<sym> i_imag_variance{}; // variance (sigma^2) of the error range of imaginary part of the current, in p.u.
 };
 
 template <typename T>

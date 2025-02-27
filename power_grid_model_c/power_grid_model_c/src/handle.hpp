@@ -28,8 +28,8 @@ struct PGM_Handle {
 };
 
 template <class Exception = std::exception, class Functor>
-auto call_with_catch(PGM_Handle* handle, Functor func, PGM_Idx error_code,
-                     std::string_view extra_msg = {}) -> std::invoke_result_t<Functor> {
+inline auto call_with_catch(PGM_Handle* handle, Functor func, PGM_Idx error_code,
+                            std::string_view extra_msg = {}) -> std::invoke_result_t<Functor> {
     if (handle) {
         PGM_clear_error(handle);
     }
