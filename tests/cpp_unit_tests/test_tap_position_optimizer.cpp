@@ -735,6 +735,7 @@ struct GenericResultPerStratety {
             return tap_range_min_3;
         default:
             FAIL("Unreachable in get_min");
+            return 0;
         }
     }
     IntS get_max(ControlSide const& tap_side) const {
