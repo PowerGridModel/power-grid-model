@@ -184,7 +184,7 @@ TEST_CASE("Test Transformer ranking") {
         CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 2, 1, 4, 5)));
     }
 
-    SUBCASE("Full grid") {
+    SUBCASE("Full grid 1 - For graph construction steps") {
         // =====Test Grid=====
         // ________[0]________
         // ||           |    |
@@ -324,13 +324,62 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         SUBCASE("Ranking complete the graph") {
-            // (TODO: jguo) existing demo grid is not compatible with the updated ranking
-            // The test grid needs to be updated here to match the new ranking logic
-            // pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-            // pgm_tap::RankedTransformerGroups const ref_order{
-            //     {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}}};
-            // CHECK(order == ref_order);
+            // The test grid 1 is not compatible with the updated logic for step up transformers
             CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapInputError);
+        }
+    }
+
+    // The test grid 2 is compatible with the updated logic for step up transformers
+    SUBCASE("Full grid 2 - For transformer ranking only") {
+        // =====Test Grid=====
+        // ________[0]________
+        // ||           |    |
+        // [1]         [4]--[5]
+        //  |           |    |
+        // [2]          |   [8]
+        //  |          [6]   |
+        // [3]----[7]---|   [9]
+        //  |                |
+        //  L--------------[10]
+        TestState state;
+        std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3}, {5, 50e3},
+                                     {6, 10e3},  {7, 10e3}, {8, 10e3}, {9, 10e3}, {10, 10e3}};
+        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+
+        std::vector<TransformerInput> transformers{
+            get_transformer(11, 0, 1, BranchSide::from), get_transformer(12, 0, 1, BranchSide::from),
+            get_transformer(13, 2, 3, BranchSide::from), get_transformer(14, 6, 7, BranchSide::from),
+            get_transformer(15, 5, 8, BranchSide::from), get_transformer(16, 9, 10, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+
+        std::vector<ThreeWindingTransformerInput> transformers3w{
+            get_transformer3w(17, 0, 4, 5, Branch3Side::side_2, 0)};
+        main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+
+        std::vector<LineInput> lines{get_line_input(18, 4, 6), get_line_input(19, 3, 10)};
+        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+
+        std::vector<LinkInput> links{{20, 1, 2, 1, 1}, {21, 3, 7, 1, 1}, {22, 8, 9, 1, 1}};
+        main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
+
+        std::vector<SourceInput> sources{{23, 0, 1, 1.0, 0, nan, nan, nan}};
+        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> regulators{
+            get_regulator(24, 11, ControlSide::to),    get_regulator(25, 12, ControlSide::to),
+            get_regulator(26, 13, ControlSide::to),    get_regulator(27, 14, ControlSide::to),
+            get_regulator(28, 15, ControlSide::to),    get_regulator(29, 16, ControlSide::to),
+            get_regulator(30, 17, ControlSide::side_2)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
+        state.components.set_construction_complete();
+
+        // Subcases
+        SUBCASE("Ranking complete the graph") {
+            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+            pgm_tap::RankedTransformerGroups const ref_order{
+                {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}, Idx2D{3, 4}}, {Idx2D{3, 2}, Idx2D{3, 3}, Idx2D{3, 5}}}};
+            CHECK(order == ref_order);
         }
     }
 }
