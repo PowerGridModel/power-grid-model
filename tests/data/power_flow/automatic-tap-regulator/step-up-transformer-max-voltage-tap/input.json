@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 2, "u_rated": 150000},
+      {"id": 4, "u_rated": 10500},
+      {"id": 6, "u_rated": 21000}
+    ],
+    "transformer": [
+      {"id": 3, "from_node": 2, "to_node": 4, "from_status": 1, "to_status": 1, "u1": 150000, "u2": 11000, "sn": 66000000, "uk": 0.199, "pk": 217000, "i0": 1e-3, "p0": 19500, "winding_from": 1, "winding_to": 2, "clock": 5, "tap_side": 0, "tap_pos": -1, "tap_min": -8, "tap_max": 9, "tap_size": 2500},
+      {"id": 5, "from_node": 4, "to_node": 6, "from_status": 1, "to_status": 1, "u1": 10600, "u2": 21000, "sn": 20000000, "uk": 0.119, "pk": 127000, "i0": 1e-03, "p0": 5700, "winding_from": 1, "winding_to": 1, "clock": 2, "tap_side": 1, "tap_pos": 4, "tap_min": -13, "tap_max": 4, "tap_size": 270}
+    ],
+    "sym_load": [
+      {"id": 7, "node": 6, "status": 1, "type": 0, "p_specified": 10000000, "q_specified": 5000000}
+    ],
+    "source": [
+      {"id": 1, "node": 2, "status": 1, "u_ref": 1.0}
+    ],
+    "transformer_tap_regulator": [
+      {"id": 8, "regulated_object": 5, "status": 1, "control_side": 1, "u_set": 21000, "u_band": 522}
+    ]
+  }
+}
