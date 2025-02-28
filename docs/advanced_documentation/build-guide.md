@@ -11,12 +11,12 @@ repository there are three builds:
 
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
 * A [CMake](https://cmake.org/) project consisting of the C++ header-only calculation core, and the following build targets:
-    * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application (enabled by default)
-    * An install target that installs the package containing the dynamic library (enabled by default)
-    * Native C++ unit tests
-    * C API tests
-    * A performance benchmark program
-    * An example C program to call the shared library
+  * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application (enabled by default)
+  * An install target that installs the package containing the dynamic library (enabled by default)
+  * Native C++ unit tests
+  * C API tests
+  * A performance benchmark program
+  * An example C program to call the shared library
 * A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the installable
   package.
 
@@ -39,7 +39,7 @@ minimum.
 
 You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
-**Linux**
+#### Linux
 
 * gcc >= 11.0
   * Version 12.x tested using the version in the `manylinux_2_28` container.
@@ -51,14 +51,14 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
-**Windows**
+#### Windows
 
 * MSVC >= 17.5
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 * Clang CL >= 15.0
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
-**macOS**
+#### macOS
 
 * Clang >= 14.0.3
   * Latest release tested in CI
@@ -96,8 +96,8 @@ The table below shows the Python dependencies
 
 ## Build Python Package
 
-Once you have prepared the build dependencies, 
-you can install the library from source in editable mode with the development dependency. 
+Once you have prepared the build dependencies,
+you can install the library from source in editable mode with the development dependency.
 Go to the root folder of the repository.
 
 ```shell
@@ -148,13 +148,12 @@ cmake --install build/ --config Release --prefix install/
 ./install/bin/power_grid_model_package_test
 ```
 
-
 ### Developer build
 
-If you opt for a developer build of Power Grid Model, 
-you can use the pre-defined CMake presets to enable developer build, including all the tests, warnings, examples, and benchmark. In the presets the [Ninja](https://ninja-build.org/) generator is used. 
+If you opt for a developer build of Power Grid Model,
+you can use the pre-defined CMake presets to enable developer build, including all the tests, warnings, examples, and benchmark. In the presets the [Ninja](https://ninja-build.org/) generator is used.
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project.
-It is also possible to use the bare CMake CLI to set up the project. 
+It is also possible to use the bare CMake CLI to set up the project.
 Supported presets for your development platform can be listed using `cmake --list-presets`.
 
 In the developer build the following build targets (directories) are enabled:
@@ -166,14 +165,13 @@ In the developer build the following build targets (directories) are enabled:
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
-
 On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc` compiler. It is the developer's reponsiblity to properly define symbolic links (which should be discoverable through `PATH` environment variable) of `clang` or `gcc` compiler in your system. If you want to build with `clang-tidy`, you also need to define symbolic link of `clang-tidy` to point to the actual `clang-tidy` executable of your system.
 
 Similar also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler. Developer needs to make sure the they are discoverable in `PATH`. For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses `vcvarsall.bat` to set up the appropriate build environment.
 
 ## Visual Studio Code Support
 
-You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically. 
+You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
 
 ```{note}
 VSCode (as well as some other IDEs) does not set its own build environment itself. For optimal usage, open the folder
@@ -238,8 +236,8 @@ brew install boost eigen nlohmann-json msgpack-cxx doctest cmake
 
 ### Build Python Library from Source
 
-It is recommended to create a virtual environment. 
-Clone repository, create and activate virtual environment. 
+It is recommended to create a virtual environment.
+Clone repository, create and activate virtual environment.
 Go to a root folder you prefer to save the repositories.
 
 ```shell
@@ -288,7 +286,6 @@ or install using
 cmake --build --preset <preset> --target install
 ```
 
-
 ## Example Setup for Windows 10
 
 Define the following environment variable user-wide:
@@ -302,10 +299,10 @@ Define the following environment variable user-wide:
 You need to install the MSVC compiler. You can either install the whole Visual Studio IDE or just the build tools.
 
 * [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
-    * Select C++ build tools
+  * Select C++ build tools
 * Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable. Check the license!)
-    * Select Desktop Development with C++
-        * [Optional] Select `C++ Clang tools for Windows`
+  * Select Desktop Development with C++
+    * [Optional] Select `C++ Clang tools for Windows`
 
 Other toolchains:
 
@@ -331,8 +328,8 @@ conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eig
 
 ### Build Python Library from Source
 
-It is recommended to create a `conda` environment. 
-Clone repository, create and activate `conda` environment. 
+It is recommended to create a `conda` environment.
+Clone repository, create and activate `conda` environment.
 Go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
