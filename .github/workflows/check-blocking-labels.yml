@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-
 name: Check Blocking Labels
 
 on:
@@ -44,3 +43,4 @@ jobs:
         run: |
           echo "This pull request needs (more) unit tests before it may be merged (needs-unit-tests)"
           exit 3
+          
