@@ -696,7 +696,7 @@ auto check_compensated_exact_per_strategy(CompensatedResultPerStratety const& co
         }
     };
 }
-struct GenericResultPerStratety {
+struct GenericResultPerStrategy {
     IntS tap_pos_any_1;
     IntS tap_pos_any_2;
     IntS tap_pos_any_3;
@@ -754,7 +754,7 @@ struct GenericResultPerStratety {
         }
     }
 };
-auto check_generic_exact_per_strategy(GenericResultPerStratety const& generic_result) -> TapPositionCheckFuncGeneric {
+auto check_generic_exact_per_strategy(GenericResultPerStrategy const& generic_result) -> TapPositionCheckFuncGeneric {
     return [generic_result](IntS value, OptimizerStrategy strategy, ControlSide tap_side) {
         using enum OptimizerStrategy;
 

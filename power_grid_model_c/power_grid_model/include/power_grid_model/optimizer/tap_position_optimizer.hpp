@@ -435,7 +435,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
         return apply([](auto const& t) { return t.tap_max(); });
     }
     IntS tap_side() const {
-        return std::visit([](auto const& t) { return static_cast<IntS>(t.get().tap_side()); }, transformer_);
+        return apply([](auto const& t) { return static_cast<IntS>(t.tap_side()); });
     }
     int64_t tap_range() const {
         return apply([](auto const& t) {
