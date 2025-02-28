@@ -1168,7 +1168,7 @@ TEST_CASE("Test tap position optmizer I/O") {
 }
 
 TEST_CASE("Test RankIterator") {
-    std::vector<std::vector<IntS>> regulator_order = {{0, 0, 0}, {0, 0, 0}};
+    std::vector<std::vector<IntS>> const regulator_order = {{0, 0, 0}, {0, 0, 0}};
     bool tap_changed{false};
     std::vector<IntS> iterations_per_rank = {2, 4, 6};
     Idx rank_index{0};
