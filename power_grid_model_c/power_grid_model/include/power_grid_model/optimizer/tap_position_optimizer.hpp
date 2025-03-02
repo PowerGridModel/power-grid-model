@@ -326,7 +326,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // situations can happen.
         if (edge_src_rank != edge_tgt_rank - 1) {
             throw AutomaticTapInputError(
-                "Control side of a transformer should be the relatively closer side to a source.\n");
+                "Control side of a transformer should be the relatively further side to a source.\n");
         }
         if (!is_unreachable(edge_res)) {
             result.emplace_back(TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank});
