@@ -347,7 +347,7 @@ TEST_CASE("Test Transformer ranking") {
         main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
         std::vector<TransformerInput> transformers{
-            get_transformer(11, 0, 1, BranchSide::from), get_transformer(12, 0, 1, BranchSide::from),
+            get_transformer(11, 0, 1, BranchSide::to), get_transformer(12, 0, 1, BranchSide::from),
             get_transformer(13, 2, 3, BranchSide::from), get_transformer(14, 6, 7, BranchSide::from),
             get_transformer(15, 5, 8, BranchSide::from), get_transformer(16, 9, 10, BranchSide::from)};
         main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
