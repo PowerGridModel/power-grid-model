@@ -1175,7 +1175,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         constexpr auto max_voltage_pos = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
             if (control_at_tap_side) {
-                // min voltage at control side => max voltage at tap side => max tap pos
+                // max voltage at tap side <=> max tap pos
                 return transformer.tap_max();
             }
             // max voltage at control side => min voltage at tap side => min tap pos
@@ -1183,7 +1183,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         };
         constexpr auto min_voltage_pos = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
             if (control_at_tap_side) {
-                // max voltage at control side => min voltage at tap side => min tap pos
+                // min voltage at tap side <=> min tap pos
                 return transformer.tap_min();
             }
             // min voltage at control side => max voltage at tap side => max tap pos
