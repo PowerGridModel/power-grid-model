@@ -1,0 +1,10 @@
+{
+  "calculation_method": "newton_raphson",
+  "tap_changing_strategy": "fast_any_tap",
+  "rtol": 1e-05,
+  "atol": 1e-05,
+  "fail": {
+    "raises": "AssertionError",
+    "reason": "Results don't match expected values as control logic is not yet implemented"
+  }
+}

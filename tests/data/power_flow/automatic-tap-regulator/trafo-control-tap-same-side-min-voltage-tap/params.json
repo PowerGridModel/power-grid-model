@@ -4,7 +4,7 @@
   "rtol": 1e-05,
   "atol": 1e-05,
   "fail": {
-    "raises": "AutomaticTapInputError",
-    "reason": "Control logic automatic tap regulator in step up transformer is not yet implemented"
+    "raises": "AssertionError",
+    "reason": "Results don't match expected values as control logic is not yet implemented"
   }
 }
