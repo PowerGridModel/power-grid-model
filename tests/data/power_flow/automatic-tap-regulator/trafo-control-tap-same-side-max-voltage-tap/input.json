@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 2, "u_rated": 10000},
+      {"id": 4, "u_rated": 400}
+    ],
+    "transformer": [
+      {"id": 3, "from_node": 2, "to_node": 4, "from_status": 1, "to_status": 1, "u1": 10000, "u2": 400, "sn": 100000, "uk": 0.1, "pk": 1000, "i0": 1e-06, "p0": 100, "winding_from": 2, "winding_to": 1, "clock": 5, "tap_side": 1, "tap_pos": -6, "tap_min": -11, "tap_max": 9, "tap_size": 4}
+    ],
+    "sym_load": [
+      {"id": 5, "node": 4, "status": 1, "type": 0, "p_specified": 1000, "q_specified": 5000}
+    ],
+    "source": [
+      {"id": 1, "node": 2, "status": 1, "u_ref": 1}
+    ],
+    "transformer_tap_regulator": [
+      {"id": 6, "regulated_object": 3, "status": 1, "control_side": 1, "u_set": 400, "u_band": 40}
+    ]
+  }
+}
