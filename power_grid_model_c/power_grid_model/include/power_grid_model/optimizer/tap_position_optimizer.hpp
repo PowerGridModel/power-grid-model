@@ -396,11 +396,19 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
 // higher voltage at control side => lower voltage at tap side => lower tap pos
-constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer) {
+constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer, bool control_at_tap_side) {
+    if (control_at_tap_side) {
+        // control side is tap side, voltage up requires tap up
+        return one_step_tap_up(transformer);
+    }
     return one_step_tap_down(transformer);
 }
 // lower voltage at control side => higher voltage at tap side => higher tap pos
-constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer) {
+constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer, bool control_at_tap_side) {
+    if (control_at_tap_side) {
+        // control side is tap side, voltage down requires tap down
+        return one_step_tap_down(transformer);
+    }
     return one_step_tap_up(transformer);
 }
 
@@ -426,6 +434,9 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
     }
+    IntS tap_side() const {
+        return apply([](auto const& t) { return static_cast<IntS>(t.tap_side()); });
+    }
     int64_t tap_range() const {
         return apply([](auto const& t) {
             return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
@@ -447,6 +458,10 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
     std::reference_wrapper<const TransformerTapRegulator> regulator;
     TransformerWrapper<TransformerTypes...> transformer;
+
+    bool control_at_tap_side() const {
+        return static_cast<IntS>(regulator.get().control_side()) == transformer.tap_side();
+    }
 };
 
 template <typename State>
@@ -710,7 +725,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     class BinarySearch {
       public:
         BinarySearch() = default;
-        BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max) { reset(tap_pos, tap_min, tap_max); }
+        BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
+            reset(tap_pos, tap_min, tap_max, control_at_tap_side);
+        }
 
         constexpr IntS get_current_tap() const { return current_; }
         constexpr bool get_last_down() const { return last_down_; }
@@ -729,7 +746,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             //  - tap_max > tap_min && strategy_max == true
             //  - tap_max < tap_min && strategy_max == false
             // Upper bound should be updated to the current tap position if the rest is the case.
-            if (tap_reverse_ == strategy_max) {
+            bool const invert_strategy = control_at_tap_side_ ? !strategy_max : strategy_max;
+            if (tap_reverse_ == invert_strategy) {
                 lower_bound_ = current_;
                 last_down_ = false;
             } else {
@@ -739,7 +757,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         void propose_new_pos(bool strategy_max, bool above_range) {
-            bool const is_down = above_range == tap_reverse_;
+            bool const is_down = (above_range == tap_reverse_) != control_at_tap_side_;
             if (last_check_) {
                 current_ = is_down ? lower_bound_ : upper_bound_;
                 inevitable_run_ = true;
@@ -753,7 +771,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // __prefer_higher__ indicates a preference towards higher voltage
             // that is a result of both the strategy as well as whether the current
             // transformer has a reversed tap_max and tap_min
-            bool const prefer_higher = strategy_max != tap_reverse_;
+            bool const prefer_higher = (strategy_max != tap_reverse_) != control_at_tap_side_;
             auto const tap_pos = search(prefer_higher);
             auto const tap_diff = tap_pos - get_current_tap();
             if (tap_diff == 0) {
@@ -774,7 +792,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
       private:
-        void reset(IntS tap_pos, IntS tap_min, IntS tap_max) {
+        void reset(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
             last_down_ = false;
             last_check_ = false;
             current_ = tap_pos;
@@ -782,6 +800,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             lower_bound_ = std::min(tap_min, tap_max);
             upper_bound_ = std::max(tap_min, tap_max);
             tap_reverse_ = tap_max < tap_min;
+            control_at_tap_side_ = control_at_tap_side;
         }
 
         void adjust(bool strategy_max = true) {
@@ -797,25 +816,27 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
         }
 
-        IntS search(bool prefer_higher = true) const {
-            // This logic is used to determin which of the middle points could be of interest
+        IntS search(bool prefer_higher_) const {
+            // This logic is used to determine which of the middle points could be of interest
             // given strategy used in optimization:
             // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
             // find the corresponding mid point. std::midpoint returns always the lower mid point
             // if the range is of even length. This is why we need to adjust bounds accordingly.
             // Not because upper bound and lower bound might be reversed, which is not possible.
+            bool const prefer_higher = control_at_tap_side_ != prefer_higher_;
             auto const primary_bound = prefer_higher ? upper_bound_ : lower_bound_;
             auto const secondary_bound = prefer_higher ? lower_bound_ : upper_bound_;
             return std::midpoint(primary_bound, secondary_bound);
         }
 
-        IntS lower_bound_{};         // tap position lower bound
-        IntS upper_bound_{};         // tap position upper bound
-        IntS current_{0};            // current tap position
-        bool last_down_{false};      // last direction
-        bool last_check_{false};     // last run checked
-        bool tap_reverse_{false};    // tap range normal or reversed
-        bool inevitable_run_{false}; // inevitable run
+        IntS lower_bound_{};              // tap position lower bound
+        IntS upper_bound_{};              // tap position upper bound
+        IntS current_{0};                 // current tap position
+        bool last_down_{false};           // last direction
+        bool last_check_{false};          // last run checked
+        bool tap_reverse_{false};         // tap range normal or reversed
+        bool inevitable_run_{false};      // inevitable run
+        bool control_at_tap_side_{false}; // regulator control side is at tap side
     };
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct BinarySearchOptions {
@@ -916,7 +937,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             std::vector<BinarySearch> binary_search_group(same_rank_regulators.size());
             std::ranges::transform(same_rank_regulators, binary_search_group.begin(), [](auto const& regulator) {
                 return BinarySearch{regulator.transformer.tap_pos(), regulator.transformer.tap_min(),
-                                    regulator.transformer.tap_max()};
+                                    regulator.transformer.tap_max(), regulator.control_at_tap_side()};
             });
             binary_search_.push_back(std::move(binary_search_group));
         }
@@ -1045,13 +1066,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
+            bool control_at_tap_side = regulator.control_at_tap_side();
+
             auto const cmp = node_state <=> param;
-            auto new_tap_pos = [&transformer, &cmp] {
+            auto new_tap_pos = [&transformer, &cmp, &control_at_tap_side] {
                 if (cmp > 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_control_voltage_down(transformer);
+                    return one_step_control_voltage_down(transformer, control_at_tap_side);
                 }
                 if (cmp < 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_control_voltage_up(transformer);
+                    return one_step_control_voltage_up(transformer, control_at_tap_side);
                 }
                 return transformer.tap_pos();
             }();
@@ -1150,11 +1173,19 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
-        constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+        constexpr auto max_voltage_pos = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            if (control_at_tap_side) {
+                // max voltage at tap side <=> max tap pos
+                return transformer.tap_max();
+            }
             // max voltage at control side => min voltage at tap side => min tap pos
             return transformer.tap_min();
         };
-        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            if (control_at_tap_side) {
+                // min voltage at tap side <=> min tap pos
+                return transformer.tap_min();
+            }
             // min voltage at control side => max voltage at tap side => max tap pos
             return transformer.tap_max();
         };
@@ -1185,11 +1216,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void exploit_neighborhood(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
-        constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_control_voltage_up(transformer);
+        constexpr auto increment_voltage = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            return one_step_control_voltage_up(transformer, control_at_tap_side);
         };
-        constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_control_voltage_down(transformer);
+        constexpr auto decrement_voltage = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            return one_step_control_voltage_down(transformer, control_at_tap_side);
         };
 
         switch (strategy_) {
@@ -1200,12 +1231,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            regulate_transformers(one_step_up, regulator_order);
+            regulate_transformers(increment_voltage, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            regulate_transformers(one_step_down, regulator_order);
+            regulate_transformers(decrement_voltage, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
@@ -1220,21 +1251,24 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     template <typename Func>
-        requires((std::invocable<Func, TransformerTypes const&> &&
-                  std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
+        requires((std::invocable<Func, TransformerTypes const&, bool> &&
+                  std::same_as<std::invoke_result_t<Func, TransformerTypes const&, bool>, IntS>) &&
                  ...)
     auto regulate_transformers(Func to_new_tap_pos,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
         auto const get_update = [to_new_tap_pos_func = std::move(to_new_tap_pos),
-                                 &update_data](transformer_c auto const& transformer) {
-            add_tap_pos_update(to_new_tap_pos_func(transformer), transformer, update_data);
+                                 &update_data](transformer_c auto const& transformer, bool control_at_tap_side) {
+            add_tap_pos_update(to_new_tap_pos_func(transformer, control_at_tap_side), transformer, update_data);
         };
 
         for (auto const& sub_order : regulator_order) {
             for (auto const& regulator : sub_order) {
-                regulator.transformer.apply(get_update);
+                bool const control_at_tap_side = regulator.control_at_tap_side();
+                regulator.transformer.apply([&get_update, &control_at_tap_side](auto const& transformer) {
+                    get_update(transformer, control_at_tap_side);
+                });
             }
         }
 
