@@ -661,7 +661,7 @@ auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_ran
             }
         };
 }
-struct CompensatedResultPerStratety {
+struct CompensatedResultPerStrategy {
     IntS tap_pos_any;
     IntS tap_pos_any_comp;
     IntS tap_range_min;
@@ -674,7 +674,7 @@ struct CompensatedResultPerStratety {
     }
     IntS get_max(bool control_at_tap_side) const { return control_at_tap_side ? tap_range_min : tap_range_max; }
 };
-auto check_compensated_exact_per_strategy(CompensatedResultPerStratety const& comp_result) -> TapPositionCheckFunc {
+auto check_compensated_exact_per_strategy(CompensatedResultPerStrategy const& comp_result) -> TapPositionCheckFunc {
     return [comp_result](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
         using enum OptimizerStrategy;
 
