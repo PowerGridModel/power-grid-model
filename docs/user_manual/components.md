@@ -675,13 +675,13 @@ Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 
 | `power_sigma` | `p_sigma` | `q_sigma` |  result  |
 | :-----------: | :-------: | :-------: | :------: |
-|       x       |     x     |     x     | &#10004; |
-|       x       |     x     |           | &#10060; |
-|       x       |           |     x     | &#10060; |
-|       x       |           |           | &#10004; |
-|               |     x     |     x     | &#10004; |
-|               |     x     |           | &#10060; |
-|               |           |     x     | &#10060; |
+|    &#10004;   |  &#10004; |  &#10004; | &#10004; |
+|    &#10004;   |  &#10004; |           | &#10060; |
+|    &#10004;   |           |  &#10004; | &#10060; |
+|    &#10004;   |           |           | &#10004; |
+|               |  &#10004; |  &#10004; | &#10004; |
+|               |  &#10004; |           | &#10060; |
+|               |           |  &#10004; | &#10060; |
 |               |           |           | &#10060; |
 
 ```{note}
@@ -806,7 +806,7 @@ The actual grid state is not changed after calculations are done.
 
 | name                       | data type                                                                                                                                                                                                                                                                                                          | unit     | description                                                                                             |           required           |  update  |   valid values    |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------- | :--------------------------: | :------: | :---------------: |
-| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer` | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10004; |                   |
+| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer` | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; |                   |
 | `u_set`                    | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the voltage setpoint (at the center of the band)                                                        | &#10024; only for power flow | &#10004; |      `>= 0`       |
 | `u_band`                   | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the width of the voltage band ($=2*\left(\Delta U\right)_{\text{acceptable}}$)                          | &#10024; only for power flow | &#10004; | `> 0` (see below) |
 | `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to resistance during transport (see [below](#line-drop-compensation)) |    &#10060; default `0.0`    | &#10004; |      `>= 0`       |
