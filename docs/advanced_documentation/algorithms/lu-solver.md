@@ -18,13 +18,13 @@ This section documents the need for a custom sparse LU-solver and its implementa
 
 The choice for the matrix equation solver type heavily leans on the need for
 [performance](#performance-considerations), the
-[topological structure](#topological-structure) of the grid and the
+[topological structure](#topological-structure) of the grid, and the
 [properties of the equations](#power-system-equations-properties). They are documented here.
 
 ### Performance considerations
 
-There is a large variety of usages of the power grid model that require good performance. This
-imposes some constraints on the algorithms that can be used.
+There is a large variety of applications of the power grid model that requires good performance.
+This imposes some limitations on the algorithms that can be used.
 
 * Highly accurate and fast calculations are needed for very large grids. This means that direct
   methods are strongly preferred, and approximate methods can only be used when there is no other
@@ -86,17 +86,17 @@ a consistent structure across the entire topology using Lagrange multipliers.
 #### Element size properties of power system equations
 
 Power system equations may contain elements of several orders of magnitude. This may lead to
-instabilities when solving the (matrix) equations due to non-linearly propagating (rounding) errors.
-Stability checks that limit those rounding errors need to function under these extreme conditions.
+instabilities when solving the equations due to non-linearly propagated numerical errors. Stability
+checks that limit those rounding errors need to function under these extreme conditions.
 
 ### Block-sparsity considerations
 
-The power flow and state estimation equations involve block-sparse matrices: dense blocks, with a
-dimensionality varying between different calculation types, methods and symmetries, are distributed
-across the matrix in an extremely sparse way. The sparse structure can be pre-calculated, but the
-dense blocks need to be inverted separately. To make matters worse, the dense blocks may differ
-heavily in structure and contents between different nodes, and are often not solvable without
-pivoting.
+The power flow and state estimation equations involve block-sparse matrices containing typically
+dense blocks. The dimensionality of such blocks varies between different calculation types, methods
+and symmetries. The blocks are typically arranged in extremely sparse fashion. The sparse structure
+can be pre-calculated, but the dense blocks need to be inverted separately. To make matters worse,
+the dense blocks may differ heavily in structure and contents between different nodes, and are often
+not solvable without pivoting.
 
 ### Custom sparse LU-solver
 
@@ -105,7 +105,10 @@ The choice for a custom LU-solver implementation comes from a number of consider
 * [LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) is the best choice, because
   [QR-decomposition](https://en.wikipedia.org/wiki/QR_decomposition) and
   [Cholesky-decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition) cannot solve the
-  power system equations efficiently as a consequence of the properties.
+  power system equations efficiently as a consequence of the
+  [power system equations' properties](#power-system-equations-properties),
+  as the QR-decomposition is not as efficient when dealing with sparse matrices, while the latter
+  requires Hermitian and/or semi-definite (in generalized form).
 * Alternative LU-solver implementations are optimized for a variety of use cases that are less
   sparse than the ones encountered in power systems.
 * Alternative LU-solver implementations do not have good block-sparse matrix equation solvers.
@@ -115,7 +118,7 @@ The choice for a custom LU-solver implementation comes from a number of consider
 The LU-solver implemented in the power grid model consists of 3 components:
 
 * A block-sparse LU-solver that:
-  * handles factorization using the topological structure up to block-level
+  * handles factorization using the topological structure down to block-level
   * solves the sparse matrix equation given the factorization
 * A dense LU-factor that handles individual blocks within the matrix equation
 
