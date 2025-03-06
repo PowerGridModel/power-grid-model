@@ -195,6 +195,11 @@ $$
 \end{bmatrix}\mathbb{U}_{p-1}
 $$
 
+in which $\mathbb{L}_{p-1}$ and $\mathbb{U}_{p-1}$ have dimensions
+$\left(N-p+1\right)\times \left(N-p+1\right)$, $\mathbb{L}_p$ and $\mathbb{U}_p$ have dimensions
+$\left(N-p\right) \times \left(N-p\right)$, and $\mathbb{M}_{p+1}$ has dimensions
+$\left(N-p-1\right) \times \left(N-p-1\right)$.
+
 Iterating this process yields the matrices
 
 $$
@@ -205,20 +210,21 @@ $$
  && \ddots && \ddots && 0 \\
  && && \boldsymbol{l}_{N-2} && 1
 \end{bmatrix} &= \begin{bmatrix}
-1 && 0 && \cdots \\
-m_0^{-1} \boldsymbol{q}_0 && 1 && \ddots \\
-&& m_1^{-1} \boldsymbol{q}_1 && \ddots \\
-&& && \ddots
+1 && 0 && \cdots && 0 \\
+m_0^{-1} \boldsymbol{q}_0 && 1 && \ddots && \vdots \\
+&& \ddots && \ddots && 0 \\
+&& && m_{N-2}^{-1} \boldsymbol{q}_{N-2} && 1
 \end{bmatrix} \\
 \mathbb{U} = \begin{bmatrix}
 m_0 && \boldsymbol{u}_0^T && && \\
-0 && m_1 && \ddots && \\
-\vdots && \ddots && \ddots && \boldsymbol{u}_{N-2}^T \\
+0 && \ddots && \ddots && \\
+\vdots && \ddots && m_{N-2} && \boldsymbol{u}_{N-2}^T \\
 0 && \cdots && 0 && m_{N-1}
 \end{bmatrix} &= \begin{bmatrix}
 m_0 && \boldsymbol{r}_0^T && && \\
-0 && m_1 && \boldsymbol{r}_1^T && \\
-\vdots && \ddots && \ddots && \ddots
+0 && \ddots && \ddots && \\
+\vdots && \ddots && m_{N-2} && \boldsymbol{r}_{N-2}^T \\
+0 && \cdots && 0 && m_{N-1}
 \end{bmatrix}
 \end{align*}
 $$
@@ -745,14 +751,14 @@ matrix.
 1. Set $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbb{M}\right\|_{\text{bwod}}$
 2. If $|\text{pivot_element}| \lt \epsilon$, then:
    1. If $|\text{pivot_element}| = 0$, then:
-      1. Set $\text{direction} = 1$.
+      1. Set $\text{phase_shift} = 1$.
       2. Proceed.
    2. Else:
-      1. Set $\text{direction}\left(\text{pivot_element}\right) \gets \text{pivot_element} / |\text{pivot_element}|$.
+      1. Set $\text{phase_shift}\left(\text{pivot_element}\right) \gets \text{pivot_element} / |\text{pivot_element}|$.
       2. Proceed.
-   3. Set $\text{pivot_element} \gets \epsilon * \text{direction}\left(\text{pivot_element}\right)$.
+   3. Set $\text{pivot_element} \gets \epsilon * \text{phase_shift}\left(\text{pivot_element}\right)$.
 
-$\text{direction}$ ensures that the complex phase of the pivot element is preserved, with a fallback
+$\text{phase_shift}$ ensures that the complex phase of the pivot element is preserved, with a fallback
 to the positive real axis when the pivot element is identically zero.
 
 ### Iterative refinement of LU-solver solutions
