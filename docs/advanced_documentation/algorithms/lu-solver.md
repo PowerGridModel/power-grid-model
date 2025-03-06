@@ -19,7 +19,7 @@ This section documents the need for a custom sparse LU-solver and its implementa
 The choice for the matrix equation solver type heavily leans on the need for
 [performance](#performance-considerations), the
 [topological structure](#topological-structure) of the grid and the
-[properties of the equations](#power-system-equation-properties). They are documented here.
+[properties of the equations](#power-system-equations-properties). They are documented here.
 
 ### Performance considerations
 
@@ -45,28 +45,32 @@ power system equations also take on the same topological structure in block-matr
 It is common that a substation is fed by a single upstream substation, i.e., most grids are operated
 in a tree-like structure. Meshed grid operations are rare, and even when they do happen, it is
 usually only for a small section of the grid. All this gives rise to extremely sparse topologies
-and, as a result, extremely sparse matrix equations with a block structure.
+and, as a result, extremely [sparse matrix equations](https://en.wikipedia.org/wiki/Sparse_matrix)
+with a [block structure](https://en.wikipedia.org/wiki/Block_matrix).
 
 Sparse matrix equations can be solved efficiently: they can be solved in linear time complexity, as
-opposed to the cubic complexity of naive Gaussian elimination. As a result, a sparse matrix solver
-is key to the performance of the power grid model. QR-decomposition therefore is not a good
-candidate.
+opposed to the cubic complexity of naive
+[Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination). As a result, a sparse
+matrix solver is key to the performance of the power grid model. QR-decomposition therefore is not a
+good candidate.
 
 #### Pivot operations
 
 Pivoting of blocks is expensive, both computationally and memory-wise, as it interferes with the
 sparse block structure of the matrix equations by introducing new potentially non-zero elements,
-called _fill-ins_, during the process of Gaussian elimination. To this end, a pre-fixed permutation
-can be chosen to avoid bock pivoting at a later stage.
+called _fill-ins_, during the process of
+[Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination). To this end, a pre-fixed
+permutation can be chosen to avoid bock pivoting at a later stage.
 
 The [topological structure](#topological-structure) of the grid does not change during the
-solving phase, so the permutation can be obtained by the minimum degree algorithm from just the
+solving phase, so the permutation can be obtained by the
+[minimum degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) from just the
 topology alone, which seeks to minimize the amount of fill-ins. Note that matrix blocks that
-contributes topologically to the matrix equation can still contain zeros. It is possible that such
+contribute topologically to the matrix equation can still contain zeros. It is possible that such
 zeros result in [ill-conditioned pivot elements](#pivot-perturbation). Handling of such
 ill-conditioned cases is discussed in the [section on pivot perturbation](#pivot-perturbation).
 
-### Power system equation properties
+### Power system equations properties
 
 #### Matrix properties of power system equations
 
@@ -98,8 +102,10 @@ pivoting.
 
 The choice for a custom LU-solver implementation comes from a number of considerations:
 
-* LU-decomposition is the best choice, because QR-decomposition and Cholesky-decomposition cannot
-  solve the power system equations efficiently as a consequence of the properties
+* [LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) is the best choice, because
+  [QR-decomposition](https://en.wikipedia.org/wiki/QR_decomposition) and
+  [Cholesky-decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition) cannot solve the
+  power system equations efficiently as a consequence of the properties.
 * Alternative LU-solver implementations are optimized for a variety of use cases that are less
   sparse than the ones encountered in power systems.
 * Alternative LU-solver implementations do not have good block-sparse matrix equation solvers.
@@ -122,7 +128,8 @@ The power grid model uses a modified version of the
 
 #### Dense LU-factorization process
 
-The Gaussian elimination process itself is, as usual, by iterating over all pivot elements $p$. Let
+The [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) process itself is, as
+usual, by iterating over all pivot elements $p$. Let
 $\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
 be the matrix block at some iteration step where $p$ is the current pivot element at the top
 left of the matrix, $m_p$ its matrix element value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are
@@ -146,7 +153,8 @@ $$
     && && && \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}
 $$
 
-Gaussian elimination constructs the matrices
+[Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) using
+[LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
 
 $$
 \begin{align*}
@@ -231,7 +239,7 @@ $$
 
 The power grid model uses an in-place approach. Permutations are separately stored.
 
-Let $\mathbb{M}\equiv \mathbb{M}\left[0:N, 0:N\right]$ be the $N\times N$-matrix and
+Let $\mathbb{M}$ be the $N\times N$-matrix and
 $\mathbb{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
 
 1. Initialize the permutations $\mathbb{P}$ and $\mathbb{Q}$ to the identity permutation.
@@ -274,13 +282,18 @@ the `SparseMatrixError` immediately, we break from the loop and throw after that
 change the functional behavior.
 ```
 
+```{note}
+Permutations are only allowed within each dense block, for the reasons described
+[earlier](#pivot-operations).
+```
+
 ### Block-sparse LU-factorization
 
 The LU-factorization process for block-sparse matrices is similar to that for
 [dense matrices](#dense-lu-factorization), but in this case, $m_p$ is a block element, and
 $\boldsymbol{q}_p$, $\boldsymbol{r}_p^T$ and $\hat{\mathbb{M}}_p$ consist of block elements as well.
-Notice that the inverse $m_p^{-1}$ can be calculated from is LU-decomposition, which can be obtained
-from the [dense LU-factorization process](#dense-lu-factorization-process).
+Notice that the inverse $m_p^{-1}$ can be calculated from its LU-decomposition, which can be
+obtained from the [dense LU-factorization process](#dense-lu-factorization-process).
 
 #### Block-sparse LU-factorization process
 
@@ -298,8 +311,9 @@ $\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\
 be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
 [LU-factorized](#dense-lu-factorization-process):
 $\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$, where
-the lower-case helps avoiding confusion with the block-sparse matrix components. Gaussian
-elimination constructs the matrices
+the lower-case helps avoiding confusion with the block-sparse matrix components. [Gaussian
+elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) using
+[LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
 
 $$
 \begin{align*}
@@ -353,8 +367,7 @@ Using the same conventions as [before](#naive-block-sparse-lu-factorization-proc
 $\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
 be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
 [LU-factorized](#dense-lu-factorization-process):
-$\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$, where
-the lower-case helps avoiding confusion with the block-sparse matrix components. Partial Gaussian
+$\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$. Partial Gaussian
 elimination constructs the matrices
 
 $$
@@ -370,7 +383,7 @@ instead of the regular left-solve procedure, as is the case for the $\mathbb{U}_
 
 ##### Rationale of the block-sparse LU-factorization process
 
-Full matrix solving (without using blocks)
+To illustrate the rationale, let's perform the full matrix solving (without using blocks):
 
 $$
 \begin{align*}
@@ -548,11 +561,11 @@ in the original matrix by varying $c$ and $b$ over other blocks.
 
 The structure of the block-sparse matrices is as follows.
 
-* The $N\times N$ block matrix $\mathbb{M}$ is interpreted as
-  $\mathbb{M}\equiv \mathbb{M}\left[0:N, 0:N\right]$, with $\mathbb{M}\left[i,j\right]$ its block
-  element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
-* In turn, let $\mathbb{M}\left[i,j\right] \equiv \mathbb{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$
-  be the dense block with dimensions $N_i\times N_j$.
+* The $N\times N$ block matrix $\mathbb{M}$ is interpreted as the block-matrix, with
+  $\mathbb{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where
+  $i,j = 0..(N-1)$.
+* In turn, let $\mathbb{M}\left[i,j\right]\equiv\mathbb{M}_{i,j}$ be the dense block with dimensions
+  $N_i\times N_j$.
 
 This can be graphically represented as
 
@@ -636,12 +649,14 @@ becomes:
 
 Solving an equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ using a
 [pre-factored LU-factorization](#block-sparse-lu-factorization) is done using the regular forward
-and backward substitutions. It starts by permuting the rows:
+and backward substitutions. Since the matrix is already ordered such that the amount of
+[fill-ins](#pivot-operations) is minimal, permutations are restricted to within each block. The
+first step of the block-sparse LU solving therefore permutes the rows within each block:
 $\boldsymbol{b}^{\prime} = \mathbb{P}\boldsymbol{b}$. After that, the forward substitution step
 essentially amounts to solving the matrix equation
 $\mathbb{L}\boldsymbol{y} = \boldsymbol{b}^{\prime}$, followed by the backwards substitution by
 solving $\mathbb{U}\boldsymbol{z} = \mathbb{y}$. The final result is then obtained by applying the
-column permutation: $\boldsymbol{x} = \mathbb{Q}\boldsymbol{z}$.
+column permutation within each block: $\boldsymbol{x} = \mathbb{Q}\boldsymbol{z}$.
 
 #### Forward substitution
 
@@ -655,7 +670,7 @@ The row permutation is applied as follows.
    2. Else:
       1. Proceed.
 
-The equation $Ly = Pb$ is solved as follows.
+The equation $\mathbb{L}\boldsymbol{y} = \mathbb{P}\boldsymbol{b}$ is solved as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. Loop over all lower-triangle off-diagonal columns (beware of sparsity): $j=0..(i-1)$:
@@ -708,12 +723,17 @@ and
 [Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179).
 Pivot perturbation consists of selecting a pivot element. If its magnitude is too small compared
 to that of the other elements in the matrix, then it cannot be used in its current form. Selecting
-another pivot element is not desirable, as described in the section on
-[pivot operations](#pivot-operations), so the matrix is ill-conditioned.
+another pivot element, via permutations with other blocks, is not desirable, as described in the
+section on [pivot operations](#pivot-operations), so the matrix is ill-conditioned.
 
 Instead, a small perturbation is done on the pivot element. This makes the matrix equation solvable
-without selecting a different pivot element, at the cost of propating rounding errors.
-slightly different matrix that is then iteratively refined.
+without selecting a different pivot element, at the cost of propagating rounding errors.
+slightly different matrix that is then iteratively refined. This method is also used by
+[Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
+and
+[Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179),
+as well as the well-known
+[MKL Pardiso solver](https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2023-0/onemkl-pardiso-parallel-direct-sparse-solver-iface.html)
 
 #### Pivot perturbation algorithm
 
@@ -892,7 +912,7 @@ $\left|\boldsymbol{x}\right|_i := \left|\boldsymbol{x}_i\right|$, as
 defined in [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
 Due to aforementioned, this is prone to rounding errors, and a single row with rounding errors may
-cause the entire iterative refinement to fail. The power grid model therefore use a modified
+cause the entire iterative refinement to fail. The power grid model therefore uses a modified
 version, in which the denominator is capped to a minimum value, determined by the maximum across all
 denominators:
 
@@ -929,14 +949,14 @@ Since the power grid model solves the matrix equations using a multi-scale matri
 intra-block, block-sparse for the full topological structure of the grid), the norm is also taken on
 those same levels, so the calculation of the norm is _block-wise_.
 
-In addition, the diagonal blocks may have much larger elements than the off-diagonal elements, while
-the relevant information is contained mostly in the off-diagonal blocks. As a result, the
-block-diagonal elements would undesirably dominate the norm. The power grid model therefore
-restricts the calculation of the norm to _off-diagonal_ blocks.
+In addition, the diagonal blocks may have much larger elements than the off-diagonal ones, while the
+relevant information is contained mostly in the off-diagonal blocks. As a result, the block-diagonal
+blocks would undesirably dominate the norm. The power grid model therefore restricts the calculation
+of the norm to _off-diagonal_ blocks.
 
 In short, the $L_{\infty ,\text{bwod}}$-norm it is the $L_{\infty}$ norm of the block-sparse matrix
-with the $L_{\infty}$ norm of the individual blocks as elements, where the block-diagonal elements
-are skipped at the block-level.
+with the $L_{\infty}$ norm of the individual blocks as elements, where the diagonal blocks are
+skipped.
 
 ##### Block-wise off-diagonal infinite matrix norm algorithm
 
@@ -1017,7 +1037,7 @@ $$
 
 * The regular $L_{\infty}$-norm is $\max\left\{1+3, 3, 5, \frac{1}{2}, 1, 1\right\} = 5$.
 * The block-wise off-diagonal infinity $L_{\infty ,\text{bwod}}$-norm is
-  $\max\left\{0+\max\left\{1, 3\right\}+\max\left\{3, 0\right\},\max\left\{5, 0\right\} + \max\left\{0, \frac{1}{2}\right\}, 1\right\} = \max\left\{3+3, 5+\frac{1}{2}, 1, 1\right\} = 6$.
+  $\max\left\{\max\left\{1, 3\right\}+\max\left\{3, 0\right\},\max\left\{5, 0\right\} + \max\left\{0, \frac{1}{2}\right\}, 1\right\} = \max\left\{3+3, 5+\frac{1}{2}, 1, 1\right\} = 6$.
 
 The two norms clearly differ and even the elements that contribute most to the norm are different.
 
