@@ -50,6 +50,10 @@ struct TrafoGraphEdge {
     Idx2D regulated_idx{};
     EdgeWeight weight{};
 
+    constexpr TrafoGraphEdge() = default;
+    constexpr TrafoGraphEdge(Idx2D regulated_idx_, EdgeWeight weight_)
+        : regulated_idx{regulated_idx_}, weight{weight_} {}
+
     bool operator==(const TrafoGraphEdge& other) const {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
@@ -65,7 +69,7 @@ struct TrafoGraphEdge {
     }
 };
 
-constexpr TrafoGraphEdge unregulated_edge_prop = {unregulated_idx, 0};
+constexpr auto unregulated_edge_prop = TrafoGraphEdge{unregulated_idx, 0};
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
@@ -330,8 +334,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
                                          "away from the source than the tap side.\n");
         }
         if (!is_unreachable(edge_res)) {
-            result.emplace_back(
-                TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank}); // NOLINT(clang-diagnostic-error, other-warning)
+            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
 
