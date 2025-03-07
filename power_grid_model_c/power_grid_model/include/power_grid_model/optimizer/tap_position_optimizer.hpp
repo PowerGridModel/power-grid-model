@@ -330,7 +330,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
                                          "away from the source than the tap side.\n");
         }
         if (!is_unreachable(edge_res)) {
-            result.emplace_back(TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank}); //  NOLINT
+            result.emplace_back(
+                TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank}); // NOLINT(clang-diagnostic-error, other-warning)
         }
     }
 
