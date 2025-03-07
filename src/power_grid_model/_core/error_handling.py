@@ -72,7 +72,7 @@ _INVALID_REGULATED_OBJECT_RE = re.compile(
 _AUTOMATIC_TAP_CALCULATION_ERROR_RE = re.compile(
     r"Automatic tap changing regulator with tap_side at LV side is not supported. Found at id (-?\d+)\n"
 )
-_AUTOMATIC_TAP_INPUT_ERROR_RE = re.compile(r"Automatic tap changer has invalid configuration\..*")
+_AUTOMATIC_TAP_INPUT_ERROR_RE = re.compile(r"Automatic tap changer has invalid configuration")
 
 _ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")

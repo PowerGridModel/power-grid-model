@@ -324,12 +324,13 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // In two winding trafo, the edge is always pointing to the control side; in three winding trafo edges, the
         // edges are always pointing parallel to the control side: meaning that for delta configuration ABC, the above
         // situations can happen.
+        // The logic still holds in meshed grids, albeit operating a more complex graph.
         if (edge_src_rank != edge_tgt_rank - 1) {
-            throw AutomaticTapInputError(
-                "Control side of a transformer should be the relatively further side to a source.\n");
+            throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
+                                         "away from the source than the tap side.\n");
         }
         if (!is_unreachable(edge_res)) {
-            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
+            result.emplace_back(TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank}); //  NOLINT
         }
     }
 
@@ -745,8 +746,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // Lower bound should be updated to the current tap position if following is the case:
             //  - tap_max > tap_min && strategy_max == true
             //  - tap_max < tap_min && strategy_max == false
-            // Upper bound should be updated to the current tap position if the rest is the case.
-            bool const invert_strategy = control_at_tap_side_ ? !strategy_max : strategy_max;
+            bool const invert_strategy = control_at_tap_side_ != strategy_max;
             if (tap_reverse_ == invert_strategy) {
                 lower_bound_ = current_;
                 last_down_ = false;
