@@ -6,14 +6,6 @@ name: Build and Test C++ and Python
 
 # Controls when the workflow will run
 on:
-  # run pipeline on push event of main branch
-  push:
-    branches:
-      - main
-  # run pipeline on pull request
-  pull_request:
-  # run pipeline on merge queue
-  merge_group:
   # run pipeline from another workflow
   workflow_call:
     inputs:
@@ -35,9 +27,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
-
 jobs:
-
   acquire-python-version-build-sdist:
     name: Build sdist and set version
     runs-on: ubuntu-24.04
@@ -215,7 +205,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.0
+        uses: pypa/cibuildwheel@v2.22.0
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
