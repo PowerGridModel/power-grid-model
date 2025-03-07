@@ -23,16 +23,16 @@ The choice for the matrix equation solver type heavily leans on the need for
 
 ### Performance considerations
 
-There is a large variety of applications of the power grid model that requires good performance.
+There is a large variety of applications of the power grid model that requires high performance.
 This imposes some limitations on the algorithms that can be used.
 
 * Highly accurate and fast calculations are needed for very large grids. This means that direct
   methods are strongly preferred, and approximate methods can only be used when there is no other
   alternative, and only if they can be iteratively refined with a fast convergence rate.
-* Sometimes, very many repetitive calculations are required, e.g., for time series. In those cases,
-  separating the decomposition (also known as factorization) of a matrix and solving two systems of
-  equations separately can give major performance boosts, because the decomposition remains the same
-  across the entire set of calculations.
+* In applications like time series, repetitive calculations are required. In those cases, separating
+  the decomposition (also known as factorization) step of a matrix and the solving step can bring
+  major performance benefits, as the decomposition remains the same across the entire set of
+  calculations.
 
 ### Topological structure
 
