@@ -149,26 +149,52 @@ The power grid model uses a modified version of the
 #### Dense LU-factorization process
 
 The [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) process itself is, as
-usual, by iterating over all pivot elements $p$. Let
-$\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
-be the matrix block at some iteration step where $p$ is the current pivot element at the top
-left of the matrix, $m_p$ its matrix element value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are
-the associated column and row vectors containing the rest of the pivot column and row and
-$\hat{\mathbb{M}}_p$ is the bottom-right block of the matrix. Note that in the bigger picture of the
-full matrix, this looks as follows, where the $m_k$, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$
-($k < p$) denote sections of the matrix that already have been decomposed in previous iteration
+usual, by iterating over all pivot elements $p$. Let the full matrix be as follows.
+
+$$
+\mathbb{M} = \begin{bmatrix}
+m_{0,0} && m_{0,1} && \cdots && m_{0,N-1} \\
+m_{1,0} && m_{1,1} && \cdots && m_{1,N-1} \\
+\vdots && \vdots && \ddots && \vdots \\
+m_{N-1,0} && m_{N-1,1} && \cdots && m_{N-1,N-1}
+\end{bmatrix}
+$$
+
+In some iteration step where $p$ is the curent pivot element, the partly-processed matrix looks as
+follows.
+
+$$
+\mathbb{M}_{\text{partly-processed up to } p}\equiv\begin{bmatrix}
+&& \mathbb{U}_{\text{processed up to } p} && \\
+\mathbb{L}_{\text{processed up to } p} && \begin{array}{|c}\hline
+  \mathbb{M}_p \end{array}
+\end{bmatrix}\equiv\begin{bmatrix}
+&& \mathbb{U}_{\text{processed up to } p} && \\
+\mathbb{L}_{\text{processed up to } p} && \begin{array}{|cc}\hline
+  m_p && \boldsymbol{r}_p^T \\
+ \boldsymbol{q}_p && \hat{\mathbb{M}}_p \end{array}
+\end{bmatrix}
+$$
+
+in which $\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
+is the matrix block is the $\left(N-p\right)\times\left(N-p\right)$ part of the matrix that has not
+been LU-factorized yet. In addition, $m_p$ is the pivot element value, $\boldsymbol{q}$ and
+$\boldsymbol{r}_p^T$ are the associated column and row vectors containing the rest of the pivot
+column and row and $\hat{\mathbb{M}}_p$ is the bottom-right block of the matrix. Note that in the
+bigger picture of the full matrix, this looks as follows, where the $m_k$, $\boldsymbol{l}_k$ and
+$\boldsymbol{u}_k$ ($k < p$) denote sections of the matrix that already have been decomposed in previous iteration
 steps (see below).
 
 $$
 \begin{bmatrix}
     m_0 && \boldsymbol{u}_0^T && && \\
     \boldsymbol{l}_0 && \ddots && \ddots && \\
-    \vdots && \ddots && \ddots && \\
-    && && && \mathbb{M}_p
+    && \ddots && \ddots && \boldsymbol{u}_{p-1}^T \\
+    && && \boldsymbol{l}_{p-1} && \mathbb{M}_p
 \end{bmatrix}\equiv\begin{bmatrix}
     m_0 && \boldsymbol{u}_0^T && && && \\
     \boldsymbol{l}_0 && \ddots && \ddots && && \\
-    \vdots && \ddots && m_{p-1} && \boldsymbol{u}_{p-1}^T && \\
+    && \ddots && m_{p-1} && \boldsymbol{u}_{p-1}^T && \\
     && && \boldsymbol{l}_{p-1} && m_p && \boldsymbol{r}_p^T \\
     && && && \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}
 $$
