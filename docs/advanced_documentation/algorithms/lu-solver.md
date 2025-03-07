@@ -37,16 +37,18 @@ This imposes some limitations on the algorithms that can be used.
 ### Topological structure
 
 Distribution grids consist of substations that distribute power in a region. This can be represented
-in a topological way as vertices and edges. As a consequence of the locality of Kirchoff's laws,
-power system equations also take on the same topological structure in block-matrix equation form.
+in a topological way as graphs containing vertices and edges. As a consequence of the locality of
+Kirchoff's laws, power system equations also take on the same topological structure in block-matrix
+equation form.
 
 #### Sparsity
 
 It is common that a substation is fed by a single upstream substation, i.e., most grids are operated
-in a tree-like structure. Meshed grid operations are rare, and even when they do happen, it is
-usually only for a small section of the grid. All this gives rise to extremely sparse topologies
-and, as a result, extremely [sparse matrix equations](https://en.wikipedia.org/wiki/Sparse_matrix)
-with a [block structure](https://en.wikipedia.org/wiki/Block_matrix).
+in a tree-like structure. Meshed grid operations are relatively rare and are generally restricted
+to small sub-sections of the grid, although exceptions exist. All this gives rise to extremely
+sparse topologies and, as a result, extremely
+[sparse matrix equations](https://en.wikipedia.org/wiki/Sparse_matrix) with a
+[block structure](https://en.wikipedia.org/wiki/Block_matrix).
 
 Sparse matrix equations can be solved efficiently: they can be solved in linear time complexity, as
 opposed to the cubic complexity of naive
@@ -56,39 +58,53 @@ good candidate.
 
 #### Pivot operations
 
-Pivoting of blocks is expensive, both computationally and memory-wise, as it interferes with the
-sparse block structure of the matrix equations by introducing new potentially non-zero elements,
-called _fill-ins_, during the process of
-[Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination). To this end, a pre-fixed
-permutation can be chosen to avoid bock pivoting at a later stage.
+In matrix solvers, it is very common practice to use the top-left diagonal element as the pivot
+point of all consequitive operations. This allows in-place operations and enhances computational
+performance. This, however, does not guarantee numerical stability. Instead, a different pivot
+element (often the matrix element with the largest norm) may be selected and moved to the top-left
+diagonal element by permuting the rows and columns of the matrix. This so-called called _pivoting_
+enhances the numerical stability of consequtive operations.
+
+Pivoting of blocks in sparse matrices is expensive, both time-wise and memory-wise. During the
+process of [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination), the pivoted
+sparse block structure of the matrix equations contains newly-introduced, potentially non-zero
+elements, called _fill-ins_. To this end, a pre-fixed permutation can be chosen to avoid block
+pivoting at a later stage, at the cost of some numerical stability.
 
 The [topological structure](#topological-structure) of the grid does not change during the
-solving phase, so the permutation can be obtained by the
-[minimum degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) from just the
-topology alone, which seeks to minimize the amount of fill-ins. Note that matrix blocks that
-contribute topologically to the matrix equation can still contain zeros. It is possible that such
-zeros result in [ill-conditioned pivot elements](#pivot-perturbation). Handling of such
-ill-conditioned cases is discussed in the [section on pivot perturbation](#pivot-perturbation).
+solving phase. The permutation can be obtained from just topology alone. This is typically done with
+the [minimum degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm), which seeks
+to minimize the amount of fill-ins. Note that matrix blocks that contribute topologically to the
+matrix equation can still contain zeros. It is possible that such zeros result in
+[ill-conditioned pivot elements](#pivot-perturbation). Handling of such ill-conditioned cases is
+discussed in the [section on pivot perturbation](#pivot-perturbation).
 
 ### Power system equations properties
 
 #### Matrix properties of power system equations
 
-[Power flow equations](../../user_manual/calculations.md#power-flow-algorithms) are not Hermitian
-and also not positive (semi-)definite. As a result, methods that depend on that property cannot be
-used.
+The matrices involved in
+[power flow equations](../../user_manual/calculations.md#power-flow-algorithms) are not Hermitian,
+nor positive (semi-)definite. As a result, methods that depend on that property cannot be used.
 
-[State estimation equations](../../user_manual/calculations.md#state-estimation-algorithms) are
-intrinsically positive definite and Hermitian, but for
+The matrices involved in
+[state estimation equations](../../user_manual/calculations.md#state-estimation-algorithms),
+instead, are, in fact, intrinsically both positive definite and Hermitian. However, for
 [performance reasons](#performance-considerations), the matrix equation is augmented to achieve
-a consistent structure across the entire topology using Lagrange multipliers.
+a consistent structure across the entire topology using Lagrange multipliers. This augmented
+structure causes the matrix to no longer be postive definite.
+
+It is in principle possible to use different solvers for power flow equations and state estimation
+equations. The power grid model, however, opts for one single implementation that can handle both
+power flow equations and state estimation equations. This reduces the overall complexity of the code
+base.
 
 #### Element size properties of power system equations
 
-Power system equations may contain elements of several orders of magnitude. This may lead to
-instabilities when solving the equations due to non-linearly propagated numerical errors. It is
-therefore essential that the solvers function under extreme conditions by limiting numerical errors
-and checking for stability.
+Power system equations may contain elements of several orders of magnitude. However, many matrix
+solvers are inherently unstable under such extreme conditions, as a reslt of non-linearly propagated
+numerical errors under such ill-conditioned matrices. It is therefore essential that the solvers
+function under extreme conditions by limiting numerical errors and checking for stability.
 
 ### Block-sparsity considerations
 
