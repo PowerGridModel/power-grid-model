@@ -86,8 +86,9 @@ a consistent structure across the entire topology using Lagrange multipliers.
 #### Element size properties of power system equations
 
 Power system equations may contain elements of several orders of magnitude. This may lead to
-instabilities when solving the equations due to non-linearly propagated numerical errors. Stability
-checks that limit those rounding errors need to function under these extreme conditions.
+instabilities when solving the equations due to non-linearly propagated numerical errors. It is
+therefore essential that the solvers function under extreme conditions by limiting numerical errors
+and checking for stability.
 
 ### Block-sparsity considerations
 
@@ -209,24 +210,24 @@ $$
 \begin{align*}
 \mathbb{L} = \begin{bmatrix}
 1 && 0 && \cdots && 0 \\
-\boldsymbol{l}_0 && \ddots && \ddots && \vdots \\
- && \ddots && \ddots && 0 \\
- && && \boldsymbol{l}_{N-2} && 1
+\left(\boldsymbol{l}_0\right)_0 && \ddots && \ddots && \vdots \\
+\vdots && \ddots && 1 && 0 \\
+\left(\boldsymbol{l}_0\right)_{N-p-2} && \cdots && \left(\boldsymbol{l}_{N-2}\right)_0 && 1
 \end{bmatrix} &= \begin{bmatrix}
 1 && 0 && \cdots && 0 \\
-m_0^{-1} \boldsymbol{q}_0 && 1 && \ddots && \vdots \\
-&& \ddots && \ddots && 0 \\
-&& && m_{N-2}^{-1} \boldsymbol{q}_{N-2} && 1
+m_0^{-1} \left(\boldsymbol{q}_0\right)_0 && \ddots && \ddots && \vdots \\
+\vdots && \ddots && 1 && 0 \\
+m_0^{-1} \left(\boldsymbol{q}_0\right)_{N-p-2} && \cdots && m_{N-2}^{-1} \left(\boldsymbol{q}_{N-2}\right)_0 && 1
 \end{bmatrix} \\
 \mathbb{U} = \begin{bmatrix}
-m_0 && \boldsymbol{u}_0^T && && \\
-0 && \ddots && \ddots && \\
-\vdots && \ddots && m_{N-2} && \boldsymbol{u}_{N-2}^T \\
+m_0 && \left(\boldsymbol{u}_0^T\right)_0 && \cdots && \left(\boldsymbol{u}_0^T\right)_{N-p-2} \\
+0 && \ddots && \ddots && \vdots \\
+\vdots && \ddots && m_{N-2} && \left(\boldsymbol{u}_{N-2}^T\right)_0 \\
 0 && \cdots && 0 && m_{N-1}
 \end{bmatrix} &= \begin{bmatrix}
-m_0 && \boldsymbol{r}_0^T && && \\
-0 && \ddots && \ddots && \\
-\vdots && \ddots && m_{N-2} && \boldsymbol{r}_{N-2}^T \\
+m_0 && \left(\boldsymbol{r}_0^T\right)_0 && \cdots && \left(\boldsymbol{r}_0^T\right)_{N-p-2} \\
+0 && \ddots && \ddots && \vdots \\
+\vdots && \ddots && m_{N-2} && \left(\boldsymbol{r}_{N-2}^T\right)_0 \\
 0 && \cdots && 0 && m_{N-1}
 \end{bmatrix}
 \end{align*}
