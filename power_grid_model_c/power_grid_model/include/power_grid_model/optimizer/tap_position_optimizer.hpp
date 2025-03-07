@@ -329,7 +329,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
                 "Control side of a transformer should be the relatively further side to a source.\n");
         }
         if (!is_unreachable(edge_res)) {
-            result.emplace_back(TrafoGraphEdge{graph[e].regulated_idx, edge_tgt_rank});
+            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
 
