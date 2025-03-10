@@ -259,7 +259,7 @@ jobs:
         run: |
           echo "LIBRARY_PREFIX=$CONDA_PREFIX" >> $GITHUB_ENV
 
-      - name: Install conda environment
+      - name: Conda library path for Windows
         if: matrix.os == 'windows'
         run: |
           echo "LIBRARY_PREFIX=$CONDA_PREFIX\Library" >> $GITHUB_ENV
