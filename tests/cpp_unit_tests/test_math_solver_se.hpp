@@ -121,7 +121,8 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
         result.load_gen_status[1] = 0;
         result.load_gen_status[3] = 0;
         result.load_gen_status[4] = 0;
-        result.measured_load_gen_power[2].value *= 3.0;
+        result.measured_load_gen_power[2].real_component.value *= 3.0;
+        result.measured_load_gen_power[2].imag_component.value *= 3.0;
         return result;
     };
 };
@@ -175,8 +176,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
 
         auto se_input = grid.se_input_angle();
         auto& branch_from_power = se_input.measured_branch_from_power.front();
-        branch_from_power.p_variance = RealValue<sym>{0.25};
-        branch_from_power.q_variance = RealValue<sym>{0.75};
+        branch_from_power.real_component.variance = RealValue<sym>{0.25};
+        branch_from_power.imag_component.variance = RealValue<sym>{0.75};
         SolverOutput<sym> output;
 
         output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);

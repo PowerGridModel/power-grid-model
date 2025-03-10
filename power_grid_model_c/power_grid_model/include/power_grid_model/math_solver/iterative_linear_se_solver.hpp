@@ -197,7 +197,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
                             block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
-                                             diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance),
+                                             diagonal_inverse(shunt_power.real_component.variance +
+                                                              shunt_power.imag_component.variance),
                                              param.shunt_param[obj]);
                         }
                     }
@@ -214,7 +215,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                 auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
                                 block.g() +=
                                     dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(power.p_variance + power.q_variance),
+                                        diagonal_inverse(power.real_component.variance + power.imag_component.variance),
                                         param.branch_param[obj].value[measured_side * 2 + b1]);
                             }
                         }
@@ -229,8 +230,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
                         auto const& injection = measured_value.bus_injection(row);
-                        block.r() = ComplexTensor<sym>{
-                            static_cast<ComplexValue<sym>>(-(injection.p_variance + injection.q_variance))};
+                        block.r() = ComplexTensor<sym>{static_cast<ComplexValue<sym>>(
+                            -(injection.real_component.variance + injection.imag_component.variance))};
                     }
                 }
                 // injection measurement not exist
@@ -287,7 +288,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
                         // eta += (-Ys)^H * (variance^-1) * i_shunt
                         rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
-                                               diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
+                                               diagonal_inverse(m.real_component.variance + m.imag_component.variance),
+                                               conj(m.value() / u[bus]));
                     }
                 }
                 // branch
@@ -307,14 +309,15 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
                             rhs_block.eta() +=
                                 dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                    diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
+                                    diagonal_inverse(m.real_component.variance + m.imag_component.variance),
+                                    conj(m.value() / u[measured_bus]));
                         }
                     }
                 }
             }
             // fill block with injection measurement, need to convert to current
             if (measured_value.has_bus_injection(bus)) {
-                rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
+                rhs_block.tau() = conj(measured_value.bus_injection(bus).value() / u[bus]);
             }
         }
     }
