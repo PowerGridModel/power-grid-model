@@ -254,21 +254,25 @@ jobs:
           conda info
           conda list
 
-      - name: Conda library path for Linux
-        if: matrix.os == 'ubuntu'
-        run: |
-          echo "LIBRARY_PREFIX=$CONDA_PREFIX" >> $GITHUB_ENV
-
-      - name: Conda library path for Windows
+      - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'
-        run: |
+        run: |          
+          $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+          Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
           echo "LIBRARY_PREFIX=$CONDA_PREFIX\Library" >> $GITHUB_ENV
 
-      - name: Build and install cmake target
-        run: |
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$LIBRARY_PREFIX -DCMAKE_PREFIX_PATH=$LIBRARY_PREFIX
           cmake --build build/ --verbose -j1
           cmake --install build/
+
+      - name: Build and install cmake target for Linux
+        if: matrix.os == 'windows'
+        run: |
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+          cmake --build build/ --verbose -j1
+          cmake --install build/      
 
       - name: Build python
         run: python -m pip install . -vv --no-build-isolation --no-deps   
