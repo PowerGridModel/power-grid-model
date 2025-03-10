@@ -522,9 +522,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                *meta_data_,
                            },
                            ignore_output);
-        } catch (const SparseMatrixError&) { // NOLINT(bugprone-empty-catch)
+        } catch (const SparseMatrixError&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
-        } catch (const NotObservableError&) { // NOLINT(bugprone-empty-catch)
+        } catch (const NotObservableError&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         }
 

@@ -18,7 +18,7 @@ static_assert(std::invocable<IncludeAll, Idx>);
 static_assert(std::invocable<IncludeAll, Idx, Idx>);
 static_assert(include_all());
 static_assert(include_all(1));
-static_assert(include_all(Idx{2},
-                          std::move(Idx{3}))); // NOLINT(performance-move-const-arg) // to test that rvalues work
+static_assert(include_all(
+    Idx{2}, std::move(Idx{3}))); // NOLINT(performance-move-const-arg) // NOSONAR // to test that rvalues work
 } // namespace
 } // namespace power_grid_model

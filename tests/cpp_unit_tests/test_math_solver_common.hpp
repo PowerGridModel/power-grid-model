@@ -112,7 +112,8 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     static constexpr double v1 = 0.97;
     static constexpr double v2 = 0.90;
     static constexpr double deg = deg_30 / 30.0;
-    // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) // should be constexpr but cant due to std::exp
+    // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) // NOSONAR // should be constexpr but cant due to
+    // std::exp
     DoubleComplex const u0 = v0 * std::exp(-1.0i * deg);
     DoubleComplex const u1 = v1 * std::exp(-4.0i * deg);
     DoubleComplex const u2 = v2 * std::exp(-37.0i * deg);
@@ -137,7 +138,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     // injection of shunt0 at bus2
     DoubleComplex const i2_shunt_inj = branch1_i_t;
     DoubleComplex const ys = -i2_shunt_inj / u2; // output
-    // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
+    // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) // NOSONAR
 
     SolverOutput<sym> output_ref() const {
         if constexpr (is_symmetric_v<sym>) {

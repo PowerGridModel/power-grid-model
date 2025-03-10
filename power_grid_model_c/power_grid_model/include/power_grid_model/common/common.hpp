@@ -92,8 +92,9 @@ template <class T, class... Ts>
 concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
 
 namespace capturing {
-// NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward) // perfect forward into void
-template <class... T> constexpr void into_the_void(T&&... /*ignored*/) {
+// perfect forward into void
+template <class... T>
+constexpr void into_the_void(T&&... /*ignored*/) { // NOLINT(cppcoreguidelines-missing-std-forward)
     // do nothing; the constexpr allows all compilers to optimize this away
 }
 } // namespace capturing
