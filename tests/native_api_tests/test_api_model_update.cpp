@@ -261,25 +261,6 @@ namespace {
 using namespace std::string_literals;
 using std::numbers::sqrt3;
 
-enum class CalculationSymmetry : Idx { symmetric = PGM_symmetric, asymmetric = PGM_asymmetric };
-enum class LoadGenType : IntS {
-    const_pq = 0, // constant power
-    const_y = 1,  // constant element_admittance (impedance)
-    const_i = 2,  // constant current
-};
-enum class MeasuredTerminalType : IntS {
-    branch_from = 0,
-    branch_to = 1,
-    source = 2,
-    shunt = 3,
-    load = 4,
-    generator = 5,
-    branch3_1 = 6,
-    branch3_2 = 7,
-    branch3_3 = 8,
-    node = 9
-};
-
 Options get_default_options(PGM_SymmetryType calculation_symmetry, PGM_CalculationMethod calculation_method) {
     Options opt;
     opt.set_calculation_type(PGM_power_flow);

@@ -527,12 +527,12 @@ template <symmetry_tag sym> class YBus {
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
 
     // cache the branch and shunt parameters in sequence_idx_map
-    IdxVector branch_param_idx_{};
-    IdxVector shunt_param_idx_{};
+    IdxVector branch_param_idx_;
+    IdxVector shunt_param_idx_;
 
     // map index between admittance entries and parameter entries
-    std::vector<IdxVector> map_admittance_param_branch_{};
-    std::vector<IdxVector> map_admittance_param_shunt_{};
+    std::vector<IdxVector> map_admittance_param_branch_;
+    std::vector<IdxVector> map_admittance_param_shunt_;
 
     std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
 

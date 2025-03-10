@@ -23,7 +23,7 @@ constexpr void register_topo_components(MainModelState<ComponentContainer> const
     auto const end = get_component_citer<Component>(state).end();
 
     target.resize(std::distance(begin, end));
-    std::transform(begin, end, target.begin(), func);
+    std::transform(begin, end, target.begin(), std::forward<ResFunc>(func));
 }
 
 } // namespace detail

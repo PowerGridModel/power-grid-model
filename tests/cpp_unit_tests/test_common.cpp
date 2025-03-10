@@ -12,5 +12,13 @@ static_assert(is_symmetric_v<symmetric_t>);
 static_assert(!is_symmetric_v<asymmetric_t>);
 static_assert(std::same_as<other_symmetry_t<symmetric_t>, asymmetric_t>);
 static_assert(std::same_as<other_symmetry_t<asymmetric_t>, symmetric_t>);
+
+static_assert(std::invocable<IncludeAll>);
+static_assert(std::invocable<IncludeAll, Idx>);
+static_assert(std::invocable<IncludeAll, Idx, Idx>);
+static_assert(include_all());
+static_assert(include_all(1));
+static_assert(include_all(
+    Idx{2}, std::move(Idx{3}))); // NOLINT(performance-move-const-arg) // NOSONAR // to test that rvalues work
 } // namespace
 } // namespace power_grid_model
