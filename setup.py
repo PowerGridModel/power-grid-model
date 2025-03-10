@@ -134,7 +134,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     if build_dir.exists():
         shutil.rmtree(build_dir)
     # remove binary
-    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll")))
+    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll"), pkg_bin_dir.rglob("*.dylib")))
     for bin_file in bin_files:
         print(f"Remove binary file: {bin_file}")
         bin_file.unlink()
