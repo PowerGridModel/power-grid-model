@@ -167,7 +167,7 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }
-    (void)std::forward<LoadGenFunc>(load_gen_func);
+    capturing::into_the_void(std::forward<LoadGenFunc>(load_gen_func));
 }
 
 template <symmetry_tag sym, typename LoadGenFunc>
@@ -192,7 +192,7 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
         calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
         calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens);
     }
-    (void)std::forward<LoadGenFunc>(load_gen_func);
+    capturing::into_the_void(std::forward<LoadGenFunc>(load_gen_func));
 }
 
 template <symmetry_tag sym>

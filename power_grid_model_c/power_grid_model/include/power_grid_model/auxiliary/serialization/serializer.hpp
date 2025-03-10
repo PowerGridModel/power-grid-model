@@ -506,11 +506,9 @@ class Serializer {
     }
 
     void pack_element_in_list(columnar_t /*tag*/, BufferView const& element_buffer, MetaComponent const& /*component*/,
-                              std::span<MetaAttribute const* const> attributes) {
+                              [[maybe_unused]] std::span<MetaAttribute const* const> attributes) {
         assert(is_columnar(element_buffer));
         assert(element_buffer.reordered_attribute_buffers.size() == attributes.size());
-
-        (void)attributes; // suppress unused variable in release mode
 
         pack_array(element_buffer.reordered_attribute_buffers.size());
         for (auto const& attribute_buffer : element_buffer.reordered_attribute_buffers) {

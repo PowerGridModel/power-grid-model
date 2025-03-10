@@ -530,7 +530,7 @@ class Topology {
                 coupling[topo_comp_i] = Idx2D{topo_idx, new_math_comp_i};
             }
         }
-        (void)std::forward<GetMathTopoComponent>(get_component_topo);
+        capturing::into_the_void(std::forward<GetMathTopoComponent>(get_component_topo));
     }
 
     void couple_all_appliance() {
