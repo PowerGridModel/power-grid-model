@@ -134,6 +134,8 @@ def _load_core() -> CDLL:
             dll_file = "libpower_grid_model_c.dylib"
         elif platform.system() == "Linux":
             dll_file = "libpower_grid_model_c.so"
+        else:
+            raise NotImplementedError(f"Unsupported platform: {platform.system()}")
         # the dll will be found through conda environment
         dll_path = dll_file
     else:
