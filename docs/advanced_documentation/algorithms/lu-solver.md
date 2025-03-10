@@ -62,8 +62,8 @@ In matrix solvers, it is very common practice to use the top-left diagonal eleme
 point of all consequitive operations. This allows in-place operations and enhances computational
 performance. This, however, does not guarantee numerical stability. Instead, a different pivot
 element (often the matrix element with the largest norm) may be selected and moved to the top-left
-diagonal element by permuting the rows and columns of the matrix. This so-called called _pivoting_
-enhances the numerical stability of consequtive operations.
+diagonal element by permuting the rows and columns of the matrix. This so-called _pivoting_ enhances
+the numerical stability of consequtive operations.
 
 Pivoting of blocks in sparse matrices is expensive, both time-wise and memory-wise. During the
 process of [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination), the pivoted
@@ -92,7 +92,7 @@ The matrices involved in
 instead, are, in fact, intrinsically both positive definite and Hermitian. However, for
 [performance reasons](#performance-considerations), the matrix equation is augmented to achieve
 a consistent structure across the entire topology using Lagrange multipliers. This augmented
-structure causes the matrix to no longer be postive definite.
+structure causes the matrix to no longer be positive definite (but still Hermitian).
 
 It is in principle possible to use different solvers for power flow equations and state estimation
 equations. The power grid model, however, opts for one single implementation that can handle both
@@ -128,7 +128,8 @@ The choice for a custom LU-solver implementation comes from a number of consider
   requires Hermitian and/or semi-definite (in generalized form).
 * Alternative LU-solver implementations are optimized for a variety of use cases that are less
   sparse than the ones encountered in power systems.
-* Alternative LU-solver implementations do not have good block-sparse matrix equation solvers.
+* The power grid model requires a faster and more dedicated block-sparse matrix equation solver than
+  what alternative LU-solver implementations provide.
 
 ## Implementation
 
@@ -176,14 +177,14 @@ $$
 \end{bmatrix}
 $$
 
-in which $\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$,
-is the matrix block is the $\left(N-p\right)\times\left(N-p\right)$ part of the matrix that has not
-been LU-factorized yet. In addition, $m_p$ is the pivot element value, $\boldsymbol{q}$ and
-$\boldsymbol{r}_p^T$ are the associated column and row vectors containing the rest of the pivot
-column and row and $\hat{\mathbb{M}}_p$ is the bottom-right block of the matrix. Note that in the
-bigger picture of the full matrix, this looks as follows, where the $m_k$, $\boldsymbol{l}_k$ and
-$\boldsymbol{u}_k$ ($k < p$) denote sections of the matrix that already have been decomposed in previous iteration
-steps (see below).
+in which $\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$
+is the $\left(N-p\right)\times\left(N-p\right)$ part of the matrix that has not been LU-factorized
+yet. In addition, $m_p$ is the pivot element value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are
+the associated column and row vectors containing the rest of the pivot column and row and
+$\hat{\mathbb{M}}_p$ is the bottom-right block of the matrix. Note that in the bigger picture of the
+full matrix, this looks as follows, where $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ are column and
+row vectors, respectively, and the $m_k$, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ ($k < p$) denote
+sections of the matrix that already have been decomposed in previous iteration steps (see below).
 
 $$
 \begin{bmatrix}
@@ -779,8 +780,8 @@ another pivot element, via permutations with other blocks, is not desirable, as 
 section on [pivot operations](#pivot-operations), so the matrix is ill-conditioned.
 
 Instead, a small perturbation is done on the pivot element. This makes the matrix equation solvable
-without selecting a different pivot element, at the cost of propagating rounding errors.
-slightly different matrix that is then iteratively refined. This method is also used by
+without selecting a different pivot element, at the cost of some propagating numerical errors.
+Iterative refinement is then used to suppress those errors. This method is also used by
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 and
 [Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179),
@@ -820,7 +821,7 @@ is required to improve the solution to the matrix equation $\mathbb{M} \cdot \bo
 The iterative refinement process is as follows: in iteration step $i$, it assumes an existing
 approximation $\boldsymbol{x}_i$ for $\boldsymbol{x}$. It then defines the difference between the
 current best and the actual solution $\boldsymbol{\Delta x} = \boldsymbol{x} - \boldsymbol{x}_i$.
-Substiting in the original equation yields
+Substituting in the original equation yields
 $\mathbb{M} \cdot (\boldsymbol{x}_i + \boldsymbol{\Delta x}) = \boldsymbol{b}$, so that
 $\mathbb{M} \cdot \boldsymbol{\Delta x} = \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}_i =: \boldsymbol{r}$, where the residual
 $\boldsymbol{r}$ can be calculated. An estimation for the left-hand side can be obtained by using
@@ -988,6 +989,8 @@ rounding errors, while the latter may hide issues in rows with small coefficient
 in the backward error, even if that row's residual is relatively large compared to the other
 entries, in favor of other rows with larger absolute, but smaller relative, residuals. In
 conclusion, $\epsilon$ should be chosen small, but large enough to suppress numerical instabilities.
+A choice for $\epsilon$ that is experimentally verified to be reasonable is mentioned
+[above](#backward-error-calculation).
 
 #### Block-wise off-diagonal infinite matrix norm
 
