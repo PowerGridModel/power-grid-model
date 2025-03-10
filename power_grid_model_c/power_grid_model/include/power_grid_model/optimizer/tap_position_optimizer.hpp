@@ -614,7 +614,7 @@ class RankIteration {
     };
 
   private:
-    std::vector<IntS> iterations_per_rank_{};
+    std::vector<IntS> iterations_per_rank_;
     Idx rank_index_{};
 };
 
