@@ -268,7 +268,7 @@ jobs:
           cmake --install build/
 
       - name: Build and install cmake target for Linux
-        if: matrix.os == 'windows'
+        if: matrix.os == 'linux'
         run: |
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
           cmake --build build/ --verbose -j1
