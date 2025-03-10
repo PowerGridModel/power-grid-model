@@ -6,6 +6,7 @@
 Loader for the dynamic library
 """
 
+import os
 import platform
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
@@ -125,11 +126,24 @@ def _load_core() -> CDLL:
     Returns: DLL/SO object
 
     """
-    if platform.system() == "Windows":
-        dll_file = "_power_grid_core.dll"
+    if "CONDA_PREFIX" in os.environ:
+        # if conda environment, use the dll file from the conda environment
+        if platform.system() == "Windows":
+            dll_file = "power_grid_model_c.dll"
+        elif platform.system() == "Darwin":
+            dll_file = "libpower_grid_model_c.dylib"
+        elif platform.system() == "Linux":
+            dll_file = "libpower_grid_model_c.so"
+        # the dll will be found through conda environment
+        dll_path = dll_file
     else:
-        dll_file = "_power_grid_core.so"
-    cdll = CDLL(str(Path(__file__).parent / dll_file))
+        # else use the dll file from the current directory
+        if platform.system() == "Windows":
+            dll_file = "_power_grid_core.dll"
+        else:
+            dll_file = "_power_grid_core.so"
+        dll_path = str(Path(__file__).parent / dll_file)
+    cdll = CDLL(dll_path)
     # assign return types
     # handle
     cdll.PGM_create_handle.argtypes = []
