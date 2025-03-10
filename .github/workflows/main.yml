@@ -269,6 +269,7 @@ jobs:
           cmake --install build/
 
       - name: Build and install cmake target for Linux
+        shell: bash -el {0}
         if: matrix.os == 'ubuntu'
         run: |
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
