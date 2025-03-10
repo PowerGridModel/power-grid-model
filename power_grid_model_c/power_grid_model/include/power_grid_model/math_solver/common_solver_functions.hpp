@@ -145,7 +145,7 @@ template <symmetry_tag sym, class LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
-                                      SolverOutput<sym>& output, LoadGenFunc&& load_gen_func) {
+                                      SolverOutput<sym>& output, LoadGenFunc load_gen_func) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
@@ -167,7 +167,6 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }
-    capturing::into_the_void(std::forward<LoadGenFunc>(load_gen_func));
 }
 
 template <symmetry_tag sym, typename LoadGenFunc>
@@ -176,7 +175,7 @@ template <symmetry_tag sym, typename LoadGenFunc>
 inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 grouped_idx_vector_type auto const& sources_per_bus,
                                 grouped_idx_vector_type auto const& load_gens_per_bus, SolverOutput<sym>& output,
-                                LoadGenFunc&& load_gen_func) {
+                                LoadGenFunc load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
     // call y bus
@@ -189,10 +188,10 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
     output.bus_injection.resize(sources_per_bus.size());
     output.bus_injection = y_bus.calculate_injection(output.u);
     for (auto const& [bus_number, sources, load_gens] : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus)) {
-        calculate_load_gen_result<sym>(load_gens, bus_number, input, output, load_gen_func);
+        calculate_load_gen_result<sym>(load_gens, bus_number, input, output,
+                                       [&load_gen_func](Idx idx) { return load_gen_func(idx); });
         calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens);
     }
-    capturing::into_the_void(std::forward<LoadGenFunc>(load_gen_func));
 }
 
 template <symmetry_tag sym>

@@ -483,7 +483,7 @@ class Topology {
         requires std::invocable<std::remove_cvref_t<GetMathTopoComponent>, MathModelTopology&> &&
                  grouped_idx_vector_type<
                      std::remove_reference_t<std::invoke_result_t<GetMathTopoComponent, MathModelTopology&>>>
-    void couple_object_components(GetMathTopoComponent&& get_component_topo, ObjectFinder object_finder,
+    void couple_object_components(GetMathTopoComponent get_component_topo, ObjectFinder object_finder,
                                   std::vector<Idx2D>& coupling, Predicate include = include_all) {
         auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
         auto const n_components = object_finder.size();
@@ -530,7 +530,6 @@ class Topology {
                 coupling[topo_comp_i] = Idx2D{topo_idx, new_math_comp_i};
             }
         }
-        capturing::into_the_void(std::forward<GetMathTopoComponent>(get_component_topo));
     }
 
     void couple_all_appliance() {
