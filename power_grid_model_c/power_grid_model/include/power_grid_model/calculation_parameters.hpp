@@ -7,6 +7,7 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
+#include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
@@ -78,21 +79,10 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
     ComplexValue<sym> i{};
 };
 
-// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
-// (circularly symmetric)
-template <symmetry_tag sym_type> struct UniformComplexRandomVariable {
-    using sym = sym_type;
-
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
-    ComplexValue<sym> value{};
-    double variance{}; // variance (sigma^2) of the error range, in p.u.
-};
-
 // voltage sensor calculation parameters for state estimation
 // The value is the complex voltage
 // If the imaginary part is NaN, it means the angle calculation is not correct
-template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
+template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandVar<sym>;
 
 // power sensor calculation parameters for state estimation
 // The value is the complex power
@@ -118,8 +108,8 @@ template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
 
     AngleMeasurementType angle_measurement_type{};
     ComplexValue<sym> value{};
-    double i_real_variance{}; // variance (sigma^2) of the error range of real part of the current, in p.u.
-    double i_imag_variance{}; // variance (sigma^2) of the error range of imaginary part of the current, in p.u.
+    RealValue<sym> i_real_variance{}; // variance (sigma^2) of the error range of real part of the current, in p.u.
+    RealValue<sym> i_imag_variance{}; // variance (sigma^2) of the error range of imaginary part of the current, in p.u.
 };
 
 template <typename T>

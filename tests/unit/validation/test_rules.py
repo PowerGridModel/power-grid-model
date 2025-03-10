@@ -2,12 +2,14 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from enum import IntEnum
+from unittest import mock
 
 import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model._core.dataset_definitions import ComponentTypeLike
+from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -15,6 +17,7 @@ from power_grid_model.validation.errors import (
     InfinityError,
     InvalidEnumValueError,
     InvalidIdError,
+    MissingValueError,
     MultiComponentNotUniqueError,
     NotBetweenError,
     NotBetweenOrAtError,
@@ -471,9 +474,97 @@ def test_all_finite():
     assert InfinityError("bar_test", "bar", [6]) in errors
 
 
-@pytest.mark.skip("No unit tests available for none_missing")
 def test_none_missing():
-    raise NotImplementedError(f"Unit test for {none_missing}")
+    dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4"), ("bla", "i1"), ("ok", "i1")]
+    dbar = [("id", "i4"), ("foobar", "f8")]
+
+    def _mock_nan_type(component: ComponentTypeLike, field: str):
+        return {
+            "foo_test": {
+                "id": np.iinfo("i4").min,
+                "foo": np.nan,
+                "bar": np.nan,
+                "baz": np.iinfo("i4").min,
+                "bla": np.iinfo("i1").min,
+                "ok": -1,
+            },
+            "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
+        }[component][field]
+
+    with mock.patch("power_grid_model.validation.rules._nan_type", _mock_nan_type):
+        valid = {
+            "foo_test": np.array(
+                [
+                    (1, 3.1, (4.2, 4.3, 4.4), 1, 6, 0),
+                    (2, 5.2, (3.3, 3.4, 3.5), 2, 7, 0),
+                    (3, 7.3, (8.4, 8.5, 8.6), 3, 8, 0),
+                ],
+                dtype=dfoo,
+            ),
+            "bar_test": np.array([(4, 0.4), (5, 0.5)], dtype=dbar),
+        }
+        errors = none_missing(data=valid, component="foo_test", fields=["foo", "bar", "baz"])
+        assert len(errors) == 0
+
+        invalid = {
+            "foo_test": np.array(
+                [
+                    (1, np.nan, (np.nan, np.nan, np.nan), np.iinfo("i4").min, np.iinfo("i1").min, 0),
+                    (2, np.nan, (4.2, 4.3, 4.4), 3, 7, 0),
+                    (3, 7.3, (np.nan, np.nan, np.nan), 5, 8, 0),
+                    (4, 8.3, (8.4, 8.5, 8.6), np.iinfo("i4").min, 9, 0),
+                    (5, 9.3, (9.4, 9.5, 9.6), 6, np.iinfo("i1").min, 0),
+                    (6, 10.3, (10.4, 10.5, 10.6), 7, 11, 0),
+                ],
+                dtype=dfoo,
+            ),
+            "bar_test": np.array([(4, 0.4), (5, np.nan)], dtype=dbar),
+        }
+
+        errors = none_missing(data=invalid, component="foo_test", fields="foo")
+        assert len(errors) == 1
+        assert errors == [MissingValueError("foo_test", "foo", [1, 2])]
+
+        errors = none_missing(data=invalid, component="foo_test", fields="bar")
+        assert len(errors) == 1
+        assert errors == [MissingValueError("foo_test", "bar", [1, 3])]
+
+        errors = none_missing(data=invalid, component="foo_test", fields="baz")
+        assert len(errors) == 1
+        assert errors == [MissingValueError("foo_test", "baz", [1, 4])]
+
+        errors = none_missing(data=invalid, component="foo_test", fields="bla")
+        assert len(errors) == 1
+        assert errors == [MissingValueError("foo_test", "bla", [1, 5])]
+
+        errors = none_missing(data=invalid, component="foo_test", fields="ok")
+        assert len(errors) == 0
+
+        for fields in (("foo", "bar", "baz", "bla", "ok"), ("foo", "bar"), ()):
+            errors = none_missing(data=invalid, component="foo_test", fields=fields)
+            expected = []
+            for field in fields:
+                expected += none_missing(data=invalid, component="foo_test", fields=field)
+            assert errors == expected
+
+        assert none_missing(
+            data={
+                "foo_test": {
+                    "id": invalid["foo_test"]["id"],
+                    "foo": invalid["foo_test"]["foo"],
+                    "bar": invalid["foo_test"]["bar"],
+                    "baz": invalid["foo_test"]["baz"],
+                    "bla": invalid["foo_test"]["bla"],
+                    "ok": invalid["foo_test"]["ok"],
+                },
+                "bar_test": {
+                    "id": invalid["bar_test"]["id"],
+                    "foobar": invalid["bar_test"]["foobar"],
+                },
+            },
+            component="foo_test",
+            fields=("foo", "bar", "baz", "bla", "ok"),
+        ) == none_missing(data=invalid, component="foo_test", fields=("foo", "bar", "baz", "bla", "ok"))
 
 
 @pytest.mark.skip("No unit tests available for all_valid_clocks")
