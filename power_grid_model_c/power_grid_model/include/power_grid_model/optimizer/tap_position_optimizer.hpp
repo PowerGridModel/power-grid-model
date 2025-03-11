@@ -307,8 +307,6 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (graph[e].regulated_idx == unregulated_idx) {
             continue;
         }
-        // control_side, two winding or three winding, is always parallel to the
-        // source side of the transformer edge
         auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
         auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
         auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
@@ -326,7 +324,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // |   C   |    B    | [A<->B], [C->A], [C->B] |
         // |   C   |    C    | [A<->B], [A->C], [A->B] |
         // In two winding trafo, the edge is always pointing to the control side; in three winding trafo edges, the
-        // edges are always pointing parallel to the control side: meaning that for delta configuration ABC, the above
+        // one directional edges are always pointing towards the control side or the node connected to the control
+        // side via the two directional edge if there exists one. For delta configuration ABC, the above
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
         if (edge_src_rank != edge_tgt_rank - 1) {
