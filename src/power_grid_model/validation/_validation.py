@@ -40,7 +40,7 @@ from power_grid_model.validation.errors import (
     MultiComponentNotUniqueError,
     ValidationError,
 )
-from power_grid_model.validation.rules import (
+from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,

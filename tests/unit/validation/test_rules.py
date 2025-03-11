@@ -32,7 +32,7 @@ from power_grid_model.validation.errors import (
     TwoValuesZeroError,
     UnsupportedTransformerRegulationError,
 )
-from power_grid_model.validation.rules import (
+from power_grid_model.validation._rules import (
     all_between,
     all_between_or_at,
     all_boolean,
