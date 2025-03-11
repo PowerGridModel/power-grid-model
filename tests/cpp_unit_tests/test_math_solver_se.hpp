@@ -36,28 +36,42 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
             result.source_status = {1};
             result.measured_voltage = {
                 {output_reference.u[0], 1.0}, {output_reference.u[2], 1.0}, {output_reference.u[2], 1.0}};
-            result.measured_bus_injection = {{output_reference.source[0].s + output_reference.load_gen[0].s +
-                                                  output_reference.load_gen[1].s + output_reference.load_gen[2].s,
-                                              0.5, 0.5}};
-            result.measured_source_power = {{output_reference.source[0].s, 0.5, 0.5},
-                                            {output_reference.source[0].s, 0.5, 0.5}};
+            auto const sum_s = output_reference.source[0].s + output_reference.load_gen[0].s +
+                               output_reference.load_gen[1].s + output_reference.load_gen[2].s;
+            result.measured_bus_injection = {{.real_component = {.value = real(sum_s), .variance = 0.5},
+                                              .imag_component = {.value = imag(sum_s), .variance = 0.5}}};
+            result.measured_source_power = {
+                {.real_component = {.value = real(output_reference.source[0].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.source[0].s), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.source[0].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.source[0].s), .variance = 0.5}}};
+
             result.measured_load_gen_power = {
-                {output_reference.load_gen[3].s, 0.5, 0.5},
-                {output_reference.load_gen[4].s, 0.5, 0.5},
-                {output_reference.load_gen[5].s, 0.5, 0.5},
-                {500.0, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.load_gen[3].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.load_gen[3].s), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.load_gen[4].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.load_gen[4].s), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.load_gen[5].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.load_gen[5].s), .variance = 0.5}},
+                {.real_component = {.value = 500.0, .variance = 0.5},
+                 .imag_component = {.value = 0.0, .variance = 0.5}},
             };
             result.measured_shunt_power = {
-                {output_reference.shunt[0].s, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.shunt[0].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.shunt[0].s), .variance = 0.5}},
             };
 
             result.measured_branch_from_power = {
-                {output_reference.branch[0].s_f, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.branch[0].s_f), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_f), .variance = 0.5}},
             };
             result.measured_branch_to_power = {
-                {output_reference.branch[0].s_t, 0.5, 0.5},
-                {output_reference.branch[0].s_t, 0.5, 0.5},
-                {output_reference.branch[1].s_t, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.branch[1].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[1].s_t), .variance = 0.5}},
             };
         } else {
             result.shunt_status = {1};
@@ -66,39 +80,61 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
             result.measured_voltage = {{ComplexValue<asymmetric_t>{output_reference.u[0]}, 1.0},
                                        {ComplexValue<asymmetric_t>{output_reference.u[2]}, 1.0},
                                        {ComplexValue<asymmetric_t>{output_reference.u[2]}, 1.0}};
-            result.measured_bus_injection = {{(output_reference.source[0].s + output_reference.load_gen[0].s +
-                                               output_reference.load_gen[1].s + output_reference.load_gen[2].s) *
-                                                  RealValue<asymmetric_t>{1.0},
-                                              RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
-            result.measured_source_power = {{output_reference.source[0].s * RealValue<asymmetric_t>{1.0},
-                                             RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
-                                            {output_reference.source[0].s * RealValue<asymmetric_t>{1.0},
-                                             RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
+            auto const sum_s = (output_reference.source[0].s + output_reference.load_gen[0].s +
+                                output_reference.load_gen[1].s + output_reference.load_gen[2].s) *
+                               RealValue<asymmetric_t>{1.0};
+            result.measured_bus_injection = {
+                {.real_component = {.value = real(sum_s), .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(sum_s), .variance = RealValue<asymmetric_t>{0.5}}}};
+            result.measured_source_power = {
+                {.real_component = {.value = real(output_reference.source[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.source[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}}};
             result.measured_load_gen_power = {
-                {output_reference.load_gen[3].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.load_gen[4].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.load_gen[5].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {500.0 * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.load_gen[3].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.load_gen[3].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.load_gen[4].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.load_gen[4].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.load_gen[5].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.load_gen[5].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(500.0 * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(500.0 * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
             result.measured_shunt_power = {
-                {output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
 
             result.measured_branch_from_power = {
-                {output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
             result.measured_branch_to_power = {
-                {output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
         }
         return result;

@@ -353,8 +353,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// R_ii = -variance, only diagonal
     /// assign variance to diagonal of 3x3 tensor, for asym
     void process_injection_diagonal(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& injection) const {
-        rhs_block.tau_p() += injection.value.real();
-        rhs_block.tau_q() += injection.value.imag();
+        rhs_block.tau_p() += injection.value().real();
+        rhs_block.tau_q() += injection.value().imag();
         block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.real_component.variance}};
         block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.imag_component.variance}};
     }

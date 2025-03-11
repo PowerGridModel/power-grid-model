@@ -54,21 +54,8 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
         StateEstimationInput<asymmetric_t> input{};
-        input.measured_load_gen_power = {
-            {.real_component = {.value = {1.0, 1.1, 1.2}, .variance = {0.3, 0.6, 0.65}},
-             .imag_component = {.value = {0.0, 0.1, -0.2}, .variance = {0.1, 0.2, 0.05}}};
-        // input.measured_load_gen_power = {{{1.0, 1.1 + 0.1i, 1.2 - 0.2i}, {0.3, 0.6, 0.65}, {0.1, 0.2, 0.05}}};
-        // std::vector<ComplexValue<asymmetric_t>> param_values = {ComplexValue<asymmetric_t>{1.0 + 0.0i},
-        // ComplexValue<asymmetric_t>{1.1 + 0.1i}, ComplexValue<asymmetric_t>{1.2 - 0.2i}};
-        //  std::vector<ComplexValue<asymmetric_t>> param_values = {ComplexValue<asymmetric_t>{1.0 + 0.0i},
-        //  ComplexValue<asymmetric_t>{1.1 + 0.1i}, ComplexValue<asymmetric_t>{1.2 - 0.2i}};
-        //  input.measured_load_gen_power = {
-        //      {.real_component = {.value = real(param_values[0]), .variance = {0.3, 0.3, 0.3}},
-        //       .imag_component = {.value = imag(param_values[0]), .variance = {0.1, 0.1, 0.1}}},
-        //      {.real_component = {.value = real(param_values[1]), .variance = {0.6, 0.6, 0.6}},
-        //       .imag_component = {.value = imag(param_values[1]), .variance = {0.2, 0.2, 0.2}}},
-        //      {.real_component = {.value = real(param_values[2]), .variance = {0.65, 0.65, 0.65}},
-        //       .imag_component = {.value = imag(param_values[2]), .variance = {0.05, 0.05, 0.05}}}};
+        input.measured_load_gen_power = {{.real_component = {.value = {1.0, 1.1, 1.2}, .variance = {0.3, 0.6, 0.65}},
+                                          .imag_component = {.value = {0.0, 0.1, -0.2}, .variance = {0.1, 0.2, 0.05}}}};
         input.load_gen_status = {1};
 
         MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
@@ -135,14 +122,6 @@ TEST_CASE("Measured Values") {
                                           .imag_component = {.value = {1.5, 1.0, 0.5}, .variance = {4.0, 3.5, 1.5}}},
                                          {.real_component = {.value = {4.0, -0.4, -1.2}, .variance = {2.0, 1.5, 5.5}},
                                           .imag_component = {.value = {0.7, -0.8, 2.5}, .variance = {3.0, 5.0, 0.5}}}};
-        // input.measured_load_gen_power = {{{1.0 + 1.5i, 0.5 + 1.0i, 2.0 + 0.5i}, {1.0, 0.5, 3.0}, {4.0, 3.5, 1.5}},
-        //                                  {{4.0 + 0.7i, -0.4 - 0.8i, -1.2 + 2.5i}, {2.0, 1.5, 5.5}, {3.0, 5.0, 0.5}}};
-        // std::vector<ComplexValue<asymmetric_t>> const param_values_1 = {ComplexValue<asymmetric_t>{1.0 + 1.5i},
-        // ComplexValue<asymmetric_t{0.5 + 1.0i}, ComplexValue<asymmetric_t{2.0 + 0.5i}};
-        // std::vector<ComplexValue<asymmetric_t>> const param_values_2 = {ComplexValue<asymmetric_t>{4.0 + 0.7i},
-        // ComplexValue<asymmetric_t{-0.4 - 0.8i}, ComplexValue<asymmetric_t{-1.2 + 2.5i}};
-        // input.measured_load_gen_power = {{{{1.0 + 1.5i, 0.5 + 1.0i, 2.0 + 0.5i}, {1.0, 0.5, 3.0}, {4.0, 3.5, 1.5}}},
-        // {{4.0 + 0.7i, -0.4 - 0.8i, -1.2 + 2.5i}, {2.0, 1.5, 5.5}, {3.0, 5.0, 0.5}}};
         input.load_gen_status = {1, 1};
 
         MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
