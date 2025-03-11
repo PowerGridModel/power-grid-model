@@ -126,8 +126,15 @@ def _load_core() -> CDLL:
     Returns: DLL/SO object
 
     """
-    if "CONDA_PREFIX" in os.environ:
-        # if conda environment, use the dll file from the conda environment
+    # first try to find the DLL local
+    if platform.system() == "Windows":
+        dll_file = "_power_grid_core.dll"
+    else:
+        dll_file = "_power_grid_core.so"
+    dll_path = Path(__file__).parent / dll_file
+
+    # if local DLL is not found, try to find the DLL from conda environment
+    if (not dll_path.exists()) and ("CONDA_PREFIX" in os.environ):
         if platform.system() == "Windows":
             dll_file = "power_grid_model_c.dll"
         elif platform.system() == "Darwin":
@@ -137,15 +144,9 @@ def _load_core() -> CDLL:
         else:
             raise NotImplementedError(f"Unsupported platform: {platform.system()}")
         # the dll will be found through conda environment
-        dll_path = dll_file
-    else:
-        # else use the dll file from the current directory
-        if platform.system() == "Windows":
-            dll_file = "_power_grid_core.dll"
-        else:
-            dll_file = "_power_grid_core.so"
-        dll_path = str(Path(__file__).parent / dll_file)
-    cdll = CDLL(dll_path)
+        dll_path = Path(dll_file)
+
+    cdll = CDLL(str(dll_path))
     # assign return types
     # handle
     cdll.PGM_create_handle.argtypes = []
