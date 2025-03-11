@@ -456,7 +456,7 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
         CHECK(sym_line_output_i_from[0] == doctest::Approx(test::i));
         CHECK(sym_source_output_i[0] == doctest::Approx(test::i));
         CHECK(sym_source_output_i[1] == doctest::Approx(0.0));
-        CHECK(sym_sym_load_output_i[0] == doctest::Approx(test::i_load * 2 + test::i_shunt));
+        CHECK(sym_sym_load_output_i[0] == doctest::Approx((test::i_load * 2) + test::i_shunt));
         CHECK(sym_asym_load_output_i[0] == doctest::Approx(0.0));
         CHECK(sym_shunt_output_i[0] == doctest::Approx(0.0));
     };
@@ -489,13 +489,13 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
 
         model.calculate(get_default_options(PGM_asymmetric, PGM_linear), asym_output);
 
-        CHECK(asym_node_output_u_pu[0 * 3 + 0] == doctest::Approx(1.05));
-        CHECK(asym_node_output_u_pu[1 * 3 + 1] == doctest::Approx(test::u1));
-        CHECK(asym_node_output_u_pu[2 * 2 + 1] == doctest::Approx(test::u1));
+        CHECK(asym_node_output_u_pu[(0 * 3) + 0] == doctest::Approx(1.05));
+        CHECK(asym_node_output_u_pu[(1 * 3) + 1] == doctest::Approx(test::u1));
+        CHECK(asym_node_output_u_pu[(2 * 2) + 1] == doctest::Approx(test::u1));
         CHECK(asym_line_output_i_from[0] == doctest::Approx(test::i));
-        CHECK(asym_source_output_i[0 * 3 + 1] == doctest::Approx(test::i));
-        CHECK(asym_source_output_i[1 * 3 + 2] == doctest::Approx(0.0));
-        CHECK(asym_sym_load_output_i[0] == doctest::Approx(test::i_load * 2 + test::i_shunt));
+        CHECK(asym_source_output_i[(0 * 3) + 1] == doctest::Approx(test::i));
+        CHECK(asym_source_output_i[(1 * 3) + 2] == doctest::Approx(0.0));
+        CHECK(asym_sym_load_output_i[0] == doctest::Approx((test::i_load * 2) + test::i_shunt));
         CHECK(asym_asym_load_output_i[1] == doctest::Approx(0.0));
         CHECK(asym_shunt_output_i[2] == doctest::Approx(0.0));
     };
@@ -820,9 +820,9 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
                 for (auto phase_idx = 0; phase_idx < n_phases; ++phase_idx) {
                     CAPTURE(phase_idx);
 
-                    CHECK(is_nan(test_node_output_u_pu[node_idx * n_phases + phase_idx]));
-                    CHECK(test_node_output_u_pu[(n_nodes + node_idx) * n_phases + phase_idx] ==
-                          doctest::Approx(ref_node_output_u_pu[node_idx * n_phases + phase_idx]));
+                    CHECK(is_nan(test_node_output_u_pu[(node_idx * n_phases) + phase_idx]));
+                    CHECK(test_node_output_u_pu[((n_nodes + node_idx) * n_phases) + phase_idx] ==
+                          doctest::Approx(ref_node_output_u_pu[(node_idx * n_phases) + phase_idx]));
                 }
             }
         }

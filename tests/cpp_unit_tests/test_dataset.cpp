@@ -619,6 +619,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                       std::vector<Idx>{0, 2, 0, 1, 1, 0}, std::vector<Idx>{2, 2}}) {
                     auto const batch_size = static_cast<Idx>(elements_per_scenarios.size());
                     auto const total_elements =
+                        // NOLINTNEXTLINE(boost-use-ranges) // std::ranges::accumulate requires C++23
                         std::accumulate(elements_per_scenarios.begin(), elements_per_scenarios.end(), Idx{0});
                     CAPTURE(batch_size);
                     CAPTURE(total_elements);
@@ -868,6 +869,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                       std::vector<Idx>{0, 2, 0, 1, 1, 0}, std::vector<Idx>{2, 2}}) {
                     auto const batch_size = static_cast<Idx>(elements_per_scenarios.size());
                     auto const total_elements =
+                        // NOLINTNEXTLINE(boost-use-ranges) // std::ranges::accumulate requires C++23
                         std::accumulate(elements_per_scenarios.begin(), elements_per_scenarios.end(), Idx{0});
                     CAPTURE(batch_size);
                     CAPTURE(total_elements);

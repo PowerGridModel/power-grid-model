@@ -24,7 +24,7 @@ TEST_CASE("Test source") {
     double const un = 10e3;
     double const zb = un * un / base_power_3p;
     double const z_abs = un * un / sk;
-    double const x1 = z_abs / sqrt(rx_ratio * rx_ratio + 1.0);
+    double const x1 = z_abs / sqrt((rx_ratio * rx_ratio) + 1.0);
     double const r1 = rx_ratio * x1;
     double const base_i = base_power_1p / (10.0e3 / sqrt3);
     DoubleComplex const z1{r1 / zb, x1 / zb};

@@ -8,6 +8,8 @@
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 
+#include <boost/algorithm/cxx11/iota.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <numeric>
@@ -35,7 +37,7 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
         return;
     }
     // add
-    vec.push_back({{first_bus, second_bus}, {element_type, idx}});
+    vec.push_back({.pos = {first_bus, second_bus}, .element = {.element_type = element_type, .idx = idx}});
 }
 
 // counting sort element
@@ -54,7 +56,7 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
         count_vec[--counter[it_element->pos.second]] = *it_element;
     }
     // sort row
-    std::fill(counter.begin(), counter.end(), 0);
+    std::ranges::fill(counter, 0);
     for (YBusElementMap const& element : count_vec) {
         ++counter[element.pos.first];
     }
@@ -104,7 +106,7 @@ struct YBusStructure {
         auto const n_fill_in = static_cast<Idx>(topo.fill_in.size());
         // allocate element vector
         std::vector<YBusElementMap> vec_map_element;
-        Idx const total_number_entries = 4 * n_branch + n_bus + 2 * n_fill_in;
+        Idx const total_number_entries = (4 * n_branch) + n_bus + (2 * n_fill_in);
         vec_map_element.reserve(total_number_entries);
         // add element
         // off diagonal element list
@@ -264,7 +266,7 @@ struct YBusStructure {
         // construct transpose entry
         lu_transpose_entry.resize(nnz_counter_lu);
         // default transpose_entry[i] = i
-        std::iota(lu_transpose_entry.begin(), lu_transpose_entry.end(), 0);
+        boost::algorithm::iota(lu_transpose_entry, 0);
         // fill off-diagonal, loop all the branches
         for (auto const [entry_1, entry_2] : off_diag_map) {
             // for each branch entry tf and ft, they are transpose to each other

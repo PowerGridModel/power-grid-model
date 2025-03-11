@@ -167,7 +167,8 @@ constexpr auto strategies_and_methods = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
-            result[idx++] = {strategy, method}; // NOSONAR {no more than one thing per line}
+            result[idx] = {.strategy = strategy, .method = method};
+            ++idx;
         }
     }
     return result;
@@ -183,7 +184,8 @@ constexpr auto strategies_and_sides = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto side : tap_sides) {
-            result[idx++] = {strategy, side}; // NOSONAR {no more than one thing per line}
+            result[idx] = {.strategy = strategy, .side = side};
+            ++idx;
         }
     }
     return result;
@@ -199,7 +201,7 @@ constexpr auto search_methods = [] { return std::array{SearchMethod::linear_sear
 
 constexpr auto strategy_search_and_sides = [] {
     // regular any strategy is only used in combination with linear_search search
-    size_t const options_size = strategies.size() * tap_sides.size() * search_methods.size() - search_methods.size();
+    size_t const options_size = (strategies.size() * tap_sides.size() * search_methods.size()) - search_methods.size();
     std::array<OptimizerStrategySearchSide, options_size> result;
     size_t idx{};
     for (auto strategy : strategies) {
@@ -208,7 +210,8 @@ constexpr auto strategy_search_and_sides = [] {
                 continue;
             }
             for (auto side : tap_sides) {
-                result[idx++] = {strategy, search, side}; // NOSONAR (no-more-than-one-thing-per-line)
+                result[idx] = {.strategy = strategy, .search = search, .side = side};
+                ++idx;
             }
         }
     }
@@ -224,7 +227,7 @@ struct OptStrategyMethodSearch {
 constexpr auto strategy_method_and_searches = [] {
     // regular any strategy is only used in combination with linear_search search
     size_t const options_size =
-        strategies.size() * calculation_methods.size() * search_methods.size() - search_methods.size();
+        (strategies.size() * calculation_methods.size() * search_methods.size()) - search_methods.size();
     std::array<OptStrategyMethodSearch, options_size> result;
     size_t idx{};
     for (auto strategy : strategies) {
@@ -233,7 +236,8 @@ constexpr auto strategy_method_and_searches = [] {
                 continue;
             }
             for (auto method : calculation_methods) {
-                result[idx++] = {strategy, method, search}; // NOSONAR (no-more-than-one-thing-per-line)
+                result[idx] = {.strategy = strategy, .method = method, .search = search};
+                ++idx;
             }
         }
     }

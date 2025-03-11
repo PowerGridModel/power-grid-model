@@ -23,8 +23,8 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 template <std::derived_from<Base> Component, class ComponentContainer,
           forward_iterator_like<typename Component::InputType> ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
-                          double system_frequency) {
+inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator const& begin,
+                          ForwardIterator const& end, double system_frequency) {
     using ComponentView = std::conditional_t<std::same_as<decltype(*begin), typename Component::InputType const&>,
                                              typename Component::InputType const&, typename Component::InputType>;
 

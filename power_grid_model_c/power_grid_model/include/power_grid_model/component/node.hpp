@@ -26,7 +26,9 @@ class Node final : public Base {
     explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {}
 
     // update node, nothing happens here
-    static constexpr UpdateChange update(BaseUpdate const& /* update_data */) { return {false, false}; }
+    static constexpr UpdateChange update(BaseUpdate const& /* update_data */) {
+        return {.topo = false, .param = false};
+    }
     static constexpr BaseUpdate inverse(BaseUpdate update_data) { return update_data; }
 
     // energized

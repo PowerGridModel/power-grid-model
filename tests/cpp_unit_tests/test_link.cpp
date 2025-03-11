@@ -99,7 +99,7 @@ TEST_CASE("Test link") {
         CHECK(asym_output.energized);
         CHECK(asym_output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i_from));
         CHECK(asym_output.i_to(1) == doctest::Approx(cabs(it_sc) * base_i_to));
-        CHECK(asym_output.i_from_angle(1) == doctest::Approx(pi / 4 - 2 * pi / 3));
+        CHECK(asym_output.i_from_angle(1) == doctest::Approx((pi / 4) - (2 * pi / 3)));
         CHECK(asym_output.i_to_angle(2) == doctest::Approx(pi));
     }
 
@@ -115,7 +115,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Update inverse") {
-        BranchUpdate branch_update{1, na_IntS, na_IntS};
+        BranchUpdate branch_update{.id = 1, .from_status = na_IntS, .to_status = na_IntS};
         auto expected = branch_update;
 
         SUBCASE("Identical") {

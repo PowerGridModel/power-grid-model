@@ -97,7 +97,7 @@ class Transformer : public Branch {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.from_status, update_data.to_status);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
-        return {topo_changed, param_changed};
+        return {.topo = topo_changed, .param = param_changed};
     }
 
     TransformerUpdate inverse(TransformerUpdate update_data) const {
@@ -187,7 +187,7 @@ class Transformer : public Branch {
         // in this case, the real part of z_series should be negative
         z_series.real(pk * u2 * u2 / sn_ / sn_);
         // X = uk_sign * sqrt(Z^2 - R^2)
-        auto const z_series_imag_squared = z_series_abs * z_series_abs - z_series.real() * z_series.real();
+        auto const z_series_imag_squared = (z_series_abs * z_series_abs) - (z_series.real() * z_series.real());
         z_series.imag(uk_sign * (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0));
         // y series
         y_series = (1.0 / z_series) / base_y_to;
@@ -198,7 +198,7 @@ class Transformer : public Branch {
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);
 
-        auto const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
+        auto const y_shunt_imag_squared = (y_shunt_abs * y_shunt_abs) - (y_shunt.real() * y_shunt.real());
         y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);
 
         // y shunt

@@ -167,7 +167,7 @@ TEST_CASE("Test compare_generic_branch") {
     // y_series:
     double const z_series_abs = uk * u2 * u2 / sn;
     double const r_series = pk * u2 * u2 / sn / sn;
-    double const z_series_imag_squared = z_series_abs * z_series_abs - r_series * r_series;
+    double const z_series_imag_squared = (z_series_abs * z_series_abs) - (r_series * r_series);
     double const z_series_imag = (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0);
     DoubleComplex const z_series = r_series + 1.0i * z_series_imag;
     DoubleComplex const y_series = 1.0 / z_series / base_y;
@@ -176,7 +176,7 @@ TEST_CASE("Test compare_generic_branch") {
     DoubleComplex y_shunt;
     double const y_shunt_abs = i0 * sn / u2 / u2;
     y_shunt.real(p0 / u2 / u2);
-    double const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
+    double const y_shunt_imag_squared = (y_shunt_abs * y_shunt_abs) - (y_shunt.real() * y_shunt.real());
     y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);
     y_shunt = y_shunt / base_y;
 

@@ -33,7 +33,7 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
         StateEstimationInput<symmetric_t> input{};
-        input.measured_load_gen_power = {{1.0 + 0.1i, 0.3, 0.1}};
+        input.measured_load_gen_power = {{.value = 1.0 + 0.1i, .p_variance = 0.3, .q_variance = 0.1}};
         input.load_gen_status = {1};
 
         MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
@@ -54,7 +54,8 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0}, 1};
 
         StateEstimationInput<asymmetric_t> input{};
-        input.measured_load_gen_power = {{{1.0, 1.1 + 0.1i, 1.2 - 0.2i}, {0.3, 0.6, 0.65}, {0.1, 0.2, 0.05}}};
+        input.measured_load_gen_power = {
+            {.value = {1.0, 1.1 + 0.1i, 1.2 - 0.2i}, .p_variance = {0.3, 0.6, 0.65}, .q_variance = {0.1, 0.2, 0.05}}};
         input.load_gen_status = {1};
 
         MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
@@ -75,7 +76,8 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
 
         StateEstimationInput<symmetric_t> input{};
-        input.measured_load_gen_power = {{1.0 + 1.5i, 1.0, 5.0}, {4.0 + 0.7i, 2.0, 3.0}};
+        input.measured_load_gen_power = {{.value = 1.0 + 1.5i, .p_variance = 1.0, .q_variance = 5.0},
+                                         {.value = 4.0 + 0.7i, .p_variance = 2.0, .q_variance = 3.0}};
         input.load_gen_status = {1};
 
         MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
@@ -96,7 +98,8 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
 
         StateEstimationInput<symmetric_t> input{};
-        input.measured_load_gen_power = {{1.0 + 1.5i, 1.0, 4.0}, {4.0 + 0.7i, 2.0, 3.0}};
+        input.measured_load_gen_power = {{.value = 1.0 + 1.5i, .p_variance = 1.0, .q_variance = 4.0},
+                                         {.value = 4.0 + 0.7i, .p_variance = 2.0, .q_variance = 3.0}};
         input.load_gen_status = {1, 1};
 
         MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
@@ -117,8 +120,12 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0, 1}, 1};
 
         StateEstimationInput<asymmetric_t> input{};
-        input.measured_load_gen_power = {{{1.0 + 1.5i, 0.5 + 1.0i, 2.0 + 0.5i}, {1.0, 0.5, 3.0}, {4.0, 3.5, 1.5}},
-                                         {{4.0 + 0.7i, -0.4 - 0.8i, -1.2 + 2.5i}, {2.0, 1.5, 5.5}, {3.0, 5.0, 0.5}}};
+        input.measured_load_gen_power = {{.value = {1.0 + 1.5i, 0.5 + 1.0i, 2.0 + 0.5i},
+                                          .p_variance = {1.0, 0.5, 3.0},
+                                          .q_variance = {4.0, 3.5, 1.5}},
+                                         {.value = {4.0 + 0.7i, -0.4 - 0.8i, -1.2 + 2.5i},
+                                          .p_variance = {2.0, 1.5, 5.5},
+                                          .q_variance = {3.0, 5.0, 0.5}}};
         input.load_gen_status = {1, 1};
 
         MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};

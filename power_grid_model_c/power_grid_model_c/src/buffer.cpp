@@ -54,7 +54,7 @@ void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_p
     }
     for (Idx i = buffer_offset; i != size + buffer_offset; ++i) {
         ValuePtr const shifted_value_ptr =
-            reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
+            reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + (stride * i);
         if constexpr (is_get) {
             attribute->get_value(buffer_ptr, shifted_value_ptr, i);
         } else {

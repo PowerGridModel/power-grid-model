@@ -90,7 +90,7 @@ TEST_CASE("Test transformer") {
     double const base_y = base_i_to / (10e3 / sqrt3);
     double const z_series_abs = 0.203 * 10e3 * 10e3 / 30e6;
     double const r_series = 100e3 * 10e3 * 10e3 / 30e6 / 30e6;
-    DoubleComplex const z_series = r_series + 1.0i * std::sqrt(z_series_abs * z_series_abs - r_series * r_series);
+    DoubleComplex const z_series = r_series + 1.0i * std::sqrt((z_series_abs * z_series_abs) - (r_series * r_series));
     DoubleComplex const y = 1.0 / z_series / base_y;
 
     // sym
@@ -318,9 +318,9 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
 
     double const z_abs = input.uk * input.u2 * input.u2 / input.sn; // z_abs = uk * u2 * u2 / sn
     double const z_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
-    double const z_imag = std::sqrt(z_abs * z_abs - z_real * z_real);
+    double const z_imag = std::sqrt((z_abs * z_abs) - (z_real * z_real));
 
-    double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
+    double const u1 = input.u1 + ((input.tap_pos - input.tap_nom) * input.tap_size);
     double const u2 = input.u2;                         // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated); // =1
 
@@ -344,7 +344,7 @@ TEST_CASE("Test Transfomer - Test 0 YNyn12") {
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
     } else {
-        y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
+        y_shunt_imag = -std::sqrt((y_shunt_abs * y_shunt_abs) - (y_shunt_real * y_shunt_real));
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
     ComplexTensor<asymmetric_t> y_shunt_diagonal;
@@ -415,9 +415,9 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     // Positive sequence
     double const z_1_abs = input.uk * input.u2 * input.u2 / input.sn;
     double const z_1_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
-    double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
+    double const z_1_imag = std::sqrt((z_1_abs * z_1_abs) - (z_1_real * z_1_real));
 
-    double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
+    double const u1 = input.u1 + ((input.tap_pos - input.tap_nom) * input.tap_size);
     double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
@@ -431,7 +431,7 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
     } else {
-        y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
+        y_shunt_imag = -std::sqrt((y_shunt_abs * y_shunt_abs) - (y_shunt_real * y_shunt_real));
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
 
@@ -524,9 +524,9 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     // Positive sequence
     double const z_1_abs = input.uk * input.u2 * input.u2 / input.sn;
     double const z_1_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
-    double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
+    double const z_1_imag = std::sqrt((z_1_abs * z_1_abs) - (z_1_real * z_1_real));
 
-    double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
+    double const u1 = input.u1 + ((input.tap_pos - input.tap_nom) * input.tap_size);
     double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
@@ -540,7 +540,7 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
     } else {
-        y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
+        y_shunt_imag = -std::sqrt((y_shunt_abs * y_shunt_abs) - (y_shunt_real * y_shunt_real));
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
 
@@ -633,9 +633,9 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     // Positive sequence
     double const z_1_abs = input.uk * input.u2 * input.u2 / input.sn;
     double const z_1_real = input.pk * input.u2 * input.u2 / input.sn / input.sn;
-    double const z_1_imag = std::sqrt(z_1_abs * z_1_abs - z_1_real * z_1_real);
+    double const z_1_imag = std::sqrt((z_1_abs * z_1_abs) - (z_1_real * z_1_real));
 
-    double const u1 = input.u1 - (input.tap_pos - input.tap_nom) * input.tap_size;
+    double const u1 = input.u1 - ((input.tap_pos - input.tap_nom) * input.tap_size);
     double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
@@ -649,7 +649,7 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     if (y_shunt_real > y_shunt_abs) {
         y_shunt_imag = 0.0;
     } else {
-        y_shunt_imag = -std::sqrt(y_shunt_abs * y_shunt_abs - y_shunt_real * y_shunt_real);
+        y_shunt_imag = -std::sqrt((y_shunt_abs * y_shunt_abs) - (y_shunt_real * y_shunt_real));
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
 
@@ -737,16 +737,16 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
     Transformer const Dyn11{input, u1_rated, u2_rated};
 
     double const uk_increment_per_tap = (input.uk_min - input.uk) / (input.tap_min - input.tap_nom);
-    double const uk = input.uk + (input.tap_pos - input.tap_nom) * uk_increment_per_tap;
+    double const uk = input.uk + ((input.tap_pos - input.tap_nom) * uk_increment_per_tap);
 
     double const pk_increment_per_tap = (input.pk_min - input.pk) / (input.tap_min - input.tap_nom);
-    double const pk = input.pk + (input.tap_pos - input.tap_nom) * pk_increment_per_tap;
+    double const pk = input.pk + ((input.tap_pos - input.tap_nom) * pk_increment_per_tap);
 
     double const z_abs = uk * input.u2 * input.u2 / input.sn;
     double const z_real = pk * input.u2 * input.u2 / input.sn / input.sn;
-    double const z_imag = std::sqrt(z_abs * z_abs - z_real * z_real);
+    double const z_imag = std::sqrt((z_abs * z_abs) - (z_real * z_real));
 
-    double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
+    double const u1 = input.u1 + ((input.tap_pos - input.tap_nom) * input.tap_size);
     double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
@@ -760,7 +760,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos < 
     if (y_1_shunt_real > y_1_shunt_abs) {
         y_1_shunt_imag = 0.0;
     } else {
-        y_1_shunt_imag = -std::sqrt(y_1_shunt_abs * y_1_shunt_abs - y_1_shunt_real * y_1_shunt_real);
+        y_1_shunt_imag = -std::sqrt((y_1_shunt_abs * y_1_shunt_abs) - (y_1_shunt_real * y_1_shunt_real));
     }
     DoubleComplex const y_1_shunt = (y_1_shunt_real + 1i * y_1_shunt_imag) / base_y_to;
 
@@ -814,16 +814,16 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     Transformer const Dyn11{input, u1_rated, u2_rated};
 
     double const uk_increment_per_tap = (input.uk_max - input.uk) / (input.tap_max - input.tap_nom);
-    double const uk = input.uk + (input.tap_pos - input.tap_nom) * uk_increment_per_tap;
+    double const uk = input.uk + ((input.tap_pos - input.tap_nom) * uk_increment_per_tap);
 
     double const pk_increment_per_tap = (input.pk_max - input.pk) / (input.tap_max - input.tap_nom);
-    double const pk = input.pk + (input.tap_pos - input.tap_nom) * pk_increment_per_tap;
+    double const pk = input.pk + ((input.tap_pos - input.tap_nom) * pk_increment_per_tap);
 
     double const z_abs = uk * input.u2 * input.u2 / input.sn;
     double const z_real = pk * input.u2 * input.u2 / input.sn / input.sn;
-    double const z_imag = std::sqrt(z_abs * z_abs - z_real * z_real);
+    double const z_imag = std::sqrt((z_abs * z_abs) - (z_real * z_real));
 
-    double const u1 = input.u1 + (input.tap_pos - input.tap_nom) * input.tap_size;
+    double const u1 = input.u1 + ((input.tap_pos - input.tap_nom) * input.tap_size);
     double const u2 = input.u2; // Tap is on the from side, not the to side
     double const k = (u1 / u2) / (u1_rated / u2_rated);
 
@@ -837,7 +837,7 @@ TEST_CASE("Test Transformer - Test uk_min, uk_max, pk_min, pk_max for tap_pos > 
     if (y_1_shunt_real > y_1_shunt_abs) {
         y_1_shunt_imag = 0.0;
     } else {
-        y_1_shunt_imag = -std::sqrt(y_1_shunt_abs * y_1_shunt_abs - y_1_shunt_real * y_1_shunt_real);
+        y_1_shunt_imag = -std::sqrt((y_1_shunt_abs * y_1_shunt_abs) - (y_1_shunt_real * y_1_shunt_real));
     }
     DoubleComplex const y_1_shunt = (y_1_shunt_real + 1i * y_1_shunt_imag) / base_y_to;
 
