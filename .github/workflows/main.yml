@@ -240,7 +240,10 @@ jobs:
             shell: bash -el {0}
           - os: windows
             shell: powershell
-  
+    
+    env:
+      POWER_GRID_MODEL_NO_BINARY_BUILD: 1
+
     defaults:
       run:
         shell: ${{ matrix.shell }}

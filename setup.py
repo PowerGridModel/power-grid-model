@@ -139,9 +139,10 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         print(f"Remove binary file: {bin_file}")
         bin_file.unlink()
 
-    # if we are building this in conda enviroment
-    # we do not need extension module
-    if "CONDA_PREFIX" in os.environ:
+    # By setting POWER_GRID_MODEL_NO_BINARY_BUILD we do not build the extension.
+    # This is usually set in conda-build recipe, so conda build process only wraps the pure Python package.
+    # As a user or developer, DO NOT set this environment variable unless you really know what you are doing.
+    if "POWER_GRID_MODEL_NO_BINARY_BUILD" in os.environ:
         return {}
 
     # fetch dependent headers
