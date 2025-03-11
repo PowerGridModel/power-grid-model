@@ -264,7 +264,7 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
     vertex_distances[v] = 0;
-    pq.push({0, v});
+    pq.emplace(0, v);
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
@@ -283,10 +283,10 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             // regardless of edge direction
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
-                pq.push({vertex_distances[t], t});
+                pq.emplace(vertex_distances[t], t);
             } else if (u == t && vertex_distances[t] + weight < vertex_distances[s]) {
                 vertex_distances[s] = vertex_distances[t] + weight;
-                pq.push({vertex_distances[s], s});
+                pq.emplace(vertex_distances[s], s);
             }
         }
     }
@@ -693,7 +693,7 @@ class RankIteration {
     };
 
   private:
-    std::vector<IntS> iterations_per_rank_{};
+    std::vector<IntS> iterations_per_rank_;
     Idx rank_index_{};
 };
 
@@ -717,7 +717,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
-    std::vector<uint64_t> max_tap_ranges_per_rank{};
+    std::vector<uint64_t> max_tap_ranges_per_rank;
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;

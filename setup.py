@@ -55,28 +55,6 @@ def get_pre_installed_header_include() -> list[str]:
         return []
 
 
-def get_conda_include() -> list[str]:
-    """
-    Get conda include path, if we are inside conda environment
-
-    Returns:
-        either empty list or a list of header paths
-    """
-    include_paths = []
-    # in the conda build system the system root is defined in CONDA_PREFIX or BUILD_PREFIX
-    for prefix in ["CONDA_PREFIX", "BUILD_PREFIX"]:
-        if prefix in os.environ:
-            conda_path = os.environ[prefix]
-            if if_win:
-                # windows has Library folder prefix
-                include_paths.append(os.path.join(conda_path, "Library", "include"))
-                include_paths.append(os.path.join(conda_path, "Library", "include", "eigen3"))
-            else:
-                include_paths.append(os.path.join(conda_path, "include"))
-                include_paths.append(os.path.join(conda_path, "include", "eigen3"))
-    return include_paths
-
-
 # custom class for ctypes
 class CTypesExtension(Extension):
     pass
@@ -150,6 +128,23 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     Returns:
 
     """
+    pkg_bin_dir = pkg_dir / "src" / pkg_name
+    # remove old extension build
+    build_dir = pkg_dir / "build"
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+    # remove binary
+    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll"), pkg_bin_dir.rglob("*.dylib")))
+    for bin_file in bin_files:
+        print(f"Remove binary file: {bin_file}")
+        bin_file.unlink()
+
+    # By setting POWER_GRID_MODEL_NO_BINARY_BUILD we do not build the extension.
+    # This is usually set in conda-build recipe, so conda build process only wraps the pure Python package.
+    # As a user or developer, DO NOT set this environment variable unless you really know what you are doing.
+    if "POWER_GRID_MODEL_NO_BINARY_BUILD" in os.environ:
+        return {}
+
     # fetch dependent headers
     pgm = Path("power_grid_model")
     pgm_c = Path("power_grid_model_c")
@@ -161,7 +156,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     ]
     include_dirs += get_required_dependency_include()
     include_dirs += get_pre_installed_header_include()
-    include_dirs += get_conda_include()
     # compiler and link flag
     cflags: list[str] = []
     lflags: list[str] = []
@@ -179,17 +173,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
     ]
-    pkg_bin_dir = pkg_dir / "src" / pkg_name
-
-    # remove old extension build
-    build_dir = pkg_dir / "build"
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    # remove binary
-    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll")))
-    for bin_file in bin_files:
-        print(f"Remove binary file: {bin_file}")
-        bin_file.unlink()
 
     # build steps for Windows and Linux
     # different treat for windows and linux

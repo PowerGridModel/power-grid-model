@@ -141,6 +141,8 @@ typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 
 // NOLINTEND(modernize-use-using)
 
+// NOLINTBEGIN(performance-enum-size)
+
 // enums
 /**
  * @brief Enumeration for calculation type.
@@ -243,6 +245,8 @@ enum PGM_ExperimentalFeatures {
     PGM_experimental_features_disabled = 0, /**< disable experimental features */
     PGM_experimental_features_enabled = 1,  /**< enable experimental features */
 };
+
+// NOLINTEND(performance-enum-size)
 
 #ifdef __cplusplus
 }

@@ -93,17 +93,17 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     static constexpr auto is_iterative = true;
 
   private:
-    enum class Order { row_major = 0, column_major = 1 };
+    enum class Order : IntS { row_major = 0, column_major = 1 };
 
     struct NRSEVoltageState {
-        ComplexTensor<sym> ui_ui_conj{};
-        ComplexTensor<sym> uj_uj_conj{};
-        ComplexTensor<sym> ui_uj_conj{};
-        ComplexTensor<sym> uj_ui_conj{};
-        ComplexValue<sym> ui{};
-        ComplexValue<sym> uj{};
-        RealDiagonalTensor<sym> abs_ui_inv{};
-        RealDiagonalTensor<sym> abs_uj_inv{};
+        ComplexTensor<sym> ui_ui_conj;
+        ComplexTensor<sym> uj_uj_conj;
+        ComplexTensor<sym> ui_uj_conj;
+        ComplexTensor<sym> uj_ui_conj;
+        ComplexValue<sym> ui;
+        ComplexValue<sym> uj;
+        RealDiagonalTensor<sym> abs_ui_inv;
+        RealDiagonalTensor<sym> abs_uj_inv;
 
         auto const& u_chi_u_chi_conj(Order ij_voltage_order) const {
             return ij_voltage_order == Order::row_major ? ui_ui_conj : uj_uj_conj;
@@ -120,10 +120,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     };
 
     struct NRSEJacobian {
-        RealTensor<sym> dP_dt{};
-        RealTensor<sym> dP_dv{};
-        RealTensor<sym> dQ_dt{};
-        RealTensor<sym> dQ_dv{};
+        RealTensor<sym> dP_dt;
+        RealTensor<sym> dP_dv;
+        RealTensor<sym> dQ_dt;
+        RealTensor<sym> dQ_dv;
 
         NRSEJacobian& operator+=(NRSEJacobian const& other) {
             this->dP_dt += other.dP_dt;
