@@ -215,7 +215,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                 auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
                                 block.g() +=
                                     dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(power).variance),
+                                        diagonal_inverse(power.p_variance + power.q_variance),
                                         param.branch_param[obj].value[measured_side * 2 + b1]);
                             }
                         }
@@ -310,8 +310,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
                             rhs_block.eta() +=
                                 dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                    diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(m).variance),
-                                    conj(m.value() / u[measured_bus]));
+                                    diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
                         }
                     }
                 }

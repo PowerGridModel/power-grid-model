@@ -260,7 +260,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
-    se_input.measured_voltage = {{1.0, 1.0}};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
     SolverType solver{y_bus_sym, topo_ptr};
     CalculationInfo info;
@@ -309,7 +309,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1};
-    se_input.measured_voltage = {{1.0, 0.1}};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 0.1}};
 
     CalculationInfo info;
     SolverOutput<symmetric_t> output;
@@ -326,10 +326,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_source_power = {
-            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_branch_from_power = {
-            {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_source_power = {{.value = 1.93, .p_variance = 0.05, .q_variance = 0.05}};
+        se_input.measured_branch_from_power = {{.value = 1.97, .p_variance = 0.05, .q_variance = 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -356,10 +354,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_load_gen_power = {
-            {.real_component = {.value = -1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_branch_to_power = {
-            {.real_component = {.value = -1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_load_gen_power = {{.value = -1.93, .p_variance = 0.05, .q_variance = 0.05}};
+        se_input.measured_branch_to_power = {{.value = -1.97, .p_variance = 0.05, .q_variance = 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -386,12 +382,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {
-            {.real_component = {.value = 2.2, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
-        se_input.measured_source_power = {
-            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_branch_from_power = {
-            {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_bus_injection = {{.value = 2.2, .p_variance = 0.1, .q_variance = 0.1}};
+        se_input.measured_source_power = {{.value = 1.93, .p_variance = 0.05, .q_variance = 0.05}};
+        se_input.measured_branch_from_power = {{.value = 1.97, .p_variance = 0.05, .q_variance = 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -418,12 +411,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {
-            {.real_component = {.value = 2.2, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
-        se_input.measured_source_power = {
-            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_branch_from_power = {
-            {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_bus_injection = {{.value = 2.2, .p_variance = 0.1, .q_variance = 0.1}};
+        se_input.measured_source_power = {{.value = 1.93, .p_variance = 0.05, .q_variance = 0.05}};
+        se_input.measured_branch_from_power = {{.value = 1.97, .p_variance = 0.05, .q_variance = 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -450,12 +440,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {
-            {.real_component = {.value = -2.2, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
-        se_input.measured_load_gen_power = {
-            {.real_component = {.value = -1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_branch_to_power = {
-            {.real_component = {.value = -1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_bus_injection = {{.value = -2.2, .p_variance = 0.1, .q_variance = 0.1}};
+        se_input.measured_load_gen_power = {{.value = -1.93, .p_variance = 0.05, .q_variance = 0.05}};
+        se_input.measured_branch_to_power = {{.value = -1.97, .p_variance = 0.05, .q_variance = 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -483,9 +470,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {
-            {.real_component = {.value = -3.0, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
-            {.real_component = {.value = 1.0, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_load_gen_power = {{.value = -3.0, .p_variance = 0.05, .q_variance = 0.05},
+                                            {.value = 1.0, .p_variance = 0.05, .q_variance = 0.05}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -515,11 +501,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {
-            {.real_component = {.value = -1.8, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
-            {.real_component = {.value = 0.9, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_bus_injection = {
-            {.real_component = {.value = -1.1, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
+        se_input.measured_load_gen_power = {{.value = -1.8, .p_variance = 0.05, .q_variance = 0.05},
+                                            {.value = 0.9, .p_variance = 0.05, .q_variance = 0.05}};
+        se_input.measured_bus_injection = {{.value = -1.1, .p_variance = 0.1, .q_variance = 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -548,11 +532,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {
-            {.real_component = {.value = -1.8, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
-            {.real_component = {.value = 0.9, .variance = 0.025}, .imag_component = {.value = 0.0, .variance = 0.075}}};
-        se_input.measured_bus_injection = {
-            {.real_component = {.value = -1.1, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
+        se_input.measured_load_gen_power = {{.value = -1.8, .p_variance = 0.05, .q_variance = 0.05},
+                                            {.value = 0.9, .p_variance = 0.025, .q_variance = 0.075}};
+        se_input.measured_bus_injection = {{.value = -1.1, .p_variance = 0.1, .q_variance = 0.1}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);

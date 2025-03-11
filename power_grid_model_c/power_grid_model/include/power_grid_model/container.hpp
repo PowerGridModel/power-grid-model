@@ -92,7 +92,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         // create object
         vec.emplace_back(std::forward<Args>(args)...);
         // insert idx to map
-        map_[id] = Idx2D{group, pos};
+        map_[id] = Idx2D{.group = group, .pos = pos};
     }
 
     // get item based on Idx2D

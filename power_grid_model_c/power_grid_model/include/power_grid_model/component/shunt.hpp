@@ -51,7 +51,7 @@ class Shunt : public Appliance {
         changed = update_params(update_data) || changed;
 
         // change shunt connection will not change topology, but will change parameters
-        return {false, changed};
+        return {.topo = false, .param = changed};
     }
 
     ShuntUpdate inverse(ShuntUpdate update_data) const {
