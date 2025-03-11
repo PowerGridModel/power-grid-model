@@ -268,7 +268,7 @@ jobs:
 
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
           cmake --build build/ --verbose -j1
-          cmake --install build/
+          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
 
       - name: Build and install cmake target for Linux
         if: matrix.os == 'ubuntu'
