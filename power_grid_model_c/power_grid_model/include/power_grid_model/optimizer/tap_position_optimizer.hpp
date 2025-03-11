@@ -92,8 +92,8 @@ inline std::pair<bool, ControlSide> regulated_trafos_contain(RegulatedTrafos con
 }
 
 struct RegulatedObjects {
-    RegulatedTrafos trafos{};
-    RegulatedTrafos trafos3w{};
+    RegulatedTrafos trafos;
+    RegulatedTrafos trafos3w;
 
     std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return regulated_trafos_contain(trafos, id); }
     std::pair<bool, ControlSide> contains_trafo3w(Idx const& id) const {
