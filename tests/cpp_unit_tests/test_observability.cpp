@@ -56,8 +56,10 @@ TEST_CASE("Necessary observability check") {
     se_input.source_status = {1};
     se_input.load_gen_status = {1, 1};
     se_input.measured_voltage = {{1.0 + 1.0i, 1.0}};
-    se_input.measured_bus_injection = {{1.0, 1.0, 1.0}};
-    se_input.measured_branch_from_power = {{1.0, 1.0, 1.0}};
+    se_input.measured_bus_injection = {
+        {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+    se_input.measured_branch_from_power = {
+        {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
     SUBCASE("Observable grid") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
