@@ -266,7 +266,7 @@ jobs:
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
 
-          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=${env:CONDA_PREFIX}\Library -DCMAKE_PREFIX_PATH=${env:CONDA_PREFIX}\Library
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=${env:CONDA_PREFIX}\Library
           cmake --build build/ --verbose -j1
           cmake --install build/
 
