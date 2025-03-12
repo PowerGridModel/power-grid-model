@@ -284,6 +284,7 @@ TEST_CASE("Deserializer") {
             CHECK(node_info.elements_per_scenario == 3);
             CHECK(node_info.total_elements == 3);
             CHECK(node_info.has_attribute_indications == true);
+            REQUIRE(node_info.attribute_indications.size() == 2);
             CHECK(node_info.attribute_indications[0]->name == "id"s);
             CHECK(node_info.attribute_indications[1]->name == "u_rated"s);
 
