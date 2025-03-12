@@ -44,7 +44,7 @@ using nlohmann::json;
 // visitor for json conversion
 struct JsonMapArrayData {
     size_t size{};
-    msgpack::sbuffer buffer{};
+    msgpack::sbuffer buffer;
 };
 
 struct JsonSAXVisitor {
@@ -130,8 +130,8 @@ struct JsonSAXVisitor {
         throw SerializationError{ss.str()};
     }
 
-    std::stack<JsonMapArrayData> data_buffers{};
-    msgpack::sbuffer root_buffer{};
+    std::stack<JsonMapArrayData> data_buffers;
+    msgpack::sbuffer root_buffer;
 };
 
 // visitors for parsing
@@ -200,8 +200,15 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
         std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr bool enable_array =
         std::same_as<map_array, visit_array_t> || std::same_as<map_array, visit_map_array_t>;
-    static constexpr std::string_view static_err_msg =
-        enable_map ? (enable_array ? "Map or an array expected." : "Map expected.") : "Array expected.";
+    static constexpr std::string_view static_err_msg = [] {
+        if constexpr (enable_map && enable_array) {
+            return "Map or an array expected.";
+        } else if constexpr (enable_map) {
+            return "Map expected.";
+        } else {
+            return "Array expected.";
+        }
+    }();
 
     Idx size{};
     bool is_map{};
@@ -236,7 +243,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
 struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
     static constexpr std::string_view static_err_msg = "String expected.";
 
-    std::string_view str{};
+    std::string_view str;
     bool visit_str(const char* v, uint32_t size) {
         str = {v, size};
         return true;

@@ -329,7 +329,7 @@ class Topology {
             permuted_node_indices[reordered[idx]] = n_non_cyclic_nodes + idx;
         }
 
-        std::ranges::copy(reordered, std::back_inserter(dfs_node));
+        dfs_node.insert(dfs_node.end(), reordered.begin(), reordered.end());
         for (auto [from, to] : fills) {
             auto from_reordered = permuted_node_indices[from];
             auto to_reordered = permuted_node_indices[to];
@@ -483,7 +483,7 @@ class Topology {
         requires std::invocable<std::remove_cvref_t<GetMathTopoComponent>, MathModelTopology&> &&
                  grouped_idx_vector_type<
                      std::remove_reference_t<std::invoke_result_t<GetMathTopoComponent, MathModelTopology&>>>
-    void couple_object_components(GetMathTopoComponent&& get_component_topo, ObjectFinder object_finder,
+    void couple_object_components(GetMathTopoComponent get_component_topo, ObjectFinder object_finder,
                                   std::vector<Idx2D>& coupling, Predicate include = include_all) {
         auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
         auto const n_components = object_finder.size();

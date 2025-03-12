@@ -54,7 +54,7 @@ template <symmetry_tag sym_type> struct BranchShortCircuitSolverOutput {
 
 // fault math calculation parameters and math output
 struct FaultCalcParam {
-    DoubleComplex y_fault{};
+    DoubleComplex y_fault;
     FaultType fault_type{};
     FaultPhase fault_phase{};
 };
@@ -126,7 +126,7 @@ static_assert(sensor_calc_param_type<PowerSensorCalcParam<asymmetric_t>>);
 struct TransformerTapRegulatorCalcParam {
     double u_set{};
     double u_band{};
-    DoubleComplex z_compensation{};
+    DoubleComplex z_compensation;
     IntS status{};
 };
 
@@ -193,7 +193,7 @@ struct SourceCalcParam {
     DoubleComplex y1;
     DoubleComplex y0;
 
-    template <symmetry_tag sym> inline ComplexTensor<sym> y_ref() const {
+    template <symmetry_tag sym> ComplexTensor<sym> y_ref() const {
         if constexpr (is_symmetric_v<sym>) {
             return y1;
         } else {

@@ -42,7 +42,7 @@ TEST_CASE("Test fault") {
 
         // Connected to source
         param = fault.calc_param(u_rated);
-        double const base_y = base_i / (u_rated / sqrt(3));
+        double const base_y = base_i / (u_rated / sqrt3);
         DoubleComplex const y_f = 1.0 / (3.0 + 1.0i * 4.0) / base_y;
         CHECK(cabs(param.y_fault - y_f) < numerical_tolerance);
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
@@ -288,10 +288,12 @@ TEST_CASE("Test fault") {
         }
 
         SUBCASE("Invalid fault type") {
-            CHECK_THROWS_AS((Fault{{1, 1, static_cast<FaultType>(-127), FaultPhase::nan, 4, 3.0, 4.0}}),
-                            InvalidShortCircuitType);
+            constexpr auto bad_value{
+                static_cast<FaultType>(-127)}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
-            FaultUpdate const fault_update{1, 0, static_cast<FaultType>(-127), FaultPhase::nan, 10, nan, nan};
+            CHECK_THROWS_AS((Fault{{1, 1, bad_value, FaultPhase::nan, 4, 3.0, 4.0}}), InvalidShortCircuitType);
+
+            FaultUpdate const fault_update{1, 0, bad_value, FaultPhase::nan, 10, nan, nan};
             CHECK_THROWS_AS(fault.update(fault_update), InvalidShortCircuitType);
         }
     }
@@ -300,7 +302,7 @@ TEST_CASE("Test fault") {
         FaultUpdate const fault_update_rx{1, na_IntS, FaultType::nan, FaultPhase::nan, na_IntID, 10.0, 20.0};
         fault.update(fault_update_rx);
         FaultCalcParam const param = fault.calc_param(u_rated);
-        double const base_y = base_i / (u_rated / sqrt(3));
+        double const base_y = base_i / (u_rated / sqrt3);
         DoubleComplex const y_f = 1.0 / (10.0 + 20.0i) / base_y;
         CHECK(cabs(param.y_fault - y_f) < numerical_tolerance);
         CHECK(param.fault_type == FaultType::two_phase_to_ground);

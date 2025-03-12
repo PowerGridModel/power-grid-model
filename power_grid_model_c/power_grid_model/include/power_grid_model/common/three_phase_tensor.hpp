@@ -281,7 +281,7 @@ inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> c
 }
 template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> const& y) {
-    x.matrix().diagonal() += y.matrix();
+    std::move(x).matrix().diagonal() += y.matrix();
 }
 
 // zero tensor
@@ -348,17 +348,22 @@ inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == Re
 //
 // The function assumes that the current value is normalized and new value should be normalized with scalar
 template <symmetry_tag sym, class Proxy>
-inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
+inline void
+update_real_value(RealValue<sym> const& new_value, Proxy&& current_value,
+                  double scalar) { // NOLINT(cppcoreguidelines-missing-std-forward) // perfect forward into void
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
-            current_value = scalar * new_value;
+            std::forward<Proxy>(current_value) = scalar * new_value;
+        } else {
+            capturing::into_the_void<Proxy>(std::forward<Proxy>(current_value));
         }
     } else {
         for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
-                current_value(i) = scalar * new_value(i);
+                current_value(i) = scalar * new_value(i); // can't forward due to runtime element access
             }
         }
+        capturing::into_the_void<Proxy>(std::forward<Proxy>(current_value));
     }
 }
 

@@ -215,7 +215,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v2.23.0
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -235,10 +235,18 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu", "windows"] # We do not test conda for MacOS
-  
+        include:
+          - os: ubuntu
+            shell: bash -el {0}
+          - os: windows
+            shell: powershell
+    
+    env:
+      POWER_GRID_MODEL_NO_BINARY_BUILD: 1
+
     defaults:
       run:
-        shell: bash -el {0}
+        shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v4
 
@@ -253,8 +261,26 @@ jobs:
         run: |
           conda info
           conda list
-      
-      - name: Build
+
+      - name: Build and install cmake target for Windows
+        if: matrix.os == 'windows'
+        run: |          
+          $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+          Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
+          cmake --build build/ --verbose -j1
+          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
+
+      - name: Build and install cmake target for Linux
+        if: matrix.os == 'ubuntu'
+        run: |
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+          cmake --build build/ --verbose -j1
+          cmake --install build/      
+
+      - name: Build python
         run: python -m pip install . -vv --no-build-isolation --no-deps   
 
       - name: Test

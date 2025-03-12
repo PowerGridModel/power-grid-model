@@ -16,14 +16,14 @@ concept iterator_like = requires(T const t) {
 
 template <typename T, typename ElementType>
 concept forward_iterator_like = std::regular<T> && iterator_like<T, ElementType> && requires(T t) {
-    { t++ } -> std::same_as<T>;
-    { ++t } -> std::same_as<T&>;
+    { t++ } -> std::same_as<T>;  // NOLINT(bugprone-inc-dec-in-conditions)
+    { ++t } -> std::same_as<T&>; // NOLINT(bugprone-inc-dec-in-conditions)
 };
 
 template <typename T, typename ElementType>
 concept bidirectional_iterator_like = forward_iterator_like<T, ElementType> && requires(T t) {
-    { t-- } -> std::same_as<T>;
-    { --t } -> std::same_as<T&>;
+    { t-- } -> std::same_as<T>;  // NOLINT(bugprone-inc-dec-in-conditions)
+    { --t } -> std::same_as<T&>; // NOLINT(bugprone-inc-dec-in-conditions)
 };
 
 template <typename T, typename ElementType>
