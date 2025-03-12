@@ -6,6 +6,7 @@
 
 #include <power_grid_model/math_solver/iterative_current_pf_solver.hpp>
 #include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
+#include <power_grid_model/math_solver/linear_pf_solver.hpp>
 #include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
 #include <power_grid_model/math_solver/newton_raphson_se_solver.hpp>
 
@@ -30,5 +31,10 @@ namespace iterative_linear_se {
 template class IterativeLinearSESolver<symmetric_t>;
 template class IterativeLinearSESolver<asymmetric_t>;
 } // namespace iterative_linear_se
+
+namespace linear_pf {
+template class LinearPFSolver<symmetric_t>;
+template class LinearPFSolver<asymmetric_t>;
+} // namespace linear_pf
 
 } // namespace power_grid_model::math_solver
