@@ -179,7 +179,7 @@ TEST_CASE("API Serialization and Deserialization") {
             CHECK(info.has_attribute_indications(0));
             CHECK_FALSE(info.has_attribute_indications(1));
             auto const node_attributes = info.attribute_indications(0);
-            CHECK(node_attributes.size() == 2);
+            REQUIRE(node_attributes.size() == 2);
             CHECK(node_attributes[0] == "id"s);
             CHECK(node_attributes[1] == "u_rated"s);
             for (Idx const idx : {0, 1}) {
