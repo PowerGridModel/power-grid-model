@@ -475,9 +475,9 @@ template <symmetry_tag sym> class MeasuredValues {
         if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
             return PowerSensorCalcParam<sym>{
                 .real_component = {.value = accumulated_p_value / accumulated_inverse_p_variance,
-                                   .variance = 1.0 / accumulated_inverse_p_variance},
+                                   .variance = RealValue<sym>{1.0} / accumulated_inverse_p_variance},
                 .imag_component = {.value = accumulated_q_value / accumulated_inverse_q_variance,
-                                   .variance = 1.0 / accumulated_inverse_q_variance}};
+                                   .variance = RealValue<sym>{1.0} / accumulated_inverse_q_variance}};
         }
         return PowerSensorCalcParam<sym>{
             .real_component = {.value = accumulated_p_value,
