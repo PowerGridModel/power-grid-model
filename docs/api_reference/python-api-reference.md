@@ -71,14 +71,18 @@ This includes all miscellaneous type hints not under dataset or categories.
 .. autofunction:: power_grid_model.validation.validate_input_data
 .. autofunction:: power_grid_model.validation.validate_batch_data
 .. autofunction:: power_grid_model.validation.assert_valid_input_data
-.. autofunction:: power_grid_model.validation.assert_valid_batch_data  
+.. autofunction:: power_grid_model.validation.assert_valid_batch_data
+.. autofunction:: power_grid_model.validation.assert_valid_data_structure
 .. autofunction:: power_grid_model.validation.errors_to_string
+.. autoclass:: power_grid_model.validation.ValidationException
 ```
 
 ### validation errors
 
 ```{eval-rst}
-.. autoclass:: power_grid_model.validation.errors.ValidationError
+.. automodule:: power_grid_model.validation.errors
+   :undoc-members:
+   :show-inheritance:
 ```
 
 ## utils
