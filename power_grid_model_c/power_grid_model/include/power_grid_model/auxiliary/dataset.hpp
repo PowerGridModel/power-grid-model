@@ -42,7 +42,7 @@ struct ComponentInfo {
     Idx total_elements{};
     // does the dataset contain only a subset of attributes with meaningful value
     bool has_attribute_indications{false};
-    std::vector<MetaAttribute const*> attribute_indications{};
+    std::vector<MetaAttribute const*> attribute_indications;
 };
 
 struct DatasetInfo {

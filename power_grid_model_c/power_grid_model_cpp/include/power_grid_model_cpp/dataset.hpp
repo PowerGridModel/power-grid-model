@@ -72,7 +72,7 @@ class DatasetInfo {
         std::vector<std::string> attributes;
         attributes.reserve(n_attributes);
         for (Idx idx = 0; idx < n_attributes; ++idx) {
-            attributes.push_back(handle_.call_with(PGM_dataset_info_attribute_name, info_, component_idx, idx));
+            attributes.emplace_back(handle_.call_with(PGM_dataset_info_attribute_name, info_, component_idx, idx));
         }
         return attributes;
     }
