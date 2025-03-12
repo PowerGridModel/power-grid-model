@@ -99,7 +99,7 @@ PGM_API PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, P
                                                            PGM_Idx component_idx);
 
 /**
- * @brief Return the number of attribute indications for a component.s
+ * @brief Return the number of attribute indications for a component.
  *
  * @param handle
  * @param info A pointer to the info object.
