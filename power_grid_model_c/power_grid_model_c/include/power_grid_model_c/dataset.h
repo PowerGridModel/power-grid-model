@@ -105,7 +105,7 @@ PGM_API PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, P
  * @param info A pointer to the info object.
  * @param component_idx The index number of the component.
  * @return The number of attribute indications for the component.
- * It is UB if PGM_dataset_info_has_attribute_indications() returns zero.
+ * It return 0 if PGM_dataset_info_has_attribute_indications() returns zero.
  */
 PGM_API PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
                                                          PGM_Idx component_idx);
