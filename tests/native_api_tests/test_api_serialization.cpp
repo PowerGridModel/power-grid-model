@@ -176,8 +176,8 @@ TEST_CASE("API Serialization and Deserialization") {
             CHECK(info.n_components() == n_components);
             CHECK(info.component_name(0) == "node"s);
             CHECK(info.component_name(1) == "source"s);
-            CHECK(info.has_attribute_indications(0) == true);
-            CHECK(info.has_attribute_indications(1) == false);
+            CHECK(info.has_attribute_indications(0));
+            CHECK_FALSE(info.has_attribute_indications(1));
             auto const node_attributes = info.attribute_indications(0);
             CHECK(node_attributes.size() == 2);
             CHECK(node_attributes[0] == "id"s);
