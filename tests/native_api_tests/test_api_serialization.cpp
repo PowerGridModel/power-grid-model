@@ -176,6 +176,12 @@ TEST_CASE("API Serialization and Deserialization") {
             CHECK(info.n_components() == n_components);
             CHECK(info.component_name(0) == "node"s);
             CHECK(info.component_name(1) == "source"s);
+            CHECK(info.has_attribute_indications(0) == true);
+            CHECK(info.has_attribute_indications(1) == false);
+            auto const node_attributes = info.attribute_indications(0);
+            CHECK(node_attributes.size() == 2);
+            CHECK(node_attributes[0] == "id"s);
+            CHECK(node_attributes[1] == "u_rated"s);
             for (Idx const idx : {0, 1}) {
                 CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario_complete[idx]);
                 CHECK(info.component_total_elements(idx) == total_elements_complete[idx]);
