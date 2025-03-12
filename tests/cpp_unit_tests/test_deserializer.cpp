@@ -456,9 +456,11 @@ TEST_CASE("Deserializer") {
             CHECK(info.get_component_info("sym_load").elements_per_scenario == -1);
             CHECK(info.get_component_info("sym_load").total_elements == 4);
             CHECK(info.get_component_info("sym_load").has_attribute_indications == false);
+            CHECK(info.get_component_info("sym_load").attribute_indications.empty());
             CHECK(info.get_component_info("asym_load").elements_per_scenario == 1);
             CHECK(info.get_component_info("asym_load").total_elements == 4);
             CHECK(info.get_component_info("asym_load").has_attribute_indications == false);
+            CHECK(info.get_component_info("asym_load").attribute_indications.empty());
         }
 
         SUBCASE("Check parse row-based") {
