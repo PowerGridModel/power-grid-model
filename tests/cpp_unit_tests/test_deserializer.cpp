@@ -284,6 +284,8 @@ TEST_CASE("Deserializer") {
             CHECK(node_info.elements_per_scenario == 3);
             CHECK(node_info.total_elements == 3);
             CHECK(node_info.has_attribute_indications == true);
+            CHECK(node_info.attribute_indications[0]->name == "id"s);
+            CHECK(node_info.attribute_indications[1]->name == "u_rated"s);
 
             auto const& line_info = info.get_component_info("line");
             CHECK(line_info.elements_per_scenario == 2);
@@ -299,6 +301,12 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load_info.elements_per_scenario == 4);
             CHECK(sym_load_info.total_elements == 4);
             CHECK(sym_load_info.has_attribute_indications == true);
+            CHECK(sym_load_info.attribute_indications[0]->name == "id"s);
+            CHECK(sym_load_info.attribute_indications[1]->name == "node"s);
+            CHECK(sym_load_info.attribute_indications[2]->name == "status"s);
+            CHECK(sym_load_info.attribute_indications[3]->name == "type"s);
+            CHECK(sym_load_info.attribute_indications[4]->name == "p_specified"s);
+            CHECK(sym_load_info.attribute_indications[5]->name == "q_specified"s);
         }
 
         SUBCASE("Check parse row-based") {
@@ -443,8 +451,10 @@ TEST_CASE("Deserializer") {
             auto const& info = deserializer.get_dataset_info();
             CHECK(info.get_component_info("sym_load").elements_per_scenario == -1);
             CHECK(info.get_component_info("sym_load").total_elements == 4);
+            CHECK(info.get_component_info("sym_load").has_attribute_indications == false);
             CHECK(info.get_component_info("asym_load").elements_per_scenario == 1);
             CHECK(info.get_component_info("asym_load").total_elements == 4);
+            CHECK(info.get_component_info("asym_load").has_attribute_indications == false);
         }
 
         SUBCASE("Check parse row-based") {
