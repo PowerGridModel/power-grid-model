@@ -22,7 +22,7 @@ using namespace std::string_literals;
 constexpr char const* json_data =
     R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5}],"source":[{"id":6},{"id":7}]}})";
 constexpr char const* complete_json_data =
-    R"({"version":"1.0","type":"input","is_batch":false,"attributes":{},"data":{"node":[{"id":5, "u_rated": 10500}],"source":[{"id":6, "node": 5, "status": 1, "u_ref": 1.0}]}})";
+    R"({"version":"1.0","type":"input","is_batch":false,"attributes":{"node": ["id", "u_rated"]},"data":{"node":[[5, 10500]],"source":[{"id":6, "node": 5, "status": 1, "u_ref": 1.0}]}})";
 } // namespace
 
 TEST_CASE("API Serialization and Deserialization") {
