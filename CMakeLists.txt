@@ -34,10 +34,10 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30.0")
 cmake_policy(SET CMP0167 OLD)  
 endif()
 
-find_package(Boost REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(msgpack-cxx REQUIRED)
+find_package(Boost REQUIRED)
 
 if(NOT WIN32)
   # thread
