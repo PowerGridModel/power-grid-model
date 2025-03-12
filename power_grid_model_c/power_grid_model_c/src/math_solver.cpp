@@ -9,6 +9,7 @@
 #include <power_grid_model/math_solver/linear_pf_solver.hpp>
 #include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
 #include <power_grid_model/math_solver/newton_raphson_se_solver.hpp>
+#include <power_grid_model/math_solver/short_circuit_solver.hpp>
 
 namespace power_grid_model::math_solver {
 
@@ -36,5 +37,10 @@ namespace linear_pf {
 template class LinearPFSolver<symmetric_t>;
 template class LinearPFSolver<asymmetric_t>;
 } // namespace linear_pf
+
+namespace short_circuit {
+template class ShortCircuitSolver<symmetric_t>;
+template class ShortCircuitSolver<asymmetric_t>;
+} // namespace short_circuit
 
 } // namespace power_grid_model::math_solver
