@@ -292,6 +292,7 @@ TEST_CASE("Deserializer") {
             CHECK(line_info.elements_per_scenario == 2);
             CHECK(line_info.total_elements == 2);
             CHECK(line_info.has_attribute_indications == false);
+            CHECK(line_info.attribute_indications.empty());
 
             auto const& source_info = info.get_component_info("source");
             CHECK(source_info.elements_per_scenario == 3);
