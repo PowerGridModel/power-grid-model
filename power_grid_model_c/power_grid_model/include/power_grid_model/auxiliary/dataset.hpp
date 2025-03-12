@@ -339,7 +339,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
-    void enable_atrribute_indications(std::string_view component)
+    void enable_attribute_indications(std::string_view component)
         requires is_indptr_mutable_v<dataset_type>
     {
         Idx const idx = find_component(component, true);

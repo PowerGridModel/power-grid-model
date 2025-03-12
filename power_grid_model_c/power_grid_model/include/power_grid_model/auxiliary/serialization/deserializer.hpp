@@ -152,7 +152,7 @@ struct DefaultNullVisitor : msgpack::null_visitor {
     }
 };
 
-struct NullVisitorCheckMap : DefaultNullVisitor {
+struct CheckHasMap : DefaultNullVisitor {
     bool has_map{false};
     bool start_map(uint32_t /*num_kv_pairs*/) {
         has_map = true;
@@ -363,7 +363,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
 
 class Deserializer {
     using DefaultNullVisitor = detail::DefaultNullVisitor;
-    using NullVisitorCheckMap = detail::NullVisitorCheckMap;
+    using CheckHasMap = detail::CheckHasMap;
     template <class map_array> using MapArrayVisitor = detail::MapArrayVisitor<map_array>;
     using StringVisitor = detail::StringVisitor;
     using BoolVisitor = detail::BoolVisitor;
@@ -509,7 +509,7 @@ class Deserializer {
     }
 
     bool parse_skip_check_map() {
-        NullVisitorCheckMap visitor{};
+        CheckHasMap visitor{};
         msgpack::parse(data_, size_, offset_, visitor);
         return visitor.has_map;
     }
@@ -713,7 +713,7 @@ class Deserializer {
         msg_data_offsets_.push_back(std::move(component_byte_meta));
         // enable attribute indications if possible
         if (has_attribute_indications) {
-            handler.enable_atrribute_indications(component_key_);
+            handler.enable_attribute_indications(component_key_);
         }
         component_key_ = {};
     }

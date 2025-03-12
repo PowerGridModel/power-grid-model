@@ -87,7 +87,8 @@ PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetI
  * @brief Return if a component has attribute indications.
  *
  * Attribute indications are used to indicate the presence of meaningful attributes for a certain component in the
- * dataset.
+ * dataset. It returns 1 for a component if all the elements of all the scenarios for this component are list-like in
+ * the serialized data.
  *
  * @param handle
  * @param info A pointer to the info object.
