@@ -36,6 +36,11 @@ extern template class IterativeCurrentPFSolver<symmetric_t>;
 extern template class IterativeCurrentPFSolver<asymmetric_t>;
 } // namespace iterative_current_pf
 
+namespace iterative_linear_se {
+extern template class IterativeLinearSESolver<symmetric_t>;
+extern template class IterativeLinearSESolver<asymmetric_t>;
+} // namespace iterative_linear_se
+
 } // namespace power_grid_model::math_solver
 
 // aliases main class

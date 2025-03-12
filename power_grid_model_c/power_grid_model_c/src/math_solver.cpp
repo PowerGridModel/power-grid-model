@@ -26,4 +26,9 @@ template class IterativeCurrentPFSolver<symmetric_t>;
 template class IterativeCurrentPFSolver<asymmetric_t>;
 } // namespace iterative_current_pf
 
+namespace iterative_linear_se {
+template class IterativeLinearSESolver<symmetric_t>;
+template class IterativeLinearSESolver<asymmetric_t>;
+} // namespace iterative_linear_se
+
 } // namespace power_grid_model::math_solver
