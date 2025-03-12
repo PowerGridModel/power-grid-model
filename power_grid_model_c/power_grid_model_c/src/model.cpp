@@ -18,6 +18,16 @@ namespace {
 using namespace power_grid_model;
 } // namespace
 
+// extern instantiation of math solver class templates
+namespace power_grid_model::math_solver {
+
+namespace newton_raphson_pf {
+extern template class NewtonRaphsonPFSolver<symmetric_t>;
+extern template class NewtonRaphsonPFSolver<asymmetric_t>;
+} // namespace newton_raphson_pf
+
+} // namespace power_grid_model::math_solver
+
 // aliases main class
 struct PGM_PowerGridModel : public MainModel {
     using MainModel::MainModel;
