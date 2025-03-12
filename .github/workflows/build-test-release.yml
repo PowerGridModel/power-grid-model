@@ -230,11 +230,9 @@ jobs:
             shell: bash -el {0}
           - os: windows
             shell: powershell
-
     env:
       POWER_GRID_MODEL_NO_BINARY_BUILD: 1
 
-  
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -262,6 +260,7 @@ jobs:
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
           cmake --build build/ --verbose -j1
           cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
+          
       - name: Build and install cmake target for Linux
         if: matrix.os == 'ubuntu'
         run: |
