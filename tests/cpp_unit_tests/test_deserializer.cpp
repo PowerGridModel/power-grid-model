@@ -279,14 +279,26 @@ TEST_CASE("Deserializer") {
 
         SUBCASE("Check buffer") {
             auto const& info = deserializer.get_dataset_info();
-            CHECK(info.get_component_info("node").elements_per_scenario == 3);
-            CHECK(info.get_component_info("node").total_elements == 3);
-            CHECK(info.get_component_info("line").elements_per_scenario == 2);
-            CHECK(info.get_component_info("line").total_elements == 2);
-            CHECK(info.get_component_info("source").elements_per_scenario == 3);
-            CHECK(info.get_component_info("source").total_elements == 3);
-            CHECK(info.get_component_info("sym_load").elements_per_scenario == 4);
-            CHECK(info.get_component_info("sym_load").total_elements == 4);
+
+            auto const& node_info = info.get_component_info("node");
+            CHECK(node_info.elements_per_scenario == 3);
+            CHECK(node_info.total_elements == 3);
+            CHECK(node_info.has_attribute_indications == true);
+
+            auto const& line_info = info.get_component_info("line");
+            CHECK(line_info.elements_per_scenario == 2);
+            CHECK(line_info.total_elements == 2);
+            CHECK(line_info.has_attribute_indications == false);
+
+            auto const& source_info = info.get_component_info("source");
+            CHECK(source_info.elements_per_scenario == 3);
+            CHECK(source_info.total_elements == 3);
+            CHECK(source_info.has_attribute_indications == false);
+
+            auto const& sym_load_info = info.get_component_info("sym_load");
+            CHECK(sym_load_info.elements_per_scenario == 4);
+            CHECK(sym_load_info.total_elements == 4);
+            CHECK(sym_load_info.has_attribute_indications == true);
         }
 
         SUBCASE("Check parse row-based") {
