@@ -298,6 +298,7 @@ TEST_CASE("Deserializer") {
             CHECK(source_info.elements_per_scenario == 3);
             CHECK(source_info.total_elements == 3);
             CHECK(source_info.has_attribute_indications == false);
+            CHECK(source_info.attribute_indications.empty());
 
             auto const& sym_load_info = info.get_component_info("sym_load");
             CHECK(sym_load_info.elements_per_scenario == 4);
