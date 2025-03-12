@@ -42,7 +42,9 @@ struct ComponentInfo {
     Idx total_elements{};
     // does the dataset contain only a subset of attributes with meaningful value
     bool has_attribute_indications{false};
-    std::vector<MetaAttribute const*> attribute_indications;
+    // this is not redundant as we use them for aggregate intialization
+    // NOLINTNEXTLINE(readability-redundant-member-init)
+    std::vector<MetaAttribute const*> attribute_indications{};
 };
 
 struct DatasetInfo {
