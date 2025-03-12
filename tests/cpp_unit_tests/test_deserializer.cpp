@@ -304,6 +304,7 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load_info.elements_per_scenario == 4);
             CHECK(sym_load_info.total_elements == 4);
             CHECK(sym_load_info.has_attribute_indications == true);
+            REQUIRE(sym_load_info.attribute_indications.size() == 6);
             CHECK(sym_load_info.attribute_indications[0]->name == "id"s);
             CHECK(sym_load_info.attribute_indications[1]->name == "node"s);
             CHECK(sym_load_info.attribute_indications[2]->name == "status"s);
