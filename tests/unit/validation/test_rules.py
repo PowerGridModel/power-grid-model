@@ -491,7 +491,7 @@ def test_none_missing():
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
         }[component][field]
 
-    with mock.patch("power_grid_model.validation.rules._nan_type", _mock_nan_type):
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
         valid = {
             "foo_test": np.array(
                 [
