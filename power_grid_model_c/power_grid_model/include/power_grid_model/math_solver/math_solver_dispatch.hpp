@@ -148,6 +148,6 @@ template <symmetry_tag sym> class MathSolveProxy {
 
 template <symmetry_tag sym> using MathSolveProxy = math_solver::MathSolveProxy<sym>;
 
-template <template <symmetry_tag> class MathSolverType> using MathSolverDispatcher = math_solver::MathSolverDispatcher;
+using MathSolverDispatcher = math_solver::MathSolverDispatcher;
 
 } // namespace power_grid_model

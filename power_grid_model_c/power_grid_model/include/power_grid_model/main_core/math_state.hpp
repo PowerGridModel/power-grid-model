@@ -5,14 +5,15 @@
 #pragma once
 
 #include "../math_solver/y_bus.hpp"
+#include "../math_solver/math_solver_dispatch.hpp"
 
 namespace power_grid_model::main_core {
 
 struct MathState {
     std::vector<YBus<symmetric_t>> y_bus_vec_sym;
     std::vector<YBus<asymmetric_t>> y_bus_vec_asym;
-    std::vector<MathSolver<symmetric_t>> math_solvers_sym;
-    std::vector<MathSolver<asymmetric_t>> math_solvers_asym;
+    std::vector<MathSolveProxy<symmetric_t>> math_solvers_sym;
+    std::vector<MathSolveProxy<asymmetric_t>> math_solvers_asym;
 };
 
 inline void clear(MathState& math_state) {
