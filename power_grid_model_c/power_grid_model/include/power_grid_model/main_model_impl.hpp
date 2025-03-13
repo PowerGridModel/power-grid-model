@@ -162,7 +162,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data,
-                           MathSolverDispatcher const* math_solver_dispatcher, pos = 0)
+                           MathSolverDispatcher const* math_solver_dispatcher, Idx pos = 0)
         : system_frequency_{system_frequency},
           meta_data_{&input_data.meta_data()},
           math_solver_dispatcher_{math_solver_dispatcher} {
@@ -1312,7 +1312,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
-            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [](auto math_topo) {
+            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto math_topo) {
                 return MathSolverProxy<sym>{math_solver_dispatcher_, std::move(math_topo)};
             });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {

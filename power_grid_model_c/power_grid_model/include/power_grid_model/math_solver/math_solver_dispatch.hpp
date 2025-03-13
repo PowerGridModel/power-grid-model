@@ -27,11 +27,11 @@ struct MathSolverDispatcher {
     template <symmetry_tag sym> struct MathSolverDispatcherConfig {
         template <template <symmetry_tag> class MathSolverType>
         constexpr MathSolverDispatcherConfig(math_solver_tag<MathSolverType>)
-            : create{[](std::shared_ptr<MathModelTopology const> const& topo_ptr) {
+            : create{[](std::shared_ptr<MathModelTopology const> const& topo_ptr) -> void* {
                   return new MathSolverType<sym>{topo_ptr};
               }},
               destroy{[](void const* solver) { delete reinterpret_cast<MathSolverType<sym> const*>(solver); }},
-              copy{[](void const* solver) {
+              copy{[](void const* solver) -> void* {
                   return new MathSolverType<sym>{*reinterpret_cast<MathSolverType<sym> const*>(solver)};
               }},
               run_power_flow{[](void* solver, PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
@@ -74,10 +74,9 @@ struct MathSolverDispatcher {
 
     template <template <symmetry_tag> class MathSolverType>
     constexpr MathSolverDispatcher(math_solver_tag<MathSolverType>)
-        : sym_config{math_solver_tag<MathSolverType>{symmetric_t{}}},
-          asym_config{math_solver_tag<MathSolverType>{asymmetric_t{}}} {}
+        : sym_config{math_solver_tag<MathSolverType>{}}, asym_config{math_solver_tag<MathSolverType>{}} {}
 
-    template <symmetry_tag sym> get_dispather_config() const {
+    template <symmetry_tag sym> MathSolverDispatcherConfig<sym> const& get_dispather_config() const {
         if constexpr (is_symmetric_v<sym>) {
             return sym_config;
         } else {
@@ -88,15 +87,15 @@ struct MathSolverDispatcher {
     MathSolverDispatcherConfig<asymmetric_t> asym_config;
 };
 
-template <symmetry_tag sym> class MathSolveProxy {
+template <symmetry_tag sym> class MathSolverProxy {
   public:
-    explicit MathSolveProxy(MathSolverDispatcher const* dispatcher,
-                            std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    explicit MathSolverProxy(MathSolverDispatcher const* dispatcher,
+                             std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : dispatcher_{dispatcher},
           solver_{dispatcher_->get_dispather_config<sym>().create(topo_ptr),
                   dispatcher_->get_dispather_config<sym>().destroy} {}
-    MathSolveProxy(MathSolveProxy const& other) { *this = other; }
-    MathSolveProxy& operator=(MathSolveProxy const& other) {
+    MathSolverProxy(MathSolverProxy const& other) { *this = other; }
+    MathSolverProxy& operator=(MathSolverProxy const& other) {
         if (this != &other) {
             solver_.reset();
             dispatcher_ = other.dispatcher_;
@@ -106,9 +105,9 @@ template <symmetry_tag sym> class MathSolveProxy {
         }
         return *this;
     }
-    MathSolveProxy(MathSolveProxy&& other) noexcept = default;
-    MathSolveProxy& operator=(MathSolveProxy&& other) noexcept = default;
-    ~MathSolveProxy() = default;
+    MathSolverProxy(MathSolverProxy&& other) noexcept = default;
+    MathSolverProxy& operator=(MathSolverProxy&& other) noexcept = default;
+    ~MathSolverProxy() = default;
 
     SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                      CalculationInfo& calculation_info, CalculationMethod calculation_method,
@@ -146,7 +145,7 @@ template <symmetry_tag sym> class MathSolveProxy {
 
 } // namespace math_solver
 
-template <symmetry_tag sym> using MathSolveProxy = math_solver::MathSolveProxy<sym>;
+template <symmetry_tag sym> using MathSolverProxy = math_solver::MathSolverProxy<sym>;
 
 using MathSolverDispatcher = math_solver::MathSolverDispatcher;
 
