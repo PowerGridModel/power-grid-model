@@ -40,7 +40,7 @@ struct ComponentInfo {
     // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
     Idx elements_per_scenario{};
     Idx total_elements{};
-    // does the dataset contain only a subset of attributes with meaningful value
+    // whether there is a subset of meaningful attributes that was deduced from the dataset
     bool has_attribute_indications{false};
     // this is not redundant as we use them for aggregate intialization
     // NOLINTNEXTLINE(readability-redundant-member-init)

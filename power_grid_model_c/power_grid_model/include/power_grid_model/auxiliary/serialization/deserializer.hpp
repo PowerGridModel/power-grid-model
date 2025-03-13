@@ -619,7 +619,7 @@ class Deserializer {
                 attributes_per_component.push_back(&component->get_attribute(single_component.second[element_number_]));
             }
             attributes_[component] = std::move(attributes_per_component);
-            // set attribute intidation if enabled
+            // set attribute indication if enabled
             if (handler.get_component_info(component_key_).has_attribute_indications) {
                 handler.set_attribute_indications(component_key_, attributes_[component]);
             }
@@ -707,12 +707,12 @@ class Deserializer {
             elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
                 elements_per_scenario * batch_size;                                     // multiply
         handler.add_component_info(component_key_, elements_per_scenario, total_elements);
-        // check if all scenarios does not have any map
-        bool const has_attribute_indications = std::none_of(component_byte_meta.cbegin(), component_byte_meta.cend(),
-                                                            [](auto const& x) { return x.has_map; });
+        // check if all scenarios only contain array data
+        bool const only_values_in_data = std::none_of(component_byte_meta.cbegin(), component_byte_meta.cend(),
+                                                      [](auto const& x) { return x.has_map; });
         msg_data_offsets_.push_back(std::move(component_byte_meta));
         // enable attribute indications if possible
-        if (has_attribute_indications) {
+        if (only_values_in_data) {
             handler.enable_attribute_indications(component_key_);
         }
         component_key_ = {};
