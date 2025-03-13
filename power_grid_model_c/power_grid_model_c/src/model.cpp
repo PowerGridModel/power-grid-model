@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
+#include <power_grid_model/common/common.hpp>
+
 #include "forward_declarations.hpp"
 
 #include "power_grid_model_c/model.h"
@@ -12,6 +15,37 @@
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
+
+#include <power_grid_model/math_solver/iterative_current_pf_solver.hpp>
+#include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
+#include <power_grid_model/math_solver/linear_pf_solver.hpp>
+#include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
+#include <power_grid_model/math_solver/newton_raphson_se_solver.hpp>
+
+namespace power_grid_model::math_solver {
+namespace linear_pf {
+// prevent explicit instantiation of template classes here; offloaded to separate files
+extern template class LinearPFSolver<symmetric_t>;
+extern template class LinearPFSolver<asymmetric_t>;
+} // namespace linear_pf
+namespace iterative_current_pf {
+extern template class IterativeCurrentPFSolver<symmetric_t>;
+extern template class IterativeCurrentPFSolver<asymmetric_t>;
+} // namespace iterative_current_pf
+namespace newton_raphson_pf {
+extern template class NewtonRaphsonPFSolver<symmetric_t>;
+extern template class NewtonRaphsonPFSolver<asymmetric_t>;
+} // namespace newton_raphson_pf
+namespace iterative_linear_se {
+extern template class IterativeLinearSESolver<symmetric_t>;
+extern template class IterativeLinearSESolver<asymmetric_t>;
+} // namespace iterative_linear_se
+namespace newton_raphson_se {
+extern template class NewtonRaphsonSESolver<symmetric_t>;
+extern template class NewtonRaphsonSESolver<asymmetric_t>;
+} // namespace newton_raphson_se
+} // namespace power_grid_model::math_solver
+
 #include <power_grid_model/main_model.hpp>
 
 namespace {

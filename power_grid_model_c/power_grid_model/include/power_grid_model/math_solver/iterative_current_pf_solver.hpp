@@ -217,8 +217,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     }
 };
 
-template class IterativeCurrentPFSolver<symmetric_t>;
-template class IterativeCurrentPFSolver<asymmetric_t>;
+// template class IterativeCurrentPFSolver<symmetric_t>;
+// template class IterativeCurrentPFSolver<asymmetric_t>;
 
 } // namespace iterative_current_pf
 

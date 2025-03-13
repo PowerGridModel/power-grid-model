@@ -10,6 +10,7 @@
 #include "common_solver_functions.hpp"
 #include "measured_values.hpp"
 #include "observability.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -701,8 +702,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 };
 
-template class NewtonRaphsonSESolver<symmetric_t>;
-template class NewtonRaphsonSESolver<asymmetric_t>;
+// template class NewtonRaphsonSESolver<symmetric_t>;
+// template class NewtonRaphsonSESolver<asymmetric_t>;
 
 } // namespace newton_raphson_se
 

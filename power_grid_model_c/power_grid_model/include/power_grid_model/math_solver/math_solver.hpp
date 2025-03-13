@@ -7,7 +7,7 @@
 #include "iterative_current_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
 #include "linear_pf_solver.hpp"
-#include "newton_raphson_pf_solver.hpp"
+// #include "newton_raphson_pf_solver.hpp"
 #include "newton_raphson_se_solver.hpp"
 #include "short_circuit_solver.hpp"
 #include "y_bus.hpp"
@@ -23,6 +23,21 @@
 namespace power_grid_model {
 
 namespace math_solver {
+
+namespace newton_raphson_pf {
+template <symmetry_tag sym> class NewtonRaphsonPFSolver;
+
+template <symmetry_tag sym>
+std::shared_ptr<NewtonRaphsonPFSolver<sym>>
+create_newton_raphson_pf_solver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr);
+
+template <symmetry_tag sym>
+SolverOutput<sym> run_power_flow_newton_raphson(std::shared_ptr<NewtonRaphsonPFSolver<sym>> newton_raphson_pf_solver,
+                                                PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
+                                                CalculationInfo& calculation_info, YBus<sym> const& y_bus);
+} // namespace newton_raphson_pf
+
+using newton_raphson_pf::NewtonRaphsonPFSolver;
 
 template <symmetry_tag sym> class MathSolver {
   public:
@@ -105,7 +120,7 @@ template <symmetry_tag sym> class MathSolver {
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type
-    std::optional<NewtonRaphsonPFSolver<sym>> newton_raphson_pf_solver_;
+    std::shared_ptr<NewtonRaphsonPFSolver<sym>> newton_raphson_pf_solver_;
     std::optional<LinearPFSolver<sym>> linear_pf_solver_;
     std::optional<IterativeCurrentPFSolver<sym>> iterative_current_pf_solver_;
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
@@ -114,11 +129,14 @@ template <symmetry_tag sym> class MathSolver {
 
     SolverOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                     CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-        if (!newton_raphson_pf_solver_.has_value()) {
+
+        if (newton_raphson_pf_solver_ == nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
-            newton_raphson_pf_solver_.emplace(y_bus, topo_ptr_);
+            newton_raphson_pf_solver_ = newton_raphson_pf::create_newton_raphson_pf_solver(y_bus, topo_ptr_);
         }
-        return newton_raphson_pf_solver_.value().run_power_flow(y_bus, input, err_tol, max_iter, calculation_info);
+
+        return newton_raphson_pf::run_power_flow_newton_raphson<sym>(newton_raphson_pf_solver_, input, err_tol,
+                                                                     max_iter, calculation_info, y_bus);
     }
 
     SolverOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double /* err_tol */, Idx /* max_iter */,

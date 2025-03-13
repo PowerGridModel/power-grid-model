@@ -9,7 +9,6 @@
 #include "test_math_solver_common.hpp"
 
 #include <power_grid_model/common/calculation_info.hpp>
-#include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
 namespace power_grid_model {

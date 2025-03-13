@@ -12,6 +12,11 @@ add_library(power_grid_model_c SHARED
   "src/dataset_definitions.cpp"
   "src/serialization.cpp"
   "src/dataset.cpp"
+  "src/instantiate_lpf.cpp"
+  "src/instantiate_icpf.cpp"
+  "src/instantiate_nrpf.cpp"
+  "src/instantiate_ilse.cpp"
+  "src/instantiate_nrse.cpp"
 )
 
 target_include_directories(power_grid_model_c PUBLIC
