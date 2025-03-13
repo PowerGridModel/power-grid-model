@@ -87,4 +87,30 @@ struct MathSolverDispatcher {
     MathSolverDispatcherConfig<asymmetric_t> asym_config;
 };
 
+template <symmetry_tag sym> class MathSolveProxy {
+  public:
+    explicit MathSolveProxy(MathSolverDispatcher const* dispatcher,
+                            std::shared_ptr<MathModelTopology const> const& topo_ptr)
+        : dispatcher_{dispatcher},
+          solver_{dispatcher_->get_dispather_config<sym>().create(topo_ptr),
+                  dispatcher_->get_dispather_config<sym>().destroy} {}
+    MathSolveProxy(MathSolveProxy const& other) { *this = other; }
+    MathSolveProxy& operator=(MathSolveProxy const& other) {
+        if (this != &other) {
+            solver_.reset();
+            dispatcher_ = other.dispatcher_;
+            solver_ = std::unique_ptr<void*, std::add_pointer_t<void(void const*)>>{
+                dispatcher_->get_dispather_config<sym>().copy(other.solver_.get())};
+        }
+        return *this;
+    }
+    MathSolveProxy(MathSolveProxy&& other) noexcept = default;
+    MathSolveProxy& operator=(MathSolveProxy&& other) noexcept = default;
+    ~MathSolveProxy() = default;
+
+  private:
+    MathSolverDispatcher const* dispatcher_{};
+    std::unique_ptr<void*, std::add_pointer_t<void(void const*)>> solver_;
+};
+
 } // namespace power_grid_model::math_solver
