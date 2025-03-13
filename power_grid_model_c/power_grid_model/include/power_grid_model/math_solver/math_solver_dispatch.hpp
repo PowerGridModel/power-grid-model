@@ -17,12 +17,13 @@
 
 #include <memory>
 
-namespace power_grid_model::math_solver {
+namespace power_grid_model {
+
+namespace math_solver {
 
 template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {};
 
 struct MathSolverDispatcher {
-
     template <symmetry_tag sym> struct MathSolverDispatcherConfig {
         template <template <symmetry_tag> class MathSolverType>
         constexpr MathSolverDispatcherConfig(math_solver_tag<MathSolverType>)
@@ -143,4 +144,10 @@ template <symmetry_tag sym> class MathSolveProxy {
     void const* get_ptr() const { return solver_.get(); }
 };
 
-} // namespace power_grid_model::math_solver
+} // namespace math_solver
+
+template <symmetry_tag sym> using MathSolveProxy = math_solver::MathSolveProxy<sym>;
+
+template <template <symmetry_tag> class MathSolverType> using MathSolverDispatcher = math_solver::MathSolverDispatcher;
+
+} // namespace power_grid_model
