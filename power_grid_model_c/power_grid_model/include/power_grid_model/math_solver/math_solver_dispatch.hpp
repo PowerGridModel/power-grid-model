@@ -94,12 +94,15 @@ template <symmetry_tag sym> class MathSolverProxy {
         : dispatcher_{dispatcher},
           solver_{dispatcher_->get_dispather_config<sym>().create(topo_ptr),
                   dispatcher_->get_dispather_config<sym>().destroy} {}
-    MathSolverProxy(MathSolverProxy const& other) { *this = other; }
+    MathSolverProxy(MathSolverProxy const& other)
+        : dispatcher_{other.dispatcher_},
+          solver_{dispatcher_->get_dispather_config<sym>().copy(other.get_ptr()),
+                  dispatcher_->get_dispather_config<sym>().destroy} {}
     MathSolverProxy& operator=(MathSolverProxy const& other) {
         if (this != &other) {
             solver_.reset();
             dispatcher_ = other.dispatcher_;
-            solver_ = std::unique_ptr<void*, std::add_pointer_t<void(void const*)>>{
+            solver_ = std::unique_ptr<void, std::add_pointer_t<void(void const*)>>{
                 dispatcher_->get_dispather_config<sym>().copy(other.get_ptr()),
                 dispatcher_->get_dispather_config<sym>().destroy};
         }
@@ -137,7 +140,7 @@ template <symmetry_tag sym> class MathSolverProxy {
 
   private:
     MathSolverDispatcher const* dispatcher_{};
-    std::unique_ptr<void*, std::add_pointer_t<void(void const*)>> solver_;
+    std::unique_ptr<void, std::add_pointer_t<void(void const*)>> solver_;
 
     void* get_ptr() { return solver_.get(); }
     void const* get_ptr() const { return solver_.get(); }
