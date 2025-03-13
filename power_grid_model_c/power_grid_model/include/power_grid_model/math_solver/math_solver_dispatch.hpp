@@ -100,7 +100,8 @@ template <symmetry_tag sym> class MathSolveProxy {
             solver_.reset();
             dispatcher_ = other.dispatcher_;
             solver_ = std::unique_ptr<void*, std::add_pointer_t<void(void const*)>>{
-                dispatcher_->get_dispather_config<sym>().copy(other.get_ptr())};
+                dispatcher_->get_dispather_config<sym>().copy(other.get_ptr()),
+                dispatcher_->get_dispather_config<sym>().destroy};
         }
         return *this;
     }
