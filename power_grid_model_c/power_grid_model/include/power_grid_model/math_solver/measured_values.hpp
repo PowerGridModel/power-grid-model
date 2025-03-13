@@ -597,8 +597,13 @@ template <symmetry_tag sym> class MeasuredValues {
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {
-            return power.value() -
-                   (power.real_component.variance * real(mu) + 1.0i * power.imag_component.variance * imag(mu));
+            auto const injection = (power.value() - (power.real_component.variance * real(mu) +
+                                                     1.0i * power.imag_component.variance * imag(mu)));
+            if constexpr (is_asymmetric_v<sym>) {
+                return injection.eval();
+            } else {
+                return injection;
+            }
         };
 
         for (Idx const load_gen : load_gens) {
