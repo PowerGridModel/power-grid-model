@@ -9,7 +9,7 @@ SPDX-License-Identifier: MPL-2.0
 Power system equations can be modeled as matrix equations. A matrix equation solver is therefore
 key to the power grid model.
 
-This section documents the need for a custom sparse LU-solver and its implementation.
+This section documents the need for a custom sparse LU solver and its implementation.
 
 ```{contents}
 ```
@@ -53,7 +53,7 @@ sparse topologies and, as a result, extremely
 Sparse matrix equations can be solved efficiently: they can be solved in linear time complexity, as
 opposed to the cubic complexity of naive
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination). As a result, a sparse
-matrix solver is key to the performance of the power grid model. QR-decomposition therefore is not a
+matrix solver is key to the performance of the power grid model. QR decomposition therefore is not a
 good candidate.
 
 #### Pivot operations
@@ -115,42 +115,42 @@ can be pre-calculated, but the dense blocks need to be inverted separately. To m
 the dense blocks may differ heavily in structure and contents between different nodes, and are often
 not solvable without pivoting.
 
-### Custom sparse LU-solver
+### Custom sparse LU solver
 
-The choice for a custom LU-solver implementation comes from a number of considerations:
+The choice for a custom LU solver implementation comes from a number of considerations:
 
-* [LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) is the best choice, because
-  [QR-decomposition](https://en.wikipedia.org/wiki/QR_decomposition) and
-  [Cholesky-decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition) cannot solve the
+* [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) is the best choice, because
+  [QR decomposition](https://en.wikipedia.org/wiki/QR_decomposition) and
+  [Cholesky decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition) cannot solve the
   power system equations efficiently as a consequence of the
   [power system equations' properties](#power-system-equations-properties),
-  as the QR-decomposition is not as efficient when dealing with sparse matrices, while the latter
+  as the QR decomposition is not as efficient when dealing with sparse matrices, while the latter
   requires Hermitian and/or semi-definite (in generalized form).
-* Alternative LU-solver implementations are optimized for a variety of use cases that are less
+* Alternative LU solver implementations are optimized for a variety of use cases that are less
   sparse than the ones encountered in power systems.
 * The power grid model requires a faster and more dedicated block-sparse matrix equation solver than
-  what alternative LU-solver implementations provide.
+  what alternative LU solver implementations provide.
 
 ## Implementation
 
-The LU-solver implemented in the power grid model consists of 3 components:
+The LU solver implemented in the power grid model consists of 3 components:
 
-* A block-sparse LU-solver that:
+* A block-sparse LU solver that:
   * handles factorization using the topological structure down to block-level
   * solves the sparse matrix equation given the factorization
-* A dense LU-factor that handles individual blocks within the matrix equation
+* A dense LU factor that handles individual blocks within the matrix equation
 
-### Dense LU-factorization
+### Dense LU factorization
 
 The power grid model uses a modified version of the
 [`LUFullPiv` defined in Eigen](https://gitlab.com/libeigen/eigen/-/blob/3.4/Eigen/src/LU/FullPivLU.h)
 (credits go to the original author). The modification adds opt-in support for
 [pivot perturbation](#pivot-perturbation).
 
-#### Dense LU-factorization process
+#### Dense LU factorization process
 
-The [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) process itself is, as
-usual, by iterating over all pivot elements $p$. Let the full matrix be as follows.
+The [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) process is identical
+and iterating over all pivot elements $p$. Let the full matrix be as follows.
 
 $$
 \mathbb{M} = \begin{bmatrix}
@@ -161,30 +161,32 @@ m_{N-1,0} && m_{N-1,1} && \cdots && m_{N-1,N-1}
 \end{bmatrix}
 $$
 
-In some iteration step where $p$ is the curent pivot element, the partly-processed matrix looks as
-follows.
+While processing current pivot element $p$, the partially processed matrix has the following
+arrangement.
 
 $$
-\mathbb{M}_{\text{partly-processed up to } p}\equiv\begin{bmatrix}
-&& \mathbb{U}_{\text{processed up to } p} && \\
-\mathbb{L}_{\text{processed up to } p} && \begin{array}{|c}\hline
+\mathbb{M}_{\underline{p}}\equiv\begin{bmatrix}
+&& \mathbb{U}_{\underline{p}} && \\
+\mathbb{L}_{\underline{p}} && \begin{array}{|c}\hline
   \mathbb{M}_p \end{array}
 \end{bmatrix}\equiv\begin{bmatrix}
-&& \mathbb{U}_{\text{processed up to } p} && \\
-\mathbb{L}_{\text{processed up to } p} && \begin{array}{|cc}\hline
+&& \mathbb{U}_{\underline{p}} && \\
+\mathbb{L}_{\underline{p}} && \begin{array}{|cc}\hline
   m_p && \boldsymbol{r}_p^T \\
  \boldsymbol{q}_p && \hat{\mathbb{M}}_p \end{array}
 \end{bmatrix}
 $$
 
-in which $\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$
-is the $\left(N-p\right)\times\left(N-p\right)$ part of the matrix that has not been LU-factorized
-yet. In addition, $m_p$ is the pivot element value, $\boldsymbol{q}$ and $\boldsymbol{r}_p^T$ are
-the associated column and row vectors containing the rest of the pivot column and row and
-$\hat{\mathbb{M}}_p$ is the bottom-right block of the matrix. Note that in the bigger picture of the
-full matrix, this looks as follows, where $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ are column and
-row vectors, respectively, and the $m_k$, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ ($k < p$) denote
-sections of the matrix that already have been decomposed in previous iteration steps (see below).
+Here, $\underline{p}$ denotes the fact that it is partially processed. Furthermore,
+$\mathbb{M}_{\underline{p}}$ is the partially processed matrix up to pivot $p$;
+$\mathbb{U}_{\underline{p}}$ and $\mathbb{L}_{\underline{p}}$ are the upper and lower part of the
+matrix up to pivot $p$;
+$\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$
+is the remaining $\left(N-p\right)\times\left(N-p\right)$ part of the matrix that is yet to be
+LU factorized. In addition, $m_p$ is the pivot element value, $\boldsymbol{q}$ and
+$\boldsymbol{r}_p^T$ are the associated column and row vectors containing the rest of the pivot
+column and row; and $\hat{\mathbb{M}}_p$ is the remaining bottom-right block of the matrix. Plugging
+all definitions into the full matrix yields the following.
 
 $$
 \begin{bmatrix}
@@ -200,8 +202,12 @@ $$
     && && && \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}
 $$
 
+In this equation, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ are column and row vectors,
+respectively; $m_k$, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ ($k < p$) denote sections of the
+matrix that have already been processed.
+
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) using
-[LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
+[LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
 
 $$
 \begin{align*}
@@ -211,8 +217,9 @@ $$
 \end{align*}
 $$
 
-where $\mathbb{1}$ is the matrix with ones on the diagonal and zeros as off-diagonal elements and
-$\mathbb{M}_{p+1}$ is the start of the next iteration. They together form the LU-decomposition as
+where $\mathbb{1}$ is the matrix with ones on the diagonal and zeros off-diagonal, and
+$\mathbb{M}_{p+1}$ is the start of the next iteration. $\mathbb{L}_p$, $\mathbb{U}_p$,
+$\mathbb{M}_{p+1}$ and $\mathbb{M}_{p}$ are related as follows.
 
 $$
 \mathbb{M}_p \equiv
@@ -226,7 +233,7 @@ $$
 \end{bmatrix} \mathbb{U}_p
 $$
 
-or, with the previous iteration also shown,
+Expanding one more step, this yields the following.
 
 $$
 \mathbb{M}_{p-1} \equiv \mathbb{L}_{p-1} \begin{bmatrix}
@@ -242,7 +249,7 @@ $$
 \end{bmatrix}\mathbb{U}_{p-1}
 $$
 
-in which $\mathbb{L}_{p-1}$ and $\mathbb{U}_{p-1}$ have dimensions
+Here, $\mathbb{L}_{p-1}$ and $\mathbb{U}_{p-1}$ have dimensions
 $\left(N-p+1\right)\times \left(N-p+1\right)$, $\mathbb{L}_p$ and $\mathbb{U}_p$ have dimensions
 $\left(N-p\right) \times \left(N-p\right)$, and $\mathbb{M}_{p+1}$ has dimensions
 $\left(N-p-1\right) \times \left(N-p-1\right)$.
@@ -288,18 +295,22 @@ $$
 \mathbb{M} = \mathbb{P}^{-1}\mathbb{L}\mathbb{U}\mathbb{Q}^{-1}
 $$
 
-#### Dense LU-factorization algorithm
+#### Dense LU factorization algorithm
 
-The power grid model uses an in-place approach. Permutations are separately stored.
+The power grid model uses an in-place LU decomposition approach. Permutations are separately stored.
+Below is the algorithm of LU decomposition with pivot perturbation
+([see below](#pivot-perturbation)) used in the power grid model.
 
 Let $\mathbb{M}$ be the $N\times N$-matrix and
-$\mathbb{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$.
+$\mathbb{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$. For
+readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix
+$\mathbb{M}$, e.g. $\mathbb{M}\left[0:3, j\right]$.
 
 1. Initialize the permutations $\mathbb{P}$ and $\mathbb{Q}$ to the identity permutation.
 2. Initialize fill-in elements to $0$.
 3. Loop over all rows: $p = 0..(N-1)$:
    1. Set the remaining matrix: $\mathbb{M}_p \gets \mathbb{M}\left[p:N,p:N\right]$ with size
-      $N_p\times N_p$.
+      $N_p\times N_p$, where $N_p := N - p$.
    2. Find largest element $\mathbb{M}_p\left[i_p,j_p\right]$ in $\mathbb{M}_p$ by magnitude. This
       is the pivot element.
    3. If the magnitude of the pivot element is too small:
@@ -324,15 +335,13 @@ $\mathbb{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,
       2. In $\mathbb{Q}$: swap $p \leftrightarrow p + j_p$
    8. Continue with the next $p$ to factorize the the bottom-right block.
 
-$\mathbb{L}$ is now the matrix composed of ones on the diagonal and the bottom-left off-diagonal
-triangle of $\mathbb{M}$ and zeros in the upper-right off-diagonal triangle. $\mathbb{U}$ is the
-matrix composed of the upper-right triangle of $\mathbb{M}$ including the diagonal elements and
-zeros in the lower-left off-diagonal triangle.
+$\mathbb{L}$ is now the matrix containing the lower triangle of $\mathbb{M}$, ones on the diagonal
+and zeros in the upper triangle. Similarly, $\mathbb{U}$ is the matrix containing the upper triangle
+of $\mathbb{M}$ including the diagonal elements and zeros in the lower triangle.
 
 ```{note}
-In the actual implementation, we use a slightly different order of operations: instead of raising
-the `SparseMatrixError` immediately, we break from the loop and throw after that. This does not
-change the functional behavior.
+In the (equivalent) actual implementation, we break from the loop and throw afterwards, instead of
+raising the `SparseMatrixError` immediately.
 ```
 
 ```{note}
@@ -340,33 +349,34 @@ Permutations are only allowed within each dense block, for the reasons described
 [earlier](#pivot-operations).
 ```
 
-### Block-sparse LU-factorization
+### Block-sparse LU factorization
 
-The LU-factorization process for block-sparse matrices is similar to that for
-[dense matrices](#dense-lu-factorization), but in this case, $m_p$ is a block element, and
+The LU factorization process for block-sparse matrices is similar to that for
+[dense matrices](#dense-lu-factorization). Only in this case, $m_p$ refers to a block element.
 $\boldsymbol{q}_p$, $\boldsymbol{r}_p^T$ and $\hat{\mathbb{M}}_p$ consist of block elements as well.
-Notice that the inverse $m_p^{-1}$ can be calculated from its LU-decomposition, which can be
-obtained from the [dense LU-factorization process](#dense-lu-factorization-process).
+Notice that the block-wise inverse $m_p^{-1}$ can be calculated using its LU decomposition, which
+can be obtained from the [dense LU factorization process](#dense-lu-factorization-process).
 
-#### Block-sparse LU-factorization process
+#### Block-sparse LU factorization process
 
-The block-sparse LU-factorization process is a little bit different from
-[before](#dense-lu-factorization-process). Below, we first
+The block-sparse LU factorization process differs slightly from the
+[dense counterpart](#dense-lu-factorization-process). Below, we first
 [describe the naive approach](#naive-block-sparse-lu-factorization-process), followed by the
 rationale and proof of the alternative approach.
 
-##### Naive block-sparse LU-factorization process
+##### Naive block-sparse LU factorization process
 
-A naive first attempt at block-sparse LU-factorization is done as follows. The
-[dense LU-factorization process](#dense-lu-factorization-process) is followed but on blocks instead
+A naïve approach towards block-sparse LU factorization is done as follows. The
+[dense LU factorization process](#dense-lu-factorization-process) is followed but on blocks instead
 of single elements. Let
 $\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
-be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
-[LU-factorized](#dense-lu-factorization-process):
+be the block-sparse sub-matrix yet to be decomposed. $\mathbb{m}_p$ is a dense block that can be
+[LU factorized](#dense-lu-factorization-process):
 $\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$, where
-the lower-case helps avoiding confusion with the block-sparse matrix components. [Gaussian
-elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) using
-[LU-decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
+the lower-case helps avoiding confusion with the block-sparse matrix components. The matrices
+constructed with [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) for
+[Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) are constructed
+accordingly.
 
 $$
 \begin{align*}
@@ -377,9 +387,9 @@ $$
 $$
 
 Here, $\overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p}$ is symbolic notation for the
-block-vector of solutions of the equation $\mathbb{m}_p x_{p;k} = \mathbb{q}_{p;k}$, where
+block-vector of solutions to the equation $\mathbb{m}_p x_{p;k} = \mathbb{q}_{p;k}$, where
 $k = 0..(p-1)$. Similarly, $\widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}$ is
-symbolic notation for the block-matrix of solutions of the equation
+symbolic notation for the block-matrix of solutions to the equation
 $\mathbb{m}_p x_{p;k,l} = \mathbb{q}_{p;k} \mathbb{r}_{p;l}^T$, where
 $k,l = 0..(p-1)$. That is:
 
@@ -401,27 +411,26 @@ $$
 Iteratively applying above factorization process yields $\mathbb{L}$ and $\mathbb{U}$, as well as
 $\mathbb{P}$ and $\mathbb{Q}$.
 
-Unfortunately, obtaining $\mathbb{m}_p^{-1} \boldsymbol{x}_p$ is numerically unstable, even if it
-is split into multiple solving steps. Instead, the process below is used.
+Unfortunately, the process of obtaining $\mathbb{m}_p^{-1} \boldsymbol{x}_p$ can be numerically
+unstable, even if it is split into multiple solving steps. Instead, the process below is used.
 
-##### Partially solved block-sparse LU-factorization process
+##### Partially solved block-sparse LU factorization process
 
 A more numerically stable approach compared to the
-[naive approach](#naive-block-sparse-lu-factorization-process) is equivalent to single-element
-pivot. Here, we describe the results. Instead of applying the full pivot decomposition in the
-$L$-matrix and delaying the solve process all the way to after the solving phase, we only apply a
-partial pivot to the $L$ matrix, and the other half in the $U$ matrix. This is equivalent to single-
-element pivoting instead of block-pivoting. For the
+[naïve approach](#naive-block-sparse-lu-factorization-process) is equivalent to single-element
+pivot. Instead of applying the full pivot decomposition in the $L$-matrix and delaying the solve
+process until the final solving phase, we only apply a partial pivoting step to both $L$ matrix and
+the $U$ matrix. This is equivalent to single-element pivoting without block-pivoting. In the
+following sections, we provide the
 [rationale](#rationale-of-the-block-sparse-lu-factorization-process) and
-[proof](#proof-of-block-sparse-lu-factorization-process), see below. Here, only the results are
-presented.
+[proof](#proof-of-block-sparse-lu-factorization-process).
 
-Using the same conventions as [before](#naive-block-sparse-lu-factorization-process), Let
+Following the same conventions as [above](#naive-block-sparse-lu-factorization-process), let
 $\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
 be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
-[LU-factorized](#dense-lu-factorization-process):
+[LU factorized](#dense-lu-factorization-process):
 $\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$. Partial Gaussian
-elimination constructs the matrices
+elimination constructs the following matrices.
 
 $$
 \begin{align*}
@@ -432,9 +441,9 @@ $$
 $$
 
 Note that the first column of $\mathbb{L}_p$ can be obtained by applying a right-solve procedure,
-instead of the regular left-solve procedure, as is the case for the $\mathbb{U}_p$.
+instead of the regular left-solve procedure, as is the case for $\mathbb{U}_p$.
 
-##### Rationale of the block-sparse LU-factorization process
+##### Rationale of the block-sparse LU factorization process
 
 To illustrate the rationale, let's perform the full matrix solving (without using blocks):
 
@@ -526,7 +535,7 @@ $\mathbb{c}$ and $\mathbb{b}$ become a column- and row-vector of block-matrices 
 individual block-elements of the vectorized decompositions $\mathbb{l}_c$ and $\mathbb{u}_b$ can be
 obtained by solving above equations.
 
-If, during the LU-decomposition of the pivot block, a row- and column-permutation was used,
+If, during the LU decomposition of the pivot block, a row- and column-permutation was used,
 $\mathbb{a} = \mathbb{p}_a^{-1} \mathbb{l}_a \mathbb{u}_p \mathbb{q}_a^{-1}$, and the columns of
 $\mathbb{c}$ and the rows of $\mathbb{b}$ are permuted: $\mathbb{c}\mapsto\mathbb{c}\mathbb{q}_a$
 and $\mathbb{b}\mapsto\mathbb{p}_a\mathbb{b}$. As a result, the equations generalize as follows.
@@ -538,7 +547,7 @@ and $\mathbb{b}\mapsto\mathbb{p}_a\mathbb{b}$. As a result, the equations genera
 * $\mathbb{l}_d\mathbb{u}_d$ denotes the start matrix of the decomposition of the next iteration and
   is equal to $\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$.
 
-##### Proof of block-sparse LU-factorization process
+##### Proof of block-sparse LU factorization process
 
 The following proves the equations $\mathbb{l}_c \mathbb{u}_a = \mathbb{c}$,
 $\mathbb{l}_a \mathbb{u}_b = \mathbb{b}$ and
@@ -606,7 +615,7 @@ $$
 $$
 
 Generalizability to larger block sizes and block-matrix sizes follows from fhe fact that
-$\mathbb{l}_c$ and $\mathbb{u}_b$ only depend on the in-block LU-decomposition of the pivot block
+$\mathbb{l}_c$ and $\mathbb{u}_b$ only depend on the in-block LU decomposition of the pivot block
 $(\mathbb{l}_a,\mathbb{u}_a)$ and the data in the respective blocks ($\mathbb{c}$ and $\mathbb{b}$)
 in the original matrix by varying $c$ and $b$ over other blocks.
 
@@ -701,7 +710,7 @@ becomes:
 ### Block-sparse LU solving
 
 Solving an equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ using a
-[pre-factored LU-factorization](#block-sparse-lu-factorization) is done using the regular forward
+[pre-factored LU factorization](#block-sparse-lu-factorization) is done using the regular forward
 and backward substitutions. Since the matrix is already ordered such that the amount of
 [fill-ins](#pivot-operations) is minimal, permutations are restricted to within each block. The
 first step of the block-sparse LU solving therefore permutes the rows within each block:
@@ -762,14 +771,14 @@ Apply the column permutation as follows.
       1. Proceed.
 
 ```{note}
-If [pivot perturbation](#pivot-perturbation) was used to obtain the LU-decomposition, the solution
+If [pivot perturbation](#pivot-perturbation) was used to obtain the LU decomposition, the solution
 obtained here is an approximation of the exact solution. The approximation can be improved using
 [iterative refinement](#iterative-refinement-of-lu-solver-solutions).
 ```
 
 ### Pivot perturbation
 
-The LU-solver implemented in the power grid model has support for pivot perturbation. The methods
+The LU solver implemented in the power grid model has support for pivot perturbation. The methods
 are described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 and
@@ -808,14 +817,14 @@ matrix.
 $\text{phase_shift}$ ensures that the complex phase of the pivot element is preserved, with a fallback
 to the positive real axis when the pivot element is identically zero.
 
-### Iterative refinement of LU-solver solutions
+### Iterative refinement of LU solver solutions
 
 This algorithm is heavily inspired by the GESP algorithm described in
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761).
 
-[LU solving](#block-sparse-lu-solving) with an [LU-decomposition](#block-sparse-lu-factorization)
+[LU solving](#block-sparse-lu-solving) with an [LU decomposition](#block-sparse-lu-factorization)
 obtained using [pivot perturbation](#pivot-perturbation) yields only approximate results, because
-the LU-decomposition itself is only approximate. Because of that, an iterative refinement process
+the LU decomposition itself is only approximate. Because of that, an iterative refinement process
 is required to improve the solution to the matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$.
 
 The iterative refinement process is as follows: in iteration step $i$, it assumes an existing
@@ -834,12 +843,12 @@ approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
 [backward error formula](#backward-error-calculation)).
 
-Since the matrix $\mathbb{M}$ does not change during this process, the LU-decomposition remains
+Since the matrix $\mathbb{M}$ does not change during this process, the LU decomposition remains
 valid throughout the process, so that this iterative refinement can be done at a reasonably low
 cost.
 
 Given the original matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$ to solve, the
-pivot perturbated matrix $\tilde{\mathbb{M}}$ with a pre-calculated LU-decomposition, and the
+pivot perturbated matrix $\tilde{\mathbb{M}}$ with a pre-calculated LU decomposition, and the
 convergence threshold $\epsilon$, the algorithm is as follows:
 
 1. Initialize:
