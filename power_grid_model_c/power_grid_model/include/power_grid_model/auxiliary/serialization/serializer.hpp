@@ -84,9 +84,8 @@ struct JsonConverter : NullVisitor<JsonConverter> {
 
     Idx indent{};
     Idx max_indent_level{};
-    std::stringstream ss{}; // NOLINT(readability-redundant-member-init) // compatibility between different STLs
-    std::stack<MapArray>
-        map_array{}; // NOLINT(readability-redundant-member-init) // compatibility between different STLs
+    std::stringstream ss{};
+    std::stack<MapArray> map_array{};
 
     void print_indent() {
         if (indent < 0) {
