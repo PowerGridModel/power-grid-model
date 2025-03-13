@@ -13,6 +13,7 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_model.hpp>
+#include <power_grid_model/math_solver/math_solver.hpp>
 
 namespace {
 using namespace power_grid_model;
@@ -23,12 +24,17 @@ struct PGM_PowerGridModel : public MainModel {
     using MainModel::MainModel;
 };
 
+// math model
+constexpr MathSolverDispatcher math_solver_dispatcher{math_solver::math_solver_tag<math_solver::MathSolver>{}};
+
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                      PGM_ConstDataset const* input_dataset) {
     return call_with_catch(
         handle,
-        [system_frequency, input_dataset] { return new PGM_PowerGridModel{system_frequency, *input_dataset, 0}; },
+        [system_frequency, input_dataset] {
+            return new PGM_PowerGridModel{system_frequency, *input_dataset, &math_solver_dispatcher, 0};
+        },
         PGM_regular_error);
 }
 
