@@ -100,7 +100,7 @@ template <symmetry_tag sym> class MathSolveProxy {
             solver_.reset();
             dispatcher_ = other.dispatcher_;
             solver_ = std::unique_ptr<void*, std::add_pointer_t<void(void const*)>>{
-                dispatcher_->get_dispather_config<sym>().copy(other.solver_.get())};
+                dispatcher_->get_dispather_config<sym>().copy(other.get_ptr())};
         }
         return *this;
     }
@@ -108,9 +108,38 @@ template <symmetry_tag sym> class MathSolveProxy {
     MathSolveProxy& operator=(MathSolveProxy&& other) noexcept = default;
     ~MathSolveProxy() = default;
 
+    SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
+                                     CalculationInfo& calculation_info, CalculationMethod calculation_method,
+                                     YBus<sym> const& y_bus) {
+        return dispatcher_->get_dispather_config<sym>().run_power_flow(get_ptr(), input, err_tol, max_iter,
+                                                                       calculation_info, calculation_method, y_bus);
+    }
+
+    SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
+                                           CalculationInfo& calculation_info, CalculationMethod calculation_method,
+                                           YBus<sym> const& y_bus) {
+        return dispatcher_->get_dispather_config<sym>().run_state_estimation(
+            get_ptr(), input, err_tol, max_iter, calculation_info, calculation_method, y_bus);
+    }
+
+    ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, CalculationInfo& calculation_info,
+                                                    CalculationMethod calculation_method, YBus<sym> const& y_bus) {
+        return dispatcher_->get_dispather_config<sym>().run_short_circuit(get_ptr(), input, calculation_info,
+                                                                          calculation_method, y_bus);
+    }
+
+    void clear_solver() { dispatcher_->get_dispather_config<sym>().clear_solver(get_ptr()); }
+
+    void parameters_changed(bool changed) {
+        dispatcher_->get_dispather_config<sym>().parameters_changed(get_ptr(), changed);
+    }
+
   private:
     MathSolverDispatcher const* dispatcher_{};
     std::unique_ptr<void*, std::add_pointer_t<void(void const*)>> solver_;
+
+    void* get_ptr() { return solver_.get(); }
+    void const* get_ptr() const { return solver_.get(); }
 };
 
 } // namespace power_grid_model::math_solver
