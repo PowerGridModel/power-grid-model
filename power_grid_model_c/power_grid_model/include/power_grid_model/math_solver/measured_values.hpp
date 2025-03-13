@@ -471,12 +471,12 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
-            return PowerSensorCalcParam<sym>{(accumulated_p_value / accumulated_inverse_p_variance) +
-                                                 (1.0i * accumulated_q_value / accumulated_inverse_q_variance),
+            return PowerSensorCalcParam<sym>{accumulated_p_value / accumulated_inverse_p_variance +
+                                                 1.0i * accumulated_q_value / accumulated_inverse_q_variance,
                                              RealValue<sym>{1.0} / accumulated_inverse_p_variance,
                                              RealValue<sym>{1.0} / accumulated_inverse_q_variance};
         }
-        return PowerSensorCalcParam<sym>{accumulated_p_value + (1.0i * accumulated_q_value),
+        return PowerSensorCalcParam<sym>{accumulated_p_value + 1.0i * accumulated_q_value,
                                          RealValue<sym>{std::numeric_limits<double>::infinity()},
                                          RealValue<sym>{std::numeric_limits<double>::infinity()}};
     }
@@ -587,8 +587,8 @@ template <symmetry_tag sym> class MeasuredValues {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
         auto const delta = bus_appliance_injection.value - s;
-        ComplexValue<sym> const mu = (real(delta) / bus_appliance_injection.p_variance) +
-                                     (1.0i * imag(delta) / bus_appliance_injection.q_variance);
+        ComplexValue<sym> const mu =
+            real(delta) / bus_appliance_injection.p_variance + 1.0i * imag(delta) / bus_appliance_injection.q_variance;
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {

@@ -1047,13 +1047,13 @@ TEST_CASE("Test Tap position optimizer") {
                 state_a.u_pu = [&state_a, &state_b, &regulator_a](ControlSide side) {
                     CHECK(side == regulator_a.control_side());
                     auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
-                    return static_cast<DoubleComplex>(1.5 - (tap_sum / 4.0));
+                    return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
                 };
 
                 state_b.u_pu = [&state_a, &state_b, &regulator_b](ControlSide side) {
                     CHECK(side == regulator_b.control_side());
                     auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
-                    return static_cast<DoubleComplex>(1.5 - (tap_sum / 4.0));
+                    return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
                 };
 
                 SUBCASE("Rank a < Rank b") {

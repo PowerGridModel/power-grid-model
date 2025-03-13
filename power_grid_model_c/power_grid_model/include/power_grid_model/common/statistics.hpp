@@ -139,7 +139,7 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     }
     explicit operator IndependentComplexRandVar<sym>() const {
         return IndependentComplexRandVar<sym>{
-            .value = value(), .variance = magnitude.variance + (magnitude.value * magnitude.value * angle.variance)};
+            .value = value(), .variance = magnitude.variance + magnitude.value * magnitude.value * angle.variance};
     }
 
     // For sym to sym conversion:
@@ -155,11 +155,11 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
         auto const imag_component = magnitude.value * sin_theta;
         return DecomposedComplexRandVar<sym>{
             .real_component = {.value = real_component,
-                               .variance = (magnitude.variance * cos_theta * cos_theta) +
-                                           (imag_component * imag_component * angle.variance)},
+                               .variance = magnitude.variance * cos_theta * cos_theta +
+                                           imag_component * imag_component * angle.variance},
             .imag_component = {.value = imag_component,
-                               .variance = (magnitude.variance * sin_theta * sin_theta) +
-                                           (real_component * real_component * angle.variance)}};
+                               .variance = magnitude.variance * sin_theta * sin_theta +
+                                           real_component * real_component * angle.variance}};
     }
 
     // Var(I_Re,p) ≈ Var(I) * cos^2(θ - 2πp/3) + Var(θ) * I^2 * sin^2(θ - 2πp/3)
@@ -171,11 +171,11 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
         ComplexValue<asymmetric_t> const complex = magnitude.value * unit_complex;
         return DecomposedComplexRandVar<asymmetric_t>{
             .real_component = {.value = real(complex),
-                               .variance = (magnitude.variance * real(unit_complex) * real(unit_complex)) +
-                                           (imag(complex) * imag(complex) * angle.variance)},
+                               .variance = magnitude.variance * real(unit_complex) * real(unit_complex) +
+                                           imag(complex) * imag(complex) * angle.variance},
             .imag_component = {.value = imag(complex),
-                               .variance = (magnitude.variance * imag(unit_complex) * imag(unit_complex)) +
-                                           (real(complex) * real(complex) * angle.variance)}};
+                               .variance = magnitude.variance * imag(unit_complex) * imag(unit_complex) +
+                                           real(complex) * real(complex) * angle.variance}};
     }
 
     // Var(I_Re) ≈ (1 / 9) * sum_p(Var(I_p) * cos^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 * sin^2(theta_p + 2
@@ -191,16 +191,16 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
         DoubleComplex const pos_seq_value = pos_seq(magnitude.value * unit_complex);
         return DecomposedComplexRandVar<symmetric_t>{
             .real_component = {.value = real(pos_seq_value),
-                               .variance = sum_val((magnitude.variance * real(unit_pos_seq_per_phase) *
-                                                    real(unit_pos_seq_per_phase)) +
-                                                   (imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) *
-                                                    magnitude.value * magnitude.value * angle.variance)) /
+                               .variance = sum_val(magnitude.variance * real(unit_pos_seq_per_phase) *
+                                                       real(unit_pos_seq_per_phase) +
+                                                   imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) *
+                                                       magnitude.value * magnitude.value * angle.variance) /
                                            9.0},
             .imag_component = {
                 .value = imag(pos_seq_value),
-                .variance = sum_val((magnitude.variance * imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase)) +
-                                    (real(unit_pos_seq_per_phase) * real(unit_pos_seq_per_phase) * magnitude.value *
-                                     magnitude.value * angle.variance)) /
+                .variance = sum_val(magnitude.variance * imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) +
+                                    real(unit_pos_seq_per_phase) * real(unit_pos_seq_per_phase) * magnitude.value *
+                                        magnitude.value * angle.variance) /
                             9.0}};
     }
 };

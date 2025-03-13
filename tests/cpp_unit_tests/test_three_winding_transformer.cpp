@@ -130,7 +130,7 @@ TEST_CASE("Test three winding transformer") {
     double const pk_t2 = 0.5 * (200e3 / 50 / 50 - 150e3 / 10 / 10 + 100e3 / 10 / 10) * 50 * 50;
     double const pk_t3 = 0.5 * (-200e3 / 50 / 50 + 150e3 / 10 / 10 + 100e3 / 10 / 10) * 10 * 10;
 
-    double const u_t1 = 138e3 + (1 * 2 * 1380);
+    double const u_t1 = 138e3 + 1 * 2 * 1380;
 
     // ********************
     double const base_i_1 = base_power_3p / 138e3 / sqrt3;

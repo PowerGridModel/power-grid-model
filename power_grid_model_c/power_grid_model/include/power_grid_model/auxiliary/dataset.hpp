@@ -547,8 +547,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
             return RangeType{std::begin(total_range) + buffer.indptr[scenario],
                              std::begin(total_range) + buffer.indptr[scenario + 1]};
         }
-        return RangeType{std::begin(total_range) + (info.elements_per_scenario * scenario),
-                         std::begin(total_range) + (info.elements_per_scenario * (scenario + 1))};
+        return RangeType{std::begin(total_range) + info.elements_per_scenario * scenario,
+                         std::begin(total_range) + info.elements_per_scenario * (scenario + 1)};
     }
 
     // get non-empty row buffer

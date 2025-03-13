@@ -699,11 +699,8 @@ class Deserializer {
 
         Idx const elements_per_scenario = get_uniform_elements_per_scenario(counter);
         Idx const total_elements = // total element based on is_uniform
-            elements_per_scenario < 0 ?
-                                      // NOLINTNEXTLINE(boost-use-ranges) // std::ranges::reduce requires C++23
-                std::reduce(counter.cbegin(), counter.cend())
-                                      :             // aggregation
-                elements_per_scenario * batch_size; // multiply
+            elements_per_scenario < 0 ? std::reduce(counter.cbegin(), counter.cend()) : // aggregation
+                elements_per_scenario * batch_size;                                     // multiply
         handler.add_component_info(component_key_, elements_per_scenario, total_elements);
         msg_data_offsets_.push_back(component_byte_meta);
         component_key_ = {};

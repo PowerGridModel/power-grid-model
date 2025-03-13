@@ -561,8 +561,8 @@ struct VoltageBand {
     friend constexpr auto operator<=>(double voltage, VoltageBand const& band) {
         assert(band.u_band >= 0.0);
 
-        auto const lower = band.u_set - (0.5 * band.u_band);
-        auto const upper = band.u_set + (0.5 * band.u_band);
+        auto const lower = band.u_set - 0.5 * band.u_band;
+        auto const upper = band.u_set + 0.5 * band.u_band;
 
         auto const lower_cmp = voltage <=> lower;
         if (auto const upper_cmp = voltage <=> upper; lower_cmp == upper_cmp) {
@@ -577,7 +577,7 @@ template <symmetry_tag sym> struct NodeState {
     ComplexValue<sym> i;
 
     friend auto operator<=>(NodeState<sym> const& state, TransformerTapRegulatorCalcParam const& param) {
-        auto const u_compensated = state.u + (param.z_compensation * state.i);
+        auto const u_compensated = state.u + param.z_compensation * state.i;
         auto const v_compensated = mean_val(cabs(u_compensated)); // TODO(mgovers): handle asym correctly
         return v_compensated <=> VoltageBand{.u_set = param.u_set, .u_band = param.u_band};
     }

@@ -28,7 +28,7 @@ TEST_CASE("Test shunt") {
     ComplexValue<asymmetric_t> const ua{1.0};
     double const p = 10e3 * 10e3 * 1.0;
     double const q = -10e3 * 10e3 * 2.0;
-    double const s = std::sqrt((p * p) + (q * q));
+    double const s = std::sqrt(p * p + q * q);
     double const i = s / 10e3 / sqrt3;
     double const pf = p / s;
 

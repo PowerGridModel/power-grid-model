@@ -8,8 +8,6 @@
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 
-#include <boost/algorithm/cxx11/iota.hpp>
-
 #include <algorithm>
 #include <memory>
 #include <numeric>
@@ -106,7 +104,7 @@ struct YBusStructure {
         auto const n_fill_in = static_cast<Idx>(topo.fill_in.size());
         // allocate element vector
         std::vector<YBusElementMap> vec_map_element;
-        Idx const total_number_entries = (4 * n_branch) + n_bus + (2 * n_fill_in);
+        Idx const total_number_entries = 4 * n_branch + n_bus + 2 * n_fill_in;
         vec_map_element.reserve(total_number_entries);
         // add element
         // off diagonal element list
@@ -266,7 +264,7 @@ struct YBusStructure {
         // construct transpose entry
         lu_transpose_entry.resize(nnz_counter_lu);
         // default transpose_entry[i] = i
-        boost::algorithm::iota(lu_transpose_entry, 0);
+        std::iota(lu_transpose_entry.begin(), lu_transpose_entry.end(), 0);
         // fill off-diagonal, loop all the branches
         for (auto const [entry_1, entry_2] : off_diag_map) {
             // for each branch entry tf and ft, they are transpose to each other
