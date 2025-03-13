@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
+#include <power_grid_model/math_solver/newton_raphson_pf_solver_fwd.hpp>
 
 namespace power_grid_model::math_solver::newton_raphson_pf {
 template class NewtonRaphsonPFSolver<symmetric_t>;

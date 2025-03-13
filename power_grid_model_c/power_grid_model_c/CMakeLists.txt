@@ -17,6 +17,7 @@ add_library(power_grid_model_c SHARED
   "src/instantiate_nrpf.cpp"
   "src/instantiate_ilse.cpp"
   "src/instantiate_nrse.cpp"
+  "src/instantiate_sc.cpp"
 )
 
 target_include_directories(power_grid_model_c PUBLIC

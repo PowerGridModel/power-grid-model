@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include "iterative_current_pf_solver.hpp"
-#include "iterative_linear_se_solver.hpp"
-#include "linear_pf_solver.hpp"
-// #include "newton_raphson_pf_solver.hpp"
-#include "newton_raphson_se_solver.hpp"
-#include "short_circuit_solver.hpp"
-#include "y_bus.hpp"
+#include "iterative_current_pf_solver_fwd.hpp"
+#include "iterative_linear_se_solver_fwd.hpp"
+#include "linear_pf_solver_fwd.hpp"
+#include "newton_raphson_pf_solver_fwd.hpp"
+#include "newton_raphson_se_solver_fwd.hpp"
+#include "short_circuit_solver_fwd.hpp"
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
@@ -23,22 +22,6 @@
 namespace power_grid_model {
 
 namespace math_solver {
-
-namespace newton_raphson_pf {
-template <symmetry_tag sym> class NewtonRaphsonPFSolver;
-
-template <symmetry_tag sym>
-std::shared_ptr<NewtonRaphsonPFSolver<sym>>
-create_newton_raphson_pf_solver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr);
-
-template <symmetry_tag sym>
-SolverOutput<sym> run_power_flow_newton_raphson(std::shared_ptr<NewtonRaphsonPFSolver<sym>> newton_raphson_pf_solver,
-                                                PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                                                CalculationInfo& calculation_info, YBus<sym> const& y_bus);
-} // namespace newton_raphson_pf
-
-using newton_raphson_pf::NewtonRaphsonPFSolver;
-
 template <symmetry_tag sym> class MathSolver {
   public:
     explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
@@ -95,13 +78,13 @@ template <symmetry_tag sym> class MathSolver {
         }
 
         // construct model if needed
-        if (!iec60909_sc_solver_.has_value()) {
+        if (iec60909_sc_solver_ != nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
-            iec60909_sc_solver_.emplace(y_bus, topo_ptr_);
+            iec60909_sc_solver_ = short_circuit::create_short_circuit_solver(y_bus, topo_ptr_);
         }
 
         // call calculation
-        return iec60909_sc_solver_.value().run_short_circuit(y_bus, input);
+        return short_circuit::run_short_circuit(iec60909_sc_solver_, input, calculation_info, y_bus);
     }
 
     void clear_solver() {
@@ -112,7 +95,7 @@ template <symmetry_tag sym> class MathSolver {
     }
 
     void parameters_changed(bool changed) {
-        if (iterative_current_pf_solver_.has_value()) {
+        if (iterative_current_pf_solver_ != nullptr) {
             iterative_current_pf_solver_->parameters_changed(changed);
         }
     }
@@ -121,40 +104,42 @@ template <symmetry_tag sym> class MathSolver {
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type
     std::shared_ptr<NewtonRaphsonPFSolver<sym>> newton_raphson_pf_solver_;
-    std::optional<LinearPFSolver<sym>> linear_pf_solver_;
-    std::optional<IterativeCurrentPFSolver<sym>> iterative_current_pf_solver_;
-    std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
-    std::optional<NewtonRaphsonSESolver<sym>> newton_raphson_se_solver_;
-    std::optional<ShortCircuitSolver<sym>> iec60909_sc_solver_;
+    std::shared_ptr<LinearPFSolver<sym>> linear_pf_solver_;
+    std::shared_ptr<IterativeCurrentPFSolver<sym>> iterative_current_pf_solver_;
+    std::shared_ptr<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
+    std::shared_ptr<NewtonRaphsonSESolver<sym>> newton_raphson_se_solver_;
+    std::shared_ptr<ShortCircuitSolver<sym>> iec60909_sc_solver_;
 
     SolverOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                     CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-
         if (newton_raphson_pf_solver_ == nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
             newton_raphson_pf_solver_ = newton_raphson_pf::create_newton_raphson_pf_solver(y_bus, topo_ptr_);
         }
 
-        return newton_raphson_pf::run_power_flow_newton_raphson<sym>(newton_raphson_pf_solver_, input, err_tol,
-                                                                     max_iter, calculation_info, y_bus);
+        return newton_raphson_pf::run_power_flow_newton_raphson(newton_raphson_pf_solver_, input, err_tol, max_iter,
+                                                                calculation_info, y_bus);
     }
 
-    SolverOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double /* err_tol */, Idx /* max_iter */,
+    SolverOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                             CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-        if (!linear_pf_solver_.has_value()) {
+        if (linear_pf_solver_ == nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
-            linear_pf_solver_.emplace(y_bus, topo_ptr_);
+            linear_pf_solver_ = linear_pf::create_linear_pf_solver(y_bus, topo_ptr_);
         }
-        return linear_pf_solver_.value().run_power_flow(y_bus, input, calculation_info);
+
+        return linear_pf::run_power_flow_linear(linear_pf_solver_, input, err_tol, max_iter, calculation_info, y_bus);
     }
 
     SolverOutput<sym> run_power_flow_iterative_current(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                        CalculationInfo& calculation_info, YBus<sym> const& y_bus) {
-        if (!iterative_current_pf_solver_.has_value()) {
+        if (iterative_current_pf_solver_ == nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
-            iterative_current_pf_solver_.emplace(y_bus, topo_ptr_);
+            iterative_current_pf_solver_ = iterative_current_pf::create_iterative_current_pf_solver(y_bus, topo_ptr_);
         }
-        return iterative_current_pf_solver_.value().run_power_flow(y_bus, input, err_tol, max_iter, calculation_info);
+
+        return iterative_current_pf::run_power_flow_iterative_current(iterative_current_pf_solver_, input, err_tol,
+                                                                      max_iter, calculation_info, y_bus);
     }
 
     SolverOutput<sym> run_power_flow_linear_current(PowerFlowInput<sym> const& input, double /* err_tol */,
@@ -167,29 +152,25 @@ template <symmetry_tag sym> class MathSolver {
     SolverOutput<sym> run_state_estimation_iterative_linear(StateEstimationInput<sym> const& input, double err_tol,
                                                             Idx max_iter, CalculationInfo& calculation_info,
                                                             YBus<sym> const& y_bus) {
-        // construct model if needed
-        if (!iterative_linear_se_solver_.has_value()) {
+        if (iterative_linear_se_solver_ == nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
-            iterative_linear_se_solver_.emplace(y_bus, topo_ptr_);
+            iterative_linear_se_solver_ = iterative_linear_se::create_iterative_linear_se_solver(y_bus, topo_ptr_);
         }
 
-        // call calculation
-        return iterative_linear_se_solver_.value().run_state_estimation(y_bus, input, err_tol, max_iter,
-                                                                        calculation_info);
+        return iterative_linear_se::run_state_estimation_iterative_linear(iterative_linear_se_solver_, input, err_tol,
+                                                                          max_iter, calculation_info, y_bus);
     }
 
     SolverOutput<sym> run_state_estimation_newton_raphson(StateEstimationInput<sym> const& input, double err_tol,
                                                           Idx max_iter, CalculationInfo& calculation_info,
                                                           YBus<sym> const& y_bus) {
-        // construct model if needed
-        if (!newton_raphson_se_solver_.has_value()) {
+        if (newton_raphson_se_solver_ == nullptr) {
             Timer const timer(calculation_info, 2210, "Create math solver");
-            newton_raphson_se_solver_.emplace(y_bus, topo_ptr_);
+            newton_raphson_se_solver_ = newton_raphson_se::create_newton_raphson_se_solver(y_bus, topo_ptr_);
         }
 
-        // call calculation
-        return newton_raphson_se_solver_.value().run_state_estimation(y_bus, input, err_tol, max_iter,
-                                                                      calculation_info);
+        return newton_raphson_se::run_state_estimation_newton_raphson(newton_raphson_se_solver_, input, err_tol,
+                                                                      max_iter, calculation_info, y_bus);
     }
 };
 
