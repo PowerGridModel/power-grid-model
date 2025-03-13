@@ -784,7 +784,7 @@ class Deserializer {
                                                      ? detail::reordered_attribute_buffers(buffer, attributes)
                                                      : std::vector<AttributeBuffer<void>>{};
         // for columnar buffer
-        // if there is no intersection between the pre-defined attributes and the user provied buffer
+        // if there is no intersection between the pre-defined attributes and the user provided buffer
         // and the whole component does not have map
         // skip the whole component for all scenarios and all elements
         if constexpr (std::same_as<row_or_column_t, columnar_t>) {
@@ -827,7 +827,7 @@ class Deserializer {
         }
 
         // for columnar buffer
-        // if there is no intersection between the pre-defined attributes and the usered provied buffer
+        // if there is no intersection between the pre-defined attributes and the usered provided buffer
         // and this scenario does not have map
         // skip the whole scenario for this compoment for all elements
         if constexpr (std::same_as<decltype(row_or_column_tag), columnar_t>) {
