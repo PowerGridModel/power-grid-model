@@ -591,19 +591,14 @@ template <symmetry_tag sym> class MeasuredValues {
                                              FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        auto const delta = bus_appliance_injection.value() - s;
+        auto const delta = ComplexValue<sym>{bus_appliance_injection.value() - s};
         ComplexValue<sym> const mu = real(delta) / bus_appliance_injection.real_component.variance +
                                      1.0i * imag(delta) / bus_appliance_injection.imag_component.variance;
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {
-            auto const injection = (power.value() - (power.real_component.variance * real(mu) +
-                                                     1.0i * power.imag_component.variance * imag(mu)));
-            if constexpr (is_asymmetric_v<sym>) {
-                return injection.eval();
-            } else {
-                return injection;
-            }
+            return ComplexValue<sym>{power.value() - power.real_component.variance * real(mu) +
+                                     1.0i * power.imag_component.variance * imag(mu)};
         };
 
         for (Idx const load_gen : load_gens) {

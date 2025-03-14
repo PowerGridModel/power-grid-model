@@ -619,7 +619,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& f_T_k_w,
                                                  PowerSensorCalcParam<sym> const& power_sensor,
                                                  ComplexValue<sym> const& f_x_complex) {
-        auto const delta_power = power_sensor.value() - f_x_complex;
+        ComplexValue<sym> const delta_power = power_sensor.value() - f_x_complex;
         rhs_block.eta_theta() += dot(f_T_k_w.dP_dt, real(delta_power)) + dot(f_T_k_w.dP_dv, imag(delta_power));
         rhs_block.eta_v() += dot(f_T_k_w.dQ_dt, real(delta_power)) + dot(f_T_k_w.dQ_dv, imag(delta_power));
     }

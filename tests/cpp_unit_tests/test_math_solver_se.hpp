@@ -80,9 +80,8 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
             result.measured_voltage = {{ComplexValue<asymmetric_t>{output_reference.u[0]}, 1.0},
                                        {ComplexValue<asymmetric_t>{output_reference.u[2]}, 1.0},
                                        {ComplexValue<asymmetric_t>{output_reference.u[2]}, 1.0}};
-            auto const sum_s = (output_reference.source[0].s + output_reference.load_gen[0].s +
-                                output_reference.load_gen[1].s + output_reference.load_gen[2].s) *
-                               RealValue<asymmetric_t>{1.0};
+            ComplexValue<asymmetric_t> const sum_s{output_reference.source[0].s + output_reference.load_gen[0].s +
+                                                   output_reference.load_gen[1].s + output_reference.load_gen[2].s};
             result.measured_bus_injection = {
                 {.real_component = {.value = real(sum_s), .variance = RealValue<asymmetric_t>{0.5}},
                  .imag_component = {.value = imag(sum_s), .variance = RealValue<asymmetric_t>{0.5}}}};
