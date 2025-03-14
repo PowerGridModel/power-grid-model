@@ -1,0 +1,78 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: CI Build
+
+# Controls when the workflow will run.
+on:
+  # run pipeline on push event of main branch.
+  push:
+    branches:
+      - main
+  # run pipeline on pull request
+  pull_request:
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # Based on UTC time
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-ci-build
+  cancel-in-progress: true
+
+jobs:
+  build-test-release:
+    name: build-test-release
+    uses: "./.github/workflows/build-test-release.yml"
+    permissions:
+      contents: write
+    with:
+      create_release: false
+
+  check-code-quality:
+    uses: "./.github/workflows/check-code-quality.yml"
+
+  reuse-compliance:
+    uses: "./.github/workflows/reuse-compliance.yml"
+
+  clang-tidy:
+    uses: "./.github/workflows/clang-tidy.yml"
+    with:
+      target: "all power_grid_model_benchmark_cpp"
+
+  citations:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # checkout the last commit
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD | tr '\n' ' ')
+          echo "$CHANGED_FILES"
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
+
+      - name: Check if CITATION.cff was modified
+        if: contains(env.changed_files, 'CITATION.cff') || contains(env.changed_files, '.github/workflows/citations.yml')
+        run: echo "either CITATION.cff or .github/workflows/citations.yml has been modified!"
+
+      - name: Check if random name would return false
+        if: contains(env.changed_files, 'random-name.cff')
+        run: echo "random-name.cff has been modified!"
+
+
+
+    # uses: "./.github/workflows/citations.yml"
+
+  ci-passed:
+    runs-on: ubuntu-latest
+    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy, citations]
+
+    steps:
+      - run: echo "ci passed"
