@@ -597,8 +597,8 @@ template <symmetry_tag sym> class MeasuredValues {
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {
-            return ComplexValue<sym>{power.value() - power.real_component.variance * real(mu) +
-                                     1.0i * power.imag_component.variance * imag(mu)};
+            return ComplexValue<sym>{power.value() - ((power.real_component.variance * real(mu)) +
+                                                      (1.0i * power.imag_component.variance * imag(mu)))};
         };
 
         for (Idx const load_gen : load_gens) {
