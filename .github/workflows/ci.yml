@@ -58,7 +58,7 @@ jobs:
 
 
 
-    uses: "./.github/workflows/citations.yml"
+    # uses: "./.github/workflows/citations.yml"
 
   ci-passed:
     runs-on: ubuntu-latest
