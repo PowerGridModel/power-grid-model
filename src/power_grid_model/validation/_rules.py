@@ -763,10 +763,11 @@ def no_strict_subset_missing(data: SingleDataset, fields : list[str], component_
         instances_with_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
         instances_with_non_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
         for field in fields:
+            nan_value = _nan_type(component_type, field)
             asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
-            instances_with_nan_data = np.logical_or(instances_with_nan_data, np.any(np.isnan(component_data[field]), axis=asym_axes)) 
+            instances_with_nan_data = np.logical_or(instances_with_nan_data, np.any(np.isnan(component_data[field]) if np.isnan(nan_value) else np.equal(component_data[field], nan_value), axis=asym_axes)) 
 
-            instances_with_non_nan_data = np.logical_or(instances_with_non_nan_data, np.any(np.logical_not(np.isnan(component_data[field])), axis=asym_axes))
+            instances_with_non_nan_data = np.logical_or(instances_with_non_nan_data, np.any(np.logical_not(np.isnan(component_data[field])) if np.isnan(nan_value) else np.logical_not(np.equal(component_data[field], nan_value)), axis=asym_axes))
 
         instances_with_invalid_data = np.logical_and(instances_with_nan_data, instances_with_non_nan_data)
 
@@ -790,9 +791,11 @@ def not_all_missing(data: SingleDataset, fields : list[str], component_type : Co
     if component_type in data:
         component_data = data[component_type]
         instances_with_all_nan_data = np.full_like([], True, shape=(len(component_data),), dtype=bool)
+
         for field in fields:
+            nan_value = _nan_type(component_type, field)
             asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
-            instances_with_all_nan_data = np.logical_and(instances_with_all_nan_data, np.any(np.isnan(component_data[field]), axis=asym_axes))
+            instances_with_all_nan_data = np.logical_and(instances_with_all_nan_data, np.any(np.isnan(component_data[field]) if np.isnan(nan_value) else np.equal(component_data[field], nan_value), axis=asym_axes))
 
         ids = component_data["id"][instances_with_all_nan_data].flatten().tolist()
         if len(ids) > 0:
