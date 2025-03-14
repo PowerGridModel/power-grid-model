@@ -746,7 +746,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
     return errors
 
 
-def subset_of_fields_are_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
+def no_strict_subset_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
     """
     Helper function that generates missing value errors if a subset of the supplied fields are missing.
     If for an instance of component type all fields are missing or all fields are not missing then no error is returned for that instance.
@@ -759,34 +759,42 @@ def subset_of_fields_are_missing(data: SingleDataset, fields : list[str], compon
     """
     errors = []
     if component_type in data:
-        asym_line_data = data[component_type]
-        instances_with_nan_data = np.array([False for i in range(0, len(asym_line_data))])
-        instances_with_non_nan_data = np.array([False for i in range(0, len(asym_line_data))])
+        component_data = data[component_type]
+        instances_with_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
+        instances_with_non_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
         for field in fields:
-            asym_axes = tuple(range(asym_line_data.ndim, asym_line_data[field].ndim))
-            instances_with_nan_data = np.logical_or(instances_with_nan_data, np.any(np.isnan(asym_line_data[field]), axis=asym_axes)) 
+            asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
+            instances_with_nan_data = np.logical_or(instances_with_nan_data, np.any(np.isnan(component_data[field]), axis=asym_axes)) 
 
-            instances_with_non_nan_data = np.logical_or(instances_with_non_nan_data, np.any(np.logical_not(np.isnan(asym_line_data[field])), axis=asym_axes))
+            instances_with_non_nan_data = np.logical_or(instances_with_non_nan_data, np.any(np.logical_not(np.isnan(component_data[field])), axis=asym_axes))
 
         instances_with_invalid_data = np.logical_and(instances_with_nan_data, instances_with_non_nan_data)
 
-        ids = asym_line_data["id"][instances_with_invalid_data]
+        ids = component_data["id"][instances_with_invalid_data]
         if len(ids) > 0:
             errors.append(MissingValueError(component_type, ",".join(fields), ids))
 
     return errors
 
 
-def all_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
+def not_all_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
+    """
+    Helper function that generates a missing value error if all values specified by the fields parameters are missing.
+
+    Args:
+        data: SingleDataset, pgm data
+        fields: List of fields
+        component_type: component type to check
+    """
     errors = []
     if component_type in data:
-        asym_line_data = data[component_type]
-        instances_with_all_nan_data = np.array([True for i in range(0, len(asym_line_data))])
+        component_data = data[component_type]
+        instances_with_all_nan_data = np.full_like([], True, shape=(len(component_data),), dtype=bool)
         for field in fields:
-            asym_axes = tuple(range(asym_line_data.ndim, asym_line_data[field].ndim))
-            instances_with_all_nan_data = np.logical_and(instances_with_all_nan_data, np.any(np.isnan(asym_line_data[field]), axis=asym_axes))
+            asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
+            instances_with_all_nan_data = np.logical_and(instances_with_all_nan_data, np.any(np.isnan(component_data[field]), axis=asym_axes))
 
-        ids = asym_line_data["id"][instances_with_all_nan_data]
+        ids = component_data["id"][instances_with_all_nan_data].flatten().tolist()
         if len(ids) > 0:
             errors.append(MissingValueError(component_type, ",".join(fields), ids))
 

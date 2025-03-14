@@ -56,8 +56,8 @@ from power_grid_model.validation._rules import (
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     none_missing as _none_missing,
     valid_p_q_sigma as _valid_p_q_sigma,
-    subset_of_fields_are_missing as _subset_of_fields_are_missing,
-    all_missing as _all_missing
+    no_strict_subset_missing as _no_strict_subset_missing,
+    not_all_missing as _not_all_missing
 )
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
@@ -533,11 +533,11 @@ def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
     for field in required_fields + optional_r_matrix_fields + optional_x_matrix_fields + required_c_matrix_fields + optional_c_matrix_fields + c_fields:
         errors += _all_greater_than_zero(data, ComponentType.asym_line, field)
 
-    errors += _subset_of_fields_are_missing(data, optional_r_matrix_fields, ComponentType.asym_line)
-    errors += _subset_of_fields_are_missing(data, optional_x_matrix_fields, ComponentType.asym_line)
-    errors += _subset_of_fields_are_missing(data, required_c_matrix_fields, ComponentType.asym_line)
-    errors += _subset_of_fields_are_missing(data, optional_c_matrix_fields, ComponentType.asym_line)
-    errors += _all_missing(data, required_c_matrix_fields + c_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, optional_r_matrix_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, optional_x_matrix_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, required_c_matrix_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, optional_c_matrix_fields, ComponentType.asym_line)
+    errors += _not_all_missing(data, required_c_matrix_fields + c_fields, ComponentType.asym_line)
 
     return errors
 
