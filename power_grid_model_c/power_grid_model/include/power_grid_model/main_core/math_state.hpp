@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../math_solver/y_bus.hpp"
 #include "../math_solver/math_solver_dispatch.hpp"
+#include "../math_solver/y_bus.hpp"
 
 namespace power_grid_model::main_core {
 

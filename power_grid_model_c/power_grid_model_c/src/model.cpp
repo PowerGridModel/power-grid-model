@@ -8,8 +8,8 @@
 #include "power_grid_model_c/model.h"
 
 #include "handle.hpp"
-#include "options.hpp"
 #include "math_solver.hpp"
+#include "options.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
