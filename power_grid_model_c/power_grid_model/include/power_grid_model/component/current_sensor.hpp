@@ -134,11 +134,8 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     template <symmetry_tag sym_calc> CurrentSensorCalcParam<sym_calc> calc_decomposed_param() const {
         auto const i_polar = PolarComplexRandVar<current_sensor_symmetry>(
             {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
-        auto const i_decomposed = DecomposedComplexRandVar<sym_calc>(i_polar);
         return CurrentSensorCalcParam<sym_calc>{.angle_measurement_type = angle_measurement_type(),
-                                                .value = i_decomposed.value(),
-                                                .i_real_variance = i_decomposed.real_component.variance,
-                                                .i_imag_variance = i_decomposed.imag_component.variance};
+                                                .measurement = DecomposedComplexRandVar<sym_calc>(i_polar)};
     }
     CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i) const final {
         return get_generic_output<symmetric_t>(i);
