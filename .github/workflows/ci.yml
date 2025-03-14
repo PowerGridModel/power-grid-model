@@ -54,7 +54,7 @@ jobs:
 
       - name: Get changed files
         run: |
-          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD)
+          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD | tr '\n' ' ')
           echo "$CHANGED_FILES"
           echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
 
