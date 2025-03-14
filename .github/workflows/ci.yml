@@ -59,8 +59,8 @@ jobs:
           echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
 
       - name: Check if CITATION.cff was modified
-        if: contains(env.changed_files, 'CITATION.cff')
-        run: echo "CITATION.cff has been modified!"
+        if: contains(env.changed_files, 'CITATION.cff') || contains(env.changed_files, '.github/workflows/citations.yml')
+        run: echo "either CITATION.cff or .github/workflows/citations.yml has been modified!"
 
       - name: Check if random name would return false
         if: contains(env.changed_files, 'random-name.cff')
