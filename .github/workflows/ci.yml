@@ -44,19 +44,18 @@ jobs:
       target: "all power_grid_model_benchmark_cpp"
 
   citations:
-    - name: Checkout
-      uses: actions/checkout@v4
-      # checkout the last commit
-      with:
-        fetch-depth: 2
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # checkout the last commit
+        with:
+          fetch-depth: 2
 
-    - name: Get changed files
-      run: |
-        CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD)
-        echo "$CHANGED_FILES"
-
-
-
+      - name: Get changed files
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD)
+          echo "$CHANGED_FILES"
 
     # uses: "./.github/workflows/citations.yml"
 
