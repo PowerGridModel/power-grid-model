@@ -667,7 +667,7 @@ This assumption is reflected in the requirements mentioned in {hoverxreftooltip}
 ```
 
 ```{note}
-The control logic assumes that the (compensated) control voltage decreases when the tap position increases.
+The control logic assumes that the (compensated) control voltage decreases when the tap position changes (increases when the control side of the regulator and the tap side of the transformer are at different sides, or decreases they are at the same side).
 If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption does not hold, and the calculation may diverge.
 Hence, this assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
 ```
