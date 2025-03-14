@@ -645,6 +645,7 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
         UnsupportedTransformerRegulationError("transformer_tap_regulator", ["control_side", "regulated_object"], [54])
         in validation_errors
     )
+    assert NotUniqueError("transformer_tap_regulator", "regulated_object", [51, 54]) in validation_errors
 
 
 def test_fault(input_data):
