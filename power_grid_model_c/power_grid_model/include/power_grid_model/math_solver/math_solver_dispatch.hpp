@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "y_bus.hpp"
-
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
@@ -20,6 +18,9 @@
 namespace power_grid_model {
 
 namespace math_solver {
+
+// forward declare YBUs
+template <symmetry_tag sym> class YBus;
 
 template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {};
 
