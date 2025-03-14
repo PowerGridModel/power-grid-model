@@ -93,7 +93,8 @@ TEST_CASE("Necessary observability check") {
             // Add sensor on branch 3 to side. Hence 2 parallel sensors
             topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
             topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 1}};
-            se_input.measured_branch_to_power = {{1.0, 1.0, 1.0}};
+            se_input.measured_branch_to_power = {
+                {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
             check_not_observable(topo, param, se_input);
         }
     }
