@@ -63,6 +63,20 @@ class DatasetInfo {
         throw ComponentTypeNotFound{component};
     }
 
+    bool has_attribute_indications(Idx component_idx) const {
+        return handle_.call_with(PGM_dataset_info_has_attribute_indications, info_, component_idx) != 0;
+    }
+
+    std::vector<std::string> attribute_indications(Idx component_idx) const {
+        Idx const n_attributes = handle_.call_with(PGM_dataset_info_n_attribute_indications, info_, component_idx);
+        std::vector<std::string> attributes;
+        attributes.reserve(n_attributes);
+        for (Idx idx = 0; idx < n_attributes; ++idx) {
+            attributes.emplace_back(handle_.call_with(PGM_dataset_info_attribute_name, info_, component_idx, idx));
+        }
+        return attributes;
+    }
+
   private:
     Handle handle_{};
     RawDatasetInfo const* info_;

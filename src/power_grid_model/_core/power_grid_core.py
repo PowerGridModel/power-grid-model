@@ -448,6 +448,24 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def dataset_info_has_attribute_indications(  # type: ignore[empty-body]
+        self, info: DatasetInfoPtr, component_idx: int
+    ) -> int:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_n_attribute_indications(  # type: ignore[empty-body]
+        self, info: DatasetInfoPtr, component_idx: int
+    ) -> int:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_info_attribute_name(  # type: ignore[empty-body]
+        self, info: DatasetInfoPtr, component_idx: int, attribute_idx: int
+    ) -> str:
+        pass  # pragma: no cover
+
+    @make_c_binding
     def create_dataset_mutable(  # type: ignore[empty-body]
         self, dataset: str, is_batch: int, batch_size: int
     ) -> MutableDatasetPtr:
