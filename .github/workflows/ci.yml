@@ -56,6 +56,17 @@ jobs:
         run: |
           CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD)
           echo "$CHANGED_FILES"
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
+
+      - name: Check if CITATION.cff was modified
+        if: contains(env.changed_files, 'CITATION.cff')
+        run: echo "CITATION.cff has been modified!"
+
+      - name: Check if random name would return false
+        if: contains(env.changed_files, 'random-name.cff')
+        run: echo "random-name.cff has been modified!"
+
+
 
     # uses: "./.github/workflows/citations.yml"
 
