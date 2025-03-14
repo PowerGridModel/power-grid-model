@@ -19,7 +19,7 @@ namespace power_grid_model {
 
 namespace math_solver {
 
-// forward declare YBUs
+// forward declare YBus
 template <symmetry_tag sym> class YBus;
 
 template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {};
@@ -27,7 +27,7 @@ template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {
 struct MathSolverDispatcher {
     template <symmetry_tag sym> struct MathSolverDispatcherConfig {
         template <template <symmetry_tag> class MathSolverType>
-        constexpr MathSolverDispatcherConfig(math_solver_tag<MathSolverType>)
+        constexpr MathSolverDispatcherConfig(math_solver_tag<MathSolverType> /* unused */)
             : create{[](std::shared_ptr<MathModelTopology const> const& topo_ptr) -> void* {
                   return new MathSolverType<sym>{topo_ptr};
               }},
@@ -74,7 +74,7 @@ struct MathSolverDispatcher {
     };
 
     template <template <symmetry_tag> class MathSolverType>
-    constexpr MathSolverDispatcher(math_solver_tag<MathSolverType>)
+    constexpr MathSolverDispatcher(math_solver_tag<MathSolverType> /* unused */)
         : sym_config{math_solver_tag<MathSolverType>{}}, asym_config{math_solver_tag<MathSolverType>{}} {}
 
     template <symmetry_tag sym> MathSolverDispatcherConfig<sym> const& get_dispather_config() const {
