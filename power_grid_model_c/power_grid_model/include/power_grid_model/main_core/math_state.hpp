@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../math_solver/math_solver_dispatch.hpp"
 #include "../math_solver/y_bus.hpp"
 
 namespace power_grid_model::main_core {
@@ -11,8 +12,8 @@ namespace power_grid_model::main_core {
 struct MathState {
     std::vector<YBus<symmetric_t>> y_bus_vec_sym;
     std::vector<YBus<asymmetric_t>> y_bus_vec_asym;
-    std::vector<MathSolver<symmetric_t>> math_solvers_sym;
-    std::vector<MathSolver<asymmetric_t>> math_solvers_asym;
+    std::vector<MathSolverProxy<symmetric_t>> math_solvers_sym;
+    std::vector<MathSolverProxy<asymmetric_t>> math_solvers_asym;
 };
 
 inline void clear(MathState& math_state) {

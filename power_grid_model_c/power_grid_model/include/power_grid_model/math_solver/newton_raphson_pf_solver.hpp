@@ -441,9 +441,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     }
 };
 
-template class NewtonRaphsonPFSolver<symmetric_t>;
-template class NewtonRaphsonPFSolver<asymmetric_t>;
-
 } // namespace newton_raphson_pf
 
 using newton_raphson_pf::NewtonRaphsonPFSolver;

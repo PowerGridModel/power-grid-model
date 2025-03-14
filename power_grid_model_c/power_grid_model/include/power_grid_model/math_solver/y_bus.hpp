@@ -543,9 +543,6 @@ template <symmetry_tag sym> class YBus {
     }
 };
 
-template class YBus<symmetric_t>;
-template class YBus<asymmetric_t>;
-
 } // namespace math_solver
 
 using math_solver::YBus;

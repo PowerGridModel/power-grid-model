@@ -175,8 +175,6 @@ template <symmetry_tag sym> class MathSolver {
     }
 };
 
-template class MathSolver<symmetric_t>;
-template class MathSolver<asymmetric_t>;
 } // namespace math_solver
 
 using math_solver::MathSolver;
