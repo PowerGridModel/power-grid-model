@@ -24,10 +24,11 @@ template <symmetry_tag sym> class YBus;
 
 template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {};
 
-struct MathSolverDispatcher {
-    template <symmetry_tag sym> struct MathSolverDispatcherConfig {
+class MathSolverDispatcher {
+  public:
+    template <symmetry_tag sym> struct Config {
         template <template <symmetry_tag> class MathSolverType>
-        constexpr MathSolverDispatcherConfig(math_solver_tag<MathSolverType> /* unused */)
+        constexpr Config(math_solver_tag<MathSolverType> /* unused */)
             : create{[](std::shared_ptr<MathModelTopology const> const& topo_ptr) -> void* {
                   return new MathSolverType<sym>{topo_ptr};
               }},
@@ -75,17 +76,19 @@ struct MathSolverDispatcher {
 
     template <template <symmetry_tag> class MathSolverType>
     constexpr MathSolverDispatcher(math_solver_tag<MathSolverType> /* unused */)
-        : sym_config{math_solver_tag<MathSolverType>{}}, asym_config{math_solver_tag<MathSolverType>{}} {}
+        : sym_config_{math_solver_tag<MathSolverType>{}}, asym_config_{math_solver_tag<MathSolverType>{}} {}
 
-    template <symmetry_tag sym> MathSolverDispatcherConfig<sym> const& get_dispather_config() const {
+    template <symmetry_tag sym> Config<sym> const& get_dispatcher_config() const {
         if constexpr (is_symmetric_v<sym>) {
-            return sym_config;
+            return sym_config_;
         } else {
-            return asym_config;
+            return asym_config_;
         }
     }
-    MathSolverDispatcherConfig<symmetric_t> sym_config;
-    MathSolverDispatcherConfig<asymmetric_t> asym_config;
+
+  private:
+    Config<symmetric_t> sym_config_;
+    Config<asymmetric_t> asym_config_;
 };
 
 template <symmetry_tag sym> class MathSolverProxy {
@@ -93,19 +96,19 @@ template <symmetry_tag sym> class MathSolverProxy {
     explicit MathSolverProxy(MathSolverDispatcher const* dispatcher,
                              std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : dispatcher_{dispatcher},
-          solver_{dispatcher_->get_dispather_config<sym>().create(topo_ptr),
-                  dispatcher_->get_dispather_config<sym>().destroy} {}
+          solver_{dispatcher_->get_dispatcher_config<sym>().create(topo_ptr),
+                  dispatcher_->get_dispatcher_config<sym>().destroy} {}
     MathSolverProxy(MathSolverProxy const& other)
         : dispatcher_{other.dispatcher_},
-          solver_{dispatcher_->get_dispather_config<sym>().copy(other.get_ptr()),
-                  dispatcher_->get_dispather_config<sym>().destroy} {}
+          solver_{dispatcher_->get_dispatcher_config<sym>().copy(other.get_ptr()),
+                  dispatcher_->get_dispatcher_config<sym>().destroy} {}
     MathSolverProxy& operator=(MathSolverProxy const& other) {
         if (this != &other) {
             solver_.reset();
             dispatcher_ = other.dispatcher_;
             solver_ = std::unique_ptr<void, std::add_pointer_t<void(void const*)>>{
-                dispatcher_->get_dispather_config<sym>().copy(other.get_ptr()),
-                dispatcher_->get_dispather_config<sym>().destroy};
+                dispatcher_->get_dispatcher_config<sym>().copy(other.get_ptr()),
+                dispatcher_->get_dispatcher_config<sym>().destroy};
         }
         return *this;
     }
@@ -116,27 +119,27 @@ template <symmetry_tag sym> class MathSolverProxy {
     SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                      CalculationInfo& calculation_info, CalculationMethod calculation_method,
                                      YBus<sym> const& y_bus) {
-        return dispatcher_->get_dispather_config<sym>().run_power_flow(get_ptr(), input, err_tol, max_iter,
-                                                                       calculation_info, calculation_method, y_bus);
+        return dispatcher_->get_dispatcher_config<sym>().run_power_flow(get_ptr(), input, err_tol, max_iter,
+                                                                        calculation_info, calculation_method, y_bus);
     }
 
     SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                            CalculationInfo& calculation_info, CalculationMethod calculation_method,
                                            YBus<sym> const& y_bus) {
-        return dispatcher_->get_dispather_config<sym>().run_state_estimation(
+        return dispatcher_->get_dispatcher_config<sym>().run_state_estimation(
             get_ptr(), input, err_tol, max_iter, calculation_info, calculation_method, y_bus);
     }
 
     ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, CalculationInfo& calculation_info,
                                                     CalculationMethod calculation_method, YBus<sym> const& y_bus) {
-        return dispatcher_->get_dispather_config<sym>().run_short_circuit(get_ptr(), input, calculation_info,
-                                                                          calculation_method, y_bus);
+        return dispatcher_->get_dispatcher_config<sym>().run_short_circuit(get_ptr(), input, calculation_info,
+                                                                           calculation_method, y_bus);
     }
 
-    void clear_solver() { dispatcher_->get_dispather_config<sym>().clear_solver(get_ptr()); }
+    void clear_solver() { dispatcher_->get_dispatcher_config<sym>().clear_solver(get_ptr()); }
 
     void parameters_changed(bool changed) {
-        dispatcher_->get_dispather_config<sym>().parameters_changed(get_ptr(), changed);
+        dispatcher_->get_dispatcher_config<sym>().parameters_changed(get_ptr(), changed);
     }
 
   private:
