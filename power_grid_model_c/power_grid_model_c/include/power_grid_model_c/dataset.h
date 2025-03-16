@@ -85,11 +85,11 @@ PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetI
 
 /**
  * @brief Return whether a component has attribute indications.
- * 
- * Attribute indications are used to indicate the presence of meaningful attributes 
- *     for a certain component in the dataset. 
- * If it returns 1 for that component, you can create columnar data with only the indicated attributes. 
- * In this case, you are guaranteed that all information from the original serialized data will be retained 
+ *
+ * Attribute indications are used to indicate the presence of meaningful attributes
+ *     for a certain component in the dataset.
+ * If it returns 1 for that component, you can create columnar data with only the indicated attributes.
+ * In this case, you are guaranteed that all information from the original serialized data will be retained
  *     for this component, i.e., you do not lose any meaningful information during the deserialization process.
  * Otherwise, no such guarantees are made.
  *
