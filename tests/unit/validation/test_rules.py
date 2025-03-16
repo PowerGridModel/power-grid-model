@@ -11,27 +11,6 @@ from power_grid_model import ComponentType, LoadGenType, initialize_array, power
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
-from power_grid_model.validation.errors import (
-    ComparisonError,
-    FaultPhaseError,
-    InfinityError,
-    InvalidEnumValueError,
-    InvalidIdError,
-    MissingValueError,
-    MultiComponentNotUniqueError,
-    NotBetweenError,
-    NotBetweenOrAtError,
-    NotBooleanError,
-    NotGreaterOrEqualError,
-    NotGreaterThanError,
-    NotIdenticalError,
-    NotLessOrEqualError,
-    NotLessThanError,
-    NotUniqueError,
-    SameValueError,
-    TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
-)
 from power_grid_model.validation._rules import (
     all_between,
     all_between_or_at,
@@ -56,6 +35,27 @@ from power_grid_model.validation._rules import (
     all_valid_ids,
     none_match_comparison,
     none_missing,
+)
+from power_grid_model.validation.errors import (
+    ComparisonError,
+    FaultPhaseError,
+    InfinityError,
+    InvalidEnumValueError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    NotBetweenError,
+    NotBetweenOrAtError,
+    NotBooleanError,
+    NotGreaterOrEqualError,
+    NotGreaterThanError,
+    NotIdenticalError,
+    NotLessOrEqualError,
+    NotLessThanError,
+    NotUniqueError,
+    SameValueError,
+    TwoValuesZeroError,
+    UnsupportedTransformerRegulationError,
 )
 
 
