@@ -30,7 +30,7 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
     return call_with_catch(
         handle,
         [system_frequency, input_dataset] {
-            return new PGM_PowerGridModel{system_frequency, *input_dataset, &get_math_solver_dispatcher(), 0};
+            return new PGM_PowerGridModel{system_frequency, *input_dataset, get_math_solver_dispatcher(), 0};
         },
         PGM_regular_error);
 }

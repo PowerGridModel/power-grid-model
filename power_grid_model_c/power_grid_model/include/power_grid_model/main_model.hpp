@@ -23,10 +23,10 @@ class MainModel {
     using Options = MainModelOptions;
 
     explicit MainModel(double system_frequency, ConstDataset const& input_data,
-                       MathSolverDispatcher const* math_solver_dispatcher, Idx pos = 0)
+                       MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
         : impl_{std::make_unique<Impl>(system_frequency, input_data, math_solver_dispatcher, pos)} {}
     explicit MainModel(double system_frequency, meta_data::MetaData const& meta_data,
-                       MathSolverDispatcher const* math_solver_dispatcher)
+                       MathSolverDispatcher const& math_solver_dispatcher)
         : impl_{std::make_unique<Impl>(system_frequency, meta_data, math_solver_dispatcher)} {};
 
     // deep copy

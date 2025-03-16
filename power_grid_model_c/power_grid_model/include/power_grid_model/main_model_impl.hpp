@@ -162,10 +162,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data,
-                           MathSolverDispatcher const* math_solver_dispatcher, Idx pos = 0)
+                           MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
         : system_frequency_{system_frequency},
           meta_data_{&input_data.meta_data()},
-          math_solver_dispatcher_{math_solver_dispatcher} {
+          math_solver_dispatcher_{&math_solver_dispatcher} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
@@ -173,10 +173,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     // constructor with only frequency
     explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data,
-                           MathSolverDispatcher const* math_solver_dispatcher)
+                           MathSolverDispatcher const& math_solver_dispatcher)
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
-          math_solver_dispatcher_{math_solver_dispatcher} {}
+          math_solver_dispatcher_{&math_solver_dispatcher} {}
 
   private:
     // helper function to get what components are present in the update data
@@ -1078,7 +1078,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The default lambda `include_all` always returns `true`.
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -1097,7 +1097,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -1117,7 +1117,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
+    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::* component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
