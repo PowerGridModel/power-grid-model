@@ -296,20 +296,17 @@ class Topology {
         }
 
         // copy all the far-end non-cyclic node, in reverse order
-        // NOLINTNEXTLINE(modernize-use-ranges) // waiting for std::views
-        std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
-                     [this](Idx x) { return node_status_[x] == -1; });
+        std::ranges::copy_if(std::views::reverse(dfs_node_copy), std::back_inserter(dfs_node),
+                             [this](Idx x) { return node_status_[x] == -1; });
 
         // copy all cyclic node
         std::vector<Idx> cyclic_node;
-        // NOLINTNEXTLINE(modernize-use-ranges) // waiting for std::views
-        std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
-                     [this](Idx x) { return node_status_[x] == -2; });
+        std::ranges::copy_if(dfs_node_copy, std::back_inserter(cyclic_node),
+                             [this](Idx x) { return node_status_[x] == -2; });
 
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
         if (cyclic_node.size() < 4) {
-            // NOLINTNEXTLINE(modernize-use-ranges) // waiting for std::views
-            std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
+            std::ranges::copy(std::views::reverse(cyclic_node), std::back_inserter(dfs_node));
             return fill_in;
         }
 

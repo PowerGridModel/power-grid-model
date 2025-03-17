@@ -8,6 +8,7 @@
 #include "enum.hpp"
 
 #include <exception>
+#include <format>
 #include <sstream>
 #include <string>
 
@@ -23,7 +24,7 @@ inline auto to_string(std::integral auto x) { return std::to_string(x); }
 
 class PowerGridError : public std::exception {
   public:
-    void append_msg(std::string_view msg) { msg_ += msg; }
+    constexpr void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg_, msg); }
     char const* what() const noexcept final { return msg_.c_str(); }
 
   private:
@@ -39,14 +40,14 @@ class InvalidArguments : public PowerGridError {
 
     template <std::same_as<TypeValuePair>... Options>
     InvalidArguments(std::string const& method, std::string const& arguments) {
-        append_msg(method + " is not implemented for " + arguments + "!\n");
+        append_msg(std::format("{} is not implemented for {}!\n", method, arguments));
     }
 
     template <class... Options>
         requires(std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...)
     InvalidArguments(std::string const& method, Options const&... options)
         : InvalidArguments{method, "the following combination of options"} {
-        (append_msg(" " + options.name + ": " + options.value + "\n"), ...);
+        (append_msg(std::format(" {}: {}\n", options.name, options.value)), ...);
     }
 };
 
@@ -54,16 +55,17 @@ class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
     MissingCaseForEnumError(std::string const& method, T const& value)
-        : InvalidArguments{method, std::string{typeid(T).name()} + " #" + detail::to_string(static_cast<IntS>(value))} {
-    }
+        : InvalidArguments{method,
+                           std::format("{} #{}", typeid(T).name(), detail::to_string(static_cast<IntS>(value)))} {}
 };
 
 class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
-        append_msg("Conflicting voltage for line " + detail::to_string(id) + "\n voltage at from node " +
-                   detail::to_string(id1) + " is " + detail::to_string(u1) + "\n voltage at to node " +
-                   detail::to_string(id2) + " is " + detail::to_string(u2) + '\n');
+        append_msg(std::format(
+            "Conflicting voltage for line {},\n voltage at from node {} is {}\n voltage at to node {} is {}\n",
+            detail::to_string(id), detail::to_string(id1), detail::to_string(u1), detail::to_string(id2),
+            detail::to_string(u2)));
     }
 };
 
