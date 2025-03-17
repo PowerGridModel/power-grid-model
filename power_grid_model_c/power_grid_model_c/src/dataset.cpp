@@ -43,6 +43,21 @@ PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* /*unused*/, PGM_DatasetInfo 
     return info->component_info[component_idx].total_elements;
 }
 
+PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                                   PGM_Idx component_idx) {
+    return static_cast<PGM_Idx>(info->component_info[component_idx].has_attribute_indications);
+}
+
+PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                                 PGM_Idx component_idx) {
+    return static_cast<PGM_Idx>(info->component_info[component_idx].attribute_indications.size());
+}
+
+char const* PGM_dataset_info_attribute_name(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                            PGM_Idx component_idx, PGM_Idx attribute_idx) {
+    return info->component_info[component_idx].attribute_indications[attribute_idx]->name;
+}
+
 // const dataset
 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
