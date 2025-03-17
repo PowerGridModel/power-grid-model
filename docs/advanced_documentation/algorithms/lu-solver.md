@@ -445,30 +445,30 @@ instead of the regular left-solve procedure, as is the case for $\mathbb{U}_p$.
 
 ##### Rationale of the block-sparse LU factorization process
 
-To illustrate the rationale, let's perform the full matrix solving (without using blocks):
+To illustrate the rationale, let's fully solve a matrix equation (without using blocks):
 
 $$
 \begin{align*}
-\begin{pmatrix}
+\begin{bmatrix}
 \mathbb{a} && \mathbb{b} \\
 \mathbb{c} && \mathbb{d}
-\end{pmatrix}
+\end{bmatrix}
 &=
-\begin{pmatrix}
+\begin{bmatrix}
 a_{11} && a_{12} && b_{11} && b_{12} \\
 a_{21} && a_{22} && b_{21} && b_{22} \\
 c_{11} && c_{12} && d_{11} && d_{12} \\
 c_{21} && c_{22} && d_{21} && d_{22}
-\end{pmatrix} \\
+\end{bmatrix} \\
 & \mapsto
-\begin{pmatrix}
+\begin{bmatrix}
 a_{11} && a_{12} && b_{11} && b_{12} \\
 \frac{a_{21}}{a_{11}} && a_{22} - a_{12} \frac{a_{21}}{a_{11}} && b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}} \\
 \frac{c_{11}}{a_{11}} && c_{12} - a_{12} \frac{c_{11}}{a_{11}} && d_{11} - b_{11}\frac{c_{11}}{a_{11}} && d_{12} - b_{12}\frac{c_{11}}{a_{11}} \\
 \frac{c_{21}}{a_{11}} && c_{22} - a_{12} \frac{c_{21}}{a_{11}} && d_{21} - b_{11}\frac{c_{21}}{a_{11}} && d_{22} - b_{12}\frac{c_{21}}{a_{11}}
-\end{pmatrix} \\
+\end{bmatrix} \\
 & \mapsto
-\begin{pmatrix}
+\begin{bmatrix}
 a_{11} && a_{12} && b_{11} && b_{12} \\
 \frac{a_{21}}{a_{11}} &&
     a_{22} - a_{12} \frac{a_{21}}{a_{11}} &&
@@ -482,41 +482,37 @@ a_{11} && a_{12} && b_{11} && b_{12} \\
     \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
     d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
     d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix} \\
-&\equiv
-\begin{pmatrix}
-\mathbb{l}_a \mathbb{u}_a && \mathbb{u}_b \\
-\mathbb{l}_c              && \mathbb{l}_d \mathbb{u}_d
-\end{pmatrix}
+\end{bmatrix}
 \end{align*}
 $$
 
-so that
+Using the following denotations, we can simplify the above as
+$\begin{bmatrix} mathbb{l}_a \mathbb{u}_a && \mathbb{u}_b \\ mathbb{l}_c && \mathbb{l}_d \mathbb{u}_d \end{bmatrix}$.
 
 $$
 \begin{align*}
-\mathbb{l}_a &= \begin{pmatrix}
+\mathbb{l}_a &= \begin{bmatrix}
     1                     && 0 \\
     \frac{a_{21}}{a_{11}} && 1
-\end{pmatrix} \\
-\mathbb{u}_a &= \begin{pmatrix}
+\end{bmatrix} \\
+\mathbb{u}_a &= \begin{bmatrix}
     a_{11} && a_{12} \\
     0 && a_{22} - a_{12} \frac{a_{21}}{a_{11}}
-\end{pmatrix} \\
-\mathbb{l}_c &= \begin{pmatrix}
+\end{bmatrix} \\
+\mathbb{l}_c &= \begin{bmatrix}
     \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix} \\
-\mathbb{u}_b &= \begin{pmatrix}
+\end{bmatrix} \\
+\mathbb{u}_b &= \begin{bmatrix}
     b_{11}                               && b_{12} \\
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
-\end{pmatrix} \\
-\mathbb{l}_d\mathbb{u}_d &= \begin{pmatrix}
+\end{bmatrix} \\
+\mathbb{l}_d\mathbb{u}_d &= \begin{bmatrix}
     d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
         d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
     d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
         d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix}
+\end{bmatrix}
 \end{align*}
 $$
 
@@ -530,15 +526,15 @@ obtained without doing full pivoting on the sub-block level:
 * $\mathbb{l}_d\mathbb{u}_d$ denotes the start matrix of the decomposition of the next iteration and
   is equal to $\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$.
 
-This process generalizes to block matrices of any size and block-invertible matrices of any size:
-$\mathbb{c}$ and $\mathbb{b}$ become a column- and row-vector of block-matrices for which the
-individual block-elements of the vectorized decompositions $\mathbb{l}_c$ and $\mathbb{u}_b$ can be
-obtained by solving above equations.
+This process generalizes to block-invertible matrices of any size: $\mathbb{c}$ and $\mathbb{b}$
+become a column- and row-vector of block-matrices for which the individual block-elements of the
+vectorized decompositions $\mathbb{l}_c$ and $\mathbb{u}_b$ can be obtained by solving the
+equations above.
 
 If, during the LU decomposition of the pivot block, a row- and column-permutation was used,
 $\mathbb{a} = \mathbb{p}_a^{-1} \mathbb{l}_a \mathbb{u}_p \mathbb{q}_a^{-1}$, and the columns of
 $\mathbb{c}$ and the rows of $\mathbb{b}$ are permuted: $\mathbb{c}\mapsto\mathbb{c}\mathbb{q}_a$
-and $\mathbb{b}\mapsto\mathbb{p}_a\mathbb{b}$. As a result, the equations generalize as follows.
+and $\mathbb{b}\mapsto\mathbb{p}_a\mathbb{b}$. In this case, the equations generalize as follows.
 
 * $\mathbb{l}_c$ is the solution to the right-multiplication matrix equation
   $\mathbb{l}_c \mathbb{u}_a = \mathbb{c} \mathbb{q}_a$.
@@ -614,12 +610,13 @@ $$
 \end{align*}
 $$
 
-Generalizability to larger block sizes and block-matrix sizes follows from fhe fact that
-$\mathbb{l}_c$ and $\mathbb{u}_b$ only depend on the in-block LU decomposition of the pivot block
-$(\mathbb{l}_a,\mathbb{u}_a)$ and the data in the respective blocks ($\mathbb{c}$ and $\mathbb{b}$)
-in the original matrix by varying $c$ and $b$ over other blocks.
+We can see that $\mathbb{l}_c$ and $\mathbb{u}_b$ are affected by the in-block LU decomposition of
+the pivot block $\left(\mathbb{l}_a,\mathbb{u}_a\right)$, as well as the data in the respective
+blocks ($\mathbb{c}$ and $\mathbb{b}$) in the original matrix. Beyond these two sources, no other
+factors affect $\mathbb{l}_c$ and $\mathbb{u}_b$. The generalization to largr block sizes and
+block-matrix sizes follows.
 
-#### Block-sparse indices
+#### Block-sparse indexing
 
 The structure of the block-sparse matrices is as follows.
 
@@ -633,30 +630,30 @@ This can be graphically represented as
 
 $$
 \begin{align*}
-\mathbb{M} &\equiv \begin{pmatrix}
+\mathbb{M} &\equiv \begin{bmatrix}
 \mathbb{M}_{0,0}   && \cdots && \mathbb{M}_{0,N-1} \\
 \vdots    && \ddots && \vdots \\
 \mathbb{M}_{N-1,0} && \cdots && \mathbb{M}_{N-1,N-1}
-\end{pmatrix} \\
-&\equiv \begin{pmatrix}
-\begin{pmatrix}
+\end{bmatrix} \\
+&\equiv \begin{bmatrix}
+\begin{bmatrix}
    \mathbb{M}_{0,0}\left[0,0\right]     && \cdots && \mathbb{M}_{0,0}\left[0,N_j-1\right] \\
    \vdots                      && \ddots && \vdots \\
    \mathbb{M}_{0,0}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,0}\left[N_i-1,N_j-1\right]
-\end{pmatrix} && \cdots && \begin{pmatrix}
+\end{bmatrix} && \cdots && \begin{bmatrix}
    \mathbb{M}_{0,N-1}\left[0,0\right]     && \cdots && \mathbb{M}_{0,N-1}\left[0,N_j-1\right] \\
    \vdots                        && \ddots && \vdots \\
-   \mathbb{M}_{0,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix} \\
+   \mathbb{M}_{0,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix} \\
 \vdots && \ddots && \vdots \\
-\begin{pmatrix}
+\begin{bmatrix}
    \mathbb{M}_{N-1,0}\left[0,0\right]     && \cdots && \mathbb{M}_{N-1,0}\left[0,N_j-1\right] \\
    \vdots                        && \ddots && \vdots \\
    \mathbb{M}_{N-1,0}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,0}\left[N_i-1,N_j-1\right]
-\end{pmatrix} && \cdots && \begin{pmatrix}
+\end{bmatrix} && \cdots && \begin{bmatrix}
    \mathbb{M}_{N-1,N-1}\left[0,0\right]     && \cdots && \mathbb{M}_{N-1,N-1}\left[0,N_j-1\right] \\
    \vdots                          && \ddots && \vdots \\
-   \mathbb{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{pmatrix}
-\end{pmatrix}
+   \mathbb{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix}
+\end{bmatrix}
 \end{align*}
 $$
 
@@ -670,12 +667,12 @@ included in this mapping. The following illustrates this mapping.
 
 $$
 \begin{align*}
-\begin{pmatrix}
+\begin{bmatrix}
 \mathbb{M}_{0,0} &&         &&         && \mathbb{M}_{0,3} \\
         && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} &&         \\
         && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} \\
 \mathbb{M}_{3,0} &&         && \mathbb{M}_{3,2} && \mathbb{M}_{3,3}
-\end{pmatrix} &\equiv
+\end{bmatrix} &\equiv
 \begin{bmatrix}
 \mathbb{M}_{0,0} && \mathbb{M}_{0,3} && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} && \mathbb{M}_{3,0} && \mathbb{M}_{3,2} && \mathbb{M}_{3,3} \\
 [[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] \\
@@ -692,9 +689,10 @@ $$
 In the first equation, the upper row contains the present block entries and the bottom row their
 column indices per row to obtain a flattened representation of the matrix. In the last equivalence,
 the column indices, in turn, are also flattened into a separate flattened representation of the
-column indices and the start indices of each row - the index pointer (`indptr`). Note that the size
-of `indptr` is 1 greater than the amount of rows. This enables describing the amount of elements
-in each row as the difference between its element in `indptr` and the next element.
+column indices and the start indices of each row, i.e., the index pointer (`indptr`). Note that the
+size of `indptr` is 1 greater than the amount of rows. This enables describing the amount of
+elements in a given row $i$ as the difference between the respective element and the next, i.e.,
+$\text{indptr}[i + 1] - \text{indptr}[i]$.
 
 Looping over the rows and columns becomes trivial. Let $\text{indptr}$ be the start. The double loop
 becomes:
@@ -709,13 +707,14 @@ becomes:
 
 ### Block-sparse LU solving
 
-Solving an equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ using a
-[pre-factored LU factorization](#block-sparse-lu-factorization) is done using the regular forward
-and backward substitutions. Since the matrix is already ordered such that the amount of
-[fill-ins](#pivot-operations) is minimal, permutations are restricted to within each block. The
-first step of the block-sparse LU solving therefore permutes the rows within each block:
-$\boldsymbol{b}^{\prime} = \mathbb{P}\boldsymbol{b}$. After that, the forward substitution step
-essentially amounts to solving the matrix equation
+An equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can be solved using
+[LU factorization](#block-sparse-lu-factorization) by forward and backward substitutions. Since the
+blocks of the matrix are already ordered in a way that minimizes the amount of
+[fill-ins](#pivot-operations), it is recommended not to permute across blocks, as that would defeat
+the whole purpose of doing the reordering. Permutations are therefore restricted to intra-block
+operations. The first step of the block-sparse LU solving therefore permutes the rows within each
+block: $\boldsymbol{b}^{\prime} = \mathbb{P}\boldsymbol{b}$. After that, the forward substitution
+step essentially amounts to solving the matrix equation
 $\mathbb{L}\boldsymbol{y} = \boldsymbol{b}^{\prime}$, followed by the backwards substitution by
 solving $\mathbb{U}\boldsymbol{z} = \mathbb{y}$. The final result is then obtained by applying the
 column permutation within each block: $\boldsymbol{x} = \mathbb{Q}\boldsymbol{z}$.
@@ -728,9 +727,9 @@ The row permutation is applied as follows.
    1. If the matrix is a block matrix:
       1. Apply the current row's block permutation:
          $\boldsymbol{b}\left[i\right] \gets \mathbb{P}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
-      2. Proceed.
+      2. Proceed with the next iteration.
    2. Else:
-      1. Proceed.
+      1. Proceed with the next iteration.
 
 The equation $\mathbb{L}\boldsymbol{y} = \mathbb{P}\boldsymbol{b}$ is solved as follows.
 
@@ -740,9 +739,9 @@ The equation $\mathbb{L}\boldsymbol{y} = \mathbb{P}\boldsymbol{b}$ is solved as 
       2. Continue with next block-column.
    2. If the matrix is a block matrix:
       1. Follow the same steps within the block.
-      2. Proceed.
+      2. Proceed with the next iteration.
    3. Else:
-      1. Proceed.
+      1. Proceed with the next iteration.
 
 #### Backward substitution
 
@@ -772,7 +771,7 @@ Apply the column permutation as follows.
 
 ```{note}
 If [pivot perturbation](#pivot-perturbation) was used to obtain the LU decomposition, the solution
-obtained here is an approximation of the exact solution. The approximation can be improved using
+obtained here is an approximation to the exact solution. The accuracy can be improved using
 [iterative refinement](#iterative-refinement-of-lu-solver-solutions).
 ```
 
