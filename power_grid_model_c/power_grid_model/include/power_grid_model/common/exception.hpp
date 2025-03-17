@@ -63,7 +63,7 @@ class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
         append_msg(std::format(
-            "Conflicting voltage for line {},\n voltage at from node {} is {}\n voltage at to node {} is {}\n",
+            "Conflicting voltage for line {}\n voltage at from node {} is {}\n voltage at to node {} is {}\n",
             detail::to_string(id), detail::to_string(id1), detail::to_string(u1), detail::to_string(id2),
             detail::to_string(u2)));
     }
