@@ -16,6 +16,7 @@ from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
     AutomaticTapCalculationError,
+    AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
     IDWrongType,
@@ -55,6 +56,7 @@ KNOWN_EXCEPTIONS = {
         InvalidMeasuredObject,
         InvalidRegulatedObject,
         AutomaticTapCalculationError,
+        AutomaticTapInputError,
         InvalidTransformerClock,
         NotObservableError,
         SparseMatrixError,

@@ -6,7 +6,11 @@ SPDX-License-Identifier: MPL-2.0
 
 # power_grid_model (Python API)
 
-This is the Python API reference for the `power-grid-model` library
+This is the Python API reference for the `power-grid-model` library.
+Due to the nature of how Python module works, we cannnot hide the implementation detail completely from the user.
+As a general rule, any Python modules/functions/classes which are not documented in this API documentation, 
+are internal implementations.
+**The user should not use any of them. We do not guarantee the stability or even the existence of those modules.**
 
 ```{eval-rst}
 .. py:module:: power_grid_model
@@ -71,14 +75,18 @@ This includes all miscellaneous type hints not under dataset or categories.
 .. autofunction:: power_grid_model.validation.validate_input_data
 .. autofunction:: power_grid_model.validation.validate_batch_data
 .. autofunction:: power_grid_model.validation.assert_valid_input_data
-.. autofunction:: power_grid_model.validation.assert_valid_batch_data  
+.. autofunction:: power_grid_model.validation.assert_valid_batch_data
+.. autofunction:: power_grid_model.validation.assert_valid_data_structure
 .. autofunction:: power_grid_model.validation.errors_to_string
+.. autoclass:: power_grid_model.validation.ValidationException
 ```
 
 ### validation errors
 
 ```{eval-rst}
-.. autoclass:: power_grid_model.validation.errors.ValidationError
+.. automodule:: power_grid_model.validation.errors
+   :undoc-members:
+   :show-inheritance:
 ```
 
 ## utils

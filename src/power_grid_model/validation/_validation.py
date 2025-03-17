@@ -33,14 +33,7 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.validation.errors import (
-    IdNotInDatasetError,
-    InvalidIdError,
-    MissingValueError,
-    MultiComponentNotUniqueError,
-    ValidationError,
-)
-from power_grid_model.validation.rules import (
+from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,
@@ -63,6 +56,13 @@ from power_grid_model.validation.rules import (
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     none_missing as _none_missing,
     valid_p_q_sigma as _valid_p_q_sigma,
+)
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    ValidationError,
 )
 from power_grid_model.validation.utils import _update_input_data
 
@@ -950,6 +950,7 @@ def validate_regulator(data: SingleDataset, component: ComponentType) -> list[Va
 def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationError]:
     errors = validate_regulator(data, ComponentType.transformer_tap_regulator)
     errors += _all_boolean(data, ComponentType.transformer_tap_regulator, "status")
+    errors += _all_unique(data, ComponentType.transformer_tap_regulator, "regulated_object")
     errors += _all_valid_enum_values(
         data, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
     )
