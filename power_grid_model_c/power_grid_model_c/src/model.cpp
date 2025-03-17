@@ -8,6 +8,7 @@
 #include "power_grid_model_c/model.h"
 
 #include "handle.hpp"
+#include "math_solver.hpp"
 #include "options.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
@@ -28,7 +29,9 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
                                      PGM_ConstDataset const* input_dataset) {
     return call_with_catch(
         handle,
-        [system_frequency, input_dataset] { return new PGM_PowerGridModel{system_frequency, *input_dataset, 0}; },
+        [system_frequency, input_dataset] {
+            return new PGM_PowerGridModel{system_frequency, *input_dataset, get_math_solver_dispatcher(), 0};
+        },
         PGM_regular_error);
 }
 
