@@ -36,8 +36,8 @@ class Base {
     Base& operator=(Base&&) = default;
 
   protected:
-    Base(const Base&) = default;
-    Base& operator=(const Base&) = default;
+    Base(Base const&) = default;
+    Base& operator=(Base const&) = default;
 
   private:
     ID id_;

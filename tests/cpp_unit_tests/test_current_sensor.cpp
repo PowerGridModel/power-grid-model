@@ -78,12 +78,12 @@ TEST_CASE("Test current sensor") {
             CHECK(sym_sensor_output.i_angle_residual == doctest::Approx(0.0));
 
             // Check symmetric sensor output for asymmetric parameters
-            CHECK(asym_sensor_param.i_real_variance[0] == doctest::Approx(i_variance_pu));
-            CHECK(asym_sensor_param.i_imag_variance[1] ==
+            CHECK(asym_sensor_param.measurement.real_component.variance[0] == doctest::Approx(i_variance_pu));
+            CHECK(asym_sensor_param.measurement.imag_component.variance[1] ==
                   doctest::Approx(i_variance_pu * sin(deg_240) * sin(deg_240) +
                                   i_angle_variance_pu * i_pu * i_pu * cos(deg_240) * cos(deg_240)));
-            CHECK(real(asym_sensor_param.value[0]) == doctest::Approx(i_pu));
-            CHECK(imag(asym_sensor_param.value[1]) == doctest::Approx(i_pu * sin(deg_240)));
+            CHECK(real(asym_sensor_param.measurement.value()[0]) == doctest::Approx(i_pu));
+            CHECK(imag(asym_sensor_param.measurement.value()[1]) == doctest::Approx(i_pu * sin(deg_240)));
 
             CHECK(sym_sensor_output_asym_param.id == 0);
             CHECK(sym_sensor_output_asym_param.energized == 1);

@@ -42,7 +42,6 @@ using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr Idx2D unregulated_idx = {.group = -1, .pos = -1};
-
 struct TrafoGraphVertex {
     bool is_source{};
 };
@@ -55,11 +54,11 @@ struct TrafoGraphEdge {
     constexpr TrafoGraphEdge(Idx2D regulated_idx_, EdgeWeight weight_)
         : regulated_idx{regulated_idx_}, weight{weight_} {}
 
-    bool operator==(const TrafoGraphEdge& other) const {
+    bool operator==(TrafoGraphEdge const& other) const {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
 
-    auto constexpr operator<=>(const TrafoGraphEdge& other) const {
+    auto constexpr operator<=>(TrafoGraphEdge const& other) const {
         if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
@@ -334,7 +333,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
                                          "away from the source than the tap side.\n");
         }
         if (!is_unreachable(edge_res)) {
-            result.push_back({.regulated_idx = graph[e].regulated_idx, .weight = edge_res});
+            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
 
@@ -345,7 +344,7 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
     auto sorted_trafos = w_trafo_list;
 
     std::ranges::sort(sorted_trafos,
-                      [](const TrafoGraphEdge& a, const TrafoGraphEdge& b) { return a.weight < b.weight; });
+                      [](TrafoGraphEdge const& a, TrafoGraphEdge const& b) { return a.weight < b.weight; });
 
     RankedTransformerGroups groups;
     auto previous_weight = std::numeric_limits<EdgeWeight>::lowest();

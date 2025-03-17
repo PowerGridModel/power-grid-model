@@ -436,8 +436,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param order Order enum to determine if (chi, psi) = (row, col) or (col, row)
     /// @param measured_power
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, Order const order,
-                                    const auto& measured_power) {
+                                    auto const& y_xi_xi, auto const& y_xi_mu, auto const& u_state, Order const order,
+                                    auto const& measured_power) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
         auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
 
@@ -461,8 +461,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 
     void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    auto& left_block, const auto& right_block, const auto& measured_power,
-                                    const auto& f_x_complex) {
+                                    auto& left_block, auto const& right_block, auto const& measured_power,
+                                    auto const& f_x_complex) {
         auto const& block_F_T_k_w = transpose_multiply_weight(left_block, measured_power);
 
         multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, left_block);

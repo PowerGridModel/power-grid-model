@@ -53,7 +53,7 @@ class InvalidArguments : public PowerGridError {
 class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
-    MissingCaseForEnumError(std::string const& method, const T& value)
+    MissingCaseForEnumError(std::string const& method, T const& value)
         : InvalidArguments{method, std::string{typeid(T).name()} + " #" + detail::to_string(static_cast<IntS>(value))} {
     }
 };
@@ -291,7 +291,7 @@ class UnreachableHit : public PowerGridError {
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>
-    TapSearchStrategyIncompatibleError(std::string const& method, const T1& value1, const T2& value2)
+    TapSearchStrategyIncompatibleError(std::string const& method, T1 const& value1, T2 const& value2)
         : InvalidArguments{
               method, std::string{typeid(T1).name()} + " #" + detail::to_string(static_cast<IntS>(value1)) + " and " +
                           std::string{typeid(T2).name()} + " #" + detail::to_string(static_cast<IntS>(value2))} {}

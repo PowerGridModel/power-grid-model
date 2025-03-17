@@ -673,9 +673,11 @@ class Deserializer {
         while (n_components-- != 0) {
             component_key_ = parse_string();
             Idx const component_size = parse_map_array<visit_array_t, stay_offset>().size;
-            count_per_scenario.push_back({.component = component_key_, .size = component_size, .offset = offset_});
-            // skip all the real content
-            parse_skip();
+            size_t const scenario_offset = offset_;
+            // skip all the real content but check if it has map
+            bool const has_map = parse_skip_check_map();
+            count_per_scenario.push_back(
+                {.component = component_key_, .size = component_size, .offset = scenario_offset, .has_map = has_map});
         }
         component_key_ = {};
         return count_per_scenario;
@@ -724,8 +726,8 @@ class Deserializer {
                 elements_per_scenario * batch_size;                                     // multiply
         handler.add_component_info(component_key_, elements_per_scenario, total_elements);
         // check if all scenarios only contain array data
-        bool const only_values_in_data = std::none_of(component_byte_meta.cbegin(), component_byte_meta.cend(),
-                                                      [](auto const& x) { return x.has_map; });
+        bool const only_values_in_data =
+            std::ranges::none_of(component_byte_meta, [](auto const& x) { return x.has_map; });
         msg_data_offsets_.push_back(std::move(component_byte_meta));
         // enable attribute indications if possible
         if (only_values_in_data) {

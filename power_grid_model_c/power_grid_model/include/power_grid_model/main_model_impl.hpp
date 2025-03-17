@@ -369,7 +369,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_, update_data, 0, components_to_update, update_independence, false);
     }
 
-    void update_state(const UpdateChange& changes) {
+    void update_state(UpdateChange const& changes) {
         // if topology changed, everything is not up to date
         // if only param changed, set param to not up to date
         is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
@@ -523,9 +523,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                *meta_data_,
                            },
                            ignore_output);
-        } catch (const SparseMatrixError&) { // NOLINT(bugprone-empty-catch) // NOSONAR
+        } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
-        } catch (const NotObservableError&) { // NOLINT(bugprone-empty-catch) // NOSONAR
+        } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         }
 

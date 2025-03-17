@@ -173,9 +173,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         case const_i:
             return params() * cabs(u);
         default:
-            auto const& load_gen_name =
-                this->name; // NOLINT(readability-static-accessed-through-instance) // for derived class type
-            throw MissingCaseForEnumError(std::string{load_gen_name} + " power scaling factor", this->type());
+            throw MissingCaseForEnumError(std::string{name} + " power scaling factor", this->type());
         }
     }
 };
