@@ -7,6 +7,7 @@
 #include "iterative_current_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
 #include "linear_pf_solver.hpp"
+#include "math_solver_dispatch.hpp"
 #include "newton_raphson_pf_solver.hpp"
 #include "newton_raphson_se_solver.hpp"
 #include "short_circuit_solver.hpp"
@@ -24,16 +25,18 @@ namespace power_grid_model {
 
 namespace math_solver {
 
-template <symmetry_tag sym> class MathSolver {
+template <symmetry_tag sym> class MathSolver : MathSolverBase<sym> {
   public:
     explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : topo_ptr_{topo_ptr},
           all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(),
                                    [](LoadGenType x) { return x == LoadGenType::const_y; })} {}
 
+    MathSolver<sym>* clone() const final { return new MathSolver<sym>(*this); }
+
     SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                      CalculationInfo& calculation_info, CalculationMethod calculation_method,
-                                     YBus<sym> const& y_bus) {
+                                     YBus<sym> const& y_bus) final {
         using enum CalculationMethod;
 
         // set method to always linear if all load_gens have const_y
@@ -57,7 +60,7 @@ template <symmetry_tag sym> class MathSolver {
 
     SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                            CalculationInfo& calculation_info, CalculationMethod calculation_method,
-                                           YBus<sym> const& y_bus) {
+                                           YBus<sym> const& y_bus) final {
         using enum CalculationMethod;
 
         switch (calculation_method) {
@@ -75,9 +78,8 @@ template <symmetry_tag sym> class MathSolver {
     ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, CalculationInfo& calculation_info,
                                                     CalculationMethod calculation_method, YBus<sym> const& y_bus) {
         if (calculation_method != CalculationMethod::default_method &&
-            calculation_method != CalculationMethod::iec60909) {
-            throw InvalidCalculationMethod{};
-        }
+            calculation_method != CalculationMethod::iec60909)
+            final { throw InvalidCalculationMethod{}; }
 
         // construct model if needed
         if (!iec60909_sc_solver_.has_value()) {
@@ -89,14 +91,14 @@ template <symmetry_tag sym> class MathSolver {
         return iec60909_sc_solver_.value().run_short_circuit(y_bus, input);
     }
 
-    void clear_solver() {
+    void clear_solver() final {
         newton_raphson_pf_solver_.reset();
         linear_pf_solver_.reset();
         iterative_current_pf_solver_.reset();
         iterative_linear_se_solver_.reset();
     }
 
-    void parameters_changed(bool changed) {
+    void parameters_changed(bool changed) final {
         if (iterative_current_pf_solver_.has_value()) {
             iterative_current_pf_solver_->parameters_changed(changed);
         }
