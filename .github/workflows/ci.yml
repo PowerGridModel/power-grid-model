@@ -44,8 +44,11 @@ jobs:
     with:
       target: "all power_grid_model_benchmark_cpp"
 
-  citations:
+  check-citations:
     runs-on: ubuntu-24.04
+    # we need to define the output to access the output of the current job in the next job 
+    outputs:
+      citation_modified: ${{ steps.check.outputs.citation_modified }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,10 +63,15 @@ jobs:
           echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
 
       - name: Check if CITATION.cff was modified
+        id: check
         if: contains(env.changed_files, 'CITATION.cff') || contains(env.changed_files, '.github/workflows/citations.yml')
         run: echo "citation_modified=True" >> $GITHUB_OUTPUT
 
-    # uses: "./.github/workflows/citations.yml"
+    citations:
+      runs-on: ubuntu-24.04
+      needs: check-citations
+      if: needs.check-citations.outputs.citation_modified == "True"
+      run: echo "uses statement would be reached"
 
   ci-passed:
     runs-on: ubuntu-latest
