@@ -10,7 +10,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Downloads](https://static.pepy.tech/badge/power-grid-model)](https://pepy.tech/project/power-grid-model)
 [![Downloads](https://static.pepy.tech/badge/power-grid-model/month)](https://pepy.tech/project/power-grid-model)
 
-[![Build and Test C++ and Python](https://github.com/PowerGridModel/power-grid-model/actions/workflows/build-test-release.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/build-test-release.yml)
+[![Build and Test C++ and Python](https://github.com/PowerGridModel/power-grid-model/actions/workflows/ci.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/ci.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/check-code-quality.yml)
 [![Clang Tidy](https://github.com/PowerGridModel/power-grid-model/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/clang-tidy.yml)
 [![REUSE Compliance Check](https://github.com/PowerGridModel/power-grid-model/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/reuse-compliance.yml)
