@@ -71,7 +71,8 @@ jobs:
       runs-on: ubuntu-24.04
       needs: check-citations
       if: needs.check-citations.outputs.citation_modified == "True"
-      run: echo "uses statement would be reached"
+      steps:
+      - run: echo "uses statement would be reached"
 
   ci-passed:
     runs-on: ubuntu-latest
