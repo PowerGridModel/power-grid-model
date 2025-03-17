@@ -70,7 +70,7 @@ jobs:
   citations:
     runs-on: ubuntu-24.04
     needs: check-citations
-    if: needs.check-citations.outputs.citation_modified == "True"
+    if: needs.check-citations.outputs.citation_modified == 'True'
     steps:
       - name: debug
         run: echo "uses statement would be reached"
