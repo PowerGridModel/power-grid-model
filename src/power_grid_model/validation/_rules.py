@@ -70,7 +70,6 @@ from power_grid_model.validation.errors import (
 )
 from power_grid_model.validation.utils import (
     _eval_expression,
-    _get_indexer,
     _get_mask,
     _get_valid_ids,
     _nan_type,
