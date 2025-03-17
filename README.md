@@ -23,7 +23,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 
-[![Nightly build](https://github.com/PowerGridModel/power-grid-model/actions/workflows/ci.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/ci.yml)
+[![Nightly build](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
