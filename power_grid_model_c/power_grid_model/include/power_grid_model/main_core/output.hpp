@@ -87,7 +87,7 @@ template <typename Component, typename IndexType, class ComponentContainer, type
                                  decltype(*comp_base_sequence_cbegin<Component>(MainModelState<ComponentContainer>{}))>
 constexpr ResIt produce_output(MainModelState<ComponentContainer> const& state, ResIt res_it, ResFunc&& func) {
     return std::transform(get_component_citer<Component>(state).begin(), get_component_citer<Component>(state).end(),
-                          comp_base_sequence_cbegin<Component>(state), res_it, func);
+                          comp_base_sequence_cbegin<Component>(state), res_it, std::forward<ResFunc>(func));
 }
 
 } // namespace detail

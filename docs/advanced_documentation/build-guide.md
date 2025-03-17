@@ -208,7 +208,7 @@ export CXX=clang++-18            # or g++-13
 export CC=clang-18               # gcc-13
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
 export LLVM_COV=llvm-cov-18
-export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
+export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 
 ### Ubuntu Software Packages

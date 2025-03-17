@@ -91,9 +91,20 @@ using IntSVector = std::vector<IntS>;
 template <class T, class... Ts>
 concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
 
+namespace capturing {
+// perfect forward into void
+template <class... T>
+constexpr void into_the_void(T&&... /*ignored*/) { // NOLINT(cppcoreguidelines-missing-std-forward)
+    // do nothing; the constexpr allows all compilers to optimize this away
+}
+} // namespace capturing
+
 // functor to include all
 struct IncludeAll {
-    template <class... T> constexpr bool operator()(T&&... /*ignored*/) const { return true; }
+    template <class... T> consteval bool operator()(T&&... args) const {
+        capturing::into_the_void(std::forward<T>(args)...);
+        return true;
+    }
 };
 constexpr IncludeAll include_all{};
 
