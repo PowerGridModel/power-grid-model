@@ -187,7 +187,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
-            cflags.append("-mmacosx-version-min=10.15")
+            cflags.append("-mmacosx-version-min=13.3")
 
     # list of extensions
     exts = [
