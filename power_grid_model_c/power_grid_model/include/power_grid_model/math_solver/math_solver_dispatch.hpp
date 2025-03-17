@@ -43,6 +43,7 @@ template <symmetry_tag sym> class MathSolverBase {
     virtual void parameters_changed(bool changed) = 0;
 
   protected:
+    MathSolverBase() = default;
     MathSolverBase(MathSolverBase const&) = default;
     MathSolverBase& operator=(MathSolverBase const&) = default;
     MathSolverBase(MathSolverBase&&) noexcept = default;
@@ -99,12 +100,12 @@ template <symmetry_tag sym> class MathSolverProxy {
     MathSolverProxy& operator=(MathSolverProxy&& other) noexcept = default;
     ~MathSolverProxy() = default;
 
+    MathSolverBase<sym>& get() { return *solver_; }
+    MathSolverBase<sym> const& get() const { return *solver_; }
+
   private:
     MathSolverDispatcher const* dispatcher_{};
     std::unique_ptr<MathSolverBase<sym>> solver_;
-
-    MathSolverBase<sym>& get() { return *solver_; }
-    MathSolverBase<sym> const& get() const { return *solver_; }
 };
 
 } // namespace math_solver

@@ -25,7 +25,7 @@ namespace power_grid_model {
 
 namespace math_solver {
 
-template <symmetry_tag sym> class MathSolver : MathSolverBase<sym> {
+template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
   public:
     explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : topo_ptr_{topo_ptr},
@@ -76,10 +76,12 @@ template <symmetry_tag sym> class MathSolver : MathSolverBase<sym> {
     }
 
     ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, CalculationInfo& calculation_info,
-                                                    CalculationMethod calculation_method, YBus<sym> const& y_bus) {
+                                                    CalculationMethod calculation_method,
+                                                    YBus<sym> const& y_bus) final {
         if (calculation_method != CalculationMethod::default_method &&
-            calculation_method != CalculationMethod::iec60909)
-            final { throw InvalidCalculationMethod{}; }
+            calculation_method != CalculationMethod::iec60909) {
+            throw InvalidCalculationMethod{};
+        }
 
         // construct model if needed
         if (!iec60909_sc_solver_.has_value()) {

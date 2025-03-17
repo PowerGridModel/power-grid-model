@@ -451,8 +451,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 [&state](Idx n_math_solvers) { return prepare_power_flow_input<sym>(state, n_math_solvers); },
                 [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               PowerFlowInput<sym> const& input) {
-                    return solver.run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                 y_bus);
+                    return solver.get().run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
+                                                       y_bus);
                 });
         };
     }
@@ -464,8 +464,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 [&state](Idx n_math_solvers) { return prepare_state_estimation_input<sym>(state, n_math_solvers); },
                 [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               StateEstimationInput<sym> const& input) {
-                    return solver.run_state_estimation(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                       y_bus);
+                    return solver.get().run_state_estimation(input, err_tol, max_iter, calculation_info_,
+                                                             calculation_method, y_bus);
                 });
         };
     }
@@ -481,7 +481,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 },
                 [this, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                            ShortCircuitInput const& input) {
-                    return solver.run_short_circuit(input, calculation_info_, calculation_method, y_bus);
+                    return solver.get().run_short_circuit(input, calculation_info_, calculation_method, y_bus);
                 });
         };
     }
@@ -1078,7 +1078,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The default lambda `include_all` always returns `true`.
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -1097,7 +1097,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -1117,7 +1117,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
+    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::* component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
@@ -1317,7 +1317,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
                 get_y_bus<sym>()[idx].register_parameters_changed_callback(
-                    [solver = std::ref(solvers[idx])](bool changed) { solver.get().parameters_changed(changed); });
+                    [solver = std::ref(solvers[idx])](bool changed) {
+                        solver.get().get().parameters_changed(changed);
+                    });
             }
         } else if (!is_parameter_up_to_date<sym>()) {
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
