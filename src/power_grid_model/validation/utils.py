@@ -13,7 +13,7 @@ import numpy as np
 from power_grid_model import power_grid_meta_data
 from power_grid_model._core.dataset_definitions import (
     ComponentType,
-    ComponentTypeLike,
+    ComponentTypeLike as _ComponentTypeLike,
     ComponentTypeVar,
     DatasetType,
     _str_to_component_type,
@@ -104,7 +104,7 @@ def _update_input_data(input_data: SingleDataset, update_data: SingleDataset):
 
 
 def _update_component_data(
-    component: ComponentTypeLike, input_data: SingleComponentData, update_data: SingleComponentData
+    component: _ComponentTypeLike, input_data: SingleComponentData, update_data: SingleComponentData
 ) -> None:
     """
     Update the data in a single component data set, with another single component data set,
@@ -117,7 +117,7 @@ def _update_component_data(
 
 
 def _update_component_array_data(
-    component: ComponentTypeLike, input_data: SingleArray, update_data: SingleArray
+    component: _ComponentTypeLike, input_data: SingleArray, update_data: SingleArray
 ) -> None:
     """
     Update the data in a numpy array, with another numpy array,
@@ -190,7 +190,7 @@ def errors_to_string(
     return msg
 
 
-def _nan_type(component: ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
+def _nan_type(component: _ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
@@ -239,7 +239,7 @@ def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: int | No
 
 
 def _set_default_value(
-    data: SingleDataset, component: ComponentTypeLike, field: str, default_value: int | float | np.ndarray
+    data: SingleDataset, component: _ComponentTypeLike, field: str, default_value: int | float | np.ndarray
 ):
     """
     This function sets the default value in the data that is to be validated, so the default values are included in the
@@ -266,7 +266,7 @@ def _set_default_value(
         data[component][field][mask] = default_value
 
 
-def _get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list[ComponentTypeVar]) -> list[int]:
+def _get_valid_ids(data: SingleDataset, ref_components: _ComponentTypeLike | list[ComponentTypeVar]) -> list[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -296,7 +296,7 @@ def _get_valid_ids(data: SingleDataset, ref_components: ComponentTypeLike | list
     return list(valid_ids)
 
 
-def _get_mask(data: SingleDataset, component: ComponentTypeLike, field: str, **filters: Any) -> np.ndarray:
+def _get_mask(data: SingleDataset, component: _ComponentTypeLike, field: str, **filters: Any) -> np.ndarray:
     """
     Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
 
