@@ -56,7 +56,7 @@ template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {
 class MathSolverDispatcher {
   public:
     template <symmetry_tag sym> struct Config {
-        template <template <symmetry_tag> class MathSolverType>
+        template <template <class> class MathSolverType>
         constexpr Config(math_solver_tag<MathSolverType> /* unused */)
             : create{[](std::shared_ptr<MathModelTopology const> const& topo_ptr) -> MathSolverBase<sym>* {
                   return new MathSolverType<sym>{topo_ptr};
@@ -65,7 +65,7 @@ class MathSolverDispatcher {
         std::add_pointer_t<MathSolverBase<sym>*(std::shared_ptr<MathModelTopology const> const&)> create;
     };
 
-    template <template <symmetry_tag> class MathSolverType>
+    template <template <class> class MathSolverType>
     constexpr MathSolverDispatcher(math_solver_tag<MathSolverType> /* unused */)
         : sym_config_{math_solver_tag<MathSolverType>{}}, asym_config_{math_solver_tag<MathSolverType>{}} {}
 
