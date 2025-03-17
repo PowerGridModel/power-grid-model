@@ -243,7 +243,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
         return true;
     }
 
-    MapArrayVisitor<map_array>() = default;
+    MapArrayVisitor() = default;
 };
 
 struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
@@ -293,7 +293,7 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
         return true;
     }
 
-    ValueVisitor<T>(T& v) : DefaultErrorVisitor<ValueVisitor<T>>{}, value{v} {}
+    ValueVisitor(T& v) : DefaultErrorVisitor<ValueVisitor<T>>{}, value{v} {}
 };
 
 template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
@@ -319,7 +319,7 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
         return true;
     }
 
-    ValueVisitor<double>(double& v) : DefaultErrorVisitor<ValueVisitor<double>>{}, value{v} {}
+    ValueVisitor(double& v) : DefaultErrorVisitor<ValueVisitor<double>>{}, value{v} {}
 };
 
 template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
@@ -372,8 +372,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
         return true;
     }
 
-    ValueVisitor<RealValue<asymmetric_t>>(RealValue<asymmetric_t>& v)
-        : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>>{}, value{v} {}
+    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>>{}, value{v} {}
 };
 
 } // namespace detail
