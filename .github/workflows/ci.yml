@@ -67,12 +67,12 @@ jobs:
         if: contains(env.changed_files, 'CITATION.cff') || contains(env.changed_files, '.github/workflows/citations.yml')
         run: echo "citation_modified=True" >> $GITHUB_OUTPUT
 
-    citations:
-      runs-on: ubuntu-24.04
-      needs: check-citations
-      if: needs.check-citations.outputs.citation_modified == "True"
-      steps:
-      - run: echo "uses statement would be reached"
+  citations:
+    runs-on: ubuntu-24.04
+    needs: check-citations
+    if: needs.check-citations.outputs.citation_modified == "True"
+    steps:
+    - run: echo "uses statement would be reached"
 
   ci-passed:
     runs-on: ubuntu-latest
