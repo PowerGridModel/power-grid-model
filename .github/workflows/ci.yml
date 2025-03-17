@@ -16,6 +16,7 @@ on:
   merge_group:
   # run this workflow manually from the Actions tab
   workflow_dispatch:
+  # Nightly run
   schedule:
     - cron: "0 2 * * *" # Based on UTC time
 
@@ -60,13 +61,7 @@ jobs:
 
       - name: Check if CITATION.cff was modified
         if: contains(env.changed_files, 'CITATION.cff') || contains(env.changed_files, '.github/workflows/citations.yml')
-        run: echo "either CITATION.cff or .github/workflows/citations.yml has been modified!"
-
-      - name: Check if random name would return false
-        if: contains(env.changed_files, 'random-name.cff')
-        run: echo "random-name.cff has been modified!"
-
-
+        run: echo "citation_modified=True" >> $GITHUB_OUTPUT
 
     # uses: "./.github/workflows/citations.yml"
 
