@@ -22,6 +22,32 @@ namespace math_solver {
 // forward declare YBus
 template <symmetry_tag sym> class YBus;
 
+// abstract base class
+template <symmetry_tag sym> class MathSolverBase {
+  public:
+    virtual ~MathSolverBase() = default;
+
+    virtual SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
+                                             CalculationInfo& calculation_info, CalculationMethod calculation_method,
+                                             YBus<sym> const& y_bus) = 0;
+    virtual SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
+                                                   CalculationInfo& calculation_info,
+                                                   CalculationMethod calculation_method, YBus<sym> const& y_bus) = 0;
+    virtual ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input,
+                                                            CalculationInfo& calculation_info,
+                                                            CalculationMethod calculation_method,
+                                                            YBus<sym> const& y_bus) = 0;
+    virtual void clear_solver() = 0;
+    virtual void parameters_changed(bool changed) = 0;
+
+  protected:
+    MathSolverBase(MathSolverBase const&) = default;
+    MathSolverBase& operator=(MathSolverBase const&) = default;
+    MathSolverBase(MathSolverBase&&) noexcept = default;
+    MathSolverBase& operator=(MathSolverBase&&) noexcept = default;
+};
+
+// tag of math solver concrete types
 template <template <symmetry_tag> class MathSolverType> struct math_solver_tag {};
 
 class MathSolverDispatcher {
