@@ -66,7 +66,7 @@ class MathSolverDispatcher {
     };
 
     template <template <class> class MathSolverType>
-    constexpr MathSolverDispatcher(math_solver_tag<MathSolverType> tag): sym_config_{tag}, asym_config_{tag} {}
+    constexpr MathSolverDispatcher(math_solver_tag<MathSolverType> tag) : sym_config_{tag}, asym_config_{tag} {}
 
     template <symmetry_tag sym> Config<sym> const& get_config() const {
         if constexpr (is_symmetric_v<sym>) {
