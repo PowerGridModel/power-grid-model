@@ -1,0 +1,6 @@
+{
+  "calculation_method": "newton_raphson",
+  "tap_changing_strategy": "fast_any_tap",
+  "rtol": 1e-05,
+  "atol": 1e-05
+}

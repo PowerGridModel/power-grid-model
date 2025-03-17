@@ -208,7 +208,8 @@ inline std::pair<IdxVector, std::vector<std::pair<Idx, Idx>>> minimum_degree_ord
             alpha.push_back(alpha.back() == from ? to : from);
             return {alpha, fills};
         }
-        std::ranges::copy(detail::remove_vertices_update_degrees(u, d, dgd, fills), std::back_inserter(alpha));
+        auto result = detail::remove_vertices_update_degrees(u, d, dgd, fills);
+        alpha.insert(alpha.end(), result.begin(), result.end());
         if (d.empty()) {
             return {alpha, fills};
         }

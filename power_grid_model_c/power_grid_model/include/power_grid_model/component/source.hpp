@@ -110,8 +110,8 @@ class Source : public Appliance {
     double u_ref_;
     double u_ref_angle_;
     // positive and zero sequence ref
-    DoubleComplex y1_ref_{};
-    DoubleComplex y0_ref_{};
+    DoubleComplex y1_ref_;
+    DoubleComplex y0_ref_;
 
     template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceSolverOutput<sym_calc> appliance_solver_output;
