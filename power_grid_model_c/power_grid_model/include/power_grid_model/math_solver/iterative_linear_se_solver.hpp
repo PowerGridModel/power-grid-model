@@ -359,9 +359,6 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     }
 };
 
-template class IterativeLinearSESolver<symmetric_t>;
-template class IterativeLinearSESolver<asymmetric_t>;
-
 } // namespace iterative_linear_se
 
 using iterative_linear_se::IterativeLinearSESolver;

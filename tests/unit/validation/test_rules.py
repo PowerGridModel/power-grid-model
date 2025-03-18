@@ -11,28 +11,7 @@ from power_grid_model import ComponentType, LoadGenType, initialize_array, power
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
-from power_grid_model.validation.errors import (
-    ComparisonError,
-    FaultPhaseError,
-    InfinityError,
-    InvalidEnumValueError,
-    InvalidIdError,
-    MissingValueError,
-    MultiComponentNotUniqueError,
-    NotBetweenError,
-    NotBetweenOrAtError,
-    NotBooleanError,
-    NotGreaterOrEqualError,
-    NotGreaterThanError,
-    NotIdenticalError,
-    NotLessOrEqualError,
-    NotLessThanError,
-    NotUniqueError,
-    SameValueError,
-    TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
-)
-from power_grid_model.validation.rules import (
+from power_grid_model.validation._rules import (
     all_between,
     all_between_or_at,
     all_boolean,
@@ -56,6 +35,27 @@ from power_grid_model.validation.rules import (
     all_valid_ids,
     none_match_comparison,
     none_missing,
+)
+from power_grid_model.validation.errors import (
+    ComparisonError,
+    FaultPhaseError,
+    InfinityError,
+    InvalidEnumValueError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    NotBetweenError,
+    NotBetweenOrAtError,
+    NotBooleanError,
+    NotGreaterOrEqualError,
+    NotGreaterThanError,
+    NotIdenticalError,
+    NotLessOrEqualError,
+    NotLessThanError,
+    NotUniqueError,
+    SameValueError,
+    TwoValuesZeroError,
+    UnsupportedTransformerRegulationError,
 )
 
 
@@ -491,7 +491,7 @@ def test_none_missing():
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
         }[component][field]
 
-    with mock.patch("power_grid_model.validation.rules._nan_type", _mock_nan_type):
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
         valid = {
             "foo_test": np.array(
                 [
