@@ -109,8 +109,6 @@ template <symmetry_tag sym_type> class LinearPFSolver {
     }
 };
 
-template class LinearPFSolver<symmetric_t>;
-template class LinearPFSolver<asymmetric_t>;
 } // namespace linear_pf
 
 using linear_pf::LinearPFSolver;

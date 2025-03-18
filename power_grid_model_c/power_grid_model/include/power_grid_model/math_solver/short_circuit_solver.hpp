@@ -436,9 +436,6 @@ template <symmetry_tag sym> class ShortCircuitSolver {
     }
 };
 
-template class ShortCircuitSolver<symmetric_t>;
-template class ShortCircuitSolver<asymmetric_t>;
-
 } // namespace short_circuit
 
 using short_circuit::ShortCircuitSolver;
