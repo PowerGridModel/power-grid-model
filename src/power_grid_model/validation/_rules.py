@@ -66,12 +66,10 @@ from power_grid_model.validation.errors import (
     SameValueError,
     TransformerClockError,
     TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
     ValidationError,
 )
 from power_grid_model.validation.utils import (
     _eval_expression,
-    _get_indexer,
     _get_mask,
     _get_valid_ids,
     _nan_type,
@@ -907,51 +905,6 @@ def all_valid_fault_phases(
                 component=component,
                 fields=[fault_type_field, fault_phase_field],
                 ids=data[component]["id"][err].flatten().tolist(),
-            )
-        ]
-    return []
-
-
-def all_supported_tap_control_side(  # pylint: disable=too-many-arguments
-    data: SingleDataset,
-    component: ComponentType,
-    control_side_field: str,
-    regulated_object_field: str,
-    tap_side_fields: list[tuple[ComponentType, str]],
-    **filters: Any,
-) -> list[UnsupportedTransformerRegulationError]:
-    """
-    Args:
-        data (SingleDataset): The input/update data set for all components
-        component (ComponentType): The component of interest
-        control_side_field (str): The field of interest
-        regulated_object_field (str): The field that contains the regulated component ids
-        tap_side_fields (list[tuple[ComponentType, str]]): The fields of interest per regulated component,
-            formatted as [(component_1, field_1), (component_2, field_2)]
-        **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
-
-    Returns:
-        A list containing zero or more InvalidAssociatedEnumValueErrors; listing all the ids
-        of components where the field of interest was invalid, given the referenced object's field.
-    """
-    mask = _get_mask(data=data, component=component, field=control_side_field, **filters)
-    values = data[component][control_side_field][mask]
-
-    invalid = np.zeros_like(mask)
-
-    for ref_component, ref_field in tap_side_fields:
-        if ref_component in data:
-            indices = _get_indexer(data[ref_component]["id"], data[component][regulated_object_field], default_value=-1)
-            found = indices != -1
-            ref_comp_values = data[ref_component][ref_field][indices[found]]
-            invalid[found] = np.logical_or(invalid[found], values[found] == ref_comp_values)
-
-    if invalid.any():
-        return [
-            UnsupportedTransformerRegulationError(
-                component=component,
-                fields=[control_side_field, regulated_object_field],
-                ids=data[component]["id"][invalid].flatten().tolist(),
             )
         ]
     return []
