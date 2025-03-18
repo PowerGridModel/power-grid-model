@@ -1315,8 +1315,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
-            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto math_topo) {
-                return MathSolverProxy<sym>{math_solver_dispatcher_, std::move(math_topo)};
+            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto const& math_topo) {
+                return MathSolverProxy<sym>{math_solver_dispatcher_, math_topo};
             });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
                 get_y_bus<sym>()[idx].register_parameters_changed_callback(
