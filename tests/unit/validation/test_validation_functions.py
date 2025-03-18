@@ -14,6 +14,15 @@ from power_grid_model._core.dataset_definitions import ComponentType, DatasetTyp
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, ComponentAttributeFilterOptions, FaultType
 from power_grid_model.validation import assert_valid_input_data
+from power_grid_model.validation._validation import (
+    assert_valid_data_structure,
+    validate_generic_power_sensor,
+    validate_ids,
+    validate_input_data,
+    validate_required_values,
+    validate_unique_ids_across_components,
+    validate_values,
+)
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InfinityError,
@@ -25,15 +34,6 @@ from power_grid_model.validation.errors import (
     NotUniqueError,
     PQSigmaPairError,
     UnsupportedTransformerRegulationError,
-)
-from power_grid_model.validation.validation import (
-    assert_valid_data_structure,
-    validate_generic_power_sensor,
-    validate_ids,
-    validate_input_data,
-    validate_required_values,
-    validate_unique_ids_across_components,
-    validate_values,
 )
 
 NaN = power_grid_meta_data[DatasetType.input][ComponentType.node].nans["id"]
@@ -672,10 +672,10 @@ def test_validate_values__bad_p_q_sigma_single_component_twice():
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
-@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_greater_than_zero", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_enum_values", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_ids")
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_power_sensor__all_terminal_types(
     _all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
 ):
@@ -703,10 +703,10 @@ def test_validate_generic_power_sensor__all_terminal_types(
         ("node", MeasuredTerminalType.node),
     ],
 )
-@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_greater_than_zero", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_enum_values", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_ids")
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_power_sensor__terminal_types(
     _all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
 ):
@@ -951,8 +951,8 @@ def test_all_default_values():
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
 
 
-@patch("power_grid_model.validation.validation.validate_transformer", new=MagicMock(return_value=[]))
-@patch("power_grid_model.validation.validation.validate_three_winding_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_three_winding_transformer", new=MagicMock(return_value=[]))
 def test_validate_values__tap_regulator_control_side():
     # Create valid transformer
     transformer = initialize_array("input", "transformer", 4)
