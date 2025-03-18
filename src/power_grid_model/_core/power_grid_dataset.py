@@ -132,6 +132,28 @@ class CDatasetInfo:  # pylint: disable=too-few-public-methods
             for idx, component_name in enumerate(self.components())
         }
 
+    def attribute_indications(self) -> Mapping[ComponentType, None | list[AttributeType]]:
+        """
+        The attribute indications in the dataset.
+
+        Returns:
+            A map of component to its attribute indications.
+            None means no attribute indications
+        """
+        result_dict: dict[ComponentType, None | list[AttributeType]] = {}
+        components = self.components()
+        for component_idx, component_name in enumerate(components):
+            has_indications = pgc.dataset_info_has_attribute_indications(self._info, component_idx)
+            if has_indications == 0:
+                result_dict[component_name] = None
+            else:
+                n_indications = pgc.dataset_info_n_attribute_indications(self._info, component_idx)
+                result_dict[component_name] = [
+                    pgc.dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    for attribute_idx in range(n_indications)
+                ]
+        return result_dict
+
 
 class CMutableDataset:
     """
@@ -446,6 +468,7 @@ class CWritableDataset:
         components = info.components()
         n_elements_per_scenario = info.elements_per_scenario()
         n_total_elements = info.total_elements()
+        attribute_indications = info.attribute_indications()
 
         return {
             component: BufferProperties(
@@ -457,6 +480,7 @@ class CWritableDataset:
                 columns=_get_filtered_attributes(
                     schema=self._schema[component],
                     component_data_filter=self._data_filter[component],
+                    attribute_indication=attribute_indications[component],
                 ),
             )
             for component in components
@@ -491,11 +515,14 @@ class CWritableDataset:
 def _get_filtered_attributes(
     schema: ComponentMetaData,
     component_data_filter: set[str] | list[str] | None | ComponentAttributeFilterOptions,
-) -> list[str] | None:
+    attribute_indication: None | list[AttributeType],
+) -> list[AttributeType] | None:
     if component_data_filter is None:
         return None
 
     if isinstance(component_data_filter, ComponentAttributeFilterOptions):
+        if component_data_filter == ComponentAttributeFilterOptions.relevant and attribute_indication is not None:
+            return attribute_indication
         return [] if schema.dtype.names is None else list(schema.dtype.names)
 
     return list(component_data_filter)

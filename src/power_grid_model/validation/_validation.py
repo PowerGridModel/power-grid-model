@@ -33,14 +33,7 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.validation.errors import (
-    IdNotInDatasetError,
-    InvalidIdError,
-    MissingValueError,
-    MultiComponentNotUniqueError,
-    ValidationError,
-)
-from power_grid_model.validation.rules import (
+from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,
@@ -53,7 +46,6 @@ from power_grid_model.validation.rules import (
     all_less_than as _all_less_than,
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
-    all_supported_tap_control_side as _all_supported_tap_control_side,
     all_unique as _all_unique,
     all_valid_associated_enum_values as _all_valid_associated_enum_values,
     all_valid_clocks as _all_valid_clocks,
@@ -63,6 +55,13 @@ from power_grid_model.validation.rules import (
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     none_missing as _none_missing,
     valid_p_q_sigma as _valid_p_q_sigma,
+)
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    ValidationError,
 )
 from power_grid_model.validation.utils import _update_input_data
 
@@ -977,12 +976,5 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
     )
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, "line_drop_compensation_x", 0.0
-    )
-    errors += _all_supported_tap_control_side(
-        data,
-        ComponentType.transformer_tap_regulator,
-        "control_side",
-        "regulated_object",
-        [(ComponentType.transformer, "tap_side"), (ComponentType.three_winding_transformer, "tap_side")],
     )
     return errors

@@ -11,6 +11,30 @@ from power_grid_model import ComponentType, LoadGenType, initialize_array, power
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
+from power_grid_model.validation._rules import (
+    all_between,
+    all_between_or_at,
+    all_boolean,
+    all_cross_unique,
+    all_enabled_identical,
+    all_finite,
+    all_greater_or_equal,
+    all_greater_than,
+    all_greater_than_or_equal_to_zero,
+    all_greater_than_zero,
+    all_identical,
+    all_less_or_equal,
+    all_less_than,
+    all_not_two_values_equal,
+    all_not_two_values_zero,
+    all_unique,
+    all_valid_clocks,
+    all_valid_enum_values,
+    all_valid_fault_phases,
+    all_valid_ids,
+    none_match_comparison,
+    none_missing,
+)
 from power_grid_model.validation.errors import (
     ComparisonError,
     FaultPhaseError,
@@ -30,32 +54,6 @@ from power_grid_model.validation.errors import (
     NotUniqueError,
     SameValueError,
     TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
-)
-from power_grid_model.validation.rules import (
-    all_between,
-    all_between_or_at,
-    all_boolean,
-    all_cross_unique,
-    all_enabled_identical,
-    all_finite,
-    all_greater_or_equal,
-    all_greater_than,
-    all_greater_than_or_equal_to_zero,
-    all_greater_than_zero,
-    all_identical,
-    all_less_or_equal,
-    all_less_than,
-    all_not_two_values_equal,
-    all_not_two_values_zero,
-    all_supported_tap_control_side,
-    all_unique,
-    all_valid_clocks,
-    all_valid_enum_values,
-    all_valid_fault_phases,
-    all_valid_ids,
-    none_match_comparison,
-    none_missing,
 )
 
 
@@ -491,7 +489,7 @@ def test_none_missing():
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
         }[component][field]
 
-    with mock.patch("power_grid_model.validation.rules._nan_type", _mock_nan_type):
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
         valid = {
             "foo_test": np.array(
                 [
@@ -640,35 +638,3 @@ def test_all_valid_fault_phases():
     errors = all_valid_fault_phases(invalid, "fault", "foo", "bar")
     assert len(errors) == 1
     assert FaultPhaseError("fault", fields=["foo", "bar"], ids=list(range(26))) in errors
-
-
-def test_supported_tap_control_side():
-    valid = {
-        "foo": np.array([(0, 4)], dtype=[("id", "i4"), ("foofoo", "i1")]),
-        "bar": np.array([(1, 5)], dtype=[("id", "i4"), ("barbar", "i1")]),
-        "baz": np.array([], dtype=[("id", "i4"), ("bazbaz", "i1")]),
-        "regulator": np.array([(2, 0, 6), (3, 1, 7)], dtype=[("id", "i4"), ("regulated", "i4"), ("control", "i1")]),
-    }
-    errors = all_supported_tap_control_side(
-        valid,
-        "regulator",
-        "control",
-        "regulated",
-        [("foo", "foofoo"), ("bar", "barbar"), ("baz", "bazbaz"), ("bla", "blabla")],
-    )
-    assert not errors
-
-    invalid = {
-        "foo": np.array([(0, 4)], dtype=[("id", "i4"), ("foofoo", "i1")]),
-        "bar": np.array([(1, 5)], dtype=[("id", "i4"), ("barbar", "i1")]),
-        "regulator": np.array([(2, 0, 4), (3, 1, 5)], dtype=[("id", "i4"), ("regulated", "i4"), ("control", "i1")]),
-    }
-    errors = all_supported_tap_control_side(
-        invalid,
-        "regulator",
-        "control",
-        "regulated",
-        [("foo", "foofoo"), ("bar", "barbar"), ("baz", "bazbaz")],
-    )
-    assert len(errors) == 1
-    assert UnsupportedTransformerRegulationError(component="regulator", fields=["control", "regulated"], ids=[2, 3])
