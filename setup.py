@@ -168,6 +168,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pgm_c / pgm_c / "src" / "options.cpp"),
         str(pgm_c / pgm_c / "src" / "dataset.cpp"),
         str(pgm_c / pgm_c / "src" / "serialization.cpp"),
+        str(pgm_c / pgm_c / "src" / "math_solver.cpp"),
     ]
     # macro
     define_macros = [
@@ -187,7 +188,7 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # extra flag for Mac
         if platform.system() == "Darwin":
             # compiler flag to set version
-            cflags.append("-mmacosx-version-min=10.15")
+            cflags.append("-mmacosx-version-min=13.3")
 
     # list of extensions
     exts = [

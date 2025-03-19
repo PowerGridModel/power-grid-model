@@ -701,9 +701,6 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 };
 
-template class NewtonRaphsonSESolver<symmetric_t>;
-template class NewtonRaphsonSESolver<asymmetric_t>;
-
 } // namespace newton_raphson_se
 
 using newton_raphson_se::NewtonRaphsonSESolver;

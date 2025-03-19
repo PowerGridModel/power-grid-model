@@ -518,15 +518,3 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.enum == other.enum
-
-
-class UnsupportedTransformerRegulationError(MultiFieldValidationError):
-    """
-    The control side of a branch regulator is not supported for the regulated object
-    """
-
-    _message = (
-        "Unsupported control side for {n} {objects}. "
-        "The control side cannot be on the same side as the tap side. "
-        "The node at the control side must have the same or lower u_rated as the node at the tap side."
-    )

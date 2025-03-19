@@ -34,7 +34,6 @@ from power_grid_model.validation.errors import (
     NotLessThanError,
     NotUniqueError,
     TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
 )
 from power_grid_model.validation.utils import _nan_type
 
@@ -640,10 +639,6 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
     )
     assert (
         NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_x", [1], 0.0) in validation_errors
-    )
-    assert (
-        UnsupportedTransformerRegulationError("transformer_tap_regulator", ["control_side", "regulated_object"], [54])
-        in validation_errors
     )
     assert NotUniqueError("transformer_tap_regulator", "regulated_object", [51, 54]) in validation_errors
 
