@@ -24,7 +24,7 @@ inline auto to_string(std::integral auto x) { return std::to_string(x); }
 
 class PowerGridError : public std::exception {
   public:
-    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg); }
+    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg_, msg); }
     char const* what() const noexcept final { return msg_.c_str(); }
 
   private:
