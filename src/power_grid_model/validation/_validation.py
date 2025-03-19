@@ -46,7 +46,6 @@ from power_grid_model.validation._rules import (
     all_less_than as _all_less_than,
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
-    all_supported_tap_control_side as _all_supported_tap_control_side,
     all_unique as _all_unique,
     all_valid_associated_enum_values as _all_valid_associated_enum_values,
     all_valid_clocks as _all_valid_clocks,
@@ -977,12 +976,5 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
     )
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, "line_drop_compensation_x", 0.0
-    )
-    errors += _all_supported_tap_control_side(
-        data,
-        ComponentType.transformer_tap_regulator,
-        "control_side",
-        "regulated_object",
-        [(ComponentType.transformer, "tap_side"), (ComponentType.three_winding_transformer, "tap_side")],
     )
     return errors
