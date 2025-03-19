@@ -153,7 +153,7 @@ The [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) p
 and iterating over all pivot elements $p$. Let the full matrix be as follows.
 
 $$
-\mathbb{M} = \begin{bmatrix}
+\mathbf{M} = \begin{bmatrix}
 m_{0,0} && m_{0,1} && \cdots && m_{0,N-1} \\
 m_{1,0} && m_{1,1} && \cdots && m_{1,N-1} \\
 \vdots && \vdots && \ddots && \vdots \\
@@ -165,27 +165,27 @@ While processing current pivot element $p$, the partially processed matrix has t
 arrangement.
 
 $$
-\mathbb{M}_{\underline{p}}\equiv\begin{bmatrix}
-&& \mathbb{U}_{\underline{p}} && \\
-\mathbb{L}_{\underline{p}} && \begin{array}{|c}\hline
-  \mathbb{M}_p \end{array}
+\mathbf{M}_{\underline{p}}\equiv\begin{bmatrix}
+&& \mathbf{U}_{\underline{p}} && \\
+\mathbf{L}_{\underline{p}} && \begin{array}{|c}\hline
+  \mathbf{M}_p \end{array}
 \end{bmatrix}\equiv\begin{bmatrix}
-&& \mathbb{U}_{\underline{p}} && \\
-\mathbb{L}_{\underline{p}} && \begin{array}{|cc}\hline
+&& \mathbf{U}_{\underline{p}} && \\
+\mathbf{L}_{\underline{p}} && \begin{array}{|cc}\hline
   m_p && \boldsymbol{r}_p^T \\
- \boldsymbol{q}_p && \hat{\mathbb{M}}_p \end{array}
+ \boldsymbol{q}_p && \hat{\mathbf{M}}_p \end{array}
 \end{bmatrix}
 $$
 
 Here, $\underline{p}$ denotes the fact that it is partially processed. Furthermore,
-$\mathbb{M}_{\underline{p}}$ is the partially processed matrix up to pivot $p$;
-$\mathbb{U}_{\underline{p}}$ and $\mathbb{L}_{\underline{p}}$ are the upper and lower part of the
+$\mathbf{M}_{\underline{p}}$ is the partially processed matrix up to pivot $p$;
+$\mathbf{U}_{\underline{p}}$ and $\mathbf{L}_{\underline{p}}$ are the upper and lower part of the
 matrix up to pivot $p$;
-$\mathbb{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}$
+$\mathbf{M}_p\equiv\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\ \boldsymbol{q}_p && \hat{\mathbf{M}}_p\end{bmatrix}$
 is the remaining $\left(N-p\right)\times\left(N-p\right)$ part of the matrix that is yet to be
 LU factorized. In addition, $m_p$ is the pivot element value, $\boldsymbol{q}$ and
 $\boldsymbol{r}_p^T$ are the associated column and row vectors containing the rest of the pivot
-column and row; and $\hat{\mathbb{M}}_p$ is the remaining bottom-right block of the matrix. Plugging
+column and row; and $\hat{\mathbf{M}}_p$ is the remaining bottom-right block of the matrix. Plugging
 all definitions into the full matrix yields the following.
 
 $$
@@ -193,13 +193,13 @@ $$
     m_0 && \boldsymbol{u}_0^T && && \\
     \boldsymbol{l}_0 && \ddots && \ddots && \\
     && \ddots && \ddots && \boldsymbol{u}_{p-1}^T \\
-    && && \boldsymbol{l}_{p-1} && \mathbb{M}_p
+    && && \boldsymbol{l}_{p-1} && \mathbf{M}_p
 \end{bmatrix}\equiv\begin{bmatrix}
     m_0 && \boldsymbol{u}_0^T && && && \\
     \boldsymbol{l}_0 && \ddots && \ddots && && \\
     && \ddots && m_{p-1} && \boldsymbol{u}_{p-1}^T && \\
     && && \boldsymbol{l}_{p-1} && m_p && \boldsymbol{r}_p^T \\
-    && && && \boldsymbol{q}_p && \hat{\mathbb{M}}_p\end{bmatrix}
+    && && && \boldsymbol{q}_p && \hat{\mathbf{M}}_p\end{bmatrix}
 $$
 
 In this equation, $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ are column and row vectors,
@@ -211,54 +211,54 @@ matrix that have already been processed.
 
 $$
 \begin{align*}
-\mathbb{L}_p &= \begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbb{1}_p\end{bmatrix} \\
-\mathbb{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbb{1}_p\end{bmatrix} \\
-\mathbb{M}_{p+1} &= \hat{\mathbb{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
+\mathbf{L}_p &= \begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbf{1}_p\end{bmatrix} \\
+\mathbf{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbf{1}_p\end{bmatrix} \\
+\mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
 \end{align*}
 $$
 
-where $\mathbb{1}$ is the matrix with ones on the diagonal and zeros off-diagonal, and
-$\mathbb{M}_{p+1}$ is the start of the next iteration. $\mathbb{L}_p$, $\mathbb{U}_p$,
-$\mathbb{M}_{p+1}$ and $\mathbb{M}_{p}$ are related as follows.
+where $\mathbf{1}$ is the matrix with ones on the diagonal and zeros off-diagonal, and
+$\mathbf{M}_{p+1}$ is the start of the next iteration. $\mathbf{L}_p$, $\mathbf{U}_p$,
+$\mathbf{M}_{p+1}$ and $\mathbf{M}_{p}$ are related as follows.
 
 $$
-\mathbb{M}_p \equiv
-\begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbb{1}_p\end{bmatrix}\begin{bmatrix}
+\mathbf{M}_p \equiv
+\begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbf{1}_p\end{bmatrix}\begin{bmatrix}
     1 && \boldsymbol{0}^T \\
-    \boldsymbol{0} && \hat{\mathbb{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
-\end{bmatrix}\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbb{1}_p\end{bmatrix}
-\equiv \mathbb{L}_p \begin{bmatrix}
+    \boldsymbol{0} && \hat{\mathbf{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
+\end{bmatrix}\begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbf{1}_p\end{bmatrix}
+\equiv \mathbf{L}_p \begin{bmatrix}
     1 && \boldsymbol{0}^T \\
-    \boldsymbol{0} && \mathbb{M}_{p+1}
-\end{bmatrix} \mathbb{U}_p
+    \boldsymbol{0} && \mathbf{M}_{p+1}
+\end{bmatrix} \mathbf{U}_p
 $$
 
 Expanding one more step, this yields the following.
 
 $$
-\mathbb{M}_{p-1} \equiv \mathbb{L}_{p-1} \begin{bmatrix}
+\mathbf{M}_{p-1} \equiv \mathbf{L}_{p-1} \begin{bmatrix}
     1 && \boldsymbol{0}^T \\
-    \boldsymbol{0} && \mathbb{L}_p
+    \boldsymbol{0} && \mathbf{L}_p
 \end{bmatrix}\begin{bmatrix}
     1 && 0 && \boldsymbol{0}^T \\
     0 && 1 && \boldsymbol{0}^T \\
-    \boldsymbol{0} && \boldsymbol{0} && \mathbb{M}_{p+1}
+    \boldsymbol{0} && \boldsymbol{0} && \mathbf{M}_{p+1}
 \end{bmatrix} \begin{bmatrix}
     1 && \boldsymbol{0}^T \\
-    \boldsymbol{0} && \mathbb{U}_p
-\end{bmatrix}\mathbb{U}_{p-1}
+    \boldsymbol{0} && \mathbf{U}_p
+\end{bmatrix}\mathbf{U}_{p-1}
 $$
 
-Here, $\mathbb{L}_{p-1}$ and $\mathbb{U}_{p-1}$ have dimensions
-$\left(N-p+1\right)\times \left(N-p+1\right)$, $\mathbb{L}_p$ and $\mathbb{U}_p$ have dimensions
-$\left(N-p\right) \times \left(N-p\right)$, and $\mathbb{M}_{p+1}$ has dimensions
+Here, $\mathbf{L}_{p-1}$ and $\mathbf{U}_{p-1}$ have dimensions
+$\left(N-p+1\right)\times \left(N-p+1\right)$, $\mathbf{L}_p$ and $\mathbf{U}_p$ have dimensions
+$\left(N-p\right) \times \left(N-p\right)$, and $\mathbf{M}_{p+1}$ has dimensions
 $\left(N-p-1\right) \times \left(N-p-1\right)$.
 
 Iterating this process yields the matrices
 
 $$
 \begin{align*}
-\mathbb{L} = \begin{bmatrix}
+\mathbf{L} = \begin{bmatrix}
 1 && 0 && \cdots && 0 \\
 \left(\boldsymbol{l}_0\right)_0 && \ddots && \ddots && \vdots \\
 \vdots && \ddots && 1 && 0 \\
@@ -269,7 +269,7 @@ m_0^{-1} \left(\boldsymbol{q}_0\right)_0 && \ddots && \ddots && \vdots \\
 \vdots && \ddots && 1 && 0 \\
 m_0^{-1} \left(\boldsymbol{q}_0\right)_{N-p-2} && \cdots && m_{N-2}^{-1} \left(\boldsymbol{q}_{N-2}\right)_0 && 1
 \end{bmatrix} \\
-\mathbb{U} = \begin{bmatrix}
+\mathbf{U} = \begin{bmatrix}
 m_0 && \left(\boldsymbol{u}_0^T\right)_0 && \cdots && \left(\boldsymbol{u}_0^T\right)_{N-p-2} \\
 0 && \ddots && \ddots && \vdots \\
 \vdots && \ddots && m_{N-2} && \left(\boldsymbol{u}_{N-2}^T\right)_0 \\
@@ -283,16 +283,16 @@ m_0 && \left(\boldsymbol{r}_0^T\right)_0 && \cdots && \left(\boldsymbol{r}_0^T\r
 \end{align*}
 $$
 
-in which $\boldsymbol{l}_p$ is the first column of the lower triangle of $\mathbb{L}_p$ and
-$\boldsymbol{u}_p^T$ is the first row of the upper triangle of $\mathbb{U}_p$.
+in which $\boldsymbol{l}_p$ is the first column of the lower triangle of $\mathbf{L}_p$ and
+$\boldsymbol{u}_p^T$ is the first row of the upper triangle of $\mathbf{U}_p$.
 
 The process described in the above assumes no pivot permutations were necessary. If permutations
 are required, they are kept track of in separate row-permution and column-permutation matrices
-$\mathbb{P}$ and $\mathbb{Q}$, such that $\mathbb{P}\mathbb{M}\mathbb{Q} = \mathbb{L}\mathbb{U}$,
+$\mathbf{P}$ and $\mathbf{Q}$, such that $\mathbf{P}\mathbf{M}\mathbf{Q} = \mathbf{L}\mathbf{U}$,
 which can be rewritten as
 
 $$
-\mathbb{M} = \mathbb{P}^{-1}\mathbb{L}\mathbb{U}\mathbb{Q}^{-1}
+\mathbf{M} = \mathbf{P}^{-1}\mathbf{L}\mathbf{U}\mathbf{Q}^{-1}
 $$
 
 #### Dense LU factorization algorithm
@@ -301,17 +301,17 @@ The power grid model uses an in-place LU decomposition approach. Permutations ar
 Below is the algorithm of LU decomposition with pivot perturbation
 ([see below](#pivot-perturbation)) used in the power grid model.
 
-Let $\mathbb{M}$ be the $N\times N$-matrix and
-$\mathbb{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$. For
+Let $\mathbf{M}$ be the $N\times N$-matrix and
+$\mathbf{M}\left[i,j\right]$ its element at (0-based) indices $(i,j)$, where $i,j = 0..(N-1)$. For
 readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix
-$\mathbb{M}$, e.g. $\mathbb{M}\left[0:3, j\right]$.
+$\mathbf{M}$, e.g. $\mathbf{M}\left[0:3, j\right]$.
 
-1. Initialize the permutations $\mathbb{P}$ and $\mathbb{Q}$ to the identity permutation.
+1. Initialize the permutations $\mathbf{P}$ and $\mathbf{Q}$ to the identity permutation.
 2. Initialize fill-in elements to $0$.
 3. Loop over all rows: $p = 0..(N-1)$:
-   1. Set the remaining matrix: $\mathbb{M}_p \gets \mathbb{M}\left[p:N,p:N\right]$ with size
+   1. Set the remaining matrix: $\mathbf{M}_p \gets \mathbf{M}\left[p:N,p:N\right]$ with size
       $N_p\times N_p$, where $N_p := N - p$.
-   2. Find largest element $\mathbb{M}_p\left[i_p,j_p\right]$ in $\mathbb{M}_p$ by magnitude. This
+   2. Find largest element $\mathbf{M}_p\left[i_p,j_p\right]$ in $\mathbf{M}_p$ by magnitude. This
       is the pivot element.
    3. If the magnitude of the pivot element is too small:
       1. If pivot perturbation is enabled, then:
@@ -323,21 +323,21 @@ $\mathbb{M}$, e.g. $\mathbb{M}\left[0:3, j\right]$.
          1. Proceed.
    4. Else:
       1. Proceed.
-   5. Swap the first and pivot row and column of $\mathbb{M}_p$, so that the pivot element is in the
+   5. Swap the first and pivot row and column of $\mathbf{M}_p$, so that the pivot element is in the
       top-left corner of the remaining matrix:
-      1. $\mathbb{M}_p\left[0,0:N_p\right] \leftrightarrow \mathbb{M}\left[i_p,0:N_p\right]$
-      2. $\mathbb{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbb{M}\left[0:N_p,j_p\right]$
+      1. $\mathbf{M}_p\left[0,0:N_p\right] \leftrightarrow \mathbf{M}\left[i_p,0:N_p\right]$
+      2. $\mathbf{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbf{M}\left[0:N_p,j_p\right]$
    6. Apply Gaussian elimination for the current pivot element:
-      1. $\mathbb{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbb{M}_p[0,0]}\mathbb{M}_p\left[0,0:N_p\right]$
-      2. $\mathbb{M}_p\left[1:N_p,0:N_p\right] \gets \mathbb{M}_p\left[1:N_p,0:N_p\right] - \mathbb{M}_p\left[1:N_p,0\right] \otimes \mathbb{M}_p\left[0,0:N_p\right]$
+      1. $\mathbf{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbf{M}_p[0,0]}\mathbf{M}_p\left[0,0:N_p\right]$
+      2. $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$
    7. Accumulate the permutation matrices:
-      1. In $\mathbb{P}$: swap $p \leftrightarrow p + i_p$
-      2. In $\mathbb{Q}$: swap $p \leftrightarrow p + j_p$
+      1. In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
+      2. In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
    8. Continue with the next $p$ to factorize the the bottom-right block.
 
-$\mathbb{L}$ is now the matrix containing the lower triangle of $\mathbb{M}$, ones on the diagonal
-and zeros in the upper triangle. Similarly, $\mathbb{U}$ is the matrix containing the upper triangle
-of $\mathbb{M}$ including the diagonal elements and zeros in the lower triangle.
+$\mathbf{L}$ is now the matrix containing the lower triangle of $\mathbf{M}$, ones on the diagonal
+and zeros in the upper triangle. Similarly, $\mathbf{U}$ is the matrix containing the upper triangle
+of $\mathbf{M}$ including the diagonal elements and zeros in the lower triangle.
 
 ```{note}
 In the (equivalent) actual implementation, we break from the loop and throw afterwards, instead of
@@ -353,7 +353,7 @@ Permutations are only allowed within each dense block, for the reasons described
 
 The LU factorization process for block-sparse matrices is similar to that for
 [dense matrices](#dense-lu-factorization). Only in this case, $m_p$ refers to a block element.
-$\boldsymbol{q}_p$, $\boldsymbol{r}_p^T$ and $\hat{\mathbb{M}}_p$ consist of block elements as well.
+$\boldsymbol{q}_p$, $\boldsymbol{r}_p^T$ and $\hat{\mathbf{M}}_p$ consist of block elements as well.
 Notice that the block-wise inverse $m_p^{-1}$ can be calculated using its LU decomposition, which
 can be obtained from the [dense LU factorization process](#dense-lu-factorization-process).
 
@@ -369,10 +369,10 @@ rationale and proof of the alternative approach.
 A naïve approach towards block-sparse LU factorization is done as follows. The
 [dense LU factorization process](#dense-lu-factorization-process) is followed but on blocks instead
 of single elements. Let
-$\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
-be the block-sparse sub-matrix yet to be decomposed. $\mathbb{m}_p$ is a dense block that can be
+$\mathbf{M}_p\equiv\begin{bmatrix}\mathbf{m}_p && \mathbf{r}_p^T \\ \mathbf{q}_p && \hat{\mathbf{M}}_p\end{bmatrix}$
+be the block-sparse sub-matrix yet to be decomposed. $\mathbf{m}_p$ is a dense block that can be
 [LU factorized](#dense-lu-factorization-process):
-$\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$, where
+$\mathbf{m}_p = \mathbf{p}_p^{-1} \mathbf{l}_p \mathbf{u}_p \mathbf{q}_p^{-1}$, where
 the lower-case helps avoiding confusion with the block-sparse matrix components. The matrices
 constructed with [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) for
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) are constructed
@@ -380,38 +380,37 @@ accordingly.
 
 $$
 \begin{align*}
-\mathbb{L}_p &= \begin{bmatrix} 1 && \pmb{\mathbb{0}}^T \\ \overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
-\mathbb{U}_p &= \begin{bmatrix} \mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{0}} && \pmb{\mathbb{1}}_p \end{bmatrix} \\
-\pmb{\mathbb{M}}_{p+1} &= \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}
+\mathbf{L}_p &= \begin{bmatrix} \mathbf{1} && \mathbf{0}^T \\ \overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p} && \mathbf{1}_p\end{bmatrix} \\
+\mathbf{U}_p &= \begin{bmatrix} \mathbf{m}_p && \mathbf{r}_p^T \\ \mathbf{0} && \mathbf{1}_p \end{bmatrix} \\
+\mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - \widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}
 \end{align*}
 $$
 
-Here, $\overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p}$ is symbolic notation for the
-block-vector of solutions to the equation $\mathbb{m}_p x_{p;k} = \mathbb{q}_{p;k}$, where
-$k = 0..(p-1)$. Similarly, $\widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}$ is
-symbolic notation for the block-matrix of solutions to the equation
-$\mathbb{m}_p x_{p;k,l} = \mathbb{q}_{p;k} \mathbb{r}_{p;l}^T$, where
-$k,l = 0..(p-1)$. That is:
+Here, $\overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p}$ is symbolic notation for the block-vector of
+solutions to the equation $\mathbf{m}_p x_{p;k} = \mathbf{q}_{p;k}$, where $k = 0..(p-1)$.
+Similarly, $\widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}$ is symbolic notation for the
+block-matrix of solutions to the equation
+$\mathbf{m}_p x_{p;k,l} = \mathbf{q}_{p;k} \mathbf{r}_{p;l}^T$, where $k,l = 0..(p-1)$. That is:
 
 $$
 \begin{align*}
-\overrightarrow{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p}
-&= \begin{bmatrix}\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_{p;0} \\
+\overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p}
+&= \begin{bmatrix}\mathbf{m}_p^{-1}\mathbf{q}_{p;0} \\
 \vdots \\
-\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;N-1} \end{bmatrix} \\
-\widehat{\mathbb{m}_p^{-1}\pmb{\mathbb{q}}_p \pmb{\mathbb{r}}_p^T}
-&= \begin{bmatrix}\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;0} \pmb{\mathbb{r}}_{p;0}^T && \cdots &&
-\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;0} \pmb{\mathbb{r}}_{p;N-1}^T \\
+\mathbf{m}_p^{-1} \mathbf{q}_{p;N-1} \end{bmatrix} \\
+\widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}
+&= \begin{bmatrix}\mathbf{m}_p^{-1} \mathbf{q}_{p;0} \mathbf{r}_{p;0}^T && \cdots &&
+\mathbf{m}_p^{-1} \mathbf{q}_{p;0} \mathbf{r}_{p;N-1}^T \\
 \vdots && \ddots && \vdots \\
-\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;0} \pmb{\mathbb{r}}_{p;0}^T && \cdots &&
-\mathbb{m}_p^{-1} \pmb{\mathbb{q}}_{p;N-1} \pmb{\mathbb{r}}_{p;N-1}^T \end{bmatrix}
+\mathbf{m}_p^{-1} \mathbf{q}_{p;0} \mathbf{r}_{p;0}^T && \cdots &&
+\mathbf{m}_p^{-1} \mathbf{q}_{p;N-1} \mathbf{r}_{p;N-1}^T \end{bmatrix}
 \end{align*}
 $$
 
-Iteratively applying above factorization process yields $\mathbb{L}$ and $\mathbb{U}$, as well as
-$\mathbb{P}$ and $\mathbb{Q}$.
+Iteratively applying above factorization process yields $\mathbf{L}$ and $\mathbf{U}$, as well as
+$\mathbf{P}$ and $\mathbf{Q}$.
 
-Unfortunately, the process of obtaining $\mathbb{m}_p^{-1} \boldsymbol{x}_p$ can be numerically
+Unfortunately, the process of obtaining $\mathbf{m}_p^{-1} \boldsymbol{x}_p$ can be numerically
 unstable, even if it is split into multiple solving steps. Instead, the process below is used.
 
 ##### Partially solved block-sparse LU factorization process
@@ -426,22 +425,22 @@ following sections, we provide the
 [proof](#proof-of-block-sparse-lu-factorization-process).
 
 Following the same conventions as [above](#naive-block-sparse-lu-factorization-process), let
-$\mathbb{M}_p\equiv\begin{bmatrix}\mathbb{m}_p && \pmb{\mathbb{r}}_p^T \\ \pmb{\mathbb{q}}_p && \hat{\pmb{\mathbb{M}}}_p\end{bmatrix}$
-be the block-sparse matrix to decompose. $\mathbb{m}_p$ is a dense block that can be
+$\mathbf{M}_p\equiv\begin{bmatrix}\mathbf{m}_p && \mathbf{r}_p^T \\ \mathbf{q}_p && \hat{\mathbf{M}}_p\end{bmatrix}$
+be the block-sparse matrix to decompose. $\mathbf{m}_p$ is a dense block that can be
 [LU factorized](#dense-lu-factorization-process):
-$\mathbb{m}_p = \mathbb{p}_p^{-1} \mathbb{l}_p \mathbb{u}_p \mathbb{q}_p^{-1}$. Partial Gaussian
+$\mathbf{m}_p = \mathbf{p}_p^{-1} \mathbf{l}_p \mathbf{u}_p \mathbf{q}_p^{-1}$. Partial Gaussian
 elimination constructs the following matrices.
 
 $$
 \begin{align*}
-\mathbb{L}_p &= \begin{bmatrix} \mathbb{l}_p && \pmb{\mathbb{0}}^T \\ \overrightarrow{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}} && \pmb{\mathbb{1}}_p\end{bmatrix} \\
-\mathbb{U}_p &= \begin{bmatrix} \mathbb{u}_p && \overrightarrow{\mathbb{l}_p\mathbb{p}_p\pmb{\mathbb{r}}_p}^T \\ \pmb{\mathbb{0}} && \pmb{\mathbb{1}}_p \end{bmatrix} \\
-\pmb{\mathbb{M}}_{p+1} &= \hat{\pmb{\mathbb{{M}}}}_p - \widehat{\pmb{\mathbb{q}}_p\mathbb{q}_p\mathbb{u}_p^{-1}\mathbb{l}_p^{-1}\mathbb{p}_p\pmb{\mathbb{r}}_p^T}
+\mathbf{L}_p &= \begin{bmatrix} \mathbf{l}_p && \mathbf{0}^T \\ \overrightarrow{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}} && \mathbf{1}_p\end{bmatrix} \\
+\mathbf{U}_p &= \begin{bmatrix} \mathbf{u}_p && \overrightarrow{\mathbf{l}_p\mathbf{p}_p\mathbf{r}_p}^T \\ \mathbf{0} && \mathbf{1}_p \end{bmatrix} \\
+\mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - \widehat{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}\mathbf{l}_p^{-1}\mathbf{p}_p\mathbf{r}_p^T}
 \end{align*}
 $$
 
-Note that the first column of $\mathbb{L}_p$ can be obtained by applying a right-solve procedure,
-instead of the regular left-solve procedure, as is the case for $\mathbb{U}_p$.
+Note that the first column of $\mathbf{L}_p$ can be obtained by applying a right-solve procedure,
+instead of the regular left-solve procedure, as is the case for $\mathbf{U}_p$.
 
 ##### Rationale of the block-sparse LU factorization process
 
@@ -450,8 +449,8 @@ To illustrate the rationale, let's fully solve a matrix equation (without using 
 $$
 \begin{align*}
 \begin{bmatrix}
-\mathbb{a} && \mathbb{b} \\
-\mathbb{c} && \mathbb{d}
+\mathbf{a} && \mathbf{b} \\
+\mathbf{c} && \mathbf{d}
 \end{bmatrix}
 &=
 \begin{bmatrix}
@@ -487,27 +486,27 @@ a_{11} && a_{12} && b_{11} && b_{12} \\
 $$
 
 Using the following denotations, we can simplify the above as
-$\begin{bmatrix} mathbb{l}_a \mathbb{u}_a && \mathbb{u}_b \\ mathbb{l}_c && \mathbb{l}_d \mathbb{u}_d \end{bmatrix}$.
+$\begin{bmatrix} \mathbf{l}_a \mathbf{u}_a && \mathbf{u}_b \\ \mathbf{l}_c && \mathbf{l}_d \mathbf{u}_d \end{bmatrix}$.
 
 $$
 \begin{align*}
-\mathbb{l}_a &= \begin{bmatrix}
+\mathbf{l}_a &= \begin{bmatrix}
     1                     && 0 \\
     \frac{a_{21}}{a_{11}} && 1
 \end{bmatrix} \\
-\mathbb{u}_a &= \begin{bmatrix}
+\mathbf{u}_a &= \begin{bmatrix}
     a_{11} && a_{12} \\
     0 && a_{22} - a_{12} \frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
-\mathbb{l}_c &= \begin{bmatrix}
+\mathbf{l}_c &= \begin{bmatrix}
     \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix} \\
-\mathbb{u}_b &= \begin{bmatrix}
+\mathbf{u}_b &= \begin{bmatrix}
     b_{11}                               && b_{12} \\
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
-\mathbb{l}_d\mathbb{u}_d &= \begin{bmatrix}
+\mathbf{l}_d\mathbf{u}_d &= \begin{bmatrix}
     d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
         d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
     d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
@@ -516,43 +515,43 @@ $$
 \end{align*}
 $$
 
-Interestingly, the matrices $\mathbb{l}_c$, $\mathbb{u}_b$ and $\mathbb{l}_d\mathbb{u}_d$ can be
+Interestingly, the matrices $\mathbf{l}_c$, $\mathbf{u}_b$ and $\mathbf{l}_d\mathbf{u}_d$ can be
 obtained without doing full pivoting on the sub-block level:
 
-* $\mathbb{l}_c$ is the solution to the right-multiplication matrix equation
-  $\mathbb{l}_c \mathbb{u}_a = \mathbb{c}$
-* $\mathbb{u}_b$ is the solution to the left-multiplication matrix equation
-  $\mathbb{l}_a \mathbb{u}_b = \mathbb{b}$.
-* $\mathbb{l}_d\mathbb{u}_d$ denotes the start matrix of the decomposition of the next iteration and
-  is equal to $\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$.
+* $\mathbf{l}_c$ is the solution to the right-multiplication matrix equation
+  $\mathbf{l}_c \mathbf{u}_a = \mathbf{c}$
+* $\mathbf{u}_b$ is the solution to the left-multiplication matrix equation
+  $\mathbf{l}_a \mathbf{u}_b = \mathbf{b}$.
+* $\mathbf{l}_d\mathbf{u}_d$ denotes the start matrix of the decomposition of the next iteration and
+  is equal to $\mathbf{l}_d\mathbf{u}_d = \mathbf{d} - \mathbf{l}_c \mathbf{u}_b$.
 
-This process generalizes to block-invertible matrices of any size: $\mathbb{c}$ and $\mathbb{b}$
+This process generalizes to block-invertible matrices of any size: $\mathbf{c}$ and $\mathbf{b}$
 become a column- and row-vector of block-matrices for which the individual block-elements of the
-vectorized decompositions $\mathbb{l}_c$ and $\mathbb{u}_b$ can be obtained by solving the
+vectorized decompositions $\mathbf{l}_c$ and $\mathbf{u}_b$ can be obtained by solving the
 equations above.
 
 If, during the LU decomposition of the pivot block, a row- and column-permutation was used,
-$\mathbb{a} = \mathbb{p}_a^{-1} \mathbb{l}_a \mathbb{u}_p \mathbb{q}_a^{-1}$, and the columns of
-$\mathbb{c}$ and the rows of $\mathbb{b}$ are permuted: $\mathbb{c}\mapsto\mathbb{c}\mathbb{q}_a$
-and $\mathbb{b}\mapsto\mathbb{p}_a\mathbb{b}$. In this case, the equations generalize as follows.
+$\mathbf{a} = \mathbf{p}_a^{-1} \mathbf{l}_a \mathbf{u}_p \mathbf{q}_a^{-1}$, and the columns of
+$\mathbf{c}$ and the rows of $\mathbf{b}$ are permuted: $\mathbf{c}\mapsto\mathbf{c}\mathbf{q}_a$
+and $\mathbf{b}\mapsto\mathbf{p}_a\mathbf{b}$. In this case, the equations generalize as follows.
 
-* $\mathbb{l}_c$ is the solution to the right-multiplication matrix equation
-  $\mathbb{l}_c \mathbb{u}_a = \mathbb{c} \mathbb{q}_a$.
-* $\mathbb{u}_b$ is the solution to the left-multiplication matrix equation
-  $\mathbb{l}_a \mathbb{u}_b = \mathbb{p}_a \mathbb{b}$.
-* $\mathbb{l}_d\mathbb{u}_d$ denotes the start matrix of the decomposition of the next iteration and
-  is equal to $\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$.
+* $\mathbf{l}_c$ is the solution to the right-multiplication matrix equation
+  $\mathbf{l}_c \mathbf{u}_a = \mathbf{c} \mathbf{q}_a$.
+* $\mathbf{u}_b$ is the solution to the left-multiplication matrix equation
+  $\mathbf{l}_a \mathbf{u}_b = \mathbf{p}_a \mathbf{b}$.
+* $\mathbf{l}_d\mathbf{u}_d$ denotes the start matrix of the decomposition of the next iteration and
+  is equal to $\mathbf{l}_d\mathbf{u}_d = \mathbf{d} - \mathbf{l}_c \mathbf{u}_b$.
 
 ##### Proof of block-sparse LU factorization process
 
-The following proves the equations $\mathbb{l}_c \mathbb{u}_a = \mathbb{c}$,
-$\mathbb{l}_a \mathbb{u}_b = \mathbb{b}$ and
-$\mathbb{l}_d\mathbb{u}_d = \mathbb{d} - \mathbb{l}_c \mathbb{u}_b$ mentioned in the
+The following proves the equations $\mathbf{l}_c \mathbf{u}_a = \mathbf{c}$,
+$\mathbf{l}_a \mathbf{u}_b = \mathbf{b}$ and
+$\mathbf{l}_d\mathbf{u}_d = \mathbf{d} - \mathbf{l}_c \mathbf{u}_b$ mentioned in the
 [previous section](#rationale-of-the-block-sparse-lu-factorization-process).
 
 $$
 \begin{align*}
-\mathbb{l}_c \mathbb{u}_a
+\mathbf{l}_c \mathbf{u}_a
 &=
 \begin{bmatrix}
     \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
@@ -573,8 +572,8 @@ $$
     c_{11} && c_{12} \\
     c_{21} && c_{22}
 \end{bmatrix} \\
-&= \mathbb{c} \\
-\mathbb{l}_a \mathbb{u}_b
+&= \mathbf{c} \\
+\mathbf{l}_a \mathbf{u}_b
 &= \begin{bmatrix}
     1                     && 0 \\
     \frac{a_{21}}{a_{11}} && 1
@@ -590,9 +589,9 @@ $$
     b_{11} && b_{12} \\
     b_{21} && b_{22}
 \end{bmatrix} \\
-&= \mathbb{b} \\
-\mathbb{l}_d\mathbb{u}_d
-&= \mathbb{d} - \mathbb{l}_c \mathbb{u}_b \\
+&= \mathbf{b} \\
+\mathbf{l}_d\mathbf{u}_d
+&= \mathbf{d} - \mathbf{l}_c \mathbf{u}_b \\
 &= \begin{bmatrix}d_{11} && d_{12} \\ d_{21} && d_{22} \end{bmatrix} - \begin{bmatrix}
     \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
@@ -606,80 +605,80 @@ $$
     d{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
         d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix} \\
-&= \mathbb{l}_d\mathbb{u}_d
+&= \mathbf{l}_d\mathbf{u}_d
 \end{align*}
 $$
 
-We can see that $\mathbb{l}_c$ and $\mathbb{u}_b$ are affected by the in-block LU decomposition of
-the pivot block $\left(\mathbb{l}_a,\mathbb{u}_a\right)$, as well as the data in the respective
-blocks ($\mathbb{c}$ and $\mathbb{b}$) in the original matrix. Beyond these two sources, no other
-factors affect $\mathbb{l}_c$ and $\mathbb{u}_b$. The generalization to largr block sizes and
+We can see that $\mathbf{l}_c$ and $\mathbf{u}_b$ are affected by the in-block LU decomposition of
+the pivot block $\left(\mathbf{l}_a,\mathbf{u}_a\right)$, as well as the data in the respective
+blocks ($\mathbf{c}$ and $\mathbf{b}$) in the original matrix. Beyond these two sources, no other
+factors affect $\mathbf{l}_c$ and $\mathbf{u}_b$. The generalization to largr block sizes and
 block-matrix sizes follows.
 
 #### Block-sparse indexing
 
 The structure of the block-sparse matrices is as follows.
 
-* The $N\times N$ block matrix $\mathbb{M}$ is interpreted as the block-matrix, with
-  $\mathbb{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where
+* The $N\times N$ block matrix $\mathbf{M}$ is interpreted as the block-matrix, with
+  $\mathbf{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where
   $i,j = 0..(N-1)$.
-* In turn, let $\mathbb{M}\left[i,j\right]\equiv\mathbb{M}_{i,j}$ be the dense block with dimensions
+* In turn, let $\mathbf{M}\left[i,j\right]\equiv\mathbf{M}_{i,j}$ be the dense block with dimensions
   $N_i\times N_j$.
 
 This can be graphically represented as
 
 $$
 \begin{align*}
-\mathbb{M} &\equiv \begin{bmatrix}
-\mathbb{M}_{0,0}   && \cdots && \mathbb{M}_{0,N-1} \\
+\mathbf{M} &\equiv \begin{bmatrix}
+\mathbf{M}_{0,0}   && \cdots && \mathbf{M}_{0,N-1} \\
 \vdots    && \ddots && \vdots \\
-\mathbb{M}_{N-1,0} && \cdots && \mathbb{M}_{N-1,N-1}
+\mathbf{M}_{N-1,0} && \cdots && \mathbf{M}_{N-1,N-1}
 \end{bmatrix} \\
 &\equiv \begin{bmatrix}
 \begin{bmatrix}
-   \mathbb{M}_{0,0}\left[0,0\right]     && \cdots && \mathbb{M}_{0,0}\left[0,N_j-1\right] \\
+   \mathbf{M}_{0,0}\left[0,0\right]     && \cdots && \mathbf{M}_{0,0}\left[0,N_j-1\right] \\
    \vdots                      && \ddots && \vdots \\
-   \mathbb{M}_{0,0}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,0}\left[N_i-1,N_j-1\right]
+   \mathbf{M}_{0,0}\left[N_i-1,0\right] && \cdots && \mathbf{M}_{0,0}\left[N_i-1,N_j-1\right]
 \end{bmatrix} && \cdots && \begin{bmatrix}
-   \mathbb{M}_{0,N-1}\left[0,0\right]     && \cdots && \mathbb{M}_{0,N-1}\left[0,N_j-1\right] \\
+   \mathbf{M}_{0,N-1}\left[0,0\right]     && \cdots && \mathbf{M}_{0,N-1}\left[0,N_j-1\right] \\
    \vdots                        && \ddots && \vdots \\
-   \mathbb{M}_{0,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{0,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix} \\
+   \mathbf{M}_{0,N-1}\left[N_i-1,0\right] && \cdots && \mathbf{M}_{0,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix} \\
 \vdots && \ddots && \vdots \\
 \begin{bmatrix}
-   \mathbb{M}_{N-1,0}\left[0,0\right]     && \cdots && \mathbb{M}_{N-1,0}\left[0,N_j-1\right] \\
+   \mathbf{M}_{N-1,0}\left[0,0\right]     && \cdots && \mathbf{M}_{N-1,0}\left[0,N_j-1\right] \\
    \vdots                        && \ddots && \vdots \\
-   \mathbb{M}_{N-1,0}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,0}\left[N_i-1,N_j-1\right]
+   \mathbf{M}_{N-1,0}\left[N_i-1,0\right] && \cdots && \mathbf{M}_{N-1,0}\left[N_i-1,N_j-1\right]
 \end{bmatrix} && \cdots && \begin{bmatrix}
-   \mathbb{M}_{N-1,N-1}\left[0,0\right]     && \cdots && \mathbb{M}_{N-1,N-1}\left[0,N_j-1\right] \\
+   \mathbf{M}_{N-1,N-1}\left[0,0\right]     && \cdots && \mathbf{M}_{N-1,N-1}\left[0,N_j-1\right] \\
    \vdots                          && \ddots && \vdots \\
-   \mathbb{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbb{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix}
+   \mathbf{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbf{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix}
 \end{bmatrix}
 \end{align*}
 $$
 
-Because of the sparse structure and the fact that all $\mathbb{M}_{i,j}$ have the same shape, it is
-much more efficient to store the blocks $\mathbb{M}_{i,j}$ in a vector $\mathbb{M}_{\tilde{k}}$
+Because of the sparse structure and the fact that all $\mathbf{M}_{i,j}$ have the same shape, it is
+much more efficient to store the blocks $\mathbf{M}_{i,j}$ in a vector $\mathbf{M}_{\tilde{k}}$
 where $\tilde{k}$ is a reordered index from $(i,j) \mapsto \tilde{k}$. This mapping, in turn, is
 stored as an index pointer, i.e., a vector of vectors of indices, with the outer index given by the
-row-index $i$, and the inner vector containing the values of $j$ for which $\mathbb{M}_{i,j}$ may be
+row-index $i$, and the inner vector containing the values of $j$ for which $\mathbf{M}_{i,j}$ may be
 non-zero. All topologically relevant matrix elements, as well as [fill-ins](#pivot-operations), are
 included in this mapping. The following illustrates this mapping.
 
 $$
 \begin{align*}
 \begin{bmatrix}
-\mathbb{M}_{0,0} &&         &&         && \mathbb{M}_{0,3} \\
-        && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} &&         \\
-        && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} \\
-\mathbb{M}_{3,0} &&         && \mathbb{M}_{3,2} && \mathbb{M}_{3,3}
+\mathbf{M}_{0,0} &&         &&         && \mathbf{M}_{0,3} \\
+        && \mathbf{M}_{1,1} && \mathbf{M}_{1,2} &&         \\
+        && \mathbf{M}_{2,1} && \mathbf{M}_{2,2} && \mathbf{M}_{2,3} \\
+\mathbf{M}_{3,0} &&         && \mathbf{M}_{3,2} && \mathbf{M}_{3,3}
 \end{bmatrix} &\equiv
 \begin{bmatrix}
-\mathbb{M}_{0,0} && \mathbb{M}_{0,3} && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} && \mathbb{M}_{3,0} && \mathbb{M}_{3,2} && \mathbb{M}_{3,3} \\
+\mathbf{M}_{0,0} && \mathbf{M}_{0,3} && \mathbf{M}_{1,1} && \mathbf{M}_{1,2} && \mathbf{M}_{2,1} && \mathbf{M}_{2,2} && \mathbf{M}_{2,3} && \mathbf{M}_{3,0} && \mathbf{M}_{3,2} && \mathbf{M}_{3,3} \\
 [[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] \\
 \end{bmatrix} \\
 &\equiv
 \begin{bmatrix}
-\mathbb{M}_{0,0} && \mathbb{M}_{0,3} && \mathbb{M}_{1,1} && \mathbb{M}_{1,2} && \mathbb{M}_{2,1} && \mathbb{M}_{2,2} && \mathbb{M}_{2,3} && \mathbb{M}_{3,0} && \mathbb{M}_{3,2} && \mathbb{M}_{3,3} && \\
+\mathbf{M}_{0,0} && \mathbf{M}_{0,3} && \mathbf{M}_{1,1} && \mathbf{M}_{1,2} && \mathbf{M}_{2,1} && \mathbf{M}_{2,2} && \mathbf{M}_{2,3} && \mathbf{M}_{3,0} && \mathbf{M}_{3,2} && \mathbf{M}_{3,3} && \\
 [0 && 3 && 1 && 2 && 1 && 2 && 3 && 0 && 2 && 3] && \\
 [0 && && 2 && && 4 && && && 7 && && && && 10]
 \end{bmatrix}
@@ -707,17 +706,17 @@ becomes:
 
 ### Block-sparse LU solving
 
-An equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can be solved using
+An equation $\mathbf{M} \boldsymbol{x} = \boldsymbol{b}$ can be solved using
 [LU factorization](#block-sparse-lu-factorization) by forward and backward substitutions. Since the
 blocks of the matrix are already ordered in a way that minimizes the amount of
 [fill-ins](#pivot-operations), it is recommended not to permute across blocks, as that would defeat
 the whole purpose of doing the reordering. Permutations are therefore restricted to intra-block
 operations. The first step of the block-sparse LU solving therefore permutes the rows within each
-block: $\boldsymbol{b}^{\prime} = \mathbb{P}\boldsymbol{b}$. After that, the forward substitution
+block: $\boldsymbol{b}^{\prime} = \mathbf{P}\boldsymbol{b}$. After that, the forward substitution
 step essentially amounts to solving the matrix equation
-$\mathbb{L}\boldsymbol{y} = \boldsymbol{b}^{\prime}$, followed by the backwards substitution by
-solving $\mathbb{U}\boldsymbol{z} = \mathbb{y}$. The final result is then obtained by applying the
-column permutation within each block: $\boldsymbol{x} = \mathbb{Q}\boldsymbol{z}$.
+$\mathbf{L}\boldsymbol{y} = \boldsymbol{b}^{\prime}$, followed by the backwards substitution by
+solving $\mathbf{U}\boldsymbol{z} = \mathbf{y}$. The final result is then obtained by applying the
+column permutation within each block: $\boldsymbol{x} = \mathbf{Q}\boldsymbol{z}$.
 
 #### Forward substitution
 
@@ -726,16 +725,16 @@ The row permutation is applied as follows.
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. If the matrix is a block matrix:
       1. Apply the current row's block permutation:
-         $\boldsymbol{b}\left[i\right] \gets \mathbb{P}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
+         $\boldsymbol{b}\left[i\right] \gets \mathbf{P}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
       2. Proceed with the next iteration.
    2. Else:
       1. Proceed with the next iteration.
 
-The equation $\mathbb{L}\boldsymbol{y} = \mathbb{P}\boldsymbol{b}$ is solved as follows.
+The equation $\mathbf{L}\boldsymbol{y} = \mathbf{P}\boldsymbol{b}$ is solved as follows.
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. Loop over all lower-triangle off-diagonal columns (beware of sparsity): $j=0..(i-1)$:
-      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbb{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
       2. Continue with next block-column.
    2. If the matrix is a block matrix:
       1. Follow the same steps within the block.
@@ -749,14 +748,14 @@ The equation $Uz = y$ is solved as follows.
 
 1. Loop over all block-rows in reverse order: $i=(N-1)..0$:
    1. Loop over all upper-triangle off-diagonal columns (beware of sparsity): $j=(i+1)..0$:
-      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbb{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
       2. Continue with next block-column.
    2. Handle the diagonal element:
       1. If the matrix is a block matrix:
          1. Follow the same steps within the block.
          2. Proceed.
       2. Else:
-         1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] / \mathbb{U}\left[i,i\right]$.
+         1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] / \mathbf{U}\left[i,i\right]$.
          2. Proceed.
 
 Apply the column permutation as follows.
@@ -764,7 +763,7 @@ Apply the column permutation as follows.
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. If the matrix is a block matrix:
       1. Apply the current row's block permutation:
-         $\boldsymbol{b}\left[i\right] \gets \mathbb{Q}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
+         $\boldsymbol{b}\left[i\right] \gets \mathbf{Q}\left[i\right] \cdot \boldsymbol{b}\left[i\right]$.
       2. Proceed.
    2. Else:
       1. Proceed.
@@ -802,11 +801,11 @@ as well as the well-known
 
 #### Pivot perturbation algorithm
 
-Let $\mathbb{M}$ be the matrix, $\left\|\mathbb{M}\right\|_{\infty ,\text{bwod}}$ the
+Let $\mathbf{M}$ be the matrix, $\left\|\mathbf{M}\right\|_{\infty ,\text{bwod}}$ the
 [block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the
 matrix.
 
-1. $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbb{M}\right\|_{\text{bwod}}$.
+1. $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbf{M}\right\|_{\text{bwod}}$.
 2. If $|\text{pivot_element}| \lt \epsilon$, then:
    1. If $|\text{pivot_element}| = 0$, then:
       1. $\text{phase_shift} \gets 1$.
@@ -816,8 +815,8 @@ matrix.
       2. Proceed.
    3. $\text{pivot_element} \gets \epsilon * \text{phase_shift}$.
 
-$\text{phase_shift}$ ensures that the sign (if $\mathbb{M}$ is a real matrix) or complex phase (if
-$\mathbb{M}$ is a complex matrix) of the pivot element is preserved. The positive real axis is used
+$\text{phase_shift}$ ensures that the sign (if $\mathbf{M}$ is a real matrix) or complex phase (if
+$\mathbf{M}$ is a complex matrix) of the pivot element is preserved. The positive real axis is used
 as a fallback when the pivot element is identically zero.
 
 ### Iterative refinement of LU solver solutions
@@ -829,17 +828,17 @@ in [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-
 obtained using [pivot perturbation](#pivot-perturbation) yields only approximate results, because
 the LU decomposition itself is only approximate. Because of that, an iterative refinement process
 is required to improve the solution to the matrix equation
-$\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$.
+$\mathbf{M} \cdot \boldsymbol{x} = \boldsymbol{b}$.
 
 The iterative refinement process works as follows. In step $i$, given an approximation
 $\boldsymbol{x}_i$ for $\boldsymbol{x}$, the difference between the current best and the exact
 solution is defined as $\boldsymbol{\Delta x} := \boldsymbol{x} - \boldsymbol{x}_i$. Substituting
 in the original equation yields
-$\mathbb{M} \cdot (\boldsymbol{x}_i + \boldsymbol{\Delta x}) = \boldsymbol{b}$, so that
-$\mathbb{M} \cdot \boldsymbol{\Delta x} = \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}_i =: \boldsymbol{r}$.
+$\mathbf{M} \cdot (\boldsymbol{x}_i + \boldsymbol{\Delta x}) = \boldsymbol{b}$, so that
+$\mathbf{M} \cdot \boldsymbol{\Delta x} = \boldsymbol{b} - \mathbf{M} \cdot \boldsymbol{x}_i =: \boldsymbol{r}$.
 The residual $\boldsymbol{r}$ can be calculated. An estimation for the left-hand side can be
-obtained by using the pivot-perturbed matrix $\tilde{\mathbb{M}}$ instead of the original matrix
-$\mathbb{M}$. Convergence is reached when $\boldsymbol{r} \to \boldsymbol{0}$, which implies
+obtained by using the pivot-perturbed matrix $\tilde{\mathbf{M}}$ instead of the original matrix
+$\mathbf{M}$. Convergence is reached when $\boldsymbol{r} \to \boldsymbol{0}$, which implies
 $\left\|\boldsymbol{\Delta x}\right\| \to 0$. Solving for $\boldsymbol{\Delta x}$ and substituting
 back into $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ provides the next best
 approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
@@ -847,11 +846,11 @@ approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
 [backward error formula](#backward-error-calculation)).
 
-Since the matrix $\mathbb{M}$ remains static during this process, the LU decomposition is valid
+Since the matrix $\mathbf{M}$ remains static during this process, the LU decomposition is valid
 throughout the process. The accuracy of the result can therefore be iteratively refined efficiently.
 
-Given the original matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$ to solve, the
-pivot perturbated matrix $\tilde{\mathbb{M}}$ with a pre-calculated LU decomposition, and the
+Given the original matrix equation $\mathbf{M} \cdot \boldsymbol{x} = \boldsymbol{b}$ to solve, the
+pivot perturbated matrix $\tilde{\mathbf{M}}$ with a pre-calculated LU decomposition, and the
 convergence threshold $\epsilon$, the algorithm is as follows:
 
 1. Initialize:
@@ -869,13 +868,13 @@ convergence threshold $\epsilon$, the algorithm is as follows:
       3. Else:
          1. Increase the number of iterations.
          2. Proceed.
-   2. Solve $\tilde{\mathbb{M}} \cdot \boldsymbol{\Delta x} = \boldsymbol{r}$ for
+   2. Solve $\tilde{\mathbf{M}} \cdot \boldsymbol{\Delta x} = \boldsymbol{r}$ for
       $\boldsymbol{\Delta x}$.
    3. Calculate the backward error with the original $\boldsymbol{x}$ and $\boldsymbol{r}$ using the
       [backward error formula](#improved-backward-error-calculation).
    4. Set the next estimation of
       $\boldsymbol{x}$: $\boldsymbol{x}_{\text{est}} \gets \boldsymbol{x}_{\text{est}} + \boldsymbol{\Delta x}$.
-   5. Set the residual: $\boldsymbol{r} \gets \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}$.
+   5. Set the residual: $\boldsymbol{r} \gets \boldsymbol{b} - \mathbf{M} \cdot \boldsymbol{x}$.
 
 As a result, we effectively always do:
 
@@ -899,11 +898,11 @@ with a few modifications described [below](#improved-backward-error-calculation)
 
 $$
 \begin{align*}
-D_{\text{max}} &= \max_i\left\{\left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
+D_{\text{max}} &= \max_i\left\{\left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
 \text{backward_error} &= \max_i \left\{
    \frac{\left|\boldsymbol{r}\right|_i}{
       \max\left\{
-         \left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
+         \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
          \epsilon_{\text{backward_error}} D_{\text{max}}
       \right\}
    }
@@ -950,13 +949,13 @@ tolerance.
 
 #### Improved backward error calculation
 
-In power system equations, the matrix \mathbb{M} in equation
-$\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can contain very discrepant entries: some may be very
+In power system equations, the matrix \mathbf{M} in equation
+$\mathbf{M} \boldsymbol{x} = \boldsymbol{b}$ can contain very discrepant entries: some may be very
 large while others are zero or very small (see also the
 [documentation on calculations](../../user_manual/calculations.md)). The same may be true for the
 right-hand side of the equation $\boldsymbol{b}$, as well as its solution $\boldsymbol{x}$. In fact,
 there may be certain rows $i$ for which both $\left|\boldsymbol{b}\left[i\right]\right|$ and
-$\sum_j \left|\mathbb{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small
+$\sum_j \left|\mathbf{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small
 and, therefore, their sum is prone to rounding errors, which may be several orders larger than
 machine precision.
 
@@ -966,15 +965,15 @@ uses the following backward error in the
 
 $$
 \begin{align*}
-\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\sum_j \left|\mathbb{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
-&= \max_i \frac{\left|\boldsymbol{b}_i - \sum_j \mathbb{M}_{i,j} \boldsymbol{x}_j\right|}{\sum_j \left|\mathbb{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
-&= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\left(\left|\mathbb{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i}
+\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
+&= \max_i \frac{\left|\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\right|}{\sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
+&= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i}
 \end{align*}
 $$
 
-In this equation, the symbolic notation $\left|\mathbb{M}\right|$ and $\left|\boldsymbol{x}\right|$
-are the matrix and vector with absolute values of the elements of $\mathbb{M}$ and $\boldsymbol{x}$
-as elements, i.e., $\left|\mathbb{M}\right|_{i,j} := \left|\mathbb{M}_{i,j}\right|$ and
+In this equation, the symbolic notation $\left|\mathbf{M}\right|$ and $\left|\boldsymbol{x}\right|$
+are the matrix and vector with absolute values of the elements of $\mathbf{M}$ and $\boldsymbol{x}$
+as elements, i.e., $\left|\mathbf{M}\right|_{i,j} := \left|\mathbf{M}_{i,j}\right|$ and
 $\left|\boldsymbol{x}\right|_i := \left|\boldsymbol{x}_i\right|$, as
 defined in [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
@@ -985,11 +984,11 @@ denominators:
 
 $$
 \begin{align*}
-D_{\text{max}} &= \max_i\left\{\left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
+D_{\text{max}} &= \max_i\left\{\left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
 \text{backward_error} &= \max_i \left\{
    \frac{\left|\boldsymbol{r}\right|_i}{
       \max\left\{
-         \left(\left|\mathbb{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
+         \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
          \epsilon_{\text{backward_error}} D_{\text{max}}
       \right\}
    }
@@ -1031,10 +1030,10 @@ skipped.
 
 The algorithm is as follows:
 
-Let $\mathbb{M}\equiv \mathbb{M}\left[0:N, 0:N\right]$ be the $N\times N$-matrix with a block-sparse
-structure and $\mathbb{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where
+Let $\mathbf{M}\equiv \mathbf{M}\left[0:N, 0:N\right]$ be the $N\times N$-matrix with a block-sparse
+structure and $\mathbf{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, where
 $i,j = 0..(N-1)$. In turn, let
-$\mathbb{M}\left[i,j\right] \equiv \mathbb{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense
+$\mathbf{M}\left[i,j\right] \equiv \mathbf{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense
 block with dimensions $N_i\times N_j$.
 
 1. $\text{norm} \gets 0$.
@@ -1044,12 +1043,12 @@ block with dimensions $N_i\times N_j$.
       1. If $i = j$, then:
          1. Skip this block: continue with the next block-column.
       2. Else, calculate the $L_{\infty}$ norm of the current block and add to the current row norm:
-         1. the current block: $\mathbb{M}_{i,j} \gets \mathbb{M}\left[i,j\right]$.
+         1. the current block: $\mathbf{M}_{i,j} \gets \mathbf{M}\left[i,j\right]$.
          2. $\text{block_norm} \gets 0$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
             1. $\text{block_row_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. $\text{block_row_norm} \gets \text{block_row_norm} + \left\|\mathbb{M}_{i,j}\left[k,l\right]\right\|$.
+               1. $\text{block_row_norm} \gets \text{block_row_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.
             3. Calculate the new block norm: set
                $\text{block_norm} \gets \max\left\{\text{block_norm}, \text{block_row_norm}\right\}$.
             4. Continue with the next row of the current block.
