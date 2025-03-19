@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model::math_solver {
-namespace {
+
 using lu_trait_double = math_solver::sparse_lu_entry_trait<double, double, double>;
 static_assert(!lu_trait_double::is_block);
 static_assert(lu_trait_double::block_size == 1);
@@ -34,7 +34,6 @@ template <class T> void check_result(std::vector<T> const& x, std::vector<T> con
 // test block calculation with 2*2
 using Tensor = Eigen::Array<double, 2, 2, Eigen::ColMajor>;
 using Array = Eigen::Array<double, 2, 1, Eigen::ColMajor>;
-} // namespace
 
 TEST_CASE("Test Sparse LU solver") {
     // 3 * 3 matrix, with diagonal, two fill-ins

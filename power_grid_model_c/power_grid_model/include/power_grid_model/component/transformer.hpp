@@ -97,7 +97,7 @@ class Transformer : public Branch {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.from_status, update_data.to_status);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
-        return {.topo = topo_changed, .param = param_changed};
+        return {topo_changed, param_changed};
     }
 
     TransformerUpdate inverse(TransformerUpdate update_data) const {

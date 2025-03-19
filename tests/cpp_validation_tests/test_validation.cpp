@@ -314,7 +314,7 @@ struct CaseParam {
 
     static std::string replace_backslash(std::string const& str) {
         std::string str_out{str};
-        std::ranges::transform(str, str_out.begin(), [](char c) { return c == '\\' ? '/' : c; });
+        std::transform(str.cbegin(), str.cend(), str_out.begin(), [](char c) { return c == '\\' ? '/' : c; });
         return str_out;
     }
 };

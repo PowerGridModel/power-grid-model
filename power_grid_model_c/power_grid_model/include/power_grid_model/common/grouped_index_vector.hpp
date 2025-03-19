@@ -132,7 +132,7 @@ class SparseGroupedIdxVector {
         : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
-        assert(std::ranges::is_sorted(indptr_));
+        assert(std::is_sorted(std::begin(indptr_), std::end(indptr_)));
     }
     SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
         : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
@@ -154,44 +154,46 @@ class DenseGroupedIdxVector {
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
             : dense_vector_{&dense_vector},
               group_{group},
-              group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
+              group_range_{std::equal_range(std::cbegin(*dense_vector_), std::cend(*dense_vector_), group)} {}
 
       private:
         using group_iterator = IdxVector::const_iterator;
 
         IdxVector const* dense_vector_{};
         Idx group_{};
-        std::ranges::subrange<group_iterator> group_range_;
+        std::pair<group_iterator, group_iterator> group_range_;
 
         friend class boost::iterator_core_access;
 
         auto dereference() const -> iterator {
             assert(dense_vector_ != nullptr);
             return boost::counting_range(
-                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.begin())),
-                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end())));
+                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.first)),
+                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.second)));
         }
         constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
 
         constexpr void increment() {
             ++group_;
-            group_range_ = {group_range_.end(), std::find_if(group_range_.end(), std::cend(*dense_vector_),
-                                                             [group = group_](Idx value) { return value > group; })};
+            group_range_ = std::make_pair(group_range_.second,
+                                          std::find_if(group_range_.second, std::cend(*dense_vector_),
+                                                       [group = group_](Idx value) { return value > group; }));
         }
         constexpr void decrement() {
             --group_;
-            group_range_ = {std::find_if(std::make_reverse_iterator(group_range_.begin()), std::crend(*dense_vector_),
-                                         [group = group_](Idx value) { return value < group; })
-                                .base(),
-                            group_range_.begin()};
+            group_range_ =
+                std::make_pair(std::find_if(std::make_reverse_iterator(group_range_.first), std::crend(*dense_vector_),
+                                            [group = group_](Idx value) { return value < group; })
+                                   .base(),
+                               group_range_.first);
         }
         constexpr void advance(Idx n) {
-            auto const start = n > 0 ? group_range_.end() : std::cbegin(*dense_vector_);
-            auto const stop = n < 0 ? group_range_.begin() : std::cend(*dense_vector_);
+            auto const start = n > 0 ? group_range_.second : std::cbegin(*dense_vector_);
+            auto const stop = n < 0 ? group_range_.first : std::cend(*dense_vector_);
 
             group_ += n;
-            group_range_ = std::ranges::equal_range(std::ranges::subrange{start, stop}, group_);
+            group_range_ = std::equal_range(start, stop, group_);
         }
     };
 
@@ -213,7 +215,7 @@ class DenseGroupedIdxVector {
         : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
-        assert(std::ranges::is_sorted(dense_vector_));
+        assert(std::is_sorted(std::begin(dense_vector_), std::end(dense_vector_)));
         assert(num_groups_ >= (dense_vector_.empty() ? 0 : dense_vector_.back()));
     }
     DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)

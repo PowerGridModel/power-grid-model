@@ -31,7 +31,7 @@ struct Idx2D {
 };
 
 struct Idx2DHash {
-    std::size_t operator()(Idx2D const& idx) const {
+    std::size_t operator()(const Idx2D& idx) const {
         size_t const h1 = std::hash<Idx>{}(idx.group);
         size_t const h2 = std::hash<Idx>{}(idx.pos);
         return h1 ^ (h2 << 1);

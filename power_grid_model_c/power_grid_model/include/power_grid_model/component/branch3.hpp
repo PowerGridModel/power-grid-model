@@ -209,7 +209,7 @@ class Branch3 : public Base {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
         // change in branch3 connection will change both topo and param
-        return {.topo = changed, .param = changed};
+        return {changed, changed};
     }
 
     auto inverse(std::convertible_to<Branch3Update> auto update_data) const {

@@ -41,7 +41,7 @@ class TransformerTapRegulator : public Regulator {
         update_real_value<symmetric_t>(update_data.u_band, u_band_, 1.0);
         update_real_value<symmetric_t>(update_data.line_drop_compensation_r, line_drop_compensation_r_, 1.0);
         update_real_value<symmetric_t>(update_data.line_drop_compensation_x, line_drop_compensation_x_, 1.0);
-        return {.topo = false, .param = false};
+        return {false, false};
     }
 
     TransformerTapRegulatorUpdate inverse(TransformerTapRegulatorUpdate update_data) const {

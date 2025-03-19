@@ -105,7 +105,7 @@ class ThreeWindingTransformer : public Branch3 {
     double base_i_2() const final { return base_i_2_; }
     double base_i_3() const final { return base_i_3_; }
     double loading(double s_1, double s_2, double s_3) const final {
-        return std::max({s_1 / sn_1_, s_2 / sn_2_, s_3 / sn_3_});
+        return std::max(std::max(s_1 / sn_1_, s_2 / sn_2_), s_3 / sn_3_);
     }
     // 3-way branch, phase shift = phase_node_x - phase_internal_node
     // the clock_12 and clock_13 is reverted
@@ -133,7 +133,7 @@ class ThreeWindingTransformer : public Branch3 {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
-        return {.topo = topo_changed, .param = param_changed};
+        return {topo_changed, param_changed};
     }
 
     ThreeWindingTransformerUpdate inverse(ThreeWindingTransformerUpdate update_data) const {

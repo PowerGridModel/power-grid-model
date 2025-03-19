@@ -186,10 +186,6 @@ template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
     bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
 
     std::string get_err_msg() { return std::string{T::static_err_msg}; }
-
-  private:
-    DefaultErrorVisitor() = default;
-    friend T; // CRTP compliance
 };
 
 struct visit_map_t;
@@ -242,8 +238,6 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
         assert(size == 0);
         return true;
     }
-
-    MapArrayVisitor() = default;
 };
 
 struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
@@ -254,8 +248,6 @@ struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
         str = {v, size};
         return true;
     }
-
-    StringVisitor() = default;
 };
 
 struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
@@ -266,8 +258,6 @@ struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
         value = v;
         return true;
     }
-
-    BoolVisitor() = default;
 };
 
 template <class T> struct ValueVisitor;
@@ -292,8 +282,6 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
         value = static_cast<T>(v);
         return true;
     }
-
-    ValueVisitor(T& v) : DefaultErrorVisitor<ValueVisitor<T>>{}, value{v} {}
 };
 
 template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
@@ -318,8 +306,6 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
         value = v;
         return true;
     }
-
-    ValueVisitor(double& v) : DefaultErrorVisitor<ValueVisitor<double>>{}, value{v} {}
 };
 
 template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
@@ -371,8 +357,6 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
         value[idx] = v;
         return true;
     }
-
-    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>>{}, value{v} {}
 };
 
 } // namespace detail
@@ -675,8 +659,7 @@ class Deserializer {
             size_t const scenario_offset = offset_;
             // skip all the real content but check if it has map
             bool const has_map = parse_skip_check_map();
-            count_per_scenario.push_back(
-                {.component = component_key_, .size = component_size, .offset = scenario_offset, .has_map = has_map});
+            count_per_scenario.push_back({component_key_, component_size, scenario_offset, has_map});
         }
         component_key_ = {};
         return count_per_scenario;
@@ -725,8 +708,8 @@ class Deserializer {
                 elements_per_scenario * batch_size;                                     // multiply
         handler.add_component_info(component_key_, elements_per_scenario, total_elements);
         // check if all scenarios only contain array data
-        bool const only_values_in_data =
-            std::ranges::none_of(component_byte_meta, [](auto const& x) { return x.has_map; });
+        bool const only_values_in_data = std::none_of(component_byte_meta.cbegin(), component_byte_meta.cend(),
+                                                      [](auto const& x) { return x.has_map; });
         msg_data_offsets_.push_back(std::move(component_byte_meta));
         // enable attribute indications if possible
         if (only_values_in_data) {
@@ -960,7 +943,7 @@ class Deserializer {
 
         ctype_func_selector(attribute.ctype, [&buffer_view, &component, &attribute, this]<class T> {
             ValueVisitor<T> visitor{
-                attribute.get_attribute<T>(component.advance_ptr(buffer_view.buffer->data, buffer_view.idx))};
+                {}, attribute.get_attribute<T>(component.advance_ptr(buffer_view.buffer->data, buffer_view.idx))};
             msgpack::parse(data_, size_, offset_, visitor);
         });
     }
@@ -971,7 +954,7 @@ class Deserializer {
         assert(buffer.meta_attribute != nullptr);
 
         ctype_func_selector(buffer.meta_attribute->ctype, [&buffer, &idx, this]<class T> {
-            ValueVisitor<T> visitor{*(reinterpret_cast<T*>(buffer.data) + idx)};
+            ValueVisitor<T> visitor{{}, *(reinterpret_cast<T*>(buffer.data) + idx)};
             msgpack::parse(data_, size_, offset_, visitor);
         });
     }

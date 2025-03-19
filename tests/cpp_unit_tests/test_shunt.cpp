@@ -95,61 +95,60 @@ TEST_CASE("Test shunt") {
 
     SUBCASE("test change") {
         SUBCASE("status") {
-            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{.id = 1, .status = 0, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan});
+            changed = shunt.update(ShuntUpdate{1, 0, nan, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = 1.0, .b1 = nan, .g0 = nan, .b0 = nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, 1.0, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = 10.0, .b1 = nan, .g0 = nan, .b0 = nan});
+            changed = shunt.update(ShuntUpdate{1, 1, 10.0, nan, nan, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = 2.0, .g0 = nan, .b0 = nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, 2.0, nan, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = 20.0, .g0 = nan, .b0 = nan});
+            changed = shunt.update(ShuntUpdate{1, 1, nan, 20.0, nan, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = 3.0, .b0 = nan});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 3.0, nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = 30.0, .b0 = nan});
+            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 30.0, nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = 4.0});
+            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 4.0});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = 40.0});
+            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 40.0});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("all or none") {
-            auto changed_ = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = 1.0, .b1 = 2.0, .g0 = 3.0, .b0 = 4.0});
+            auto changed_ = shunt.update(ShuntUpdate{1, 1, 1.0, 2.0, 3.0, 4.0});
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
-            changed_ = shunt.update(ShuntUpdate{.id = 1, .status = 0, .g1 = 10.0, .b1 = 20.0, .g0 = 30.0, .b0 = 40.0});
+            changed_ = shunt.update(ShuntUpdate{1, 0, 10.0, 20.0, 30.0, 40.0});
             CHECK(!changed_.topo);
             CHECK(changed_.param);
-            changed_ =
-                shunt.update(ShuntUpdate{.id = 1, .status = na_IntS, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan});
+            changed_ = shunt.update(ShuntUpdate{1, na_IntS, nan, nan, nan, nan});
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
         }
     }
 
     SUBCASE("Update inverse") {
-        ShuntUpdate shunt_update{.id = 1, .status = na_IntS, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan};
+        ShuntUpdate shunt_update{1, na_IntS, nan, nan, nan, nan};
         auto expected = shunt_update;
 
         SUBCASE("Identical") {

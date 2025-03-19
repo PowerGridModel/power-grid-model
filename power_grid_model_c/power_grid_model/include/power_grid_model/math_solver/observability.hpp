@@ -14,7 +14,7 @@ namespace power_grid_model::math_solver {
 namespace detail {
 
 template <symmetry_tag sym>
-std::tuple<Idx, Idx> count_voltage_sensors(Idx const n_bus, MeasuredValues<sym> const& measured_values) {
+std::tuple<Idx, Idx> count_voltage_sensors(const Idx n_bus, const MeasuredValues<sym>& measured_values) {
     Idx n_voltage_sensor{};
     Idx n_voltage_phasor_sensor{};
     for (Idx bus = 0; bus != n_bus; ++bus) {

@@ -95,7 +95,7 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
         update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, inv_base_power);
         update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, inv_base_power);
 
-        return {.topo = false, .param = false};
+        return {false, false};
     }
 
     PowerSensorUpdate<power_sensor_symmetry> inverse(PowerSensorUpdate<power_sensor_symmetry> update_data) const {

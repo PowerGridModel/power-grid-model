@@ -105,7 +105,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         update_real_value<current_sensor_symmetry>(update_data.i_measured, i_measured_, base_current_inv_);
         update_real_value<current_sensor_symmetry>(update_data.i_angle_measured, i_angle_measured_, 1.0);
 
-        return {.topo = false, .param = false};
+        return {false, false};
     }
 
     CurrentSensorUpdate<current_sensor_symmetry>

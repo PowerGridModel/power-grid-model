@@ -114,7 +114,7 @@ class Fault final : public Base {
             x_f_ = update.x_f;
         }
         check_sanity();
-        return {.topo = false, .param = false}; // topology and parameters do not change
+        return {false, false}; // topology and parameters do not change
     }
 
     FaultUpdate inverse(FaultUpdate update_data) const {

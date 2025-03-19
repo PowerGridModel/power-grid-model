@@ -115,7 +115,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Update inverse") {
-        BranchUpdate branch_update{.id = 1, .from_status = na_IntS, .to_status = na_IntS};
+        BranchUpdate branch_update{1, na_IntS, na_IntS};
         auto expected = branch_update;
 
         SUBCASE("Identical") {

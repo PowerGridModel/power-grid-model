@@ -40,7 +40,7 @@ ShortCircuitInput create_sc_test_input(FaultType fault_type, FaultPhase fault_ph
     ShortCircuitInput sc_input;
     sc_input.fault_buses = fault_buses;
     sc_input.source = {vref};
-    sc_input.faults = {{.y_fault = y_fault, .fault_type = fault_type, .fault_phase = fault_phase}};
+    sc_input.faults = {{y_fault, fault_type, fault_phase}};
     return sc_input;
 }
 
@@ -58,7 +58,7 @@ template <symmetry_tag sym>
 constexpr ShortCircuitSolverOutput<sym> create_math_sc_output(ComplexValue<sym> u0, ComplexValue<sym> u1,
                                                               ComplexValue<sym> if_abc) {
     ShortCircuitSolverOutput<sym> sc_output;
-    sc_output.u_bus = {std::move(u0), std::move(u1)};
+    sc_output.u_bus = {u0, u1};
     sc_output.fault = {{if_abc}};
     sc_output.branch = {BranchShortCircuitSolverOutput<sym>{.i_f = if_abc, .i_t = -if_abc}};
     sc_output.source = {{if_abc}};
@@ -156,14 +156,14 @@ TEST_CASE("Short circuit solver") {
     // params sym
     MathModelParam<symmetric_t> param_sc_sym;
     param_sc_sym.branch_param = {{y0, -y0, -y0, y0}};
-    param_sc_sym.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
+    param_sc_sym.source_param = {SourceCalcParam{yref, yref}};
 
     // params asym
     MathModelParam<asymmetric_t> param_sc_asym;
     ComplexTensor<asymmetric_t> const y0a{(2.0 * y0 + y0_0) / 3.0, (y0_0 - y0) / 3.0};
     param_sc_asym.branch_param = {{y0a, -y0a, -y0a, y0a}};
     ComplexTensor<asymmetric_t> const yref_asym{yref};
-    param_sc_asym.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
+    param_sc_asym.source_param = {SourceCalcParam{yref, yref}};
 
     // topo and param ptr
     auto topo_sc_ptr = std::make_shared<MathModelTopology const>(topo_sc);
@@ -310,9 +310,9 @@ TEST_CASE("Short circuit solver") {
         DenseGroupedIdxVector const fault_buses_2 = {from_sparse, {0, 1}};
         // params source injection
         MathModelParam<asymmetric_t> asym_param_comp;
-        asym_param_comp.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
+        asym_param_comp.source_param = {SourceCalcParam{yref, yref}};
         MathModelParam<symmetric_t> sym_param_comp;
-        sym_param_comp.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
+        sym_param_comp.source_param = {SourceCalcParam{yref, yref}};
         // topo and param ptr
         auto topo_comp_ptr = std::make_shared<MathModelTopology const>(topo_comp);
         auto asym_param_comp_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(asym_param_comp);

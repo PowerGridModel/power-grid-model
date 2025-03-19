@@ -29,8 +29,8 @@ class DatasetInfo {
     DatasetInfo(RawDatasetInfo const* info) noexcept : info_{info} {}
     DatasetInfo(DatasetInfo&&) = default;
     DatasetInfo& operator=(DatasetInfo&&) = default;
-    DatasetInfo(DatasetInfo const&) = delete;            // No copy constructor
-    DatasetInfo& operator=(DatasetInfo const&) = delete; // No copy assignment
+    DatasetInfo(const DatasetInfo&) = delete;            // No copy constructor
+    DatasetInfo& operator=(const DatasetInfo&) = delete; // No copy assignment
     ~DatasetInfo() = default;
 
     std::string name() const { return std::string{handle_.call_with(PGM_dataset_info_name, info_)}; }
@@ -88,8 +88,8 @@ class DatasetWritable {
         : dataset_{dataset}, info_{handle_.call_with(PGM_dataset_writable_get_info, dataset_)} {}
     DatasetWritable(DatasetWritable&&) = default;
     DatasetWritable& operator=(DatasetWritable&&) = default;
-    DatasetWritable(DatasetWritable const&) = delete;            // No copy constructor
-    DatasetWritable& operator=(DatasetWritable const&) = delete; // No copy assignment
+    DatasetWritable(const DatasetWritable&) = delete;            // No copy constructor
+    DatasetWritable& operator=(const DatasetWritable&) = delete; // No copy assignment
     ~DatasetWritable() = default;
 
     RawWritableDataset const* get() const { return dataset_; }

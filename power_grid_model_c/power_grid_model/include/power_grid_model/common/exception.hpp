@@ -8,7 +8,6 @@
 #include "enum.hpp"
 
 #include <exception>
-#include <format>
 #include <sstream>
 #include <string>
 
@@ -24,7 +23,7 @@ inline auto to_string(std::integral auto x) { return std::to_string(x); }
 
 class PowerGridError : public std::exception {
   public:
-    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg_, msg); }
+    void append_msg(std::string_view msg) { msg_ += msg; }
     char const* what() const noexcept final { return msg_.c_str(); }
 
   private:
@@ -45,16 +44,17 @@ class InvalidArguments : public PowerGridError {
 
     template <class... Options>
         requires(std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...)
-    InvalidArguments(std::string const& method, Options const&... options)
+    InvalidArguments(std::string const& method, Options&&... options)
         : InvalidArguments{method, "the following combination of options"} {
-        (append_msg(" " + options.name + ": " + options.value + "\n"), ...);
+        (append_msg(" " + std::forward<Options>(options).name + ": " + std::forward<Options>(options).value + "\n"),
+         ...);
     }
 };
 
 class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
-    MissingCaseForEnumError(std::string const& method, T const& value)
+    MissingCaseForEnumError(std::string const& method, const T& value)
         : InvalidArguments{method, std::string{typeid(T).name()} + " #" + detail::to_string(static_cast<IntS>(value))} {
     }
 };
@@ -292,7 +292,7 @@ class UnreachableHit : public PowerGridError {
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>
-    TapSearchStrategyIncompatibleError(std::string const& method, T1 const& value1, T2 const& value2)
+    TapSearchStrategyIncompatibleError(std::string const& method, const T1& value1, const T2& value2)
         : InvalidArguments{
               method, std::string{typeid(T1).name()} + " #" + detail::to_string(static_cast<IntS>(value1)) + " and " +
                           std::string{typeid(T2).name()} + " #" + detail::to_string(static_cast<IntS>(value2))} {}

@@ -10,7 +10,7 @@ namespace power_grid_model {
 
 TEST_CASE("Test sparse mapping") {
     IdxVector const idx_B_in_A{3, 5, 2, 1, 1, 2};
-    SparseIndexMapping mapping{.indptr = {0, 0, 2, 4, 5, 5, 6, 6}, .reorder = {3, 4, 2, 5, 0, 1}};
+    SparseIndexMapping mapping{{0, 0, 2, 4, 5, 5, 6, 6}, {3, 4, 2, 5, 0, 1}};
     SparseIndexMapping mapping_2 = build_sparse_mapping(idx_B_in_A, 7);
 
     CHECK(mapping.indptr == mapping_2.indptr);

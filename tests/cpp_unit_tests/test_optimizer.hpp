@@ -167,8 +167,7 @@ constexpr auto strategies_and_methods = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
-            result[idx] = {.strategy = strategy, .method = method};
-            ++idx;
+            result[idx++] = {strategy, method}; // NOSONAR {no more than one thing per line}
         }
     }
     return result;
@@ -184,8 +183,7 @@ constexpr auto strategies_and_sides = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto side : tap_sides) {
-            result[idx] = {.strategy = strategy, .side = side};
-            ++idx;
+            result[idx++] = {strategy, side}; // NOSONAR {no more than one thing per line}
         }
     }
     return result;
@@ -210,8 +208,7 @@ constexpr auto strategy_search_and_sides = [] {
                 continue;
             }
             for (auto side : tap_sides) {
-                result[idx] = {.strategy = strategy, .search = search, .side = side};
-                ++idx;
+                result[idx++] = {strategy, search, side}; // NOSONAR (no-more-than-one-thing-per-line)
             }
         }
     }
@@ -236,8 +233,7 @@ constexpr auto strategy_method_and_searches = [] {
                 continue;
             }
             for (auto method : calculation_methods) {
-                result[idx] = {.strategy = strategy, .method = method, .search = search};
-                ++idx;
+                result[idx++] = {strategy, method, search}; // NOSONAR (no-more-than-one-thing-per-line)
             }
         }
     }

@@ -87,7 +87,7 @@ template <typename Component, typename IndexType, class ComponentContainer, type
                                  decltype(*comp_base_sequence_cbegin<Component>(MainModelState<ComponentContainer>{}))>
 constexpr ResIt produce_output(MainModelState<ComponentContainer> const& state, ResIt res_it, ResFunc&& func) {
     return std::transform(get_component_citer<Component>(state).begin(), get_component_citer<Component>(state).end(),
-                          comp_base_sequence_cbegin<Component>(state), std::move(res_it), std::forward<ResFunc>(func));
+                          comp_base_sequence_cbegin<Component>(state), res_it, std::forward<ResFunc>(func));
 }
 
 } // namespace detail
@@ -434,7 +434,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, typename 
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<SolverOutputType> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx>(
-        state, std::move(res_it), [&state, &math_output](Component const& component, Idx const obj_seq) {
+        state, res_it, [&state, &math_output](Component const& component, Idx const obj_seq) {
             return output_result<Component, ComponentContainer>(component, state, math_output, obj_seq);
         });
 }

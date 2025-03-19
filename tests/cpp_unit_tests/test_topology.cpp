@@ -175,72 +175,69 @@ TEST_CASE("Test topology") {
 
     // result
     TopologicalComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {
-        // 0 1 2 3
-        {.group = 0, .pos = 1}, // Topological node 0 has become node 4 in mathematical model (group) 0
-        {.group = 0, .pos = 2},
-        {.group = 0, .pos = 0},
-        {.group = 0, .pos = 4},
-        // 4 5 6
-        {.group = 1, .pos = 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
-        {.group = 1, .pos = 3},
-        {.group = 1, .pos = 0},
-        // 7, 8, 9, 10, 11
-        {.group = -1, .pos = -1}, // Topological node 7 is not included in the mathematical model, because it was not
-                                  // connected to any power source
-        {.group = -1, .pos = -1},
-        {.group = -1, .pos = -1},
-        {.group = -1, .pos = -1},
-        {.group = -1, .pos = -1},
-        // b0, b1, b2
-        {.group = 0, .pos = 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
-        {.group = -1, .pos = -1},
-        {.group = 1, .pos = 1}};
+    comp_coup_ref.node = {        // 0 1 2 3
+                          {0, 1}, // Topological node 0 has become node 4 in mathematical model (group) 0
+                          {0, 2},
+                          {0, 0},
+                          {0, 4},
+                          // 4 5 6
+                          {1, 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
+                          {1, 3},
+                          {1, 0},
+                          // 7, 8, 9, 10, 11
+                          {-1, -1}, // Topological node 7 is not included in the mathematical model, because it was not
+                                    // connected to any power source
+                          {-1, -1},
+                          {-1, -1},
+                          {-1, -1},
+                          {-1, -1},
+                          // b0, b1, b2
+                          {0, 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
+                          {-1, -1},
+                          {1, 1}};
     comp_coup_ref.source = {
-        {.group = 0, .pos = 0},   // 0
-        {.group = 1, .pos = 0},   // 1
-        {.group = -1, .pos = -1}, // 2
-        {.group = -1, .pos = -1}, // 3
+        {0, 0},   // 0
+        {1, 0},   // 1
+        {-1, -1}, // 2
+        {-1, -1}, // 3
     };
     comp_coup_ref.branch = {
-        {.group = 0, .pos = 0},   // 0
-        {.group = 0, .pos = 1},   // 1
-        {.group = 0, .pos = 2},   // 2
-        {.group = -1, .pos = -1}, // 3
-        {.group = -1, .pos = -1}, // 4
-        {.group = 0, .pos = 3},   // 5
-        {.group = 1, .pos = 0},   // 6
-        {.group = 1, .pos = 1},   // 7
+        {0, 0},   // 0
+        {0, 1},   // 1
+        {0, 2},   // 2
+        {-1, -1}, // 3
+        {-1, -1}, // 4
+        {0, 3},   // 5
+        {1, 0},   // 6
+        {1, 1},   // 7
     };
     comp_coup_ref.branch3 = {
-        {.group = 0, .pos = {4, 5, 6}},     // b0
-        {.group = -1, .pos = {-1, -1, -1}}, // b1
-        {.group = 1, .pos = {2, 3, 4}},     // b2
+        {0, {4, 5, 6}},     // b0
+        {-1, {-1, -1, -1}}, // b1
+        {1, {2, 3, 4}},     // b2
     };
-    comp_coup_ref.load_gen = {
-        {.group = 0, .pos = 0}, {.group = -1, .pos = -1}, {.group = 1, .pos = 0}, {.group = 0, .pos = 1}};
-    comp_coup_ref.shunt = {{.group = 0, .pos = 0}, {.group = 1, .pos = 0}, {.group = -1, .pos = -1}};
-    comp_coup_ref.voltage_sensor = {{.group = 0, .pos = 0}, {.group = 0, .pos = 2}, {.group = 0, .pos = 1},
-                                    {.group = 0, .pos = 3}, {.group = 1, .pos = 0}, {.group = -1, .pos = -1}};
+    comp_coup_ref.load_gen = {{0, 0}, {-1, -1}, {1, 0}, {0, 1}};
+    comp_coup_ref.shunt = {{0, 0}, {1, 0}, {-1, -1}};
+    comp_coup_ref.voltage_sensor = {{0, 0}, {0, 2}, {0, 1}, {0, 3}, {1, 0}, {-1, -1}};
     comp_coup_ref.power_sensor = {
-        {.group = 0, .pos = 0},   // 0 branch_from
-        {.group = 1, .pos = 0},   // 1 source
-        {.group = 0, .pos = 1},   // 2 branch_to
-        {.group = -1, .pos = -1}, // 3 source
-        {.group = 1, .pos = 0},   // 4 load       = load power sensor 0 in math model 1
-        {.group = 1, .pos = 0},   // 5 shunt      = shunt power sensor 0 in math model 1
-        {.group = -1, .pos = -1}, // 6 load
-        {.group = 0, .pos = 0},   // 7 generator
-        {.group = 1, .pos = 1},   // 8 load
-        {.group = 1, .pos = 1},   // 9 shunt
-        {.group = 0, .pos = 2},   // 10 branch_to
-        {.group = 0, .pos = 1},   // 11 branch_from
-        {.group = 1, .pos = 1},   // 12 source
-        {.group = 0, .pos = 0},   // 13 branch_to
-        {.group = 0, .pos = 2},   // 14 branch_from
-        {.group = 0, .pos = 4},   // 15 branch_from
-        {.group = 0, .pos = 3},   // 16 branch_from
-        {.group = 1, .pos = 0}    // 17 node
+        {0, 0},   // 0 branch_from
+        {1, 0},   // 1 source
+        {0, 1},   // 2 branch_to
+        {-1, -1}, // 3 source
+        {1, 0},   // 4 load       = load power sensor 0 in math model 1
+        {1, 0},   // 5 shunt      = shunt power sensor 0 in math model 1
+        {-1, -1}, // 6 load
+        {0, 0},   // 7 generator
+        {1, 1},   // 8 load
+        {1, 1},   // 9 shunt
+        {0, 2},   // 10 branch_to
+        {0, 1},   // 11 branch_from
+        {1, 1},   // 12 source
+        {0, 0},   // 13 branch_to
+        {0, 2},   // 14 branch_from
+        {0, 4},   // 15 branch_from
+        {0, 3},   // 16 branch_from
+        {1, 0}    // 17 node
     };
 
     // Sub graph / math model 0
@@ -351,10 +348,7 @@ TEST_CASE("Test cycle reorder") {
         comp_conn.source_connected = {1};
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
-        comp_coup_ref.node = {{.group = 0, .pos = 0}, {.group = 0, .pos = 1}, {.group = 0, .pos = 2},
-                              {.group = 0, .pos = 3}, {.group = 0, .pos = 4}, {.group = 0, .pos = 5},
-                              {.group = 0, .pos = 6}, {.group = 0, .pos = 7}, {.group = 0, .pos = 8},
-                              {.group = 0, .pos = 9}};
+        comp_coup_ref.node = {{0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, {0, 9}};
         std::vector<BranchIdx> const fill_in_ref{{3, 5}, {4, 5}, {5, 8}, {5, 6}, {5, 7}};
 
         Topology topo{comp_topo, comp_conn};
@@ -400,9 +394,7 @@ TEST_CASE("Test cycle reorder") {
         comp_conn.source_connected = {1};
         // result
         TopologicalComponentToMathCoupling comp_coup_ref{};
-        comp_coup_ref.node = {{.group = 0, .pos = 0}, {.group = 0, .pos = 3}, {.group = 0, .pos = 1},
-                              {.group = 0, .pos = 2}, {.group = 0, .pos = 4}, {.group = 0, .pos = 5},
-                              {.group = 0, .pos = 6}};
+        comp_coup_ref.node = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {0, 4}, {0, 5}, {0, 6}};
         std::vector<BranchIdx> const fill_in_ref{{5, 6}, {2, 6}, {4, 6}};
 
         Topology topo{comp_topo, comp_conn};

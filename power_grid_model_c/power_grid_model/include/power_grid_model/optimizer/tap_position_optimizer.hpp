@@ -41,7 +41,7 @@ using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
-constexpr Idx2D unregulated_idx = {.group = -1, .pos = -1};
+constexpr Idx2D unregulated_idx = {-1, -1};
 struct TrafoGraphVertex {
     bool is_source{};
 };
@@ -54,11 +54,11 @@ struct TrafoGraphEdge {
     constexpr TrafoGraphEdge(Idx2D regulated_idx_, EdgeWeight weight_)
         : regulated_idx{regulated_idx_}, weight{weight_} {}
 
-    bool operator==(TrafoGraphEdge const& other) const {
+    bool operator==(const TrafoGraphEdge& other) const {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
 
-    auto constexpr operator<=>(TrafoGraphEdge const& other) const {
+    auto constexpr operator<=>(const TrafoGraphEdge& other) const {
         if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
@@ -343,8 +343,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
 inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> RankedTransformerGroups {
     auto sorted_trafos = w_trafo_list;
 
-    std::ranges::sort(sorted_trafos,
-                      [](TrafoGraphEdge const& a, TrafoGraphEdge const& b) { return a.weight < b.weight; });
+    std::sort(sorted_trafos.begin(), sorted_trafos.end(),
+              [](const TrafoGraphEdge& a, const TrafoGraphEdge& b) { return a.weight < b.weight; });
 
     RankedTransformerGroups groups;
     auto previous_weight = std::numeric_limits<EdgeWeight>::lowest();
@@ -630,7 +630,7 @@ inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...
                                                State const& state) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
                                                                   regulator.regulator.get().control_side());
-    return get_math_id<Node>(state, controlled_node_idx) != unregulated_idx;
+    return get_math_id<Node>(state, controlled_node_idx) != Idx2D{-1, -1};
 }
 
 struct VoltageBand {
@@ -655,7 +655,7 @@ template <symmetry_tag sym> struct NodeState {
     ComplexValue<sym> u;
     ComplexValue<sym> i;
 
-    friend auto operator<=>(NodeState<sym> const& state, TransformerTapRegulatorCalcParam const& param) {
+    friend auto operator<=>(NodeState<sym> state, TransformerTapRegulatorCalcParam const& param) {
         auto const u_compensated = state.u + param.z_compensation * state.i;
         auto const v_compensated = mean_val(cabs(u_compensated)); // TODO(mgovers): handle asym correctly
         return v_compensated <=> VoltageBand{.u_set = param.u_set, .u_band = param.u_band};
@@ -844,7 +844,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct BinarySearchOptions {
         bool strategy_max{false};
-        Idx2D idx_bs{.group = 0, .pos = 0};
+        Idx2D idx_bs{0, 0};
     };
     Idx total_iterations{0}; // metric purpose only
 
@@ -894,7 +894,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
-        auto const cache = cache_states(order);
+        auto const cache = this->cache_states(order);
         try {
             opt_prep(order);
             auto result = optimize(state, order, method);
@@ -1012,7 +1012,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const adjust_transformer_in_rank = [&](Idx const& rank_idx, Idx const& transformer_idx,
                                                         std::vector<RegulatedTransformer> const& same_rank_regulators) {
                 auto const& regulator = same_rank_regulators[transformer_idx];
-                BinarySearchOptions const options{strategy_max, Idx2D{.group = rank_idx, .pos = transformer_idx}};
+                BinarySearchOptions const options{strategy_max, Idx2D{rank_idx, transformer_idx}};
                 tap_changed = adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
                 return tap_changed;
             };

@@ -171,7 +171,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
             // shunt
             result.shunt_param = {ys};
             // source
-            result.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
+            result.source_param = {SourceCalcParam{yref, yref}};
         } else {
             // branch
             DoubleComplex const y0_0 = 0.5 + 0.5i;
@@ -193,7 +193,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
             result.shunt_param = {ysa};
 
             // source
-            result.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
+            result.source_param = {SourceCalcParam{yref, yref}};
         }
         return result;
     }
@@ -217,15 +217,15 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
         result.source[0].i = source_inj;
         result.source[0].s = conj(result.source[0].i) * u0;
         // shunt result
-        result.shunt = {{.s = conj(i2_shunt_inj) * u2, .i = i2_shunt_inj}};
+        result.shunt = {{conj(i2_shunt_inj) * u2, i2_shunt_inj}};
         // load input and result, load6 is disconnected
-        result.load_gen = {{.s = s0_load_inj / 3.0, .i = i0_load_inj / 3.0},
-                           {.s = s0_load_inj / 3.0, .i = i0_load_inj / 3.0},
-                           {.s = s0_load_inj / 3.0, .i = i0_load_inj / 3.0},
-                           {.s = s1_load_inj / 3.0, .i = i1_load_inj / 3.0},
-                           {.s = s1_load_inj / 3.0, .i = i1_load_inj / 3.0},
-                           {.s = s1_load_inj / 3.0, .i = i1_load_inj / 3.0},
-                           {.s = 0.0, .i = 0.0}};
+        result.load_gen = {{s0_load_inj / 3.0, i0_load_inj / 3.0},
+                           {s0_load_inj / 3.0, i0_load_inj / 3.0},
+                           {s0_load_inj / 3.0, i0_load_inj / 3.0},
+                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
+                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
+                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
+                           {0.0, 0.0}};
         // bus injection
         result.bus_injection = {result.branch[0].s_f, result.branch[0].s_t + result.branch[1].s_f, 0};
 

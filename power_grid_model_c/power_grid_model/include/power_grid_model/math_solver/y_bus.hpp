@@ -35,7 +35,7 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
         return;
     }
     // add
-    vec.push_back({.pos = {first_bus, second_bus}, .element = {.element_type = element_type, .idx = idx}});
+    vec.push_back({{first_bus, second_bus}, {element_type, idx}});
 }
 
 // counting sort element
@@ -54,7 +54,7 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
         count_vec[--counter[it_element->pos.second]] = *it_element;
     }
     // sort row
-    std::ranges::fill(counter, 0);
+    std::fill(counter.begin(), counter.end(), 0);
     for (YBusElementMap const& element : count_vec) {
         ++counter[element.pos.first];
     }

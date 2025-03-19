@@ -28,7 +28,7 @@ class Base {
     virtual ~Base() = default;
     constexpr ID id() const noexcept { return id_; }
     constexpr BaseOutput base_output(bool is_energized) const {
-        return BaseOutput{.id = id_, .energized = static_cast<IntS>(is_energized)};
+        return BaseOutput{id_, static_cast<IntS>(is_energized)};
     }
     virtual bool energized(bool is_connected_to_source) const = 0;
 
@@ -36,8 +36,8 @@ class Base {
     Base& operator=(Base&&) = default;
 
   protected:
-    Base(Base const&) = default;
-    Base& operator=(Base const&) = default;
+    Base(const Base&) = default;
+    Base& operator=(const Base&) = default;
 
   private:
     ID id_;
