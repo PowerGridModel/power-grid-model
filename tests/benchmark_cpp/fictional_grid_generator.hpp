@@ -183,35 +183,35 @@ class FictionalGridGenerator {
         input_.node.push_back(mv_busbar);
         for (Idx i = 0; i != option_.n_parallel_hv_mv_transformer; ++i) {
             // transformer, 150/10.5kV, 60MVA, uk=20.3%
-            TransformerInput const transformer{id_gen_++,
-                                               id_source_node,
-                                               id_mv_busbar,
-                                               1,
-                                               1,
-                                               150.0e3,
-                                               10.5e3,
-                                               60.0e6,
-                                               0.203,
-                                               200e3,
-                                               0.01,
-                                               40e3,
-                                               WindingType::wye_n,
-                                               WindingType::delta,
-                                               5,
-                                               BranchSide::from,
-                                               0,
-                                               -10,
-                                               10,
-                                               0,
-                                               2.5e3,
-                                               nan,
-                                               nan,
-                                               nan,
-                                               nan,
-                                               nan,
-                                               nan,
-                                               nan,
-                                               nan};
+            TransformerInput const transformer{.id = id_gen_++,
+                                               .from_node = id_source_node,
+                                               .to_node = id_mv_busbar,
+                                               .from_status = 1,
+                                               .to_status = 1,
+                                               .u1 = 150.0e3,
+                                               .u2 = 10.5e3,
+                                               .sn = 60.0e6,
+                                               .uk = 0.203,
+                                               .pk = 200e3,
+                                               .i0 = 0.01,
+                                               .p0 = 40e3,
+                                               .winding_from = WindingType::wye_n,
+                                               .winding_to = WindingType::delta,
+                                               .clock = 5,
+                                               .tap_side = BranchSide::from,
+                                               .tap_pos = 0,
+                                               .tap_min = -10,
+                                               .tap_max = 10,
+                                               .tap_nom = 0,
+                                               .tap_size = 2.5e3,
+                                               .uk_min = nan,
+                                               .uk_max = nan,
+                                               .pk_min = nan,
+                                               .pk_max = nan,
+                                               .r_grounding_from = nan,
+                                               .x_grounding_from = nan,
+                                               .r_grounding_to = nan,
+                                               .x_grounding_to = nan};
             input_.transformer.push_back(transformer);
             // shunt, Z0 = 0 + j7 ohm
             ShuntInput const shunt{
@@ -220,10 +220,23 @@ class FictionalGridGenerator {
         }
 
         // template input
-        NodeInput const mv_node{0, 10.5e3};
+        NodeInput const mv_node{.id = 0, .u_rated = 10.5e3};
         SymLoadGenInput const mv_sym_load{0, 0, 1, LoadGenType::const_i, 0.8e6, 0.6e6};
         // cable 3 * 630Al XLPE 10kV, per km
-        LineInput const mv_line{0, 0, 0, 1, 1, 0.063, 0.103, 0.4e-6, 0.0004, 0.275, 0.101, 0.66e-6, 0.0, 1e3};
+        LineInput const mv_line{.id = 0,
+                                .from_node = 0,
+                                .to_node = 0,
+                                .from_status = 1,
+                                .to_status = 1,
+                                .r1 = 0.063,
+                                .x1 = 0.103,
+                                .c1 = 0.4e-6,
+                                .tan1 = 0.0004,
+                                .r0 = 0.275,
+                                .x0 = 0.101,
+                                .c0 = 0.66e-6,
+                                .tan0 = 0.0,
+                                .i_n = 1e3};
 
         // random generator
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
@@ -295,38 +308,38 @@ class FictionalGridGenerator {
 
     void generate_lv_grid(ID mv_node, double mv_base_load) {
         ID const id_lv_busbar = id_gen_++;
-        NodeInput const lv_busbar{id_lv_busbar, 400.0};
+        NodeInput const lv_busbar{.id = id_lv_busbar, .u_rated = 400.0};
         input_.node.push_back(lv_busbar);
         // transformer, 1500 kVA or mv base load, uk=6%, pk=8.8kW
-        TransformerInput const transformer{id_gen_++,
-                                           mv_node,
-                                           id_lv_busbar,
-                                           1,
-                                           1,
-                                           10.5e3,
-                                           420.0,
-                                           std::max(1500e3, mv_base_load * 1.2),
-                                           0.06,
-                                           8.8e3,
-                                           0.01,
-                                           1e3,
-                                           WindingType::delta,
-                                           WindingType::wye_n,
-                                           11,
-                                           BranchSide::from,
-                                           3,
-                                           5,
-                                           1,
-                                           3,
-                                           250.0,
-                                           nan,
-                                           nan,
-                                           nan,
-                                           nan,
-                                           nan,
-                                           nan,
-                                           nan,
-                                           nan};
+        TransformerInput const transformer{.id = id_gen_++,
+                                           .from_node = mv_node,
+                                           .to_node = id_lv_busbar,
+                                           .from_status = 1,
+                                           .to_status = 1,
+                                           .u1 = 10.5e3,
+                                           .u2 = 420.0,
+                                           .sn = std::max(1500e3, mv_base_load * 1.2),
+                                           .uk = 0.06,
+                                           .pk = 8.8e3,
+                                           .i0 = 0.01,
+                                           .p0 = 1e3,
+                                           .winding_from = WindingType::delta,
+                                           .winding_to = WindingType::wye_n,
+                                           .clock = 11,
+                                           .tap_side = BranchSide::from,
+                                           .tap_pos = 3,
+                                           .tap_min = 5,
+                                           .tap_max = 1,
+                                           .tap_nom = 3,
+                                           .tap_size = 250.0,
+                                           .uk_min = nan,
+                                           .uk_max = nan,
+                                           .pk_min = nan,
+                                           .pk_max = nan,
+                                           .r_grounding_from = nan,
+                                           .x_grounding_from = nan,
+                                           .r_grounding_to = nan,
+                                           .x_grounding_to = nan};
         input_.transformer.push_back(transformer);
 
         // template
@@ -334,10 +347,35 @@ class FictionalGridGenerator {
         AsymLoadGenInput const lv_asym_load{
             0, 0, 1, LoadGenType::const_i, RealValue<asymmetric_t>{0.0}, RealValue<asymmetric_t>{0.0}};
         // 4*150 Al, per km
-        LineInput const lv_main_line{0, 0, 0, 1, 1, 0.206, 0.079, 0.72e-6, 0.0004, 0.94, 0.387, 0.36e-6, 0.0, 300.0};
+        LineInput const lv_main_line{.id = 0,
+                                     .from_node = 0,
+                                     .to_node = 0,
+                                     .from_status = 1,
+                                     .to_status = 1,
+                                     .r1 = 0.206,
+                                     .x1 = 0.079,
+                                     .c1 = 0.72e-6,
+                                     .tan1 = 0.0004,
+                                     .r0 = 0.94,
+                                     .x0 = 0.387,
+                                     .c0 = 0.36e-6,
+                                     .tan0 = 0.0,
+                                     .i_n = 300.0};
         // 4*16 Cu, per km
-        LineInput const lv_connection_line{0,       0,      0,   1,     1,        1.15, 0.096,
-                                           0.43e-6, 0.0004, 4.6, 0.408, 0.258e-6, 0.0,  80.0};
+        LineInput const lv_connection_line{.id = 0,
+                                           .from_node = 0,
+                                           .to_node = 0,
+                                           .from_status = 1,
+                                           .to_status = 1,
+                                           .r1 = 1.15,
+                                           .x1 = 0.096,
+                                           .c1 = 0.43e-6,
+                                           .tan1 = 0.0004,
+                                           .r0 = 4.6,
+                                           .x0 = 0.408,
+                                           .c0 = 0.258e-6,
+                                           .tan0 = 0.0,
+                                           .i_n = 80.0};
 
         // generator
         std::uniform_int_distribution<Idx> load_type_gen{0, 2};
