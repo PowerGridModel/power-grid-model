@@ -19,7 +19,8 @@ if platform.system() == "Windows":
 elif platform.system() in ["Linux", "Darwin"]:
     if_win = False
     if platform.system() == "Darwin" and (
-        "MACOSX_DEPLOYMENT_TARGET" not in os.environ or float(os.environ["MACOSX_DEPLOYMENT_TARGET"]) < 13.3
+        "MACOSX_DEPLOYMENT_TARGET" not in os.environ
+        or tuple(map(int, os.environ["MACOSX_DEPLOYMENT_TARGET"].split("."))) < (13, 3)
     ):
         os.environ["MACOSX_DEPLOYMENT_TARGET"] = "13.3"
 else:
