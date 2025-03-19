@@ -16,9 +16,6 @@ on:
   merge_group:
   # run this workflow manually from the Actions tab
   workflow_dispatch:
-  # Nightly run
-  schedule:
-    - cron: "0 2 * * *" # Based on UTC time
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-ci-build
@@ -44,37 +41,9 @@ jobs:
     with:
       target: "all power_grid_model_benchmark_cpp"
 
-  check-citations:
-    runs-on: ubuntu-24.04
-    # we need to define the output to access the output of the current job in the next job 
-    outputs:
-      citation_modified: ${{ steps.check.outputs.citation_modified }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        # checkout the last commit
-        with:
-          fetch-depth: 2
-
-      - name: Get changed files
-        run: |
-          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD | tr '\n' ' ')
-          echo "$CHANGED_FILES"
-          echo "changed_files=$CHANGED_FILES" >> $GITHUB_ENV
-
-      - name: Check if CITATION.cff was modified
-        id: check
-        if: contains(env.changed_files, 'CITATION.cff') || contains(env.changed_files, '.github/workflows/citations.yml')
-        run: echo "citation_modified=True" >> $GITHUB_OUTPUT
-
-  citations:
-    needs: check-citations
-    if: needs.check-citations.outputs.citation_modified == 'True'
-    uses: "./.github/workflows/citations.yml"
-
   ci-passed:
     runs-on: ubuntu-latest
-    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy, citations]
+    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy]
 
     steps:
       - run: echo "ci passed"

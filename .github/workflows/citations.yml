@@ -12,6 +12,10 @@ on:
     paths:
       - CITATION.cff
       - .github/workflows/citations.yml
+  pull_request:
+    paths:
+      - CITATION.cff
+      - .github/workflows/citations.yml
   # run pipeline from another workflow
   workflow_call:
   # run this workflow manually from the Actions tab
