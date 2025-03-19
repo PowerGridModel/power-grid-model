@@ -554,58 +554,58 @@ $$
 \begin{align*}
 \mathbb{l}_c \mathbb{u}_a
 &=
-\begin{pmatrix}
+\begin{bmatrix}
     \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix} \begin{pmatrix}
+\end{bmatrix} \begin{bmatrix}
     a_{11} && a_{12} \\
     0 && a_{22} - a_{12} \frac{a_{21}}{a_{11}}
-\end{pmatrix} \\
-&= \begin{pmatrix}
+\end{bmatrix} \\
+&= \begin{bmatrix}
     a_{11} \frac{c_{11}}{a_{11}} && a_{12} \frac{c_{11}}{a_{11}} + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)\frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     a_{11} \frac{c_{21}}{a_{11}} && a_{12} \frac{c_{21}}{a_{11}} + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)\frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix} \\
-&= \begin{pmatrix}
+\end{bmatrix} \\
+&= \begin{bmatrix}
     c_{11} && c_{11} + \left(c_{12} - c_{11}\right) \\
     c_{21} && c_{21} + \left(c_{22} - c_{21}\right)
-\end{pmatrix} \\
-&= \begin{pmatrix}
+\end{bmatrix} \\
+&= \begin{bmatrix}
     c_{11} && c_{12} \\
     c_{21} && c_{22}
-\end{pmatrix} \\
+\end{bmatrix} \\
 &= \mathbb{c} \\
 \mathbb{l}_a \mathbb{u}_b
-&= \begin{pmatrix}
+&= \begin{bmatrix}
     1                     && 0 \\
     \frac{a_{21}}{a_{11}} && 1
-\end{pmatrix} \begin{pmatrix}
+\end{bmatrix} \begin{bmatrix}
     b_{11}                               && b_{12} \\
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
-\end{pmatrix} \\
-&= \begin{pmatrix}
+\end{bmatrix} \\
+&= \begin{bmatrix}
     b_{11}                                                               && b_{12} \\
     b_{11} \frac{a_{21}}{a_{11}} + b_{21} - b_{11} \frac{a_{21}}{a_{11}} && b_{12} \frac{a_{21}}{a_{11}} + b_{22} - b_{12}\frac{a_{21}}{a_{11}}
-\end{pmatrix} \\
-&= \begin{pmatrix}
+\end{bmatrix} \\
+&= \begin{bmatrix}
     b_{11} && b_{12} \\
     b_{21} && b_{22}
-\end{pmatrix} \\
+\end{bmatrix} \\
 &= \mathbb{b} \\
 \mathbb{l}_d\mathbb{u}_d
 &= \mathbb{d} - \mathbb{l}_c \mathbb{u}_b \\
-&= \begin{pmatrix}d_{11} && d_{12} \\ d_{21} && d_{22} \end{pmatrix} - \begin{pmatrix}
+&= \begin{bmatrix}d_{11} && d_{12} \\ d_{21} && d_{22} \end{bmatrix} - \begin{bmatrix}
     \frac{c_{11}}{a_{11}} && \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     \frac{c_{21}}{a_{11}} && \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix} \begin{pmatrix}
+\end{bmatrix} \begin{bmatrix}
     b_{11}                               && b_{12} \\
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
-\end{pmatrix} \\
-&= \begin{pmatrix}
+\end{bmatrix} \\
+&= \begin{bmatrix}
     d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
         d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
     d{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
         d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
-\end{pmatrix} \\
+\end{bmatrix} \\
 &= \mathbb{l}_d\mathbb{u}_d
 \end{align*}
 $$
@@ -777,19 +777,23 @@ obtained here is an approximation to the exact solution. The accuracy can be imp
 
 ### Pivot perturbation
 
-The LU solver implemented in the power grid model has support for pivot perturbation. The methods
-are described in
+The LU solver implemented in the power grid model features pivot perturbation. We refer readers to
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 and
-[Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179).
-Pivot perturbation consists of selecting a pivot element. If its magnitude is too small compared
-to that of the other elements in the matrix, then it cannot be used in its current form. Selecting
-another pivot element, via permutations with other blocks, is not desirable, as described in the
-section on [pivot operations](#pivot-operations), so the matrix is ill-conditioned.
+[Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179)
+for more details. Here, we briefly present the method used in the power grid model LU solver.
 
-Instead, a small perturbation is done on the pivot element. This makes the matrix equation solvable
-without selecting a different pivot element, at the cost of some propagating numerical errors.
-Iterative refinement is then used to suppress those errors. This method is also used by
+Solving matrix equations with forward and backward substitution requires the selection of a pivot
+element. If the magnitude of a pivot element is too small compared to that of the other elements
+in the matrix, numerical instabilities may be encountered and the pivot element therefore cannot be
+used as is. Another pivot element could potentially be selected by permutation with other matrix
+elements across blocks, but this is not desirable, as described in the section on
+[pivot operations](#pivot-operations). In such cases, the matrix is ill-conditioned.
+
+Instead, a small perturbation can be added to the pivot element. This renders the matrix equation
+solvable without selecting a different pivot element. The cost of such operation is the introduction
+of numerical errors that are potentially propagating. Iterative refinement can be used to mitigate
+the numerical errors. This method is also used by
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 and
 [Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179),
@@ -798,43 +802,44 @@ as well as the well-known
 
 #### Pivot perturbation algorithm
 
-The following pivot perturbation algorithm works for both real and complex matrix equations. Let
-$\mathbb{M}$ be the matrix, $\left\|\mathbb{M}\right\|_{\infty ,\text{bwod}}$ the
+Let $\mathbb{M}$ be the matrix, $\left\|\mathbb{M}\right\|_{\infty ,\text{bwod}}$ the
 [block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the
 matrix.
 
-1. Set $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbb{M}\right\|_{\text{bwod}}$
+1. $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbb{M}\right\|_{\text{bwod}}$.
 2. If $|\text{pivot_element}| \lt \epsilon$, then:
    1. If $|\text{pivot_element}| = 0$, then:
-      1. Set $\text{phase_shift} = 1$.
+      1. $\text{phase_shift} \gets 1$.
       2. Proceed.
    2. Else:
-      1. Set $\text{phase_shift}\left(\text{pivot_element}\right) \gets \text{pivot_element} / |\text{pivot_element}|$.
+      1. $\text{phase_shift} \gets \text{pivot_element} / |\text{pivot_element}|$.
       2. Proceed.
-   3. Set $\text{pivot_element} \gets \epsilon * \text{phase_shift}\left(\text{pivot_element}\right)$.
+   3. $\text{pivot_element} \gets \epsilon * \text{phase_shift}$.
 
-$\text{phase_shift}$ ensures that the complex phase of the pivot element is preserved, with a fallback
-to the positive real axis when the pivot element is identically zero.
+$\text{phase_shift}$ ensures that the sign (if $\mathbb{M}$ is a real matrix) or complex phase (if
+$\mathbb{M}$ is a complex matrix) of the pivot element is preserved. The positive real axis is used
+as a fallback when the pivot element is identically zero.
 
 ### Iterative refinement of LU solver solutions
 
-This algorithm is heavily inspired by the GESP algorithm described in
-[Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761).
+The following refinement algorithm draws substantial inspiration from the GESP algorithm described
+in [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761).
 
 [LU solving](#block-sparse-lu-solving) with an [LU decomposition](#block-sparse-lu-factorization)
 obtained using [pivot perturbation](#pivot-perturbation) yields only approximate results, because
 the LU decomposition itself is only approximate. Because of that, an iterative refinement process
-is required to improve the solution to the matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$.
+is required to improve the solution to the matrix equation
+$\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$.
 
-The iterative refinement process is as follows: in iteration step $i$, it assumes an existing
-approximation $\boldsymbol{x}_i$ for $\boldsymbol{x}$. It then defines the difference between the
-current best and the actual solution $\boldsymbol{\Delta x} = \boldsymbol{x} - \boldsymbol{x}_i$.
-Substituting in the original equation yields
+The iterative refinement process works as follows. In step $i$, given an approximation
+$\boldsymbol{x}_i$ for $\boldsymbol{x}$, the difference between the current best and the exact
+solution is defined as $\boldsymbol{\Delta x} := \boldsymbol{x} - \boldsymbol{x}_i$. Substituting
+in the original equation yields
 $\mathbb{M} \cdot (\boldsymbol{x}_i + \boldsymbol{\Delta x}) = \boldsymbol{b}$, so that
-$\mathbb{M} \cdot \boldsymbol{\Delta x} = \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}_i =: \boldsymbol{r}$, where the residual
-$\boldsymbol{r}$ can be calculated. An estimation for the left-hand side can be obtained by using
-the pivot-perturbed matrix $\tilde{A}$ instead of the original matrix A. Convergence can be reached
-if $\boldsymbol{r} \to \boldsymbol{0}$, since then also
+$\mathbb{M} \cdot \boldsymbol{\Delta x} = \boldsymbol{b} - \mathbb{M} \cdot \boldsymbol{x}_i =: \boldsymbol{r}$.
+The residual $\boldsymbol{r}$ can be calculated. An estimation for the left-hand side can be
+obtained by using the pivot-perturbed matrix $\tilde{\mathbb{M}}$ instead of the original matrix
+$\mathbb{M}$. Convergence is reached when $\boldsymbol{r} \to \boldsymbol{0}$, which implies
 $\left\|\boldsymbol{\Delta x}\right\| \to 0$. Solving for $\boldsymbol{\Delta x}$ and substituting
 back into $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ provides the next best
 approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
@@ -842,9 +847,8 @@ approximation $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
 A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
 [backward error formula](#backward-error-calculation)).
 
-Since the matrix $\mathbb{M}$ does not change during this process, the LU decomposition remains
-valid throughout the process, so that this iterative refinement can be done at a reasonably low
-cost.
+Since the matrix $\mathbb{M}$ remains static during this process, the LU decomposition is valid
+throughout the process. The accuracy of the result can therefore be iteratively refined efficiently.
 
 Given the original matrix equation $\mathbb{M} \cdot \boldsymbol{x} = \boldsymbol{b}$ to solve, the
 pivot perturbated matrix $\tilde{\mathbb{M}}$ with a pre-calculated LU decomposition, and the
@@ -875,16 +879,16 @@ convergence threshold $\epsilon$, the algorithm is as follows:
 
 As a result, we effectively always do:
 
-1. A solve step; and
-2. At least one iterative refinement step.
+1. A solving step; and
+2. At least one refinement step.
 
-The reason a sparse matrix error is raised, and not an iteration diverge error, when the maximum
-allowed amount of iterations is exceeded, is the following. It is the iterative refinement of the
-matrix equation solution that cannot be solved in the set amount of iterations - not the set of
-power system equations. This will only happen when the matrix equation requires iterative refinement
-in the first place, which happens only when pivot perturbation is needed, namely in the case of an
-ill-conditioned matrix equation. A matrix equation that is both ill-conditioned and not iteratively
-refinable is underdetermined and cannot be solved.
+When the maximum allowed amount of iterations is exceeded, a sparse matrix error instead of an
+iteration diverge error is raised. The reason is, that it is specifically the iterative refinement
+of the matrix equation solution that cannot be solved in the set amount of iterations - not the set
+of power system equations. This will only happen when the matrix equation requires iterative
+refinement in the first place, which happens only when pivot perturbation is needed, namely in the
+case of an ill-conditioned matrix equation. A matrix equation that is both ill-conditioned and not
+iteratively refinable is underdetermined and cannot be solved.
 
 #### Backward error calculation
 
@@ -907,13 +911,13 @@ D_{\text{max}} &= \max_i\left\{\left(\left|\mathbb{M}\right|\cdot\left|\boldsymb
 \end{align*}
 $$
 
-$0 \leq \epsilon \leq 1$ is a value that introduces a
+$\epsilon \in \left[0, 1\right]$ is a value that introduces a
 [cut-off value to improve stability](#improved-backward-error-calculation) of the algorithm and
 should ideally be small.
 
 ```{note}
 $\epsilon = 10^{-4}$ was experimentally determined to be a reasonably good value on a number of
-real-world MV grids.
+real-world medium voltage grids.
 ```
 
 ### Differences with literature
@@ -924,12 +928,12 @@ and
 [Schenk06](https://etna.math.kent.edu/volumes/2001-2010/vol23/abstract.php?vol=23&pages=158-179).
 They are summarized below.
 
-#### No check for diminishing returns
+#### No diminishing backward error
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
 contains an early-out criterion for the
-[iterative refinement](#iterative-refinement-of-lu-solver-solutions) that checks for deminishing
-returns in consecutive iterations. It amounts to (in reverse order):
+[iterative refinement](#iterative-refinement-of-lu-solver-solutions) that checks for diminishing
+backward error in consecutive iterations. It amounts to (in reverse order):
 
 1. If $\text{backward_error} \gt \frac{1}{2}\text{last_backward_error}$, then:
    1. Stop iterative refinement.
@@ -938,18 +942,20 @@ returns in consecutive iterations. It amounts to (in reverse order):
 
 In power systems, however, the fact that the matrix may contain elements
 [spanning several orders of magnitude](#element-size-properties-of-power-system-equations) may cause
-slow convergence far away from the optimum. The diminishing return criterion would cause the
-algorithm to exit before the actual solution is found. Multiple refinement iterations may still
-yield better results. The power grid model therefore does not stop on deminishing returns. Instead,
-a maximum amount of iterations is used in combination with the error tolerance.
+slow convergence far away from the optimum. The diminishing criterion would cause the algorithm to
+terminate before the actual solution is found. Multiple refinement iterations may still yield better
+results. The power grid model therefore does not terminate early when encountering diminishing
+backward errors. Instead, a maximum amount of iterations is used in combination with the error
+tolerance.
 
 #### Improved backward error calculation
 
-In power system equations, the matrix equation $\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can be
-very unbalanced: some entries in the matrix $\mathbb{M}$ may be very large while others are zero or
-very small. The same may be true for the right-hand side of the equation $\boldsymbol{b}$, as well
-as its solution $\boldsymbol{x}$. In fact, there may be certain rows $i$ for which both
-$\left|\boldsymbol{b}\left[i\right]\right|$ and
+In power system equations, the matrix \mathbb{M} in equation
+$\mathbb{M} \boldsymbol{x} = \boldsymbol{b}$ can contain very discrepant entries: some may be very
+large while others are zero or very small (see also the
+[documentation on calculations](../../user_manual/calculations.md)). The same may be true for the
+right-hand side of the equation $\boldsymbol{b}$, as well as its solution $\boldsymbol{x}$. In fact,
+there may be certain rows $i$ for which both $\left|\boldsymbol{b}\left[i\right]\right|$ and
 $\sum_j \left|\mathbb{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small
 and, therefore, their sum is prone to rounding errors, which may be several orders larger than
 machine precision.
@@ -972,8 +978,8 @@ as elements, i.e., $\left|\mathbb{M}\right|_{i,j} := \left|\mathbb{M}_{i,j}\righ
 $\left|\boldsymbol{x}\right|_i := \left|\boldsymbol{x}_i\right|$, as
 defined in [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
-Due to aforementioned, this is prone to rounding errors, and a single row with rounding errors may
-cause the entire iterative refinement to fail. The power grid model therefore uses a modified
+Due to the aforementioned, this is prone to rounding errors, and a single row with rounding errors
+may cause the entire iterative refinement to fail. The power grid model therefore uses a modified
 version, in which the denominator is capped to a minimum value, determined by the maximum across all
 denominators:
 
@@ -993,11 +999,11 @@ $$
 
 $\epsilon$ may be chosen. $\epsilon = 0$ means no cut-off, while $\epsilon = 1$ means that only the
 absolute values of the residuals are relevant - not the relative values. The former is prone to
-rounding errors, while the latter may hide issues in rows with small coefficients by supressing them
-in the backward error, even if that row's residual is relatively large compared to the other
-entries, in favor of other rows with larger absolute, but smaller relative, residuals. In
-conclusion, $\epsilon$ should be chosen small, but large enough to suppress numerical instabilities.
-A choice for $\epsilon$ that is experimentally verified to be reasonable is mentioned
+rounding errors. The latter may hide issues in rows with small coefficients by supressing them
+in the backward error. This would favor rows with larger absolute, but smaller relative residuals.
+This can be the case, even if that row's residual is relatively large compared to the other entries.
+In conclusion, $\epsilon$ should be chosen small, but large enough to suppress numerical
+instabilities. A choice for $\epsilon$ that is experimentally verified to be reasonable is mentioned
 [above](#backward-error-calculation).
 
 #### Block-wise off-diagonal infinite matrix norm
@@ -1031,23 +1037,23 @@ $i,j = 0..(N-1)$. In turn, let
 $\mathbb{M}\left[i,j\right] \equiv \mathbb{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense
 block with dimensions $N_i\times N_j$.
 
-1. Set $\text{norm} \gets 0$.
+1. $\text{norm} \gets 0$.
 2. Loop over all block-rows: $i = 0..(N-1)$:
-   1. Set $\text{row_norm} \gets 0$.
+   1. $\text{row_norm} \gets 0$.
    2. Loop over all block-columns: $j = 0..(N-1)$ (beware of sparse structure):
       1. If $i = j$, then:
          1. Skip this block: continue with the next block-column.
       2. Else, calculate the $L_{\infty}$ norm of the current block and add to the current row norm:
-         1. Set the current block: $\mathbb{M}_{i,j} \gets \mathbb{M}\left[i,j\right]$.
-         2. Set $\text{block_norm} \gets 0$.
+         1. the current block: $\mathbb{M}_{i,j} \gets \mathbb{M}\left[i,j\right]$.
+         2. $\text{block_norm} \gets 0$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
-            1. Set $\text{block_row_norm} \gets 0$.
+            1. $\text{block_row_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. Set $\text{block_row_norm} \gets \text{block_row_norm} + \left\|\mathbb{M}_{i,j}\left[k,l\right]\right\|$.
+               1. $\text{block_row_norm} \gets \text{block_row_norm} + \left\|\mathbb{M}_{i,j}\left[k,l\right]\right\|$.
             3. Calculate the new block norm: set
                $\text{block_norm} \gets \max\left\{\text{block_norm}, \text{block_row_norm}\right\}$.
             4. Continue with the next row of the current block.
-         4. Set $\text{row_norm} \gets \text{row_norm} + \text{block_norm}$.
+         4. $\text{row_norm} \gets \text{row_norm} + \text{block_norm}$.
          5. Continue with the next block-column.
    3. Calculate the new norm: set
       $\text{norm} \gets \max\left\{\text{norm}, \text{row_norm}\right\}$.
@@ -1061,41 +1067,41 @@ $L_{\infty}$-norm using the following examples.
 The first example shows how the taking the block-wise norm affects the calculation of the norm.
 
 $$
-\begin{pmatrix}
-\begin{pmatrix}
+\begin{bmatrix}
+\begin{bmatrix}
 0 && 0 \\
 0 && 0
-\end{pmatrix} && \begin{pmatrix}
+\end{bmatrix} && \begin{bmatrix}
 1 && 0 \\
 0 && 3
-\end{pmatrix} && \begin{pmatrix}
+\end{bmatrix} && \begin{bmatrix}
 3 && 0 \\
 0 && 0
-\end{pmatrix} \\
-\begin{pmatrix}
+\end{bmatrix} \\
+\begin{bmatrix}
 5 && 0 \\
 0 && 0
-\end{pmatrix} &&
-\begin{pmatrix}
+\end{bmatrix} &&
+\begin{bmatrix}
 0 && 0 \\
 0 && 0
-\end{pmatrix} && \begin{pmatrix}
+\end{bmatrix} && \begin{bmatrix}
 0 && 0 \\
 0 && \frac{1}{2}
-\end{pmatrix} \\
-\begin{pmatrix}
+\end{bmatrix} \\
+\begin{bmatrix}
 0 && 0 \\
 0 && 0
-\end{pmatrix} &&
-\begin{pmatrix}
+\end{bmatrix} &&
+\begin{bmatrix}
 0 && 0 \\
 0 && 0
-\end{pmatrix} &&
-\begin{pmatrix}
+\end{bmatrix} &&
+\begin{bmatrix}
 1 && 0 \\
 0 && 1
-\end{pmatrix}
-\end{pmatrix}
+\end{bmatrix}
+\end{bmatrix}
 $$
 
 * The regular $L_{\infty}$-norm is $\max\left\{1+3, 3, 5, \frac{1}{2}, 1, 1\right\} = 5$.
@@ -1107,22 +1113,22 @@ The two norms clearly differ and even the elements that contribute most to the n
 The next example shows how keeping only the off-diagonal blocks affects the norm.
 
 $$
-\begin{pmatrix}
-\begin{pmatrix}
+\begin{bmatrix}
+\begin{bmatrix}
 20 && 20 \\
 30 && 0
-\end{pmatrix} && \begin{pmatrix}
+\end{bmatrix} && \begin{bmatrix}
 2 && 2 \\
 3 && 0
-\end{pmatrix} \\
-\begin{pmatrix}
+\end{bmatrix} \\
+\begin{bmatrix}
 0 && 0 \\
 0 && 3
-\end{pmatrix} && \begin{pmatrix}
+\end{bmatrix} && \begin{bmatrix}
 100 && 0 \\
 0 && 1
-\end{pmatrix}
-\end{pmatrix}
+\end{bmatrix}
+\end{bmatrix}
 $$
 
 * The regular $L_{\infty}$-norm is $\max\left\{20+20+2+2,30+3,100,3+1\right\} = \max\left\{44,33,100,4\right\} = 100$.
