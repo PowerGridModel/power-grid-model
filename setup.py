@@ -18,6 +18,8 @@ if platform.system() == "Windows":
     if_win = True
 elif platform.system() in ["Linux", "Darwin"]:
     if_win = False
+    if platform.system() == "Darwin":
+        os.environ["MACOSX_DEPLOYMENT_TARGET"] = "13.3"
 else:
     raise SystemError("Only Windows, Linux, or MacOS is supported!")
 
