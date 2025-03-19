@@ -77,7 +77,9 @@ TEST_CASE("Measured Values") {
         topo.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
 
         StateEstimationInput<symmetric_t> input{};
-        input.measured_load_gen_power = {{{1.0, 1.0}, {1.5, 5.0}}, {{4.0, 2.0}, {0.7, 3.0}}};
+        input.measured_load_gen_power = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 1.5, .variance = 5.0}},
+            {.real_component = {.value = 4.0, .variance = 2.0}, .imag_component = {.value = 0.7, .variance = 3.0}}};
         input.load_gen_status = {1};
 
         MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};

@@ -73,13 +73,19 @@ struct MapArray {
     bool begin{true};
 };
 
-struct JsonConverter : msgpack::null_visitor {
+template <typename T> struct NullVisitor : msgpack::null_visitor {
+  private:
+    NullVisitor() = default;
+    friend T; // CRTP compliance
+};
+
+struct JsonConverter : NullVisitor<JsonConverter> {
     static constexpr char sep_char = ' ';
 
     Idx indent{};
     Idx max_indent_level{};
-    std::stringstream ss{};           // NOLINT(readability-redundant-member-init)
-    std::stack<MapArray> map_array{}; // NOLINT(readability-redundant-member-init)
+    std::stringstream ss{};
+    std::stack<MapArray> map_array{};
 
     void print_indent() {
         if (indent < 0) {
@@ -194,6 +200,9 @@ struct JsonConverter : msgpack::null_visitor {
         ss << '}';
         return true;
     }
+
+    JsonConverter(Idx indent_, Idx max_indent_level_)
+        : NullVisitor<JsonConverter>{}, indent{indent_}, max_indent_level{max_indent_level_} {}
 };
 
 } // namespace json_converter
@@ -380,7 +389,7 @@ class Serializer {
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
             Idx const max_indent_level = dataset_handler_.is_batch() ? 4 : 3;
-            json_converter::JsonConverter visitor{{}, indent, max_indent_level};
+            json_converter::JsonConverter visitor{indent, max_indent_level};
             auto const msgpack_data = get_msgpack(use_compact_list);
             msgpack::parse(msgpack_data.data(), msgpack_data.size(), visitor);
             json_buffer_ = visitor.ss.str();

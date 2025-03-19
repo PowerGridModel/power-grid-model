@@ -48,14 +48,14 @@ TEST_CASE("Necessary observability check") {
     topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
 
     MathModelParam<symmetric_t> param;
-    param.source_param = {SourceCalcParam{10.0 - 50.0i, 10.0 - 50.0i}};
+    param.source_param = {SourceCalcParam{.y1 = 10.0 - 50.0i, .y0 = 10.0 - 50.0i}};
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1, 1};
-    se_input.measured_voltage = {{1.0 + 1.0i, 1.0}};
+    se_input.measured_voltage = {{.value = 1.0 + 1.0i, .variance = 1.0}};
     se_input.measured_bus_injection = {
         {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
     se_input.measured_branch_from_power = {
@@ -81,7 +81,7 @@ TEST_CASE("Necessary observability check") {
 
         SUBCASE("voltage phasor unavailable condition for unobservable grid") {
             // setting only real part of measurement makes it magnitude sensor
-            se_input.measured_voltage = {{{1.0, nan}, 1.0}};
+            se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
             check_not_observable(topo, param, se_input);
         }
 
@@ -103,7 +103,7 @@ TEST_CASE("Necessary observability check") {
         // it is not independent with injection sensor of bus_2
         topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
         // set non phasor measurement
-        se_input.measured_voltage = {{{1.0, nan}, 1.0}};
+        se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
         // this will throw NotObservableError
         check_not_observable(topo, param, se_input);
     }

@@ -5,6 +5,7 @@
 Checks: '
 -*,
 boost-*,
+-boost-use-ranges,
 bugprone-*,
 -bugprone-easily-swappable-parameters,
 -bugprone-exception-escape,
@@ -55,6 +56,8 @@ readability-*,
 -readability-function-cognitive-complexity,
 -readability-identifier-length,
 -readability-magic-numbers,
+-readability-math-missing-parentheses,
+-readability-redundant-member-init,
 -bugprone-unchecked-optional-access,
 '
 

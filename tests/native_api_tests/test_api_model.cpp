@@ -16,6 +16,7 @@
 #include <limits>
 #include <map>
 #include <string>
+#include <utility>
 
 /*
 Testing network
@@ -80,7 +81,9 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
                      std::string_view reference_err_msg) {
     CHECK(e.error_code() == reference_error);
     std::string const err_msg{e.what()};
-    doctest::String const ref_err_msg{reference_err_msg.data()};
+    REQUIRE(std::in_range<doctest::String::size_type>(reference_err_msg.size()));
+    doctest::String const ref_err_msg{reference_err_msg.data(),
+                                      static_cast<doctest::String::size_type>(reference_err_msg.size())};
     REQUIRE(err_msg.c_str() == doctest::Contains(ref_err_msg));
 }
 

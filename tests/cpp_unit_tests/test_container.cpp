@@ -107,9 +107,9 @@ TEST_CASE("Test component container") {
     }
 
     SUBCASE("Test get item by idx_2d") {
-        C const& c = const_container.get_item<C>({0, 0});
-        C const& c1 = const_container.get_item<C>({1, 0});
-        C const& c2 = const_container.get_item<C2>({2, 0});
+        C const& c = const_container.get_item<C>({.group = 0, .pos = 0});
+        C const& c1 = const_container.get_item<C>({.group = 1, .pos = 0});
+        C const& c2 = const_container.get_item<C2>({.group = 2, .pos = 0});
         CHECK(c.a == 5);
         CHECK(c1.a == 6);
         CHECK(c2.a == 7);

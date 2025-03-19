@@ -226,7 +226,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, cache_type_c CacheType,
               forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
-    void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
+    void update_component(ForwardIterator const& begin, ForwardIterator const& end,
+                          std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         assert(construction_complete_);
@@ -374,7 +375,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_, update_data, 0, components_to_update, update_independence, false);
     }
 
-    void update_state(const UpdateChange& changes) {
+    void update_state(UpdateChange const& changes) {
         // if topology changed, everything is not up to date
         // if only param changed, set param to not up to date
         is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
@@ -528,9 +529,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                *meta_data_,
                            },
                            ignore_output);
-        } catch (const SparseMatrixError&) { // NOLINT(bugprone-empty-catch) // NOSONAR
+        } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
-        } catch (const NotObservableError&) { // NOLINT(bugprone-empty-catch) // NOSONAR
+        } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         }
 
@@ -752,7 +753,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy, calculator,
-                   [this](ConstDataset update_data) { this->update_components<permanent_update_t>(update_data); },
+                   [this](ConstDataset const& update_data) {
+                       this->update_components<permanent_update_t>(update_data);
+                   },
                    *meta_data_, search_method)
             ->optimize(state_, options.calculation_method);
     }
@@ -1230,15 +1233,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         }
 
-        auto fault_coup =
-            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component, not_connected});
+        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(),
+                                             Idx2D{.group = isolated_component, .pos = not_connected});
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             auto map = build_dense_mapping(topo_bus_indices[i], state_.math_topology[i]->n_bus());
 
             for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{i, reordered_idx};
+                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{.group = i, .pos = reordered_idx};
             }
 
             sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state_.math_topology[i]->n_bus()};
@@ -1312,8 +1315,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
-            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto math_topo) {
-                return MathSolverProxy<sym>{math_solver_dispatcher_, std::move(math_topo)};
+            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto const& math_topo) {
+                return MathSolverProxy<sym>{math_solver_dispatcher_, math_topo};
             });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
                 get_y_bus<sym>()[idx].register_parameters_changed_callback(
