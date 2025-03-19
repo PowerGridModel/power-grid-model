@@ -8,6 +8,7 @@
 #include "enum.hpp"
 
 #include <exception>
+#include <format>
 #include <sstream>
 #include <string>
 
@@ -23,7 +24,7 @@ inline auto to_string(std::integral auto x) { return std::to_string(x); }
 
 class PowerGridError : public std::exception {
   public:
-    void append_msg(std::string_view msg) { msg_ += msg; }
+    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg); }
     char const* what() const noexcept final { return msg_.c_str(); }
 
   private:
