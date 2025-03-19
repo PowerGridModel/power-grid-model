@@ -41,11 +41,11 @@ You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
 **Linux**
 
-* gcc >= 11.0
-  * Version 12.x tested using the version in the `manylinux_2_28` container.
-  * Version 12.x tested using the musllinux build with custom compiler
+* gcc >= 13.0
+  * Version 14.x tested using the version in the `manylinux_2_28` container.
+  * Version 14.x tested using the musllinux build with custom compiler
   * Version 13.x tested in CI
-* Clang >= 15.0
+* Clang >= 17.0
   * Version 18.x tested in CI
   * Version 18.x tested in CI with code quality checks
 
@@ -55,12 +55,12 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 * MSVC >= 17.5
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
-* Clang CL >= 15.0
+* Clang CL >= 17.0
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
 **macOS**
 
-* Clang >= 14.0.3
+* Clang >= 15.0
   * Latest release tested in CI
 
 ### Build System for CMake Project
