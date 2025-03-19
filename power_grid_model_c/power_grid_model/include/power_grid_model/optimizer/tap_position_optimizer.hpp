@@ -41,6 +41,7 @@ using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
+constexpr auto last_rank = infty - 1;
 constexpr Idx2D unregulated_idx = {-1, -1};
 struct TrafoGraphVertex {
     bool is_source{};
@@ -309,7 +310,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         }
         auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
         auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
-        auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
+        auto edge_res = std::min(edge_src_rank, edge_tgt_rank);
 
         // New edge logic for ranking
         // |  Tap  | Control |         All edges       |
@@ -328,13 +329,18 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // side via the bidirectional edge (if it exists). For delta configuration ABC, the above
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
+        if (is_unreachable(edge_res)) {
+            continue;
+        }
+        if (edge_src_rank == infty && edge_tgt_rank != infty) {
+            throw AutomaticTapInputError(
+                "The transformer is being controlled from non source side towards source side which is unsupported.\n");
+        }
         if (edge_src_rank != edge_tgt_rank - 1) {
-            throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
-                                         "away from the source than the tap side.\n");
+            edge_res = last_rank;
         }
-        if (!is_unreachable(edge_res)) {
-            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
-        }
+
+        result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
     }
 
     return result;
