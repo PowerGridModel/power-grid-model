@@ -185,10 +185,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # flags for Linux and Mac
         cflags += ["-std=c++20", "-O3", "-fvisibility=hidden"]
         lflags += ["-lpthread", "-O3"]
-        # extra flag for Mac
-        if platform.system() == "Darwin":
-            # compiler flag to set version
-            cflags.append("-mmacosx-version-min=13.3")
 
     # list of extensions
     exts = [
