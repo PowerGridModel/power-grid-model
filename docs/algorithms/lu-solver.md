@@ -949,7 +949,7 @@ tolerance.
 
 #### Improved backward error calculation
 
-In power system equations, the matrix \mathbf{M} in equation
+In power system equations, the matrix $\mathbf{M}$ in equation
 $\mathbf{M} \boldsymbol{x} = \boldsymbol{b}$ can contain very discrepant entries: some may be very
 large while others are zero or very small (see also the
 [documentation on calculations](../user_manual/calculations.md)). The same may be true for the
