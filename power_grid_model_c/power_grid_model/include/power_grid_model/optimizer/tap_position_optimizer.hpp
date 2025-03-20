@@ -328,11 +328,11 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // side via the bidirectional edge (if it exists). For delta configuration ABC, the above
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
-        if (edge_src_rank != edge_tgt_rank - 1) {
-            throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
-                                         "away from the source than the tap side.\n");
-        }
         if (!is_unreachable(edge_res)) {
+            if (edge_src_rank != edge_tgt_rank - 1) {
+                throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
+                                            "away from the source than the tap side.\n");
+            }        
             result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
