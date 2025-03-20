@@ -84,11 +84,11 @@ discussed in the [section on pivot perturbation](#pivot-perturbation).
 #### Matrix properties of power system equations
 
 The matrices involved in
-[power flow equations](../../user_manual/calculations.md#power-flow-algorithms) are not Hermitian,
+[power flow equations](../user_manual/calculations.md#power-flow-algorithms) are not Hermitian,
 nor positive (semi-)definite. As a result, methods that depend on that property cannot be used.
 
 The matrices involved in
-[state estimation equations](../../user_manual/calculations.md#state-estimation-algorithms),
+[state estimation equations](../user_manual/calculations.md#state-estimation-algorithms),
 instead, are, in fact, intrinsically both positive definite and Hermitian. However, for
 [performance reasons](#performance-considerations), the matrix equation is augmented to achieve
 a consistent structure across the entire topology using Lagrange multipliers. This augmented
@@ -952,7 +952,7 @@ tolerance.
 In power system equations, the matrix \mathbf{M} in equation
 $\mathbf{M} \boldsymbol{x} = \boldsymbol{b}$ can contain very discrepant entries: some may be very
 large while others are zero or very small (see also the
-[documentation on calculations](../../user_manual/calculations.md)). The same may be true for the
+[documentation on calculations](../user_manual/calculations.md)). The same may be true for the
 right-hand side of the equation $\boldsymbol{b}$, as well as its solution $\boldsymbol{x}$. In fact,
 there may be certain rows $i$ for which both $\left|\boldsymbol{b}\left[i\right]\right|$ and
 $\sum_j \left|\mathbf{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small

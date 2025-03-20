@@ -97,6 +97,12 @@ examples/Generic Branch Example.ipynb
 ```
 
 ```{toctree}
+:caption: "Algorithms"
+:maxdepth: 2
+algorithms/lu-solver
+```
+
+```{toctree}
 :caption: "Advanced documentation"
 :maxdepth: 2
 advanced_documentation/native-data-interface
@@ -104,7 +110,6 @@ advanced_documentation/build-guide
 advanced_documentation/c-api
 advanced_documentation/core-design
 advanced_documentation/python-wrapper-design
-advanced_documentation/algorithms/index.md
 ```
 
 ```{toctree}
