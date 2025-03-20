@@ -18,7 +18,7 @@ Only classes that have connections to other classes are shown in this diagram.
 
 ```{raw} html
 <div style="overflow-x: auto; white-space: nowrap;">
-  <img src="../_static/classes.svg" style="max-width: none;" alt="Classe diagram">
+  <img src="../_static/classes.svg" style="max-width: none;" alt="Class diagram">
 </div>.
 ```
 
@@ -27,7 +27,7 @@ Only classes that have connections to other classes are shown in this diagram.
 This is the package diagram of the `power_grid_model` package.
 
 ```{note}
-Only modules that import (or are impored by) other modules are shown in this diagram.
+Only modules that import (or are imported by) other modules are shown in this diagram.
 ```
 
 ```{raw} html
