@@ -18,6 +18,8 @@ if platform.system() == "Windows":
     if_win = True
 elif platform.system() in ["Linux", "Darwin"]:
     if_win = False
+    if platform.system() == "Darwin":
+        os.environ["MACOSX_DEPLOYMENT_TARGET"] = "13.3"
 else:
     raise SystemError("Only Windows, Linux, or MacOS is supported!")
 
@@ -185,10 +187,6 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # flags for Linux and Mac
         cflags += ["-std=c++20", "-O3", "-fvisibility=hidden"]
         lflags += ["-lpthread", "-O3"]
-        # extra flag for Mac
-        if platform.system() == "Darwin":
-            # compiler flag to set version
-            cflags.append("-mmacosx-version-min=10.15")
 
     # list of extensions
     exts = [

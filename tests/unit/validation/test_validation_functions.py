@@ -33,7 +33,6 @@ from power_grid_model.validation.errors import (
     MultiComponentNotUniqueError,
     NotUniqueError,
     PQSigmaPairError,
-    UnsupportedTransformerRegulationError,
 )
 
 NaN = power_grid_meta_data[DatasetType.input][ComponentType.node].nans["id"]
@@ -971,11 +970,11 @@ def test_validate_values__tap_regulator_control_side():
     transformer_tap_regulator["regulated_object"] = np.arange(7)
     transformer_tap_regulator["control_side"] = [
         BranchSide.to_side,  # OK
-        BranchSide.from_side,  # control side is same as tap side (unsupported)
+        BranchSide.from_side,  # OK
         Branch3Side.side_3,  # branch3 provided but it is a 2-winding transformer (invalid)
         10,  # control side entirely out of range (invalid)
         Branch3Side.side_3,  # OK
-        Branch3Side.side_1,  # control side is same as tap side (unsupported)
+        Branch3Side.side_1,  # OK
         10,  # control side entirely out of range (invalid)
     ]
 
@@ -991,7 +990,7 @@ def test_validate_values__tap_regulator_control_side():
     assert power_flow_errors == all_errors
     assert not state_estimation_errors
 
-    assert len(all_errors) == 4
+    assert len(all_errors) == 3
     assert (
         InvalidEnumValueError("transformer_tap_regulator", "control_side", [10, 13], [BranchSide, Branch3Side])
         in all_errors
@@ -1011,14 +1010,6 @@ def test_validate_values__tap_regulator_control_side():
             ["control_side", "regulated_object"],
             [13],
             [Branch3Side],
-        )
-        in all_errors
-    )
-    assert (
-        UnsupportedTransformerRegulationError(
-            "transformer_tap_regulator",
-            ["control_side", "regulated_object"],
-            [8, 12],
         )
         in all_errors
     )
