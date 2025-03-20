@@ -1531,17 +1531,18 @@ TEST_CASE("Test RankIterator") {
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
+        CHECK_FALSE(tap_changed);
         CHECK(iterations_per_rank[0] == 2);
         CHECK(iterations_per_rank[1] == 4);
         CHECK(iterations_per_rank[2] == 6);
         CHECK(rank_index == 2);
-        CHECK(tap_changed == false);
     }
     SUBCASE("Test tap changed") {
         update = true;
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
+        CHECK(tap_changed);
         CHECK(iterations_per_rank[0] == 3);
         CHECK(iterations_per_rank[1] == 0);
         CHECK(iterations_per_rank[2] == 0);
@@ -1553,6 +1554,7 @@ TEST_CASE("Test RankIterator") {
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
+        CHECK(tap_changed);
         CHECK(iterations_per_rank[0] == 2);
         CHECK(iterations_per_rank[1] == 4);
         CHECK(iterations_per_rank[2] == 7);

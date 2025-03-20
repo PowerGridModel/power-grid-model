@@ -226,8 +226,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, cache_type_c CacheType,
               forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
-    void update_component(ForwardIterator const& begin, ForwardIterator const& end,
-                          std::span<Idx2D const> sequence_idx) {
+    void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         assert(construction_complete_);
