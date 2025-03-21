@@ -204,7 +204,7 @@ class AutomaticTapCalculationError : public PowerGridError {
 class AutomaticTapInputError : public PowerGridError {
   public:
     AutomaticTapInputError(std::string const& msg) {
-        append_msg("Automatic tap changer has invalid configuration. " + msg); // NOSONAR
+        append_msg(std::format("Automatic tap changer has invalid configuration. {}", msg));
     }
 };
 
