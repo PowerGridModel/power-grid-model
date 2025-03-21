@@ -535,8 +535,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
             throw DatasetError{"Cannot have duplicated components!\n"};
         }
         check_uniform_integrity(elements_per_scenario, total_elements);
-        dataset_info_.component_info.push_back(
-            {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
+        dataset_info_.component_info.push_back({.component = &dataset_info_.dataset->get_component(component),
+                                                .elements_per_scenario = elements_per_scenario,
+                                                .total_elements = total_elements});
         buffers_.push_back(Buffer{});
     }
 

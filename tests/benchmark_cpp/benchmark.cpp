@@ -8,15 +8,22 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
+#include <power_grid_model/math_solver/math_solver.hpp>
 
 #include <iostream>
 #include <random>
 
 namespace power_grid_model::benchmark {
 namespace {
+MathSolverDispatcher const& get_math_solver_dispatcher() {
+    static constexpr MathSolverDispatcher math_solver_dispatcher{math_solver::math_solver_tag<MathSolver>{}};
+    return math_solver_dispatcher;
+}
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data)} {}
+    PowerGridBenchmark()
+        : main_model{
+              std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data, get_math_solver_dispatcher())} {}
 
     template <symmetry_tag sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
@@ -70,7 +77,7 @@ struct PowerGridBenchmark {
             Timer const t_total(info, 0000, "Total");
             {
                 Timer const t_build(info, 1000, "Build model");
-                main_model = std::make_unique<MainModel>(50.0, input.get_dataset());
+                main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
             }
             run_pf<sym>(calculation_method, info);
         }

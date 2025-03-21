@@ -238,7 +238,7 @@ template <column_vector DerivedA> inline auto mean_val(Eigen::ArrayBase<DerivedA
 inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
 inline double mean_val(double z) { return z; }
 
-template <symmetry_tag sym, class T> inline auto process_mean_val(const T& m) {
+template <symmetry_tag sym, class T> inline auto process_mean_val(T const& m) {
     if constexpr (is_symmetric_v<sym>) {
         return mean_val(m);
     } else {
@@ -348,9 +348,7 @@ inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == Re
 //
 // The function assumes that the current value is normalized and new value should be normalized with scalar
 template <symmetry_tag sym, class Proxy>
-inline void
-update_real_value(RealValue<sym> const& new_value, Proxy&& current_value,
-                  double scalar) { // NOLINT(cppcoreguidelines-missing-std-forward) // perfect forward into void
+inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
             std::forward<Proxy>(current_value) = scalar * new_value;

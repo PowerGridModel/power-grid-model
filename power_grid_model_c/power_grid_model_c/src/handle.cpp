@@ -26,8 +26,8 @@ PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) { return static_cast<Id
 PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) { return handle->failed_scenarios.data(); }
 char const** PGM_batch_errors(PGM_Handle const* handle) {
     handle->batch_errs_c_str.clear();
-    std::transform(handle->batch_errs.begin(), handle->batch_errs.end(), std::back_inserter(handle->batch_errs_c_str),
-                   [](auto const& x) { return x.c_str(); });
+    std::ranges::transform(handle->batch_errs, std::back_inserter(handle->batch_errs_c_str),
+                           [](auto const& x) { return x.c_str(); });
     return handle->batch_errs_c_str.data();
 }
 void PGM_clear_error(PGM_Handle* handle) { *handle = PGM_Handle{}; }
