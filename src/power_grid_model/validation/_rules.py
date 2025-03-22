@@ -68,13 +68,7 @@ from power_grid_model.validation.errors import (
     TwoValuesZeroError,
     ValidationError,
 )
-from power_grid_model.validation.utils import (
-    _eval_expression,
-    _get_mask,
-    _get_valid_ids,
-    _nan_type,
-    _set_default_value,
-)
+from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
