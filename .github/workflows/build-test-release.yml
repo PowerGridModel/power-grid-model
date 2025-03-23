@@ -14,14 +14,6 @@ on:
         description: Create a (pre-)release when CI passes
         default: false
         required: false
-  # run this workflow manually from the Actions tab
-  workflow_dispatch:
-    inputs:
-      create_release:
-        type: boolean
-        description: Create a (pre-)release when CI passes
-        default: false
-        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
@@ -341,8 +333,8 @@ jobs:
       - name: Upload wheels
         if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         run: |
-          pip install twine
-          echo "Publish to PyPI..."
+          # pip install twine
+          # echo "Publish to PyPI..."
           # twine upload --verbose wheelhouse/*
           echo "Contents of wheelhouse:"
           ls -lh wheelhouse

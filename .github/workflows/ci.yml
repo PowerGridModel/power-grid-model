@@ -16,6 +16,12 @@ on:
   merge_group:
   # run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-ci-build
