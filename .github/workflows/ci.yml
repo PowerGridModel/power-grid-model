@@ -29,13 +29,13 @@ concurrency:
 
 jobs:
   build-test-release:
+    runs-on: ubuntu-24.04
     name: build-test-release
     uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
     with:
-      trigger_type: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.event_name || 'other' }}
-      create_release: ${{ inputs.create_release }}
+      create_release: ${{ ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.create_release) || false}}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"

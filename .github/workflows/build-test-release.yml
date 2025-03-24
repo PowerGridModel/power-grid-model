@@ -9,9 +9,6 @@ on:
   # run pipeline from another workflow
   workflow_call:
     inputs:
-      trigger_type:
-        type: string
-        required: true
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
@@ -333,11 +330,10 @@ jobs:
       - name: Display tag
         run: |
           echo "${{ steps.tag.outputs.tag }}"
-          echo "${{ inputs.trigger_type }}"
           echo "${{ inputs.create_release }}"
 
       - name: Upload wheels
-        if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && inputs.create_release )
+        if: (inputs.create_release)
         run: |
           echo "upload wheels reached"
           # pip install twine
@@ -347,9 +343,12 @@ jobs:
 
       - name: Release
         # uses: softprops/action-gh-release@v2
-        if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && inputs.create_release )
+        if: (inputs.create_release)
         run: |
           echo "Release was reached"
+          echo "${{ steps.tag.outputs.tag }}"
+          echo "${{ github.ref }}"
+          echo "${{ github.sha }}"
         # with:
         #   files: |
         #     ./wheelhouse/*
