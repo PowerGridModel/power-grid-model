@@ -97,7 +97,7 @@ class AsymLine : public Branch {
                 // branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 ComplexTensor<asymmetric_t> branch_shunt = ComplexTensor<asymmetric_t>();
                 if ((cabs(y_shunt_abc_) >= numerical_tolerance).all()) {
-                    branch_shunt = 0.5 * inv(y_shunt_abc_) + inv(inv(y_series_abc_) + 2.0 * inv(y_shunt_abc_));
+                    branch_shunt = 0.5 * y_shunt_abc_ + inv(inv(y_series_abc_) + 2.0 * inv(y_shunt_abc_));
                 }
                 // from or to connected
                 param.yff() = from_status() ? branch_shunt : ComplexTensor<asymmetric_t>();
