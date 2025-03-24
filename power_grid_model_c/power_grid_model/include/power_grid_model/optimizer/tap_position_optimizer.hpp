@@ -338,7 +338,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
                 // Make this transformer have the lowest possible priority.
                 result.emplace_back(graph[e].regulated_idx, last_rank);
             } else {
-                result.emplace_back(graph[e].regulated_idx, edge_res);
+                result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
             }
         }
     }
