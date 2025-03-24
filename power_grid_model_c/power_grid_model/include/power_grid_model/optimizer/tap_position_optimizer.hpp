@@ -331,8 +331,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (!is_unreachable(edge_res)) {
             if (edge_src_rank != edge_tgt_rank - 1) {
                 throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
-                                            "away from the source than the tap side.\n");
-            }        
+                                             "away from the source than the tap side.\n");
+            }
             result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
