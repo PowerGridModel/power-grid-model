@@ -329,17 +329,17 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // side via the bidirectional edge (if it exists). For delta configuration ABC, the above
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
-        if (!is_unreachable(edge_res)) {
-            if (edge_src_rank == infty && edge_tgt_rank != infty) {
+        if (!(edge_src_rank == infty && edge_tgt_rank == infty)) {
+            if ((edge_src_rank == infty) != (edge_tgt_rank == infty)) {
                 throw AutomaticTapInputError("The transformer is being controlled from non source side towards source "
                                              "side.\n");
-            }
-            if (edge_src_rank != edge_tgt_rank - 1) {
+            } else if (edge_src_rank != edge_tgt_rank - 1) {
                 // Control side is also controlled by a closer regulated transformer.
-	            // Make this transformer have the lowest possible priority.
-                edge_res = last_rank;
+                // Make this transformer have the lowest possible priority.
+                result.emplace_back(graph[e].regulated_idx, last_rank);
+            } else {
+                result.emplace_back(graph[e].regulated_idx, edge_res);
             }
-            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
 
