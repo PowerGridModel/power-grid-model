@@ -34,6 +34,8 @@ jobs:
     permissions:
       contents: write
     with:
+      # If event_name is push or workflow dispatch (Bool True) and create_release is True, then create_release becomes True
+      # otherwise create_release becomes False. 
       create_release: ${{ ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.create_release) || false}}
 
   check-code-quality:
