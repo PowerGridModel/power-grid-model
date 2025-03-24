@@ -29,7 +29,6 @@ concurrency:
 
 jobs:
   build-test-release:
-    runs-on: ubuntu-24.04
     name: build-test-release
     uses: "./.github/workflows/build-test-release.yml"
     permissions:
