@@ -331,7 +331,10 @@ jobs:
         run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Display tag
-        run: echo "${{ steps.tag.outputs.tag }}"
+        run: |
+          echo "${{ steps.tag.outputs.tag }}"
+          echo "${{ inputs.trigger_type }}"
+          echo "${{ inputs.create_release }}"
 
       - name: Upload wheels
         if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && (inputs.create_release == 'true'))
