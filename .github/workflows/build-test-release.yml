@@ -9,11 +9,15 @@ on:
   # run pipeline from another workflow
   workflow_call:
     inputs:
+      trigger_type:
+        required: true
+        type: string
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
         default: false
         required: false
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
@@ -331,7 +335,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && (inputs.create_release == 'true'))
         run: |
           # pip install twine
           # echo "Publish to PyPI..."
@@ -340,12 +344,14 @@ jobs:
           ls -lh wheelhouse
 
       - name: Release
-        uses: softprops/action-gh-release@v2
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
-        with:
-          files: |
-            ./wheelhouse/*
-          tag_name: ${{ steps.tag.outputs.tag }}
-          prerelease: ${{ github.ref != 'refs/heads/main'}}
-          generate_release_notes: true
-          target_commitish: ${{ github.sha }}
+        # uses: softprops/action-gh-release@v2
+        if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        run: |
+          echo "Release was reached"
+        # with:
+        #   files: |
+        #     ./wheelhouse/*
+        #   tag_name: ${{ steps.tag.outputs.tag }}
+        #   prerelease: ${{ github.ref != 'refs/heads/main'}}
+        #   generate_release_notes: true
+        #   target_commitish: ${{ github.sha }}

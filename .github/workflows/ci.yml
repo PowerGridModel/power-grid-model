@@ -34,7 +34,8 @@ jobs:
     permissions:
       contents: write
     with:
-      create_release: false
+      trigger_type: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.event_name || 'other' }}
+      create_release: ${{ inputs.create_release }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
