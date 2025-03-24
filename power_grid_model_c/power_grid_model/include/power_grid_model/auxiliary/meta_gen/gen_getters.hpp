@@ -47,7 +47,8 @@ constexpr MetaAttribute get_meta_attribute(size_t offset, char const* attribute_
                 *reinterpret_cast<ValueType*>(value_ptr) =
                     (reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr;
             },
-        .compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, double atol, double rtol, Idx pos) -> bool {
+        .compare_value = [](RawDataConstPtr ptr_x, RawDataConstPtr ptr_y, [[maybe_unused]] double atol,
+                            [[maybe_unused]] double rtol, Idx pos) -> bool {
             ValueType const& x = (reinterpret_cast<StructType const*>(ptr_x) + pos)->*member_ptr;
             ValueType const& y = (reinterpret_cast<StructType const*>(ptr_y) + pos)->*member_ptr;
             if constexpr (std::same_as<ValueType, double>) {

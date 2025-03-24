@@ -14,7 +14,10 @@
 
 #include <nlohmann/json.hpp>
 
+#pragma warning(push)
+#pragma warning(disable : 4702) // Maybe unused code
 #include <msgpack.hpp>
+#pragma warning(pop)
 
 #include <set>
 #include <span>

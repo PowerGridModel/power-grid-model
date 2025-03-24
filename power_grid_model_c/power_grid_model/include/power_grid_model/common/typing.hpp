@@ -14,8 +14,9 @@ template <std::integral T, std::integral U>
 constexpr auto narrow_cast(U value) {
     if constexpr (std::same_as<T, U>) {
         return value;
+    } else {
+        assert(std::in_range<T>(value));
+        return static_cast<T>(value);
     }
-    assert(std::in_range<T>(value));
-    return static_cast<T>(value);
 }
 } // namespace power_grid_model

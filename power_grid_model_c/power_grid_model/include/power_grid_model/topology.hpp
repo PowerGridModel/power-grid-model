@@ -168,23 +168,13 @@ class Topology {
 #pragma warning(push)
 #pragma warning(disable : 4701) // disable boost iteration macro issue
     template <typename F> static void for_all_vertices(GlobalGraph& graph, F&& func) {
-        BGL_FORALL_VERTICES(v, graph, GlobalGraph) { func(v); }
-    }
-
-    template <typename F> static void for_all_vertices(ReorderGraph& graph, F&& func) {
-        BGL_FORALL_VERTICES(v, graph, ReorderGraph) { func(v); }
+        BGL_FORALL_VERTICES(v, graph, GlobalGraph) { std::forward<F>(func)(v); }
     }
 
     template <typename F>
     static void for_all_adjacent_vertices(boost::graph_traits<GlobalGraph>::vertex_descriptor current,
                                           GlobalGraph& graph, F&& func) {
-        BGL_FORALL_ADJ(current, adjacent, graph, GlobalGraph) { func(adjacent); }
-    }
-
-    template <typename F>
-    static void for_all_adjacent_vertices(boost::graph_traits<ReorderGraph>::vertex_descriptor current,
-                                          ReorderGraph& graph, F&& func) {
-        BGL_FORALL_ADJ(current, adjacent, graph, ReorderGraph) { func(adjacent); }
+        BGL_FORALL_ADJ(current, adjacent, graph, GlobalGraph) { std::forward<F>(func)(adjacent); }
     }
 #pragma warning(pop)
 
@@ -300,7 +290,6 @@ class Topology {
     std::vector<BranchIdx> reorder_node(std::vector<Idx>& dfs_node,
                                         std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
         using GlobalVertexDesc = boost::graph_traits<GlobalGraph>::vertex_descriptor;
-        using ReorderVertexDesc = boost::graph_traits<ReorderGraph>::vertex_descriptor;
 
         std::vector<BranchIdx> fill_in;
         // make a copy and clear current vector

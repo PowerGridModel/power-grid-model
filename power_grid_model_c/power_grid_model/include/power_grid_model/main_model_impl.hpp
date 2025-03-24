@@ -735,15 +735,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         auto const calculator = [this, &options] {
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {
                 return calculate_power_flow_<sym>(options.err_tol, options.max_iter);
+            } else {
+                assert(options.optimizer_type == OptimizerType::no_optimization);
+                if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
+                    return calculate_state_estimation_<sym>(options.err_tol, options.max_iter);
+                } else if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
+                    return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling);
+                } else {
+                    throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
+                }
             }
-            assert(options.optimizer_type == OptimizerType::no_optimization);
-            if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter);
-            }
-            if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling);
-            }
-            throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
         }();
 
         SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
@@ -1013,6 +1014,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     }
                     // assign parameters
                     increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
+                } else {
+                    (void)increments;
+                    (void)state;
+                    (void)changed_component_idx;
                 }
             }...};
 
