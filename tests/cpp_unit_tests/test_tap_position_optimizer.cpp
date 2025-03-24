@@ -430,7 +430,7 @@ TEST_CASE("Test Transformer ranking") {
         state.components.set_construction_complete();
 
         pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-        pgm_tap::RankedTransformerGroups const ref_order{{{Idx2D{3, 0}}, {Idx2D{3, 2}}, {Idx2D{3, 1}}}};
+        pgm_tap::RankedTransformerGroups const ref_order{{{Idx2D{3, 0}}, {Idx2D{3, 2}}}, {{Idx2D{3, 1}}}};
         CHECK(order == ref_order);
     }
 }
