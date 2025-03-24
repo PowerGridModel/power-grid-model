@@ -15,7 +15,6 @@ on:
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
-        default: false
         required: false
 
 
