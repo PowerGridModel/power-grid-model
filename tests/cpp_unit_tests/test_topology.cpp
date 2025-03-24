@@ -6,8 +6,6 @@
 
 #include <doctest/doctest.h>
 
-#include <ostream>
-
 /*
  *  [0]   = Node / Bus
  * --0--> = Branch (from --id--> to)
@@ -177,118 +175,120 @@ TEST_CASE("Test topology") {
 
     // result
     TopologicalComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {        // 0 1 2 3
-                          {0, 4}, // Topological node 0 has become node 4 in mathematical model (group) 0
-                          {0, 2},
-                          {0, 0},
-                          {0, 1},
-                          // 4 5 6
-                          {1, 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
-                          {1, 3},
-                          {1, 0},
-                          // 7, 8, 9, 10, 11
-                          {-1, -1}, // Topological node 7 is not included in the mathematical model, because it was not
-                                    // connected to any power source
-                          {-1, -1},
-                          {-1, -1},
-                          {-1, -1},
-                          {-1, -1},
-                          // b0, b1, b2
-                          {0, 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
-                          {-1, -1},
-                          {1, 1}};
+    comp_coup_ref.node = {
+        // 0 1 2 3
+        {.group = 0, .pos = 1}, // Topological node 0 has become node 4 in mathematical model (group) 0
+        {.group = 0, .pos = 2},
+        {.group = 0, .pos = 0},
+        {.group = 0, .pos = 4},
+        // 4 5 6
+        {.group = 1, .pos = 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
+        {.group = 1, .pos = 3},
+        {.group = 1, .pos = 0},
+        // 7, 8, 9, 10, 11
+        {.group = -1, .pos = -1}, // Topological node 7 is not included in the mathematical model, because it was not
+                                  // connected to any power source
+        {.group = -1, .pos = -1},
+        {.group = -1, .pos = -1},
+        {.group = -1, .pos = -1},
+        {.group = -1, .pos = -1},
+        // b0, b1, b2
+        {.group = 0, .pos = 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
+        {.group = -1, .pos = -1},
+        {.group = 1, .pos = 1}};
     comp_coup_ref.source = {
-        {0, 0},   // 0
-        {1, 0},   // 1
-        {-1, -1}, // 2
-        {-1, -1}, // 3
+        {.group = 0, .pos = 0},   // 0
+        {.group = 1, .pos = 0},   // 1
+        {.group = -1, .pos = -1}, // 2
+        {.group = -1, .pos = -1}, // 3
     };
     comp_coup_ref.branch = {
-        {0, 0},   // 0
-        {0, 1},   // 1
-        {0, 2},   // 2
-        {-1, -1}, // 3
-        {-1, -1}, // 4
-        {0, 3},   // 5
-        {1, 0},   // 6
-        {1, 1},   // 7
+        {.group = 0, .pos = 0},   // 0
+        {.group = 0, .pos = 1},   // 1
+        {.group = 0, .pos = 2},   // 2
+        {.group = -1, .pos = -1}, // 3
+        {.group = -1, .pos = -1}, // 4
+        {.group = 0, .pos = 3},   // 5
+        {.group = 1, .pos = 0},   // 6
+        {.group = 1, .pos = 1},   // 7
     };
     comp_coup_ref.branch3 = {
-        {0, {4, 5, 6}},     // b0
-        {-1, {-1, -1, -1}}, // b1
-        {1, {2, 3, 4}},     // b2
+        {.group = 0, .pos = {4, 5, 6}},     // b0
+        {.group = -1, .pos = {-1, -1, -1}}, // b1
+        {.group = 1, .pos = {2, 3, 4}},     // b2
     };
-    comp_coup_ref.load_gen = {{0, 1}, {-1, -1}, {1, 0}, {0, 0}};
-    comp_coup_ref.shunt = {{0, 0}, {1, 0}, {-1, -1}};
-    comp_coup_ref.voltage_sensor = {{0, 0}, {0, 3}, {0, 1}, {0, 2}, {1, 0}, {-1, -1}};
+    comp_coup_ref.load_gen = {
+        {.group = 0, .pos = 0}, {.group = -1, .pos = -1}, {.group = 1, .pos = 0}, {.group = 0, .pos = 1}};
+    comp_coup_ref.shunt = {{.group = 0, .pos = 0}, {.group = 1, .pos = 0}, {.group = -1, .pos = -1}};
+    comp_coup_ref.voltage_sensor = {{.group = 0, .pos = 0}, {.group = 0, .pos = 2}, {.group = 0, .pos = 1},
+                                    {.group = 0, .pos = 3}, {.group = 1, .pos = 0}, {.group = -1, .pos = -1}};
     comp_coup_ref.power_sensor = {
-        {0, 0},   // 0 branch_from
-        {1, 0},   // 1 source
-        {0, 1},   // 2 branch_to
-        {-1, -1}, // 3 source
-        {1, 0},   // 4 load       = load power sensor 0 in math model 1
-        {1, 0},   // 5 shunt      = shunt power sensor 0 in math model 1
-        {-1, -1}, // 6 load
-        {0, 0},   // 7 generator
-        {1, 1},   // 8 load
-        {1, 1},   // 9 shunt
-        {0, 2},   // 10 branch_to
-        {0, 1},   // 11 branch_from
-        {1, 1},   // 12 source
-        {0, 0},   // 13 branch_to
-        {0, 2},   // 14 branch_from
-        {0, 4},   // 15 branch_from
-        {0, 3},   // 16 branch_from
-        {1, 0}    // 17 node
+        {.group = 0, .pos = 0},   // 0 branch_from
+        {.group = 1, .pos = 0},   // 1 source
+        {.group = 0, .pos = 1},   // 2 branch_to
+        {.group = -1, .pos = -1}, // 3 source
+        {.group = 1, .pos = 0},   // 4 load       = load power sensor 0 in math model 1
+        {.group = 1, .pos = 0},   // 5 shunt      = shunt power sensor 0 in math model 1
+        {.group = -1, .pos = -1}, // 6 load
+        {.group = 0, .pos = 0},   // 7 generator
+        {.group = 1, .pos = 1},   // 8 load
+        {.group = 1, .pos = 1},   // 9 shunt
+        {.group = 0, .pos = 2},   // 10 branch_to
+        {.group = 0, .pos = 1},   // 11 branch_from
+        {.group = 1, .pos = 1},   // 12 source
+        {.group = 0, .pos = 0},   // 13 branch_to
+        {.group = 0, .pos = 2},   // 14 branch_from
+        {.group = 0, .pos = 4},   // 15 branch_from
+        {.group = 0, .pos = 3},   // 16 branch_from
+        {.group = 1, .pos = 0}    // 17 node
     };
 
     // Sub graph / math model 0
     MathModelTopology math0;
-    math0.slack_bus = 4;
-    math0.sources_per_bus = {from_sparse, {0, 0, 0, 0, 0, 1}};
-    math0.branch_bus_idx = {{4, 2}, {4, 1}, {1, -1}, {-1, 0}, {2, 3}, {1, 3}, {0, 3}};
-    math0.phase_shift = {0.0, -1.0, 0.0, 0.0, 0.0};
-    math0.load_gens_per_bus = {from_sparse, {0, 0, 0, 1, 1, 2}};
-    math0.load_gen_type = {LoadGenType::const_y, LoadGenType::const_pq};
-    math0.shunts_per_bus = {from_sparse, {0, 0, 1, 1, 1, 1}};
-    math0.voltage_sensors_per_bus = {from_sparse, {0, 2, 3, 4, 4, 4}};
-    math0.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 0, 0}};
-    math0.power_sensors_per_source = {from_sparse, {0, 0}};
-    math0.power_sensors_per_shunt = {from_sparse, {0, 0}};
-    math0.power_sensors_per_load_gen = {from_sparse, {0, 1, 1}};
-    math0.power_sensors_per_branch_from = {from_sparse, {0, 0, 2, 2, 2, 3, 4, 5}};
+    math0.slack_bus = 1;
+    math0.sources_per_bus = {from_dense, {1}, 5};
+    math0.branch_bus_idx = {{1, 2}, {1, 4}, {4, -1}, {-1, 0}, {2, 3}, {4, 3}, {0, 3}};
+    math0.phase_shift = {0.0, 0.0, 0.0, 0.0, -1.0};
+    math0.load_gens_per_bus = {from_dense, {1, 2}, 5};
+    math0.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_y};
+    math0.shunts_per_bus = {from_dense, {4}, 5};
+    math0.voltage_sensors_per_bus = {from_dense, {0, 0, 2, 4}, 5};
+    math0.power_sensors_per_bus = {from_dense, {}, 5};
+    math0.power_sensors_per_source = {from_dense, {}, 1};
+    math0.power_sensors_per_shunt = {from_dense, {}, 1};
+    math0.power_sensors_per_load_gen = {from_dense, {1}, 2};
+    math0.power_sensors_per_branch_from = {from_dense, {1, 1, 4, 5, 6}, 7};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
-    math0.power_sensors_per_branch_to = {from_sparse, {0, 1, 3, 3, 3, 3, 3, 3}};
-    math0.fill_in = {{3, 4}};
+    math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 7};
+    math0.fill_in = {{2, 4}};
 
     // Sub graph / math model 1
     MathModelTopology math1;
     math1.slack_bus = 3;
-    math1.sources_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
-    math1.branch_bus_idx = {
-        {3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1},
-    };
+    math1.sources_per_bus = {from_dense, {3}, 4};
+    math1.branch_bus_idx = {{3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1}};
     math1.phase_shift = {0, 0, 0, 0};
-    math1.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
+    math1.load_gens_per_bus = {from_dense, {3}, 4};
     math1.load_gen_type = {LoadGenType::const_i};
-    math1.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
-    math1.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
-    math1.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 1}};
-    math1.power_sensors_per_source = {from_sparse, {0, 2}};
-    math1.power_sensors_per_shunt = {from_sparse, {0, 2}};
-    math1.power_sensors_per_load_gen = {from_sparse, {0, 2}};
-    math1.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0}};
-    math1.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0}};
+    math1.shunts_per_bus = {from_dense, {0}, 4};
+    math1.voltage_sensors_per_bus = {from_dense, {3}, 4};
+    math1.power_sensors_per_bus = {from_dense, {3}, 4};
+    math1.power_sensors_per_source = {from_dense, {0, 0}, 1};
+    math1.power_sensors_per_shunt = {from_dense, {0, 0}, 1};
+    math1.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
+    math1.power_sensors_per_branch_from = {from_dense, {}, 5};
+    math1.power_sensors_per_branch_to = {from_dense, {}, 5};
 
     std::vector<MathModelTopology> math_topology_ref = {math0, math1};
 
     SUBCASE("Test topology result") {
         Topology topo{comp_topo, comp_conn};
-        auto pair = topo.build_topology();
-        auto const& math_topology = pair.first;
-        auto const& topo_comp_coup = *pair.second;
+        auto const [math_topology, topo_comp_coup_ptr] = topo.build_topology();
+
+        REQUIRE(topo_comp_coup_ptr != nullptr);
+        auto const& topo_comp_coup = *topo_comp_coup_ptr;
 
         CHECK(math_topology.size() == 2);
         // test component coupling
@@ -324,41 +324,94 @@ TEST_CASE("Test topology") {
 }
 
 TEST_CASE("Test cycle reorder") {
-    // component topology
-    ComponentTopology comp_topo{};
-    comp_topo.n_node = 7;
-    comp_topo.branch_node_idx = {
-        {0, 1}, // 0
-        {1, 2}, // 1
-        {2, 3}, // 2
-        {3, 4}, // 3
-        {4, 5}, // 4
-        {0, 5}, // 5
-        {1, 4}, // 6
-        {6, 0}, // 7
-        {6, 2}, // 8
-        {5, 1}, // 9
-        {3, 1}, // 10
-        {6, 1}, // 11
-        {2, 1}, // 12
-    };
-    comp_topo.source_node_idx = {0};
-    // component connection
-    ComponentConnections comp_conn{};
-    comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
-    comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
-    comp_conn.source_connected = {1};
-    // result
-    TopologicalComponentToMathCoupling comp_coup_ref{};
-    comp_coup_ref.node = {{0, 3}, {0, 5}, {0, 4}, {0, 2}, {0, 6}, {0, 1}, {0, 0}};
-    std::vector<BranchIdx> const fill_in_ref{{3, 4}, {3, 6}, {4, 6}};
+    SUBCASE("9 nodes") {
+        // {
+        //     0: [3, 5],
+        //     1: [4, 5, 8],
+        //     2: [4, 5, 6],
+        //     3: [6, 7],
+        //     4: [6, 8],
+        //     6: [7, 8, 9],
+        //     7: [8, 9],
+        //     8: [9]
+        // }
 
-    Topology topo{comp_topo, comp_conn};
-    auto pair = topo.build_topology();
-    auto const& topo_comp_coup = *pair.second;
-    auto const& math_topo = *pair.first[0];
-    CHECK(topo_comp_coup.node == comp_coup_ref.node);
-    CHECK(math_topo.fill_in == fill_in_ref);
+        // component topology
+        ComponentTopology comp_topo{};
+        comp_topo.n_node = 10;
+        comp_topo.branch_node_idx = {
+            {0, 3}, {0, 5}, {1, 4}, {1, 5}, {1, 8}, {2, 4}, {2, 5}, {2, 6}, {3, 6},
+            {3, 7}, {4, 6}, {4, 8}, {6, 7}, {6, 8}, {6, 9}, {7, 8}, {7, 9}, {8, 9},
+        };
+        comp_topo.source_node_idx = {0};
+        // component connection
+        ComponentConnections comp_conn{};
+        comp_conn.branch_connected = std::vector<BranchConnected>(18, {1, 1});
+        comp_conn.branch_phase_shift = std::vector<double>(18, 0.0);
+        comp_conn.source_connected = {1};
+        // result
+        TopologicalComponentToMathCoupling comp_coup_ref{};
+        comp_coup_ref.node = {{.group = 0, .pos = 0}, {.group = 0, .pos = 1}, {.group = 0, .pos = 2},
+                              {.group = 0, .pos = 3}, {.group = 0, .pos = 4}, {.group = 0, .pos = 5},
+                              {.group = 0, .pos = 6}, {.group = 0, .pos = 7}, {.group = 0, .pos = 8},
+                              {.group = 0, .pos = 9}};
+        std::vector<BranchIdx> const fill_in_ref{{3, 5}, {4, 5}, {5, 8}, {5, 6}, {5, 7}};
+
+        Topology topo{comp_topo, comp_conn};
+        auto pair = topo.build_topology();
+        auto const& topo_comp_coup = *pair.second;
+        auto const& math_topo = *pair.first[0];
+        CHECK(topo_comp_coup.node == comp_coup_ref.node);
+        CHECK(math_topo.fill_in == fill_in_ref);
+    }
+
+    SUBCASE("7 nodes") {
+        // {
+        //     0: [1, 5, 6],
+        //     1: [2, 4, 5, 3, 6],
+        //     2: [3, 6]
+        //     3: [4],
+        //     4: [5],
+        // }
+
+        // component topology
+        ComponentTopology comp_topo{};
+        comp_topo.n_node = 7;
+        comp_topo.branch_node_idx = {
+            {0, 1}, // 0
+            {1, 2}, // 1
+            {2, 3}, // 2
+            {3, 4}, // 3
+            {4, 5}, // 4
+            {0, 5}, // 5
+            {1, 4}, // 6
+            {6, 0}, // 7
+            {6, 2}, // 8
+            {5, 1}, // 9
+            {3, 1}, // 10
+            {6, 1}, // 11
+            {2, 1}, // 12
+        };
+        comp_topo.source_node_idx = {0};
+        // component connection
+        ComponentConnections comp_conn{};
+        comp_conn.branch_connected = std::vector<BranchConnected>(13, {1, 1});
+        comp_conn.branch_phase_shift = std::vector<double>(13, 0.0);
+        comp_conn.source_connected = {1};
+        // result
+        TopologicalComponentToMathCoupling comp_coup_ref{};
+        comp_coup_ref.node = {{.group = 0, .pos = 0}, {.group = 0, .pos = 3}, {.group = 0, .pos = 1},
+                              {.group = 0, .pos = 2}, {.group = 0, .pos = 4}, {.group = 0, .pos = 5},
+                              {.group = 0, .pos = 6}};
+        std::vector<BranchIdx> const fill_in_ref{{5, 6}, {2, 6}, {4, 6}};
+
+        Topology topo{comp_topo, comp_conn};
+        auto pair = topo.build_topology();
+        auto const& topo_comp_coup = *pair.second;
+        auto const& math_topo = *pair.first[0];
+        CHECK(topo_comp_coup.node == comp_coup_ref.node);
+        CHECK(math_topo.fill_in == fill_in_ref);
+    }
 }
 
 } // namespace power_grid_model

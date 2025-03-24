@@ -34,6 +34,7 @@ if there are sources
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
@@ -42,12 +43,16 @@ namespace power_grid_model::math_solver {
 
 namespace linear_pf {
 
-template <symmetry_tag sym> class LinearPFSolver {
+template <symmetry_tag sym_type> class LinearPFSolver {
 
   public:
+    using sym = sym_type;
+
     using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
     using BlockPermArray =
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+
+    static constexpr auto is_iterative = false;
 
     LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
@@ -57,10 +62,10 @@ template <symmetry_tag sym> class LinearPFSolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(n_bus_) {}
 
-    MathOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                   CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                     CalculationInfo& calculation_info) {
         // output
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
 
         Timer const main_timer(calculation_info, 2220, "Math solver");
@@ -94,18 +99,16 @@ template <symmetry_tag sym> class LinearPFSolver {
     SparseSolverType sparse_solver_;
     BlockPermArray perm_;
 
-    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
         detail::prepare_linear_matrix_and_rhs(y_bus, input, *load_gens_per_bus_, *sources_per_bus_, output, mat_data_);
     }
 
-    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
         detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
                                     [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
 
-template class LinearPFSolver<symmetric_t>;
-template class LinearPFSolver<asymmetric_t>;
 } // namespace linear_pf
 
 using linear_pf::LinearPFSolver;

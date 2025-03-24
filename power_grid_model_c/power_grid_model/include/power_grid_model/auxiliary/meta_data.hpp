@@ -16,21 +16,11 @@
 
 namespace power_grid_model::meta_data {
 
-// pointer to member
-template <class T> struct trait_pointer_to_member;
-template <class StructType, class ValueType> struct trait_pointer_to_member<ValueType StructType::*> {
-    using value_type = ValueType;
-};
-
 // primary template to get the attribute list of a component
 // the specializations will contain static constexpr "value" field
 //    which is a std::array
 // the specializations are automatically generated
 template <class T> struct get_attributes_list;
-// primary template functor classes to generate nan value for a component
-// the specializations will contain operator() to return a component instance with NaNs
-// the specializations are automatically generated
-template <class T> struct get_component_nan;
 
 // ctype string
 template <class T> struct ctype_t;
@@ -55,33 +45,42 @@ template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 // function selector based on ctype
 // the operator() of the functor should have a single template parameter
 // the selector will instantiate the operator() with relevant type
-template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor f, Args&&... args) {
+template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor&& f, Args&&... args) {
     using enum CType;
 
     switch (ctype) {
     case c_double:
-        return f.template operator()<double>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
     case c_double3:
-        return f.template operator()<RealValue<asymmetric_t>>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<RealValue<asymmetric_t>>(std::forward<Args>(args)...);
     case c_int8:
-        return f.template operator()<int8_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
     case c_int32:
-        return f.template operator()<int32_t>(std::forward<Args>(args)...);
+        return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
     default:
         throw MissingCaseForEnumError{"CType selector", ctype};
     }
 }
 
 // set nan
-inline void set_nan(double& x) { x = nan; }
-inline void set_nan(IntS& x) { x = na_IntS; }
-inline void set_nan(ID& x) { x = na_IntID; }
+constexpr void set_nan(double& x) { x = nan; }
+constexpr void set_nan(IntS& x) { x = na_IntS; }
+constexpr void set_nan(ID& x) { x = na_IntID; }
 inline void set_nan(RealValue<asymmetric_t>& x) { x = RealValue<asymmetric_t>{nan}; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline void set_nan(Enum& x) {
+constexpr void set_nan(Enum& x) {
     x = static_cast<Enum>(na_IntS);
 }
+template <typename T>
+    requires requires(T t) {
+        { set_nan(t) };
+    }
+inline T const nan_value = [] {
+    T v{};
+    set_nan(v);
+    return v;
+}();
 
 using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr
@@ -187,5 +186,27 @@ struct MetaData {
 
 // little endian
 constexpr bool is_little_endian() { return std::endian::native == std::endian::little; }
+
+// list of all dataset names
+struct input_getter_s {
+    static constexpr char const* name = "input";
+    template <class T> using type = typename T::InputType;
+};
+struct update_getter_s {
+    static constexpr char const* name = "update";
+    template <class T> using type = typename T::UpdateType;
+};
+struct sym_output_getter_s {
+    static constexpr char const* name = "sym_output";
+    template <class T> using type = typename T::template OutputType<symmetric_t>;
+};
+struct asym_output_getter_s {
+    static constexpr char const* name = "asym_output";
+    template <class T> using type = typename T::template OutputType<asymmetric_t>;
+};
+struct sc_output_getter_s {
+    static constexpr char const* name = "sc_output";
+    template <class T> using type = typename T::ShortCircuitOutputType;
+};
 
 } // namespace power_grid_model::meta_data

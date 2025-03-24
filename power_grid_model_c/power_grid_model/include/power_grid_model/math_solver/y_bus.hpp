@@ -35,7 +35,7 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
         return;
     }
     // add
-    vec.push_back({{first_bus, second_bus}, {element_type, idx}});
+    vec.push_back({.pos = {first_bus, second_bus}, .element = {.element_type = element_type, .idx = idx}});
 }
 
 // counting sort element
@@ -54,7 +54,7 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
         count_vec[--counter[it_element->pos.second]] = *it_element;
     }
     // sort row
-    std::fill(counter.begin(), counter.end(), 0);
+    std::ranges::fill(counter, 0);
     for (YBusElementMap const& element : count_vec) {
         ++counter[element.pos.first];
     }
@@ -294,6 +294,7 @@ template <symmetry_tag sym> class YBus {
     }
 
     // getter
+    YBusStructure const& y_bus_structure() const { return *y_bus_struct_; }
     Idx size() const { return static_cast<Idx>(bus_entry().size()); }
     Idx nnz() const { return row_indptr().back(); }
     Idx nnz_lu() const { return row_indptr_lu().back(); }
@@ -443,7 +444,7 @@ template <symmetry_tag sym> class YBus {
 
     // calculate branch flow based on voltage
     template <typename T>
-        requires std::same_as<T, BranchMathOutput<sym>> || std::same_as<T, BranchShortCircuitMathOutput<sym>>
+        requires std::same_as<T, BranchSolverOutput<sym>> || std::same_as<T, BranchShortCircuitSolverOutput<sym>>
     std::vector<T> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
         std::vector<T> branch_flow(math_topology_->branch_bus_idx.size());
         std::transform(math_topology_->branch_bus_idx.cbegin(), math_topology_->branch_bus_idx.cend(),
@@ -459,7 +460,7 @@ template <symmetry_tag sym> class YBus {
                            output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                            output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
-                           if constexpr (std::same_as<T, BranchMathOutput<sym>>) {
+                           if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
                                // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
                                output.s_f = uf * conj(output.i_f);
                                output.s_t = ut * conj(output.i_t);
@@ -471,18 +472,18 @@ template <symmetry_tag sym> class YBus {
     }
 
     // calculate shunt flow based on voltage, injection direction
-    template <typename MathOutputType>
-        requires std::same_as<MathOutputType, ApplianceMathOutput<sym>> ||
-                 std::same_as<MathOutputType, ApplianceShortCircuitMathOutput<sym>>
-    std::vector<MathOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<MathOutputType> shunt_flow(math_topology_->n_shunt());
+    template <typename SolverOutputType>
+        requires std::same_as<SolverOutputType, ApplianceSolverOutput<sym>> ||
+                 std::same_as<SolverOutputType, ApplianceShortCircuitSolverOutput<sym>>
+    std::vector<SolverOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
+        std::vector<SolverOutputType> shunt_flow(math_topology_->n_shunt());
         for (auto const [bus, shunts] : enumerated_zip_sequence(math_topology_->shunts_per_bus)) {
             for (Idx const shunt : shunts) {
                 // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_->shunt_param[shunt], u[bus]);
 
-                if constexpr (std::same_as<MathOutputType, ApplianceMathOutput<sym>>) {
+                if constexpr (std::same_as<SolverOutputType, ApplianceSolverOutput<sym>>) {
                     // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                     shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
                 }
@@ -526,12 +527,12 @@ template <symmetry_tag sym> class YBus {
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
 
     // cache the branch and shunt parameters in sequence_idx_map
-    IdxVector branch_param_idx_{};
-    IdxVector shunt_param_idx_{};
+    IdxVector branch_param_idx_;
+    IdxVector shunt_param_idx_;
 
     // map index between admittance entries and parameter entries
-    std::vector<IdxVector> map_admittance_param_branch_{};
-    std::vector<IdxVector> map_admittance_param_shunt_{};
+    std::vector<IdxVector> map_admittance_param_branch_;
+    std::vector<IdxVector> map_admittance_param_shunt_;
 
     std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
 
@@ -541,9 +542,6 @@ template <symmetry_tag sym> class YBus {
         });
     }
 };
-
-template class YBus<symmetric_t>;
-template class YBus<asymmetric_t>;
 
 } // namespace math_solver
 

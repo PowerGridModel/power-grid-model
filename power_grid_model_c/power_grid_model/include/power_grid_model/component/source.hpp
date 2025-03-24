@@ -42,19 +42,12 @@ class Source : public Appliance {
         y0_ref_ = y1_ref_ / z01_ratio;
     }
 
-    // getter for calculation param, y_ref
-    template <symmetry_tag sym> ComplexTensor<sym> math_param() const {
+    template <symmetry_tag sym> SourceCalcParam math_param() const {
         // internal element_admittance
-        if constexpr (is_symmetric_v<sym>) {
-            return y1_ref_;
-        } else {
-            ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
-            ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
-            ComplexTensor<asymmetric_t> y012;
-            y012 << y1_ref_, 0.0, 0.0, 0.0, y1_ref_, 0.0, 0.0, 0.0, y0_ref_;
-            ComplexTensor<asymmetric_t> yabc = dot(sym_matrix, y012, sym_matrix_inv);
-            return yabc;
-        }
+        SourceCalcParam math_param;
+        math_param.y0 = y0_ref_;
+        math_param.y1 = y1_ref_;
+        return math_param;
     }
 
     // setter
@@ -95,16 +88,16 @@ class Source : public Appliance {
 
     // update for source
     UpdateChange update(SourceUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.status);
         bool const param_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
         // change source connection will change both topo and param
         // change u ref will change param
-        return {topo_changed, param_changed || topo_changed};
+        return {.topo = topo_changed, .param = param_changed || topo_changed};
     }
 
     SourceUpdate inverse(SourceUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
         set_if_not_nan(update_data.u_ref, u_ref_);
@@ -117,22 +110,23 @@ class Source : public Appliance {
     double u_ref_;
     double u_ref_angle_;
     // positive and zero sequence ref
-    DoubleComplex y1_ref_{};
-    DoubleComplex y0_ref_{};
+    DoubleComplex y1_ref_;
+    DoubleComplex y0_ref_;
 
-    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
-        ApplianceMathOutput<sym_calc> appliance_math_output;
+    template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+        ApplianceSolverOutput<sym_calc> appliance_solver_output;
         ComplexValue<sym_calc> const u_ref{u_ref_};
-        ComplexTensor<sym_calc> const y_ref = math_param<sym_calc>();
-        appliance_math_output.i = dot(y_ref, u_ref - u);
-        appliance_math_output.s = u * conj(appliance_math_output.i);
-        return appliance_math_output;
+        SourceCalcParam const source_param = math_param<sym_calc>();
+        ComplexTensor<sym_calc> const y_ref = source_param.template y_ref<sym_calc>();
+        appliance_solver_output.i = dot(y_ref, u_ref - u);
+        appliance_solver_output.s = u * conj(appliance_solver_output.i);
+        return appliance_solver_output;
     }
 
-    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
+    ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
         return u2si<symmetric_t>(u);
     }
-    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
+    ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
         return u2si<asymmetric_t>(u);
     }
 

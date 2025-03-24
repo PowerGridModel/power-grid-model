@@ -8,6 +8,7 @@
 
 namespace power_grid_model {
 
+namespace {
 struct C {
     explicit C(Idx a1) : a{a1} {}
 
@@ -23,6 +24,27 @@ struct C2 : C {
     C2(Idx a1, uint16_t b1) : C{a1}, b{b1} {}
     uint16_t b;
 };
+
+static_assert(Container<C1>::is_storageable_v<C1>);
+static_assert(!Container<C1>::is_storageable_v<C2>);
+static_assert(!Container<C1>::is_storageable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1>::is_storageable_v<C1>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1>::is_storageable_v<C2>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1>::is_storageable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_storageable_v<C1>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_storageable_v<C2>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1, C2>::is_storageable_v<C>);
+
+static_assert(Container<C1>::is_gettable_v<C1>);
+static_assert(!Container<C1>::is_gettable_v<C2>);
+static_assert(!Container<C1>::is_gettable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1>::is_gettable_v<C1>);
+static_assert(!Container<ExtraRetrievableTypes<C>, C1>::is_gettable_v<C2>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1>::is_gettable_v<C>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_gettable_v<C1>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_gettable_v<C2>);
+static_assert(Container<ExtraRetrievableTypes<C>, C1, C2>::is_gettable_v<C>);
+} // namespace
 
 TEST_CASE("Test component container") {
     using CompContainer = Container<C, C1, C2>;
@@ -85,9 +107,9 @@ TEST_CASE("Test component container") {
     }
 
     SUBCASE("Test get item by idx_2d") {
-        C const& c = const_container.template get_item<C>({0, 0});
-        C const& c1 = const_container.template get_item<C>({1, 0});
-        C const& c2 = const_container.template get_item<C2>({2, 0});
+        C const& c = const_container.template get_item<C>({.group = 0, .pos = 0});
+        C const& c1 = const_container.template get_item<C>({.group = 1, .pos = 0});
+        C const& c2 = const_container.template get_item<C2>({.group = 2, .pos = 0});
         CHECK(c.a == 5);
         CHECK(c1.a == 6);
         CHECK(c2.a == 7);
@@ -173,6 +195,23 @@ TEST_CASE("Test component container") {
         CHECK(const_container2.get_item_by_seq<C>(1).a == 66);
         CHECK(const_container2.get_item_by_seq<C>(2).a == 7);
     }
+
+    SUBCASE("Test get group index") {
+        CHECK(const_container.get_group_idx<C>() == 0);
+        CHECK(const_container.get_group_idx<C1>() == 1);
+        CHECK(const_container.get_group_idx<C2>() == 2);
+    }
+
+#ifndef NDEBUG
+    SUBCASE("Test get id by idx2d") {
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 0}) == 1);
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 1}) == 11);
+        CHECK(const_container.get_id_by_idx(Idx2D{0, 2}) == 111);
+        CHECK(const_container.get_id_by_idx(Idx2D{1, 0}) == 2);
+        CHECK(const_container.get_id_by_idx(Idx2D{1, 1}) == 22);
+        CHECK(const_container.get_id_by_idx(Idx2D{2, 0}) == 3);
+    }
+#endif // NDEBUG
 }
 
 } // namespace power_grid_model

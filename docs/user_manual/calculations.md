@@ -31,10 +31,19 @@ Output:
 - Node voltage magnitude and angle
 - Power flow through branches
 
+See [Power flow algorithms](#power-flow-algorithms) for detailed documentation on the calculation methods.
+
+##### Regulated power flow
+
+For most power flow calculations, the grid is fixed as the user dictates. However, in practice, the grid often contains regulators for certain components.
+When including those regulators in the calculations, the grid may be optimized according to the power flow results and the behaviour of the regulators.
+
+See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed documentation on regulated power flow calculations.
+
 #### State estimation
 
 State estimation is a statistical calculation method that determines the most probable state of the grid, based on
-network data and measurements. Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were 
+network data and measurements. Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were
 either measured, estimated or forecasted.
 
 Input:
@@ -48,23 +57,23 @@ Output:
 - Power flow through branches
 - Deviation between measurement values and estimated state
 
-In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will 
-raise a sparse matrix error; the matrix reprensentation of the system is too sparse to solve and particular so when it is
-singular. In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of
-unknowns) or a balanced system (when the number of measurements is equal to the number of unknowns). For each node, there are two unknowns, `u` and `u_angle`, so the following conditions should be met:
+In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or
+a `SparseMatrixError`.
+In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of unknowns.
+For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
 
 $$
-   \begin{eqnarray}
-      n_{measurements}    & >= & n_{unknowns}
-   \end{eqnarray}
+    \begin{eqnarray}
+        n_{measurements}    & >= & n_{unknowns}
+    \end{eqnarray}
 $$
 
 Where
 
 $$
-   \begin{eqnarray}
-      n_{unknowns}    & = & 2 & \cdot & n_{nodes}
-   \end{eqnarray}
+    \begin{eqnarray}
+        n_{unknowns}    & = & 2 & \cdot & n_{nodes} - 1
+    \end{eqnarray}
 $$
 
 The number of measurements can be found by taking the sum of the following:
@@ -87,7 +96,7 @@ In observable systems this helps better outputting correct results. On the other
 
 ##### Necessary observability condition
 
-Based on the requirements of observability mentioned above, user needs to satisfy  at least the following conditions for state estimation calculation in power-grid-model.
+Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
 - If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
@@ -98,6 +107,16 @@ Based on the requirements of observability mentioned above, user needs to satisf
 - Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
 - Any sensor on a `Branch` for all branches: Parallel branches with either side of measurements count as one.
 - All `Branch3` sensors.
+
+##### Sufficient observability condition
+
+The condition check above only checks the necessary condition for observability. When the measurements are not independent enough, the system may still be unobservable even if the necessary condition is met.
+It is rather complicated to do a full sufficient and necessary observability check in generic cases. However, `power-grid-model` performs the sufficient condition check when the following conditions are met:
+
+1. The system is a radial network.
+2. The system does not have voltage phasor measurements.
+
+In this case, the validation of the independent measurements is rather straightforward. If the system is not observable, the calculation will raise a `NotObservableError` instead of `SparseMatrixError`.
 
 #### Short circuit calculations
 
@@ -115,6 +134,23 @@ Output:
 
 - Node voltage magnitude and angle
 - Current flowing through branches and fault.
+
+#### Common calculations
+
+Power flowing through a branch is calculated by voltage and current for any type of calculations in the following way:
+
+$$
+    \begin{eqnarray}
+        \underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}
+    \end{eqnarray}
+$$
+
+These quantities are in complex form. Hence, they can be constructed by PGM output attributes in the following way:
+
+- For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle. Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$. Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
+
+- For  $\underline{I}$ of branches, `i_side` is the magnitude. Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
+The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for {hoverxreftooltip}`user_manual/components:Branch3`s.
 
 ### Power flow algorithms
 
@@ -144,18 +180,18 @@ Therefore power-grid-model will use this method regardless of the input provided
 The nodal equations of a power system network can be written as:
 
 $$
-   \begin{eqnarray}
-      I_N    & = Y_{bus}U_N
-   \end{eqnarray}
+    \begin{eqnarray}
+        I_N    & = Y_{bus}U_N
+    \end{eqnarray}
 $$
 
 Where $I_N$ is the $N$ vector of source currents injected into each bus and $U_N$ is the $N$ vector of bus voltages. The complex power
 delivered to bus $k$ is:
 
 $$
-   \begin{eqnarray}
-      S_{k}    & =  P_k + jQ_k & = U_{k} I_{k}^{*}
-   \end{eqnarray}
+    \begin{eqnarray}
+        S_{k}    & =  P_k + jQ_k & = U_{k} I_{k}^{*}
+    \end{eqnarray}
 $$
 
 Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at each node
@@ -173,80 +209,81 @@ This is the traditional method for power flow calculations. This method uses a T
 terms, to solve the nonlinear set of equations iteratively:
 
 $$
-   \begin{eqnarray}
-      f(x)    & =  y
-   \end{eqnarray}
+    \begin{eqnarray}
+        f(x)    & =  y
+    \end{eqnarray}
 $$
 
 Where:
 
 $$
-   \begin{eqnarray}
-      x     =  \begin{bmatrix}
-               \delta \\
-               U
-               \end{bmatrix} = 
-               \begin{bmatrix}
-               \delta_2 \\
-               \vdots \\
-               \delta_N \\
-               U_2 \\
-               \vdots \\
-               U_N
-               \end{bmatrix}
-      \quad\text{and}\quad
-      y     =  \begin{bmatrix}
-               P \\
-               Q
-               \end{bmatrix} = 
-               \begin{bmatrix}
-               P_2 \\
-               \vdots \\
-               P_N \\
-               Q_2 \\
-               \vdots \\
-               Q_N
-               \end{bmatrix}
-      \quad\text{and}\quad
-      f(x)  =  \begin{bmatrix}
-               P(x) \\
-               Q(x)
-               \end{bmatrix} = 
-               \begin{bmatrix}
-               P_{2}(x) \\
-               \vdots \\
-               P_{N}(x) \\
-               Q_{2}(x) \\
-               \vdots \\
-               Q_{N}(x)
-               \end{bmatrix}
-   \end{eqnarray}
+    \begin{eqnarray}
+        x    =  \begin{bmatrix}
+                \delta \\
+                U
+                \end{bmatrix} =
+                \begin{bmatrix}
+                \delta_2 \\
+                \vdots \\
+                \delta_N \\
+                U_2 \\
+                \vdots \\
+                U_N
+                \end{bmatrix}
+        \quad\text{and}\quad
+        y    =  \begin{bmatrix}
+                P \\
+                Q
+                \end{bmatrix} =
+                \begin{bmatrix}
+                P_2 \\
+                \vdots \\
+                P_N \\
+                Q_2 \\
+                \vdots \\
+                Q_N
+                \end{bmatrix}
+        \quad\text{and}\quad
+        f(x) =  \begin{bmatrix}
+                P(x) \\
+                Q(x)
+                \end{bmatrix} =
+                \begin{bmatrix}
+                P_{2}(x) \\
+                \vdots \\
+                P_{N}(x) \\
+                Q_{2}(x) \\
+                \vdots \\
+                Q_{N}(x)
+                \end{bmatrix}
+    \end{eqnarray}
 $$
 
 As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
 In each iteration $i$ the following equation is solved:
 
 $$
-   \begin{eqnarray}
-      J(i) \Delta x(i)    & =  \Delta y(i)
-   \end{eqnarray}
+    \begin{eqnarray}
+        J(i) \Delta x(i)    & =  \Delta y(i)
+    \end{eqnarray}
 $$
 
 Where
 
 $$
-   \begin{eqnarray}
-      \Delta x(i)    & =  x(i+1) - x(i)
-      \quad\text{and}\quad
-      \Delta y(i)    & =  y - f(x(i))
-   \end{eqnarray}
+    \begin{eqnarray}
+        \Delta x(i)    & =  x(i+1) - x(i)
+        \quad\text{and}\quad
+        \Delta y(i)    & =  y - f(x(i))
+    \end{eqnarray}
 $$
 
-$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial 
+$J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial
 derivatives of $\dfrac{\partial P}{\partial \delta}$, $\dfrac{\partial P}{\partial U}$, $\dfrac{\partial Q}{\partial \delta}$
 and $\dfrac{\partial Q}{\partial U}$.
 
 For each iteration the following steps are executed:
+
 - Compute $\Delta y(i)$
 - Compute the Jacobian $J(i)$
 - Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
@@ -262,22 +299,22 @@ Additionally, [Newton-Raphson](#newton-raphson-power-flow) will be more robust c
 
 The algorithm is as follows:
 
-1. Build $Y_{bus}$ matrix 
+1. Build $Y_{bus}$ matrix
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
-3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$. 
+3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration. The injected currents are calculated as per ZIP model of loads and generation using $U_N$.
    $
-      \begin{eqnarray}
-         I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
-      \end{eqnarray}
+       \begin{eqnarray}
+           I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| + \overline{(\frac{S_{P}}{U_N})}
+       \end{eqnarray}
    $
-4. Solve linear equation: $YU_N^i = I_N^i$ 
-5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3. 
+4. Solve linear equation: $YU_N^i = I_N^i$
+5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3.
 
-The iterative current algorithm only needs to calculate injected currents before solving linear equations. 
+The iterative current algorithm only needs to calculate injected currents before solving linear equations.
 This is more straightforward than calculating the Jacobian, which was done in the Newton-Raphson algorithm.
 
-Factorizing the matrix of linear equation is the most computationally heavy task. 
-The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations. 
+Factorizing the matrix of linear equation is the most computationally heavy task.
+The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations.
 The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like timeseries calculations.
 
 #### Linear power flow
@@ -287,8 +324,8 @@ Algorithm call: {py:class}`CalculationMethod.linear <power_grid_model.enum.Calcu
 This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>`.
 By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
 It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
-When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy. 
-Therefore power-grid-model will use this method regardless of the input provided by the user in this case. 
+When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy.
+Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 
 The algorithm is as follows:
 
@@ -317,17 +354,17 @@ Weighted least squares (WLS) state estimation can be performed with power-grid-m
 Given a grid with $N_b$ buses the state variable column vector is defined as below.
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{U}     =     \begin{bmatrix}
                             \underline{U}_1 \\
-                            \underline{U}_2 \\ 
+                            \underline{U}_2 \\
                             \vdots \\
                             \underline{U}_{N_{b}}
-                        \end{bmatrix} 
-   \end{eqnarray}
+                        \end{bmatrix}
+    \end{eqnarray}
 $$
 
-Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus. 
+Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus.
 
 The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
 by solving:
@@ -341,35 +378,35 @@ $$
 Where:
 
 $$
-   \begin{eqnarray}
-      \underline{x}     =  \begin{bmatrix}
-               \underline{x}_1 \\
-               \underline{x}_2 \\
-               \vdots \\
-               \underline{x}_{N_{m}}
-               \end{bmatrix} = 
-               f(\underline{U})
-      \quad\text{and}\quad
-      \underline{z}     =  \begin{bmatrix}
-               \underline{z}_1 \\
-               \underline{z}_2 \\
-               \vdots \\
-               \underline{z}_{N_{m}}
-               \end{bmatrix} 
-      \quad\text{and}\quad
-      W  = \Sigma^{-1} =  \begin{bmatrix}
-               \sigma_1^2 & 0 & \cdots & 0 \\
-               0 & \sigma_2^2 & \cdots & 0 \\
-               \vdots & \vdots & \ddots & \vdots \\
-               0 & 0 & \cdots & \sigma_{N_{m}}^2
-               \end{bmatrix} ^{-1} = 
-               \begin{bmatrix}
-               w_1 & 0 & \cdots & 0 \\
-               0 & w_2 & \cdots & 0 \\
-               \vdots & \vdots & \ddots & \vdots \\
-               0 & 0 & \cdots & w_{N_{m}}
-               \end{bmatrix}
-   \end{eqnarray}
+    \begin{eqnarray}
+        \underline{x}     =  \begin{bmatrix}
+                \underline{x}_1 \\
+                \underline{x}_2 \\
+                \vdots \\
+                \underline{x}_{N_{m}}
+                \end{bmatrix} =
+                f(\underline{U})
+        \quad\text{and}\quad
+        \underline{z}     =  \begin{bmatrix}
+                \underline{z}_1 \\
+                \underline{z}_2 \\
+                \vdots \\
+                \underline{z}_{N_{m}}
+                \end{bmatrix}
+        \quad\text{and}\quad
+        W  = \Sigma^{-1} =  \begin{bmatrix}
+                \sigma_1^2 & 0 & \cdots & 0 \\
+                0 & \sigma_2^2 & \cdots & 0 \\
+                \vdots & \vdots & \ddots & \vdots \\
+                0 & 0 & \cdots & \sigma_{N_{m}}^2
+                \end{bmatrix} ^{-1} =
+                \begin{bmatrix}
+                w_1 & 0 & \cdots & 0 \\
+                0 & w_2 & \cdots & 0 \\
+                \vdots & \vdots & \ddots & \vdots \\
+                0 & 0 & \cdots & w_{N_{m}}
+                \end{bmatrix}
+    \end{eqnarray}
 $$
 
 Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th measured value in complex form,
@@ -391,9 +428,9 @@ There can be multiple sensors measuring the same physical quantity. For example,
 voltage sensors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
 
 $$
-   \begin{eqnarray}
-            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}} 
-   \end{eqnarray}
+    \begin{eqnarray}
+            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}}
+    \end{eqnarray}
 $$
 
 Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of individual measurements.
@@ -401,13 +438,13 @@ Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of indi
 Multiple appliance measurements (power measurements) on one bus are aggregated as the total injection at the bus:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k
             \quad\text{and}\quad
             \sigma_P^2 = \sum_{k=1}^{N_{appliance}} \sigma_{P,k}^2
             \quad\text{and}\quad
             \sigma_Q^2 = \sum_{k=1}^{N_{appliance}} \sigma_{Q,k}^2
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual appliances.
@@ -424,35 +461,35 @@ which is not realistic in distribution grids. Therefore, traditional measurement
   magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{U}_i = U_i \cdot e^{j \theta_i}
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 - Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
-also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage 
+also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage
 phasor, the current phasor is calculated as follows:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{I} = (\underline{S}/\underline{U})^*
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 - Bus power injection: Linear WLS requires a complex current phasor. Similar as above, if the bus voltage is not measured,
 the nominal voltage with zero angle will be used as an estimation. The current phasor is calculated as follows:
 
 $$
-   \begin{eqnarray}
+    \begin{eqnarray}
             \underline{I} = (\underline{S}/\underline{U})^*
-   \end{eqnarray}
+    \end{eqnarray}
 $$
 
 The aggregated apparent power flow is considered as a single measurement, with variance $\sigma_S^2 = \sigma_P^2 + \sigma_Q^2$.
 
-The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of 
-bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS 
-algorithm. In each iteration, the resulted voltage phase angle will be applied as the phase shift of the measured voltage phasor 
+The assumption made in the linearization of measurements introduces a system error to the algorithm, because the phase shifts of
+bus voltages are ignored in the input measurement data. This error is corrected by applying an iterative approach to the linear WLS
+algorithm. In each iteration, the resulted voltage phase angle will be applied as the phase shift of the measured voltage phasor
 for the next iteration:
 
 - Initialization: let $\underline{U}^{(k)}$ be the column vector of the estimated voltage phasor in the k-th iteration. Let Bus $s$
@@ -468,7 +505,7 @@ be the slack bus, which is connected to the external network (source). $\underli
   - Compute the temporary new voltage phasor $\underline{\tilde{U}}^{(k)}$ using the pre-factorized matrix. See also [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
   - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
   - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
-  stop the iteration. Otherwise, continue until the maximum number of iterations is reached. 
+  stop the iteration. Otherwise, continue until the maximum number of iterations is reached.
   
 In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
 the system error of the phase shift converges to zero. Because the matrix is pre-built and
@@ -519,7 +556,7 @@ The algorithm will assume angles to be zero by default (see the details about vo
 
 ### Short circuit calculation algorithms
 
-In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints. 
+In the short circuit calculation, the following equations are solved with border conditions of faults added as constraints.
 
 $$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
 
@@ -538,12 +575,12 @@ Algorithm call: {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.Cal
 
 The assumptions used for calculations in power-grid-model are aligned to the ones mentioned in [IEC 60909](https://webstore.iec.ch/publication/24100).
 
-- The state of grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
+- The state of the grid with respect to loads and generations are ignored for the short circuit calculation. (Note: Shunt admittances are included in calculation.)
 - The pre-fault voltage is considered in the calculation and is calculated based on the grid parameters and topology. (Excl. loads and generation)
 - The calculations are assumed to be time-independent. (Voltages are sine throughout with the fault occurring at a zero crossing of the voltage, the complexity of rotating machines and harmonics are neglected, etc.)
-- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function. 
-  The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents. 
-  The table to derive `c` according to IEC 60909 is shown below. 
+- To account for the different operational conditions, a voltage scaling factor of `c` is applied to the voltage source while running short circuit calculation function.
+  The factor `c` is determined by the nominal voltage of the node that the source is connected to and the API option to calculate the `minimum` or `maximum` short circuit currents.
+  The table to derive `c` according to IEC 60909 is shown below.
 
 | Algorithm      | c_max | c_min |
 | -------------- | ----- | ----- |
@@ -554,26 +591,126 @@ The assumptions used for calculations in power-grid-model are aligned to the one
 In the IEC 609090 standard, there is a difference in `c` (for `U_nom` <= 1kV) for systems with a voltage tolerance of 6% and 10%. In power-grid-model we only use the value for a 10% voltage tolerance.
 ```
 
-There are 4 types of fault situations that can occur in the grid, along with the following possible combinations of the associated phases:
+There are {py:class}`4 types <power_grid_model.enum.FaultType>` of fault situations that can occur in the grid, along with the following possible combinations of the {py:class}`associated phases <power_grid_model.enum.FaultType>`:
 
-- Three-phase to ground: abc
-- Single phase to ground: a, b, c
-- Two phase: ab, bc, ac
-- Two phase to ground: ab, bc, ac
+- Three-phase to ground: `abc`
+- Single phase to ground: `a`, `b`, `c`
+- Two phase: `ab`, `bc`, `ac`
+- Two phase to ground: `ab`, `bc`, `ac`
+
+### Regulated power flow calculations
+
+Regulated power flow calculations are disabled by default.
+
+At the time of writing, the following regulated power flow calculation types are implemented.
+Please refer to their respective sections for detailed documentation.
+
+| Regulation type                                                   | Setting                                                                                 | Enum values                                                                 |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Automatic tap changing](#power-flow-with-automatic-tap-changing) | {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` | {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` |
+
+#### Power flow with automatic tap changing
+
+Some of the most important regulators in the grid affect the tap position of transformers.
+These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try to regulate a control voltage $U_{\text{control}}$ such that it is within a specified voltage band.
+The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
+Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` option.
+
+| Algorithm                                                                   | Default  | Speed    | Algorithm call                                                                                              |
+| --------------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
+| Optimize tap positions for any value in the voltage band                    |          |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
+| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
+| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
+
+##### Control logic for power flow with automatic tap changing
+
+We provide the control logic used for tap changing. For simplicity, we demonstrate the case where the regulator control side and the transformer tap side are at different sides.
+
+- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers inbetween.
+  - Transformers are regulated in order according to their ranks.
+- Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+- Find the optimal state using the following procedure
+  - While some transformers can still be further regulated, iterate as follows:
+    - Run a power flow calculation with the current tap positions with the specified [calculation method](#power-flow-algorithms).
+    - Start with the transformers ranked closest to a {hoverxreftooltip}`user_manual/components:source` (because the source provides a relatively stable voltage level and these transformers will have a high impact on the rest of the grid).
+    - Loop over all ranks:
+      - Loop over all transformers within this rank; transformers with the same rank are independently regulated:
+        - If the $U_{\text{control}} < U_{\text{set}} - \frac{U_{\text{band}}}{2}$:
+          - The ratio between the voltage on the tap side and the voltage on the control side is too high.
+          - To decrease this ratio, the tap ratio must be decreased.
+          - Therefore, the tap position of the regulated transformer is decreased if it satisfies the bounds set by `tap_min` and `tap_max`.
+        - If, however, the $U_{\text{control}} > U_{\text{set}} + \frac{U_{\text{band}}}{2}$:
+          - The ratio between the voltage on the tap side and the voltage on the control side is too low.
+          - To increase this ratio, the tap ratio must be increase.
+          - Therefore, the tap position of the regulated transformer is increased if it satisfies the bounds set by `tap_min` and `tap_max`.
+        - If the tap position of this transformer did not change, the transformer is considered regulated.
+      - If not all transformers within this rank are regulated:
+        - A better combination of tap positions may have been found.
+        - Step out of the loop and go to the next iteration step.
+  - Exploit the neighbourhood of all transformers (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+    - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
+
+In the case where the control side of the regulator and the tap side of the transformer are at the same side, the control logic of taps will be reverted (see `user_manual/calculations:Initialization and exploitation of regulated transformers`). 
+The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback mechanisms in the grid.
+
+```{note}
+For iterative [power flow calculation methods](#power-flow-algorithms), the initial state may not converge.
+If the iterative process failed to converge, the optimization procedure is executed twice.
+First, the {py:class}`linear <power_grid_model.enum.CalculationMethod.linear>` calculation method is used to find an approximate solution.
+The optimization procedure is then run a second time to find the actual optimum with the user-specified calculation method.
+```
+
+```{note}
+The control logic assumes that changes in the voltage level at a transformer are dominated by changes in the tap position of the transformer itself, rather than by adjacent transformers.
+This assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
+```
+
+```{note}
+If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption does not hold, and the calculation may diverge.
+Hence, this assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
+```
+
+##### Initialization and exploitation of regulated transformers
+
+Internally, to achieve an optimal regulated tap position, the control algorithm sets initial tap positions and exploits neighborhoods around local optima, depending on the strategy as follows.
+
+| strategy                                                                                                    | initial tap position | exploitation direction | search method | description                                                                           |
+| ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | linear search | Find any tap position that gives a control side voltage within the `u_band`           |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | voltage min tap      | voltage down           | binary search | Find the tap position that gives the lowest control side voltage within the `u_band`  |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | voltage min tap      | voltage up             | binary search | Find the tap position that gives the highest control side voltage within the `u_band` |
+| {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       | current tap position | no exploitation        | binary search | Find any tap position that gives a control side voltage within the `u_band`           |
+
+| transformer configuration                      | voltage min tap | voltage min tap | voltage down | voltage up |
+| ---------------------------------------------- | --------------- | --------------- | ------------ | ---------- |
+| regulator control side != transformer tap side | `tap_max`       | `tap_min`       | step up      | step down  |
+| regulator control side == transformer tap side | `tap_min`       | `tap_max`       | step down    | step up    |
+
+
+##### Search methods used for tap changing optimization
+
+Given the discrete nature of the finite tap ranges, we use the following search methods to find the next tap position along the exploitation direction.
+
+| Search method | Description                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| linear search | Start with an initial guess and do a local search with step size 1 for each iteration step.     |
+| binary search | Start with a large search region and reduce the search region by half for every iteration step. |
 
 ## Batch Calculations
 
-Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid. 
-Any form of multiple calculations can be carried out in power-grid-model using batch calculations. 
+Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid.
+Any form of multiple calculations can be carried out in power-grid-model using batch calculations.
 Batches are not restricted to any particular type of calculations, like timeseries or contingency analysis or their combination.
 They can be used for determining hosting/loading capacity, determining optimal tap positions, estimating system losses, monte-carlo simulations or any other form of multiple calculations required in a power-flow study.
 The framework for creating the batches is the same for all types of calculations.
 For every component, the attributes that can be updated in a batch scenario are mentioned in [Components](components.md).
 Examples of batch calculations for timeseries and contingency analysis are given in [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
 
-The same method as for single calculations, `calculate_power_flow`, can be used to calculate a number of scenarios in one go.
-To do this, you need to supply an `update_data` argument. 
-This argument contains a dictionary of 2D update arrays (one array per component type).
+The same method as for single calculations, {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`, can be used to calculate a number of scenarios in one go.
+To do this, you need to supply an `update_data` keyword argument.
+This keyword argument contains a dictionary of 2D update arrays (one array per component type).
 
 The performance for different batches vary. power-grid-model automatically makes efficient calculations whenever possible. See the [Performance Guide](performance-guide.md#topology-caching) for ways to optimally use the performance optimizations.
 
@@ -629,10 +766,10 @@ independent_update_data = {'line': line_update}
 
 ### Parallel Computing
 
-The batch calculation supports shared memory multi-threading parallel computing. 
+The batch calculation supports shared memory multi-threading parallel computing.
 The common internal states and variables are shared as much as possible to save memory usage and avoid copy.
 
-You can set `threading` parameter in `calculate_power_flow()` or `calculate_state_estimation()` to enable/disable parallel computing.
+You can set the `threading` keyword argument in the `calculate_*` functions (like {py:class}`calculate_power_flow() <power_grid_model.PowerGridModel.calculate_power_flow>`) to enable/disable parallel computing.
 
 - `threading=-1`, use sequential computing (default)
 - `threading=0`, use number of threads available from the machine hardware (recommended)

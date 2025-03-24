@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
-Common Enumerations
+Common enumerations used by the power-grid-model library.
 
 Note: these enumeration match the C++ arithmetic core, so don't change the values unless you change them in C++ as well
 
@@ -65,6 +65,31 @@ class CalculationMethod(IntEnum):
     iterative_current = 3
     linear_current = 4
     iec60909 = 5
+
+
+class TapChangingStrategy(IntEnum):
+    """Tap Changing Strategies"""
+
+    disabled = 0
+    """
+    Disable automatic tap adjustment
+    """
+    any_valid_tap = 1
+    """
+    Adjust tap position automatically; optimize for any value in the voltage band
+    """
+    min_voltage_tap = 2
+    """
+    Adjust tap position automatically; optimize for the lower end of the voltage band
+    """
+    max_voltage_tap = 3
+    """
+    Adjust tap position automatically; optimize for the higher end of the voltage band
+    """
+    fast_any_tap = 4
+    """
+    Adjust tap position automatically; optimize for any value in the voltage band; binary search
+    """
 
 
 class MeasuredTerminalType(IntEnum):
@@ -178,3 +203,12 @@ class _ExperimentalFeatures(IntEnum):
 
     disabled = 0
     enabled = 1
+
+
+class ComponentAttributeFilterOptions(IntEnum):
+    """Filter option component or attribute"""
+
+    everything = 0
+    """Filter all components/attributes"""
+    relevant = 1
+    """Filter only non-empty components/attributes that contain non-NaN values"""

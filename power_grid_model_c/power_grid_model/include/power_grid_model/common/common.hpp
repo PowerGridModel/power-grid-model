@@ -25,9 +25,17 @@ using IntS = int8_t;
 // struct of indexing to sub modules
 struct Idx2D {
     Idx group; // sequence number of outer module/groups
-    Idx pos;   //  sequence number inside the group
+    Idx pos;   // sequence number inside the group
 
     friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
+};
+
+struct Idx2DHash {
+    std::size_t operator()(Idx2D const& idx) const {
+        size_t const h1 = std::hash<Idx>{}(idx.group);
+        size_t const h2 = std::hash<Idx>{}(idx.pos);
+        return h1 ^ (h2 << 1);
+    }
 };
 
 struct symmetric_t {};
@@ -37,6 +45,7 @@ template <typename T>
 concept symmetry_tag = std::derived_from<T, symmetric_t> || std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> constexpr bool is_symmetric_v = std::derived_from<T, symmetric_t>;
+template <symmetry_tag T> constexpr bool is_asymmetric_v = std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric_v<T>, asymmetric_t, symmetric_t>;
 
@@ -57,6 +66,7 @@ constexpr double numerical_tolerance = 1e-8;
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr IntS na_IntS = std::numeric_limits<IntS>::min();
 constexpr ID na_IntID = std::numeric_limits<ID>::min();
+constexpr Idx na_Idx = std::numeric_limits<Idx>::min();
 
 // power grid constant
 constexpr double base_power_3p = 1e6;
@@ -77,5 +87,25 @@ constexpr double default_source_z01_ratio = 1.0;
 using DoubleVector = std::vector<double>;
 using ComplexVector = std::vector<std::complex<double>>;
 using IntSVector = std::vector<IntS>;
+
+template <class T, class... Ts>
+concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
+
+namespace capturing {
+// perfect forward into void
+template <class... T>
+constexpr void into_the_void(T&&... /*ignored*/) { // NOLINT(cppcoreguidelines-missing-std-forward)
+    // do nothing; the constexpr allows all compilers to optimize this away
+}
+} // namespace capturing
+
+// functor to include all
+struct IncludeAll {
+    template <class... T> consteval bool operator()(T&&... args) const {
+        capturing::into_the_void(std::forward<T>(args)...);
+        return true;
+    }
+};
+constexpr IncludeAll include_all{};
 
 } // namespace power_grid_model

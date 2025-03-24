@@ -37,11 +37,10 @@ class Transformer : public Branch {
           winding_to_{transformer_input.winding_to},
           clock_{transformer_input.clock},
           tap_side_{transformer_input.tap_side},
-          tap_pos_{transformer_input.tap_pos},
           tap_min_{transformer_input.tap_min},
           tap_max_{transformer_input.tap_max},
-          tap_nom_{transformer_input.tap_nom == na_IntS ? (IntS)0 : transformer_input.tap_nom},
-          tap_direction_{tap_max_ > tap_min_ ? (IntS)1 : (IntS)-1},
+          tap_nom_{transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom},
+          tap_direction_{tap_max_ > tap_min_ ? IntS{1} : IntS{-1}},
           uk_min_{is_nan(transformer_input.uk_min) ? uk_ : transformer_input.uk_min},
           uk_max_{is_nan(transformer_input.uk_max) ? uk_ : transformer_input.uk_max},
           pk_min_{is_nan(transformer_input.pk_min) ? pk_ : transformer_input.pk_min},
@@ -53,6 +52,13 @@ class Transformer : public Branch {
               calculate_z_pu(transformer_input.r_grounding_from, transformer_input.x_grounding_from, u1_rated)},
           z_grounding_to_{
               calculate_z_pu(transformer_input.r_grounding_to, transformer_input.x_grounding_to, u2_rated)} {
+        // init tap_pos_ linter smell
+        if (transformer_input.tap_pos == na_IntS) {
+            tap_pos_ = transformer_input.tap_nom == na_IntS ? IntS{0} : transformer_input.tap_nom;
+        } else {
+            tap_pos_ = transformer_input.tap_pos;
+        }
+
         if (!is_valid_clock(clock_, winding_from_, winding_to_)) {
             throw InvalidTransformerClock{id(), clock_};
         }
@@ -71,14 +77,14 @@ class Transformer : public Branch {
     double phase_shift() const final { return clock_ * deg_30; }
     bool is_param_mutable() const final { return true; }
     // getters
-    IntS tap_pos() const { return tap_pos_; }
-    BranchSide tap_side() const { return tap_side_; }
-    IntS tap_min() const { return tap_min_; }
-    IntS tap_max() const { return tap_max_; }
-    IntS tap_nom() const { return tap_nom_; }
+    constexpr IntS tap_pos() const { return tap_pos_; }
+    constexpr BranchSide tap_side() const { return tap_side_; }
+    constexpr IntS tap_min() const { return tap_min_; }
+    constexpr IntS tap_max() const { return tap_max_; }
+    constexpr IntS tap_nom() const { return tap_nom_; }
 
     // setter
-    bool set_tap(IntS new_tap) {
+    constexpr bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
             return false;
         }
@@ -88,14 +94,14 @@ class Transformer : public Branch {
 
     // update for transformer, hide default update for branch
     UpdateChange update(TransformerUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.from_status, update_data.to_status);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
-        return {topo_changed, param_changed};
+        return {.topo = topo_changed, .param = param_changed};
     }
 
     TransformerUpdate inverse(TransformerUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         update_data = Branch::inverse(update_data);
         set_if_not_nan(update_data.tap_pos, tap_pos_);
@@ -142,7 +148,7 @@ class Transformer : public Branch {
         return {r / base_z, x / base_z};
     }
 
-    IntS tap_limit(IntS new_tap) const {
+    constexpr IntS tap_limit(IntS new_tap) const {
         new_tap = std::min(new_tap, std::max(tap_max_, tap_min_));
         new_tap = std::max(new_tap, std::min(tap_max_, tap_min_));
         return new_tap;
@@ -187,7 +193,7 @@ class Transformer : public Branch {
         y_series = (1.0 / z_series) / base_y_to;
         // shunt
         DoubleComplex y_shunt;
-        // Y = I0_2 / (U2/sqrt(3)) = i0 * (S / sqrt(3) / U2) / (U2/sqrt(3)) = i0 * S * / U2 / U2
+        // Y = I0_2 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);
@@ -264,5 +270,7 @@ class Transformer : public Branch {
         return param;
     }
 };
+
+static_assert(transformer_c<Transformer>);
 
 } // namespace power_grid_model

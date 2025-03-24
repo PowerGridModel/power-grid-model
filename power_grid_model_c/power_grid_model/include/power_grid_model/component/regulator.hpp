@@ -19,6 +19,7 @@ class Regulator : public Base {
     static constexpr char const* name = "regulator";
 
     ID regulated_object() const { return regulated_object_; };
+    ComponentType regulated_object_type() const { return regulated_object_type_; };
 
     // regulator always energized
     bool energized(bool /* is_connected_to_source */) const final { return true; }
@@ -28,16 +29,17 @@ class Regulator : public Base {
     void set_status(IntS status) { status_ = static_cast<bool>(status); }
 
     auto inverse(std::convertible_to<RegulatorUpdate> auto update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         set_if_not_nan(update_data.status, static_cast<IntS>(status_));
         return update_data;
     }
 
   protected:
     // constructor
-    explicit Regulator(RegulatorInput const& regulator_input)
+    explicit Regulator(RegulatorInput const& regulator_input, ComponentType regulated_object_type)
         : Base{regulator_input},
           regulated_object_{regulator_input.regulated_object},
+          regulated_object_type_{regulated_object_type},
           status_{regulator_input.status != 0} {}
 
     Regulator(Regulator const&) = default;
@@ -50,6 +52,7 @@ class Regulator : public Base {
 
   private:
     ID regulated_object_;
+    ComponentType regulated_object_type_;
     bool status_;
 };
 

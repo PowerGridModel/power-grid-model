@@ -3,11 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 
 name: conda-pgm-env
-channels:
-  - conda-forge
 dependencies:
   # build env
-  - python=3.11
+  - python=3.12
   - pip
   - wheel
   - setuptools
@@ -17,6 +15,8 @@ dependencies:
   - nlohmann_json
   - msgpack-cxx
   - numpy
+  - cmake
+  - ninja
   # test deps
   - pytest
   - pytest-cov

@@ -19,7 +19,8 @@ graph LR
     base-->branch
       branch-->line
       branch-->link
-      branch-->transformer
+      branch-->generic_branch
+      branch-->transformer      
     base-->branch3
       branch3-->three_winding_transformer
     base-->appliance
@@ -39,7 +40,7 @@ graph LR
         generic_power_sensor-->asym_power_sensor
      
    classDef green fill:#9f6,stroke:#333,stroke-width:2px
-   class node,line,link,transformer,three_winding_transformer,source,shunt,sym_load,sym_gen,asym_load,asym_gen,sym_voltage_sensor,asym_voltage_sensor,sym_power_sensor,asym_power_sensor green
+   class node,line,link,generic_branch,transformer,three_winding_transformer,source,shunt,sym_load,sym_gen,asym_load,asym_gen,sym_voltage_sensor,asym_voltage_sensor,sym_power_sensor,asym_power_sensor green
 ```
 
 ```{note}
@@ -78,8 +79,9 @@ Meanwhile, both symmetric and asymmetric calculations can be run on the same mod
 
 ## Reference Direction
 
-The sign of active/reactive power of the {ref}`user_manual/components:Appliance` and
+The sign of active/reactive power of the {ref}`user_manual/components:Branch`, {ref}`user_manual/components:Branch3`, {ref}`user_manual/components:Appliance` and
 {ref}`user_manual/components:Sensor` depends on the reference direction.
 
-* For load reference direction, positive active power means the power flows *from the node to the appliance/sensor*.
-* For generator reference direction, positive active power means the power flows *from the appliance/sensor to the node*.
+* For load reference direction, positive active/reactive power means the power flows *from the node to the appliance/sensor*.
+* For generator reference direction, positive active/reactive power means the power flows *from the appliance/sensor to the node*.
+* For `branch` and `branch3` type of components, positive active/reactive power means the power flows *from the node to the branch*.

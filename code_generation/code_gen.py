@@ -4,7 +4,6 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List
 
 from jinja2 import Environment, FileSystemLoader
 from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData
@@ -16,8 +15,19 @@ OUTPUT_PATH = Path(__file__).parents[1]
 JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
 
+def _data_type_nan(data_type: str):
+    if data_type == "ID":
+        return "na_IntID"
+    elif data_type == "double" or "RealValue" in data_type:
+        return "nan"
+    elif data_type == "IntS":
+        return "na_IntS"
+    else:
+        return f"static_cast<{data_type}>(na_IntS)"
+
+
 class CodeGenerator:
-    all_classes: Dict[str, AttributeClass]
+    all_classes: dict[str, AttributeClass]
     base_output_path: Path
 
     def __init__(self, base_output_path: Path) -> None:
@@ -54,6 +64,7 @@ class CodeGenerator:
                 attribute_class.specification_names = [attribute_class.name]
             new_attribute_list = []
             for attribute in attribute_class.attributes:
+                attribute.nan_value = _data_type_nan(attribute.data_type)
                 if isinstance(attribute.names, str):
                     new_attribute_list.append(attribute)
                 else:
@@ -86,7 +97,7 @@ class CodeGenerator:
     def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
         with open(data_path) as data_file:
             json_data = data_file.read()
-        dataset_meta_data: List[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
+        dataset_meta_data: list[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
 
         # create list
         all_map = {}
@@ -102,7 +113,6 @@ class CodeGenerator:
                     for component_name in component.names:
                         all_components[component_name] = [x.names for x in class_def.full_attributes]
                 all_map[f"{prefix}{dataset.name}"] = all_components
-
         self.render_template(template_path=template_path, output_path=output_path, all_map=all_map)
 
     def code_gen(self):

@@ -55,6 +55,21 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_link_from_node;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_link_to_node;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_link_from_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_link_to_status;
+// component generic_branch
+PGM_API extern PGM_MetaComponent const* const PGM_def_input_generic_branch;
+// attributes of input generic_branch
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_from_node;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_to_node;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_from_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_to_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_r1;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_x1;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_g1;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_b1;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_k;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_theta;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_generic_branch_sn;
 // component transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_transformer;
 // attributes of input transformer
@@ -87,6 +102,17 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_r_ground
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_x_grounding_from;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_r_grounding_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_x_grounding_to;
+// component transformer_tap_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_input_transformer_tap_regulator;
+// attributes of input transformer_tap_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_regulated_object;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_control_side;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_u_set;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_u_band;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_line_drop_compensation_r;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_tap_regulator_line_drop_compensation_x;
 // component three_winding_transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_three_winding_transformer;
 // attributes of input three_winding_transformer
@@ -300,6 +326,26 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_p_t
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_q_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_i_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_s_to;
+// component generic_branch
+PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_generic_branch;
+// attributes of sym_output generic_branch
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_loading;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_p_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_q_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_s_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_p_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_q_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_generic_branch_s_to;
+// component transformer_tap_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_transformer_tap_regulator;
+// attributes of sym_output transformer_tap_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_tap_pos;
 // component three_winding_transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_three_winding_transformer;
 // attributes of sym_output three_winding_transformer
@@ -466,6 +512,26 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_p_
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_q_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_i_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_s_to;
+// component generic_branch
+PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_generic_branch;
+// attributes of asym_output generic_branch
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_loading;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_p_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_q_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_s_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_p_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_q_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_generic_branch_s_to;
+// component transformer_tap_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_transformer_tap_regulator;
+// attributes of asym_output transformer_tap_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_tap_pos;
 // component three_winding_transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_three_winding_transformer;
 // attributes of asym_output three_winding_transformer
@@ -603,6 +669,15 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_from_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_to_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_pos;
+// component transformer_tap_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_update_transformer_tap_regulator;
+// attributes of update transformer_tap_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_u_set;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_u_band;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_line_drop_compensation_r;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_transformer_tap_regulator_line_drop_compensation_x;
 // component three_winding_transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_update_three_winding_transformer;
 // attributes of update three_winding_transformer

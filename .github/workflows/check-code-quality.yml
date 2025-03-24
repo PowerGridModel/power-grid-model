@@ -19,15 +19,17 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-code-quality
   cancel-in-progress: true
 
 jobs:
   check-code-quality:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -36,7 +38,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: '3.12'
 
       - name: Upgrade pip
         run: pip install --upgrade pip
@@ -48,12 +50,12 @@ jobs:
 
       - name: Install and run black
         run: |
-          pip install black
+          pip install black[jupyter]
           black .
 
       - name: Install and run mypy
         run: |
-          pip install mypy
+          pip install mypy numpy
           mypy .
 
       - name: Install and run pylint
@@ -64,8 +66,8 @@ jobs:
 
       - name: Install and run clang-format
         run: |
-          sudo apt-get update && sudo apt-get install -y clang-format-15
-          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format-15 -style=file -i {} \;
+          sudo apt-get update && sudo apt-get install -y clang-format-18
+          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format-18 -style=file -i {} \;
 
       - name: If needed raise error
         run: |
@@ -74,4 +76,19 @@ jobs:
             echo "Formatting not correct! See below the files which need to be reformatted!"
             git status --porcelain --untracked-files=no
             exit 1
+          fi
+      
+      - name: Check generated code
+        if: success()
+        run: |
+          pip install -r code_generation/requirements.txt
+          python code_generation/code_gen.py
+          if [ -n "$(git status --porcelain)" ]; then
+            echo
+            echo "The following files are outdated or were manually updated:"
+            git status --porcelain
+            exit 1
+          else
+            echo
+            echo "All the generated files are up to date."
           fi

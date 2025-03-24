@@ -4,11 +4,12 @@
 
 #pragma once
 
+#include "common.hpp"
+
 #include "../../common/common.hpp"
 #include "../../common/exception.hpp"
-#include "../dataset_handler.hpp"
+#include "../dataset.hpp"
 #include "../meta_data.hpp"
-#include "../meta_data_gen.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -22,7 +23,7 @@
 #include <string_view>
 
 // custom packers
-namespace msgpack {
+namespace msgpack { // NOLINT(modernize-concat-nested-namespaces)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
 
@@ -72,11 +73,17 @@ struct MapArray {
     bool begin{true};
 };
 
-struct JsonConverter : msgpack::null_visitor {
+template <typename T> struct NullVisitor : msgpack::null_visitor {
+  private:
+    NullVisitor() = default;
+    friend T; // CRTP compliance
+};
+
+struct JsonConverter : NullVisitor<JsonConverter> {
     static constexpr char sep_char = ' ';
 
-    Idx indent;
-    Idx max_indent_level;
+    Idx indent{};
+    Idx max_indent_level{};
     std::stringstream ss{};
     std::stack<MapArray> map_array{};
 
@@ -193,6 +200,9 @@ struct JsonConverter : msgpack::null_visitor {
         ss << '}';
         return true;
     }
+
+    JsonConverter(Idx indent_, Idx max_indent_level_)
+        : NullVisitor<JsonConverter>{}, indent{indent_}, max_indent_level{max_indent_level_} {}
 };
 
 } // namespace json_converter
@@ -200,15 +210,26 @@ struct JsonConverter : msgpack::null_visitor {
 class Serializer {
     using RawElementPtr = void const*;
 
+    struct BufferView {
+        ConstDataset::Buffer const* buffer{nullptr};
+        Idx idx{0};
+        std::span<AttributeBuffer<void const> const> reordered_attribute_buffers;
+    };
+
     struct ComponentBuffer {
         MetaComponent const* component;
-        RawElementPtr data;
+        BufferView buffer_view;
         Idx size;
     };
 
     struct ScenarioBuffer {
         std::vector<ComponentBuffer> component_buffers;
     };
+
+    using row_based_t = detail::row_based_t;
+    using columnar_t = detail::columnar_t;
+    static constexpr auto row_based = detail::row_based;
+    static constexpr auto columnar = detail::columnar;
 
   public:
     static constexpr std::string_view version = "1.0";
@@ -224,7 +245,7 @@ class Serializer {
     // destructor
     ~Serializer() = default;
 
-    Serializer(ConstDatasetHandler dataset_handler, SerializationFormat serialization_format)
+    Serializer(ConstDataset dataset_handler, SerializationFormat serialization_format)
         : serialization_format_{serialization_format},
           dataset_handler_{std::move(dataset_handler)},
           packer_{msgpack_buffer_} {
@@ -276,15 +297,16 @@ class Serializer {
   private:
     SerializationFormat serialization_format_{};
 
-    ConstDatasetHandler dataset_handler_;
+    ConstDataset dataset_handler_;
     std::vector<ScenarioBuffer> scenario_buffers_;   // list of scenarios, then list of components, omit empty
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
 
     // msgpack pakcer
-    msgpack::sbuffer msgpack_buffer_{};
+    msgpack::sbuffer msgpack_buffer_;
     msgpack::packer<msgpack::sbuffer> packer_;
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
+    std::map<MetaComponent const*, std::vector<AttributeBuffer<void const>>> reordered_attribute_buffers_;
 
     // json
     Idx json_indent_{-1};
@@ -305,15 +327,15 @@ class Serializer {
         for (Idx component = 0; component != dataset_handler_.n_components(); ++component) {
             ComponentBuffer component_buffer{};
             ComponentInfo const& info = dataset_handler_.get_component_info(component);
-            ConstDatasetHandler::Buffer const& buffer = dataset_handler_.get_buffer(component);
+            ConstDataset::Buffer const& buffer = dataset_handler_.get_buffer(component);
             component_buffer.component = info.component;
+
+            component_buffer.buffer_view.buffer = &buffer;
             if (info.elements_per_scenario < 0) {
-                component_buffer.data =
-                    component_buffer.component->advance_ptr(buffer.data, buffer.indptr[begin_scenario]);
+                component_buffer.buffer_view.idx = buffer.indptr[begin_scenario];
                 component_buffer.size = buffer.indptr[end_scenario] - buffer.indptr[begin_scenario];
             } else {
-                component_buffer.data =
-                    component_buffer.component->advance_ptr(buffer.data, info.elements_per_scenario * begin_scenario);
+                component_buffer.buffer_view.idx = info.elements_per_scenario * begin_scenario;
                 component_buffer.size = info.elements_per_scenario * (end_scenario - begin_scenario);
             }
             // only store the view if it is non-empty
@@ -326,16 +348,34 @@ class Serializer {
 
     void check_attributes() {
         attributes_ = {};
-        for (auto const& buffer : component_buffers_) {
+        for (auto const& component_buffer : component_buffers_) {
             std::vector<MetaAttribute const*> attributes;
-            for (auto const& attribute : buffer.component->attributes) {
+            std::vector<AttributeBuffer<void const>> reordered_attribute_buffers;
+            for (auto const& attribute : component_buffer.component->attributes) {
                 // if not all the values of an attribute are nan
                 // add this attribute to the list
-                if (!attribute.check_all_nan(buffer.data, buffer.size)) {
-                    attributes.push_back(&attribute);
+                assert(is_row_based(component_buffer) || is_columnar(component_buffer));
+                if (is_row_based(component_buffer)) {
+                    if (!attribute.check_all_nan(
+                            component_buffer.component->advance_ptr(component_buffer.buffer_view.buffer->data,
+                                                                    component_buffer.buffer_view.idx),
+                            component_buffer.size)) {
+                        attributes.push_back(&attribute);
+                    }
+                } else if (auto it = std::ranges::find_if(component_buffer.buffer_view.buffer->attributes,
+                                                          [&attribute](auto const& attribute_buffer) {
+                                                              return attribute_buffer.meta_attribute == &attribute;
+                                                          });
+                           it != component_buffer.buffer_view.buffer->attributes.end()) {
+                    if (!check_all_nan(*it, 0, component_buffer.size)) {
+                        attributes.push_back(&attribute);
+                        reordered_attribute_buffers.push_back(*it);
+                    }
                 }
             }
-            attributes_[buffer.component] = attributes;
+
+            attributes_[component_buffer.component] = std::move(attributes);
+            reordered_attribute_buffers_[component_buffer.component] = std::move(reordered_attribute_buffers);
         }
     }
 
@@ -349,35 +389,12 @@ class Serializer {
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
             Idx const max_indent_level = dataset_handler_.is_batch() ? 4 : 3;
-            json_converter::JsonConverter visitor{{}, indent, max_indent_level};
+            json_converter::JsonConverter visitor{indent, max_indent_level};
             auto const msgpack_data = get_msgpack(use_compact_list);
             msgpack::parse(msgpack_data.data(), msgpack_data.size(), visitor);
             json_buffer_ = visitor.ss.str();
         }
         return json_buffer_;
-    }
-
-    static void json_convert_inf(nlohmann::json& json_document) {
-        switch (json_document.type()) {
-        case nlohmann::json::value_t::object:
-        case nlohmann::json::value_t::array:
-            for (auto& value : json_document) {
-                json_convert_inf(value);
-            }
-            break;
-        case nlohmann::json::value_t::number_float:
-            json_inf_to_string(json_document);
-            break;
-        default:
-            break;
-        }
-    }
-
-    static void json_inf_to_string(nlohmann::json& value) {
-        double const v = value.get<double>();
-        if (std::isinf(v)) {
-            value = v > 0.0 ? "inf" : "-inf";
-        }
     }
 
     void serialize(bool use_compact_list) {
@@ -431,6 +448,24 @@ class Serializer {
     }
 
     void pack_component(ComponentBuffer const& component_buffer) {
+        assert(component_buffer.buffer_view.buffer != nullptr);
+        if (dataset_handler_.is_row_based(*component_buffer.buffer_view.buffer)) {
+            pack_component(row_based, component_buffer);
+        } else {
+            pack_component(columnar, component_buffer);
+        }
+    }
+
+    template <detail::row_based_or_columnar_c row_or_column_t>
+    void pack_component(row_or_column_t row_or_column_tag, ComponentBuffer const& component_buffer) {
+        assert(component_buffer.buffer_view.buffer != nullptr);
+        assert(is_row_based(component_buffer) == detail::is_row_based_v<row_or_column_t>);
+        assert(is_columnar(component_buffer) == detail::is_columnar_v<row_or_column_t>);
+        assert(dataset_handler_.is_row_based(*component_buffer.buffer_view.buffer) ==
+               detail::is_row_based_v<row_or_column_t>);
+        assert(dataset_handler_.is_columnar(*component_buffer.buffer_view.buffer) ==
+               detail::is_columnar_v<row_or_column_t>);
+
         packer_.pack(component_buffer.component);
         pack_array(component_buffer.size);
         bool const use_compact_list = use_compact_list_;
@@ -442,37 +477,90 @@ class Serializer {
             assert(found != attributes_.cend());
             return found->second;
         }();
+        auto const reordered_attribute_buffers = [&]() -> std::span<AttributeBuffer<void const> const> {
+            if (detail::is_row_based_v<row_or_column_t> || !use_compact_list) {
+                return {};
+            }
+            auto const found = reordered_attribute_buffers_.find(component_buffer.component);
+            assert(found != reordered_attribute_buffers_.cend());
+            return found->second;
+        }();
+
+        BufferView const buffer_view{.buffer = component_buffer.buffer_view.buffer,
+                                     .idx = component_buffer.buffer_view.idx,
+                                     .reordered_attribute_buffers = reordered_attribute_buffers};
+
         for (Idx element = 0; element != component_buffer.size; ++element) {
-            RawElementPtr element_ptr = component_buffer.component->advance_ptr(component_buffer.data, element);
+            BufferView const element_buffer = advance(buffer_view, element);
             if (use_compact_list) {
-                pack_element_in_list(element_ptr, attributes);
+                pack_element_in_list(row_or_column_tag, element_buffer, *component_buffer.component, attributes);
             } else {
-                pack_element_in_dict(element_ptr, component_buffer);
+                pack_element_in_dict(row_or_column_tag, element_buffer, component_buffer);
             }
         }
     }
 
-    void pack_element_in_list(RawElementPtr element_ptr, std::span<MetaAttribute const* const> attributes) {
+    void pack_element_in_list(row_based_t tag, BufferView const& element_buffer, MetaComponent const& component,
+                              std::span<MetaAttribute const* const> attributes) {
+        assert(is_row_based(element_buffer));
+
         pack_array(attributes.size());
         for (auto const* const attribute : attributes) {
-            if (check_nan(element_ptr, *attribute)) {
+            if (check_nan(tag, element_buffer, component, *attribute)) {
                 packer_.pack_nil();
             } else {
-                pack_attribute(element_ptr, *attribute);
+                pack_attribute(tag, element_buffer, component, *attribute);
             }
         }
     }
 
-    void pack_element_in_dict(RawElementPtr element_ptr, ComponentBuffer const& component_buffer) {
+    void pack_element_in_list(columnar_t /*tag*/, BufferView const& element_buffer, MetaComponent const& /*component*/,
+                              [[maybe_unused]] std::span<MetaAttribute const* const> attributes) {
+        assert(is_columnar(element_buffer));
+        assert(element_buffer.reordered_attribute_buffers.size() == attributes.size());
+
+        pack_array(element_buffer.reordered_attribute_buffers.size());
+        for (auto const& attribute_buffer : element_buffer.reordered_attribute_buffers) {
+            if (check_nan(attribute_buffer, element_buffer.idx)) {
+                packer_.pack_nil();
+            } else {
+                pack_attribute(attribute_buffer, element_buffer.idx);
+            }
+        }
+    }
+
+    void pack_element_in_dict(row_based_t tag, BufferView const& element_buffer,
+                              ComponentBuffer const& component_buffer) {
+        assert(is_row_based(element_buffer));
+
         uint32_t valid_attributes_count = 0;
         for (auto const& attribute : component_buffer.component->attributes) {
-            valid_attributes_count += static_cast<uint32_t>(!check_nan(element_ptr, attribute));
+            valid_attributes_count +=
+                static_cast<uint32_t>(!check_nan(tag, element_buffer, *component_buffer.component, attribute));
         }
         pack_map(valid_attributes_count);
         for (auto const& attribute : component_buffer.component->attributes) {
-            if (!check_nan(element_ptr, attribute)) {
+            if (!check_nan(tag, element_buffer, *component_buffer.component, attribute)) {
                 packer_.pack(attribute.name);
-                pack_attribute(element_ptr, attribute);
+                pack_attribute(tag, element_buffer, *component_buffer.component, attribute);
+            }
+        }
+    }
+
+    void pack_element_in_dict(columnar_t /*tag*/, BufferView const& element_buffer,
+                              ComponentBuffer const& /*component_buffer*/) {
+        assert(is_columnar(element_buffer));
+        assert(element_buffer.reordered_attribute_buffers.empty());
+
+        uint32_t valid_attributes_count = 0;
+        for (auto const& attribute_buffer : element_buffer.buffer->attributes) {
+            valid_attributes_count += static_cast<uint32_t>(!check_nan(attribute_buffer, element_buffer.idx));
+        }
+        pack_map(valid_attributes_count);
+        for (auto const& attribute_buffer : element_buffer.buffer->attributes) {
+            if (!check_nan(attribute_buffer, element_buffer.idx)) {
+                packer_.pack(attribute_buffer.meta_attribute->name);
+                pack_attribute(attribute_buffer, element_buffer.idx);
             }
         }
     }
@@ -495,17 +583,62 @@ class Serializer {
         packer_.pack_map(static_cast<uint32_t>(count));
     }
 
-    static bool check_nan(RawElementPtr element_ptr, MetaAttribute const& attribute) {
+    static bool check_nan(row_based_t /*tag*/, BufferView const& element_buffer, MetaComponent const& component,
+                          MetaAttribute const& attribute) {
+        assert(is_row_based(element_buffer));
+
+        RawElementPtr element_ptr = component.advance_ptr(element_buffer.buffer->data, element_buffer.idx);
         return ctype_func_selector(attribute.ctype, [element_ptr, &attribute]<class T> {
             return is_nan(attribute.get_attribute<T const>(element_ptr));
         });
     }
 
-    void pack_attribute(RawElementPtr element_ptr, MetaAttribute const& attribute) {
+    static bool check_nan(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
+        return check_all_nan(attribute_buffer, idx, 1);
+    }
+
+    static bool check_all_nan(AttributeBuffer<void const> const& attribute_buffer, Idx idx, Idx size) {
+        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<class T> {
+            return std::ranges::all_of(
+                std::span<T const>{reinterpret_cast<T const*>(attribute_buffer.data) + idx, static_cast<size_t>(size)},
+                [](auto const& x) { return is_nan(x); });
+        });
+    }
+
+    void pack_attribute(row_based_t /*tag*/, BufferView const& element_buffer, MetaComponent const& component,
+                        MetaAttribute const& attribute) {
+        RawElementPtr element_ptr = component.advance_ptr(element_buffer.buffer->data, element_buffer.idx);
         ctype_func_selector(attribute.ctype, [this, element_ptr, &attribute]<class T> {
             packer_.pack(attribute.get_attribute<T const>(element_ptr));
         });
     }
+    void pack_attribute(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
+        ctype_func_selector(attribute_buffer.meta_attribute->ctype, [this, &attribute_buffer, idx]<class T> {
+            packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx));
+        });
+    }
+
+    static constexpr BufferView advance(BufferView buffer_view, Idx offset) {
+        buffer_view.idx += offset;
+        return buffer_view;
+    }
+
+    static constexpr bool is_row_based(ComponentBuffer const& component_buffer) {
+        return is_row_based(component_buffer.buffer_view);
+    }
+    static constexpr bool is_row_based(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_row_based(*buffer_view.buffer);
+    }
+    static constexpr bool is_row_based(ConstDataset::Buffer const& buffer) { return buffer.data != nullptr; }
+    static constexpr bool is_columnar(ComponentBuffer const& component_buffer) {
+        return is_columnar(component_buffer.buffer_view);
+    }
+    static constexpr bool is_columnar(BufferView const& buffer_view) {
+        assert(buffer_view.buffer != nullptr);
+        return is_columnar(*buffer_view.buffer);
+    }
+    static constexpr bool is_columnar(ConstDataset::Buffer const& buffer) { return buffer.data == nullptr; }
 };
 
 } // namespace power_grid_model::meta_data

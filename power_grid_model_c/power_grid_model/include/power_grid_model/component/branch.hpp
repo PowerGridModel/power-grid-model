@@ -22,6 +22,8 @@ class Branch : public Base {
     using UpdateType = BranchUpdate;
     template <symmetry_tag sym> using OutputType = BranchOutput<sym>;
     using ShortCircuitOutputType = BranchShortCircuitOutput;
+    using SideType = BranchSide;
+
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final { return ComponentType::branch; }
 
@@ -37,11 +39,31 @@ class Branch : public Base {
     }
 
     // getter
-    ID from_node() const { return from_node_; }
-    ID to_node() const { return to_node_; }
-    bool from_status() const { return from_status_; }
-    bool to_status() const { return to_status_; }
-    bool branch_status() const { return from_status_ && to_status_; }
+    constexpr ID from_node() const { return from_node_; }
+    constexpr ID to_node() const { return to_node_; }
+    constexpr ID node(BranchSide side) const {
+        switch (side) {
+        case BranchSide::from:
+            return from_node();
+        case BranchSide::to:
+            return to_node();
+        default:
+            throw MissingCaseForEnumError{"node(BranchSide)", side};
+        }
+    }
+    constexpr bool from_status() const { return from_status_; }
+    constexpr bool to_status() const { return to_status_; }
+    constexpr bool branch_status() const { return from_status() && to_status(); }
+    constexpr bool status(BranchSide side) const {
+        switch (side) {
+        case BranchSide::from:
+            return from_status();
+        case BranchSide::to:
+            return to_status();
+        default:
+            throw MissingCaseForEnumError{"status(BranchSide)", side};
+        }
+    }
     template <symmetry_tag sym> BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
             return BranchCalcParam<sym>{};
@@ -67,28 +89,29 @@ class Branch : public Base {
     BranchOutput<sym> get_output(ComplexValue<sym> const& u_f, ComplexValue<sym> const& u_t) const {
         // calculate flow
         BranchCalcParam<sym> const param = calc_param<sym>();
-        BranchMathOutput<sym> branch_math_output{};
-        branch_math_output.i_f = dot(param.yff(), u_f) + dot(param.yft(), u_t);
-        branch_math_output.i_t = dot(param.ytf(), u_f) + dot(param.ytt(), u_t);
-        branch_math_output.s_f = u_f * conj(branch_math_output.i_f);
-        branch_math_output.s_t = u_t * conj(branch_math_output.i_t);
+        BranchSolverOutput<sym> branch_solver_output{};
+        branch_solver_output.i_f = dot(param.yff(), u_f) + dot(param.yft(), u_t);
+        branch_solver_output.i_t = dot(param.ytf(), u_f) + dot(param.ytt(), u_t);
+        branch_solver_output.s_f = u_f * conj(branch_solver_output.i_f);
+        branch_solver_output.s_t = u_t * conj(branch_solver_output.i_t);
         // calculate result
-        return get_output<sym>(branch_math_output);
+        return get_output<sym>(branch_solver_output);
     }
 
-    template <symmetry_tag sym> BranchOutput<sym> get_output(BranchMathOutput<sym> const& branch_math_output) const {
+    template <symmetry_tag sym>
+    BranchOutput<sym> get_output(BranchSolverOutput<sym> const& branch_solver_output) const {
         // result object
         BranchOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.p_from = base_power<sym> * real(branch_math_output.s_f);
-        output.q_from = base_power<sym> * imag(branch_math_output.s_f);
-        output.i_from = base_i_from() * cabs(branch_math_output.i_f);
-        output.s_from = base_power<sym> * cabs(branch_math_output.s_f);
-        output.p_to = base_power<sym> * real(branch_math_output.s_t);
-        output.q_to = base_power<sym> * imag(branch_math_output.s_t);
-        output.i_to = base_i_to() * cabs(branch_math_output.i_t);
-        output.s_to = base_power<sym> * cabs(branch_math_output.s_t);
+        output.p_from = base_power<sym> * real(branch_solver_output.s_f);
+        output.q_from = base_power<sym> * imag(branch_solver_output.s_f);
+        output.i_from = base_i_from() * cabs(branch_solver_output.i_f);
+        output.s_from = base_power<sym> * cabs(branch_solver_output.s_f);
+        output.p_to = base_power<sym> * real(branch_solver_output.s_t);
+        output.q_to = base_power<sym> * imag(branch_solver_output.s_t);
+        output.i_to = base_i_to() * cabs(branch_solver_output.i_t);
+        output.s_to = base_power<sym> * cabs(branch_solver_output.s_t);
         double const max_s = std::max(sum_val(output.s_from), sum_val(output.s_to));
         double const max_i = std::max(max_val(output.i_from), max_val(output.i_to));
         output.loading = loading(max_s, max_i);
@@ -97,38 +120,48 @@ class Branch : public Base {
 
     BranchShortCircuitOutput get_sc_output(ComplexValue<symmetric_t> const& i_f,
                                            ComplexValue<symmetric_t> const& i_t) const {
-        return get_sc_output(BranchShortCircuitMathOutput<symmetric_t>{.i_f = i_f, .i_t = i_t});
+        return get_sc_output(BranchShortCircuitSolverOutput<symmetric_t>{.i_f = i_f, .i_t = i_t});
     }
     BranchShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> const& i_f,
                                            ComplexValue<asymmetric_t> const& i_t) const {
-        return get_sc_output(BranchShortCircuitMathOutput<asymmetric_t>{.i_f = i_f, .i_t = i_t});
+        return get_sc_output(BranchShortCircuitSolverOutput<asymmetric_t>{.i_f = i_f, .i_t = i_t});
     }
 
-    BranchShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<asymmetric_t> const& branch_math_output) const {
+    BranchShortCircuitOutput
+    get_sc_output(BranchShortCircuitSolverOutput<asymmetric_t> const& branch_solver_output) const {
         BranchShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.i_from = base_i_from() * cabs(branch_math_output.i_f);
-        output.i_to = base_i_to() * cabs(branch_math_output.i_t);
-        output.i_from_angle = arg(branch_math_output.i_f);
-        output.i_to_angle = arg(branch_math_output.i_t);
+        output.i_from = base_i_from() * cabs(branch_solver_output.i_f);
+        output.i_to = base_i_to() * cabs(branch_solver_output.i_t);
+        output.i_from_angle = arg(branch_solver_output.i_f);
+        output.i_to_angle = arg(branch_solver_output.i_t);
         return output;
     }
 
-    BranchShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<symmetric_t> const& branch_math_output) const {
+    BranchShortCircuitOutput
+    get_sc_output(BranchShortCircuitSolverOutput<symmetric_t> const& branch_solver_output) const {
         return get_sc_output(
-            BranchShortCircuitMathOutput<asymmetric_t>{.i_f = ComplexValue<asymmetric_t>{branch_math_output.i_f},
-                                                       .i_t = ComplexValue<asymmetric_t>{branch_math_output.i_t}});
+            BranchShortCircuitSolverOutput<asymmetric_t>{.i_f = ComplexValue<asymmetric_t>{branch_solver_output.i_f},
+                                                         .i_t = ComplexValue<asymmetric_t>{branch_solver_output.i_t}});
     }
 
     template <symmetry_tag sym> BranchOutput<sym> get_null_output() const {
-        BranchOutput<sym> output{};
+        BranchOutput<sym> output{.loading = {},
+                                 .p_from = {},
+                                 .q_from = {},
+                                 .i_from = {},
+                                 .s_from = {},
+                                 .p_to = {},
+                                 .q_to = {},
+                                 .i_to = {},
+                                 .s_to = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     BranchShortCircuitOutput get_null_sc_output() const {
-        BranchShortCircuitOutput output{};
+        BranchShortCircuitOutput output{.i_from = {}, .i_from_angle = {}, .i_to = {}, .i_to_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -151,14 +184,14 @@ class Branch : public Base {
 
     // default update for branch, will be hidden for transformer
     UpdateChange update(BranchUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const changed = set_status(update_data.from_status, update_data.to_status);
         // change branch connection will change both topo and param
-        return {changed, changed};
+        return {.topo = changed, .param = changed};
     }
 
     auto inverse(std::convertible_to<BranchUpdate> auto update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.from_status, static_cast<IntS>(from_status_));
         set_if_not_nan(update_data.to_status, static_cast<IntS>(to_status_));
@@ -175,9 +208,9 @@ class Branch : public Base {
         double const tap = cabs(tap_ratio);
         BranchCalcParam<symmetric_t> param{};
         // not both connected
-        if (!(from_status_ && to_status_)) {
+        if (!branch_status()) {
             // single connected
-            if (from_status_ || to_status_) {
+            if (from_status() || to_status()) {
                 DoubleComplex branch_shunt;
                 // shunt value
                 if (cabs(y_shunt) < numerical_tolerance) {
@@ -187,8 +220,8 @@ class Branch : public Base {
                     branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 }
                 // from or to connected
-                param.yff() = from_status_ ? (1.0 / tap / tap) * branch_shunt : 0.0;
-                param.ytt() = to_status_ ? branch_shunt : 0.0;
+                param.yff() = from_status() ? (1.0 / tap / tap) * branch_shunt : 0.0;
+                param.ytt() = to_status() ? branch_shunt : 0.0;
             }
         }
         // both connected

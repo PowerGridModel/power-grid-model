@@ -42,12 +42,11 @@ class ThreeWindingTransformer : public Branch3 {
           clock_12_{three_winding_transformer_input.clock_12},
           clock_13_{three_winding_transformer_input.clock_13},
           tap_side_{three_winding_transformer_input.tap_side},
-          tap_pos_{three_winding_transformer_input.tap_pos},
           tap_min_{three_winding_transformer_input.tap_min},
           tap_max_{three_winding_transformer_input.tap_max},
-          tap_nom_{three_winding_transformer_input.tap_nom == na_IntS ? (IntS)0
+          tap_nom_{three_winding_transformer_input.tap_nom == na_IntS ? IntS{0}
                                                                       : three_winding_transformer_input.tap_nom},
-          tap_direction_{tap_max_ > tap_min_ ? (IntS)1 : (IntS)-1},
+          tap_direction_{tap_max_ > tap_min_ ? IntS{1} : IntS{-1}},
           tap_size_{three_winding_transformer_input.tap_size},
           uk_12_min_{is_nan(three_winding_transformer_input.uk_12_min) ? uk_12_
                                                                        : three_winding_transformer_input.uk_12_min},
@@ -79,6 +78,14 @@ class ThreeWindingTransformer : public Branch3 {
           z_grounding_1_{three_winding_transformer_input.r_grounding_1, three_winding_transformer_input.x_grounding_1},
           z_grounding_2_{three_winding_transformer_input.r_grounding_2, three_winding_transformer_input.x_grounding_2},
           z_grounding_3_{three_winding_transformer_input.r_grounding_3, three_winding_transformer_input.x_grounding_3} {
+        // init tap_pos_ linter smell
+        if (three_winding_transformer_input.tap_pos == na_IntS) {
+            tap_pos_ =
+                three_winding_transformer_input.tap_nom == na_IntS ? IntS{0} : three_winding_transformer_input.tap_nom;
+        } else {
+            tap_pos_ = three_winding_transformer_input.tap_pos;
+        }
+
         if (!is_valid_clock(clock_12_, winding_1_, winding_2_)) {
             throw InvalidTransformerClock{id(), clock_12_};
         }
@@ -98,7 +105,7 @@ class ThreeWindingTransformer : public Branch3 {
     double base_i_2() const final { return base_i_2_; }
     double base_i_3() const final { return base_i_3_; }
     double loading(double s_1, double s_2, double s_3) const final {
-        return std::max(std::max(s_1 / sn_1_, s_2 / sn_2_), s_3 / sn_3_);
+        return std::max({s_1 / sn_1_, s_2 / sn_2_, s_3 / sn_3_});
     }
     // 3-way branch, phase shift = phase_node_x - phase_internal_node
     // the clock_12 and clock_13 is reverted
@@ -107,14 +114,14 @@ class ThreeWindingTransformer : public Branch3 {
     std::array<double, 3> phase_shift() const final { return {0.0, -clock_12_ * deg_30, -clock_13_ * deg_30}; }
 
     // getters
-    IntS tap_pos() const { return tap_pos_; }
-    Branch3Side tap_side() const { return tap_side_; }
-    IntS tap_min() const { return tap_min_; }
-    IntS tap_max() const { return tap_max_; }
-    IntS tap_nom() const { return tap_nom_; }
+    constexpr IntS tap_pos() const { return tap_pos_; }
+    constexpr Branch3Side tap_side() const { return tap_side_; }
+    constexpr IntS tap_min() const { return tap_min_; }
+    constexpr IntS tap_max() const { return tap_max_; }
+    constexpr IntS tap_nom() const { return tap_nom_; }
 
     // setter
-    bool set_tap(IntS new_tap) {
+    constexpr bool set_tap(IntS new_tap) {
         if (new_tap == na_IntS || new_tap == tap_pos_) {
             return false;
         }
@@ -123,14 +130,14 @@ class ThreeWindingTransformer : public Branch3 {
     }
 
     UpdateChange update(ThreeWindingTransformerUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
-        return {topo_changed, param_changed};
+        return {.topo = topo_changed, .param = param_changed};
     }
 
     ThreeWindingTransformerUpdate inverse(ThreeWindingTransformerUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         update_data = Branch3::inverse(update_data);
         set_if_not_nan(update_data.tap_pos, tap_pos_);
@@ -190,7 +197,7 @@ class ThreeWindingTransformer : public Branch3 {
     DoubleComplex z_grounding_2_;
     DoubleComplex z_grounding_3_;
 
-    IntS tap_limit(IntS new_tap) const {
+    constexpr IntS tap_limit(IntS new_tap) const {
         new_tap = std::min(new_tap, std::max(tap_max_, tap_min_));
         new_tap = std::max(new_tap, std::min(tap_max_, tap_min_));
         return new_tap;
@@ -408,5 +415,7 @@ class ThreeWindingTransformer : public Branch3 {
         return transformer_params;
     }
 };
+
+static_assert(transformer_c<ThreeWindingTransformer>);
 
 } // namespace power_grid_model

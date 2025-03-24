@@ -42,7 +42,7 @@ TEST_CASE("Test source") {
     ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
     ComplexTensor<asymmetric_t> const sym_matrix_inv = get_sym_matrix_inv();
     ComplexTensor<asymmetric_t> y012;
-    y012 << y1, 0.0, 0.0, 0.0, y1, 0.0, 0.0, 0.0, y0;
+    y012 << y0, 0.0, 0.0, 0.0, y1, 0.0, 0.0, 0.0, y1;
     ComplexTensor<asymmetric_t> const y_ref_asym = dot(sym_matrix, y012, sym_matrix_inv);
 
     // construct
@@ -75,9 +75,10 @@ TEST_CASE("Test source") {
         CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
 
         // yref
-        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>();
+        DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().template y_ref<symmetric_t>();
         CHECK(cabs(y_ref_sym_cal - y_ref_sym) < numerical_tolerance);
-        ComplexTensor<asymmetric_t> const y_ref_asym_cal = source.math_param<asymmetric_t>();
+        ComplexTensor<asymmetric_t> const y_ref_asym_cal =
+            source.math_param<asymmetric_t>().template y_ref<asymmetric_t>();
         CHECK((cabs(y_ref_asym_cal - y_ref_asym) < numerical_tolerance).all());
     }
 
@@ -104,10 +105,10 @@ TEST_CASE("Test source") {
     }
 
     SUBCASE("test source sym results; s, i as input") {
-        ApplianceMathOutput<symmetric_t> appliance_math_output_sym;
-        appliance_math_output_sym.i = 1.0 + 2.0i;
-        appliance_math_output_sym.s = 3.0 + 4.0i;
-        ApplianceOutput<symmetric_t> const sym_result = source.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
+        appliance_solver_output_sym.i = 1.0 + 2.0i;
+        appliance_solver_output_sym.s = 3.0 + 4.0i;
+        ApplianceOutput<symmetric_t> const sym_result = source.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(3.0 * base_power<symmetric_t>));
@@ -126,12 +127,12 @@ TEST_CASE("Test source") {
     }
 
     SUBCASE("test source asym results; s, i as input") {
-        ApplianceMathOutput<asymmetric_t> appliance_math_output_asym;
+        ApplianceSolverOutput<asymmetric_t> appliance_solver_output_asym;
         ComplexValue<asymmetric_t> const i_a{1.0 + 2.0i};
         ComplexValue<asymmetric_t> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
-        appliance_math_output_asym.i = i_a;
-        appliance_math_output_asym.s = s_a;
-        ApplianceOutput<asymmetric_t> const asym_result = source.get_output<asymmetric_t>(appliance_math_output_asym);
+        appliance_solver_output_asym.i = i_a;
+        appliance_solver_output_asym.s = s_a;
+        ApplianceOutput<asymmetric_t> const asym_result = source.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
         CHECK(asym_result.p(0) == doctest::Approx(3.0 * base_power<asymmetric_t>));
@@ -144,7 +145,7 @@ TEST_CASE("Test source") {
     SUBCASE("test asym source short circuit results") {
         ComplexValue<asymmetric_t> const i_asym{1.0 + 2.0i};
         ApplianceShortCircuitOutput const asym_sc_result =
-            source.get_sc_output(ApplianceShortCircuitMathOutput<asymmetric_t>{i_asym});
+            source.get_sc_output(ApplianceShortCircuitSolverOutput<asymmetric_t>{i_asym});
         CHECK(asym_sc_result.id == 1);
         CHECK(asym_sc_result.energized == 1);
         CHECK(asym_sc_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
@@ -158,9 +159,9 @@ TEST_CASE("Test source") {
         DoubleComplex const i_sym = 1.0 + 2.0i;
         ComplexValue<asymmetric_t> const i_asym{1.0 + 2.0i};
         ApplianceShortCircuitOutput const sym_sc_result =
-            source.get_sc_output(ApplianceShortCircuitMathOutput<symmetric_t>{i_sym});
+            source.get_sc_output(ApplianceShortCircuitSolverOutput<symmetric_t>{i_sym});
         ApplianceShortCircuitOutput const asym_sc_result =
-            source.get_sc_output(ApplianceShortCircuitMathOutput<asymmetric_t>{i_asym});
+            source.get_sc_output(ApplianceShortCircuitSolverOutput<asymmetric_t>{i_asym});
         CHECK(sym_sc_result.id == asym_sc_result.id);
         CHECK(sym_sc_result.energized == asym_sc_result.energized);
         CHECK(sym_sc_result.i(0) == doctest::Approx(asym_sc_result.i(0)));

@@ -105,13 +105,13 @@ template <symmetry_tag sym> class MeasuredValues {
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
-    using FlowVector = std::vector<ApplianceMathOutput<sym>>;
+    using FlowVector = std::vector<ApplianceSolverOutput<sym>>;
     using LoadGenSourceFlow = std::pair<FlowVector, FlowVector>;
 
     LoadGenSourceFlow calculate_load_gen_source(ComplexValueVector<sym> const& u,
                                                 ComplexValueVector<sym> const& s) const {
-        std::vector<ApplianceMathOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
-        std::vector<ApplianceMathOutput<sym>> source_flow(math_topology_->n_source());
+        std::vector<ApplianceSolverOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
+        std::vector<ApplianceSolverOutput<sym>> source_flow(math_topology_->n_source());
 
         // loop all buses
         for (auto const& [bus, load_gens, sources] :
@@ -332,8 +332,8 @@ template <symmetry_tag sym> class MeasuredValues {
 
         // combine valid appliance_injection_measurement and direct_injection_measurement
         // three scenarios; check if we have valid injection measurement
-        auto const uncertain_direct_injection =
-            is_inf(direct_injection_measurement.p_variance) || is_inf(direct_injection_measurement.q_variance);
+        auto const uncertain_direct_injection = is_inf(direct_injection_measurement.real_component.variance) ||
+                                                is_inf(direct_injection_measurement.imag_component.variance);
 
         bus_injection_[bus].idx_bus_injection = static_cast<Idx>(power_main_value_.size());
         if (n_unmeasured > 0) {
@@ -343,8 +343,8 @@ template <symmetry_tag sym> class MeasuredValues {
                 // only direct injection
                 power_main_value_.push_back(direct_injection_measurement);
             }
-        } else if (uncertain_direct_injection || any_zero(appliance_injection_measurement.p_variance) ||
-                   any_zero(appliance_injection_measurement.q_variance)) {
+        } else if (uncertain_direct_injection || any_zero(appliance_injection_measurement.real_component.variance) ||
+                   any_zero(appliance_injection_measurement.imag_component.variance)) {
             // only appliance injection if
             //    there is no direct injection measurement,
             //    or we have zero injection
@@ -370,13 +370,15 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         auto const& appliance_measurement = extra_value_[appliance_idx];
-        if (is_inf(appliance_measurement.p_variance) || is_inf(appliance_measurement.q_variance)) {
+        if (is_inf(appliance_measurement.real_component.variance) ||
+            is_inf(appliance_measurement.imag_component.variance)) {
             ++n_unmeasured;
             return;
         }
-        measurements.value += appliance_measurement.value;
-        measurements.p_variance += appliance_measurement.p_variance;
-        measurements.q_variance += appliance_measurement.q_variance;
+        measurements.real_component.value += appliance_measurement.real_component.value;
+        measurements.imag_component.value += appliance_measurement.imag_component.value;
+        measurements.real_component.variance += appliance_measurement.real_component.variance;
+        measurements.imag_component.variance += appliance_measurement.imag_component.variance;
     }
 
     void process_branch_measurements(StateEstimationInput<sym> const& input) {
@@ -463,22 +465,25 @@ template <symmetry_tag sym> class MeasuredValues {
         for (auto pos : sensors) {
             auto const& measurement = data[pos];
 
-            accumulated_inverse_p_variance += RealValue<sym>{1.0} / measurement.p_variance;
-            accumulated_inverse_q_variance += RealValue<sym>{1.0} / measurement.q_variance;
+            accumulated_inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
+            accumulated_inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
 
-            accumulated_p_value += real(measurement.value) / measurement.p_variance;
-            accumulated_q_value += imag(measurement.value) / measurement.q_variance;
+            accumulated_p_value += measurement.real_component.value / measurement.real_component.variance;
+            accumulated_q_value += measurement.imag_component.value / measurement.imag_component.variance;
         }
 
         if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
-            return PowerSensorCalcParam<sym>{accumulated_p_value / accumulated_inverse_p_variance +
-                                                 1.0i * accumulated_q_value / accumulated_inverse_q_variance,
-                                             RealValue<sym>{1.0} / accumulated_inverse_p_variance,
-                                             RealValue<sym>{1.0} / accumulated_inverse_q_variance};
+            return PowerSensorCalcParam<sym>{
+                .real_component = {.value = accumulated_p_value / accumulated_inverse_p_variance,
+                                   .variance = RealValue<sym>{1.0} / accumulated_inverse_p_variance},
+                .imag_component = {.value = accumulated_q_value / accumulated_inverse_q_variance,
+                                   .variance = RealValue<sym>{1.0} / accumulated_inverse_q_variance}};
         }
-        return PowerSensorCalcParam<sym>{accumulated_p_value + 1.0i * accumulated_q_value,
-                                         RealValue<sym>{std::numeric_limits<double>::infinity()},
-                                         RealValue<sym>{std::numeric_limits<double>::infinity()}};
+        return PowerSensorCalcParam<sym>{
+            .real_component = {.value = accumulated_p_value,
+                               .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}},
+            .imag_component = {.value = accumulated_q_value,
+                               .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}}};
     }
 
     template <sensor_calc_param_type CalcParam, bool only_magnitude = false>
@@ -498,9 +503,13 @@ template <symmetry_tag sym> class MeasuredValues {
     }
 
     // process one object
-    static constexpr auto default_status_checker = [](auto x) -> bool { return x; };
+    struct DefaultStatusChecker {
+        template <class T> bool operator()(T x) const { return x; }
+    };
 
-    template <class TS, class StatusChecker = decltype(default_status_checker)>
+    static constexpr DefaultStatusChecker default_status_checker{};
+
+    template <class TS, class StatusChecker = DefaultStatusChecker>
     static Idx process_one_object(Idx const object, grouped_idx_vector_type auto const& sensors_per_object,
                                   std::vector<TS> const& object_status,
                                   std::vector<PowerSensorCalcParam<sym>> const& input_data,
@@ -534,7 +543,7 @@ template <symmetry_tag sym> class MeasuredValues {
             unconstrained_min(x.variance);
         }
         for (auto const& x : power_main_value_) {
-            auto const variance = x.p_variance + x.q_variance;
+            auto const variance = x.real_component.variance + x.imag_component.variance;
             if constexpr (is_symmetric_v<sym>) {
                 unconstrained_min(variance);
             } else {
@@ -548,8 +557,8 @@ template <symmetry_tag sym> class MeasuredValues {
         auto const inv_norm_var = 1.0 / min_var;
         std::ranges::for_each(voltage_main_value_, [inv_norm_var](auto& x) { x.variance *= inv_norm_var; });
         std::ranges::for_each(power_main_value_, [inv_norm_var](auto& x) {
-            x.p_variance *= inv_norm_var;
-            x.q_variance *= inv_norm_var;
+            x.real_component.variance *= inv_norm_var;
+            x.imag_component.variance *= inv_norm_var;
         });
     }
 
@@ -559,17 +568,17 @@ template <symmetry_tag sym> class MeasuredValues {
                                                  FlowVector& source_flow) const {
         // calculate residual, divide, and assign to unmeasured (but connected) appliances
         ComplexValue<sym> const s_residual_per_appliance =
-            (s - bus_appliance_injection.value) / static_cast<double>(n_unmeasured);
+            (s - bus_appliance_injection.value()) / static_cast<double>(n_unmeasured);
         for (Idx const load_gen : load_gens) {
             if (has_load_gen(load_gen)) {
-                load_gen_flow[load_gen].s = load_gen_power(load_gen).value;
+                load_gen_flow[load_gen].s = load_gen_power(load_gen).value();
             } else if (idx_load_gen_power_[load_gen] == unmeasured) {
                 load_gen_flow[load_gen].s = s_residual_per_appliance;
             }
         }
         for (Idx const source : sources) {
             if (has_source(source)) {
-                source_flow[source].s = source_power(source).value;
+                source_flow[source].s = source_power(source).value();
             } else if (idx_source_power_[source] == unmeasured) {
                 source_flow[source].s = s_residual_per_appliance;
             }
@@ -582,13 +591,14 @@ template <symmetry_tag sym> class MeasuredValues {
                                              FlowVector& source_flow) const {
         // residual normalized by variance
         // mu = (sum[S_i] - S_cal) / sum[variance]
-        auto const delta = bus_appliance_injection.value - s;
-        ComplexValue<sym> const mu =
-            real(delta) / bus_appliance_injection.p_variance + 1.0i * imag(delta) / bus_appliance_injection.q_variance;
+        auto const delta = ComplexValue<sym>{bus_appliance_injection.value() - s};
+        ComplexValue<sym> const mu = real(delta) / bus_appliance_injection.real_component.variance +
+                                     1.0i * imag(delta) / bus_appliance_injection.imag_component.variance;
 
         // S_i = S_i_mea - var_i * mu
         auto const calculate_injection = [&mu](auto const& power) {
-            return power.value - (power.p_variance * real(mu) + 1.0i * power.q_variance * imag(mu));
+            return ComplexValue<sym>{power.value() - ((power.real_component.variance * real(mu)) +
+                                                      (1.0i * power.imag_component.variance * imag(mu)))};
         };
 
         for (Idx const load_gen : load_gens) {

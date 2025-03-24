@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model::math_solver {
-
+namespace {
 using lu_trait_double = math_solver::sparse_lu_entry_trait<double, double, double>;
 static_assert(!lu_trait_double::is_block);
 static_assert(lu_trait_double::block_size == 1);
@@ -34,6 +34,7 @@ template <class T> void check_result(std::vector<T> const& x, std::vector<T> con
 // test block calculation with 2*2
 using Tensor = Eigen::Array<double, 2, 2, Eigen::ColMajor>;
 using Array = Eigen::Array<double, 2, 1, Eigen::ColMajor>;
+} // namespace
 
 TEST_CASE("Test Sparse LU solver") {
     // 3 * 3 matrix, with diagonal, two fill-ins
@@ -123,6 +124,74 @@ TEST_CASE("Test Sparse LU solver") {
         SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
             solver.solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm, rhs, x);
+            check_result(x, x_ref);
+        }
+    }
+}
+
+TEST_CASE("LU solver with ill-conditioned system") {
+    // test with ill-conditioned matrix if we do not do numerical pivoting
+    // 4*4 matrix, or 2*2 with 2*2 blocks
+    // [                  [         [
+    //   0  0  0  -1       8          0
+    //   0 -1  0   0       0          0
+    //   0  0  5   1    * 10    =    50
+    //  -1  0  1  -9       0          2
+    //               ]    ]             ]
+    //
+
+    SUBCASE("Scalar variant") {
+        auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 4, 8, 12, 16});
+        auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3});
+        auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 5, 10, 15});
+        auto data = std::vector<double>{
+            0,  0,  0, -1, // row 0
+            0,  -1, 0, 0,  // row 1
+            0,  0,  5, 1,  // row 2
+            -1, 0,  1, -9  // row 3
+        };
+        auto const rhs = std::vector<double>{0, 0, 50, 2};
+        auto const x_ref = std::vector<double>{8, 0, 10, 0};
+        auto x = std::vector<double>(4, 0.0);
+
+        SparseLUSolver<double, double, double> solver{row_indptr, col_indices, diag_lu};
+        Idx perm{};
+
+        SUBCASE("Error without perturbation") {
+            CHECK_THROWS_AS(solver.prefactorize(data, perm, false), SparseMatrixError);
+        }
+
+        SUBCASE("Success with perturbation") {
+            CHECK_NOTHROW(solver.prefactorize(data, perm, true));
+            solver.solve_with_prefactorized_matrix(data, perm, rhs, x);
+            check_result(x, x_ref);
+        }
+    }
+
+    SUBCASE("Block variant") {
+        auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 2, 4});
+        auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 0, 1});
+        auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 3});
+        auto data = std::vector<Tensor>{
+            {{0, 0}, {0, -1}}, // 0, 0
+            {{0, -1}, {0, 0}}, // 0, 1
+            {{0, 0}, {-1, 0}}, // 1, 0
+            {{5, 1}, {1, -9}}, // 1, 1
+        };
+        auto const rhs = std::vector<Array>{{0, 0}, {50, 2}};
+        auto const x_ref = std::vector<Array>{{8, 0}, {10, 0}};
+        auto x = std::vector<Array>(2, Array::Zero());
+        auto block_perm = std::vector<SparseLUSolver<Tensor, Array, Array>::BlockPerm>(2);
+
+        SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu};
+
+        SUBCASE("Error without perturbation") {
+            CHECK_THROWS_AS(solver.prefactorize(data, block_perm, false), SparseMatrixError);
+        }
+
+        SUBCASE("Success with perturbation") {
+            CHECK_NOTHROW(solver.prefactorize(data, block_perm, true));
+            solver.solve_with_prefactorized_matrix(data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
     }

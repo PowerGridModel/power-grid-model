@@ -26,7 +26,9 @@ class Node final : public Base {
     explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {}
 
     // update node, nothing happens here
-    static constexpr UpdateChange update(BaseUpdate const& /* update_data */) { return {false, false}; }
+    static constexpr UpdateChange update(BaseUpdate const& /* update_data */) {
+        return {.topo = false, .param = false};
+    }
     static constexpr BaseUpdate inverse(BaseUpdate update_data) { return update_data; }
 
     // energized
@@ -57,13 +59,13 @@ class Node final : public Base {
         return get_sc_output(uabc_pu);
     }
     template <symmetry_tag sym> NodeOutput<sym> get_null_output() const {
-        NodeOutput<sym> output{};
+        NodeOutput<sym> output{.u_pu = {}, .u = {}, .u_angle = {}, .p = {}, .q = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     NodeShortCircuitOutput get_null_sc_output() const {
-        NodeShortCircuitOutput output{};
+        NodeShortCircuitOutput output{.u_pu = {}, .u = {}, .u_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }

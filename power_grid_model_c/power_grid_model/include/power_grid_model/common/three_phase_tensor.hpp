@@ -125,8 +125,8 @@ static_assert(std::is_trivially_destructible_v<ComplexValue<asymmetric_t>>);
 template <class T>
 concept column_vector = (T::ColsAtCompileTime == 1);
 template <class T>
-concept rk2_tensor = (static_cast<Idx>(T::RowsAtCompileTime) ==
-                      static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
+concept rk2_tensor =
+    (static_cast<Idx>(T::RowsAtCompileTime) == static_cast<Idx>(T::ColsAtCompileTime)); // rank 2 tensor
 template <class T>
 concept column_vector_or_tensor = column_vector<T> || rk2_tensor<T>;
 
@@ -152,8 +152,17 @@ inline ComplexValue<asymmetric_t> piecewise_complex_value(ComplexValue<asymmetri
 inline double cabs(double x) { return std::abs(x); }
 inline double cabs(DoubleComplex const& x) { return std::sqrt(std::norm(x)); }
 inline double abs2(DoubleComplex const& x) { return std::norm(x); }
-template <column_vector_or_tensor DerivedA> inline auto cabs(Eigen::ArrayBase<DerivedA> const& m) {
+template <column_vector_or_tensor DerivedA>
+inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
+    requires(std::same_as<typename DerivedA::Scalar, DoubleComplex>)
+{
     return sqrt(abs2(m));
+}
+template <column_vector_or_tensor DerivedA>
+inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
+    requires(std::same_as<typename DerivedA::Scalar, double>)
+{
+    return m.abs();
 }
 
 // phase_shift(x) = e^{i arg(x)} = x / |x|
@@ -229,7 +238,7 @@ template <column_vector DerivedA> inline auto mean_val(Eigen::ArrayBase<DerivedA
 inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
 inline double mean_val(double z) { return z; }
 
-template <symmetry_tag sym, class T> inline auto process_mean_val(const T& m) {
+template <symmetry_tag sym, class T> inline auto process_mean_val(T const& m) {
     if constexpr (is_symmetric_v<sym>) {
         return mean_val(m);
     } else {
@@ -272,7 +281,7 @@ inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> c
 }
 template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> const& y) {
-    x.matrix().diagonal() += y.matrix();
+    std::move(x).matrix().diagonal() += y.matrix();
 }
 
 // zero tensor
@@ -287,6 +296,9 @@ inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
+template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
+    return is_nan(x.real()) || is_nan(x.imag());
+}
 inline bool is_nan(ID x) { return x == na_IntID; }
 inline bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
@@ -294,6 +306,7 @@ template <class Enum>
 inline bool is_nan(Enum x) {
     return static_cast<IntS>(x) == na_IntS;
 }
+inline bool is_nan(Idx x) { return x == na_Idx; }
 
 // is normal
 inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
@@ -338,14 +351,17 @@ template <symmetry_tag sym, class Proxy>
 inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
-            current_value = scalar * new_value;
+            std::forward<Proxy>(current_value) = scalar * new_value;
+        } else {
+            capturing::into_the_void<Proxy>(std::forward<Proxy>(current_value));
         }
     } else {
         for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
-                current_value(i) = scalar * new_value(i);
+                current_value(i) = scalar * new_value(i); // can't forward due to runtime element access
             }
         }
+        capturing::into_the_void<Proxy>(std::forward<Proxy>(current_value));
     }
 }
 

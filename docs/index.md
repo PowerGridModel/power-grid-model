@@ -22,6 +22,7 @@ Currently, it supports both symmetric and asymmetric calculations for the follow
 * Short Circuit
 
 For conversions from various data format to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For an extended python interface to the the power-grid-model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
 
 ```{note}
 Do you wish to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
@@ -31,7 +32,7 @@ Do you wish to be updated on the latest news and releases? Subscribe to the Powe
 
 You can directly install the package from PyPI.
 
-```
+```sh
 pip install power-grid-model
 ```
 
@@ -39,7 +40,7 @@ pip install power-grid-model
 
 If you are using `conda`, you can directly install the package from `conda-forge` channel.
 
-```
+```sh
 conda install -c conda-forge power-grid-model
 ```
 
@@ -73,6 +74,7 @@ user_manual/data-validator
 user_manual/model-validation
 user_manual/serialization
 ```
+
 ```{toctree}
 :caption: "API Reference"
 :maxdepth: 2
@@ -91,6 +93,13 @@ examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
 examples/Asymmetric Calculation Example.ipynb
 examples/Transformer Examples.ipynb
+examples/Generic Branch Example.ipynb
+```
+
+```{toctree}
+:caption: "Algorithms"
+:maxdepth: 2
+algorithms/lu-solver
 ```
 
 ```{toctree}
@@ -100,7 +109,9 @@ advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
 advanced_documentation/core-design
+advanced_documentation/python-wrapper-design
 ```
+
 ```{toctree}
 :caption: "Contribution"
 :maxdepth: 2
@@ -109,6 +120,7 @@ contribution/CONTRIBUTING.md
 contribution/folder-structure.md
 contribution/GOVERNANCE.md
 ```
+
 ```{toctree}
 :caption: "Release and Support"
 :maxdepth: 2

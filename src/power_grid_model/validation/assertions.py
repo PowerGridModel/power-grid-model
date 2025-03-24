@@ -6,13 +6,11 @@
 Helper functions to assert valid data. They basically call validate_input_data or validate_batch_data and raise a
 ValidationException if the validation results in one or more errors.
 """
-from typing import Dict, List, Optional, Union
-
 from power_grid_model.data_types import BatchDataset, SingleDataset
 from power_grid_model.enum import CalculationType
+from power_grid_model.validation._validation import validate_batch_data, validate_input_data
 from power_grid_model.validation.errors import ValidationError
 from power_grid_model.validation.utils import errors_to_string
-from power_grid_model.validation.validation import validate_batch_data, validate_input_data
 
 
 class ValidationException(ValueError):
@@ -21,7 +19,7 @@ class ValidationException(ValueError):
     to display a summary of all the errors when printing the exception.
     """
 
-    def __init__(self, errors: Union[List[ValidationError], Dict[int, List[ValidationError]]], name: str = "data"):
+    def __init__(self, errors: list[ValidationError] | dict[int, list[ValidationError]], name: str = "data"):
         super().__init__(f"Invalid {name}")
         self.errors = errors
         self.name = name
@@ -31,7 +29,7 @@ class ValidationException(ValueError):
 
 
 def assert_valid_input_data(
-    input_data: SingleDataset, calculation_type: Optional[CalculationType] = None, symmetric: bool = True
+    input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ):
     """
     Validates the entire input dataset:
@@ -60,7 +58,7 @@ def assert_valid_input_data(
 def assert_valid_batch_data(
     input_data: SingleDataset,
     update_data: BatchDataset,
-    calculation_type: Optional[CalculationType] = None,
+    calculation_type: CalculationType | None = None,
     symmetric: bool = True,
 ):
     """

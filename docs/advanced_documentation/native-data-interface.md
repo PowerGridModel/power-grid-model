@@ -55,20 +55,56 @@ node_dtype = np.dtype(
 To recreate the same node input dataset, we just create a `numpy` array using this special defined `dtype`.
 The `numpy` array has exactly the same data layout as the `std::vector<NodeInput>` above.
 
-
 ```python
 node = np.empty(shape=2, dtype=node_dtype)
 node['id'] = [1, 2]
 node['u_rated'] = [150e3, 10e3]
 ```
 
+## Columnar data format
+
+Additionally, we can represent the contents mentioned `NodeInput` struct in [Structured Array](#structured-array) for only specific attributes.
+This is especially useful when the component in question, e.g., a transformer, has many default attributes. In that case, the user can save significantly on memory usage. Hence, we can term it into `NodeInputURated` which is of `double` type.
+(note again, its representation in C++ core might be different than that of `NodeInputURated`).
+
+One can create a `std::vector<NodeInputURated>` to hold input for multiple nodes.
+In a similar example we create attribute data with `u_rated` of two nodes of 150 kV and 10 kV.
+
+```c++
+using NodeInputURated = double;
+std::vector<NodeInputURated> node_u_rated_input{ 150.0e3 , 10.0e3 };
+```
+
+Similar would be the case for `NodeInputId` and `std::vector<NodeNodeInputId>`
+
+To recreate this in Python using NumPy arrays, we should create it with the correct dtype - as mentioned in [Structured Array](#structured-array) - for each attribute.
+
+```python
+node_id = np.empty(shape=2, dtype=node_dtype["id"])
+node_id['id'] = [1, 2]
+node_u_rated = np.empty(shape=2, dtype=node_dtype["u_rated"])
+node_u_rated['u_rated'] = [150e3, 10e3]
+```
+
+## Creating Dataset
+
 We further save this array into a dictionary.
 With other types of components, the dictionary is a valid input dataset for the constructor of `PowerGridModel`,
 see [Python API Reference](../api_reference/python-api-reference.md).
 
+For a row based data format,
+
 ```python
 input_data = {'node': node}
 ```
+
+or for columnar data format,
+
+```python
+input_data_columnar = {'node': {"id": node_id, "u_rated": node_u_rated}}
+```
+
+There can also be a combination of both row based and columnar data format in a dataset.
 
 In the `ctypes` wrapper the pointers to all the array data will be retrieved and passed to the C++ code.
 This is also true for result dataset.
@@ -98,10 +134,12 @@ For example, the following update dataset will set `from_status` of the line #5 
 and keep the `to_status` as unchanged (change not available).
 
 ```python
-from power_grid_model import power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 import numpy as np
 
-line_update = np.empty(shape=1, dtype=power_grid_meta_data['update']['line']['dtype'])
+line_update = np.empty(shape=1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.line]['dtype'])
+# direct string access is supported as well:
+# line_update = np.empty(shape=1, dtype=power_grid_meta_data['update']['line']['dtype'])
 line_update['id'] = [5]
 line_update['from_status'] = [0]
 line_update['to_status'] = [-128]
@@ -137,9 +175,16 @@ One can import the `power_grid_meta_data` to get all the predefined `numpy.dtype
 The code below creates an array which is compatible with transformer input dataset.
 
 ```python
-from power_grid_model import power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
-transformer = np.empty(shape=5, dtype=power_grid_meta_data['input']['transformer']['dtype'])
+transformer_dtype = power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype
+# Array for row based data
+transformer = np.empty(shape=5, dtype=transformer_dtype)
+# Array for columnar data
+transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype["tap_pos"])
+
+# direct string access is supported as well:
+# transformer = np.empty(shape=5, dtype=power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype)
 ```
 
 Furthermore, there is an even more convenient function `initialize_array`

@@ -9,12 +9,12 @@
 #include "common/enum.hpp"
 #include "common/exception.hpp"
 #include "index_mapping.hpp"
+#include "sparse_ordering.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/iteration_macros.hpp>
-#include <boost/graph/minimum_degree_ordering.hpp>
 
 // build topology of the grid
 // divide grid into several math models
@@ -43,10 +43,6 @@ class Topology {
     // branch3 #1, has internal node idx n_node + 1
     using GlobalGraph = boost::compressed_sparse_row_graph<boost::directedS, GlobalVertex, GlobalEdge,
                                                            boost::no_property, GraphIdx, GraphIdx>;
-
-    using ReorderGraph = boost::adjacency_list<boost::vecS, // vector as adjacency
-                                               boost::vecS, // vector for vertices
-                                               boost::directedS>;
 
     // dfs visitor for global graph
     class GlobalDFSVisitor : public boost::dfs_visitor<> {
@@ -156,14 +152,17 @@ class Topology {
     TopologicalComponentToMathCoupling comp_coup_;
 
     void reset_topology() {
-        comp_coup_.node.resize(comp_topo_.n_node_total(), Idx2D{-1, -1});
-        comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.branch3.resize(comp_topo_.branch3_node_idx.size(), Idx2DBranch3{-1, {-1, -1, -1}});
-        comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.source.resize(comp_topo_.source_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(), Idx2D{-1, -1});
-        comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), Idx2D{-1, -1});
+        constexpr auto unknown_idx2d = Idx2D{.group = -1, .pos = -1};
+        constexpr auto unknown_idx2d_branch3 = Idx2DBranch3{.group = -1, .pos = {-1, -1, -1}};
+
+        comp_coup_.node.resize(comp_topo_.n_node_total(), unknown_idx2d);
+        comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), unknown_idx2d);
+        comp_coup_.branch3.resize(comp_topo_.branch3_node_idx.size(), unknown_idx2d_branch3);
+        comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), unknown_idx2d);
+        comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(), unknown_idx2d);
+        comp_coup_.source.resize(comp_topo_.source_node_idx.size(), unknown_idx2d);
+        comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(), unknown_idx2d);
+        comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), unknown_idx2d);
     }
 
 #pragma warning(push)
@@ -266,11 +265,13 @@ class Topology {
             if (back_edges.empty()) {
                 // no cycle, the graph is pure tree structure
                 // just reverse the node
-                std::reverse(dfs_node.begin(), dfs_node.end());
+                std::ranges::reverse(dfs_node);
+                math_topo_single.is_radial = true;
             } else {
                 // with cycles, meshed graph
                 // use minimum degree
                 math_topo_single.fill_in = reorder_node(dfs_node, back_edges);
+                math_topo_single.is_radial = false;
             }
             // initialize phase shift
             math_topo_single.phase_shift.resize(dfs_node.size());
@@ -309,6 +310,7 @@ class Topology {
         // loop all back edges assign all nodes before the back edges as inside cycle
         for (auto const& back_edge : back_edges) {
             GraphIdx node_in_cycle = back_edge.first;
+
             // loop back from source in the predecessor tree
             // stop if it is already marked as in cycle
             while (node_status_[node_in_cycle] != -2) {
@@ -319,114 +321,50 @@ class Topology {
         }
 
         // copy all the far-end non-cyclic node, in reverse order
-        std::copy_if(dfs_node_copy.crbegin(), dfs_node_copy.crend(), std::back_inserter(dfs_node),
-                     [this](Idx x) { return node_status_[x] == -1; });
+        std::ranges::copy_if(std::views::reverse(dfs_node_copy), std::back_inserter(dfs_node),
+                             [this](Idx x) { return node_status_[x] == -1; });
+
         // copy all cyclic node
         std::vector<Idx> cyclic_node;
-        std::copy_if(dfs_node_copy.cbegin(), dfs_node_copy.cend(), std::back_inserter(cyclic_node),
-                     [this](Idx x) { return node_status_[x] == -2; });
-        GraphIdx const n_cycle_node = cyclic_node.size();
+        std::ranges::copy_if(dfs_node_copy, std::back_inserter(cyclic_node),
+                             [this](Idx x) { return node_status_[x] == -2; });
+
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
-        if (n_cycle_node < 4) {
-            std::copy(cyclic_node.crbegin(), cyclic_node.crend(), std::back_inserter(dfs_node));
+        if (cyclic_node.size() < 4) {
+            std::ranges::copy(std::views::reverse(cyclic_node), std::back_inserter(dfs_node));
             return fill_in;
         }
 
-        // assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            node_status_[cyclic_node[i]] = static_cast<Idx>(i);
-        }
-        // build graph lambda
-        auto const build_graph = [&](ReorderGraph& g) {
-            // add edges
-            for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-                // loop all edges of vertex i
-                auto const global_i = static_cast<GraphIdx>(cyclic_node[i]);
-                for_all_adjacent_vertices(global_i, global_graph_, [&](GlobalVertexDesc const& global_j) {
-                    // skip if j is not part of cyclic sub graph
-                    if (node_status_[global_j] != -1) {
-                        GraphIdx const j = (GraphIdx)node_status_[global_j];
-                        if (!boost::edge(i, j, g).second) {
-                            boost::add_edge(i, j, g);
-                        }
-                    }
-                    auto const j = static_cast<GraphIdx>(node_status_[global_j]);
-                    if (!boost::edge(i, j, g).second) {
-                        boost::add_edge(i, j, g);
-                    }
-                });
+        std::map<Idx, std::vector<Idx>> unique_nearest_neighbours;
+        for (Idx const node_idx : cyclic_node) {
+            auto predecessor = static_cast<Idx>(predecessors_[node_idx]);
+            if (predecessor != node_idx) {
+                unique_nearest_neighbours[node_idx] = {predecessor};
             }
-        };
-        ReorderGraph meshed_graph{n_cycle_node};
-        build_graph(meshed_graph);
-        // start minimum degree ordering
-        std::vector<std::make_signed_t<GraphIdx>> perm(n_cycle_node);
-        std::vector<std::make_signed_t<GraphIdx>> inverse_perm(n_cycle_node);
-        std::vector<std::make_signed_t<GraphIdx>> degree(n_cycle_node);
-        std::vector<std::make_signed_t<GraphIdx>> supernode_sizes(n_cycle_node, 1);
-        boost::vec_adj_list_vertex_id_map<boost::no_property, std::make_signed_t<GraphIdx>> const id{};
-        int const delta = 0;
-        boost::minimum_degree_ordering(meshed_graph, boost::make_iterator_property_map(degree.begin(), id),
-                                       boost::make_iterator_property_map(inverse_perm.begin(), id),
-                                       boost::make_iterator_property_map(perm.begin(), id),
-                                       boost::make_iterator_property_map(supernode_sizes.begin(), id), delta, id);
-        // re-order cyclic node
-        std::vector<Idx> const cyclic_node_copy{cyclic_node};
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            cyclic_node[i] = cyclic_node_copy[perm[i]];
         }
-        // copy back to dfs node
-        std::copy(cyclic_node.cbegin(), cyclic_node.cend(), std::back_inserter(dfs_node));
+        for (auto const& [from_node, to_node] : back_edges) {
+            auto const from{static_cast<Idx>(from_node)};
+            auto const to{static_cast<Idx>(to_node)};
+            if (!detail::in_graph(std::pair{from, to}, unique_nearest_neighbours)) {
+                unique_nearest_neighbours[from].push_back(to);
+            }
+        }
 
-        // analyze and record fill-ins
-        // re-assign temporary bus number as increasing from 0, 1, 2, ..., n_cycle_node - 1
-        for (GraphIdx i = 0; i != n_cycle_node; ++i) {
-            node_status_[cyclic_node[i]] = static_cast<Idx>(i);
+        auto [reordered, fills] = minimum_degree_ordering(std::move(unique_nearest_neighbours));
+
+        const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
+        std::map<Idx, Idx> permuted_node_indices;
+        for (Idx idx = 0; idx < static_cast<Idx>(reordered.size()); ++idx) {
+            permuted_node_indices[reordered[idx]] = n_non_cyclic_nodes + idx;
         }
-        // re-build graph with reordered cyclic node
-        meshed_graph.clear();
-        meshed_graph = ReorderGraph{n_cycle_node};
-        build_graph(meshed_graph);
-        // begin to remove vertices from graph, create fill-ins
-        for_all_vertices(meshed_graph, [&](ReorderVertexDesc const& i) {
-            // double loop to loop all pairs of adjacent vertices
-            for_all_adjacent_vertices(i, meshed_graph, [&](ReorderVertexDesc const& j1) {
-                // skip for already removed vertices
-                if (j1 < i) {
-                    return;
-                }
-                for_all_adjacent_vertices(i, meshed_graph, [&](ReorderVertexDesc const& j2) {
-                    // no self edges
-                    assert(i != j1);
-                    assert(i != j2);
-                    // skip for already removed vertices
-                    if (j2 < i) {
-                        return;
-                    }
-                    // only keep pair with j1 < j2
-                    if (j1 >= j2) {
-                        return;
-                    }
-                    // if edge j1 -> j2 does not already exists
-                    // it is a fill-in
-                    if (!boost::edge(j1, j2, meshed_graph).second) {
-                        // anti edge should also not exist
-                        assert(!boost::edge(j2, j1, meshed_graph).second);
-                        // add both edges to the graph
-                        boost::add_edge(j1, j2, meshed_graph);
-                        boost::add_edge(j2, j1, meshed_graph);
-                        // add to fill-in
-                        fill_in.push_back({static_cast<Idx>(j1), static_cast<Idx>(j2)});
-                    }
-                });
-            });
-        });
-        // offset fill-in indices by n_node - n_cycle_node
-        auto const offset = static_cast<Idx>(dfs_node.size() - n_cycle_node);
-        std::for_each(fill_in.begin(), fill_in.end(), [offset](BranchIdx& b) {
-            b[0] += offset;
-            b[1] += offset;
-        });
+
+        dfs_node.insert(dfs_node.end(), reordered.begin(), reordered.end());
+        for (auto [from, to] : fills) {
+            auto from_reordered = permuted_node_indices[from];
+            auto to_reordered = permuted_node_indices[to];
+            fill_in.push_back({from_reordered, to_reordered});
+        }
+
         return fill_in;
     }
 
@@ -446,14 +384,13 @@ class Topology {
             Idx2D const i_math = comp_coup_.node[i];
             Idx2D const j_math = comp_coup_.node[j];
             Idx const math_group = [&]() {
-                Idx group = -1;
                 if (i_status != 0 && i_math.group != -1) {
-                    group = i_math.group;
+                    return i_math.group;
                 }
                 if (j_status != 0 && j_math.group != -1) {
-                    group = j_math.group;
+                    return j_math.group;
                 }
-                return group;
+                return Idx{-1};
             }();
             // skip if no math model connected
             if (math_group == -1) {
@@ -468,7 +405,7 @@ class Topology {
             // push back
             math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
             // set branch idx in coupling
-            comp_coup_.branch[k] = Idx2D{math_group, branch_pos};
+            comp_coup_.branch[k] = Idx2D{.group = math_group, .pos = branch_pos};
         }
         // k as branch number for 3-way branch
         for (Idx k = 0; k != static_cast<Idx>(comp_topo_.branch3_node_idx.size()); ++k) {
@@ -521,8 +458,6 @@ class Topology {
         }
     }
 
-    static constexpr auto include_all = [](Idx) { return true; };
-
     // proxy class to find the coupled object in math model in the coupling process to a single type object
     //    given a particular component index
     struct SingleTypeObjectFinder {
@@ -549,11 +484,11 @@ class Topology {
                 return branch_coupling[obj_idx];
             // return relevant branch mapped from branch3
             case branch3_1:
-                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[0]};
+                return {.group = branch3_coupling[obj_idx].group, .pos = branch3_coupling[obj_idx].pos[0]};
             case branch3_2:
-                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[1]};
+                return {.group = branch3_coupling[obj_idx].group, .pos = branch3_coupling[obj_idx].pos[1]};
             case branch3_3:
-                return {branch3_coupling[obj_idx].group, branch3_coupling[obj_idx].pos[2]};
+                return {.group = branch3_coupling[obj_idx].group, .pos = branch3_coupling[obj_idx].pos[2]};
             default:
                 assert(false);
                 return {};
@@ -573,11 +508,11 @@ class Topology {
     // The coupling element should be pre-allocated in coupling
     // Only connect the component if include(component_i) returns true
     template <Idx (MathModelTopology::*n_obj_fn)() const, typename GetMathTopoComponent,
-              typename ObjectFinder = SingleTypeObjectFinder, typename Predicate = decltype(include_all)>
+              typename ObjectFinder = SingleTypeObjectFinder, typename Predicate = IncludeAll>
         requires std::invocable<std::remove_cvref_t<GetMathTopoComponent>, MathModelTopology&> &&
                  grouped_idx_vector_type<
                      std::remove_reference_t<std::invoke_result_t<GetMathTopoComponent, MathModelTopology&>>>
-    void couple_object_components(GetMathTopoComponent&& get_component_topo, ObjectFinder object_finder,
+    void couple_object_components(GetMathTopoComponent get_component_topo, ObjectFinder object_finder,
                                   std::vector<Idx2D>& coupling, Predicate include = include_all) {
         auto const n_math_topologies(static_cast<Idx>(math_topology_.size()));
         auto const n_components = object_finder.size();
@@ -621,7 +556,7 @@ class Topology {
             for (Idx new_math_comp_i = 0; new_math_comp_i != static_cast<Idx>(reorder.size()); ++new_math_comp_i) {
                 Idx const old_math_comp_i = reorder[new_math_comp_i];
                 Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
-                coupling[topo_comp_i] = Idx2D{topo_idx, new_math_comp_i};
+                coupling[topo_comp_i] = Idx2D{.group = topo_idx, .pos = new_math_comp_i};
             }
         }
     }
@@ -629,17 +564,18 @@ class Topology {
     void couple_all_appliance() {
         // shunt
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.shunts_per_bus; },
-            {comp_topo_.shunt_node_idx, comp_coup_.node}, comp_coup_.shunt);
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.shunts_per_bus; },
+            {.component_obj_idx = comp_topo_.shunt_node_idx, .objects_coupling = comp_coup_.node}, comp_coup_.shunt);
         // load_gen
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.load_gens_per_bus; },
-            {comp_topo_.load_gen_node_idx, comp_coup_.node}, comp_coup_.load_gen);
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.load_gens_per_bus; },
+            {.component_obj_idx = comp_topo_.load_gen_node_idx, .objects_coupling = comp_coup_.node},
+            comp_coup_.load_gen);
 
         // set load gen type
         // resize vector
-        std::for_each(math_topology_.begin(), math_topology_.end(),
-                      [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
+        std::ranges::for_each(math_topology_,
+                              [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
         for (Idx k = 0; k != static_cast<Idx>(comp_topo_.load_gen_node_idx.size()); ++k) {
             Idx2D const idx_math = comp_coup_.load_gen[k];
@@ -651,33 +587,37 @@ class Topology {
 
         // source
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.sources_per_bus; },
-            {comp_topo_.source_node_idx, comp_coup_.node}, comp_coup_.source,
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.sources_per_bus; },
+            {.component_obj_idx = comp_topo_.source_node_idx, .objects_coupling = comp_coup_.node}, comp_coup_.source,
             [this](Idx i) { return comp_conn_.source_connected[i]; });
     }
 
     void couple_sensors() {
         // voltage sensors
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.voltage_sensors_per_bus; },
-            {comp_topo_.voltage_sensor_node_idx, comp_coup_.node}, comp_coup_.voltage_sensor);
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.voltage_sensors_per_bus; },
+            {.component_obj_idx = comp_topo_.voltage_sensor_node_idx, .objects_coupling = comp_coup_.node},
+            comp_coup_.voltage_sensor);
 
         // source power sensors
         couple_object_components<&MathModelTopology::n_source>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_source; },
-            {comp_topo_.power_sensor_object_idx, comp_coup_.source}, comp_coup_.power_sensor,
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_source; },
+            {.component_obj_idx = comp_topo_.power_sensor_object_idx, .objects_coupling = comp_coup_.source},
+            comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
 
         // shunt power sensors
         couple_object_components<&MathModelTopology::n_shunt>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_shunt; },
-            {comp_topo_.power_sensor_object_idx, comp_coup_.shunt}, comp_coup_.power_sensor,
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_shunt; },
+            {.component_obj_idx = comp_topo_.power_sensor_object_idx, .objects_coupling = comp_coup_.shunt},
+            comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
 
         // load + generator power sensors
         couple_object_components<&MathModelTopology::n_load_gen>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_load_gen; },
-            {comp_topo_.power_sensor_object_idx, comp_coup_.load_gen}, comp_coup_.power_sensor,
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_load_gen; },
+            {.component_obj_idx = comp_topo_.power_sensor_object_idx, .objects_coupling = comp_coup_.load_gen},
+            comp_coup_.power_sensor,
             [this](Idx i) {
                 return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
                        comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
@@ -694,27 +634,31 @@ class Topology {
                    comp_topo_.power_sensor_terminal_type[i] == branch3_2 ||
                    comp_topo_.power_sensor_terminal_type[i] == branch3_3;
         };
-        SensorBranchObjectFinder const object_finder_from_sensor{comp_topo_.power_sensor_object_idx,
-                                                                 comp_topo_.power_sensor_terminal_type,
-                                                                 comp_coup_.branch, comp_coup_.branch3};
+        SensorBranchObjectFinder const object_finder_from_sensor{.sensor_obj_idx = comp_topo_.power_sensor_object_idx,
+                                                                 .power_sensor_terminal_type =
+                                                                     comp_topo_.power_sensor_terminal_type,
+                                                                 .branch_coupling = comp_coup_.branch,
+                                                                 .branch3_coupling = comp_coup_.branch3};
 
         // branch 'from' power sensors
         couple_object_components<&MathModelTopology::n_branch>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_branch_from; },
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_branch_from; },
             object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
 
         // branch 'to' power sensors
         couple_object_components<&MathModelTopology::n_branch>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_branch_to; },
-            {comp_topo_.power_sensor_object_idx, comp_coup_.branch}, comp_coup_.power_sensor,
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_branch_to; },
+            {.component_obj_idx = comp_topo_.power_sensor_object_idx, .objects_coupling = comp_coup_.branch},
+            comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
 
         // node injection power sensors
         couple_object_components<&MathModelTopology::n_bus>(
-            [](MathModelTopology & math_topo) -> auto& { return math_topo.power_sensors_per_bus; },
-            {comp_topo_.power_sensor_object_idx, comp_coup_.node}, comp_coup_.power_sensor,
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_bus; },
+            {.component_obj_idx = comp_topo_.power_sensor_object_idx, .objects_coupling = comp_coup_.node},
+            comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
     }
-}; // namespace power_grid_model
+};
 
 } // namespace power_grid_model

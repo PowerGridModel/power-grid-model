@@ -141,6 +141,8 @@ typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 
 // NOLINTEND(modernize-use-using)
 
+// NOLINTBEGIN(performance-enum-size)
+
 // enums
 /**
  * @brief Enumeration for calculation type.
@@ -164,6 +166,14 @@ enum PGM_CalculationMethod {
     PGM_iterative_current = 3, /**< linear current method for power flow */
     PGM_linear_current = 4,    /**< iterative constant impedance method for power flow */
     PGM_iec60909 = 5           /**< fault analysis for short circuits using the iec60909 standard */
+};
+
+/**
+ * @brief Enumeration for calculation and/or component symmetry
+ */
+enum PGM_SymmetryType {
+    PGM_asymmetric = 0, /** < asymmetric calculation and/or component */
+    PGM_symmetric = 1   /** < symmetric calculation and/or component */
 };
 
 /**
@@ -207,6 +217,22 @@ enum PGM_ShortCircuitVoltageScaling {
 };
 
 /**
+ * @brief Enumeration of tap changing strategies.
+ *
+ */
+enum PGM_TapChangingStrategy {
+    PGM_tap_changing_strategy_disabled = 0, /**< disable automatic tap adjustment */
+    PGM_tap_changing_strategy_any_valid_tap =
+        1, /**< adjust tap position automatically; optimize for any value in the voltage band */
+    PGM_tap_changing_strategy_min_voltage_tap =
+        2, /**< adjust tap position automatically; optimize for the lower end of the voltage band */
+    PGM_tap_changing_strategy_max_voltage_tap =
+        3, /**< adjust tap position automatically; optimize for the higher end of the voltage band */
+    PGM_tap_changing_strategy_fast_any_tap =
+        4, /**< adjust tap position automatically; optimize for any value in the voltage band; binary search */
+};
+
+/**
  * @brief Enumeration of experimental features.
  *
  * [Danger mode]
@@ -219,6 +245,8 @@ enum PGM_ExperimentalFeatures {
     PGM_experimental_features_disabled = 0, /**< disable experimental features */
     PGM_experimental_features_enabled = 1,  /**< enable experimental features */
 };
+
+// NOLINTEND(performance-enum-size)
 
 #ifdef __cplusplus
 }

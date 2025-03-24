@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Nightly build
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # Based on UTC time
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-nightly
+  cancel-in-progress: true
+
+jobs:
+  main:
+    uses: "./.github/workflows/main.yml"
+    permissions:
+      contents: write
+    with:
+      create_release: false
+
+  check-code-quality:
+    uses: "./.github/workflows/check-code-quality.yml"
+
+  reuse-compliance:
+    uses: "./.github/workflows/reuse-compliance.yml"
+
+  clang-tidy:
+    uses: "./.github/workflows/clang-tidy.yml"
+    with:
+      target: "all power_grid_model_benchmark_cpp"
+
+  citations:
+    uses: "./.github/workflows/citations.yml"

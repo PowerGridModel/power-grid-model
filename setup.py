@@ -7,7 +7,6 @@ import platform
 import shutil
 from itertools import chain
 from pathlib import Path
-from typing import List
 
 # noinspection PyPackageRequirements
 from setuptools import Extension, setup
@@ -19,11 +18,13 @@ if platform.system() == "Windows":
     if_win = True
 elif platform.system() in ["Linux", "Darwin"]:
     if_win = False
+    if platform.system() == "Darwin":
+        os.environ["MACOSX_DEPLOYMENT_TARGET"] = "13.3"
 else:
     raise SystemError("Only Windows, Linux, or MacOS is supported!")
 
 
-def get_required_dependency_include() -> List[str]:
+def get_required_dependency_include() -> list[str]:
     """
     Get build requirements includes.
 
@@ -31,15 +32,16 @@ def get_required_dependency_include() -> List[str]:
         either empty list or a list of header path
     """
     try:
+        import libboost_headers
         import msgpack_cxx
         import nlohmann_json
 
-        return [str(msgpack_cxx.get_include()), str(nlohmann_json.get_include())]
+        return [str(msgpack_cxx.get_include()), str(nlohmann_json.get_include()), str(libboost_headers.get_include())]
     except ImportError:
         return []
 
 
-def get_pre_installed_header_include() -> List[str]:
+def get_pre_installed_header_include() -> list[str]:
     """
     Get header files from pybuild_header_dependency, if it is installed
 
@@ -49,32 +51,10 @@ def get_pre_installed_header_include() -> List[str]:
     try:
         from pybuild_header_dependency import HeaderResolver
 
-        resolver = HeaderResolver({"eigen": None, "boost": None})
+        resolver = HeaderResolver({"eigen": None})
         return [str(resolver.get_include())]
     except ImportError:
         return []
-
-
-def get_conda_include() -> List[str]:
-    """
-    Get conda include path, if we are inside conda environment
-
-    Returns:
-        either empty list or a list of header paths
-    """
-    include_paths = []
-    # in the conda build system the system root is defined in CONDA_PREFIX or BUILD_PREFIX
-    for prefix in ["CONDA_PREFIX", "BUILD_PREFIX"]:
-        if prefix in os.environ:
-            conda_path = os.environ[prefix]
-            if if_win:
-                # windows has Library folder prefix
-                include_paths.append(os.path.join(conda_path, "Library", "include"))
-                include_paths.append(os.path.join(conda_path, "Library", "include", "eigen3"))
-            else:
-                include_paths.append(os.path.join(conda_path, "include"))
-                include_paths.append(os.path.join(conda_path, "include", "eigen3"))
-    return include_paths
 
 
 # custom class for ctypes
@@ -100,25 +80,37 @@ class MyBuildExt(build_ext):
                 cxx = os.environ["CXX"]
             else:
                 cxx = self.compiler.compiler_cxx[0]
+            # check setuptools has an update change in the version 72.2 about cxx compiler options
+            # to be compatible with both version, we check if compiler_so_cxx exists
+            if not hasattr(self.compiler, "compiler_so_cxx"):
+                compiler_so_cxx = self.compiler.compiler_so
+                linker_so_cxx = self.compiler.linker_so
+            else:
+                compiler_so_cxx = self.compiler.compiler_so_cxx
+                linker_so_cxx = self.compiler.linker_so_cxx
             # customize compiler and linker options
-            self.compiler.compiler_so[0] = cxx
-            self.compiler.linker_so[0] = cxx
+            compiler_so_cxx[0] = cxx
+            linker_so_cxx[0] = cxx
             self.compiler.compiler_cxx = [cxx]
             # add link time optimization
             if "clang" in cxx:
                 lto_flag = "-flto=thin"
             else:
                 lto_flag = "-flto"
-            self.compiler.compiler_so += [lto_flag]
-            self.compiler.linker_so += [lto_flag]
-            # remove -g and -O2
-            self.compiler.compiler_so = [x for x in self.compiler.compiler_so if x not in ["-g", "-O2"]]
-            self.compiler.linker_so = [x for x in self.compiler.linker_so if x not in ["-g", "-O2", "-Wl,-O1"]]
+            compiler_so_cxx += [lto_flag]
+            linker_so_cxx += [lto_flag]
+            # remove debug and optimization flags
+            for x in compiler_so_cxx.copy():
+                if x in ["-g", "-O2"]:
+                    compiler_so_cxx.remove(x)
+            for x in linker_so_cxx.copy():
+                if x in ["-g", "-O2", "-Wl,-O1"]:
+                    linker_so_cxx.remove(x)
 
             print("-------compiler arguments----------")
-            print(self.compiler.compiler_so)
+            print(compiler_so_cxx)
             print("-------linker arguments----------")
-            print(self.compiler.linker_so)
+            print(linker_so_cxx)
         return super().build_extensions()
 
     def get_export_symbols(self, ext):
@@ -138,6 +130,23 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     Returns:
 
     """
+    pkg_bin_dir = pkg_dir / "src" / pkg_name
+    # remove old extension build
+    build_dir = pkg_dir / "build"
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+    # remove binary
+    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll"), pkg_bin_dir.rglob("*.dylib")))
+    for bin_file in bin_files:
+        print(f"Remove binary file: {bin_file}")
+        bin_file.unlink()
+
+    # By setting POWER_GRID_MODEL_NO_BINARY_BUILD we do not build the extension.
+    # This is usually set in conda-build recipe, so conda build process only wraps the pure Python package.
+    # As a user or developer, DO NOT set this environment variable unless you really know what you are doing.
+    if "POWER_GRID_MODEL_NO_BINARY_BUILD" in os.environ:
+        return {}
+
     # fetch dependent headers
     pgm = Path("power_grid_model")
     pgm_c = Path("power_grid_model_c")
@@ -149,12 +158,11 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
     ]
     include_dirs += get_required_dependency_include()
     include_dirs += get_pre_installed_header_include()
-    include_dirs += get_conda_include()
     # compiler and link flag
-    cflags: List[str] = []
-    lflags: List[str] = []
-    library_dirs: List[str] = []
-    libraries: List[str] = []
+    cflags: list[str] = []
+    lflags: list[str] = []
+    library_dirs: list[str] = []
+    libraries: list[str] = []
     sources = [
         str(pgm_c / pgm_c / "src" / "handle.cpp"),
         str(pgm_c / pgm_c / "src" / "meta_data.cpp"),
@@ -162,22 +170,12 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         str(pgm_c / pgm_c / "src" / "options.cpp"),
         str(pgm_c / pgm_c / "src" / "dataset.cpp"),
         str(pgm_c / pgm_c / "src" / "serialization.cpp"),
+        str(pgm_c / pgm_c / "src" / "math_solver.cpp"),
     ]
     # macro
     define_macros = [
         ("EIGEN_MPL2_ONLY", "1"),  # only MPL-2 part of eigen3
     ]
-    pkg_bin_dir = pkg_dir / "src" / pkg_name
-
-    # remove old extension build
-    build_dir = pkg_dir / "build"
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    # remove binary
-    bin_files = list(chain(pkg_bin_dir.rglob("*.so"), pkg_bin_dir.rglob("*.dll")))
-    for bin_file in bin_files:
-        print(f"Remove binary file: {bin_file}")
-        bin_file.unlink()
 
     # build steps for Windows and Linux
     # different treat for windows and linux
@@ -189,15 +187,11 @@ def generate_build_ext(pkg_dir: Path, pkg_name: str):
         # flags for Linux and Mac
         cflags += ["-std=c++20", "-O3", "-fvisibility=hidden"]
         lflags += ["-lpthread", "-O3"]
-        # extra flag for Mac
-        if platform.system() == "Darwin":
-            # compiler flag to set version
-            cflags.append("-mmacosx-version-min=10.15")
 
     # list of extensions
     exts = [
         CTypesExtension(
-            name="power_grid_model.core._power_grid_core",
+            name="power_grid_model._core._power_grid_core",
             sources=sources,
             include_dirs=include_dirs,
             library_dirs=library_dirs,

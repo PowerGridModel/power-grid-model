@@ -10,7 +10,7 @@ namespace power_grid_model {
 
 TEST_CASE("Test sparse mapping") {
     IdxVector const idx_B_in_A{3, 5, 2, 1, 1, 2};
-    SparseIndexMapping mapping{{0, 0, 2, 4, 5, 5, 6, 6}, {3, 4, 2, 5, 0, 1}};
+    SparseIndexMapping mapping{.indptr = {0, 0, 2, 4, 5, 5, 6, 6}, .reorder = {3, 4, 2, 5, 0, 1}};
     SparseIndexMapping mapping_2 = build_sparse_mapping(idx_B_in_A, 7);
 
     CHECK(mapping.indptr == mapping_2.indptr);
@@ -21,7 +21,7 @@ TEST_CASE("Test dense mapping - comparison sort") {
     constexpr Idx count{10};
     constexpr Idx n_B = 100000;
 
-    double decrement = static_cast<double>(n_B) / count;
+    double const decrement = static_cast<double>(n_B) / count;
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {
@@ -51,7 +51,7 @@ TEST_CASE("Test dense mapping - counting sort") {
     constexpr Idx count{1000000};
     constexpr Idx n_B = 10;
 
-    double decrement = static_cast<double>(n_B) / count;
+    double const decrement = static_cast<double>(n_B) / count;
 
     IdxVector idx_B_in_A(count);
     for (Idx i = 0; i < count; ++i) {

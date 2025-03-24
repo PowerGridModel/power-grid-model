@@ -5,12 +5,14 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
+#include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "power_grid_model_c/dataset.h"
 
-#include <power_grid_model/auxiliary/dataset_handler.hpp>
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 
+using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 
 // dataset info
@@ -41,6 +43,21 @@ PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* /*unused*/, PGM_DatasetInfo 
     return info->component_info[component_idx].total_elements;
 }
 
+PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                                   PGM_Idx component_idx) {
+    return static_cast<PGM_Idx>(info->component_info[component_idx].has_attribute_indications);
+}
+
+PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                                 PGM_Idx component_idx) {
+    return static_cast<PGM_Idx>(info->component_info[component_idx].attribute_indications.size());
+}
+
+char const* PGM_dataset_info_attribute_name(PGM_Handle* /* handle */, PGM_DatasetInfo const* info,
+                                            PGM_Idx component_idx, PGM_Idx attribute_idx) {
+    return info->component_info[component_idx].attribute_indications[attribute_idx]->name;
+}
+
 // const dataset
 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
@@ -48,7 +65,7 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
     return call_with_catch(
         handle,
         [dataset, is_batch, batch_size]() {
-            return new ConstDatasetHandler{static_cast<bool>(is_batch), batch_size, dataset};
+            return new ConstDataset{static_cast<bool>(is_batch), batch_size, dataset, get_meta_data()};
         },
         PGM_regular_error);
 }
@@ -56,12 +73,12 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
                                                          PGM_WritableDataset const* writable_dataset) {
     return call_with_catch(
-        handle, [writable_dataset]() { return new ConstDatasetHandler{*writable_dataset}; }, PGM_regular_error);
+        handle, [writable_dataset]() { return new ConstDataset{*writable_dataset}; }, PGM_regular_error);
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) {
     return call_with_catch(
-        handle, [mutable_dataset]() { return new ConstDatasetHandler{*mutable_dataset}; }, PGM_regular_error);
+        handle, [mutable_dataset]() { return new ConstDataset{*mutable_dataset}; }, PGM_regular_error);
 }
 
 void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) { delete dataset; }
@@ -74,6 +91,13 @@ void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
         [dataset, component, elements_per_scenario, total_elements, indptr, data]() {
             dataset->add_buffer(component, elements_per_scenario, total_elements, indptr, data);
         },
+        PGM_regular_error);
+}
+
+void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
+                                            char const* attribute, void const* data) {
+    call_with_catch(
+        handle, [dataset, component, attribute, data]() { dataset->add_attribute_buffer(component, attribute, data); },
         PGM_regular_error);
 }
 
@@ -94,6 +118,13 @@ void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* da
         PGM_regular_error);
 }
 
+void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
+                                               char const* attribute, void* data) {
+    call_with_catch(
+        handle, [dataset, component, attribute, data]() { dataset->set_attribute_buffer(component, attribute, data); },
+        PGM_regular_error);
+}
+
 // mutable dataset
 
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
@@ -101,7 +132,7 @@ PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* d
     return call_with_catch(
         handle,
         [dataset, is_batch, batch_size]() {
-            return new MutableDatasetHandler{static_cast<bool>(is_batch), batch_size, dataset};
+            return new MutableDataset{static_cast<bool>(is_batch), batch_size, dataset, get_meta_data()};
         },
         PGM_regular_error);
 }
@@ -116,6 +147,13 @@ void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* data
         [dataset, component, elements_per_scenario, total_elements, indptr, data]() {
             dataset->add_buffer(component, elements_per_scenario, total_elements, indptr, data);
         },
+        PGM_regular_error);
+}
+
+void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
+                                              char const* attribute, void* data) {
+    call_with_catch(
+        handle, [dataset, component, attribute, data]() { dataset->add_attribute_buffer(component, attribute, data); },
         PGM_regular_error);
 }
 

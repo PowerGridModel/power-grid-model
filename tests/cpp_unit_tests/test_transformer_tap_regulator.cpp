@@ -20,7 +20,7 @@ void check_nan_preserving_equality(std::floating_point auto actual, std::floatin
 TEST_CASE("Test transformer tap regulator") {
     TransformerTapRegulatorInput const input{.id = 1,
                                              .regulated_object = 2,
-                                             .status = true,
+                                             .status = 1,
                                              .control_side = ControlSide::from,
                                              .u_set = 10.0e3,
                                              .u_band = 1.0e3,
@@ -29,13 +29,17 @@ TEST_CASE("Test transformer tap regulator") {
 
     double const u_rated{10.0e3};
 
-    TransformerTapRegulator transformer_tap_regulator{input, u_rated};
-
-    // TODO: test inverse update
+    TransformerTapRegulator transformer_tap_regulator{input, ComponentType::branch, u_rated};
 
     SUBCASE("Test energized") {
         CHECK(transformer_tap_regulator.energized(true));
         CHECK(transformer_tap_regulator.energized(false));
+    }
+
+    SUBCASE("Test regulated object") { CHECK(transformer_tap_regulator.regulated_object() == ID{2}); }
+
+    SUBCASE("Test regulated object type") {
+        CHECK(transformer_tap_regulator.regulated_object_type() == ComponentType::branch);
     }
 
     SUBCASE("Test math model type") { CHECK(transformer_tap_regulator.math_model_type() == ComponentType::regulator); }
@@ -57,27 +61,42 @@ TEST_CASE("Test transformer tap regulator") {
     }
 
     SUBCASE("Test update") {
-        TransformerTapRegulatorUpdate const update{.id = 1,
-                                                   .status = false,
-                                                   .u_set = 11.0e3,
-                                                   .u_band = 2.0e3,
-                                                   .line_drop_compensation_r = 2.0,
-                                                   .line_drop_compensation_x = 4.0};
+        SUBCASE("Set all values") {
+            TransformerTapRegulatorUpdate const update{.id = 1,
+                                                       .status = 0,
+                                                       .u_set = 11.0e3,
+                                                       .u_band = 2.0e3,
+                                                       .line_drop_compensation_r = 2.0,
+                                                       .line_drop_compensation_x = 4.0};
 
-        transformer_tap_regulator.update(update);
+            transformer_tap_regulator.update(update);
 
-        TransformerTapRegulatorCalcParam const param = transformer_tap_regulator.calc_param<symmetric_t>();
-        double const u_set_expected{1.1};
-        double const u_band_expected{0.2};
-        double const z_base = u_rated * u_rated / 1e6;
-        double const r_pu = 2.0 / z_base;
-        double const x_pu = 4.0 / z_base;
-        DoubleComplex const z_compensation_expected{r_pu, x_pu};
+            TransformerTapRegulatorCalcParam const param = transformer_tap_regulator.calc_param<symmetric_t>();
+            double const u_set_expected{1.1};
+            double const u_band_expected{0.2};
+            double const z_base = u_rated * u_rated / 1e6;
+            double const r_pu = 2.0 / z_base;
+            double const x_pu = 4.0 / z_base;
+            DoubleComplex const z_compensation_expected{r_pu, x_pu};
 
-        CHECK(param.u_set == doctest::Approx(u_set_expected));
-        CHECK(param.u_band == doctest::Approx(u_band_expected));
-        CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
-        CHECK_FALSE(param.status);
+            CHECK(param.u_set == doctest::Approx(u_set_expected));
+            CHECK(param.u_band == doctest::Approx(u_band_expected));
+            CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
+            CHECK_FALSE(param.status);
+        }
+        SUBCASE("Set nan values") {
+            TransformerTapRegulatorCalcParam const before_param = transformer_tap_regulator.calc_param<symmetric_t>();
+
+            TransformerTapRegulatorUpdate const update{.id = 1};
+            transformer_tap_regulator.update(update);
+
+            TransformerTapRegulatorCalcParam const param = transformer_tap_regulator.calc_param<symmetric_t>();
+
+            CHECK(param.u_set == doctest::Approx(before_param.u_set));
+            CHECK(param.u_band == doctest::Approx(before_param.u_band));
+            CHECK(cabs(param.z_compensation - before_param.z_compensation) < numerical_tolerance);
+            CHECK(param.status == before_param.status);
+        }
     }
 
     SUBCASE("Test update inverse") {
@@ -125,7 +144,7 @@ TEST_CASE("Test transformer tap regulator") {
 
         SUBCASE("multiple") {
             update.id = 1;
-            update.status = false;
+            update.status = 0;
             update.u_set = 11.0e3;
             update.u_band = 2.0e3;
             update.line_drop_compensation_r = 2.0;
@@ -177,6 +196,22 @@ TEST_CASE("Test transformer tap regulator") {
         CHECK(param.u_band == doctest::Approx(u_band_expected));
         CHECK(cabs(param.z_compensation - z_compensation_expected) < numerical_tolerance);
         CHECK(param.status);
+    }
+
+    SUBCASE("Test default line drop compensation") {
+        TransformerTapRegulator const regulator{{.id = 1,
+                                                 .regulated_object = 2,
+                                                 .status = 1,
+                                                 .control_side = ControlSide::from,
+                                                 .u_set = 10.0e3,
+                                                 .u_band = 1.0e3},
+                                                ComponentType::branch,
+                                                u_rated};
+
+        TransformerTapRegulatorCalcParam const param = regulator.calc_param<symmetric_t>();
+        CHECK(!is_nan(param.z_compensation));
+        CHECK(param.z_compensation.real() == doctest::Approx(0.0));
+        CHECK(param.z_compensation.imag() == doctest::Approx(0.0));
     }
 }
 

@@ -20,6 +20,8 @@ class Branch3 : public Base {
     using UpdateType = Branch3Update;
     template <symmetry_tag sym> using OutputType = Branch3Output<sym>;
     using ShortCircuitOutputType = Branch3ShortCircuitOutput;
+    using SideType = Branch3Side;
+
     static constexpr char const* name = "branch3";
     ComponentType math_model_type() const final { return ComponentType::branch3; }
 
@@ -37,18 +39,46 @@ class Branch3 : public Base {
     }
 
     // getter
-    ID node_1() const { return node_1_; }
-    ID node_2() const { return node_2_; }
-    ID node_3() const { return node_3_; }
-    bool status_1() const { return status_1_; }
-    bool status_2() const { return status_2_; }
-    bool status_3() const { return status_3_; }
-    bool branch3_status() const {
-        return status_1_ && status_2_ && status_3_; // TODO: check if this makes sense for branch3
+    constexpr ID node_1() const { return node_1_; }
+    constexpr ID node_2() const { return node_2_; }
+    constexpr ID node_3() const { return node_3_; }
+    constexpr ID node(Branch3Side side) const {
+        using enum Branch3Side;
+
+        switch (side) {
+        case side_1:
+            return node_1();
+        case side_2:
+            return node_2();
+        case side_3:
+            return node_3();
+        default:
+            throw MissingCaseForEnumError{"node(Branch3Side)", side};
+        }
+    }
+    constexpr bool status_1() const { return status_1_; }
+    constexpr bool status_2() const { return status_2_; }
+    constexpr bool status_3() const { return status_3_; }
+    constexpr bool branch3_status() const {
+        return status_1() && status_2() && status_3(); // TODO: check if this makes sense for branch3
+    }
+    constexpr bool status(Branch3Side side) const {
+        using enum Branch3Side;
+
+        switch (side) {
+        case side_1:
+            return status_1();
+        case side_2:
+            return status_2();
+        case side_3:
+            return status_3();
+        default:
+            throw MissingCaseForEnumError{"status(Branch3Side)", side};
+        }
     }
 
     // virtual getter
-    bool energized(bool is_connected_to_source = true) const final {
+    constexpr bool energized(bool is_connected_to_source = true) const final {
         return is_connected_to_source && (status_1_ || status_2_ || status_3_);
     }
     virtual double base_i_1() const = 0;
@@ -70,27 +100,27 @@ class Branch3 : public Base {
     }
 
     template <symmetry_tag sym>
-    Branch3Output<sym> get_output(BranchMathOutput<sym> const& branch_math_output1,
-                                  BranchMathOutput<sym> const& branch_math_output2,
-                                  BranchMathOutput<sym> const& branch_math_output3) const {
+    Branch3Output<sym> get_output(BranchSolverOutput<sym> const& branch_solver_output1,
+                                  BranchSolverOutput<sym> const& branch_solver_output2,
+                                  BranchSolverOutput<sym> const& branch_solver_output3) const {
         // result object
         Branch3Output<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         // calculate result
-        output.p_1 = base_power<sym> * real(branch_math_output1.s_f);
-        output.q_1 = base_power<sym> * imag(branch_math_output1.s_f);
-        output.i_1 = base_i_1() * cabs(branch_math_output1.i_f);
-        output.s_1 = base_power<sym> * cabs(branch_math_output1.s_f);
+        output.p_1 = base_power<sym> * real(branch_solver_output1.s_f);
+        output.q_1 = base_power<sym> * imag(branch_solver_output1.s_f);
+        output.i_1 = base_i_1() * cabs(branch_solver_output1.i_f);
+        output.s_1 = base_power<sym> * cabs(branch_solver_output1.s_f);
 
-        output.p_2 = base_power<sym> * real(branch_math_output2.s_f);
-        output.q_2 = base_power<sym> * imag(branch_math_output2.s_f);
-        output.i_2 = base_i_2() * cabs(branch_math_output2.i_f);
-        output.s_2 = base_power<sym> * cabs(branch_math_output2.s_f);
+        output.p_2 = base_power<sym> * real(branch_solver_output2.s_f);
+        output.q_2 = base_power<sym> * imag(branch_solver_output2.s_f);
+        output.i_2 = base_i_2() * cabs(branch_solver_output2.i_f);
+        output.s_2 = base_power<sym> * cabs(branch_solver_output2.s_f);
 
-        output.p_3 = base_power<sym> * real(branch_math_output3.s_f);
-        output.q_3 = base_power<sym> * imag(branch_math_output3.s_f);
-        output.i_3 = base_i_3() * cabs(branch_math_output3.i_f);
-        output.s_3 = base_power<sym> * cabs(branch_math_output3.s_f);
+        output.p_3 = base_power<sym> * real(branch_solver_output3.s_f);
+        output.q_3 = base_power<sym> * imag(branch_solver_output3.s_f);
+        output.i_3 = base_i_3() * cabs(branch_solver_output3.i_f);
+        output.s_3 = base_power<sym> * cabs(branch_solver_output3.s_f);
 
         output.loading = loading(sum_val(output.s_1), sum_val(output.s_2), sum_val(output.s_3));
 
@@ -120,20 +150,35 @@ class Branch3 : public Base {
         return get_sc_output(iabc_1, iabc_2, iabc_3);
     }
     template <symmetry_tag sym>
-    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitMathOutput<sym> const& branch_math_output1,
-                                            BranchShortCircuitMathOutput<sym> const& branch_math_output2,
-                                            BranchShortCircuitMathOutput<sym> const& branch_math_output3) const {
-        return get_sc_output(branch_math_output1.i_f, branch_math_output2.i_f, branch_math_output3.i_f);
+    Branch3ShortCircuitOutput get_sc_output(BranchShortCircuitSolverOutput<sym> const& branch_solver_output1,
+                                            BranchShortCircuitSolverOutput<sym> const& branch_solver_output2,
+                                            BranchShortCircuitSolverOutput<sym> const& branch_solver_output3) const {
+        return get_sc_output(branch_solver_output1.i_f, branch_solver_output2.i_f, branch_solver_output3.i_f);
     }
 
     template <symmetry_tag sym> Branch3Output<sym> get_null_output() const {
-        Branch3Output<sym> output{};
+        Branch3Output<sym> output{
+            .loading = {},
+            .p_1 = {},
+            .q_1 = {},
+            .i_1 = {},
+            .s_1 = {},
+            .p_2 = {},
+            .q_2 = {},
+            .i_2 = {},
+            .s_2 = {},
+            .p_3 = {},
+            .q_3 = {},
+            .i_3 = {},
+            .s_3 = {},
+        };
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     Branch3ShortCircuitOutput get_null_sc_output() const {
-        Branch3ShortCircuitOutput output{};
+        Branch3ShortCircuitOutput output{
+            .i_1 = {}, .i_1_angle = {}, .i_2 = {}, .i_2_angle = {}, .i_3 = {}, .i_3_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
@@ -161,14 +206,14 @@ class Branch3 : public Base {
 
     // default update for branch3, will be hidden for three winding transformer
     UpdateChange update(Branch3Update const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const changed = set_status(update_data.status_1, update_data.status_2, update_data.status_3);
         // change in branch3 connection will change both topo and param
-        return {changed, changed};
+        return {.topo = changed, .param = changed};
     }
 
     auto inverse(std::convertible_to<Branch3Update> auto update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status_1, static_cast<IntS>(status_1_));
         set_if_not_nan(update_data.status_2, static_cast<IntS>(status_2_));

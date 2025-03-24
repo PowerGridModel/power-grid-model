@@ -27,13 +27,15 @@ TEST_CASE("Test link") {
 
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
-    DoubleComplex const it_sc{2.0, 2.0 * sqrt(3)};
+    DoubleComplex const it_sc{2.0, 2.0 * sqrt3};
     ComplexValue<asymmetric_t> const if_sc_asym{1.0 + 1.0i};
-    ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt(3))};
+    ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt3)};
 
     CHECK(link.math_model_type() == ComponentType::branch);
 
     SUBCASE("General") {
+        CHECK(branch.status(BranchSide::from) == branch.from_status());
+        CHECK(branch.status(BranchSide::to) == branch.to_status());
         CHECK(branch.base_i_from() == doctest::Approx(base_i_from));
         CHECK(branch.base_i_to() == doctest::Approx(base_i_to));
         CHECK(!branch.is_param_mutable());
@@ -113,7 +115,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Update inverse") {
-        BranchUpdate branch_update{1, na_IntS, na_IntS};
+        BranchUpdate branch_update{.id = 1, .from_status = na_IntS, .to_status = na_IntS};
         auto expected = branch_update;
 
         SUBCASE("Identical") {

@@ -4,18 +4,26 @@
 
 #include "fictional_grid_generator.hpp"
 
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
+#include <power_grid_model/math_solver/math_solver.hpp>
 
 #include <iostream>
 #include <random>
 
 namespace power_grid_model::benchmark {
 namespace {
+MathSolverDispatcher const& get_math_solver_dispatcher() {
+    static constexpr MathSolverDispatcher math_solver_dispatcher{math_solver::math_solver_tag<MathSolver>{}};
+    return math_solver_dispatcher;
+}
 
 struct PowerGridBenchmark {
-    PowerGridBenchmark() : main_model{std::make_unique<MainModel>(50.0)} {}
+    PowerGridBenchmark()
+        : main_model{
+              std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data, get_math_solver_dispatcher())} {}
 
     template <symmetry_tag sym>
     void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
@@ -30,8 +38,14 @@ struct PowerGridBenchmark {
         Idx const max_iter = (calculation_method == CalculationMethod::iterative_current) ? 100 : 20;
         try {
             // calculate
-            main_model->calculate_power_flow<sym>(1e-8, max_iter, calculation_method, output.get_dataset(),
-                                                  batch_data.get_dataset(), threading);
+            main_model->calculate({.calculation_type = CalculationType::power_flow,
+                                   .calculation_symmetry = is_symmetric_v<sym> ? CalculationSymmetry::symmetric
+                                                                               : CalculationSymmetry::asymmetric,
+                                   .calculation_method = calculation_method,
+                                   .err_tol = 1e-8,
+                                   .max_iter = max_iter,
+                                   .threading = threading},
+                                  output.get_dataset(), batch_data.get_dataset());
             CalculationInfo info_extra = main_model->calculation_info();
             info.merge(info_extra);
         } catch (std::exception const& e) {
@@ -63,7 +77,7 @@ struct PowerGridBenchmark {
             Timer const t_total(info, 0000, "Total");
             {
                 Timer const t_build(info, 1000, "Build model");
-                main_model = std::make_unique<MainModel>(50.0, input.get_dataset());
+                main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
             }
             run_pf<sym>(calculation_method, info);
         }

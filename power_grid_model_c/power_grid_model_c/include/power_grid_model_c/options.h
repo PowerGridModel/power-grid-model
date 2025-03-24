@@ -66,7 +66,7 @@ PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PG
  *
  * @param handle
  * @param opt The pointer to the option instance.
- * @param sym 1 for symmetric calculation; 0 for asymmetric calculation.
+ * @param sym See #PGM_CalculationSymmetry . 1 for symmetric calculation; 0 for asymmetric calculation.
  */
 PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym);
 
@@ -111,6 +111,15 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  */
 PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Options* opt,
                                                    PGM_Idx short_circuit_voltage_scaling);
+
+/**
+ * @brief Specify the tap changing strategy for power flow calculations
+ *
+ * @param handle
+ * @param opt pointer to option instance
+ * @param tap_changing_strategy See #PGM_TapChangingStrategy
+ */
+PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy);
 
 /**
  * @brief Enable/disable experimental features.

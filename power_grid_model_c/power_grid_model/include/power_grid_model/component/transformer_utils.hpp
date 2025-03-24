@@ -4,9 +4,27 @@
 
 #pragma once
 
+#include "../common/common.hpp"
 #include "../common/enum.hpp"
 
 namespace power_grid_model {
+
+namespace detail {
+template <typename T>
+concept enum_c = std::is_enum_v<T>;
+} // namespace detail
+
+template <typename T>
+concept transformer_c = component_c<T> && requires(T const& t, typename T::UpdateType u, typename T::SideType s) {
+    { t.node(s) } -> std::same_as<ID>;
+    { t.status(s) } -> std::convertible_to<bool>;
+
+    { t.tap_side() } -> std::same_as<typename T::SideType>;
+    { t.tap_pos() } -> std::convertible_to<IntS>;
+    { t.tap_min() } -> std::convertible_to<IntS>;
+    { t.tap_max() } -> std::convertible_to<IntS>;
+    { t.tap_nom() } -> std::convertible_to<IntS>;
+};
 
 constexpr double tap_adjust_impedance(double tap_pos, double tap_min, double tap_max, double tap_nom, double xk,
                                       double xk_min, double xk_max) {

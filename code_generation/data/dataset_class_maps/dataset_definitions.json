@@ -17,8 +17,16 @@
                     "class_name": "LinkInput"
                 },
                 {
+                    "names": ["generic_branch"],
+                    "class_name": "GenericBranchInput"
+                },
+                {
                     "names": ["transformer"],
                     "class_name": "TransformerInput"
+                },
+                {
+                    "names": ["transformer_tap_regulator"],
+                    "class_name": "TransformerTapRegulatorInput"
                 },
                 {
                     "names": ["three_winding_transformer"],
@@ -59,8 +67,12 @@
                     "class_name": "NodeOutput"
                 },
                 {
-                    "names": ["line", "link", "transformer"],
+                    "names": ["line", "link", "transformer", "generic_branch"],
                     "class_name": "BranchOutput"
+                },
+                {
+                    "names": ["transformer_tap_regulator"],
+                    "class_name": "TransformerTapRegulatorOutput"
                 },
                 {
                     "names": ["three_winding_transformer"],
@@ -103,6 +115,10 @@
                 {
                     "names": ["transformer"],
                     "class_name": "TransformerUpdate"
+                },
+                {
+                    "names": ["transformer_tap_regulator"],
+                    "class_name": "TransformerTapRegulatorUpdate"
                 },
                 {
                     "names": ["three_winding_transformer"],

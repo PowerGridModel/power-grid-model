@@ -70,11 +70,15 @@ namespace power_grid_model::math_solver {
 namespace iterative_current_pf {
 
 // solver
-template <symmetry_tag sym>
-class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentPFSolver<sym>> {
+template <symmetry_tag sym_type>
+class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCurrentPFSolver<sym_type>> {
   public:
+    using sym = sym_type;
+
     using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
     using BlockPermArray = typename SparseSolverType::BlockPermArray;
+
+    static constexpr auto is_iterative = true;
 
     IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
@@ -82,7 +86,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
-    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                   SolverOutput<sym>& output) {
         make_flat_start(input, output.u);
 
         auto const& sources_per_bus = *this->sources_per_bus_;
@@ -97,7 +102,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                 Idx const data_sequence = bus_entry[bus_number];
                 for (auto source_number : sources) {
                     // YBus_diag += Y_source
-                    mat_data[data_sequence] += y_bus.math_model_param().source_param[source_number];
+                    mat_data[data_sequence] +=
+                        y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
                 }
             }
             // prefactorize
@@ -185,7 +191,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
                      PowerFlowInput<sym> const& input) {
         for (Idx const source_number : sources) {
             // I_inj_i += Y_source_j * U_ref_j
-            rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number],
+            rhs_u_[bus_number] += dot(y_bus.math_model_param().source_param[source_number].template y_ref<sym>(),
                                       ComplexValue<sym>{input.source[source_number]});
         }
     }
@@ -210,9 +216,6 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym, IterativeCurrentP
         }
     }
 };
-
-template class IterativeCurrentPFSolver<symmetric_t>;
-template class IterativeCurrentPFSolver<asymmetric_t>;
 
 } // namespace iterative_current_pf
 

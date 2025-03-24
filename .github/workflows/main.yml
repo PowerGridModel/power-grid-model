@@ -14,17 +14,25 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: false
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
-        default: true
+        default: false
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
 
@@ -32,13 +40,13 @@ jobs:
 
   acquire-python-version-build-sdist:
     name: Build sdist and set version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Set PyPI Version
         run: |
@@ -61,46 +69,36 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         build-option: [ debug, release ]
         compiler: [gcc, clang]
         include:
           - compiler: gcc
-            cc: gcc-13
-            cxx: g++-13
           - compiler: clang
-            cc: clang-15
-            cxx: clang++-15
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Fix kernel mmap rnd bits
-        # https://github.com/actions/runner-images/issues/9491
-        continue-on-error: true
-        run: sudo sysctl vm.mmap_rnd_bits=28
-
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build clang-15
+          sudo apt-get install -y ninja-build gcc-13 g++-13 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-13 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-13 /usr/local/bin/g++
 
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-
       - name: Install C++ dependencies
         run: |
           brew install boost eigen nlohmann-json msgpack-cxx doctest
-
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
@@ -118,8 +116,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Activate conda
+        uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
+        with:
+          miniforge-version: latest
+      
+      - name: List conda
         run: |
-          & "$env:CONDA\condabin\conda" init
+          conda info
+          conda list
 
       - name: Install conda environment
         run: |
@@ -131,12 +135,16 @@ jobs:
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
 
+          # Resolve dirty PATH environment
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
+
           # generate cmake cache
           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           # build
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           # test
-          ctest --test-dir cpp_build\${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
+          ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
           # install
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
 
@@ -148,14 +156,12 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    runs-on: macos-13
+    runs-on: macos-14
     strategy:
       matrix:
         build-option: [ debug, release ]
     env:
       CMAKE_PREFIX_PATH: /usr/local
-      CC: clang
-      CXX: clang++
       PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
@@ -168,9 +174,6 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
-          brew install python@3.12 || true
-          brew link --overwrite python@3.12
-          brew pin python@3.12
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
@@ -182,13 +185,13 @@ jobs:
         platform: [ linux-x64, linux-aarch64, macos, windows ]
         include:
           - platform: linux-x64
-            os: ubuntu-latest
+            os: ubuntu-24.04
             cibw_build: "*_x86_64"
           - platform: linux-aarch64
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             cibw_build: "*_aarch64"
           - platform: macos
-            os: macos-13
+            os: macos-14
             cibw_build: "*"
           - platform: windows
             os: windows-latest
@@ -205,18 +208,14 @@ jobs:
           name: version
           path: .
 
-      - name: Set up QEMU
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up XCode
-        if: matrix.os == 'macos-13'
+        if: matrix.os == 'macos-14'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.23.1
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -236,15 +235,24 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu", "windows"] # We do not test conda for MacOS
-  
+        include:
+          - os: ubuntu
+            shell: bash -el {0}
+          - os: windows
+            shell: powershell
+    
+    env:
+      POWER_GRID_MODEL_NO_BINARY_BUILD: 1
+
     defaults:
       run:
-        shell: bash -el {0}
+        shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
+          miniforge-version: latest  # use miniforge instead of miniconda
           activate-environment: conda-pgm-env
           environment-file: .github/conda_pgm_env.yml
           auto-activate-base: false
@@ -253,57 +261,36 @@ jobs:
         run: |
           conda info
           conda list
-      
-      - name: Build
+
+      - name: Build and install cmake target for Windows
+        if: matrix.os == 'windows'
+        run: |          
+          $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+          Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
+          cmake --build build/ --verbose -j1
+          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
+
+      - name: Build and install cmake target for Linux
+        if: matrix.os == 'ubuntu'
+        run: |
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+          cmake --build build/ --verbose -j1
+          cmake --install build/      
+
+      - name: Build python
         run: python -m pip install . -vv --no-build-isolation --no-deps   
 
       - name: Test
         run: pytest
 
-  test-python-macos-arm64:
-    runs-on: flyci-macos-large-latest-m1
-    needs: [build-cpp-test-macos, build-and-test-python]
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'merge_group')
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      
-      - name: Check python version
-        run: |
-          uname -a
-          uname -m
-          python -c 'import platform; print(platform.platform())'
-          python --version
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: version
-          path: .
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: wheelhouse-macos
-          path: wheelhouse-macos/.
-   
-      - name: Install
-        run: |
-          pip install power-grid-model[dev]==$(cat PYPI_VERSION) --find-links=wheelhouse-macos
-      
-      - name: test
-        run: |
-          pytest
-
-
   publish-wheels:
-    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda, test-python-macos-arm64]
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
@@ -322,7 +309,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
           architecture: x64
 
       - uses: actions/download-artifact@v4
@@ -346,7 +333,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         run: |
           pip install twine
           echo "Publish to PyPI..."
@@ -354,7 +341,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         with:
           files: |
             ./wheelhouse/*

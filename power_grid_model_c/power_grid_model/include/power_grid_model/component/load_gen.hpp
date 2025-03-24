@@ -102,17 +102,16 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
     // update for load_gen
     UpdateChange update(LoadGenUpdate<loadgen_symmetry> const& update_data) {
-        assert(update_data.id == this->id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         this->set_status(update_data.status);
         set_power(update_data.p_specified, update_data.q_specified);
         // change load connection and/or value will not change topology or parameters
-        return {false, false};
+        return {.topo = false, .param = false};
     }
 
     LoadGenUpdate<loadgen_symmetry> inverse(LoadGenUpdate<loadgen_symmetry> update_data) const {
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         double const scalar = direction_ * base_power<loadgen_symmetry>;
-
-        assert(update_data.id == this->id());
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
         set_if_not_nan(update_data.p_specified, real(s_specified_) * scalar);
@@ -145,16 +144,16 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         return piecewise_complex_value(s_specified_);
     }
     template <symmetry_tag calculation_symmetry>
-    ApplianceMathOutput<calculation_symmetry> u2si(ComplexValue<calculation_symmetry> const& u) const {
-        ApplianceMathOutput<calculation_symmetry> appliance_math_output;
-        appliance_math_output.s = scale_power<calculation_symmetry>(u);
-        appliance_math_output.i = conj(appliance_math_output.s / u);
-        return appliance_math_output;
+    ApplianceSolverOutput<calculation_symmetry> u2si(ComplexValue<calculation_symmetry> const& u) const {
+        ApplianceSolverOutput<calculation_symmetry> appliance_solver_output;
+        appliance_solver_output.s = scale_power<calculation_symmetry>(u);
+        appliance_solver_output.i = conj(appliance_solver_output.s / u);
+        return appliance_solver_output;
     }
-    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const override {
+    ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const override {
         return u2si<symmetric_t>(u);
     }
-    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const override {
+    ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const override {
         return u2si<asymmetric_t>(u);
     }
 
@@ -162,7 +161,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
     // scale load
     template <symmetry_tag calculation_symmetry>
-    ComplexValue<calculation_symmetry> scale_power(ComplexValue<calculation_symmetry> u) const {
+    ComplexValue<calculation_symmetry> scale_power(ComplexValue<calculation_symmetry> const& u) const {
         using enum LoadGenType;
 
         auto const params = [this] { return this->template calc_param<calculation_symmetry>(); };
@@ -174,7 +173,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         case const_i:
             return params() * cabs(u);
         default:
-            throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
+            throw MissingCaseForEnumError(std::string{name} + " power scaling factor", this->type());
         }
     }
 };

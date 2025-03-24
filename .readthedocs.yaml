@@ -9,9 +9,11 @@ sphinx:
   configuration: docs/conf.py
 
 build:
-  os: "ubuntu-22.04"
+  os: "ubuntu-24.04"
   tools:
     python: "3.11"
+  apt_packages:
+    - graphviz
   jobs:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
@@ -21,6 +23,11 @@ build:
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
+      # build class and package diagrams
+      - pyreverse --no-standalone -o dot src/power_grid_model
+      - ccomps -x classes.dot | dot -Grankdir=LR -Nfontsize=13 -Efontsize=13 | gvpack -m100 -array_l1 | neato -n2 -Tsvg -o docs/_static/classes.svg
+      - dot packages.dot -Grankdir=TD -Nfontsize=13 -Efontsize=13 -Tsvg -o docs/_static/packages.svg
+      - rm packages.dot classes.dot
       # download support
       - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/RELEASE.md
       - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/SUPPORT.md

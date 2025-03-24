@@ -104,17 +104,17 @@ TEST_CASE("Three phase tensor") {
 
     SUBCASE("Test value initialization") {
         NodeOutput<symmetric_t> sym{};
-        CHECK(sym.id == 0);
-        CHECK(sym.energized == 0);
-        CHECK(sym.u_pu == 0.0);
-        CHECK(sym.u == 0.0);
-        CHECK(sym.u_angle == 0.0);
+        CHECK(sym.id == na_IntID);
+        CHECK(sym.energized == na_IntS);
+        CHECK(is_nan(sym.u_pu));
+        CHECK(is_nan(sym.u));
+        CHECK(is_nan(sym.u_angle));
         NodeOutput<asymmetric_t> asym{};
-        CHECK(asym.id == 0);
-        CHECK(asym.energized == 0);
-        CHECK(asym.u_pu(0) == doctest::Approx(0.0));
-        CHECK(asym.u(1) == doctest::Approx(0.0));
-        CHECK(asym.u_angle(2) == doctest::Approx(0.0));
+        CHECK(asym.id == na_IntID);
+        CHECK(asym.energized == na_IntS);
+        CHECK(is_nan(asym.u_pu(0)));
+        CHECK(is_nan(asym.u(1)));
+        CHECK(is_nan(asym.u_angle(2)));
     }
 
     SUBCASE("Test symmetrical matrix") {

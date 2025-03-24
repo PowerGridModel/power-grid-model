@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Dict
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
 import pytest
 
 from power_grid_model import LoadGenType, initialize_array
-from power_grid_model.core.power_grid_meta import power_grid_meta_data
+from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
     export_json_data,
@@ -21,6 +20,7 @@ from power_grid_model.utils import (
     json_serialize_to_file,
     msgpack_deserialize_from_file,
     msgpack_serialize_to_file,
+    self_test,
 )
 
 
@@ -127,7 +127,7 @@ def test_json_deserialize_from_file(deserialize_mock: MagicMock, open_mock: Magi
     deserialize_mock.return_value = {"foo": [{"val": 123}]}  # type: ignore
     assert json_deserialize_from_file(file_path=Path("output.json")) == deserialize_mock.return_value
     handle.read.assert_called_once()
-    deserialize_mock.assert_called_once_with(handle.read.return_value)
+    deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -149,7 +149,7 @@ def test_msgpack_deserialize_from_file(deserialize_mock: MagicMock, open_mock: M
     deserialize_mock.return_value = {"foo": [{"val": 123}]}  # type: ignore
     assert msgpack_deserialize_from_file(file_path=Path("output.msgpack")) == deserialize_mock.return_value
     handle.read.assert_called_once()
-    deserialize_mock.assert_called_once_with(handle.read.return_value)
+    deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -161,3 +161,7 @@ def test_msgpack_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     serialize_mock.assert_called_once_with(data=data, dataset_type=None, use_compact_list=False)
     handle = open_mock()
     handle.write.assert_called_once_with(serialize_mock.return_value)
+
+
+def test_self_test():
+    self_test()

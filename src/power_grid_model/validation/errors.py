@@ -8,7 +8,9 @@ Error classes
 import re
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Iterable, Type
+
+from power_grid_model import ComponentType
 
 
 class ValidationError(ABC):
@@ -30,18 +32,18 @@ class ValidationError(ABC):
 
     """
 
-    component: Optional[Union[str, List[str]]] = None
+    component: ComponentType | list[ComponentType] | None = None
     """
     The component, or components, to which the error applies.
     """
 
-    field: Optional[Union[str, List[str], List[Tuple[str, str]]]] = None
+    field: str | list[str] | list[tuple[ComponentType, str]] | None = None
     """
     The field, or fields, to which the error applies. A field can also be a tuple (component, field) when multiple
     components are being addressed.
     """
 
-    ids: Optional[Union[List[int], List[Tuple[str, int]]]] = None
+    ids: list[int] | list[tuple[ComponentType, int]] | None = None
     """
     The object identifiers to which the error applies. A field object identifier can also be a tuple (component, id)
     when multiple components are being addressed.
@@ -56,16 +58,28 @@ class ValidationError(ABC):
         """
         A string representation of the component to which this error applies
         """
-        return str(self.component)
+        if self.component is None:
+            return str(None)
+        if isinstance(self.component, list):
+            return "/".join(component.value for component in self.component)
+        return self.component.value
 
     @property
     def field_str(self) -> str:
         """
         A string representation of the field to which this error applies
         """
-        return f"'{self.field}'"
 
-    def get_context(self, id_lookup: Optional[Union[List[str], Dict[int, str]]] = None) -> Dict[str, Any]:
+        def _unpack(field: str | tuple[ComponentType, str]) -> str:
+            if isinstance(field, str):
+                return f"'{field}'"
+            return ".".join(field)
+
+        if isinstance(self.field, list):
+            return self._delimiter.join(_unpack(field) for field in self.field)
+        return _unpack(self.field) if self.field else str(self.field)
+
+    def get_context(self, id_lookup: list[str] | dict[int, str] | None = None) -> dict[str, Any]:
         """
         Returns a dictionary that supplies (human readable) information about this error. Each member variable is
         included in the dictionary. If a function {field_name}_str() exists, the value is overwritten by that function.
@@ -113,11 +127,11 @@ class SingleFieldValidationError(ValidationError):
     """
 
     _message = "Field {field} is not valid for {n} {objects}."
-    component: str
+    component: ComponentType
     field: str
-    ids: List[int]
+    ids: list[int] | None
 
-    def __init__(self, component: str, field: str, ids: Iterable[int]):
+    def __init__(self, component: ComponentType, field: str, ids: Iterable[int] | None):
         """
         Args:
             component: Component name
@@ -126,7 +140,7 @@ class SingleFieldValidationError(ValidationError):
         """
         self.component = component
         self.field = field
-        self.ids = sorted(ids)
+        self.ids = sorted(ids) if ids is not None else None
 
 
 class MultiFieldValidationError(ValidationError):
@@ -135,11 +149,11 @@ class MultiFieldValidationError(ValidationError):
     """
 
     _message = "Combination of fields {field} is not valid for {n} {objects}."
-    component: str
-    field: List[str]
-    ids: List[int]
+    component: ComponentType
+    field: list[str]
+    ids: list[int]
 
-    def __init__(self, component: str, fields: List[str], ids: List[int]):
+    def __init__(self, component: ComponentType, fields: list[str], ids: list[int]):
         """
         Args:
             component: Component name
@@ -153,30 +167,26 @@ class MultiFieldValidationError(ValidationError):
         if len(self.field) < 2:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
 
-    @property
-    def field_str(self) -> str:
-        return self._delimiter.join(f"'{field}'" for field in self.field)
-
 
 class MultiComponentValidationError(ValidationError):
     """
-    Base class for an error that applies to multiple component, and as a consequence also to multiple fields.
+    Base class for an error that applies to multiple components, and, subsequently, multiple fields.
     Even if both fields have the same name, they are considered to be different fields and notated as such.
     E.g. the two fields `id` fields of the `node` and `line` component: [('node', 'id'), ('line', 'id')].
     """
 
-    component: List[str]
-    field: List[Tuple[str, str]]
-    ids: List[Tuple[str, int]]
+    component: list[ComponentType]
+    field: list[tuple[ComponentType, str]]
+    ids: list[tuple[ComponentType, int]]
     _message = "Fields {field} are not valid for {n} {objects}."
 
-    def __init__(self, fields: List[Tuple[str, str]], ids: List[Tuple[str, int]]):
+    def __init__(self, fields: list[tuple[ComponentType, str]], ids: list[tuple[ComponentType, int]]):
         """
         Args:
             fields: List of field names, formatted as tuples (component, field)
             ids: List of component IDs (not row indices), formatted as tuples (component, id)
         """
-        self.component = sorted(set(component for component, _ in fields))
+        self.component = sorted(set(component for component, _ in fields), key=str)
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
@@ -184,14 +194,6 @@ class MultiComponentValidationError(ValidationError):
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
         if len(self.component) < 2:
             raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
-
-    @property
-    def component_str(self) -> str:
-        return "/".join(self.component)
-
-    @property
-    def field_str(self) -> str:
-        return self._delimiter.join(f"{component}.{field}" for component, field in self.field)
 
 
 class NotIdenticalError(SingleFieldValidationError):
@@ -201,11 +203,11 @@ class NotIdenticalError(SingleFieldValidationError):
     """
 
     _message = "Field {field} is not unique for {n} {objects}: {num_unique} different values."
-    values: List[Any]
-    unique: Set[Any]
+    values: list[Any]
+    unique: set[Any]
     num_unique: int
 
-    def __init__(self, component: str, field: str, ids: Iterable[int], values: List[Any]):
+    def __init__(self, component: ComponentType, field: str, ids: Iterable[int], values: list[Any]):
         super().__init__(component, field, ids)
         self.values = values
         self.unique = set(self.values)
@@ -237,9 +239,9 @@ class InvalidEnumValueError(SingleFieldValidationError):
     """
 
     _message = "Field {field} contains invalid {enum} values for {n} {objects}."
-    enum: Type[Enum]
+    enum: Type[Enum] | list[Type[Enum]]
 
-    def __init__(self, component: str, field: str, ids: List[int], enum: Type[Enum]):
+    def __init__(self, component: ComponentType, field: str, ids: list[int], enum: Type[Enum] | list[Type[Enum]]):
         super().__init__(component, field, ids)
         self.enum = enum
 
@@ -248,6 +250,9 @@ class InvalidEnumValueError(SingleFieldValidationError):
         """
         A string representation of the field to which this error applies.
         """
+        if isinstance(self.enum, list):
+            return ",".join(e.__name__ for e in self.enum)
+
         return self.enum.__name__
 
     def __eq__(self, other):
@@ -289,7 +294,7 @@ class IdNotInDatasetError(SingleFieldValidationError):
     _message = "ID does not exist in {ref_dataset} for {n} {objects}."
     ref_dataset: str
 
-    def __init__(self, component: str, ids: List[int], ref_dataset: str):
+    def __init__(self, component: ComponentType, ids: list[int], ref_dataset: str):
         super().__init__(component=component, field="id", ids=ids)
         self.ref_dataset = ref_dataset
 
@@ -314,19 +319,20 @@ class InvalidIdError(SingleFieldValidationError):
     """
 
     _message = "Field {field} does not contain a valid {ref_components} id for {n} {objects}. {filters}"
-    ref_components: List[str]
+    ref_components: list[ComponentType]
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
-        component: str,
+        component: ComponentType,
         field: str,
-        ids: List[int],
-        ref_components: Union[str, List[str]],
-        filters: Optional[Dict[str, Any]] = None,
+        ids: list[int] | None = None,
+        ref_components: ComponentType | list[ComponentType] | None = None,
+        filters: dict[str, Any] | None = None,
     ):
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-positional-arguments
         super().__init__(component=component, field=field, ids=ids)
-        self.ref_components = [ref_components] if isinstance(ref_components, str) else ref_components
+        ref_components = ref_components if ref_components is not None else []
+        self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
         self.filters = filters if filters else None
 
     @property
@@ -367,9 +373,9 @@ class ComparisonError(SingleFieldValidationError):
 
     _message = "Invalid {field}, compared to {ref_value} for {n} {objects}."
 
-    RefType = Union[int, float, str, Tuple[Union[int, float, str], ...]]
+    RefType = int | float | str | tuple[int | float | str, ...]
 
-    def __init__(self, component: str, field: str, ids: List[int], ref_value: "ComparisonError.RefType"):
+    def __init__(self, component: ComponentType, field: str, ids: list[int], ref_value: "ComparisonError.RefType"):
         super().__init__(component, field, ids)
         self.ref_value = ref_value
 
@@ -464,3 +470,51 @@ class FaultPhaseError(MultiFieldValidationError):
     """
 
     _message = "The fault phase is not applicable to the corresponding fault type for {n} {objects}."
+
+
+class PQSigmaPairError(MultiFieldValidationError):
+    """
+    The combination of p_sigma and q_sigma is not valid. They should be both present or both absent.
+    """
+
+    _message = "The combination of p_sigma and q_sigma is not valid for {n} {objects}."
+
+
+class InvalidAssociatedEnumValueError(MultiFieldValidationError):
+    """
+    The value is not a valid value in combination with the other specified attributes.
+    E.g. When a transformer tap regulator has a branch3 control side but regulates a transformer.
+    """
+
+    _message = "The combination of fields {field} results in invalid {enum} values for {n} {objects}."
+    enum: Type[Enum] | list[Type[Enum]]
+
+    def __init__(
+        self,
+        component: ComponentType,
+        fields: list[str],
+        ids: list[int],
+        enum: Type[Enum] | list[Type[Enum]],
+    ):
+        """
+        Args:
+            component: Component name
+            fields: List of field names
+            ids: List of component IDs (not row indices)
+            enum: The supported enum values
+        """
+        super().__init__(component, fields, ids)
+        self.enum = enum
+
+    @property
+    def enum_str(self) -> str:
+        """
+        A string representation of the field to which this error applies.
+        """
+        if isinstance(self.enum, list):
+            return ",".join(e.__name__ for e in self.enum)
+
+        return self.enum.__name__
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.enum == other.enum

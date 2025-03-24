@@ -75,28 +75,25 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
     explicit VoltageSensor(VoltageSensorInput<sym> const& voltage_sensor_input, double u_rated)
         : GenericVoltageSensor{voltage_sensor_input},
           u_rated_{u_rated},
-          u_sigma_{voltage_sensor_input.u_sigma / (u_rated_ * u_scale<sym>)},
-          u_measured_{voltage_sensor_input.u_measured / (u_rated_ * u_scale<sym>)},
+          u_sigma_{voltage_sensor_input.u_sigma * inv_u_norm()},
+          u_measured_{voltage_sensor_input.u_measured * inv_u_norm()},
           u_angle_measured_{voltage_sensor_input.u_angle_measured} {};
 
     UpdateChange update(VoltageSensorUpdate<sym> const& update_data) {
-        assert(update_data.id == this->id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
-        double const scalar = 1 / (u_rated_ * u_scale<sym>);
-
-        update_real_value<sym>(update_data.u_measured, u_measured_, scalar);
+        update_real_value<sym>(update_data.u_measured, u_measured_, inv_u_norm());
         update_real_value<sym>(update_data.u_angle_measured, u_angle_measured_, 1.0);
 
         if (!is_nan(update_data.u_sigma)) {
-            u_sigma_ = update_data.u_sigma * scalar;
+            u_sigma_ = update_data.u_sigma * inv_u_norm();
         }
 
-        return {false, false};
+        return {.topo = false, .param = false};
     }
 
     VoltageSensorUpdate<sym> inverse(VoltageSensorUpdate<sym> update_data) const {
-        assert(update_data.id == this->id());
-
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         double const scalar = u_rated_ * u_scale<sym>;
 
         set_if_not_nan(update_data.u_measured, u_measured_ * scalar);
@@ -111,6 +108,8 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
     double u_sigma_;
     RealValue<sym> u_measured_;
     RealValue<sym> u_angle_measured_;
+
+    constexpr auto inv_u_norm() const { return 1.0 / (u_rated_ * u_scale<sym>); }
 
     bool has_angle() const {
         if constexpr (is_symmetric_v<sym>) {

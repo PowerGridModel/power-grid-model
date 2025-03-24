@@ -56,13 +56,21 @@ class Fault final : public Base {
         return param;
     }
 
-    FaultOutput get_null_output() const { return get_null_output_impl<FaultOutput>(); }
+    FaultOutput get_null_output() const {
+        FaultOutput output{};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
     FaultOutput get_output() const {
         // During power flow and state estimation the fault object will have an empty output
         return get_null_output();
     }
 
-    FaultShortCircuitOutput get_null_sc_output() const { return get_null_output_impl<FaultShortCircuitOutput>(); }
+    FaultShortCircuitOutput get_null_sc_output() const {
+        FaultShortCircuitOutput output{.i_f = {}, .i_f_angle = {}};
+        static_cast<BaseOutput&>(output) = base_output(false);
+        return output;
+    }
     FaultShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
@@ -81,9 +89,9 @@ class Fault final : public Base {
     }
 
     template <symmetry_tag sym>
-    FaultShortCircuitOutput get_sc_output(FaultShortCircuitMathOutput<sym> const& math_output,
+    FaultShortCircuitOutput get_sc_output(FaultShortCircuitSolverOutput<sym> const& solver_output,
                                           double const u_rated) const {
-        return get_sc_output(math_output.i_fault, u_rated);
+        return get_sc_output(solver_output.i_fault, u_rated);
     }
 
     // update faulted object
@@ -106,11 +114,11 @@ class Fault final : public Base {
             x_f_ = update.x_f;
         }
         check_sanity();
-        return {false, false}; // topology and parameters do not change
+        return {.topo = false, .param = false}; // topology and parameters do not change
     }
 
     FaultUpdate inverse(FaultUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status, static_cast<IntS>(status_));
         set_if_not_nan(update_data.fault_type, fault_type_);
@@ -185,13 +193,7 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    template <std::convertible_to<BaseOutput> T> T get_null_output_impl() const {
-        T output{};
-        static_cast<BaseOutput&>(output) = base_output(false);
-        return output;
-    }
-
-    void check_sanity() {
+    void check_sanity() const {
         using enum FaultPhase;
 
         auto const check_supported = [&](auto const& iterable) {
@@ -201,15 +203,19 @@ class Fault final : public Base {
         };
         switch (fault_type_) {
         case FaultType::three_phase:
-            return check_supported(std::array{FaultPhase::nan, default_value, abc});
+            check_supported(std::array{FaultPhase::nan, default_value, abc});
+            return;
         case FaultType::single_phase_to_ground:
-            return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+            check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+            return;
         case FaultType::two_phase:
             [[fallthrough]];
         case FaultType::two_phase_to_ground:
-            return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+            check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+            return;
         case FaultType::nan:
-            return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+            check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+            return;
         default:
             throw InvalidShortCircuitType(fault_type_);
         }

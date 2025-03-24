@@ -7,6 +7,7 @@
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
 
 #include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
 
@@ -142,6 +143,11 @@ constexpr std::string_view json_single = R"(
         "-inf",
         "+inf"
       ]
+    ],
+    "asym_load": [
+      {
+        "id": 100
+      }
     ]
   }
 }
@@ -250,7 +256,7 @@ void check_error(std::string_view json, char const* err_msg) {
     std::vector<NodeInput> node(1);
 
     auto const run = [&]() {
-        Deserializer deserializer{from_json, json};
+        Deserializer deserializer{from_json, json, meta_data_gen::meta_data};
         deserializer.get_dataset_info().set_buffer("node", nullptr, node.data());
         deserializer.parse();
     };
@@ -262,28 +268,52 @@ void check_error(std::string_view json, char const* err_msg) {
 
 TEST_CASE("Deserializer") {
     SUBCASE("Single dataset") {
-        Deserializer deserializer{from_json, json_single};
+        Deserializer deserializer{from_json, json_single, meta_data_gen::meta_data};
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().dataset().name == "input"s);
             CHECK(!deserializer.get_dataset_info().is_batch());
             CHECK(deserializer.get_dataset_info().batch_size() == 1);
-            CHECK(deserializer.get_dataset_info().n_components() == 4);
+            CHECK(deserializer.get_dataset_info().n_components() == 5);
         }
 
         SUBCASE("Check buffer") {
             auto const& info = deserializer.get_dataset_info();
-            CHECK(info.get_component_info("node").elements_per_scenario == 3);
-            CHECK(info.get_component_info("node").total_elements == 3);
-            CHECK(info.get_component_info("line").elements_per_scenario == 2);
-            CHECK(info.get_component_info("line").total_elements == 2);
-            CHECK(info.get_component_info("source").elements_per_scenario == 3);
-            CHECK(info.get_component_info("source").total_elements == 3);
-            CHECK(info.get_component_info("sym_load").elements_per_scenario == 4);
-            CHECK(info.get_component_info("sym_load").total_elements == 4);
+
+            auto const& node_info = info.get_component_info("node");
+            CHECK(node_info.elements_per_scenario == 3);
+            CHECK(node_info.total_elements == 3);
+            CHECK(node_info.has_attribute_indications == true);
+            REQUIRE(node_info.attribute_indications.size() == 2);
+            CHECK(node_info.attribute_indications[0]->name == "id"s);
+            CHECK(node_info.attribute_indications[1]->name == "u_rated"s);
+
+            auto const& line_info = info.get_component_info("line");
+            CHECK(line_info.elements_per_scenario == 2);
+            CHECK(line_info.total_elements == 2);
+            CHECK(line_info.has_attribute_indications == false);
+            CHECK(line_info.attribute_indications.empty());
+
+            auto const& source_info = info.get_component_info("source");
+            CHECK(source_info.elements_per_scenario == 3);
+            CHECK(source_info.total_elements == 3);
+            CHECK(source_info.has_attribute_indications == false);
+            CHECK(source_info.attribute_indications.empty());
+
+            auto const& sym_load_info = info.get_component_info("sym_load");
+            CHECK(sym_load_info.elements_per_scenario == 4);
+            CHECK(sym_load_info.total_elements == 4);
+            CHECK(sym_load_info.has_attribute_indications == true);
+            REQUIRE(sym_load_info.attribute_indications.size() == 6);
+            CHECK(sym_load_info.attribute_indications[0]->name == "id"s);
+            CHECK(sym_load_info.attribute_indications[1]->name == "node"s);
+            CHECK(sym_load_info.attribute_indications[2]->name == "status"s);
+            CHECK(sym_load_info.attribute_indications[3]->name == "type"s);
+            CHECK(sym_load_info.attribute_indications[4]->name == "p_specified"s);
+            CHECK(sym_load_info.attribute_indications[5]->name == "q_specified"s);
         }
 
-        SUBCASE("Check parse") {
+        SUBCASE("Check parse row-based") {
             std::vector<NodeInput> node(3);
             std::vector<LineInput> line(2);
             std::vector<SourceInput> source(3);
@@ -333,10 +363,86 @@ TEST_CASE("Deserializer") {
             CHECK(sym_load[3].p_specified == -std::numeric_limits<double>::infinity());
             CHECK(sym_load[3].q_specified == std::numeric_limits<double>::infinity());
         }
+
+        SUBCASE("Check parse columnar") {
+            std::vector<ID> node_id(3);
+            std::vector<double> node_u_rated(3);
+            std::vector<ID> line_id(2);
+            std::vector<double> line_r1(2);
+            std::vector<double> line_r0(2);
+            std::vector<double> line_x1(2);
+            std::vector<double> line_x0(2);
+            std::vector<ID> source_id(3);
+            std::vector<double> source_u_ref(3);
+            std::vector<double> source_sk(3);
+            std::vector<double> source_rx_ratio(3);
+            std::vector<ID> sym_load_id(4);
+            std::vector<RealValue<symmetric_t>> sym_load_p_specified(4);
+            std::vector<RealValue<symmetric_t>> sym_load_q_specified(4);
+
+            auto& info = deserializer.get_dataset_info();
+            info.set_buffer("node", nullptr, nullptr);
+            info.set_attribute_buffer("node", "id", node_id.data());
+            info.set_attribute_buffer("node", "u_rated", node_u_rated.data());
+            info.set_buffer("line", nullptr, nullptr);
+            info.set_attribute_buffer("line", "id", line_id.data());
+            info.set_attribute_buffer("line", "r1", line_r1.data());
+            info.set_attribute_buffer("line", "r0", line_r0.data());
+            info.set_attribute_buffer("line", "x1", line_x1.data());
+            info.set_attribute_buffer("line", "x0", line_x0.data());
+            info.set_buffer("source", nullptr, nullptr);
+            info.set_attribute_buffer("source", "id", source_id.data());
+            info.set_attribute_buffer("source", "u_ref", source_u_ref.data());
+            info.set_attribute_buffer("source", "sk", source_sk.data());
+            info.set_attribute_buffer("source", "rx_ratio", source_rx_ratio.data());
+            info.set_buffer("sym_load", nullptr, nullptr);
+            info.set_attribute_buffer("sym_load", "id", sym_load_id.data());
+            info.set_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
+            info.set_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+
+            deserializer.parse();
+            // check node
+            CHECK(node_id[0] == 1);
+            CHECK(node_u_rated[0] == doctest::Approx(10.5e3));
+            CHECK(node_id[1] == 2);
+            CHECK(node_u_rated[1] == doctest::Approx(10.5e3));
+            CHECK(node_id[2] == 3);
+            CHECK(node_u_rated[2] == doctest::Approx(10.5e3));
+            // check line
+            CHECK(line_id[0] == 4);
+            CHECK(line_r1[0] == doctest::Approx(0.11));
+            CHECK(is_nan(line_r0[0]));
+            CHECK(line_id[1] == 5);
+            CHECK(line_x1[1] == doctest::Approx(0.16));
+            CHECK(is_nan(line_x0[1]));
+            // check source
+            CHECK(source_id[0] == 15);
+            CHECK(source_u_ref[0] == doctest::Approx(1.03));
+            CHECK(source_sk[0] == doctest::Approx(1e20));
+            CHECK(is_nan(source_rx_ratio[0]));
+            CHECK(source_id[1] == 16);
+            CHECK(source_u_ref[1] == doctest::Approx(1.04));
+            CHECK(is_nan(source_sk[1]));
+            CHECK(is_nan(source_rx_ratio[1]));
+            CHECK(source_id[2] == 17);
+            CHECK(source_u_ref[2] == doctest::Approx(1.03));
+            CHECK(source_sk[2] == doctest::Approx(1e10));
+            CHECK(source_rx_ratio[2] == doctest::Approx(0.2));
+            // check sym_load
+            CHECK(sym_load_id[0] == 7);
+            CHECK(sym_load_p_specified[0] == doctest::Approx(1.01e6));
+            CHECK(sym_load_id[1] == 8);
+            CHECK(sym_load_q_specified[1] == doctest::Approx(0.22e6));
+            CHECK(sym_load_id[2] == 36);
+            CHECK(sym_load_p_specified[2] == std::numeric_limits<double>::infinity());
+            CHECK(sym_load_id[3] == 37);
+            CHECK(sym_load_p_specified[3] == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load_q_specified[3] == std::numeric_limits<double>::infinity());
+        }
     }
 
     SUBCASE("Batch dataset") {
-        Deserializer deserializer{from_json, json_batch};
+        Deserializer deserializer{from_json, json_batch, meta_data_gen::meta_data};
 
         SUBCASE("Check meta data") {
             CHECK(deserializer.get_dataset_info().dataset().name == "update"s);
@@ -349,11 +455,15 @@ TEST_CASE("Deserializer") {
             auto const& info = deserializer.get_dataset_info();
             CHECK(info.get_component_info("sym_load").elements_per_scenario == -1);
             CHECK(info.get_component_info("sym_load").total_elements == 4);
+            CHECK(info.get_component_info("sym_load").has_attribute_indications == false);
+            CHECK(info.get_component_info("sym_load").attribute_indications.empty());
             CHECK(info.get_component_info("asym_load").elements_per_scenario == 1);
             CHECK(info.get_component_info("asym_load").total_elements == 4);
+            CHECK(info.get_component_info("asym_load").has_attribute_indications == false);
+            CHECK(info.get_component_info("asym_load").attribute_indications.empty());
         }
 
-        SUBCASE("Check parse") {
+        SUBCASE("Check parse row-based") {
             std::vector<SymLoadGenUpdate> sym_load(4);
             std::vector<AsymLoadGenUpdate> asym_load(4);
             IdxVector sym_load_indptr(deserializer.get_dataset_info().batch_size() + 1);
@@ -401,6 +511,71 @@ TEST_CASE("Deserializer") {
             CHECK(asym_load[3].q_specified(0) == std::numeric_limits<double>::infinity());
             CHECK(asym_load[3].q_specified(1) == doctest::Approx(80.0));
             CHECK(asym_load[3].q_specified(2) == std::numeric_limits<double>::infinity());
+        }
+
+        SUBCASE("Check parse columnar") {
+            std::vector<ID> sym_load_id(4);
+            std::vector<IntS> sym_load_status(4);
+            std::vector<RealValue<symmetric_t>> sym_load_p_specified(4);
+            std::vector<RealValue<symmetric_t>> sym_load_q_specified(4);
+            std::vector<ID> asym_load_id(4);
+            std::vector<IntS> asym_load_status(4);
+            std::vector<RealValue<asymmetric_t>> asym_load_p_specified(4);
+            std::vector<RealValue<asymmetric_t>> asym_load_q_specified(4);
+            IdxVector sym_load_indptr(deserializer.get_dataset_info().batch_size() + 1);
+
+            auto& info = deserializer.get_dataset_info();
+            info.set_buffer("sym_load", sym_load_indptr.data(), nullptr);
+            info.set_attribute_buffer("sym_load", "id", sym_load_id.data());
+            info.set_attribute_buffer("sym_load", "status", sym_load_status.data());
+            info.set_attribute_buffer("sym_load", "p_specified", sym_load_p_specified.data());
+            info.set_attribute_buffer("sym_load", "q_specified", sym_load_q_specified.data());
+            info.set_buffer("asym_load", nullptr, nullptr);
+            info.set_attribute_buffer("asym_load", "id", asym_load_id.data());
+            info.set_attribute_buffer("asym_load", "status", asym_load_status.data());
+            info.set_attribute_buffer("asym_load", "p_specified", asym_load_p_specified.data());
+            info.set_attribute_buffer("asym_load", "q_specified", asym_load_q_specified.data());
+
+            deserializer.parse();
+
+            // sym_load
+            CHECK(sym_load_indptr == IdxVector{0, 1, 1, 3, 4});
+            CHECK(sym_load_id[0] == 7);
+            CHECK(sym_load_p_specified[0] == doctest::Approx(20.0));
+            CHECK(sym_load_status[0] == na_IntS);
+            CHECK(sym_load_id[1] == 7);
+            CHECK(is_nan(sym_load_p_specified[1]));
+            CHECK(sym_load_q_specified[1] == doctest::Approx(10.0));
+            CHECK(sym_load_status[1] == na_IntS);
+            CHECK(sym_load_id[2] == 8);
+            CHECK(is_nan(sym_load_p_specified[2]));
+            CHECK(is_nan(sym_load_q_specified[2]));
+            CHECK(sym_load_status[2] == 0);
+            CHECK(sym_load_id[3] == 37);
+            CHECK(sym_load_p_specified[3] == -std::numeric_limits<double>::infinity());
+            CHECK(sym_load_q_specified[3] == std::numeric_limits<double>::infinity());
+
+            // asym_load
+            CHECK(asym_load_id[0] == 9);
+            CHECK(asym_load_p_specified[0](0) == doctest::Approx(100.0));
+            CHECK(is_nan(asym_load_p_specified[0](1)));
+            CHECK(asym_load_p_specified[0](2) == doctest::Approx(200));
+            CHECK(is_nan(asym_load_q_specified[0]));
+            CHECK(asym_load_id[1] == 9);
+            CHECK(is_nan(asym_load_p_specified[1]));
+            CHECK(is_nan(asym_load_q_specified[1]));
+            CHECK(asym_load_id[2] == 9);
+            CHECK(is_nan(asym_load_p_specified[2]));
+            CHECK(asym_load_q_specified[2](0) == doctest::Approx(70.0));
+            CHECK(asym_load_q_specified[2](1) == doctest::Approx(80.0));
+            CHECK(asym_load_q_specified[2](2) == doctest::Approx(90.0));
+            CHECK(asym_load_id[3] == 31);
+            CHECK(asym_load_p_specified[3](0) == -std::numeric_limits<double>::infinity());
+            CHECK(asym_load_p_specified[3](1) == doctest::Approx(75.0));
+            CHECK(asym_load_p_specified[3](2) == -std::numeric_limits<double>::infinity());
+            CHECK(asym_load_q_specified[3](0) == std::numeric_limits<double>::infinity());
+            CHECK(asym_load_q_specified[3](1) == doctest::Approx(80.0));
+            CHECK(asym_load_q_specified[3](2) == std::numeric_limits<double>::infinity());
         }
     }
 }

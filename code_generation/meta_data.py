@@ -5,7 +5,6 @@
 # define dataclass for meta data
 
 from dataclasses import dataclass
-from typing import List, Optional, Union
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -13,30 +12,33 @@ from dataclasses_json import DataClassJsonMixin
 @dataclass
 class Attribute(DataClassJsonMixin):
     data_type: str
-    names: Union[str, List[str]]
+    names: str | list[str]
     description: str
+    nan_value: str | None = None
 
 
 @dataclass
 class AttributeClass(DataClassJsonMixin):
     name: str
-    attributes: List[Attribute]
-    full_attributes: Optional[List[Attribute]] = None
-    base: Optional[str] = None
+    attributes: list[Attribute]
+    full_attributes: list[Attribute] | None = None
+    base: str | None = None
     is_template: bool = False
-    full_name: Optional[str] = None
+    full_name: str | None = None
+    specification_names: list[str] | None = None
+    base_attributes: dict[str, list[Attribute]] | None = None
 
 
 @dataclass
 class DatasetMetaData(DataClassJsonMixin):
     name: str
     include_guard: str
-    classes: List[AttributeClass]
+    classes: list[AttributeClass]
 
 
 @dataclass
 class ObjectMapData(DataClassJsonMixin):
-    names: List[str]
+    names: list[str]
     class_name: str
 
 
@@ -44,9 +46,9 @@ class ObjectMapData(DataClassJsonMixin):
 class DatasetMapData(DataClassJsonMixin):
     name: str
     is_template: bool
-    components: List[ObjectMapData]
+    components: list[ObjectMapData]
 
 
 @dataclass
 class AllDatasetMapData(DataClassJsonMixin):
-    all_datasets: List[DatasetMapData]
+    all_datasets: list[DatasetMapData]

@@ -200,11 +200,16 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
 };
 
 // solver
-template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolver<sym, NewtonRaphsonPFSolver<sym>> {
+template <symmetry_tag sym_type>
+class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPFSolver<sym_type>> {
   public:
+    using sym = sym_type;
+
     using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
     using BlockPermArray =
         typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+
+    static constexpr auto is_iterative = true;
 
     NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
@@ -215,7 +220,8 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
-    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, MathOutput<sym>& output) {
+    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                   SolverOutput<sym>& output) {
         using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
 
         ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
@@ -407,7 +413,7 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
     void add_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position, YBus<sym> const& y_bus,
                      PowerFlowInput<sym> const& input, ComplexValueVector<sym> const& u) {
         for (Idx const source_number : sources) {
-            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number];
+            ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
             ComplexValue<sym> const u_ref{input.source[source_number]};
             // calculate block, um = ui, us = uref
             PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
@@ -434,9 +440,6 @@ template <symmetry_tag sym> class NewtonRaphsonPFSolver : public IterativePFSolv
         }
     }
 };
-
-template class NewtonRaphsonPFSolver<symmetric_t>;
-template class NewtonRaphsonPFSolver<asymmetric_t>;
 
 } // namespace newton_raphson_pf
 

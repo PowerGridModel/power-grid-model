@@ -86,18 +86,24 @@ template <symmetry_tag sym> class NRSEGainBlock : public Block<double, sym, true
 };
 
 // solver
-template <symmetry_tag sym> class NewtonRaphsonSESolver {
-    enum class Order { row_major = 0, column_major = 1 };
+template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
+  public:
+    using sym = sym_type;
+
+    static constexpr auto is_iterative = true;
+
+  private:
+    enum class Order : IntS { row_major = 0, column_major = 1 };
 
     struct NRSEVoltageState {
-        ComplexTensor<sym> ui_ui_conj{};
-        ComplexTensor<sym> uj_uj_conj{};
-        ComplexTensor<sym> ui_uj_conj{};
-        ComplexTensor<sym> uj_ui_conj{};
-        ComplexValue<sym> ui{};
-        ComplexValue<sym> uj{};
-        RealDiagonalTensor<sym> abs_ui_inv{};
-        RealDiagonalTensor<sym> abs_uj_inv{};
+        ComplexTensor<sym> ui_ui_conj;
+        ComplexTensor<sym> uj_uj_conj;
+        ComplexTensor<sym> ui_uj_conj;
+        ComplexTensor<sym> uj_ui_conj;
+        ComplexValue<sym> ui;
+        ComplexValue<sym> uj;
+        RealDiagonalTensor<sym> abs_ui_inv;
+        RealDiagonalTensor<sym> abs_uj_inv;
 
         auto const& u_chi_u_chi_conj(Order ij_voltage_order) const {
             return ij_voltage_order == Order::row_major ? ui_ui_conj : uj_uj_conj;
@@ -114,10 +120,10 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     };
 
     struct NRSEJacobian {
-        RealTensor<sym> dP_dt{};
-        RealTensor<sym> dP_dv{};
-        RealTensor<sym> dQ_dt{};
-        RealTensor<sym> dQ_dv{};
+        RealTensor<sym> dP_dt;
+        RealTensor<sym> dP_dv;
+        RealTensor<sym> dQ_dt;
+        RealTensor<sym> dQ_dv;
 
         NRSEJacobian& operator+=(NRSEJacobian const& other) {
             this->dP_dt += other.dP_dt;
@@ -138,12 +144,12 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(y_bus.size()) {}
 
-    MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
-                                         Idx max_iter, CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
+                                           double err_tol, Idx max_iter, CalculationInfo& calculation_info) {
         // prepare
         Timer main_timer;
         Timer sub_timer;
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
         output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
@@ -153,7 +159,8 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
-        necessary_observability_check(measured_values, y_bus.shared_topology());
+        auto const observability_result =
+            necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
@@ -169,7 +176,8 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation");
-            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_);
+            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_,
+                                                  observability_result.use_perturbation());
             sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
             max_dev = iterate_unknown(output.u, measured_values);
         };
@@ -345,10 +353,10 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     /// R_ii = -variance, only diagonal
     /// assign variance to diagonal of 3x3 tensor, for asym
     void process_injection_diagonal(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& injection) const {
-        rhs_block.tau_p() += injection.value.real();
-        rhs_block.tau_q() += injection.value.imag();
-        block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.p_variance}};
-        block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.q_variance}};
+        rhs_block.tau_p() += injection.value().real();
+        rhs_block.tau_q() += injection.value().imag();
+        block.r_P_theta() = RealTensor<sym>{RealValue<sym>{-injection.real_component.variance}};
+        block.r_Q_v() = RealTensor<sym>{RealValue<sym>{-injection.imag_component.variance}};
     }
 
     /// @brief Processes common part of all elements to fill from an injection measurement.
@@ -428,8 +436,8 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     /// @param order Order enum to determine if (chi, psi) = (row, col) or (col, row)
     /// @param measured_power
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    const auto& y_xi_xi, const auto& y_xi_mu, const auto& u_state, Order const order,
-                                    const auto& measured_power) {
+                                    auto const& y_xi_xi, auto const& y_xi_mu, auto const& u_state, Order const order,
+                                    auto const& measured_power) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
         auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
 
@@ -453,8 +461,8 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     }
 
     void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    auto& left_block, const auto& right_block, const auto& measured_power,
-                                    const auto& f_x_complex) {
+                                    auto& left_block, auto const& right_block, auto const& measured_power,
+                                    auto const& f_x_complex) {
         auto const& block_F_T_k_w = transpose_multiply_weight(left_block, measured_power);
 
         multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, left_block);
@@ -513,7 +521,8 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     /// eta(row) += w_k . (z_k - f_k(x))
     ///
     /// In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
-    /// angle measurement of zero. w_theta = 1.0 by default for all measurements
+    /// angle measurement of zero. w_theta = w_k by default for all measurements
+    ///    angle_error = u_error / u_rated (1.0) = w_k
     ///
     /// @param block LHS(row, col), ie. LHS(row, row)
     /// @param rhs_block RHS(row)
@@ -539,10 +548,10 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
         RealValue<sym> delta_theta{};
         if (measured_values.has_angle_measurement(bus)) {
             delta_theta = RealValue<sym>{arg(measured_values.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
-            w_theta = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{w_v};
         } else if (bus == virtual_angle_measurement_bus && !measured_values.has_angle()) {
             delta_theta = arg(ComplexValue<sym>{1.0}) - RealValue<sym>{x_[bus].theta()};
-            w_theta = RealTensor<sym>{1.0};
+            w_theta = RealTensor<sym>{w_v};
         }
 
         block.g_P_theta() += w_theta;
@@ -575,8 +584,8 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     /// @return  F_k(u1, u2, y12)^T . W
     NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block,
                                            PowerSensorCalcParam<sym> const& power_sensor) {
-        auto const w_p = diagonal_inverse(power_sensor.p_variance);
-        auto const w_q = diagonal_inverse(power_sensor.q_variance);
+        auto const w_p = diagonal_inverse(power_sensor.real_component.variance);
+        auto const w_q = diagonal_inverse(power_sensor.imag_component.variance);
 
         NRSEJacobian product{};
         product.dP_dt = dot(w_p, jac_block.dP_dt);
@@ -610,7 +619,7 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
     static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& f_T_k_w,
                                                  PowerSensorCalcParam<sym> const& power_sensor,
                                                  ComplexValue<sym> const& f_x_complex) {
-        auto const delta_power = power_sensor.value - f_x_complex;
+        ComplexValue<sym> const delta_power = power_sensor.value() - f_x_complex;
         rhs_block.eta_theta() += dot(f_T_k_w.dP_dt, real(delta_power)) + dot(f_T_k_w.dP_dv, imag(delta_power));
         rhs_block.eta_v() += dot(f_T_k_w.dQ_dt, real(delta_power)) + dot(f_T_k_w.dQ_dv, imag(delta_power));
     }
@@ -670,10 +679,10 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
             estimated_result.theta() += estimated_delta.theta() - RealValue<sym>{angle_offset};
             estimated_result.v() += estimated_delta.v();
             if (measured_values.has_bus_injection(bus)) {
-                if (all_zero(measured_values.bus_injection(bus).p_variance)) {
+                if (all_zero(measured_values.bus_injection(bus).real_component.variance)) {
                     estimated_result.phi_p() += estimated_delta.phi_p();
                 }
-                if (all_zero(measured_values.bus_injection(bus).q_variance)) {
+                if (all_zero(measured_values.bus_injection(bus).imag_component.variance)) {
                     estimated_result.phi_q() += estimated_delta.phi_q();
                 }
             }
@@ -691,9 +700,6 @@ template <symmetry_tag sym> class NewtonRaphsonSESolver {
         return RealDiagonalTensor<sym>{static_cast<RealValue<sym>>(RealValue<sym>{1.0} / value)};
     }
 };
-
-template class NewtonRaphsonSESolver<symmetric_t>;
-template class NewtonRaphsonSESolver<asymmetric_t>;
 
 } // namespace newton_raphson_se
 

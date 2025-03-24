@@ -6,14 +6,17 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
 import pytest
 
-from power_grid_model.core.power_grid_model import PowerGridModel
+from power_grid_model._core.dataset_definitions import DatasetType
+from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
+    AutomaticTapCalculationError,
+    AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
     IDWrongType,
@@ -21,11 +24,14 @@ from power_grid_model.errors import (
     InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
+    InvalidRegulatedObject,
     InvalidTransformerClock,
+    MaxIterationReached,
     NotObservableError,
     PowerGridBatchError,
     PowerGridError,
     PowerGridSerializationError,
+    SparseMatrixError,
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
@@ -48,11 +54,16 @@ KNOWN_EXCEPTIONS = {
         InvalidBranch3,
         InvalidCalculationMethod,
         InvalidMeasuredObject,
+        InvalidRegulatedObject,
+        AutomaticTapCalculationError,
+        AutomaticTapInputError,
         InvalidTransformerClock,
         NotObservableError,
+        SparseMatrixError,
         PowerGridSerializationError,
         AssertionError,
         OSError,
+        MaxIterationReached,
     )
 }
 
@@ -88,7 +99,7 @@ def get_output_type(calculation_type: str, sym: bool) -> str:
     return "asym_output"
 
 
-def get_test_case_paths(calculation_type: str, test_cases: Optional[List[str]] = None) -> Dict[str, Path]:
+def get_test_case_paths(calculation_type: str, test_cases: list[str] | None = None) -> dict[str, Path]:
     """get a list of all cases, directories in validation datasets"""
     calculation_type_dir = DATA_PATH / calculation_type
     test_case_paths = {
@@ -168,7 +179,7 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
             )
 
 
-def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, test_cases: Optional[List[str]] = None):
+def pytest_cases(get_batch_cases: bool = False, data_dir: str | None = None, test_cases: list[str] | None = None):
     if data_dir is not None:
         relevant_calculations = [data_dir]
     else:
@@ -186,14 +197,14 @@ def pytest_cases(get_batch_cases: bool = False, data_dir: Optional[str] = None, 
             )
 
 
-def bool_params(true_id: str, false_id: Optional[str] = None, **kwargs):
+def bool_params(true_id: str, false_id: str | None = None, **kwargs):
     if false_id is None:
         false_id = f"not-{true_id}"
     yield pytest.param(False, **kwargs, id=false_id)
     yield pytest.param(True, **kwargs, id=true_id)
 
 
-def dict_params(params: Dict[Any, str], **kwargs):
+def dict_params(params: dict[Any, str], **kwargs):
     for value, param_id in params.items():
         yield pytest.param(value, **kwargs, id=param_id)
 
@@ -219,8 +230,11 @@ def save_json_data(json_file: str, data: Dataset):
     json_serialize_to_file(data_file, data)
 
 
-def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: Union[float, Dict[str, float]]):
+def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: float | dict[str, float]):
     for key, expected_data in expected.items():
+        if not isinstance(expected_data, np.ndarray):
+            raise NotImplementedError("Validation tests are not implemented for columnar data")
+
         for col_name in expected_data.dtype.names:
             actual_col = actual[key][col_name]
             expected_col = expected_data[col_name]
@@ -280,7 +294,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                 )
 
 
-def convert_python_to_numpy(data: PythonDataset, data_type: str) -> Dataset:
+def convert_python_to_numpy(data: PythonDataset, data_type: DatasetType) -> Dataset:
     """
     Convert native python data to internal numpy
 

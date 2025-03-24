@@ -46,16 +46,16 @@ class Shunt : public Appliance {
     }
 
     UpdateChange update(ShuntUpdate const& update_data) {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
         bool changed = set_status(update_data.status);
         changed = update_params(update_data) || changed;
 
         // change shunt connection will not change topology, but will change parameters
-        return {false, changed};
+        return {.topo = false, .param = changed};
     }
 
     ShuntUpdate inverse(ShuntUpdate update_data) const {
-        assert(update_data.id == id());
+        assert(update_data.id == this->id() || is_nan(update_data.id));
 
         set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
         set_if_not_nan(update_data.g1, g1_);
@@ -77,8 +77,8 @@ class Shunt : public Appliance {
     DoubleComplex y0_{nan};
 
     template <typename T>
-        requires std::same_as<T, ShuntInput> || std::same_as<T, ShuntUpdate> bool
-    update_params(T shunt_params) {
+        requires std::same_as<T, ShuntInput> || std::same_as<T, ShuntUpdate>
+    bool update_params(T shunt_params) {
         bool changed = update_param(shunt_params.g1, g1_);
         changed = update_param(shunt_params.b1, b1_) || changed;
         changed = update_param(shunt_params.g0, g0_) || changed;
@@ -101,18 +101,18 @@ class Shunt : public Appliance {
         return true;
     }
 
-    template <symmetry_tag sym_calc> ApplianceMathOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
-        ApplianceMathOutput<sym_calc> appliance_math_output;
+    template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
+        ApplianceSolverOutput<sym_calc> appliance_solver_output;
         ComplexTensor<sym_calc> const param = calc_param<sym_calc>();
         // return value should be injection direction, therefore a negative sign for i
-        appliance_math_output.i = -dot(param, u);
-        appliance_math_output.s = u * conj(appliance_math_output.i);
-        return appliance_math_output;
+        appliance_solver_output.i = -dot(param, u);
+        appliance_solver_output.s = u * conj(appliance_solver_output.i);
+        return appliance_solver_output;
     }
-    ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
+    ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
         return u2si<symmetric_t>(u);
     }
-    ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
+    ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
         return u2si<asymmetric_t>(u);
     }
 

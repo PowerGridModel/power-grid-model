@@ -49,24 +49,24 @@ class Appliance : public Base {
 
     // empty output
     template <symmetry_tag sym> ApplianceOutput<sym> get_null_output() const {
-        ApplianceOutput<sym> output{};
+        ApplianceOutput<sym> output{.p = {}, .q = {}, .i = {}, .s = {}, .pf = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
     ApplianceShortCircuitOutput get_null_sc_output() const {
-        ApplianceShortCircuitOutput output{};
+        ApplianceShortCircuitOutput output{.i = {}, .i_angle = {}};
         static_cast<BaseOutput&>(output) = base_output(false);
         return output;
     }
 
     template <symmetry_tag sym>
-    ApplianceOutput<sym> get_output(ApplianceMathOutput<sym> const& appliance_math_output) const {
+    ApplianceOutput<sym> get_output(ApplianceSolverOutput<sym> const& appliance_solver_output) const {
         ApplianceOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(energized(true));
-        output.p = base_power<sym> * real(appliance_math_output.s) * injection_direction();
-        output.q = base_power<sym> * imag(appliance_math_output.s) * injection_direction();
-        output.s = base_power<sym> * cabs(appliance_math_output.s);
-        output.i = base_i_ * cabs(appliance_math_output.i);
+        output.p = base_power<sym> * real(appliance_solver_output.s) * injection_direction();
+        output.q = base_power<sym> * imag(appliance_solver_output.s) * injection_direction();
+        output.s = base_power<sym> * cabs(appliance_solver_output.s);
+        output.i = base_i_ * cabs(appliance_solver_output.i);
         // pf
         if constexpr (is_symmetric_v<sym>) {
             if (output.s < numerical_tolerance) {
@@ -104,8 +104,9 @@ class Appliance : public Base {
         }
     }
     template <symmetry_tag sym>
-    ApplianceShortCircuitOutput get_sc_output(ApplianceShortCircuitMathOutput<sym> const& appliance_math_output) const {
-        return get_sc_output(appliance_math_output.i);
+    ApplianceShortCircuitOutput
+    get_sc_output(ApplianceShortCircuitSolverOutput<sym> const& appliance_solver_output) const {
+        return get_sc_output(appliance_solver_output.i);
     }
 
   private:
@@ -114,8 +115,8 @@ class Appliance : public Base {
     double base_i_;
 
     // pure virtual functions for translate from u to s/i
-    virtual ApplianceMathOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const = 0;
-    virtual ApplianceMathOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const = 0;
+    virtual ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const = 0;
+    virtual ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const = 0;
 
     virtual double injection_direction() const = 0;
 };

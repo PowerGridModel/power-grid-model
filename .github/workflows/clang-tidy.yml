@@ -13,34 +13,44 @@ on:
   pull_request:
   # run pipeline on merge queue
   merge_group:
+  # run pipeline from another workflow
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        description: "The CMake target to run (e.g.: all)"
+        required: true
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       target:
         type: choice
         description: The CMake target to run
-        default: power_grid_model_c
+        default: all power_grid_model_benchmark_cpp
         options:
           - all
+          - all power_grid_model_benchmark_cpp
           - power_grid_model_c
+          - power_grid_model_unit_tests
+          - power_grid_model_api_tests
+          - power_grid_model_validation_tests
+          - power_grid_model_benchmark_cpp
+          - power_grid_model_c_example
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-clang-tidy
   cancel-in-progress: true
 
 jobs:
   clang-tidy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         build-option: [ debug, release ]
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      CC: clang-15
-      CXX: clang++-15
-      CLANG_TIDY: clang-tidy-15
       PRESET: ci-clang-tidy-${{ matrix.build-option }}
       TARGET: nonexistent  # will be overwritten later in this action
 
@@ -50,7 +60,10 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build clang-15 clang-tidy-15
+          sudo apt-get install -y ninja-build clang-18 clang-tidy-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/clang-tidy-18 /usr/local/bin/clang-tidy
 
       - name: Enable brew
         run: |
@@ -61,14 +74,14 @@ jobs:
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Set build target in case of push
-        if: github.event_name != 'workflow_dispatch'
+        if: inputs.target == null
         run: |
-          echo "TARGET=power_grid_model_c" >> $GITHUB_ENV
+          echo "TARGET=power_grid_model_api_tests" >> $GITHUB_ENV
 
       - name: Set build target in case of workflow dispatch
-        if: github.event_name == 'workflow_dispatch'
+        if: inputs.target != null
         run: |
-          echo "TARGET=${{ github.event.inputs.target }}" >> $GITHUB_ENV
+          echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
 
       - name: Build
         run: |

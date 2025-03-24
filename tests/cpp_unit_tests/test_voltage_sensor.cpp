@@ -31,7 +31,7 @@ void check_nan_preserving_equality(RealValue<asymmetric_t> const& actual, RealVa
 
 TEST_CASE("Test voltage sensor") {
     SUBCASE("Test Sensor energized function") {
-        VoltageSensorInput<symmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -40,7 +40,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test Sensor math_model_type") {
-        VoltageSensorInput<symmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -48,7 +48,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test get_null_output") {
-        VoltageSensorInput<symmetric_t> voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> voltage_sensor_input{.id = 0, .measured_object = 1};
         voltage_sensor_input.id = 12;
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
@@ -65,7 +65,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - sym") {
-        VoltageSensorInput<symmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<symmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 2.0;
         VoltageSensor<symmetric_t> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -97,7 +97,7 @@ TEST_CASE("Test voltage sensor") {
     }
 
     SUBCASE("Test voltage sensor update - asym") {
-        VoltageSensorInput<asymmetric_t> const voltage_sensor_input{};
+        VoltageSensorInput<asymmetric_t> const voltage_sensor_input{.id = 0, .measured_object = 1};
         double const u_rated = 2.0;
         VoltageSensor<asymmetric_t> voltage_sensor{voltage_sensor_input, u_rated};
 
@@ -114,8 +114,8 @@ TEST_CASE("Test voltage sensor") {
         VoltageSensorCalcParam<asymmetric_t> param = voltage_sensor.calc_param<asymmetric_t>();
         CHECK(param.variance == doctest::Approx(6.75));
 
-        ComplexValue<asymmetric_t> expected_param_value{0.5 * sqrt(3) * exp(1i * 2.0), 0.55 * sqrt(3) * exp(1i * 2.1),
-                                                        0.6 * sqrt(3) * exp(1i * 2.2)};
+        ComplexValue<asymmetric_t> expected_param_value{0.5 * sqrt3 * exp(1i * 2.0), 0.55 * sqrt3 * exp(1i * 2.1),
+                                                        0.6 * sqrt3 * exp(1i * 2.2)};
         CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
         CHECK(cabs(param.value[2]) == doctest::Approx(cabs(expected_param_value[2])));
@@ -126,8 +126,7 @@ TEST_CASE("Test voltage sensor") {
 
         update = voltage_sensor.update(vs_update);
         param = voltage_sensor.calc_param<asymmetric_t>();
-        expected_param_value = {1.5 * sqrt(3) * exp(1i * 4.0), 0.55 * sqrt(3) * exp(1i * 4.1),
-                                1.6 * sqrt(3) * exp(1i * 2.2)};
+        expected_param_value = {1.5 * sqrt3 * exp(1i * 4.0), 0.55 * sqrt3 * exp(1i * 4.1), 1.6 * sqrt3 * exp(1i * 2.2)};
 
         CHECK(cabs(param.value[0]) == doctest::Approx(cabs(expected_param_value[0])));
         CHECK(cabs(param.value[1]) == doctest::Approx(cabs(expected_param_value[1])));
@@ -496,14 +495,38 @@ TEST_CASE("Test voltage sensor") {
         }
     }
 
+    SUBCASE("Construction and update") {
+        VoltageSensorInput<symmetric_t> const sym_voltage_sensor_input{
+            .id = 7, .measured_object = 3, .u_sigma = 1.0, .u_measured = 25000, .u_angle_measured = -0.2};
+        VoltageSensorUpdate<symmetric_t> const sym_voltage_sensor_update{
+            .id = 7,
+            .u_sigma = sym_voltage_sensor_input.u_sigma,
+            .u_measured = sym_voltage_sensor_input.u_measured,
+            .u_angle_measured = sym_voltage_sensor_input.u_angle_measured};
+
+        SymVoltageSensor sym_voltage_sensor{sym_voltage_sensor_input, 31250};
+        auto const orig_calc_param = sym_voltage_sensor.calc_param<symmetric_t>();
+
+        sym_voltage_sensor.update(sym_voltage_sensor_update);
+        auto const updated_calc_param = sym_voltage_sensor.calc_param<symmetric_t>();
+
+        CHECK(orig_calc_param.value == updated_calc_param.value);
+        CHECK(orig_calc_param.variance == updated_calc_param.variance);
+    }
+
     SUBCASE("Update inverse - sym") {
         constexpr auto u_sigma = 1.0;
         constexpr auto u_measured = 2.0;
         constexpr auto u_angle_measured = 3.0;
         constexpr auto u_rated = 10.0e3;
-        VoltageSensor<symmetric_t> const voltage_sensor{{1, 2, u_sigma, u_measured, u_angle_measured}, u_rated};
+        VoltageSensor<symmetric_t> const voltage_sensor{{.id = 1,
+                                                         .measured_object = 2,
+                                                         .u_sigma = u_sigma,
+                                                         .u_measured = u_measured,
+                                                         .u_angle_measured = u_angle_measured},
+                                                        u_rated};
 
-        VoltageSensorUpdate<symmetric_t> vs_update{1, nan, nan, nan};
+        VoltageSensorUpdate<symmetric_t> vs_update{.id = 1, .u_sigma = nan, .u_measured = nan, .u_angle_measured = nan};
         auto expected = vs_update;
 
         SUBCASE("Identical") {
@@ -550,9 +573,15 @@ TEST_CASE("Test voltage sensor") {
         RealValue<asymmetric_t> const u_measured{2.0, 3.0, 4.0};
         RealValue<asymmetric_t> const u_angle_measured{5.0, 6.0, 7.0};
         constexpr double u_rated = 10.0e3;
-        VoltageSensor<asymmetric_t> const voltage_sensor{{1, 2, u_sigma, u_measured, u_angle_measured}, u_rated};
+        VoltageSensor<asymmetric_t> const voltage_sensor{{.id = 1,
+                                                          .measured_object = 2,
+                                                          .u_sigma = u_sigma,
+                                                          .u_measured = u_measured,
+                                                          .u_angle_measured = u_angle_measured},
+                                                         u_rated};
 
-        VoltageSensorUpdate<asymmetric_t> vs_update{1, nan, {nan, nan, nan}, {nan, nan, nan}};
+        VoltageSensorUpdate<asymmetric_t> vs_update{
+            .id = 1, .u_sigma = nan, .u_measured = {nan, nan, nan}, .u_angle_measured = {nan, nan, nan}};
         auto expected = vs_update;
 
         SUBCASE("Identical") {

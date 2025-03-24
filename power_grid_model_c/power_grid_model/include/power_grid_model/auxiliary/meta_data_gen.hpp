@@ -20,39 +20,13 @@
 #include <string>
 
 // generate of meta data
-namespace power_grid_model::meta_data {
-
-namespace meta_data_gen {
-
-// list of all dataset names
-template <class T> struct input_getter_s {
-    using type = typename T::InputType;
-};
-template <class T> struct update_getter_s {
-    using type = typename T::UpdateType;
-};
-template <class T> struct sym_output_getter_s {
-    using type = typename T::template OutputType<symmetric_t>;
-};
-template <class T> struct asym_output_getter_s {
-    using type = typename T::template OutputType<asymmetric_t>;
-};
-template <class T> struct sc_output_getter_s {
-    using type = typename T::ShortCircuitOutputType;
-};
+namespace power_grid_model::meta_data::meta_data_gen {
 
 // generate meta data
-constexpr MetaData meta_data = get_meta_data<AllComponents, // all components list
-                                             dataset_mark<[] { return "input"; }, input_getter_s>,
-                                             dataset_mark<[] { return "update"; }, update_getter_s>,
-                                             dataset_mark<[] { return "sym_output"; }, sym_output_getter_s>,
-                                             dataset_mark<[] { return "asym_output"; }, asym_output_getter_s>,
-                                             dataset_mark<[] { return "sc_output"; }, sc_output_getter_s>
-                                             // end list of all marks
-                                             >::value;
+constexpr MetaData meta_data =
+    get_meta_data<AllComponents, // all components list
+                  input_getter_s, update_getter_s, sym_output_getter_s, asym_output_getter_s, sc_output_getter_s
+                  // end list of all marks
+                  >::value;
 
-} // namespace meta_data_gen
-
-constexpr MetaData meta_data = meta_data_gen::meta_data;
-
-} // namespace power_grid_model::meta_data
+} // namespace power_grid_model::meta_data::meta_data_gen

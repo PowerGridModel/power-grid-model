@@ -22,6 +22,10 @@ enum class Branch3Side : IntS { side_1 = 0, side_2 = 1, side_3 = 2 };
 
 enum class ControlSide : IntS { from = 0, to = 1, side_1 = 0, side_2 = 1, side_3 = 2 };
 
+enum class CalculationType : IntS { power_flow = 0, state_estimation = 1, short_circuit = 2 };
+
+enum class CalculationSymmetry : IntS { asymmetric = 0, symmetric = 1 };
+
 enum class CalculationMethod : IntS {
     default_method = -128,
     linear = 0,
@@ -58,7 +62,8 @@ enum class ComponentType : IntS {
     branch3 = 9,
     fault = 10,
     regulator = 11,
-    transformer_tap_regulator = 12
+    transformer_tap_regulator = 12,
+    test = -128 // any stub or mock may use this. do not use this in production
 };
 
 // DO NOT change the order of enumerations
@@ -113,6 +118,17 @@ enum class OptimizerStrategy : IntS { // Conventions for optimization strategies
     global_maximum = 2,               // global_maximum = argmax{f(x) \in Range} for x in Domain
     local_minimum = 3,                // local_minimum = Any{argmin{f(x) \in Range}} for x in Domain
     local_maximum = 4,                // local_maximum = Any{argmax{f(x) \in Range}} for x in Domain
+    fast_any = 5,                     // fast_any = Any{f(x) \in Range} for x \in Domain, but faster
+};
+
+enum class SearchMethod : IntS { // Which type of tap search method for finite element optimization process
+    linear_search = 0,           // use linear_search method: one step per iteration
+    binary_search = 1,           // use binary search: half a tap range at a time
+};
+
+enum class AngleMeasurementType : IntS { // The type of the angle measurement for current sensors
+    local = 0,                           // local = 0, the angle is relative to the local voltage angle
+    global = 1,                          // global = 1, the angle is relative to the global voltage angle
 };
 
 } // namespace power_grid_model

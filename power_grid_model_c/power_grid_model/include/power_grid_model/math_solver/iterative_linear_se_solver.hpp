@@ -61,7 +61,13 @@ template <symmetry_tag sym> class ILSEGainBlock : public Block<DoubleComplex, sy
     GetterType<1, 1> r() { return this->template get_val<1, 1>(); }
 };
 
-template <symmetry_tag sym> class IterativeLinearSESolver {
+template <symmetry_tag sym_type> class IterativeLinearSESolver {
+  public:
+    using sym = sym_type;
+
+    static constexpr auto is_iterative = true;
+
+  private:
     // block size 2 for symmetric, 6 for asym
     static constexpr Idx bsr_block_size_ = is_symmetric_v<sym> ? 2 : 6;
 
@@ -74,12 +80,12 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(y_bus.size()) {}
 
-    MathOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input, double err_tol,
-                                         Idx max_iter, CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
+                                           double err_tol, Idx max_iter, CalculationInfo& calculation_info) {
         // prepare
         Timer main_timer;
         Timer sub_timer;
-        MathOutput<sym> output;
+        SolverOutput<sym> output;
         output.u.resize(n_bus_);
         output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
@@ -89,11 +95,14 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
         // preprocess measured value
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
-        necessary_observability_check(measured_values, y_bus.shared_topology());
+        auto const observability_result =
+            necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
-        // prepare matrix, including pre-factorization
+        // prepare matrix
         sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");
         prepare_matrix(y_bus, measured_values);
+        // prefactorize
+        sparse_solver_.prefactorize(data_gain_, perm_, observability_result.use_perturbation());
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
@@ -187,9 +196,10 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                         if (measured_value.has_shunt(obj)) {
                             // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
-                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
-                                             diagonal_inverse(shunt_power.p_variance + shunt_power.q_variance),
-                                             param.shunt_param[obj]);
+                            block.g() +=
+                                dot(hermitian_transpose(param.shunt_param[obj]),
+                                    diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(shunt_power).variance),
+                                    param.shunt_param[obj]);
                         }
                     }
                     // branch
@@ -205,7 +215,7 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                                 auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
                                 block.g() +=
                                     dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(power.p_variance + power.q_variance),
+                                        diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(power).variance),
                                         param.branch_param[obj].value[measured_side * 2 + b1]);
                             }
                         }
@@ -220,8 +230,8 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
                         auto const& injection = measured_value.bus_injection(row);
-                        block.r() = ComplexTensor<sym>{
-                            static_cast<ComplexValue<sym>>(-(injection.p_variance + injection.q_variance))};
+                        block.r() = ComplexTensor<sym>{static_cast<ComplexValue<sym>>(
+                            -(static_cast<IndependentComplexRandVar<sym>>(injection).variance))};
                     }
                 }
                 // injection measurement not exist
@@ -246,8 +256,6 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
             Idx const data_idx_tranpose = y_bus.lu_transpose_entry()[data_idx_lu];
             data_gain_[data_idx_lu].qh() = hermitian_transpose(data_gain_[data_idx_tranpose].q());
         }
-        // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_);
     }
 
     void prepare_rhs(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_value,
@@ -279,8 +287,10 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
                         // eta += (-Ys)^H * (variance^-1) * i_shunt
-                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
-                                               diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[bus]));
+                        rhs_block.eta() -=
+                            dot(hermitian_transpose(param.shunt_param[obj]),
+                                diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(m).variance),
+                                conj(m.value() / u[bus]));
                     }
                 }
                 // branch
@@ -300,14 +310,15 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                             // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
                             rhs_block.eta() +=
                                 dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                    diagonal_inverse(m.p_variance + m.q_variance), conj(m.value / u[measured_bus]));
+                                    diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(m).variance),
+                                    conj(m.value() / u[measured_bus]));
                         }
                     }
                 }
             }
             // fill block with injection measurement, need to convert to current
             if (measured_value.has_bus_injection(bus)) {
-                rhs_block.tau() = conj(measured_value.bus_injection(bus).value / u[bus]);
+                rhs_block.tau() = conj(measured_value.bus_injection(bus).value() / u[bus]);
             }
         }
     }
@@ -327,8 +338,7 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
                 } else {
                     return voltage(0);
                 }
-            }
-            ();
+            }();
             return cabs(voltage_a) / voltage_a;
         }();
 
@@ -348,9 +358,6 @@ template <symmetry_tag sym> class IterativeLinearSESolver {
         return measured_values.combine_voltage_iteration_with_measurements(current_u);
     }
 };
-
-template class IterativeLinearSESolver<symmetric_t>;
-template class IterativeLinearSESolver<asymmetric_t>;
 
 } // namespace iterative_linear_se
 

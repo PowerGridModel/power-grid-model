@@ -64,10 +64,10 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("Symmetric test results; s, i as input") {
-        ApplianceMathOutput<symmetric_t> appliance_math_output_sym;
-        appliance_math_output_sym.i = 1.0 + 2.0i;
-        appliance_math_output_sym.s = 3.0 + 4.0i;
-        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(appliance_math_output_sym);
+        ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
+        appliance_solver_output_sym.i = 1.0 + 2.0i;
+        appliance_solver_output_sym.s = 3.0 + 4.0i;
+        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));
@@ -78,12 +78,12 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("Asymmetric test results; s, i as input") {
-        ApplianceMathOutput<asymmetric_t> appliance_math_output_asym;
+        ApplianceSolverOutput<asymmetric_t> appliance_solver_output_asym;
         ComplexValue<asymmetric_t> const i_a{1.0 + 2.0i};
         ComplexValue<asymmetric_t> const s_a{3.0 + 4.0i, 3.0 + 4.0i, 3.0 + 4.0i};
-        appliance_math_output_asym.i = i_a;
-        appliance_math_output_asym.s = s_a;
-        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(appliance_math_output_asym);
+        appliance_solver_output_asym.i = i_a;
+        appliance_solver_output_asym.s = s_a;
+        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(appliance_solver_output_asym);
         CHECK(asym_result.id == 1);
         CHECK(asym_result.energized);
         CHECK(asym_result.p(0) == doctest::Approx(-3.0 * base_power<asymmetric_t>));
@@ -95,60 +95,61 @@ TEST_CASE("Test shunt") {
 
     SUBCASE("test change") {
         SUBCASE("status") {
-            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, nan});
+            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{1, 0, nan, nan, nan, nan});
+            changed = shunt.update(ShuntUpdate{.id = 1, .status = 0, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{1, 1, 1.0, nan, nan, nan});
+            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = 1.0, .b1 = nan, .g0 = nan, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{1, 1, 10.0, nan, nan, nan});
+            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = 10.0, .b1 = nan, .g0 = nan, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{1, 1, nan, 2.0, nan, nan});
+            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = 2.0, .g0 = nan, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{1, 1, nan, 20.0, nan, nan});
+            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = 20.0, .g0 = nan, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 3.0, nan});
+            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = 3.0, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, 30.0, nan});
+            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = 30.0, .b0 = nan});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("g1") {
-            auto changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 4.0});
+            auto changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = 4.0});
             CHECK(!changed.topo);
             CHECK(!changed.param);
-            changed = shunt.update(ShuntUpdate{1, 1, nan, nan, nan, 40.0});
+            changed = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = 40.0});
             CHECK(!changed.topo);
             CHECK(changed.param);
         }
         SUBCASE("all or none") {
-            auto changed_ = shunt.update(ShuntUpdate{1, 1, 1.0, 2.0, 3.0, 4.0});
+            auto changed_ = shunt.update(ShuntUpdate{.id = 1, .status = 1, .g1 = 1.0, .b1 = 2.0, .g0 = 3.0, .b0 = 4.0});
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
-            changed_ = shunt.update(ShuntUpdate{1, 0, 10.0, 20.0, 30.0, 40.0});
+            changed_ = shunt.update(ShuntUpdate{.id = 1, .status = 0, .g1 = 10.0, .b1 = 20.0, .g0 = 30.0, .b0 = 40.0});
             CHECK(!changed_.topo);
             CHECK(changed_.param);
-            changed_ = shunt.update(ShuntUpdate{1, na_IntS, nan, nan, nan, nan});
+            changed_ =
+                shunt.update(ShuntUpdate{.id = 1, .status = na_IntS, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan});
             CHECK(!changed_.topo);
             CHECK(!changed_.param);
         }
     }
 
     SUBCASE("Update inverse") {
-        ShuntUpdate shunt_update{1, na_IntS, nan, nan, nan, nan};
+        ShuntUpdate shunt_update{.id = 1, .status = na_IntS, .g1 = nan, .b1 = nan, .g0 = nan, .b0 = nan};
         auto expected = shunt_update;
 
         SUBCASE("Identical") {

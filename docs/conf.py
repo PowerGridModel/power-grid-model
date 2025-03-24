@@ -43,9 +43,12 @@ extensions = [
     "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",
+    "sphinxcontrib.tikz",
 ]
 
 templates_path = ["_templates"]
+
+tikz_latex_preamble = "\\usepackage{circuitikz}"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -55,15 +58,19 @@ html_static_path = ["_static"]
 
 exclude_patterns = [
     "*/.ipynb_checkpoints/*",
+    "_build/**/*",
 ]
 
 # -- myst parser and myst_nb config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
 myst_heading_anchors = 4
 # execute jupter notebooks output before building webpage
-jupyter_execute_notebooks = "off"
+nb_execution_mode = "off"
+nb_execution_excludepatterns = ["*/_build/*"]
+
 # Extentions in myst
 myst_enable_extensions = [
+    "amsmath",
     "dollarmath",
     "substitution",
 ]

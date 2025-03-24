@@ -26,6 +26,15 @@ as well as some helper functions for enumerations and meta data.
 from power_grid_model import LoadGenType
 from power_grid_model import PowerGridModel
 from power_grid_model import initialize_array
+from power_grid_model.utils import self_test
+```
+
+A basic self_test function is provided to check if the installation was successful
+and there are no build errors, segmentation violations, undefined symbols, etc.
+The function should be imported and called by a user by running following commands:
+
+```python
+self_test()
 ```
 
 ## Input Data
@@ -115,6 +124,8 @@ Both input and output data are dictionaries of structured `numpy` arrays.
 We can use `pandas` to convert them to data frames and print them.
 
 ```python
+import pandas as pd
+
 print('Node Input')
 print(pd.DataFrame(input_data['node']))
 print('Node Result')
@@ -140,18 +151,7 @@ To validate the `input_data` and `update_data` for valid values, use {py:class}`
 
 ## Batch Data
 
-Optionally, we can add batch scenarios using the `update_data` argument. 
-The code below initializes a symmetric load update array with a shape of `(5, 4)`. This is in the form of $\text{number of batches} \times \text{number of components}$.
-The `update_data` is an optional argument to the {py:class}`power_grid_model.PowerGridModel` object or the calculation functions.
-
-```python
-from power_grid_model import initialize_array
-
-sym_load_update = initialize_array('update', 'sym_load', (5, 4))
-# --- Add other sym_load attributes --- 
-update_data = {
-    "sym_load": sym_load_update
-}
-
-model = PowerGridModel(input_data=input_data, update_data=update_data)
-```
+You can calculate a (large) number of scenarios using one command and even in parallel threading.
+This is what makes Power Grid Model a powerful calculation engine.
+You need to create a batch update dataset and put it in the `update_data` argument of `calculate_power_flow`.
+Please refer to [Power Flow Example](examples/Power%20Flow%20Example.ipynb) for a detailed tutorial about how to execute batch calculations.

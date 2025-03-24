@@ -26,7 +26,7 @@ struct get_attributes_list<BaseInput> {
     static constexpr std::array<MetaAttribute, 1> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<BaseInput, &BaseInput::id, offsetof(BaseInput, id), []{ return "id"; }>::value,
+            meta_data_gen::get_meta_attribute<&BaseInput::id>(offsetof(BaseInput, id), "id"),
     };
 };
 
@@ -35,8 +35,8 @@ struct get_attributes_list<NodeInput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<NodeInput, &NodeInput::id, offsetof(NodeInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<NodeInput, &NodeInput::u_rated, offsetof(NodeInput, u_rated), []{ return "u_rated"; }>::value,
+            meta_data_gen::get_meta_attribute<&NodeInput::id>(offsetof(NodeInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&NodeInput::u_rated>(offsetof(NodeInput, u_rated), "u_rated"),
     };
 };
 
@@ -45,11 +45,11 @@ struct get_attributes_list<BranchInput> {
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<BranchInput, &BranchInput::id, offsetof(BranchInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchInput, &BranchInput::from_node, offsetof(BranchInput, from_node), []{ return "from_node"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchInput, &BranchInput::to_node, offsetof(BranchInput, to_node), []{ return "to_node"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchInput, &BranchInput::from_status, offsetof(BranchInput, from_status), []{ return "from_status"; }>::value,
-            meta_data_gen::get_meta_attribute<BranchInput, &BranchInput::to_status, offsetof(BranchInput, to_status), []{ return "to_status"; }>::value,
+            meta_data_gen::get_meta_attribute<&BranchInput::id>(offsetof(BranchInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&BranchInput::from_node>(offsetof(BranchInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&BranchInput::to_node>(offsetof(BranchInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&BranchInput::from_status>(offsetof(BranchInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&BranchInput::to_status>(offsetof(BranchInput, to_status), "to_status"),
     };
 };
 
@@ -58,13 +58,13 @@ struct get_attributes_list<Branch3Input> {
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::id, offsetof(Branch3Input, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::node_1, offsetof(Branch3Input, node_1), []{ return "node_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::node_2, offsetof(Branch3Input, node_2), []{ return "node_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::node_3, offsetof(Branch3Input, node_3), []{ return "node_3"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::status_1, offsetof(Branch3Input, status_1), []{ return "status_1"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::status_2, offsetof(Branch3Input, status_2), []{ return "status_2"; }>::value,
-            meta_data_gen::get_meta_attribute<Branch3Input, &Branch3Input::status_3, offsetof(Branch3Input, status_3), []{ return "status_3"; }>::value,
+            meta_data_gen::get_meta_attribute<&Branch3Input::id>(offsetof(Branch3Input, id), "id"),
+            meta_data_gen::get_meta_attribute<&Branch3Input::node_1>(offsetof(Branch3Input, node_1), "node_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Input::node_2>(offsetof(Branch3Input, node_2), "node_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Input::node_3>(offsetof(Branch3Input, node_3), "node_3"),
+            meta_data_gen::get_meta_attribute<&Branch3Input::status_1>(offsetof(Branch3Input, status_1), "status_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Input::status_2>(offsetof(Branch3Input, status_2), "status_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Input::status_3>(offsetof(Branch3Input, status_3), "status_3"),
     };
 };
 
@@ -73,8 +73,8 @@ struct get_attributes_list<SensorInput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<SensorInput, &SensorInput::id, offsetof(SensorInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<SensorInput, &SensorInput::measured_object, offsetof(SensorInput, measured_object), []{ return "measured_object"; }>::value,
+            meta_data_gen::get_meta_attribute<&SensorInput::id>(offsetof(SensorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&SensorInput::measured_object>(offsetof(SensorInput, measured_object), "measured_object"),
     };
 };
 
@@ -83,9 +83,9 @@ struct get_attributes_list<ApplianceInput> {
     static constexpr std::array<MetaAttribute, 3> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<ApplianceInput, &ApplianceInput::id, offsetof(ApplianceInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceInput, &ApplianceInput::node, offsetof(ApplianceInput, node), []{ return "node"; }>::value,
-            meta_data_gen::get_meta_attribute<ApplianceInput, &ApplianceInput::status, offsetof(ApplianceInput, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<&ApplianceInput::id>(offsetof(ApplianceInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&ApplianceInput::node>(offsetof(ApplianceInput, node), "node"),
+            meta_data_gen::get_meta_attribute<&ApplianceInput::status>(offsetof(ApplianceInput, status), "status"),
     };
 };
 
@@ -94,20 +94,40 @@ struct get_attributes_list<LineInput> {
     static constexpr std::array<MetaAttribute, 14> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::id, offsetof(LineInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::from_node, offsetof(LineInput, from_node), []{ return "from_node"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::to_node, offsetof(LineInput, to_node), []{ return "to_node"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::from_status, offsetof(LineInput, from_status), []{ return "from_status"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::to_status, offsetof(LineInput, to_status), []{ return "to_status"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::r1, offsetof(LineInput, r1), []{ return "r1"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::x1, offsetof(LineInput, x1), []{ return "x1"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::c1, offsetof(LineInput, c1), []{ return "c1"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::tan1, offsetof(LineInput, tan1), []{ return "tan1"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::r0, offsetof(LineInput, r0), []{ return "r0"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::x0, offsetof(LineInput, x0), []{ return "x0"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::c0, offsetof(LineInput, c0), []{ return "c0"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::tan0, offsetof(LineInput, tan0), []{ return "tan0"; }>::value,
-            meta_data_gen::get_meta_attribute<LineInput, &LineInput::i_n, offsetof(LineInput, i_n), []{ return "i_n"; }>::value,
+            meta_data_gen::get_meta_attribute<&LineInput::id>(offsetof(LineInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&LineInput::from_node>(offsetof(LineInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&LineInput::to_node>(offsetof(LineInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&LineInput::from_status>(offsetof(LineInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&LineInput::to_status>(offsetof(LineInput, to_status), "to_status"),
+            meta_data_gen::get_meta_attribute<&LineInput::r1>(offsetof(LineInput, r1), "r1"),
+            meta_data_gen::get_meta_attribute<&LineInput::x1>(offsetof(LineInput, x1), "x1"),
+            meta_data_gen::get_meta_attribute<&LineInput::c1>(offsetof(LineInput, c1), "c1"),
+            meta_data_gen::get_meta_attribute<&LineInput::tan1>(offsetof(LineInput, tan1), "tan1"),
+            meta_data_gen::get_meta_attribute<&LineInput::r0>(offsetof(LineInput, r0), "r0"),
+            meta_data_gen::get_meta_attribute<&LineInput::x0>(offsetof(LineInput, x0), "x0"),
+            meta_data_gen::get_meta_attribute<&LineInput::c0>(offsetof(LineInput, c0), "c0"),
+            meta_data_gen::get_meta_attribute<&LineInput::tan0>(offsetof(LineInput, tan0), "tan0"),
+            meta_data_gen::get_meta_attribute<&LineInput::i_n>(offsetof(LineInput, i_n), "i_n"),
+    };
+};
+
+template<>
+struct get_attributes_list<GenericBranchInput> {
+    static constexpr std::array<MetaAttribute, 12> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::id>(offsetof(GenericBranchInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::from_node>(offsetof(GenericBranchInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::to_node>(offsetof(GenericBranchInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::from_status>(offsetof(GenericBranchInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::to_status>(offsetof(GenericBranchInput, to_status), "to_status"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::r1>(offsetof(GenericBranchInput, r1), "r1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::x1>(offsetof(GenericBranchInput, x1), "x1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::g1>(offsetof(GenericBranchInput, g1), "g1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::b1>(offsetof(GenericBranchInput, b1), "b1"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::k>(offsetof(GenericBranchInput, k), "k"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::theta>(offsetof(GenericBranchInput, theta), "theta"),
+            meta_data_gen::get_meta_attribute<&GenericBranchInput::sn>(offsetof(GenericBranchInput, sn), "sn"),
     };
 };
 
@@ -116,11 +136,11 @@ struct get_attributes_list<LinkInput> {
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<LinkInput, &LinkInput::id, offsetof(LinkInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<LinkInput, &LinkInput::from_node, offsetof(LinkInput, from_node), []{ return "from_node"; }>::value,
-            meta_data_gen::get_meta_attribute<LinkInput, &LinkInput::to_node, offsetof(LinkInput, to_node), []{ return "to_node"; }>::value,
-            meta_data_gen::get_meta_attribute<LinkInput, &LinkInput::from_status, offsetof(LinkInput, from_status), []{ return "from_status"; }>::value,
-            meta_data_gen::get_meta_attribute<LinkInput, &LinkInput::to_status, offsetof(LinkInput, to_status), []{ return "to_status"; }>::value,
+            meta_data_gen::get_meta_attribute<&LinkInput::id>(offsetof(LinkInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&LinkInput::from_node>(offsetof(LinkInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&LinkInput::to_node>(offsetof(LinkInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&LinkInput::from_status>(offsetof(LinkInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&LinkInput::to_status>(offsetof(LinkInput, to_status), "to_status"),
     };
 };
 
@@ -129,35 +149,35 @@ struct get_attributes_list<TransformerInput> {
     static constexpr std::array<MetaAttribute, 29> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::id, offsetof(TransformerInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::from_node, offsetof(TransformerInput, from_node), []{ return "from_node"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::to_node, offsetof(TransformerInput, to_node), []{ return "to_node"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::from_status, offsetof(TransformerInput, from_status), []{ return "from_status"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::to_status, offsetof(TransformerInput, to_status), []{ return "to_status"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::u1, offsetof(TransformerInput, u1), []{ return "u1"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::u2, offsetof(TransformerInput, u2), []{ return "u2"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::sn, offsetof(TransformerInput, sn), []{ return "sn"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::uk, offsetof(TransformerInput, uk), []{ return "uk"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::pk, offsetof(TransformerInput, pk), []{ return "pk"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::i0, offsetof(TransformerInput, i0), []{ return "i0"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::p0, offsetof(TransformerInput, p0), []{ return "p0"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::winding_from, offsetof(TransformerInput, winding_from), []{ return "winding_from"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::winding_to, offsetof(TransformerInput, winding_to), []{ return "winding_to"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::clock, offsetof(TransformerInput, clock), []{ return "clock"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::tap_side, offsetof(TransformerInput, tap_side), []{ return "tap_side"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::tap_pos, offsetof(TransformerInput, tap_pos), []{ return "tap_pos"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::tap_min, offsetof(TransformerInput, tap_min), []{ return "tap_min"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::tap_max, offsetof(TransformerInput, tap_max), []{ return "tap_max"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::tap_nom, offsetof(TransformerInput, tap_nom), []{ return "tap_nom"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::tap_size, offsetof(TransformerInput, tap_size), []{ return "tap_size"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::uk_min, offsetof(TransformerInput, uk_min), []{ return "uk_min"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::uk_max, offsetof(TransformerInput, uk_max), []{ return "uk_max"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::pk_min, offsetof(TransformerInput, pk_min), []{ return "pk_min"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::pk_max, offsetof(TransformerInput, pk_max), []{ return "pk_max"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::r_grounding_from, offsetof(TransformerInput, r_grounding_from), []{ return "r_grounding_from"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::x_grounding_from, offsetof(TransformerInput, x_grounding_from), []{ return "x_grounding_from"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::r_grounding_to, offsetof(TransformerInput, r_grounding_to), []{ return "r_grounding_to"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerInput, &TransformerInput::x_grounding_to, offsetof(TransformerInput, x_grounding_to), []{ return "x_grounding_to"; }>::value,
+            meta_data_gen::get_meta_attribute<&TransformerInput::id>(offsetof(TransformerInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::from_node>(offsetof(TransformerInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::to_node>(offsetof(TransformerInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::from_status>(offsetof(TransformerInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::to_status>(offsetof(TransformerInput, to_status), "to_status"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::u1>(offsetof(TransformerInput, u1), "u1"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::u2>(offsetof(TransformerInput, u2), "u2"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::sn>(offsetof(TransformerInput, sn), "sn"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::uk>(offsetof(TransformerInput, uk), "uk"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::pk>(offsetof(TransformerInput, pk), "pk"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::i0>(offsetof(TransformerInput, i0), "i0"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::p0>(offsetof(TransformerInput, p0), "p0"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::winding_from>(offsetof(TransformerInput, winding_from), "winding_from"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::winding_to>(offsetof(TransformerInput, winding_to), "winding_to"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::clock>(offsetof(TransformerInput, clock), "clock"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::tap_side>(offsetof(TransformerInput, tap_side), "tap_side"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::tap_pos>(offsetof(TransformerInput, tap_pos), "tap_pos"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::tap_min>(offsetof(TransformerInput, tap_min), "tap_min"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::tap_max>(offsetof(TransformerInput, tap_max), "tap_max"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::tap_nom>(offsetof(TransformerInput, tap_nom), "tap_nom"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::tap_size>(offsetof(TransformerInput, tap_size), "tap_size"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::uk_min>(offsetof(TransformerInput, uk_min), "uk_min"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::uk_max>(offsetof(TransformerInput, uk_max), "uk_max"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::pk_min>(offsetof(TransformerInput, pk_min), "pk_min"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::pk_max>(offsetof(TransformerInput, pk_max), "pk_max"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::r_grounding_from>(offsetof(TransformerInput, r_grounding_from), "r_grounding_from"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::x_grounding_from>(offsetof(TransformerInput, x_grounding_from), "x_grounding_from"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::r_grounding_to>(offsetof(TransformerInput, r_grounding_to), "r_grounding_to"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::x_grounding_to>(offsetof(TransformerInput, x_grounding_to), "x_grounding_to"),
     };
 };
 
@@ -166,56 +186,56 @@ struct get_attributes_list<ThreeWindingTransformerInput> {
     static constexpr std::array<MetaAttribute, 50> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::id, offsetof(ThreeWindingTransformerInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::node_1, offsetof(ThreeWindingTransformerInput, node_1), []{ return "node_1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::node_2, offsetof(ThreeWindingTransformerInput, node_2), []{ return "node_2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::node_3, offsetof(ThreeWindingTransformerInput, node_3), []{ return "node_3"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::status_1, offsetof(ThreeWindingTransformerInput, status_1), []{ return "status_1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::status_2, offsetof(ThreeWindingTransformerInput, status_2), []{ return "status_2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::status_3, offsetof(ThreeWindingTransformerInput, status_3), []{ return "status_3"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::u1, offsetof(ThreeWindingTransformerInput, u1), []{ return "u1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::u2, offsetof(ThreeWindingTransformerInput, u2), []{ return "u2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::u3, offsetof(ThreeWindingTransformerInput, u3), []{ return "u3"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::sn_1, offsetof(ThreeWindingTransformerInput, sn_1), []{ return "sn_1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::sn_2, offsetof(ThreeWindingTransformerInput, sn_2), []{ return "sn_2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::sn_3, offsetof(ThreeWindingTransformerInput, sn_3), []{ return "sn_3"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_12, offsetof(ThreeWindingTransformerInput, uk_12), []{ return "uk_12"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_13, offsetof(ThreeWindingTransformerInput, uk_13), []{ return "uk_13"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_23, offsetof(ThreeWindingTransformerInput, uk_23), []{ return "uk_23"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_12, offsetof(ThreeWindingTransformerInput, pk_12), []{ return "pk_12"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_13, offsetof(ThreeWindingTransformerInput, pk_13), []{ return "pk_13"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_23, offsetof(ThreeWindingTransformerInput, pk_23), []{ return "pk_23"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::i0, offsetof(ThreeWindingTransformerInput, i0), []{ return "i0"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::p0, offsetof(ThreeWindingTransformerInput, p0), []{ return "p0"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::winding_1, offsetof(ThreeWindingTransformerInput, winding_1), []{ return "winding_1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::winding_2, offsetof(ThreeWindingTransformerInput, winding_2), []{ return "winding_2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::winding_3, offsetof(ThreeWindingTransformerInput, winding_3), []{ return "winding_3"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::clock_12, offsetof(ThreeWindingTransformerInput, clock_12), []{ return "clock_12"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::clock_13, offsetof(ThreeWindingTransformerInput, clock_13), []{ return "clock_13"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::tap_side, offsetof(ThreeWindingTransformerInput, tap_side), []{ return "tap_side"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::tap_pos, offsetof(ThreeWindingTransformerInput, tap_pos), []{ return "tap_pos"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::tap_min, offsetof(ThreeWindingTransformerInput, tap_min), []{ return "tap_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::tap_max, offsetof(ThreeWindingTransformerInput, tap_max), []{ return "tap_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::tap_nom, offsetof(ThreeWindingTransformerInput, tap_nom), []{ return "tap_nom"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::tap_size, offsetof(ThreeWindingTransformerInput, tap_size), []{ return "tap_size"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_12_min, offsetof(ThreeWindingTransformerInput, uk_12_min), []{ return "uk_12_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_12_max, offsetof(ThreeWindingTransformerInput, uk_12_max), []{ return "uk_12_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_13_min, offsetof(ThreeWindingTransformerInput, uk_13_min), []{ return "uk_13_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_13_max, offsetof(ThreeWindingTransformerInput, uk_13_max), []{ return "uk_13_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_23_min, offsetof(ThreeWindingTransformerInput, uk_23_min), []{ return "uk_23_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::uk_23_max, offsetof(ThreeWindingTransformerInput, uk_23_max), []{ return "uk_23_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_12_min, offsetof(ThreeWindingTransformerInput, pk_12_min), []{ return "pk_12_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_12_max, offsetof(ThreeWindingTransformerInput, pk_12_max), []{ return "pk_12_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_13_min, offsetof(ThreeWindingTransformerInput, pk_13_min), []{ return "pk_13_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_13_max, offsetof(ThreeWindingTransformerInput, pk_13_max), []{ return "pk_13_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_23_min, offsetof(ThreeWindingTransformerInput, pk_23_min), []{ return "pk_23_min"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::pk_23_max, offsetof(ThreeWindingTransformerInput, pk_23_max), []{ return "pk_23_max"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::r_grounding_1, offsetof(ThreeWindingTransformerInput, r_grounding_1), []{ return "r_grounding_1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::x_grounding_1, offsetof(ThreeWindingTransformerInput, x_grounding_1), []{ return "x_grounding_1"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::r_grounding_2, offsetof(ThreeWindingTransformerInput, r_grounding_2), []{ return "r_grounding_2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::x_grounding_2, offsetof(ThreeWindingTransformerInput, x_grounding_2), []{ return "x_grounding_2"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::r_grounding_3, offsetof(ThreeWindingTransformerInput, r_grounding_3), []{ return "r_grounding_3"; }>::value,
-            meta_data_gen::get_meta_attribute<ThreeWindingTransformerInput, &ThreeWindingTransformerInput::x_grounding_3, offsetof(ThreeWindingTransformerInput, x_grounding_3), []{ return "x_grounding_3"; }>::value,
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::id>(offsetof(ThreeWindingTransformerInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::node_1>(offsetof(ThreeWindingTransformerInput, node_1), "node_1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::node_2>(offsetof(ThreeWindingTransformerInput, node_2), "node_2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::node_3>(offsetof(ThreeWindingTransformerInput, node_3), "node_3"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::status_1>(offsetof(ThreeWindingTransformerInput, status_1), "status_1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::status_2>(offsetof(ThreeWindingTransformerInput, status_2), "status_2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::status_3>(offsetof(ThreeWindingTransformerInput, status_3), "status_3"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::u1>(offsetof(ThreeWindingTransformerInput, u1), "u1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::u2>(offsetof(ThreeWindingTransformerInput, u2), "u2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::u3>(offsetof(ThreeWindingTransformerInput, u3), "u3"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::sn_1>(offsetof(ThreeWindingTransformerInput, sn_1), "sn_1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::sn_2>(offsetof(ThreeWindingTransformerInput, sn_2), "sn_2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::sn_3>(offsetof(ThreeWindingTransformerInput, sn_3), "sn_3"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_12>(offsetof(ThreeWindingTransformerInput, uk_12), "uk_12"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_13>(offsetof(ThreeWindingTransformerInput, uk_13), "uk_13"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_23>(offsetof(ThreeWindingTransformerInput, uk_23), "uk_23"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_12>(offsetof(ThreeWindingTransformerInput, pk_12), "pk_12"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_13>(offsetof(ThreeWindingTransformerInput, pk_13), "pk_13"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_23>(offsetof(ThreeWindingTransformerInput, pk_23), "pk_23"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::i0>(offsetof(ThreeWindingTransformerInput, i0), "i0"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::p0>(offsetof(ThreeWindingTransformerInput, p0), "p0"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::winding_1>(offsetof(ThreeWindingTransformerInput, winding_1), "winding_1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::winding_2>(offsetof(ThreeWindingTransformerInput, winding_2), "winding_2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::winding_3>(offsetof(ThreeWindingTransformerInput, winding_3), "winding_3"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::clock_12>(offsetof(ThreeWindingTransformerInput, clock_12), "clock_12"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::clock_13>(offsetof(ThreeWindingTransformerInput, clock_13), "clock_13"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::tap_side>(offsetof(ThreeWindingTransformerInput, tap_side), "tap_side"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::tap_pos>(offsetof(ThreeWindingTransformerInput, tap_pos), "tap_pos"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::tap_min>(offsetof(ThreeWindingTransformerInput, tap_min), "tap_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::tap_max>(offsetof(ThreeWindingTransformerInput, tap_max), "tap_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::tap_nom>(offsetof(ThreeWindingTransformerInput, tap_nom), "tap_nom"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::tap_size>(offsetof(ThreeWindingTransformerInput, tap_size), "tap_size"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_12_min>(offsetof(ThreeWindingTransformerInput, uk_12_min), "uk_12_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_12_max>(offsetof(ThreeWindingTransformerInput, uk_12_max), "uk_12_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_13_min>(offsetof(ThreeWindingTransformerInput, uk_13_min), "uk_13_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_13_max>(offsetof(ThreeWindingTransformerInput, uk_13_max), "uk_13_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_23_min>(offsetof(ThreeWindingTransformerInput, uk_23_min), "uk_23_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::uk_23_max>(offsetof(ThreeWindingTransformerInput, uk_23_max), "uk_23_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_12_min>(offsetof(ThreeWindingTransformerInput, pk_12_min), "pk_12_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_12_max>(offsetof(ThreeWindingTransformerInput, pk_12_max), "pk_12_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_13_min>(offsetof(ThreeWindingTransformerInput, pk_13_min), "pk_13_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_13_max>(offsetof(ThreeWindingTransformerInput, pk_13_max), "pk_13_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_23_min>(offsetof(ThreeWindingTransformerInput, pk_23_min), "pk_23_min"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::pk_23_max>(offsetof(ThreeWindingTransformerInput, pk_23_max), "pk_23_max"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::r_grounding_1>(offsetof(ThreeWindingTransformerInput, r_grounding_1), "r_grounding_1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::x_grounding_1>(offsetof(ThreeWindingTransformerInput, x_grounding_1), "x_grounding_1"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::r_grounding_2>(offsetof(ThreeWindingTransformerInput, r_grounding_2), "r_grounding_2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::x_grounding_2>(offsetof(ThreeWindingTransformerInput, x_grounding_2), "x_grounding_2"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::r_grounding_3>(offsetof(ThreeWindingTransformerInput, r_grounding_3), "r_grounding_3"),
+            meta_data_gen::get_meta_attribute<&ThreeWindingTransformerInput::x_grounding_3>(offsetof(ThreeWindingTransformerInput, x_grounding_3), "x_grounding_3"),
     };
 };
 
@@ -224,10 +244,10 @@ struct get_attributes_list<GenericLoadGenInput> {
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<GenericLoadGenInput, &GenericLoadGenInput::id, offsetof(GenericLoadGenInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericLoadGenInput, &GenericLoadGenInput::node, offsetof(GenericLoadGenInput, node), []{ return "node"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericLoadGenInput, &GenericLoadGenInput::status, offsetof(GenericLoadGenInput, status), []{ return "status"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericLoadGenInput, &GenericLoadGenInput::type, offsetof(GenericLoadGenInput, type), []{ return "type"; }>::value,
+            meta_data_gen::get_meta_attribute<&GenericLoadGenInput::id>(offsetof(GenericLoadGenInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericLoadGenInput::node>(offsetof(GenericLoadGenInput, node), "node"),
+            meta_data_gen::get_meta_attribute<&GenericLoadGenInput::status>(offsetof(GenericLoadGenInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&GenericLoadGenInput::type>(offsetof(GenericLoadGenInput, type), "type"),
     };
 };
 
@@ -238,12 +258,12 @@ struct get_attributes_list<LoadGenInput<sym_type>> {
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::id, offsetof(LoadGenInput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::node, offsetof(LoadGenInput<sym>, node), []{ return "node"; }>::value,
-            meta_data_gen::get_meta_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::status, offsetof(LoadGenInput<sym>, status), []{ return "status"; }>::value,
-            meta_data_gen::get_meta_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::type, offsetof(LoadGenInput<sym>, type), []{ return "type"; }>::value,
-            meta_data_gen::get_meta_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::p_specified, offsetof(LoadGenInput<sym>, p_specified), []{ return "p_specified"; }>::value,
-            meta_data_gen::get_meta_attribute<LoadGenInput<sym>, &LoadGenInput<sym>::q_specified, offsetof(LoadGenInput<sym>, q_specified), []{ return "q_specified"; }>::value,
+            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::id>(offsetof(LoadGenInput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::node>(offsetof(LoadGenInput<sym>, node), "node"),
+            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::status>(offsetof(LoadGenInput<sym>, status), "status"),
+            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::type>(offsetof(LoadGenInput<sym>, type), "type"),
+            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::p_specified>(offsetof(LoadGenInput<sym>, p_specified), "p_specified"),
+            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::q_specified>(offsetof(LoadGenInput<sym>, q_specified), "q_specified"),
     };
 };
 
@@ -252,13 +272,13 @@ struct get_attributes_list<ShuntInput> {
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::id, offsetof(ShuntInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::node, offsetof(ShuntInput, node), []{ return "node"; }>::value,
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::status, offsetof(ShuntInput, status), []{ return "status"; }>::value,
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::g1, offsetof(ShuntInput, g1), []{ return "g1"; }>::value,
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::b1, offsetof(ShuntInput, b1), []{ return "b1"; }>::value,
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::g0, offsetof(ShuntInput, g0), []{ return "g0"; }>::value,
-            meta_data_gen::get_meta_attribute<ShuntInput, &ShuntInput::b0, offsetof(ShuntInput, b0), []{ return "b0"; }>::value,
+            meta_data_gen::get_meta_attribute<&ShuntInput::id>(offsetof(ShuntInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&ShuntInput::node>(offsetof(ShuntInput, node), "node"),
+            meta_data_gen::get_meta_attribute<&ShuntInput::status>(offsetof(ShuntInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&ShuntInput::g1>(offsetof(ShuntInput, g1), "g1"),
+            meta_data_gen::get_meta_attribute<&ShuntInput::b1>(offsetof(ShuntInput, b1), "b1"),
+            meta_data_gen::get_meta_attribute<&ShuntInput::g0>(offsetof(ShuntInput, g0), "g0"),
+            meta_data_gen::get_meta_attribute<&ShuntInput::b0>(offsetof(ShuntInput, b0), "b0"),
     };
 };
 
@@ -267,14 +287,14 @@ struct get_attributes_list<SourceInput> {
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::id, offsetof(SourceInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::node, offsetof(SourceInput, node), []{ return "node"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::status, offsetof(SourceInput, status), []{ return "status"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::u_ref, offsetof(SourceInput, u_ref), []{ return "u_ref"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::u_ref_angle, offsetof(SourceInput, u_ref_angle), []{ return "u_ref_angle"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::sk, offsetof(SourceInput, sk), []{ return "sk"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::rx_ratio, offsetof(SourceInput, rx_ratio), []{ return "rx_ratio"; }>::value,
-            meta_data_gen::get_meta_attribute<SourceInput, &SourceInput::z01_ratio, offsetof(SourceInput, z01_ratio), []{ return "z01_ratio"; }>::value,
+            meta_data_gen::get_meta_attribute<&SourceInput::id>(offsetof(SourceInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&SourceInput::node>(offsetof(SourceInput, node), "node"),
+            meta_data_gen::get_meta_attribute<&SourceInput::status>(offsetof(SourceInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&SourceInput::u_ref>(offsetof(SourceInput, u_ref), "u_ref"),
+            meta_data_gen::get_meta_attribute<&SourceInput::u_ref_angle>(offsetof(SourceInput, u_ref_angle), "u_ref_angle"),
+            meta_data_gen::get_meta_attribute<&SourceInput::sk>(offsetof(SourceInput, sk), "sk"),
+            meta_data_gen::get_meta_attribute<&SourceInput::rx_ratio>(offsetof(SourceInput, rx_ratio), "rx_ratio"),
+            meta_data_gen::get_meta_attribute<&SourceInput::z01_ratio>(offsetof(SourceInput, z01_ratio), "z01_ratio"),
     };
 };
 
@@ -283,9 +303,9 @@ struct get_attributes_list<GenericVoltageSensorInput> {
     static constexpr std::array<MetaAttribute, 3> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<GenericVoltageSensorInput, &GenericVoltageSensorInput::id, offsetof(GenericVoltageSensorInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericVoltageSensorInput, &GenericVoltageSensorInput::measured_object, offsetof(GenericVoltageSensorInput, measured_object), []{ return "measured_object"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericVoltageSensorInput, &GenericVoltageSensorInput::u_sigma, offsetof(GenericVoltageSensorInput, u_sigma), []{ return "u_sigma"; }>::value,
+            meta_data_gen::get_meta_attribute<&GenericVoltageSensorInput::id>(offsetof(GenericVoltageSensorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericVoltageSensorInput::measured_object>(offsetof(GenericVoltageSensorInput, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&GenericVoltageSensorInput::u_sigma>(offsetof(GenericVoltageSensorInput, u_sigma), "u_sigma"),
     };
 };
 
@@ -296,11 +316,11 @@ struct get_attributes_list<VoltageSensorInput<sym_type>> {
     static constexpr std::array<MetaAttribute, 5> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::id, offsetof(VoltageSensorInput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::measured_object, offsetof(VoltageSensorInput<sym>, measured_object), []{ return "measured_object"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::u_sigma, offsetof(VoltageSensorInput<sym>, u_sigma), []{ return "u_sigma"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::u_measured, offsetof(VoltageSensorInput<sym>, u_measured), []{ return "u_measured"; }>::value,
-            meta_data_gen::get_meta_attribute<VoltageSensorInput<sym>, &VoltageSensorInput<sym>::u_angle_measured, offsetof(VoltageSensorInput<sym>, u_angle_measured), []{ return "u_angle_measured"; }>::value,
+            meta_data_gen::get_meta_attribute<&VoltageSensorInput<sym>::id>(offsetof(VoltageSensorInput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorInput<sym>::measured_object>(offsetof(VoltageSensorInput<sym>, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorInput<sym>::u_sigma>(offsetof(VoltageSensorInput<sym>, u_sigma), "u_sigma"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorInput<sym>::u_measured>(offsetof(VoltageSensorInput<sym>, u_measured), "u_measured"),
+            meta_data_gen::get_meta_attribute<&VoltageSensorInput<sym>::u_angle_measured>(offsetof(VoltageSensorInput<sym>, u_angle_measured), "u_angle_measured"),
     };
 };
 
@@ -309,10 +329,10 @@ struct get_attributes_list<GenericPowerSensorInput> {
     static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::id, offsetof(GenericPowerSensorInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::measured_object, offsetof(GenericPowerSensorInput, measured_object), []{ return "measured_object"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::measured_terminal_type, offsetof(GenericPowerSensorInput, measured_terminal_type), []{ return "measured_terminal_type"; }>::value,
-            meta_data_gen::get_meta_attribute<GenericPowerSensorInput, &GenericPowerSensorInput::power_sigma, offsetof(GenericPowerSensorInput, power_sigma), []{ return "power_sigma"; }>::value,
+            meta_data_gen::get_meta_attribute<&GenericPowerSensorInput::id>(offsetof(GenericPowerSensorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericPowerSensorInput::measured_object>(offsetof(GenericPowerSensorInput, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&GenericPowerSensorInput::measured_terminal_type>(offsetof(GenericPowerSensorInput, measured_terminal_type), "measured_terminal_type"),
+            meta_data_gen::get_meta_attribute<&GenericPowerSensorInput::power_sigma>(offsetof(GenericPowerSensorInput, power_sigma), "power_sigma"),
     };
 };
 
@@ -323,14 +343,14 @@ struct get_attributes_list<PowerSensorInput<sym_type>> {
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::id, offsetof(PowerSensorInput<sym>, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::measured_object, offsetof(PowerSensorInput<sym>, measured_object), []{ return "measured_object"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::measured_terminal_type, offsetof(PowerSensorInput<sym>, measured_terminal_type), []{ return "measured_terminal_type"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::power_sigma, offsetof(PowerSensorInput<sym>, power_sigma), []{ return "power_sigma"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::p_measured, offsetof(PowerSensorInput<sym>, p_measured), []{ return "p_measured"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::q_measured, offsetof(PowerSensorInput<sym>, q_measured), []{ return "q_measured"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::p_sigma, offsetof(PowerSensorInput<sym>, p_sigma), []{ return "p_sigma"; }>::value,
-            meta_data_gen::get_meta_attribute<PowerSensorInput<sym>, &PowerSensorInput<sym>::q_sigma, offsetof(PowerSensorInput<sym>, q_sigma), []{ return "q_sigma"; }>::value,
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::id>(offsetof(PowerSensorInput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::measured_object>(offsetof(PowerSensorInput<sym>, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::measured_terminal_type>(offsetof(PowerSensorInput<sym>, measured_terminal_type), "measured_terminal_type"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::power_sigma>(offsetof(PowerSensorInput<sym>, power_sigma), "power_sigma"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::p_measured>(offsetof(PowerSensorInput<sym>, p_measured), "p_measured"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::q_measured>(offsetof(PowerSensorInput<sym>, q_measured), "q_measured"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::p_sigma>(offsetof(PowerSensorInput<sym>, p_sigma), "p_sigma"),
+            meta_data_gen::get_meta_attribute<&PowerSensorInput<sym>::q_sigma>(offsetof(PowerSensorInput<sym>, q_sigma), "q_sigma"),
     };
 };
 
@@ -339,13 +359,13 @@ struct get_attributes_list<FaultInput> {
     static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::id, offsetof(FaultInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::status, offsetof(FaultInput, status), []{ return "status"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::fault_type, offsetof(FaultInput, fault_type), []{ return "fault_type"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::fault_phase, offsetof(FaultInput, fault_phase), []{ return "fault_phase"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::fault_object, offsetof(FaultInput, fault_object), []{ return "fault_object"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::r_f, offsetof(FaultInput, r_f), []{ return "r_f"; }>::value,
-            meta_data_gen::get_meta_attribute<FaultInput, &FaultInput::x_f, offsetof(FaultInput, x_f), []{ return "x_f"; }>::value,
+            meta_data_gen::get_meta_attribute<&FaultInput::id>(offsetof(FaultInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&FaultInput::status>(offsetof(FaultInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&FaultInput::fault_type>(offsetof(FaultInput, fault_type), "fault_type"),
+            meta_data_gen::get_meta_attribute<&FaultInput::fault_phase>(offsetof(FaultInput, fault_phase), "fault_phase"),
+            meta_data_gen::get_meta_attribute<&FaultInput::fault_object>(offsetof(FaultInput, fault_object), "fault_object"),
+            meta_data_gen::get_meta_attribute<&FaultInput::r_f>(offsetof(FaultInput, r_f), "r_f"),
+            meta_data_gen::get_meta_attribute<&FaultInput::x_f>(offsetof(FaultInput, x_f), "x_f"),
     };
 };
 
@@ -354,9 +374,9 @@ struct get_attributes_list<RegulatorInput> {
     static constexpr std::array<MetaAttribute, 3> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::id, offsetof(RegulatorInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::regulated_object, offsetof(RegulatorInput, regulated_object), []{ return "regulated_object"; }>::value,
-            meta_data_gen::get_meta_attribute<RegulatorInput, &RegulatorInput::status, offsetof(RegulatorInput, status), []{ return "status"; }>::value,
+            meta_data_gen::get_meta_attribute<&RegulatorInput::id>(offsetof(RegulatorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&RegulatorInput::regulated_object>(offsetof(RegulatorInput, regulated_object), "regulated_object"),
+            meta_data_gen::get_meta_attribute<&RegulatorInput::status>(offsetof(RegulatorInput, status), "status"),
     };
 };
 
@@ -365,417 +385,49 @@ struct get_attributes_list<TransformerTapRegulatorInput> {
     static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::id, offsetof(TransformerTapRegulatorInput, id), []{ return "id"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::regulated_object, offsetof(TransformerTapRegulatorInput, regulated_object), []{ return "regulated_object"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::status, offsetof(TransformerTapRegulatorInput, status), []{ return "status"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::control_side, offsetof(TransformerTapRegulatorInput, control_side), []{ return "control_side"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::u_set, offsetof(TransformerTapRegulatorInput, u_set), []{ return "u_set"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::u_band, offsetof(TransformerTapRegulatorInput, u_band), []{ return "u_band"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::line_drop_compensation_r, offsetof(TransformerTapRegulatorInput, line_drop_compensation_r), []{ return "line_drop_compensation_r"; }>::value,
-            meta_data_gen::get_meta_attribute<TransformerTapRegulatorInput, &TransformerTapRegulatorInput::line_drop_compensation_x, offsetof(TransformerTapRegulatorInput, line_drop_compensation_x), []{ return "line_drop_compensation_x"; }>::value,
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::id>(offsetof(TransformerTapRegulatorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::regulated_object>(offsetof(TransformerTapRegulatorInput, regulated_object), "regulated_object"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::status>(offsetof(TransformerTapRegulatorInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::control_side>(offsetof(TransformerTapRegulatorInput, control_side), "control_side"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::u_set>(offsetof(TransformerTapRegulatorInput, u_set), "u_set"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::u_band>(offsetof(TransformerTapRegulatorInput, u_band), "u_band"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::line_drop_compensation_r>(offsetof(TransformerTapRegulatorInput, line_drop_compensation_r), "line_drop_compensation_r"),
+            meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::line_drop_compensation_x>(offsetof(TransformerTapRegulatorInput, line_drop_compensation_x), "line_drop_compensation_x"),
     };
 };
 
-
-
-// template specialization functors to get nan
-
 template<>
-struct get_component_nan<BaseInput> {
-    BaseInput operator() () const {
-        BaseInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<NodeInput> {
-    NodeInput operator() () const {
-        NodeInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.u_rated);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<BranchInput> {
-    BranchInput operator() () const {
-        BranchInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.from_node);
-        set_nan(comp.to_node);
-        set_nan(comp.from_status);
-        set_nan(comp.to_status);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<Branch3Input> {
-    Branch3Input operator() () const {
-        Branch3Input comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node_1);
-        set_nan(comp.node_2);
-        set_nan(comp.node_3);
-        set_nan(comp.status_1);
-        set_nan(comp.status_2);
-        set_nan(comp.status_3);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<SensorInput> {
-    SensorInput operator() () const {
-        SensorInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.measured_object);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<ApplianceInput> {
-    ApplianceInput operator() () const {
-        ApplianceInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node);
-        set_nan(comp.status);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<LineInput> {
-    LineInput operator() () const {
-        LineInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.from_node);
-        set_nan(comp.to_node);
-        set_nan(comp.from_status);
-        set_nan(comp.to_status);
-        set_nan(comp.r1);
-        set_nan(comp.x1);
-        set_nan(comp.c1);
-        set_nan(comp.tan1);
-        set_nan(comp.r0);
-        set_nan(comp.x0);
-        set_nan(comp.c0);
-        set_nan(comp.tan0);
-        set_nan(comp.i_n);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<LinkInput> {
-    LinkInput operator() () const {
-        LinkInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.from_node);
-        set_nan(comp.to_node);
-        set_nan(comp.from_status);
-        set_nan(comp.to_status);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<TransformerInput> {
-    TransformerInput operator() () const {
-        TransformerInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.from_node);
-        set_nan(comp.to_node);
-        set_nan(comp.from_status);
-        set_nan(comp.to_status);
-        set_nan(comp.u1);
-        set_nan(comp.u2);
-        set_nan(comp.sn);
-        set_nan(comp.uk);
-        set_nan(comp.pk);
-        set_nan(comp.i0);
-        set_nan(comp.p0);
-        set_nan(comp.winding_from);
-        set_nan(comp.winding_to);
-        set_nan(comp.clock);
-        set_nan(comp.tap_side);
-        set_nan(comp.tap_pos);
-        set_nan(comp.tap_min);
-        set_nan(comp.tap_max);
-        set_nan(comp.tap_nom);
-        set_nan(comp.tap_size);
-        set_nan(comp.uk_min);
-        set_nan(comp.uk_max);
-        set_nan(comp.pk_min);
-        set_nan(comp.pk_max);
-        set_nan(comp.r_grounding_from);
-        set_nan(comp.x_grounding_from);
-        set_nan(comp.r_grounding_to);
-        set_nan(comp.x_grounding_to);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<ThreeWindingTransformerInput> {
-    ThreeWindingTransformerInput operator() () const {
-        ThreeWindingTransformerInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node_1);
-        set_nan(comp.node_2);
-        set_nan(comp.node_3);
-        set_nan(comp.status_1);
-        set_nan(comp.status_2);
-        set_nan(comp.status_3);
-        set_nan(comp.u1);
-        set_nan(comp.u2);
-        set_nan(comp.u3);
-        set_nan(comp.sn_1);
-        set_nan(comp.sn_2);
-        set_nan(comp.sn_3);
-        set_nan(comp.uk_12);
-        set_nan(comp.uk_13);
-        set_nan(comp.uk_23);
-        set_nan(comp.pk_12);
-        set_nan(comp.pk_13);
-        set_nan(comp.pk_23);
-        set_nan(comp.i0);
-        set_nan(comp.p0);
-        set_nan(comp.winding_1);
-        set_nan(comp.winding_2);
-        set_nan(comp.winding_3);
-        set_nan(comp.clock_12);
-        set_nan(comp.clock_13);
-        set_nan(comp.tap_side);
-        set_nan(comp.tap_pos);
-        set_nan(comp.tap_min);
-        set_nan(comp.tap_max);
-        set_nan(comp.tap_nom);
-        set_nan(comp.tap_size);
-        set_nan(comp.uk_12_min);
-        set_nan(comp.uk_12_max);
-        set_nan(comp.uk_13_min);
-        set_nan(comp.uk_13_max);
-        set_nan(comp.uk_23_min);
-        set_nan(comp.uk_23_max);
-        set_nan(comp.pk_12_min);
-        set_nan(comp.pk_12_max);
-        set_nan(comp.pk_13_min);
-        set_nan(comp.pk_13_max);
-        set_nan(comp.pk_23_min);
-        set_nan(comp.pk_23_max);
-        set_nan(comp.r_grounding_1);
-        set_nan(comp.x_grounding_1);
-        set_nan(comp.r_grounding_2);
-        set_nan(comp.x_grounding_2);
-        set_nan(comp.r_grounding_3);
-        set_nan(comp.x_grounding_3);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<GenericLoadGenInput> {
-    GenericLoadGenInput operator() () const {
-        GenericLoadGenInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node);
-        set_nan(comp.status);
-        set_nan(comp.type);
-        return comp;
-    }
+struct get_attributes_list<GenericCurrentSensorInput> {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::id>(offsetof(GenericCurrentSensorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::measured_object>(offsetof(GenericCurrentSensorInput, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::measured_terminal_type>(offsetof(GenericCurrentSensorInput, measured_terminal_type), "measured_terminal_type"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::angle_measurement_type>(offsetof(GenericCurrentSensorInput, angle_measurement_type), "angle_measurement_type"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::i_sigma>(offsetof(GenericCurrentSensorInput, i_sigma), "i_sigma"),
+            meta_data_gen::get_meta_attribute<&GenericCurrentSensorInput::i_angle_sigma>(offsetof(GenericCurrentSensorInput, i_angle_sigma), "i_angle_sigma"),
+    };
 };
 
 template <symmetry_tag sym_type>
-struct get_component_nan<LoadGenInput<sym_type>> {
+struct get_attributes_list<CurrentSensorInput<sym_type>> {
     using sym = sym_type;
 
-    LoadGenInput<sym> operator() () const {
-        LoadGenInput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node);
-        set_nan(comp.status);
-        set_nan(comp.type);
-        set_nan(comp.p_specified);
-        set_nan(comp.q_specified);
-        return comp;
-    }
+    static constexpr std::array<MetaAttribute, 8> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::id>(offsetof(CurrentSensorInput<sym>, id), "id"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::measured_object>(offsetof(CurrentSensorInput<sym>, measured_object), "measured_object"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::measured_terminal_type>(offsetof(CurrentSensorInput<sym>, measured_terminal_type), "measured_terminal_type"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::angle_measurement_type>(offsetof(CurrentSensorInput<sym>, angle_measurement_type), "angle_measurement_type"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_sigma>(offsetof(CurrentSensorInput<sym>, i_sigma), "i_sigma"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_angle_sigma>(offsetof(CurrentSensorInput<sym>, i_angle_sigma), "i_angle_sigma"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_measured>(offsetof(CurrentSensorInput<sym>, i_measured), "i_measured"),
+            meta_data_gen::get_meta_attribute<&CurrentSensorInput<sym>::i_angle_measured>(offsetof(CurrentSensorInput<sym>, i_angle_measured), "i_angle_measured"),
+    };
 };
 
-template<>
-struct get_component_nan<ShuntInput> {
-    ShuntInput operator() () const {
-        ShuntInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node);
-        set_nan(comp.status);
-        set_nan(comp.g1);
-        set_nan(comp.b1);
-        set_nan(comp.g0);
-        set_nan(comp.b0);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<SourceInput> {
-    SourceInput operator() () const {
-        SourceInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.node);
-        set_nan(comp.status);
-        set_nan(comp.u_ref);
-        set_nan(comp.u_ref_angle);
-        set_nan(comp.sk);
-        set_nan(comp.rx_ratio);
-        set_nan(comp.z01_ratio);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<GenericVoltageSensorInput> {
-    GenericVoltageSensorInput operator() () const {
-        GenericVoltageSensorInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.measured_object);
-        set_nan(comp.u_sigma);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<VoltageSensorInput<sym_type>> {
-    using sym = sym_type;
-
-    VoltageSensorInput<sym> operator() () const {
-        VoltageSensorInput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.measured_object);
-        set_nan(comp.u_sigma);
-        set_nan(comp.u_measured);
-        set_nan(comp.u_angle_measured);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<GenericPowerSensorInput> {
-    GenericPowerSensorInput operator() () const {
-        GenericPowerSensorInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.measured_object);
-        set_nan(comp.measured_terminal_type);
-        set_nan(comp.power_sigma);
-        return comp;
-    }
-};
-
-template <symmetry_tag sym_type>
-struct get_component_nan<PowerSensorInput<sym_type>> {
-    using sym = sym_type;
-
-    PowerSensorInput<sym> operator() () const {
-        PowerSensorInput<sym> comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.measured_object);
-        set_nan(comp.measured_terminal_type);
-        set_nan(comp.power_sigma);
-        set_nan(comp.p_measured);
-        set_nan(comp.q_measured);
-        set_nan(comp.p_sigma);
-        set_nan(comp.q_sigma);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<FaultInput> {
-    FaultInput operator() () const {
-        FaultInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.status);
-        set_nan(comp.fault_type);
-        set_nan(comp.fault_phase);
-        set_nan(comp.fault_object);
-        set_nan(comp.r_f);
-        set_nan(comp.x_f);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<RegulatorInput> {
-    RegulatorInput operator() () const {
-        RegulatorInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.regulated_object);
-        set_nan(comp.status);
-        return comp;
-    }
-};
-
-template<>
-struct get_component_nan<TransformerTapRegulatorInput> {
-    TransformerTapRegulatorInput operator() () const {
-        TransformerTapRegulatorInput comp;
-        // all attributes including base class
-        
-        set_nan(comp.id);
-        set_nan(comp.regulated_object);
-        set_nan(comp.status);
-        set_nan(comp.control_side);
-        set_nan(comp.u_set);
-        set_nan(comp.u_band);
-        set_nan(comp.line_drop_compensation_r);
-        set_nan(comp.line_drop_compensation_x);
-        return comp;
-    }
-};
 
 
 

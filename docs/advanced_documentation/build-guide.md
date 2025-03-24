@@ -11,12 +11,12 @@ repository there are three builds:
 
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
 * A [CMake](https://cmake.org/) project consisting of the C++ header-only calculation core, and the following build targets:
-    * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
-    * Native C++ unit tests
-    * C API tests
-    * A performance benchmark program
-    * An example C program to call the shared library
-    * An install target that installs a package that contains the dynamic library
+  * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application (enabled by default)
+  * An install target that installs the package containing the dynamic library (enabled by default)
+  * Native C++ unit tests
+  * C API tests
+  * A performance benchmark program
+  * An example C program to call the shared library
 * A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the installable
   package.
 
@@ -39,33 +39,33 @@ minimum.
 
 You need a C++ compiler with C++20 support. Below is a list of tested compilers:
 
-**Linux**
+#### Linux
 
-* gcc >= 11.0
-  * Version 12.x tested using the version in the `manylinux_2_28` container.
-  * Version 12.x tested using the musllinux build with custom compiler
+* gcc >= 13.0
+  * Version 14.x tested using the version in the `manylinux_2_28` container.
+  * Version 14.x tested using the musllinux build with custom compiler
   * Version 13.x tested in CI
-* Clang >= 15.0
-  * Version 15.x tested in CI
-  * Version 15.x tested in CI with code quality checks
+* Clang >= 17.0
+  * Version 18.x tested in CI
+  * Version 18.x tested in CI with code quality checks
 
 You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
 
-**Windows**
+#### Windows
 
 * MSVC >= 17.5
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
-* Clang CL >= 15.0
+* Clang CL >= 17.0
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
-**macOS**
+#### macOS
 
-* Clang >= 14.0.3
+* Clang >= 15.0
   * Latest release tested in CI
 
 ### Build System for CMake Project
 
-This repository uses [CMake](https://cmake.org/) (version 3.23 or later) and [Ninja](https://ninja-build.org/) as C++ build system.
+This repository uses [CMake](https://cmake.org/) (version 3.23 or later) as C++ build system.
 
 ### Build Dependencies
 
@@ -96,49 +96,86 @@ The table below shows the Python dependencies
 
 ## Build Python Package
 
-Once you have prepared the build dependencies, 
-you can install the library from source in develop mode with the development dependency. 
+Once you have prepared the build dependencies,
+you can install the library from source in editable mode with the development dependency.
 Go to the root folder of the repository.
 
-```
+```shell
 pip install -e .[dev]
 ```
 
 Then you can run the tests.
 
-```
+```shell
 pytest
+```
+
+A basic `self_test` function is provided to check if the installation was successful and ensures there are no build errors, segmentation violations, undefined symbols, etc. It performs multiple C API calls, runs through the main data flow, and verifies the integrity of serialization and deserialization.
+
+```python
+from power_grid_model.utils import self_test
+self_test()
 ```
 
 ## Build CMake Project
 
-There is a root cmake file in the root folder of the repo `CMakeLists.txt`. It specifies
-dependencies and the build options for the project. The core algorithm is implemented in the header-only
-library `power_grid_model`. There are four sub-projects defined in the root cmake file:
+### User build
+
+If you are a C-API user of the library, you can build the CMake using all the default settings.
+You can specifiy a standard [CMAKE_BUILD_TYPE](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html).
+This will only build the core C-API dynamic library.
+
+```shell
+cmake -DCMAKE_BUILD_TYPE=Release -B build/
+cmake --build build/ --config Release
+```
+
+You can further install the C-API dynamic library in the default `CMAKE_INSTALL_PREFIX` or a local directory.
+The command below installs the C-API dynamic library in a local directory `install`.
+
+```shell
+cmake --install build/ --config Release --prefix install/
+```
+
+In the repository there is a package test that consumes the C-API dynamic library.
+We can configure, build, install, and run the package test.
+
+```shell
+cd tests/package_tests
+cmake -DCMAKE_BUILD_TYPE=Release -Dpower_grid_model_DIR="../../install/lib/cmake/power_grid_model/" -B build/
+cmake --build build/ --config Release
+cmake --install build/ --config Release --prefix install/
+./install/bin/power_grid_model_package_test
+```
+
+### Developer build
+
+If you opt for a developer build of Power Grid Model,
+you can use the pre-defined CMake presets to enable developer build, including all the tests, warnings, examples, and benchmark. In the presets the [Ninja](https://ninja-build.org/) generator is used.
+In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project.
+It is also possible to use the bare CMake CLI to set up the project.
+Supported presets for your development platform can be listed using `cmake --list-presets`.
+
+In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application
 * `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
-* `tests/cpp_integration_tests`: the integration test target for the C++ core using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
-* `tests/c_api_tests`: the C API test target using the `doctest` framework
+* `tests/native_api_tests`: the C API test target using the `doctest` framework
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
-In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project. It is also possible to use
-the bare CMake CLI to set up the project. For ease of use, several presets are available (CMake 3.23+). Supported presets
-for your development platform can be listed using `cmake --list-presets`.
+On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc` compiler. It is the developer's reponsiblity to properly define symbolic links (which should be discoverable through `PATH` environment variable) of `clang` or `gcc` compiler in your system. If you want to build with `clang-tidy`, you also need to define symbolic link of `clang-tidy` to point to the actual `clang-tidy` executable of your system.
+
+Similar also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler. Developer needs to make sure the they are discoverable in `PATH`. For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses `vcvarsall.bat` to set up the appropriate build environment.
 
 ## Visual Studio Code Support
 
-You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically. 
+You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
 
 ```{note}
 VSCode (as well as some other IDEs) does not set its own build environment itself. For optimal usage, open the folder
-using `cmake <project_dir>` from a terminal that has the environment set up. E.g.:
-
-* For x64 Windows native development using MSVC or Clang CL, use the `x64 Native Command Prompt`, which uses
-  `vcvarsall.bat` to set the appropriate build environment.
-* For Linux/WSL using the LLVM-15 `clang`, `source` or `export` `CC=clang-15`, `CXX=clang++-15` and `LLVM_COV=llvm-cov-15`. Optionally, you can `export` `CLANG_TIDY=clang-tidy-15`.
+using `cmake <project_dir>` from a terminal that has the environment set up. See above section for tips.
 ```
 
 ## Build Script for Linux/macOS
@@ -167,11 +204,11 @@ WSL), or in a physical/virtual machine.
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-15            # or g++-13
-export CC=clang-15               # gcc-13
+export CXX=clang++-18            # or g++-13
+export CC=clang-18               # gcc-13
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
-export LLVM_COV=llvm-cov-15
-export CLANG_TIDY=clang-tidy-15  # only if you want to use one of the clang-tidy presets
+export LLVM_COV=llvm-cov-18
+export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 
 ### Ubuntu Software Packages
@@ -180,14 +217,14 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-15 make gdb ninja-build pkg-config python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.11 python3.11-dev python3.11-venv python3-pip
 ```
 
 ### C++ packages
 
 The recommended way to get C++ package is via [Homebrew](https://brew.sh/).
 
-```note
+```{note}
 Go to its website to follow the installation instruction.
 ```
 
@@ -199,14 +236,14 @@ brew install boost eigen nlohmann-json msgpack-cxx doctest cmake
 
 ### Build Python Library from Source
 
-It is recommended to create a virtual environment. 
-Clone repository, create and activate virtual environment. 
+It is recommended to create a virtual environment.
+Clone repository, create and activate virtual environment.
 Go to a root folder you prefer to save the repositories.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
-python3.10 -m venv .venv
+python3.11 -m venv .venv
 source ./.venv/bin/activate
 ```
 
@@ -232,7 +269,7 @@ To list the available presets, run `./build.sh -h`.
 One can run the unit tests and C API example by:
 
 ```shell
-ctest --test-dir cpp_build/<preset>
+ctest --preset <preset>
 ```
 
 or
@@ -249,7 +286,6 @@ or install using
 cmake --build --preset <preset> --target install
 ```
 
-
 ## Example Setup for Windows 10
 
 Define the following environment variable user-wide:
@@ -263,15 +299,24 @@ Define the following environment variable user-wide:
 You need to install the MSVC compiler. You can either install the whole Visual Studio IDE or just the build tools.
 
 * [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
-    * Select C++ build tools
+  * Select C++ build tools
 * Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable. Check the license!)
-    * Select Desktop Development with C++
-        * [Optional] Select `C++ Clang tools for Windows`
+  * Select Desktop Development with C++
+    * [Optional] Select `C++ Clang tools for Windows`
 
 Other toolchains:
 
-* [Miniconda](https://docs.conda.io/en/latest/miniconda.html), install Python 3 64-bit under user wide.
+* [Miniforge](https://github.com/conda-forge/miniforge), install Python 3 64-bit under user wide.
 * [Git](https://git-scm.com/downloads)
+
+```{note}
+It is also possible to use any other `conda` provider like [Miniconda](https://docs.conda.io/en/latest/miniconda.html). However, we recommend using [Miniforge](https://github.com/conda-forge/miniforge), because it is published under BSD License and by default does not have any references to commercially licensed software.
+```
+
+```{note}
+Long paths for (dependencies in) the installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
+```
 
 ### C++ packages
 
@@ -283,18 +328,18 @@ conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eig
 
 ### Build Python Library from Source
 
-It is recommended to create a `conda` environment. 
-Clone repository, create and activate `conda` environment. 
+It is recommended to create a `conda` environment.
+Clone repository, create and activate `conda` environment.
 Go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
-Then open a Miniconda PowerShell Prompt, go to the repository folder.
+Then open a Miniforge PowerShell Prompt (or equivalent if you use a different `conda` provider), go to the repository folder.
 
 ```shell
-conda create -n power-grid-env python=3.10
+conda create -n power-grid-env python=3.11
 conda activate power-grid-env
 ```
 
@@ -304,8 +349,9 @@ Install from source in develop mode, and run `pytest`.
 pip install -e .[dev]
 pytest
 ```
+
 ```{note}
-Long paths for (dependencies in) the miniconda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
+Long paths for (dependencies in) the conda installation environment might exceed the `maximum path length limitation` set by Windows, causing the installation to fail.
 It is possible to enable long paths in Windows by following the steps in the [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
@@ -330,7 +376,7 @@ The IDE should be able to automatically detect the Visual Studio cmake configura
 
 ## Example Setup for macOS (Big Sur)
 
-In this section an example is given for setup in macOS Big Sur and Python 3.10.
+In this section an example is given for setup in macOS Big Sur and Python 3.11.
 
 ### Environment variables
 
@@ -358,7 +404,7 @@ install the build dependency. go to a root folder you prefer to save the reposit
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git 
 cd power-grid-model
-python3.10 -m venv .venv
+python3.11 -m venv .venv
 source ./.venv/bin/activate
 ```
 
@@ -386,7 +432,7 @@ To list the available presets, run `./build.sh -h`.
 One can run the unit tests and C API example by:
 
 ```shell
-ctest --test-dir cpp_build/<preset>
+ctest --preset <preset>
 ```
 
 or
@@ -415,4 +461,27 @@ the {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blo
 ```{note}
 This project has the main project as a required dependency. Configuration will fail if the main project has not been
 built and installed, e.g. using `cmake --build --preset <preset> --target install` for the current preset.
+```
+
+## Documentation
+
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[doc]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
+
+```shell
+pip install -e .[doc]
+```
+
+```{note}
+The `pip install .` part of the command installs the complete package from scratch.
+```
+
+The C API documentation is generated using [Doxygen](https://www.doxygen.nl). If you do not have Doxygen installed, it can also be temporarily bypassed by commenting out the `breathe` settings in  `docs/conf.py`.
+
+The documentation can be built with the following commands, resulting in html files of the webpages which can be found in `docs/_build/html` directory.
+
+```shell
+cd docs/doxygen
+doxygen
+cd ..
+sphinx-build -b html . _build/html
 ```
