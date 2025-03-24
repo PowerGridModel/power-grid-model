@@ -519,9 +519,14 @@ TEST_CASE("Test voltage sensor") {
         constexpr auto u_measured = 2.0;
         constexpr auto u_angle_measured = 3.0;
         constexpr auto u_rated = 10.0e3;
-        VoltageSensor<symmetric_t> const voltage_sensor{{1, 2, u_sigma, u_measured, u_angle_measured}, u_rated};
+        VoltageSensor<symmetric_t> const voltage_sensor{{.id = 1,
+                                                         .measured_object = 2,
+                                                         .u_sigma = u_sigma,
+                                                         .u_measured = u_measured,
+                                                         .u_angle_measured = u_angle_measured},
+                                                        u_rated};
 
-        VoltageSensorUpdate<symmetric_t> vs_update{1, nan, nan, nan};
+        VoltageSensorUpdate<symmetric_t> vs_update{.id = 1, .u_sigma = nan, .u_measured = nan, .u_angle_measured = nan};
         auto expected = vs_update;
 
         SUBCASE("Identical") {
@@ -568,9 +573,15 @@ TEST_CASE("Test voltage sensor") {
         RealValue<asymmetric_t> const u_measured{2.0, 3.0, 4.0};
         RealValue<asymmetric_t> const u_angle_measured{5.0, 6.0, 7.0};
         constexpr double u_rated = 10.0e3;
-        VoltageSensor<asymmetric_t> const voltage_sensor{{1, 2, u_sigma, u_measured, u_angle_measured}, u_rated};
+        VoltageSensor<asymmetric_t> const voltage_sensor{{.id = 1,
+                                                          .measured_object = 2,
+                                                          .u_sigma = u_sigma,
+                                                          .u_measured = u_measured,
+                                                          .u_angle_measured = u_angle_measured},
+                                                         u_rated};
 
-        VoltageSensorUpdate<asymmetric_t> vs_update{1, nan, {nan, nan, nan}, {nan, nan, nan}};
+        VoltageSensorUpdate<asymmetric_t> vs_update{
+            .id = 1, .u_sigma = nan, .u_measured = {nan, nan, nan}, .u_angle_measured = {nan, nan, nan}};
         auto expected = vs_update;
 
         SUBCASE("Identical") {
