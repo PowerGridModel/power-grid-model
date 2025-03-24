@@ -340,8 +340,6 @@ jobs:
         if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && inputs.create_release )
         run: |
           echo "upload wheels reached"
-          echo "${{ inputs.trigger_type }}"
-          echo "${{ inputs.create_release }}"
           # pip install twine
           # echo "Publish to PyPI..."
           # twine upload --verbose wheelhouse/*
@@ -349,7 +347,7 @@ jobs:
 
       - name: Release
         # uses: softprops/action-gh-release@v2
-        if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        if: (inputs.trigger_type == 'push') || ((inputs.trigger_type == 'workflow_dispatch') && inputs.create_release )
         run: |
           echo "Release was reached"
         # with:
