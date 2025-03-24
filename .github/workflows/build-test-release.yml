@@ -322,10 +322,10 @@ jobs:
           path: .
 
       - name: Combine wheelhouses
-        run: mv wheelhouse-*/* wheelhouse
+        run: echo "combine wheelhouses reached"
 
       - name: List assets
-        run: ls ./wheelhouse/ -al
+        run: echo "List assets reached"
 
       - name: Get tag
         id: tag
@@ -340,8 +340,7 @@ jobs:
           # pip install twine
           # echo "Publish to PyPI..."
           # twine upload --verbose wheelhouse/*
-          echo "Contents of wheelhouse:"
-          ls -lh wheelhouse
+          echo "upload wheels reached"
 
       - name: Release
         # uses: softprops/action-gh-release@v2
