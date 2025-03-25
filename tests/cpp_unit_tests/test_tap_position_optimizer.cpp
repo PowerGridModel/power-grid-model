@@ -185,6 +185,25 @@ TEST_CASE("Test Transformer ranking") {
         CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 2, 1, 4, 5)));
     }
 
+    SUBCASE("Controlling from non source to source transformer") {
+        TestState state;
+        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3}};
+        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+
+        std::vector<TransformerInput> transformers{get_transformer(2, 0, 1, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+
+        std::vector<SourceInput> sources{SourceInput{.id = 3, .node = 0, .status = IntS{1}, .u_ref = 1.0}};
+        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> regulators{get_regulator(4, 2, ControlSide::from)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
+        state.components.set_construction_complete();
+
+        CHECK_THROWS_AS(pgm_tap::build_transformer_graph(state), AutomaticTapInputError);
+    }
+
     SUBCASE("Process edge weights") {
         using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
