@@ -309,7 +309,6 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         }
         auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
         auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
-        auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
 
         // New edge logic for ranking
         // |  Tap  | Control |         All edges       |
