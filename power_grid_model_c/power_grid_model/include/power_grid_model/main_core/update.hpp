@@ -264,7 +264,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
                 *changed_it++ = sequence_single;
             }
         },
-        begin, end, sequence_idx);
+        std::move(begin), std::move(end), sequence_idx);
 
     return state_changed;
 }

@@ -93,7 +93,7 @@ class Source : public Appliance {
         bool const param_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
         // change source connection will change both topo and param
         // change u ref will change param
-        return {topo_changed, param_changed || topo_changed};
+        return {.topo = topo_changed, .param = param_changed || topo_changed};
     }
 
     SourceUpdate inverse(SourceUpdate update_data) const {

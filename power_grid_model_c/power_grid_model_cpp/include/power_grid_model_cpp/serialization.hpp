@@ -116,7 +116,7 @@ inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
         writable_dataset.set_buffer(component_name, indptr, current_buffer);
         dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
     }
-    return OwningDataset{.dataset = std::move(dataset_mutable), .storage = std::move(storage)};
+    return OwningDataset{std::move(dataset_mutable), std::move(storage)};
 }
 } // namespace power_grid_model_cpp
 
