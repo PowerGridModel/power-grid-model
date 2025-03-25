@@ -309,7 +309,6 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         }
         auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
         auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
-        auto const edge_res = std::min(edge_src_rank, edge_tgt_rank);
 
         // New edge logic for ranking
         // |  Tap  | Control |         All edges       |
@@ -328,11 +327,11 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // side via the bidirectional edge (if it exists). For delta configuration ABC, the above
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
-        if (edge_src_rank != edge_tgt_rank - 1) {
-            throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
-                                         "away from the source than the tap side.\n");
-        }
-        if (!is_unreachable(edge_res)) {
+        if (!is_unreachable(edge_src_rank) || !is_unreachable(edge_tgt_rank)) {
+            if (edge_src_rank != edge_tgt_rank - 1) {
+                throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
+                                             "away from the source than the tap side.\n");
+            }
             result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
