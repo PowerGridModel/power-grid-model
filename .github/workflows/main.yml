@@ -119,6 +119,8 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
         with:
           miniforge-version: latest
+          channels: conda-forge
+          conda-remove-defaults: "true"
       
       - name: List conda
         run: |
@@ -256,6 +258,8 @@ jobs:
           activate-environment: conda-pgm-env
           environment-file: .github/conda_pgm_env.yml
           auto-activate-base: false
+          channels: conda-forge
+          conda-remove-defaults: "true"
       
       - name: List conda
         run: |
