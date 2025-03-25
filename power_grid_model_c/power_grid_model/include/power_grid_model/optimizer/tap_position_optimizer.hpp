@@ -285,9 +285,6 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
                 pq.emplace(vertex_distances[t], t);
-            } else if (u == t && vertex_distances[t] + weight < vertex_distances[s]) {
-                vertex_distances[s] = vertex_distances[t] + weight;
-                pq.emplace(vertex_distances[s], s);
             }
         }
     }
