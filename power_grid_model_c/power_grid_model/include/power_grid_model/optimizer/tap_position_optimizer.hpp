@@ -329,7 +329,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
         if (!is_unreachable(edge_src_rank) || !is_unreachable(edge_tgt_rank)) {
-            if ((edge_src_rank == infty) != (edge_tgt_rank == infty)) {
+            if ((edge_src_rank == infty) || (edge_tgt_rank == infty)) {
                 throw AutomaticTapInputError("The transformer is being controlled from non source side towards source "
                                              "side.\n");
             } else if (edge_src_rank != edge_tgt_rank - 1) {
