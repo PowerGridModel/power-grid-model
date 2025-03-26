@@ -1088,13 +1088,13 @@ TEST_CASE("API Model") {
 
         auto const run_se_with_current_sensor = [&input_dataset_se](PGM_CalculationMethod method,
                                                                     PGM_ExperimentalFeatures experimental_features) {
-            Model model{50.0, input_dataset_se};
-            Options options{};
-            options.set_calculation_type(PGM_state_estimation);
-            options.set_calculation_method(method);
-            options.set_experimental_features(experimental_features);
+            Model model_with_current_sensor{50.0, input_dataset_se};
+            Options experimental_options{};
+            experimental_options.set_calculation_type(PGM_state_estimation);
+            experimental_options.set_calculation_method(method);
+            experimental_options.set_experimental_features(experimental_features);
             DatasetMutable const output_dataset{"sym_output", false, 1};
-            model.calculate(options, output_dataset);
+            model_with_current_sensor.calculate(experimental_options, output_dataset);
         };
         for (auto const method : {PGM_default_method, PGM_iterative_linear, PGM_newton_raphson}) {
             CAPTURE(method);

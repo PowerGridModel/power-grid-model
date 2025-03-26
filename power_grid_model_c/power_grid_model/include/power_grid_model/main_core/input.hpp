@@ -109,17 +109,18 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                              measured_terminal_type = input.measured_terminal_type] {
                 switch (measured_terminal_type) {
                     using enum MeasuredTerminalType;
+                    using enum Branch3Side;
 
                 case branch_from:
                     return get_component<Branch>(state, measured_object).node(BranchSide::from);
                 case branch_to:
                     return get_component<Branch>(state, measured_object).node(BranchSide::to);
                 case branch3_1:
-                    return get_component<Branch3>(state, measured_object).node(Branch3Side::side_1);
+                    return get_component<Branch3>(state, measured_object).node(side_1);
                 case branch3_2:
-                    return get_component<Branch3>(state, measured_object).node(Branch3Side::side_2);
+                    return get_component<Branch3>(state, measured_object).node(side_2);
                 case branch3_3:
-                    return get_component<Branch3>(state, measured_object).node(Branch3Side::side_2);
+                    return get_component<Branch3>(state, measured_object).node(side_2);
                 default:
                     throw MissingCaseForEnumError{std::format("{} item retrieval", GenericCurrentSensor::name),
                                                   measured_terminal_type};
