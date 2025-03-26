@@ -261,11 +261,12 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     return trafo_graph;
 }
 
-inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distances, TransformerGraph const& graph) {
+inline void process_edges_dijkstra(Idx search_start_vertex, std::vector<EdgeWeight>& vertex_distances,
+                                   TransformerGraph const& graph) {
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
-    vertex_distances[v] = 0;
-    pq.emplace(0, v);
+    vertex_distances[search_start_vertex] = 0;
+    pq.emplace(0, search_start_vertex);
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
@@ -275,14 +276,12 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             continue;
         }
 
-        BGL_FORALL_EDGES(e, graph, TransformerGraph) {
+        BGL_FORALL_OUTEDGES(u, e, graph, TransformerGraph) {
             auto s = boost::source(e, graph);
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEDGES here because we need information
-            // regardless of edge direction
-            if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
+            if (vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
                 pq.emplace(vertex_distances[t], t);
             }
