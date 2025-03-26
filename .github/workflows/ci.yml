@@ -37,8 +37,7 @@ jobs:
       # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
       # create_release becomes true if the event that triggered this workflow is "push" on main
       # otherwise create_release becomes false
-      # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
-      create_release: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || (github.event_name == 'push' && true) || false }}
+      create_release: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'}}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
