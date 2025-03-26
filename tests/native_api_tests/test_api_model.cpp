@@ -1062,6 +1062,47 @@ TEST_CASE("API Model") {
             }
         }
     }
+
+    SUBCASE("Current sensor is experimental") {
+        auto const input_data_se_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 10000},
+      {"id": 2, "u_rated": 10000}
+    ],
+      "line": [
+      {"id": 3, "from_node": 1, "to_node": 2, "r": 0.1, "x": 0.2}
+    ],
+    "sym_current_sensor": [
+      {"id": 4, "measured_object": 3, "measured_terminal_type": 0}
+    ]
+  }
+})json";
+
+        auto const owning_input_dataset_se = load_dataset(input_data_se_json);
+        auto const& input_dataset_se = owning_input_dataset_se.dataset;
+
+        auto const run_se_with_current_sensor = [&input_dataset_se](PGM_CalculationMethod method,
+                                                                    PGM_ExperimentalFeatures experimental_features) {
+            Model model{50.0, input_dataset_se};
+            Options options{};
+            options.set_calculation_type(PGM_state_estimation);
+            options.set_calculation_method(method);
+            options.set_experimental_features(experimental_features);
+            DatasetMutable const output_dataset{"sym_output", false, 1};
+            model.calculate(options, output_dataset);
+        };
+        for (auto const method : {PGM_default_method, PGM_iterative_linear, PGM_newton_raphson}) {
+            CAPTURE(method);
+            CHECK_THROWS_WITH_AS(run_se_with_current_sensor(method, PGM_experimental_features_disabled),
+                                 "State estimation is not implemented for current sensors!\n", PowerGridRegularError);
+            CHECK_NOTHROW(run_se_with_current_sensor(method, PGM_experimental_features_enabled));
+        }
+    }
 }
 
 } // namespace power_grid_model_cpp

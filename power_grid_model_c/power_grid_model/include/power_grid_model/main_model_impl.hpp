@@ -801,6 +801,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     CalculationInfo calculation_info() const { return calculation_info_; }
 
+    void check_no_experimental_features_used(Options const& options) const {
+        if (options.calculation_type == CalculationType::state_estimation &&
+            state_.components.template size<GenericCurrentSensor>() > 0) {
+            throw ExperimentalFeature{"State estimation", "current sensors"};
+        }
+    }
+
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
