@@ -259,7 +259,7 @@ jobs:
 
     defaults:
       run:
-        shell: ${{ matrix.shell }}
+        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v4
 
