@@ -46,7 +46,6 @@ jobs:
     secrets:
       PYPI_USER: ${{ secrets.PYPI_USER }}
       PYPI_PASS: ${{ secrets.PYPI_PASS }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
