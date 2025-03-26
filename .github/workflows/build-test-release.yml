@@ -237,7 +237,7 @@ jobs:
 
     defaults:
       run:
-        shell: bash -el {0}
+        shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v4
 
@@ -330,7 +330,7 @@ jobs:
           pip install twine
           echo "Publish to PyPI..."
           twine upload --verbose wheelhouse/*
-          
+
       - name: Release
         uses: softprops/action-gh-release@v2
         if: (inputs.create_release)
