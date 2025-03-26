@@ -4,20 +4,24 @@
 
 name: CI Build
 
-# Controls when the workflow will run
+# Controls when the workflow will run.
 on:
-  # run pipeline on push event of main branch.
+  # run pipeline on push event of main branch
   push:
     branches:
       - main
-  # run pipeline on pull request.
+  # run pipeline on pull request
   pull_request:
   # run pipeline on merge queue
   merge_group:
   # run this workflow manually from the Actions tab
   workflow_dispatch:
-  schedule:
-    - cron: "0 2 * * *" # Based on UTC time
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-ci-build
@@ -29,8 +33,8 @@ jobs:
     uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
-    with:
-      create_release: false
+    with: 
+      create_release: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release || github.event_name == 'push' && true || false }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
@@ -41,17 +45,11 @@ jobs:
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
-      target: "all power_grid_model_benchmark_cpp"
-
-  citations:
-    uses: "./.github/workflows/citations.yml"
+      target: "power_grid_model_api_tests"
 
   ci-passed:
     runs-on: ubuntu-latest
-    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy, citations]
+    needs: [build-test-release, check-code-quality, reuse-compliance, clang-tidy]
 
     steps:
       - run: echo "ci passed"
-  # sonar:
-  #   uses: "./.github/workflows/sonar.yml"
-  #   secrets: inherit
