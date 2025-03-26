@@ -626,9 +626,9 @@ Power flow calculations that take the behavior of these regulators into account 
 
 ##### Control logic for power flow with automatic tap changing
 
-The following control logic is used:
+We provide the control logic used for tap changing. For simplicity, we demonstrate the case where the regulator control side and the transformer tap side are at different sides.
 
-- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of transformers inbetween.
+- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers inbetween.
   - Transformers are regulated in order according to their ranks.
 - Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
 - Find the optimal state using the following procedure
@@ -652,6 +652,7 @@ The following control logic is used:
   - Exploit the neighbourhood of all transformers (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
+In the case where the control side of the regulator and the tap side of the transformer are at the same side, the control logic of taps will be reverted (see `user_manual/calculations:Initialization and exploitation of regulated transformers`). 
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback mechanisms in the grid.
 
 ```{note}
@@ -667,7 +668,6 @@ This assumption is reflected in the requirements mentioned in {hoverxreftooltip}
 ```
 
 ```{note}
-The control logic assumes that the (compensated) control voltage decreases when the tap position increases.
 If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption does not hold, and the calculation may diverge.
 Hence, this assumption is reflected in the requirements mentioned in {hoverxreftooltip}`user_manual/components:Line drop compensation`.
 ```
@@ -679,9 +679,15 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 | strategy                                                                                                    | initial tap position | exploitation direction | search method | description                                                                           |
 | ----------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------- |
 | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     | current tap position | no exploitation        | linear search | Find any tap position that gives a control side voltage within the `u_band`           |
-| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | `tap_max`            | step up                | binary search | Find the tap position that gives the lowest control side voltage within the `u_band`  |
-| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | `tap_min`            | step down              | binary search | Find the tap position that gives the highest control side voltage within the `u_band` |
+| {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` | voltage min tap      | voltage down           | binary search | Find the tap position that gives the lowest control side voltage within the `u_band`  |
+| {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` | voltage min tap      | voltage up             | binary search | Find the tap position that gives the highest control side voltage within the `u_band` |
 | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       | current tap position | no exploitation        | binary search | Find any tap position that gives a control side voltage within the `u_band`           |
+
+| transformer configuration                      | voltage min tap | voltage min tap | voltage down | voltage up |
+| ---------------------------------------------- | --------------- | --------------- | ------------ | ---------- |
+| regulator control side != transformer tap side | `tap_max`       | `tap_min`       | step up      | step down  |
+| regulator control side == transformer tap side | `tap_min`       | `tap_max`       | step down    | step up    |
+
 
 ##### Search methods used for tap changing optimization
 

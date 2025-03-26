@@ -146,7 +146,7 @@ static_assert(std::convertible_to<decltype(stub_const_dataset_update), ConstData
 
 constexpr auto strategies = [] {
     using enum OptimizerStrategy;
-    return std::array{any, global_minimum, global_maximum, local_minimum, local_maximum};
+    return std::array{any, local_maximum, local_minimum, global_maximum, global_minimum};
 }();
 
 constexpr auto calculation_methods = [] {
@@ -167,7 +167,8 @@ constexpr auto strategies_and_methods = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto method : calculation_methods) {
-            result[idx++] = {strategy, method}; // NOSONAR {no more than one thing per line}
+            result[idx] = {.strategy = strategy, .method = method};
+            ++idx;
         }
     }
     return result;
@@ -183,7 +184,8 @@ constexpr auto strategies_and_sides = [] {
     size_t idx{};
     for (auto strategy : strategies) {
         for (auto side : tap_sides) {
-            result[idx++] = {strategy, side}; // NOSONAR {no more than one thing per line}
+            result[idx] = {.strategy = strategy, .side = side};
+            ++idx;
         }
     }
     return result;
@@ -208,7 +210,8 @@ constexpr auto strategy_search_and_sides = [] {
                 continue;
             }
             for (auto side : tap_sides) {
-                result[idx++] = {strategy, search, side}; // NOSONAR (no-more-than-one-thing-per-line)
+                result[idx] = {.strategy = strategy, .search = search, .side = side};
+                ++idx;
             }
         }
     }
@@ -233,7 +236,8 @@ constexpr auto strategy_method_and_searches = [] {
                 continue;
             }
             for (auto method : calculation_methods) {
-                result[idx++] = {strategy, method, search}; // NOSONAR (no-more-than-one-thing-per-line)
+                result[idx] = {.strategy = strategy, .method = method, .search = search};
+                ++idx;
             }
         }
     }

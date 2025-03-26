@@ -73,11 +73,17 @@ struct MapArray {
     bool begin{true};
 };
 
-struct JsonConverter : msgpack::null_visitor {
+template <typename T> struct NullVisitor : msgpack::null_visitor {
+  private:
+    NullVisitor() = default;
+    friend T; // CRTP compliance
+};
+
+struct JsonConverter : NullVisitor<JsonConverter> {
     static constexpr char sep_char = ' ';
 
-    Idx indent;
-    Idx max_indent_level;
+    Idx indent{};
+    Idx max_indent_level{};
     std::stringstream ss{};
     std::stack<MapArray> map_array{};
 
@@ -194,6 +200,9 @@ struct JsonConverter : msgpack::null_visitor {
         ss << '}';
         return true;
     }
+
+    JsonConverter(Idx indent_, Idx max_indent_level_)
+        : NullVisitor<JsonConverter>{}, indent{indent_}, max_indent_level{max_indent_level_} {}
 };
 
 } // namespace json_converter
@@ -293,7 +302,7 @@ class Serializer {
     std::vector<ComponentBuffer> component_buffers_; // list of components, then all scenario flatten
 
     // msgpack pakcer
-    msgpack::sbuffer msgpack_buffer_{};
+    msgpack::sbuffer msgpack_buffer_;
     msgpack::packer<msgpack::sbuffer> packer_;
     bool use_compact_list_{};
     std::map<MetaComponent const*, std::vector<MetaAttribute const*>> attributes_;
@@ -380,7 +389,7 @@ class Serializer {
     std::string const& get_json(bool use_compact_list, Idx indent) {
         if (json_buffer_.empty() || (use_compact_list_ != use_compact_list) || (json_indent_ != indent)) {
             Idx const max_indent_level = dataset_handler_.is_batch() ? 4 : 3;
-            json_converter::JsonConverter visitor{{}, indent, max_indent_level};
+            json_converter::JsonConverter visitor{indent, max_indent_level};
             auto const msgpack_data = get_msgpack(use_compact_list);
             msgpack::parse(msgpack_data.data(), msgpack_data.size(), visitor);
             json_buffer_ = visitor.ss.str();
@@ -506,11 +515,9 @@ class Serializer {
     }
 
     void pack_element_in_list(columnar_t /*tag*/, BufferView const& element_buffer, MetaComponent const& /*component*/,
-                              std::span<MetaAttribute const* const> attributes) {
+                              [[maybe_unused]] std::span<MetaAttribute const* const> attributes) {
         assert(is_columnar(element_buffer));
         assert(element_buffer.reordered_attribute_buffers.size() == attributes.size());
-
-        (void)attributes; // suppress unused variable in release mode
 
         pack_array(element_buffer.reordered_attribute_buffers.size());
         for (auto const& attribute_buffer : element_buffer.reordered_attribute_buffers) {
@@ -606,7 +613,7 @@ class Serializer {
         });
     }
     void pack_attribute(AttributeBuffer<void const> const& attribute_buffer, Idx idx) {
-        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<class T> {
+        ctype_func_selector(attribute_buffer.meta_attribute->ctype, [this, &attribute_buffer, idx]<class T> {
             packer_.pack(*(reinterpret_cast<T const*>(attribute_buffer.data) + idx));
         });
     }

@@ -29,8 +29,8 @@ class DatasetInfo {
     DatasetInfo(RawDatasetInfo const* info) noexcept : info_{info} {}
     DatasetInfo(DatasetInfo&&) = default;
     DatasetInfo& operator=(DatasetInfo&&) = default;
-    DatasetInfo(const DatasetInfo&) = delete;            // No copy constructor
-    DatasetInfo& operator=(const DatasetInfo&) = delete; // No copy assignment
+    DatasetInfo(DatasetInfo const&) = delete;            // No copy constructor
+    DatasetInfo& operator=(DatasetInfo const&) = delete; // No copy assignment
     ~DatasetInfo() = default;
 
     std::string name() const { return std::string{handle_.call_with(PGM_dataset_info_name, info_)}; }
@@ -63,6 +63,20 @@ class DatasetInfo {
         throw ComponentTypeNotFound{component};
     }
 
+    bool has_attribute_indications(Idx component_idx) const {
+        return handle_.call_with(PGM_dataset_info_has_attribute_indications, info_, component_idx) != 0;
+    }
+
+    std::vector<std::string> attribute_indications(Idx component_idx) const {
+        Idx const n_attributes = handle_.call_with(PGM_dataset_info_n_attribute_indications, info_, component_idx);
+        std::vector<std::string> attributes;
+        attributes.reserve(n_attributes);
+        for (Idx idx = 0; idx < n_attributes; ++idx) {
+            attributes.emplace_back(handle_.call_with(PGM_dataset_info_attribute_name, info_, component_idx, idx));
+        }
+        return attributes;
+    }
+
   private:
     Handle handle_{};
     RawDatasetInfo const* info_;
@@ -74,8 +88,8 @@ class DatasetWritable {
         : dataset_{dataset}, info_{handle_.call_with(PGM_dataset_writable_get_info, dataset_)} {}
     DatasetWritable(DatasetWritable&&) = default;
     DatasetWritable& operator=(DatasetWritable&&) = default;
-    DatasetWritable(const DatasetWritable&) = delete;            // No copy constructor
-    DatasetWritable& operator=(const DatasetWritable&) = delete; // No copy assignment
+    DatasetWritable(DatasetWritable const&) = delete;            // No copy constructor
+    DatasetWritable& operator=(DatasetWritable const&) = delete; // No copy assignment
     ~DatasetWritable() = default;
 
     RawWritableDataset const* get() const { return dataset_; }

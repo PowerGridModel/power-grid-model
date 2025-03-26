@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 set(PROJECT_SOURCES
-    "test_all_components.cpp"
     "test_entry_point.cpp"
+    "test_all_components.cpp"
     "test_common.cpp"
     "test_exceptions.cpp"
     "test_component_list.cpp"
@@ -12,6 +12,7 @@ set(PROJECT_SOURCES
     "test_component_output.cpp"
     "test_component_update.cpp"
     "test_three_phase_tensor.cpp"
+    "test_statistics.cpp"
     "test_node.cpp"
     "test_line.cpp"
     "test_generic_branch.cpp"

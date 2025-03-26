@@ -114,7 +114,7 @@ class Fault final : public Base {
             x_f_ = update.x_f;
         }
         check_sanity();
-        return {false, false}; // topology and parameters do not change
+        return {.topo = false, .param = false}; // topology and parameters do not change
     }
 
     FaultUpdate inverse(FaultUpdate update_data) const {
@@ -193,7 +193,7 @@ class Fault final : public Base {
     double r_f_;
     double x_f_;
 
-    void check_sanity() {
+    void check_sanity() const {
         using enum FaultPhase;
 
         auto const check_supported = [&](auto const& iterable) {
@@ -203,15 +203,19 @@ class Fault final : public Base {
         };
         switch (fault_type_) {
         case FaultType::three_phase:
-            return check_supported(std::array{FaultPhase::nan, default_value, abc});
+            check_supported(std::array{FaultPhase::nan, default_value, abc});
+            return;
         case FaultType::single_phase_to_ground:
-            return check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+            check_supported(std::array{FaultPhase::nan, default_value, a, b, c});
+            return;
         case FaultType::two_phase:
             [[fallthrough]];
         case FaultType::two_phase_to_ground:
-            return check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+            check_supported(std::array{FaultPhase::nan, default_value, ab, ac, bc});
+            return;
         case FaultType::nan:
-            return check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+            check_supported(std::array{FaultPhase::nan, default_value, abc, a, b, c, ab, ac, bc});
+            return;
         default:
             throw InvalidShortCircuitType(fault_type_);
         }

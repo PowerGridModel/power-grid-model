@@ -22,10 +22,12 @@ class MainModel {
   public:
     using Options = MainModelOptions;
 
-    explicit MainModel(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
-        : impl_{std::make_unique<Impl>(system_frequency, input_data, pos)} {}
-    explicit MainModel(double system_frequency, meta_data::MetaData const& meta_data)
-        : impl_{std::make_unique<Impl>(system_frequency, meta_data)} {};
+    explicit MainModel(double system_frequency, ConstDataset const& input_data,
+                       MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
+        : impl_{std::make_unique<Impl>(system_frequency, input_data, math_solver_dispatcher, pos)} {}
+    explicit MainModel(double system_frequency, meta_data::MetaData const& meta_data,
+                       MathSolverDispatcher const& math_solver_dispatcher)
+        : impl_{std::make_unique<Impl>(system_frequency, meta_data, math_solver_dispatcher)} {};
 
     // deep copy
     MainModel(MainModel const& other) {
@@ -55,34 +57,10 @@ class MainModel {
         impl().get_indexer(component_type, id_begin, size, indexer_begin);
     }
 
-    void set_construction_complete() { impl().set_construction_complete(); }
-
-    template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
-        add_component<CompType>(std::span<typename CompType::InputType const>{components});
-    }
-    template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
-        impl().add_component<CompType>(components);
-    }
-
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         impl().update_components<CacheType>(update_data.get_individual_scenario(0));
     }
 
-    template <typename CompType, typename MathOutputType, typename OutputType>
-    void output_result(MathOutputType const& math_output, std::vector<OutputType>& target) const {
-        output_result<CompType>(math_output, std::span<OutputType>{target});
-    }
-    template <typename CompType, typename MathOutputType, typename OutputType>
-    void output_result(MathOutputType const& math_output, std::span<OutputType> target) const {
-        impl().output_result<CompType>(math_output, target.begin());
-    }
-
-    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
-        return impl().calculate<calculation_type, sym>(options);
-    }
-    void calculate(Options const& options, MutableDataset const& result_data) {
-        return impl().calculate(options, result_data);
-    }
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
         return impl().calculate(options, result_data, update_data);

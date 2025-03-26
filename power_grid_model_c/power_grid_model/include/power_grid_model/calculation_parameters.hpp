@@ -7,6 +7,7 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
+#include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
@@ -53,7 +54,7 @@ template <symmetry_tag sym_type> struct BranchShortCircuitSolverOutput {
 
 // fault math calculation parameters and math output
 struct FaultCalcParam {
-    DoubleComplex y_fault{};
+    DoubleComplex y_fault;
     FaultType fault_type{};
     FaultPhase fault_phase{};
 };
@@ -78,35 +79,16 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
     ComplexValue<sym> i{};
 };
 
-// Complex measured value of a sensor in p.u. with a uniform variance across all phases and axes of the complex plane
-// (circularly symmetric)
-template <symmetry_tag sym_type> struct UniformComplexRandomVariable {
-    using sym = sym_type;
-
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
-    ComplexValue<sym> value{};
-    double variance{}; // variance (sigma^2) of the error range, in p.u.
-};
-
 // voltage sensor calculation parameters for state estimation
 // The value is the complex voltage
 // If the imaginary part is NaN, it means the angle calculation is not correct
-template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandomVariable<sym>;
+template <symmetry_tag sym> using VoltageSensorCalcParam = UniformComplexRandVar<sym>;
 
 // power sensor calculation parameters for state estimation
 // The value is the complex power
 //   * for appliances, it is always in injection direction
 //   * for branches, the direction is node -> branch
-template <symmetry_tag sym_type> struct PowerSensorCalcParam {
-    using sym = sym_type;
-
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
-    ComplexValue<sym> value{};
-    RealValue<sym> p_variance{}; // variance (sigma^2) of the error range of the active power, in p.u.
-    RealValue<sym> q_variance{}; // variance (sigma^2) of the error range of the reactive power, in p.u.
-};
+template <symmetry_tag sym> using PowerSensorCalcParam = DecomposedComplexRandVar<sym>;
 
 // current sensor calculation parameters for state estimation
 // The value is the complex current
@@ -117,9 +99,7 @@ template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
     static constexpr bool symmetric{is_symmetric_v<sym>};
 
     AngleMeasurementType angle_measurement_type{};
-    ComplexValue<sym> value{};
-    double i_real_variance{}; // variance (sigma^2) of the error range of real part of the current, in p.u.
-    double i_imag_variance{}; // variance (sigma^2) of the error range of imaginary part of the current, in p.u.
+    DecomposedComplexRandVar<sym> measurement;
 };
 
 template <typename T>
@@ -136,7 +116,7 @@ static_assert(sensor_calc_param_type<PowerSensorCalcParam<asymmetric_t>>);
 struct TransformerTapRegulatorCalcParam {
     double u_set{};
     double u_band{};
-    DoubleComplex z_compensation{};
+    DoubleComplex z_compensation;
     IntS status{};
 };
 
@@ -203,7 +183,7 @@ struct SourceCalcParam {
     DoubleComplex y1;
     DoubleComplex y0;
 
-    template <symmetry_tag sym> inline ComplexTensor<sym> y_ref() const {
+    template <symmetry_tag sym> ComplexTensor<sym> y_ref() const {
         if constexpr (is_symmetric_v<sym>) {
             return y1;
         } else {

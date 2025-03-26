@@ -106,7 +106,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         this->set_status(update_data.status);
         set_power(update_data.p_specified, update_data.q_specified);
         // change load connection and/or value will not change topology or parameters
-        return {false, false};
+        return {.topo = false, .param = false};
     }
 
     LoadGenUpdate<loadgen_symmetry> inverse(LoadGenUpdate<loadgen_symmetry> update_data) const {
@@ -161,7 +161,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
     // scale load
     template <symmetry_tag calculation_symmetry>
-    ComplexValue<calculation_symmetry> scale_power(ComplexValue<calculation_symmetry> u) const {
+    ComplexValue<calculation_symmetry> scale_power(ComplexValue<calculation_symmetry> const& u) const {
         using enum LoadGenType;
 
         auto const params = [this] { return this->template calc_param<calculation_symmetry>(); };
@@ -173,7 +173,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         case const_i:
             return params() * cabs(u);
         default:
-            throw MissingCaseForEnumError(std::string(this->name) + " power scaling factor", this->type());
+            throw MissingCaseForEnumError(std::string{name} + " power scaling factor", this->type());
         }
     }
 };

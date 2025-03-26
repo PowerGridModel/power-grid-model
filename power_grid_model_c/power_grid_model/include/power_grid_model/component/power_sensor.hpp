@@ -87,15 +87,15 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
     };
 
     UpdateChange update(PowerSensorUpdate<power_sensor_symmetry> const& update_data) {
+        assert(update_data.id == this->id() || is_nan(update_data.id));
+
         set_power(update_data.p_measured, update_data.q_measured);
 
-        if (!is_nan(update_data.power_sigma)) {
-            apparent_power_sigma_ = update_data.power_sigma * inv_base_power;
-        }
+        update_real_value<symmetric_t>(update_data.power_sigma, apparent_power_sigma_, inv_base_power);
         update_real_value<power_sensor_symmetry>(update_data.p_sigma, p_sigma_, inv_base_power);
         update_real_value<power_sensor_symmetry>(update_data.q_sigma, q_sigma_, inv_base_power);
 
-        return {false, false};
+        return {.topo = false, .param = false};
     }
 
     PowerSensorUpdate<power_sensor_symmetry> inverse(PowerSensorUpdate<power_sensor_symmetry> update_data) const {
@@ -131,34 +131,37 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
     PowerSensorCalcParam<symmetric_t> sym_calc_param() const final {
         PowerSensorCalcParam<symmetric_t> calc_param{};
         if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
-            calc_param.p_variance = mean_val(p_sigma_ * p_sigma_);
-            calc_param.q_variance = mean_val(q_sigma_ * q_sigma_);
+            calc_param.real_component.variance = mean_val(p_sigma_ * p_sigma_);
+            calc_param.imag_component.variance = mean_val(q_sigma_ * q_sigma_);
         } else {
             auto const variance = is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
                                                    : std::numeric_limits<double>::infinity();
-            calc_param.p_variance = variance;
-            calc_param.q_variance = variance;
+            calc_param.real_component.variance = variance;
+            calc_param.imag_component.variance = variance;
         }
-        assert(is_nan(calc_param.p_variance) == is_nan(calc_param.q_variance));
+        assert(is_nan(calc_param.real_component.variance) == is_nan(calc_param.imag_component.variance));
 
-        calc_param.value = mean_val(s_measured_);
+        auto const mean_s_measured = mean_val(s_measured_);
+        calc_param.real_component.value = real(mean_s_measured);
+        calc_param.imag_component.value = imag(mean_s_measured);
         return calc_param;
     }
     PowerSensorCalcParam<asymmetric_t> asym_calc_param() const final {
         PowerSensorCalcParam<asymmetric_t> calc_param{};
         if (is_normal(p_sigma_) && is_normal(q_sigma_)) {
-            calc_param.p_variance = RealValue<asymmetric_t>{p_sigma_ * p_sigma_};
-            calc_param.q_variance = RealValue<asymmetric_t>{q_sigma_ * q_sigma_};
+            calc_param.real_component.variance = RealValue<asymmetric_t>{p_sigma_ * p_sigma_};
+            calc_param.imag_component.variance = RealValue<asymmetric_t>{q_sigma_ * q_sigma_};
         } else {
             auto const variance =
                 RealValue<asymmetric_t>{is_nan(p_sigma_) ? apparent_power_sigma_ * apparent_power_sigma_ / 2
                                                          : std::numeric_limits<double>::infinity()};
-            calc_param.p_variance = variance;
-            calc_param.q_variance = variance;
+            calc_param.real_component.variance = variance;
+            calc_param.imag_component.variance = variance;
         }
-        assert(is_nan(calc_param.p_variance) == is_nan(calc_param.q_variance));
+        assert(is_nan(calc_param.real_component.variance) == is_nan(calc_param.imag_component.variance));
 
-        calc_param.value = piecewise_complex_value(s_measured_);
+        calc_param.real_component.value = RealValue<asymmetric_t>{real(s_measured_)};
+        calc_param.imag_component.value = RealValue<asymmetric_t>{imag(s_measured_)};
         return calc_param;
     }
     PowerSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& s) const final {

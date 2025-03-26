@@ -36,28 +36,42 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
             result.source_status = {1};
             result.measured_voltage = {
                 {output_reference.u[0], 1.0}, {output_reference.u[2], 1.0}, {output_reference.u[2], 1.0}};
-            result.measured_bus_injection = {{output_reference.source[0].s + output_reference.load_gen[0].s +
-                                                  output_reference.load_gen[1].s + output_reference.load_gen[2].s,
-                                              0.5, 0.5}};
-            result.measured_source_power = {{output_reference.source[0].s, 0.5, 0.5},
-                                            {output_reference.source[0].s, 0.5, 0.5}};
+            auto const sum_s = output_reference.source[0].s + output_reference.load_gen[0].s +
+                               output_reference.load_gen[1].s + output_reference.load_gen[2].s;
+            result.measured_bus_injection = {{.real_component = {.value = real(sum_s), .variance = 0.5},
+                                              .imag_component = {.value = imag(sum_s), .variance = 0.5}}};
+            result.measured_source_power = {
+                {.real_component = {.value = real(output_reference.source[0].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.source[0].s), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.source[0].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.source[0].s), .variance = 0.5}}};
+
             result.measured_load_gen_power = {
-                {output_reference.load_gen[3].s, 0.5, 0.5},
-                {output_reference.load_gen[4].s, 0.5, 0.5},
-                {output_reference.load_gen[5].s, 0.5, 0.5},
-                {500.0, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.load_gen[3].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.load_gen[3].s), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.load_gen[4].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.load_gen[4].s), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.load_gen[5].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.load_gen[5].s), .variance = 0.5}},
+                {.real_component = {.value = 500.0, .variance = 0.5},
+                 .imag_component = {.value = 0.0, .variance = 0.5}},
             };
             result.measured_shunt_power = {
-                {output_reference.shunt[0].s, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.shunt[0].s), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.shunt[0].s), .variance = 0.5}},
             };
 
             result.measured_branch_from_power = {
-                {output_reference.branch[0].s_f, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.branch[0].s_f), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_f), .variance = 0.5}},
             };
             result.measured_branch_to_power = {
-                {output_reference.branch[0].s_t, 0.5, 0.5},
-                {output_reference.branch[0].s_t, 0.5, 0.5},
-                {output_reference.branch[1].s_t, 0.5, 0.5},
+                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.branch[1].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[1].s_t), .variance = 0.5}},
             };
         } else {
             result.shunt_status = {1};
@@ -66,39 +80,64 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
             result.measured_voltage = {{ComplexValue<asymmetric_t>{output_reference.u[0]}, 1.0},
                                        {ComplexValue<asymmetric_t>{output_reference.u[2]}, 1.0},
                                        {ComplexValue<asymmetric_t>{output_reference.u[2]}, 1.0}};
-            result.measured_bus_injection = {{(output_reference.source[0].s + output_reference.load_gen[0].s +
-                                               output_reference.load_gen[1].s + output_reference.load_gen[2].s) *
-                                                  RealValue<asymmetric_t>{1.0},
-                                              RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
-            result.measured_source_power = {{output_reference.source[0].s * RealValue<asymmetric_t>{1.0},
-                                             RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
-                                            {output_reference.source[0].s * RealValue<asymmetric_t>{1.0},
-                                             RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}}};
+            ComplexValue<asymmetric_t> const sum_s{output_reference.source[0].s + output_reference.load_gen[0].s +
+                                                   output_reference.load_gen[1].s + output_reference.load_gen[2].s};
+            result.measured_bus_injection = {
+                {.real_component = {.value = real(sum_s), .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(sum_s), .variance = RealValue<asymmetric_t>{0.5}}}};
+            result.measured_source_power = {
+                {.real_component = {.value = real(output_reference.source[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.source[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.source[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.source[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}}};
             result.measured_load_gen_power = {
-                {output_reference.load_gen[3].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.load_gen[4].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.load_gen[5].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {500.0 * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5}, RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.load_gen[3].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.load_gen[3].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.load_gen[4].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.load_gen[4].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.load_gen[5].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.load_gen[5].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(500.0 * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(500.0 * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
             result.measured_shunt_power = {
-                {output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
 
             result.measured_branch_from_power = {
-                {output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
             result.measured_branch_to_power = {
-                {output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
-                {output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}, RealValue<asymmetric_t>{0.5},
-                 RealValue<asymmetric_t>{0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
+                {.real_component = {.value = real(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}},
+                 .imag_component = {.value = imag(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
+                                    .variance = RealValue<asymmetric_t>{0.5}}},
             };
         }
         return result;
@@ -121,7 +160,8 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
         result.load_gen_status[1] = 0;
         result.load_gen_status[3] = 0;
         result.load_gen_status[4] = 0;
-        result.measured_load_gen_power[2].value *= 3.0;
+        result.measured_load_gen_power[2].real_component.value *= 3.0;
+        result.measured_load_gen_power[2].imag_component.value *= 3.0;
         return result;
     };
 };
@@ -175,8 +215,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
 
         auto se_input = grid.se_input_angle();
         auto& branch_from_power = se_input.measured_branch_from_power.front();
-        branch_from_power.p_variance = RealValue<sym>{0.25};
-        branch_from_power.q_variance = RealValue<sym>{0.75};
+        branch_from_power.real_component.variance = RealValue<sym>{0.25};
+        branch_from_power.imag_component.variance = RealValue<sym>{0.75};
         SolverOutput<sym> output;
 
         output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
@@ -220,7 +260,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
-    se_input.measured_voltage = {{1.0, 1.0}};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
     SolverType solver{y_bus_sym, topo_ptr};
     CalculationInfo info;
@@ -269,7 +309,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1};
-    se_input.measured_voltage = {{1.0, 0.1}};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 0.1}};
 
     CalculationInfo info;
     SolverOutput<symmetric_t> output;
@@ -286,8 +326,10 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
-        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
+        se_input.measured_source_power = {
+            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -314,8 +356,10 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
-        se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
+        se_input.measured_load_gen_power = {
+            {.real_component = {.value = -1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_branch_to_power = {
+            {.real_component = {.value = -1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -342,9 +386,12 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {{2.2, 0.1, 0.1}};
-        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
-        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = 2.2, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
+        se_input.measured_source_power = {
+            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -371,9 +418,12 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {{2.2, 0.1, 0.1}};
-        se_input.measured_source_power = {{1.93, 0.05, 0.05}};
-        se_input.measured_branch_from_power = {{1.97, 0.05, 0.05}};
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = 2.2, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
+        se_input.measured_source_power = {
+            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -400,9 +450,12 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 1}};
 
-        se_input.measured_bus_injection = {{-2.2, 0.1, 0.1}};
-        se_input.measured_load_gen_power = {{-1.93, 0.05, 0.05}};
-        se_input.measured_branch_to_power = {{-1.97, 0.05, 0.05}};
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = -2.2, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
+        se_input.measured_load_gen_power = {
+            {.real_component = {.value = -1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_branch_to_power = {
+            {.real_component = {.value = -1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -430,7 +483,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_load_gen = {from_sparse, {0, 1, 2}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-3.0, 0.05, 0.05}, {1.0, 0.05, 0.05}};
+        se_input.measured_load_gen_power = {
+            {.real_component = {.value = -3.0, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
+            {.real_component = {.value = 1.0, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -460,8 +515,11 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.05, 0.05}};
-        se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
+        se_input.measured_load_gen_power = {
+            {.real_component = {.value = -1.8, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
+            {.real_component = {.value = 0.9, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = -1.1, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -490,8 +548,11 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 1}};
 
         se_input.load_gen_status = {1, 1};
-        se_input.measured_load_gen_power = {{-1.8, 0.05, 0.05}, {0.9, 0.025, 0.075}};
-        se_input.measured_bus_injection = {{-1.1, 0.1, 0.1}};
+        se_input.measured_load_gen_power = {
+            {.real_component = {.value = -1.8, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
+            {.real_component = {.value = 0.9, .variance = 0.025}, .imag_component = {.value = 0.0, .variance = 0.075}}};
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = -1.1, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
 
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);

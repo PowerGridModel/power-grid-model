@@ -18,7 +18,7 @@ struct UpdateChange {
     bool param{};
 
     friend constexpr UpdateChange operator||(UpdateChange const& x, UpdateChange const& y) {
-        return UpdateChange{x.topo || y.topo, x.param || y.param};
+        return UpdateChange{.topo = x.topo || y.topo, .param = x.param || y.param};
     }
 };
 

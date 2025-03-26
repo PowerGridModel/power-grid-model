@@ -30,6 +30,7 @@ target_sources(power_grid_model_cpp PUBLIC
 set_target_properties(power_grid_model_cpp PROPERTIES
   VERSION ${PGM_VERSION}
   SOVERSION ${PGM_VERSION}
+  CXX_STANDARD 17
 )
 
 

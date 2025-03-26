@@ -25,7 +25,7 @@
 #include "auxiliary/output.hpp"
 
 // math model include
-#include "math_solver/math_solver.hpp"
+#include "math_solver/math_solver_dispatch.hpp"
 
 #include "optimizer/optimizer.hpp"
 
@@ -161,17 +161,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using Options = MainModelOptions;
 
     // constructor with data
-    explicit MainModelImpl(double system_frequency, ConstDataset const& input_data, Idx pos = 0)
-        : system_frequency_{system_frequency}, meta_data_{&input_data.meta_data()} {
+    explicit MainModelImpl(double system_frequency, ConstDataset const& input_data,
+                           MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
+        : system_frequency_{system_frequency},
+          meta_data_{&input_data.meta_data()},
+          math_solver_dispatcher_{&math_solver_dispatcher} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
     }
 
     // constructor with only frequency
-    explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data)
-        : system_frequency_{system_frequency}, meta_data_{&meta_data} {}
+    explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data,
+                           MathSolverDispatcher const& math_solver_dispatcher)
+        : system_frequency_{system_frequency},
+          meta_data_{&meta_data},
+          math_solver_dispatcher_{&math_solver_dispatcher} {}
 
+  private:
     // helper function to get what components are present in the update data
     std::array<bool, main_core::utils::n_types<ComponentType...>>
     get_components_to_update(ConstDataset const& update_data) const {
@@ -255,6 +262,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
+
     template <class CompType, cache_type_c CacheType>
     void update_component(ConstDataset::RangeObject<typename CompType::UpdateType const> components,
                           std::span<Idx2D const> sequence_idx) {
@@ -290,6 +298,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     std::get<main_core::utils::index_of_component<CT, ComponentType...>>(sequence_idx_map));
             });
     }
+
+  public:
     // overload to update all components in the first scenario (e.g. permanent update)
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
@@ -300,6 +310,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
+  private:
     // set complete construction
     // initialize internal arrays
     void set_construction_complete() {
@@ -338,6 +349,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         state_.comp_coup = {};
     }
 
+  public:
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
@@ -352,6 +364,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
     }
 
+  private:
     // Entry point for main_model.hpp
     main_core::utils::SequenceIdx<ComponentType...> get_all_sequence_idx_map(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
@@ -361,8 +374,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             state_, update_data, 0, components_to_update, update_independence, false);
     }
 
-  private:
-    void update_state(const UpdateChange& changes) {
+    void update_state(UpdateChange const& changes) {
         // if topology changed, everything is not up to date
         // if only param changed, set param to not up to date
         is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
@@ -412,21 +424,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         calculation_info_ = CalculationInfo{};
         // prepare
-        auto const& input = [this, &prepare_input] {
+        auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer(calculation_info_, 2100, "Prepare");
             prepare_solvers<sym>();
             assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-            return prepare_input(n_math_solvers_);
+            return prepare_input_(n_math_solvers_);
         }();
         // calculate
-        return [this, &input, &solve] {
+        return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
             Timer const timer(calculation_info_, 2200, "Math Calculation");
             auto& solvers = get_solvers<sym>();
             auto& y_bus_vec = get_y_bus<sym>();
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(n_math_solvers_);
             for (Idx i = 0; i != n_math_solvers_; ++i) {
-                solver_output.emplace_back(solve(solvers[i], y_bus_vec[i], input[i]));
+                solver_output.emplace_back(solve_(solvers[i], y_bus_vec[i], input[i]));
             }
             return solver_output;
         }();
@@ -435,12 +447,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter) {
         return [this, err_tol, max_iter](MainModelState const& state,
                                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            return calculate_<SolverOutput<sym>, MathSolver<sym>, YBus<sym>, PowerFlowInput<sym>>(
+            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
                 [&state](Idx n_math_solvers) { return prepare_power_flow_input<sym>(state, n_math_solvers); },
-                [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               PowerFlowInput<sym> const& input) {
-                    return solver.run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                 y_bus);
+                    return solver.get().run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
+                                                       y_bus);
                 });
         };
     }
@@ -448,12 +460,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter) {
         return [this, err_tol, max_iter](MainModelState const& state,
                                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            return calculate_<SolverOutput<sym>, MathSolver<sym>, YBus<sym>, StateEstimationInput<sym>>(
+            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
                 [&state](Idx n_math_solvers) { return prepare_state_estimation_input<sym>(state, n_math_solvers); },
-                [this, err_tol, max_iter, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               StateEstimationInput<sym> const& input) {
-                    return solver.run_state_estimation(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                       y_bus);
+                    return solver.get().run_state_estimation(input, err_tol, max_iter, calculation_info_,
+                                                             calculation_method, y_bus);
                 });
         };
     }
@@ -462,14 +474,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return [this,
                 voltage_scaling](MainModelState const& /*state*/,
                                  CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
-            return calculate_<ShortCircuitSolverOutput<sym>, MathSolver<sym>, YBus<sym>, ShortCircuitInput>(
+            return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
                 [this, voltage_scaling](Idx /* n_math_solvers */) {
                     assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
                     return prepare_short_circuit_input<sym>(voltage_scaling);
                 },
-                [this, calculation_method](MathSolver<sym>& solver, YBus<sym> const& y_bus,
+                [this, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                            ShortCircuitInput const& input) {
-                    return solver.run_short_circuit(input, calculation_info_, calculation_method, y_bus);
+                    return solver.get().run_short_circuit(input, calculation_info_, calculation_method, y_bus);
                 });
         };
     }
@@ -493,7 +505,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
-            calculation_fn(*this, result_data, 0);
+            std::forward<Calculate>(calculation_fn)(*this, result_data, 0);
             return BatchParameter{};
         }
 
@@ -516,9 +528,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                *meta_data_,
                            },
                            ignore_output);
-        } catch (const SparseMatrixError&) {
+        } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
-        } catch (const NotObservableError&) {
+        } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         }
 
@@ -528,8 +540,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // lambda for sub batch calculation
         main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence;
-        auto sub_batch =
-            sub_batch_calculation_(calculation_fn, result_data, update_data, all_scenarios_sequence, exceptions, infos);
+        auto sub_batch = sub_batch_calculation_(std::forward<Calculate>(calculation_fn), result_data, update_data,
+                                                all_scenarios_sequence, exceptions, infos);
 
         batch_dispatch(sub_batch, n_scenarios, threading);
 
@@ -556,9 +568,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
             state_, update_data, 0, components_to_update, update_independence, false);
 
-        return [&base_model, &exceptions, &infos, &calculation_fn, &result_data, &update_data,
-                &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence), components_to_update,
-                update_independence](Idx start, Idx stride, Idx n_scenarios) {
+        return [&base_model, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
+                &result_data, &update_data, &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence),
+                components_to_update, update_independence](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
 
@@ -576,8 +588,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                         all_scenarios_sequence_, current_scenario_sequence_cache, infos);
 
             auto calculate_scenario = MainModelImpl::call_with<Idx>(
-                [&model, &calculation_fn, &result_data, &infos](Idx scenario_idx) {
-                    calculation_fn(model, result_data, scenario_idx);
+                [&model, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
+                    calculation_fn_(model, result_data, scenario_idx);
                     infos[scenario_idx].merge(model.calculation_info_);
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
@@ -718,7 +730,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-  public:
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
@@ -741,7 +752,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
                    options.optimizer_type, options.optimizer_strategy, calculator,
-                   [this](ConstDataset update_data) { this->update_components<permanent_update_t>(update_data); },
+                   [this](ConstDataset const& update_data) {
+                       this->update_components<permanent_update_t>(update_data);
+                   },
                    *meta_data_, search_method)
             ->optimize(state_, options.calculation_method);
     }
@@ -771,6 +784,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             *this, options, result_data, pos);
     }
 
+  public:
     // Batch calculation, propagating the results to result_data
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
@@ -785,6 +799,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             result_data, update_data, options.threading);
     }
 
+    CalculationInfo calculation_info() const { return calculation_info_; }
+
+  private:
     template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
     ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
@@ -818,14 +835,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(output_func);
     }
 
-    CalculationInfo calculation_info() const { return calculation_info_; }
-
-  private:
     mutable CalculationInfo calculation_info_; // needs to be first due to padding override
                                                // may be changed in const functions for metrics
 
     double system_frequency_;
     meta_data::MetaData const* meta_data_;
+    MathSolverDispatcher const* math_solver_dispatcher_;
 
     MainModelState state_;
     // math model
@@ -853,7 +868,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym> std::vector<MathSolver<sym>>& get_solvers() {
+    template <symmetry_tag sym> std::vector<MathSolverProxy<sym>>& get_solvers() {
         if constexpr (is_symmetric_v<sym>) {
             return math_state_.math_solvers_sym;
         } else {
@@ -1217,15 +1232,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         }
 
-        auto fault_coup =
-            std::vector<Idx2D>(state_.components.template size<Fault>(), Idx2D{isolated_component, not_connected});
+        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(),
+                                             Idx2D{.group = isolated_component, .pos = not_connected});
         std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             auto map = build_dense_mapping(topo_bus_indices[i], state_.math_topology[i]->n_bus());
 
             for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{i, reordered_idx};
+                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{.group = i, .pos = reordered_idx};
             }
 
             sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state_.math_topology[i]->n_bus()};
@@ -1285,7 +1300,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym> void prepare_solvers() {
-        std::vector<MathSolver<sym>>& solvers = get_solvers<sym>();
+        std::vector<MathSolverProxy<sym>>& solvers = get_solvers<sym>();
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
             rebuild_topology();
@@ -1299,11 +1314,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
-            std::ranges::transform(state_.math_topology, std::back_inserter(solvers),
-                                   [](auto math_topo) { return MathSolver<sym>{std::move(math_topo)}; });
+            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto const& math_topo) {
+                return MathSolverProxy<sym>{math_solver_dispatcher_, math_topo};
+            });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
                 get_y_bus<sym>()[idx].register_parameters_changed_callback(
-                    [solver = std::ref(solvers[idx])](bool changed) { solver.get().parameters_changed(changed); });
+                    [solver = std::ref(solvers[idx])](bool changed) {
+                        solver.get().get().parameters_changed(changed);
+                    });
             }
         } else if (!is_parameter_up_to_date<sym>()) {
             std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();

@@ -89,7 +89,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
             u_sigma_ = update_data.u_sigma * inv_u_norm();
         }
 
-        return {false, false};
+        return {.topo = false, .param = false};
     }
 
     VoltageSensorUpdate<sym> inverse(VoltageSensorUpdate<sym> update_data) const {

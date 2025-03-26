@@ -112,6 +112,8 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     static constexpr double v1 = 0.97;
     static constexpr double v2 = 0.90;
     static constexpr double deg = deg_30 / 30.0;
+    // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) // NOSONAR // should be constexpr but cant due to
+    // std::exp
     DoubleComplex const u0 = v0 * std::exp(-1.0i * deg);
     DoubleComplex const u1 = v1 * std::exp(-4.0i * deg);
     DoubleComplex const u2 = v2 * std::exp(-37.0i * deg);
@@ -136,6 +138,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     // injection of shunt0 at bus2
     DoubleComplex const i2_shunt_inj = branch1_i_t;
     DoubleComplex const ys = -i2_shunt_inj / u2; // output
+    // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members) // NOSONAR
 
     SolverOutput<sym> output_ref() const {
         if constexpr (is_symmetric_v<sym>) {
@@ -168,7 +171,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
             // shunt
             result.shunt_param = {ys};
             // source
-            result.source_param = {SourceCalcParam{yref, yref}};
+            result.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
         } else {
             // branch
             DoubleComplex const y0_0 = 0.5 + 0.5i;
@@ -190,7 +193,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
             result.shunt_param = {ysa};
 
             // source
-            result.source_param = {SourceCalcParam{yref, yref}};
+            result.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
         }
         return result;
     }
@@ -214,15 +217,15 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
         result.source[0].i = source_inj;
         result.source[0].s = conj(result.source[0].i) * u0;
         // shunt result
-        result.shunt = {{conj(i2_shunt_inj) * u2, i2_shunt_inj}};
+        result.shunt = {{.s = conj(i2_shunt_inj) * u2, .i = i2_shunt_inj}};
         // load input and result, load6 is disconnected
-        result.load_gen = {{s0_load_inj / 3.0, i0_load_inj / 3.0},
-                           {s0_load_inj / 3.0, i0_load_inj / 3.0},
-                           {s0_load_inj / 3.0, i0_load_inj / 3.0},
-                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
-                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
-                           {s1_load_inj / 3.0, i1_load_inj / 3.0},
-                           {0.0, 0.0}};
+        result.load_gen = {{.s = s0_load_inj / 3.0, .i = i0_load_inj / 3.0},
+                           {.s = s0_load_inj / 3.0, .i = i0_load_inj / 3.0},
+                           {.s = s0_load_inj / 3.0, .i = i0_load_inj / 3.0},
+                           {.s = s1_load_inj / 3.0, .i = i1_load_inj / 3.0},
+                           {.s = s1_load_inj / 3.0, .i = i1_load_inj / 3.0},
+                           {.s = s1_load_inj / 3.0, .i = i1_load_inj / 3.0},
+                           {.s = 0.0, .i = 0.0}};
         // bus injection
         result.bus_injection = {result.branch[0].s_f, result.branch[0].s_t + result.branch[1].s_f, 0};
 

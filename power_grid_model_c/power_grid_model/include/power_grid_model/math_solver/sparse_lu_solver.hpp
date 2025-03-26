@@ -138,6 +138,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                 throw SparseMatrixError{}; // can not specify error code
             }
         }
+        capturing::into_the_void(std::move(matrix));
     }
 };
 

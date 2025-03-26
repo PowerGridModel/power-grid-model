@@ -10,6 +10,7 @@
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/statistics.hpp"
 
 namespace power_grid_model {
 
@@ -48,6 +49,10 @@ class GenericCurrentSensor : public Sensor {
         }
     }
 
+  protected:
+    MeasuredTerminalType terminal_type() const { return terminal_type_; }
+    AngleMeasurementType angle_measurement_type() const { return angle_measurement_type_; }
+
   private:
     MeasuredTerminalType terminal_type_;
     AngleMeasurementType angle_measurement_type_;
@@ -73,12 +78,12 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
 
     explicit CurrentSensor(CurrentSensorInput<current_sensor_symmetry> const& current_sensor_input, double u_rated)
         : GenericCurrentSensor{current_sensor_input},
+          base_current_{base_power_3p * inv_sqrt3 / u_rated},
+          base_current_inv_{1.0 / base_current_},
           i_angle_measured_{current_sensor_input.i_angle_measured},
           i_angle_sigma_{current_sensor_input.i_angle_sigma},
-          base_current_{base_power_3p * inv_sqrt3 / u_rated},
-          base_current_inv_{1.0 / base_current_} {
-        set_current(current_sensor_input);
-
+          i_sigma_{current_sensor_input.i_sigma * base_current_inv_},
+          i_measured_{current_sensor_input.i_measured * base_current_inv_} {
         switch (current_sensor_input.measured_terminal_type) {
             using enum MeasuredTerminalType;
         case branch_from:
@@ -93,15 +98,14 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     };
 
     UpdateChange update(CurrentSensorUpdate<current_sensor_symmetry> const& update_data) {
-        if (!is_nan(update_data.i_sigma)) {
-            i_sigma_ = update_data.i_sigma * base_current_inv_;
-        }
-        if (!is_nan(update_data.i_angle_sigma)) {
-            i_angle_sigma_ = update_data.i_angle_sigma;
-        }
+        assert(update_data.id == this->id() || is_nan(update_data.id));
+
+        update_real_value<symmetric_t>(update_data.i_sigma, i_sigma_, base_current_inv_);
+        update_real_value<symmetric_t>(update_data.i_angle_sigma, i_angle_sigma_, 1.0);
         update_real_value<current_sensor_symmetry>(update_data.i_measured, i_measured_, base_current_inv_);
         update_real_value<current_sensor_symmetry>(update_data.i_angle_measured, i_angle_measured_, 1.0);
-        return {false, false};
+
+        return {.topo = false, .param = false};
     }
 
     CurrentSensorUpdate<current_sensor_symmetry>
@@ -117,29 +121,21 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     }
 
   private:
-    RealValue<current_sensor_symmetry> i_measured_{};
-    RealValue<current_sensor_symmetry> i_angle_measured_{};
-    double i_sigma_{};
-    double i_angle_sigma_{};
     double base_current_{};
     double base_current_inv_{};
+    RealValue<current_sensor_symmetry> i_angle_measured_{};
+    double i_angle_sigma_{};
+    double i_sigma_{};
+    RealValue<current_sensor_symmetry> i_measured_{};
 
-    void set_current(CurrentSensorInput<current_sensor_symmetry> const& input) {
-        i_sigma_ = input.i_sigma * base_current_inv_;
-        i_measured_ = input.i_measured * base_current_inv_;
-    }
+    CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final { return calc_decomposed_param<symmetric_t>(); }
+    CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final { return calc_decomposed_param<asymmetric_t>(); }
 
-    // TODO when filling the functions below take in mind that i_angle_sigma is optional
-
-    CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final {
-        CurrentSensorCalcParam<symmetric_t> calc_param{};
-        // TODO
-        return calc_param;
-    }
-    CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final {
-        CurrentSensorCalcParam<asymmetric_t> calc_param{};
-        // TODO
-        return calc_param;
+    template <symmetry_tag sym_calc> CurrentSensorCalcParam<sym_calc> calc_decomposed_param() const {
+        auto const i_polar = PolarComplexRandVar<current_sensor_symmetry>(
+            {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
+        return CurrentSensorCalcParam<sym_calc>{.angle_measurement_type = angle_measurement_type(),
+                                                .measurement = DecomposedComplexRandVar<sym_calc>(i_polar)};
     }
     CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i) const final {
         return get_generic_output<symmetric_t>(i);
@@ -150,8 +146,11 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     template <symmetry_tag sym_calc>
     CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
         CurrentSensorOutput<sym_calc> output{};
-        // TODO
-        (void)i; // Suppress unused variable warning
+        output.id = id();
+        ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
+        output.energized = 1; // current sensor is always energized
+        output.i_residual = cabs(i_residual);
+        output.i_angle_residual = arg(i_residual);
         return output;
     }
 };

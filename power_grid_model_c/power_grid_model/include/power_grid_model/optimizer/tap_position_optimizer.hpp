@@ -41,8 +41,7 @@ using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
-constexpr Idx2D unregulated_idx = {-1, -1};
-
+constexpr Idx2D unregulated_idx = {.group = -1, .pos = -1};
 struct TrafoGraphVertex {
     bool is_source{};
 };
@@ -51,11 +50,15 @@ struct TrafoGraphEdge {
     Idx2D regulated_idx{};
     EdgeWeight weight{};
 
-    bool operator==(const TrafoGraphEdge& other) const {
+    constexpr TrafoGraphEdge() = default;
+    constexpr TrafoGraphEdge(Idx2D regulated_idx_, EdgeWeight weight_)
+        : regulated_idx{regulated_idx_}, weight{weight_} {}
+
+    bool operator==(TrafoGraphEdge const& other) const {
         return regulated_idx == other.regulated_idx && weight == other.weight;
     } // thanks boost
 
-    auto constexpr operator<=>(const TrafoGraphEdge& other) const {
+    auto constexpr operator<=>(TrafoGraphEdge const& other) const {
         if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
             return cmp;
         }
@@ -66,12 +69,36 @@ struct TrafoGraphEdge {
     }
 };
 
+constexpr auto unregulated_edge_prop = TrafoGraphEdge{unregulated_idx, 0};
 using TrafoGraphEdges = std::vector<std::pair<TrafoGraphIdx, TrafoGraphIdx>>;
 using TrafoGraphEdgeProperties = std::vector<TrafoGraphEdge>;
 
+struct RegulatedTrafoProperties {
+    Idx id{};
+    ControlSide control_side{};
+
+    auto operator<=>(RegulatedTrafoProperties const& other) const = default; // NOLINT(modernize-use-nullptr)
+};
+
+using RegulatedTrafos = std::set<RegulatedTrafoProperties>;
+
+inline std::pair<bool, ControlSide> regulated_trafos_contain(RegulatedTrafos const& trafos_set, Idx const& id) {
+    if (auto it =
+            std::ranges::find_if(trafos_set, [&](RegulatedTrafoProperties const& trafo) { return trafo.id == id; });
+        it != trafos_set.end()) {
+        return {true, it->control_side};
+    }
+    return {false, ControlSide{}}; // no default invalid control side, won't be used by logic
+}
+
 struct RegulatedObjects {
-    std::set<Idx> transformers{};
-    std::set<Idx> transformers3w{};
+    RegulatedTrafos trafos;
+    RegulatedTrafos trafos3w;
+
+    std::pair<bool, ControlSide> contains_trafo(Idx const& id) const { return regulated_trafos_contain(trafos, id); }
+    std::pair<bool, ControlSide> contains_trafo3w(Idx const& id) const {
+        return regulated_trafos_contain(trafos3w, id);
+    }
 };
 
 using TransformerGraph = boost::compressed_sparse_row_graph<boost::directedS, TrafoGraphVertex, TrafoGraphEdge,
@@ -90,12 +117,12 @@ inline void add_to_edge(main_core::MainModelState<ComponentContainer> const& sta
 
 inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state,
                                  ThreeWindingTransformer const& transformer3w, bool const& trafo3w_is_regulated,
-                                 Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
+                                 ControlSide const& control_side, Idx2D const& trafo3w_idx, TrafoGraphEdges& edges,
                                  TrafoGraphEdgeProperties& edge_props) {
     using enum Branch3Side;
 
     constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
-        {{side_1, side_2}, {side_2, side_3}, {side_3, side_1}}};
+        {{side_1, side_2}, {side_1, side_3}, {side_2, side_3}}};
 
     for (auto const& [first_side, second_side] : branch3_combinations) {
         if (!transformer3w.status(first_side) || !transformer3w.status(second_side)) {
@@ -105,19 +132,24 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
         auto const& to_node = transformer3w.node(second_side);
 
         auto const tap_at_first_side = transformer3w.tap_side() == first_side;
-        auto const single_direction_condition =
-            trafo3w_is_regulated && (tap_at_first_side || transformer3w.tap_side() == second_side);
-        // ranking
-        if (single_direction_condition) {
+        auto const connected_to_primary_side_regulated =
+            trafo3w_is_regulated && (tap_at_first_side || (transformer3w.tap_side() == second_side));
+
+        auto const tap_at_control = static_cast<IntS>(control_side) == static_cast<IntS>(transformer3w.tap_side());
+
+        // only add weighted edge if the trafo3w meets the condition
+        if (connected_to_primary_side_regulated) {
             auto const& tap_side_node = tap_at_first_side ? from_node : to_node;
             auto const& non_tap_side_node = tap_at_first_side ? to_node : from_node;
+            auto const edge_from_node = tap_at_control ? non_tap_side_node : tap_side_node;
+            auto const edge_to_node = tap_at_control ? tap_side_node : non_tap_side_node;
             // add regulated idx only when the first side node is tap side node.
             // This is done to add only one directional edge with regulated idx.
-            Idx2D const regulated_idx = from_node == tap_side_node ? unregulated_idx : trafo3w_idx;
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node, {regulated_idx, 1});
+            auto const edge_value = TrafoGraphEdge{trafo3w_idx, 1};
+            add_to_edge(state, edges, edge_props, edge_from_node, edge_to_node, edge_value);
         } else {
-            add_to_edge(state, edges, edge_props, from_node, to_node, {unregulated_idx, 1});
-            add_to_edge(state, edges, edge_props, to_node, from_node, {unregulated_idx, 1});
+            add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
+            add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
         }
     }
 }
@@ -129,9 +161,10 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
                         TrafoGraphEdgeProperties& edge_props) {
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
-        bool const trafo3w_is_regulated = regulated_objects.transformers3w.contains(transformer3w.id());
+        auto const trafo3w_is_regulated = regulated_objects.contains_trafo3w(transformer3w.id());
         Idx2D const trafo3w_idx = main_core::get_component_idx_by_id(state, transformer3w.id());
-        process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated, trafo3w_idx, edges, edge_props);
+        process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated.first, trafo3w_is_regulated.second, trafo3w_idx,
+                             edges, edge_props);
     }
 }
 
@@ -146,15 +179,17 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         }
         auto const& from_node = transformer.from_node();
         auto const& to_node = transformer.to_node();
-        if (regulated_objects.transformers.contains(transformer.id())) {
-            auto const tap_at_from_side = transformer.tap_side() == BranchSide::from;
-            auto const& tap_side_node = tap_at_from_side ? from_node : to_node;
-            auto const& non_tap_side_node = tap_at_from_side ? to_node : from_node;
-            add_to_edge(state, edges, edge_props, tap_side_node, non_tap_side_node,
-                        {main_core::get_component_idx_by_id(state, transformer.id()), 1});
+        auto const trafo_regulated = regulated_objects.contains_trafo(transformer.id());
+        if (trafo_regulated.first) {
+            auto const control_side = trafo_regulated.second;
+            auto const control_side_node = control_side == ControlSide::from ? from_node : to_node;
+            auto const non_control_side_node = control_side == ControlSide::from ? to_node : from_node;
+            auto const trafo_idx = main_core::get_component_idx_by_id(state, transformer.id());
+
+            add_to_edge(state, edges, edge_props, non_control_side_node, control_side_node, {trafo_idx, 1});
         } else {
-            add_to_edge(state, edges, edge_props, from_node, to_node, {unregulated_idx, 1});
-            add_to_edge(state, edges, edge_props, to_node, from_node, {unregulated_idx, 1});
+            add_to_edge(state, edges, edge_props, from_node, to_node, unregulated_edge_prop);
+            add_to_edge(state, edges, edge_props, to_node, from_node, unregulated_edge_prop);
         }
     }
 }
@@ -172,8 +207,8 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
         if (!branch.from_status() || !branch.to_status()) {
             continue;
         }
-        add_to_edge(state, edges, edge_props, branch.from_node(), branch.to_node(), {unregulated_idx, 0});
-        add_to_edge(state, edges, edge_props, branch.to_node(), branch.from_node(), {unregulated_idx, 0});
+        add_to_edge(state, edges, edge_props, branch.from_node(), branch.to_node(), unregulated_edge_prop);
+        add_to_edge(state, edges, edge_props, branch.to_node(), branch.from_node(), unregulated_edge_prop);
     }
 }
 
@@ -190,10 +225,11 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
         if (!regulator.status()) {
             continue;
         }
+        auto const control_side = regulator.control_side();
         if (regulator.regulated_object_type() == ComponentType::branch) {
-            regulated_objects.transformers.emplace(regulator.regulated_object());
+            regulated_objects.trafos.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         } else {
-            regulated_objects.transformers3w.emplace(regulator.regulated_object());
+            regulated_objects.trafos3w.emplace(RegulatedTrafoProperties{regulator.regulated_object(), control_side});
         }
     }
     return regulated_objects;
@@ -228,7 +264,7 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
     vertex_distances[v] = 0;
-    pq.push({0, v});
+    pq.emplace(0, v);
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
@@ -243,13 +279,14 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEDGES here because our grid is undirected
+            // We can not use BGL_FORALL_OUTEDGES here because we need information
+            // regardless of edge direction
             if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
-                pq.push({vertex_distances[t], t});
+                pq.emplace(vertex_distances[t], t);
             } else if (u == t && vertex_distances[t] + weight < vertex_distances[s]) {
                 vertex_distances[s] = vertex_distances[t] + weight;
-                pq.push({vertex_distances[s], s});
+                pq.emplace(vertex_distances[s], s);
             }
         }
     }
@@ -270,9 +307,32 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         if (graph[e].regulated_idx == unregulated_idx) {
             continue;
         }
-        auto edge_res = std::min(vertex_distances[boost::source(e, graph)], vertex_distances[boost::target(e, graph)]);
-        if (!is_unreachable(edge_res)) {
-            result.push_back({graph[e].regulated_idx, edge_res});
+        auto const edge_src_rank = vertex_distances[boost::source(e, graph)];
+        auto const edge_tgt_rank = vertex_distances[boost::target(e, graph)];
+
+        // New edge logic for ranking
+        // |  Tap  | Control |         All edges       |
+        // ---------------------------------------------
+        // |   A   |    A    | [B->A], [C->A], [B<->C] |
+        // |   A   |    B    | [A->B], [A->C], [B<->C] |
+        // |   A   |    C    | [A->B], [A->C], [B<->C] |
+        // |   B   |    A    | [B->A], [C<->A], [B->C] |
+        // |   B   |    B    | [A->B], [C<->A], [C->B] |
+        // |   B   |    C    | [B->A], [C<->A], [B->C] |
+        // |   C   |    A    | [A<->B], [C->A], [C->B] |
+        // |   C   |    B    | [A<->B], [C->A], [C->B] |
+        // |   C   |    C    | [A<->B], [A->C], [A->B] |
+        // In two winding trafo, the edge is always pointing to the control side; in three winding trafo edges, the
+        // unidirectional edges are always pointing towards the control side and the node connected to the control
+        // side via the bidirectional edge (if it exists). For delta configuration ABC, the above
+        // situations can happen.
+        // The logic still holds in meshed grids, albeit operating a more complex graph.
+        if (!is_unreachable(edge_src_rank) || !is_unreachable(edge_tgt_rank)) {
+            if (edge_src_rank != edge_tgt_rank - 1) {
+                throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
+                                             "away from the source than the tap side.\n");
+            }
+            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
 
@@ -282,8 +342,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
 inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> RankedTransformerGroups {
     auto sorted_trafos = w_trafo_list;
 
-    std::sort(sorted_trafos.begin(), sorted_trafos.end(),
-              [](const TrafoGraphEdge& a, const TrafoGraphEdge& b) { return a.weight < b.weight; });
+    std::ranges::sort(sorted_trafos,
+                      [](TrafoGraphEdge const& a, TrafoGraphEdge const& b) { return a.weight < b.weight; });
 
     RankedTransformerGroups groups;
     auto previous_weight = std::numeric_limits<EdgeWeight>::lowest();
@@ -292,7 +352,10 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
             groups.emplace_back();
             previous_weight = trafo.weight;
         }
-        groups.back().push_back(trafo.regulated_idx);
+        auto& current_group = groups.back(); // avoid duplicates
+        if (std::ranges::find(current_group, trafo.regulated_idx) == current_group.end()) {
+            current_group.emplace_back(trafo.regulated_idx);
+        }
     }
     return groups;
 }
@@ -336,11 +399,19 @@ constexpr IntS one_step_tap_down(transformer_c auto const& transformer) {
     return tap_min < tap_max ? tap_pos - IntS{1} : tap_pos + IntS{1};
 }
 // higher voltage at control side => lower voltage at tap side => lower tap pos
-constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer) {
+constexpr IntS one_step_control_voltage_up(transformer_c auto const& transformer, bool control_at_tap_side) {
+    if (control_at_tap_side) {
+        // control side is tap side, voltage up requires tap up
+        return one_step_tap_up(transformer);
+    }
     return one_step_tap_down(transformer);
 }
 // lower voltage at control side => higher voltage at tap side => higher tap pos
-constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer) {
+constexpr IntS one_step_control_voltage_down(transformer_c auto const& transformer, bool control_at_tap_side) {
+    if (control_at_tap_side) {
+        // control side is tap side, voltage down requires tap down
+        return one_step_tap_down(transformer);
+    }
     return one_step_tap_up(transformer);
 }
 
@@ -366,6 +437,9 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
     IntS tap_max() const {
         return apply([](auto const& t) { return t.tap_max(); });
     }
+    IntS tap_side() const {
+        return apply([](auto const& t) { return static_cast<IntS>(t.tap_side()); });
+    }
     int64_t tap_range() const {
         return apply([](auto const& t) {
             return std::abs(static_cast<int64_t>(t.tap_max()) - static_cast<int64_t>(t.tap_min()));
@@ -387,6 +461,10 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
     std::reference_wrapper<const TransformerTapRegulator> regulator;
     TransformerWrapper<TransformerTypes...> transformer;
+
+    bool control_at_tap_side() const {
+        return static_cast<IntS>(regulator.get().control_side()) == transformer.tap_side();
+    }
 };
 
 template <typename State>
@@ -551,7 +629,7 @@ inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...
                                                State const& state) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
                                                                   regulator.regulator.get().control_side());
-    return get_math_id<Node>(state, controlled_node_idx) != Idx2D{-1, -1};
+    return get_math_id<Node>(state, controlled_node_idx) != unregulated_idx;
 }
 
 struct VoltageBand {
@@ -576,7 +654,7 @@ template <symmetry_tag sym> struct NodeState {
     ComplexValue<sym> u;
     ComplexValue<sym> i;
 
-    friend auto operator<=>(NodeState<sym> state, TransformerTapRegulatorCalcParam const& param) {
+    friend auto operator<=>(NodeState<sym> const& state, TransformerTapRegulatorCalcParam const& param) {
         auto const u_compensated = state.u + param.z_compensation * state.i;
         auto const v_compensated = mean_val(cabs(u_compensated)); // TODO(mgovers): handle asym correctly
         return v_compensated <=> VoltageBand{.u_set = param.u_set, .u_band = param.u_band};
@@ -614,7 +692,7 @@ class RankIteration {
     };
 
   private:
-    std::vector<IntS> iterations_per_rank_{};
+    std::vector<IntS> iterations_per_rank_;
     Idx rank_index_{};
 };
 
@@ -638,7 +716,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     using TransformerRanker = TransformerRanker_;
 
   private:
-    std::vector<uint64_t> max_tap_ranges_per_rank{};
+    std::vector<uint64_t> max_tap_ranges_per_rank;
     using ComponentContainer = typename State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
@@ -650,7 +728,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     class BinarySearch {
       public:
         BinarySearch() = default;
-        BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max) { reset(tap_pos, tap_min, tap_max); }
+        BinarySearch(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
+            reset(tap_pos, tap_min, tap_max, control_at_tap_side);
+        }
 
         constexpr IntS get_current_tap() const { return current_; }
         constexpr bool get_last_down() const { return last_down_; }
@@ -668,8 +748,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // Lower bound should be updated to the current tap position if following is the case:
             //  - tap_max > tap_min && strategy_max == true
             //  - tap_max < tap_min && strategy_max == false
-            // Upper bound should be updated to the current tap position if the rest is the case.
-            if (tap_reverse_ == strategy_max) {
+            bool const invert_strategy = control_at_tap_side_ != strategy_max;
+            if (tap_reverse_ == invert_strategy) {
                 lower_bound_ = current_;
                 last_down_ = false;
             } else {
@@ -679,7 +759,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         void propose_new_pos(bool strategy_max, bool above_range) {
-            bool const is_down = above_range == tap_reverse_;
+            bool const is_down = (above_range == tap_reverse_) != control_at_tap_side_;
             if (last_check_) {
                 current_ = is_down ? lower_bound_ : upper_bound_;
                 inevitable_run_ = true;
@@ -693,7 +773,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             // __prefer_higher__ indicates a preference towards higher voltage
             // that is a result of both the strategy as well as whether the current
             // transformer has a reversed tap_max and tap_min
-            bool const prefer_higher = strategy_max != tap_reverse_;
+            bool const prefer_higher = (strategy_max != tap_reverse_) != control_at_tap_side_;
             auto const tap_pos = search(prefer_higher);
             auto const tap_diff = tap_pos - get_current_tap();
             if (tap_diff == 0) {
@@ -714,7 +794,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
       private:
-        void reset(IntS tap_pos, IntS tap_min, IntS tap_max) {
+        void reset(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
             last_down_ = false;
             last_check_ = false;
             current_ = tap_pos;
@@ -722,6 +802,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             lower_bound_ = std::min(tap_min, tap_max);
             upper_bound_ = std::max(tap_min, tap_max);
             tap_reverse_ = tap_max < tap_min;
+            control_at_tap_side_ = control_at_tap_side;
         }
 
         void adjust(bool strategy_max = true) {
@@ -737,30 +818,32 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             }
         }
 
-        IntS search(bool prefer_higher = true) const {
-            // This logic is used to determin which of the middle points could be of interest
+        IntS search(bool prefer_higher_) const {
+            // This logic is used to determine which of the middle points could be of interest
             // given strategy used in optimization:
             // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
             // find the corresponding mid point. std::midpoint returns always the lower mid point
             // if the range is of even length. This is why we need to adjust bounds accordingly.
             // Not because upper bound and lower bound might be reversed, which is not possible.
+            bool const prefer_higher = control_at_tap_side_ != prefer_higher_;
             auto const primary_bound = prefer_higher ? upper_bound_ : lower_bound_;
             auto const secondary_bound = prefer_higher ? lower_bound_ : upper_bound_;
             return std::midpoint(primary_bound, secondary_bound);
         }
 
-        IntS lower_bound_{};         // tap position lower bound
-        IntS upper_bound_{};         // tap position upper bound
-        IntS current_{0};            // current tap position
-        bool last_down_{false};      // last direction
-        bool last_check_{false};     // last run checked
-        bool tap_reverse_{false};    // tap range normal or reversed
-        bool inevitable_run_{false}; // inevitable run
+        IntS lower_bound_{};              // tap position lower bound
+        IntS upper_bound_{};              // tap position upper bound
+        IntS current_{0};                 // current tap position
+        bool last_down_{false};           // last direction
+        bool last_check_{false};          // last run checked
+        bool tap_reverse_{false};         // tap range normal or reversed
+        bool inevitable_run_{false};      // inevitable run
+        bool control_at_tap_side_{false}; // regulator control side is at tap side
     };
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct BinarySearchOptions {
         bool strategy_max{false};
-        Idx2D idx_bs{0, 0};
+        Idx2D idx_bs{.group = 0, .pos = 0};
     };
     Idx total_iterations{0}; // metric purpose only
 
@@ -810,7 +893,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
-        auto const cache = this->cache_states(order);
+        auto const cache = cache_states(order);
         try {
             opt_prep(order);
             auto result = optimize(state, order, method);
@@ -856,7 +939,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             std::vector<BinarySearch> binary_search_group(same_rank_regulators.size());
             std::ranges::transform(same_rank_regulators, binary_search_group.begin(), [](auto const& regulator) {
                 return BinarySearch{regulator.transformer.tap_pos(), regulator.transformer.tap_min(),
-                                    regulator.transformer.tap_max()};
+                                    regulator.transformer.tap_max(), regulator.control_at_tap_side()};
             });
             binary_search_.push_back(std::move(binary_search_group));
         }
@@ -928,7 +1011,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const adjust_transformer_in_rank = [&](Idx const& rank_idx, Idx const& transformer_idx,
                                                         std::vector<RegulatedTransformer> const& same_rank_regulators) {
                 auto const& regulator = same_rank_regulators[transformer_idx];
-                BinarySearchOptions const options{strategy_max, Idx2D{rank_idx, transformer_idx}};
+                BinarySearchOptions const options{strategy_max, Idx2D{.group = rank_idx, .pos = transformer_idx}};
                 tap_changed = adjust_transformer(regulator, state, result, update_data, search, options) || tap_changed;
                 return tap_changed;
             };
@@ -985,13 +1068,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
+            bool control_at_tap_side = regulator.control_at_tap_side();
+
             auto const cmp = node_state <=> param;
-            auto new_tap_pos = [&transformer, &cmp] {
+            auto new_tap_pos = [&transformer, &cmp, &control_at_tap_side] {
                 if (cmp > 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_control_voltage_down(transformer);
+                    return one_step_control_voltage_down(transformer, control_at_tap_side);
                 }
                 if (cmp < 0) { // NOLINT(modernize-use-nullptr)
-                    return one_step_control_voltage_up(transformer);
+                    return one_step_control_voltage_up(transformer, control_at_tap_side);
                 }
                 return transformer.tap_pos();
             }();
@@ -1090,11 +1175,19 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto pilot_run(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
-        constexpr auto max_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+        constexpr auto max_voltage_pos = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            if (control_at_tap_side) {
+                // max voltage at tap side <=> max tap pos
+                return transformer.tap_max();
+            }
             // max voltage at control side => min voltage at tap side => min tap pos
             return transformer.tap_min();
         };
-        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer) -> IntS {
+        constexpr auto min_voltage_pos = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            if (control_at_tap_side) {
+                // min voltage at tap side <=> min tap pos
+                return transformer.tap_min();
+            }
             // min voltage at control side => max voltage at tap side => max tap pos
             return transformer.tap_max();
         };
@@ -1125,11 +1218,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     void exploit_neighborhood(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         using namespace std::string_literals;
 
-        constexpr auto one_step_up = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_control_voltage_up(transformer);
+        constexpr auto increment_voltage = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            return one_step_control_voltage_up(transformer, control_at_tap_side);
         };
-        constexpr auto one_step_down = [](transformer_c auto const& transformer) -> IntS {
-            return one_step_control_voltage_down(transformer);
+        constexpr auto decrement_voltage = [](transformer_c auto const& transformer, bool control_at_tap_side) -> IntS {
+            return one_step_control_voltage_down(transformer, control_at_tap_side);
         };
 
         switch (strategy_) {
@@ -1140,12 +1233,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case OptimizerStrategy::global_maximum:
             [[fallthrough]];
         case OptimizerStrategy::local_maximum:
-            regulate_transformers(one_step_up, regulator_order);
+            regulate_transformers(increment_voltage, regulator_order);
             break;
         case OptimizerStrategy::global_minimum:
             [[fallthrough]];
         case OptimizerStrategy::local_minimum:
-            regulate_transformers(one_step_down, regulator_order);
+            regulate_transformers(decrement_voltage, regulator_order);
             break;
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
@@ -1160,21 +1253,24 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     template <typename Func>
-        requires((std::invocable<Func, TransformerTypes const&> &&
-                  std::same_as<std::invoke_result_t<Func, TransformerTypes const&>, IntS>) &&
+        requires((std::invocable<Func, TransformerTypes const&, bool> &&
+                  std::same_as<std::invoke_result_t<Func, TransformerTypes const&, bool>, IntS>) &&
                  ...)
     auto regulate_transformers(Func to_new_tap_pos,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order) const {
         UpdateBuffer update_data;
 
         auto const get_update = [to_new_tap_pos_func = std::move(to_new_tap_pos),
-                                 &update_data](transformer_c auto const& transformer) {
-            add_tap_pos_update(to_new_tap_pos_func(transformer), transformer, update_data);
+                                 &update_data](transformer_c auto const& transformer, bool control_at_tap_side) {
+            add_tap_pos_update(to_new_tap_pos_func(transformer, control_at_tap_side), transformer, update_data);
         };
 
         for (auto const& sub_order : regulator_order) {
             for (auto const& regulator : sub_order) {
-                regulator.transformer.apply(get_update);
+                bool const control_at_tap_side = regulator.control_at_tap_side();
+                regulator.transformer.apply([&get_update, &control_at_tap_side](auto const& transformer) {
+                    get_update(transformer, control_at_tap_side);
+                });
             }
         }
 

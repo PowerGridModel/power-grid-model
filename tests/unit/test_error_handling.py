@@ -10,7 +10,7 @@ from power_grid_model import PowerGridModel
 from power_grid_model._core.power_grid_meta import initialize_array
 from power_grid_model.enum import CalculationMethod, LoadGenType, MeasuredTerminalType, TapChangingStrategy
 from power_grid_model.errors import (
-    AutomaticTapCalculationError,
+    AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
     IDNotFound,
@@ -25,6 +25,7 @@ from power_grid_model.errors import (
     IterationDiverge,
     MissingCaseForEnumError,
     NotObservableError,
+    PowerGridError,
 )
 
 from .utils import PowerGridModelWithExt
@@ -303,43 +304,44 @@ def test_handle_invalid_calculation_method_error():
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
 
-def test_transformer_tap_regulator_at_lv_tap_side():
+def test_transformer_tap_regulator_control_side_not_closer_to_source():
     node_input = initialize_array("input", "node", 2)
     node_input["id"] = [0, 1]
-    node_input["u_rated"] = [1e4, 4e2]
-
-    source_input = initialize_array("input", "source", 1)
-    source_input["id"] = [2]
-    source_input["node"] = [0]
-    source_input["status"] = [1]
-    source_input["u_ref"] = [10.0e3]
+    node_input["u_rated"] = [150e3, 10e3]
 
     transformer_input = initialize_array("input", "transformer", 1)
-    transformer_input["id"] = [3]
+    transformer_input["id"] = [2]
     transformer_input["from_node"] = [0]
     transformer_input["to_node"] = [1]
     transformer_input["from_status"] = [1]
     transformer_input["to_status"] = [1]
-    transformer_input["winding_from"] = [2]
+    transformer_input["winding_from"] = [1]
     transformer_input["winding_to"] = [1]
-    transformer_input["clock"] = [5]
+    transformer_input["clock"] = [0]
     transformer_input["tap_side"] = [1]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [3]
+    source_input["node"] = [0]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [1.0]
 
     transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
     transformer_tap_regulator_input["id"] = [4]
-    transformer_tap_regulator_input["regulated_object"] = [3]
+    transformer_tap_regulator_input["regulated_object"] = [2]
     transformer_tap_regulator_input["status"] = [1]
     transformer_tap_regulator_input["control_side"] = [0]
 
-    with pytest.raises(AutomaticTapCalculationError):
-        PowerGridModel(
-            input_data={
-                "node": node_input,
-                "transformer": transformer_input,
-                "source": source_input,
-                "transformer_tap_regulator": transformer_tap_regulator_input,
-            }
-        )
+    model = PowerGridModel(
+        input_data={
+            "node": node_input,
+            "transformer": transformer_input,
+            "source": source_input,
+            "transformer_tap_regulator": transformer_tap_regulator_input,
+        }
+    )
+    with pytest.raises(AutomaticTapInputError):
+        model.calculate_power_flow(tap_changing_strategy=TapChangingStrategy.min_voltage_tap, decode_error=True)
 
 
 def test_automatic_tap_changing():

@@ -31,10 +31,19 @@ constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr int8_t na_IntS = std::numeric_limits<int8_t>::min();
 constexpr ID na_IntID = std::numeric_limits<ID>::min();
 
-template <std::same_as<double> T> constexpr T nan_value() { return nan; }
-template <std::same_as<std::array<double, 3>> T> constexpr T nan_value() { return {nan, nan, nan}; }
-template <std::same_as<ID> T> constexpr T nan_value() { return na_IntID; }
-template <std::same_as<int8_t> T> constexpr T nan_value() { return na_IntS; }
+template <typename T> constexpr T nan_value() {
+    if constexpr (std::is_same_v<T, double>) {
+        return nan;
+    } else if constexpr (std::is_same_v<T, ID>) {
+        return na_IntID;
+    } else if constexpr (std::is_same_v<T, int8_t>) {
+        return na_IntS;
+    } else if constexpr (std::is_same_v<T, std::array<double, 3>>) {
+        return std::array<double, 3>{nan, nan, nan};
+    } else {
+        static_assert(false, "Unsupported type for nan_value");
+    }
+}
 
 class UnsupportedPGM_CType : public PowerGridError {
   public:

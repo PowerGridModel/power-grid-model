@@ -93,7 +93,7 @@ class Source : public Appliance {
         bool const param_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
         // change source connection will change both topo and param
         // change u ref will change param
-        return {topo_changed, param_changed || topo_changed};
+        return {.topo = topo_changed, .param = param_changed || topo_changed};
     }
 
     SourceUpdate inverse(SourceUpdate update_data) const {
@@ -110,8 +110,8 @@ class Source : public Appliance {
     double u_ref_;
     double u_ref_angle_;
     // positive and zero sequence ref
-    DoubleComplex y1_ref_{};
-    DoubleComplex y0_ref_{};
+    DoubleComplex y1_ref_;
+    DoubleComplex y0_ref_;
 
     template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
         ApplianceSolverOutput<sym_calc> appliance_solver_output;

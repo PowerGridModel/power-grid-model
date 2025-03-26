@@ -14,7 +14,6 @@ Although all functions are 'public', you probably only need validate_input_data(
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
-from typing import cast
 
 import numpy as np
 
@@ -34,14 +33,7 @@ from power_grid_model.enum import (
     MeasuredTerminalType,
     WindingType,
 )
-from power_grid_model.validation.errors import (
-    IdNotInDatasetError,
-    InvalidIdError,
-    MissingValueError,
-    MultiComponentNotUniqueError,
-    ValidationError,
-)
-from power_grid_model.validation.rules import (
+from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,
@@ -54,7 +46,6 @@ from power_grid_model.validation.rules import (
     all_less_than as _all_less_than,
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
-    all_supported_tap_control_side as _all_supported_tap_control_side,
     all_unique as _all_unique,
     all_valid_associated_enum_values as _all_valid_associated_enum_values,
     all_valid_clocks as _all_valid_clocks,
@@ -64,6 +55,13 @@ from power_grid_model.validation.rules import (
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     none_missing as _none_missing,
     valid_p_q_sigma as _valid_p_q_sigma,
+)
+from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
+    InvalidIdError,
+    MissingValueError,
+    MultiComponentNotUniqueError,
+    ValidationError,
 )
 from power_grid_model.validation.utils import _update_input_data
 
@@ -247,40 +245,30 @@ def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[
 def _process_power_sigma_and_p_q_sigma(
     data: SingleDataset,
     sensor: ComponentType,
-    required_list: dict[ComponentType | str, list[str | list[str]]],
 ) -> None:
     """
     Helper function to process the required list when both `p_sigma` and `q_sigma` exist
     and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
-    `p_sigma` and `q_sigma`in this case. Happens only on proxy data (not the original data).
+    `p_sigma` and `q_sigma` in this case. Happens only on proxy data (not the original data).
     However, note that this value is eventually not used in the calculation.
+
+    Args:
+        data: SingleDataset, pgm data
+        sensor: only of types ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
     """
-
-    def _check_sensor_in_data(_data, _sensor):
-        return _sensor in _data and isinstance(_data[_sensor], np.ndarray)
-
-    def _contains_p_q_sigma(_sensor_data):
-        return "p_sigma" in _sensor_data.dtype.names and "q_sigma" in _sensor_data.dtype.names
-
-    def _process_power_sigma_in_list(_sensor_mask, _power_sigma, _p_sigma, _q_sigma):
-        _mask = np.logical_not(np.logical_or(np.isnan(_p_sigma), np.isnan(_q_sigma)))
-        if _power_sigma.ndim < _mask.ndim:
-            _mask = np.any(_mask, axis=tuple(range(_power_sigma.ndim, _mask.ndim)))
-
-        for sublist, should_remove in zip(_sensor_mask, _mask):
-            if should_remove and "power_sigma" in sublist:
-                sublist = cast(list[str], sublist)
-                sublist.remove("power_sigma")
-
-    if _check_sensor_in_data(data, sensor):
+    if sensor in data:
         sensor_data = data[sensor]
-        sensor_mask = required_list[sensor]
-        if _contains_p_q_sigma(sensor_data):
-            p_sigma = sensor_data["p_sigma"]
-            q_sigma = sensor_data["q_sigma"]
-            power_sigma = sensor_data["power_sigma"]
+        power_sigma = sensor_data["power_sigma"]
+        p_sigma = sensor_data["p_sigma"]
+        q_sigma = sensor_data["q_sigma"]
 
-            _process_power_sigma_in_list(sensor_mask, power_sigma, p_sigma, q_sigma)
+        # virtual patch to handle missing power_sigma
+        asym_axes = tuple(range(sensor_data.ndim, p_sigma.ndim))
+        mask = np.logical_and(np.isnan(power_sigma), np.any(np.logical_not(np.isnan(p_sigma)), axis=asym_axes))
+        power_sigma[mask] = np.nansum(p_sigma[mask], axis=asym_axes)
+
+        mask = np.logical_and(np.isnan(power_sigma), np.any(np.logical_not(np.isnan(q_sigma)), axis=asym_axes))
+        power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
 
 
 def validate_required_values(
@@ -298,7 +286,7 @@ def validate_required_values(
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required: dict[ComponentType | str, list[str | list[str]]] = {"base": ["id"]}
+    required: dict[ComponentType | str, list[str]] = {"base": ["id"]}
 
     # Nodes
     required["node"] = required["base"] + ["u_rated"]
@@ -382,12 +370,7 @@ def validate_required_values(
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
     # Different requirements for individual sensors. Avoid shallow copy.
     for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
-        try:
-            required[sensor_type] = [
-                required["power_sensor"].copy() for _ in range(data[sensor_type].shape[0])  # type: ignore
-            ]
-        except KeyError:
-            pass
+        required[sensor_type] = required["power_sensor"].copy()
 
     # Faults
     required["fault"] = required["base"] + ["fault_object"]
@@ -404,13 +387,13 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    _process_power_sigma_and_p_q_sigma(data, ComponentType.sym_power_sensor, required)
-    _process_power_sigma_and_p_q_sigma(data, ComponentType.asym_power_sensor, required)
+    _process_power_sigma_and_p_q_sigma(data, ComponentType.sym_power_sensor)
+    _process_power_sigma_and_p_q_sigma(data, ComponentType.asym_power_sensor)
 
     return _validate_required_in_data(data, required)
 
 
-def _validate_required_in_data(data, required):
+def _validate_required_in_data(data: SingleDataset, required: dict[ComponentType | str, list[str]]):
     """
     Checks if all required data is available.
 
@@ -429,25 +412,14 @@ def _validate_required_in_data(data, required):
             and isinstance(data[component], ABCSized)
         )
 
-    def is_nested_list(items):
-        return isinstance(items, list) and all(isinstance(i, list) for i in items)
-
-    def process_nested_items(component, items, data, results):
-        for index, item in enumerate(sublist for sublist in items):
-            if index < len(data[component]):
-                results.append(_none_missing(data, component, item, index))
-
-    results = []
+    results: list[MissingValueError] = []
 
     for component in data:
         if is_valid_component(data, component):
             items = required.get(component, [])
-            if is_nested_list(items):
-                process_nested_items(component, items, data, results)
-            else:
-                results.append(_none_missing(data, component, items, 0))
+            results += _none_missing(data, component, items)
 
-    return list(chain(*results))
+    return results
 
 
 def validate_values(data: SingleDataset, calculation_type: CalculationType | None = None) -> list[ValidationError]:
@@ -977,6 +949,7 @@ def validate_regulator(data: SingleDataset, component: ComponentType) -> list[Va
 def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationError]:
     errors = validate_regulator(data, ComponentType.transformer_tap_regulator)
     errors += _all_boolean(data, ComponentType.transformer_tap_regulator, "status")
+    errors += _all_unique(data, ComponentType.transformer_tap_regulator, "regulated_object")
     errors += _all_valid_enum_values(
         data, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
     )
@@ -1003,12 +976,5 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
     )
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, "line_drop_compensation_x", 0.0
-    )
-    errors += _all_supported_tap_control_side(
-        data,
-        ComponentType.transformer_tap_regulator,
-        "control_side",
-        "regulated_object",
-        [(ComponentType.transformer, "tap_side"), (ComponentType.three_winding_transformer, "tap_side")],
     )
     return errors

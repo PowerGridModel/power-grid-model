@@ -170,7 +170,7 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
         // Test single zipped iteration
         IdxRanges actual_ranges_a{};
         Idx current_index{};
-        for (auto [index, element_range] : enumerated_zip_sequence(idx_vector_a)) {
+        for (auto const& [index, element_range] : enumerated_zip_sequence(idx_vector_a)) {
             actual_ranges_a.push_back(element_range);
 
             CHECK(index == current_index++);
@@ -184,7 +184,7 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
         IdxRanges actual_ranges_a{};
         IdxRanges actual_ranges_b{};
         Idx current_index{};
-        for (auto const [index, first_group, second_group] : enumerated_zip_sequence(idx_vector_a, idx_vector_b)) {
+        for (auto const& [index, first_group, second_group] : enumerated_zip_sequence(idx_vector_a, idx_vector_b)) {
             for (auto& element : first_group) {
                 actual_idx_counts_a.push_back(element);
             }
@@ -209,7 +209,7 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
         IdxRanges actual_ranges_b{};
         IdxRanges actual_ranges_c{};
         Idx current_index{};
-        for (auto [index, element_range_1, element_range_2, element_range_3] :
+        for (auto const& [index, element_range_1, element_range_2, element_range_3] :
              enumerated_zip_sequence(idx_vector_a, idx_vector_b, idx_vector_c)) {
             actual_ranges_a.push_back(element_range_1);
             actual_ranges_b.push_back(element_range_2);

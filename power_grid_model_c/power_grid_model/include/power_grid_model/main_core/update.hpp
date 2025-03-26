@@ -18,7 +18,7 @@ namespace power_grid_model::main_core::update {
 namespace detail {
 template <component_c Component, forward_iterator_like<typename Component::UpdateType> ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
-inline void iterate_component_sequence(Func&& func, ForwardIterator begin, ForwardIterator end,
+inline void iterate_component_sequence(Func func, ForwardIterator begin, ForwardIterator end,
                                        std::span<Idx2D const> sequence_idx) {
     assert(std::distance(begin, end) >= static_cast<ptrdiff_t>(sequence_idx.size()));
 
@@ -264,7 +264,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
                 *changed_it++ = sequence_single;
             }
         },
-        begin, end, sequence_idx);
+        std::move(begin), std::move(end), sequence_idx);
 
     return state_changed;
 }

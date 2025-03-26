@@ -53,7 +53,6 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
-    MultiFieldValidationError,
     NotBetweenError,
     NotBetweenOrAtError,
     NotBooleanError,
@@ -63,20 +62,13 @@ from power_grid_model.validation.errors import (
     NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
+    PQSigmaPairError,
     SameValueError,
     TransformerClockError,
     TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
     ValidationError,
 )
-from power_grid_model.validation.utils import (
-    _eval_expression,
-    _get_indexer,
-    _get_mask,
-    _get_valid_ids,
-    _nan_type,
-    _set_default_value,
-)
+from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
 
 Error = TypeVar("Error", bound=ValidationError)
 CompError = TypeVar("CompError", bound=ComparisonError)
@@ -754,12 +746,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
     return errors
 
 
-def none_missing(
-    data: SingleDataset,
-    component: ComponentType,
-    fields: list[str | list[str]] | str | list[str],
-    index: int = 0,
-) -> list[MissingValueError]:
+def none_missing(data: SingleDataset, component: ComponentType, fields: str | list[str]) -> list[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
     Returns an empty list on success, or a list containing a single error object on failure.
@@ -777,23 +764,21 @@ def none_missing(
     if isinstance(fields, str):
         fields = [fields]
     for field in fields:
-        if isinstance(field, list):
-            field = field[0]
         nan = _nan_type(component, field)
         if np.isnan(nan):
-            invalid = np.isnan(data[component][field][index])
+            invalid = np.isnan(data[component][field])
         else:
-            invalid = np.equal(data[component][field][index], nan)
+            invalid = np.equal(data[component][field], nan)
 
         if invalid.any():
-            if isinstance(invalid, np.ndarray):
-                invalid = np.any(invalid)
+            # handle both symmetric and asymmetric values
+            invalid = np.any(invalid, axis=tuple(range(1, invalid.ndim)))
             ids = data[component]["id"][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
     return errors
 
 
-def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[MultiFieldValidationError]:
+def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[PQSigmaPairError]:
     """
     Check validity of the pair `(p_sigma, q_sigma)` for 'sym_power_sensor' and 'asym_power_sensor'.
 
@@ -802,7 +787,7 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[Multi
         component: The component of interest, in this case only 'sym_power_sensor' or 'asym_power_sensor'
 
     Returns:
-        A list containing zero or one MultiFieldValidationError, listing the p_sigma and q_sigma mismatch.
+        A list containing zero or one PQSigmaPairError, listing the p_sigma and q_sigma mismatch.
         Note that with asymetric power sensors, partial assignment of p_sigma and q_sigma is also considered mismatch.
     """
     errors = []
@@ -812,16 +797,18 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[Multi
     q_nan = np.isnan(q_sigma)
     p_inf = np.isinf(p_sigma)
     q_inf = np.isinf(q_sigma)
-    if p_sigma.ndim > 1:  # if component == 'asym_power_sensor':
-        p_nan = p_nan.any(axis=-1)
-        q_nan = q_nan.any(axis=-1)
-        p_inf = p_inf.any(axis=-1)
-        q_inf = q_inf.any(axis=-1)
     mis_match = p_nan != q_nan
-    mis_match |= np.logical_or(p_inf, q_inf)
+    mis_match |= np.logical_xor(p_inf, q_inf)  # infinite sigmas are supported if they are both infinite
+    if p_sigma.ndim > 1:  # if component == 'asym_power_sensor':
+        mis_match = mis_match.any(axis=-1)
+        mis_match |= np.logical_xor(p_nan.any(axis=-1), p_nan.all(axis=-1))
+        mis_match |= np.logical_xor(q_nan.any(axis=-1), q_nan.all(axis=-1))
+        mis_match |= np.logical_xor(p_inf.any(axis=-1), p_inf.all(axis=-1))
+        mis_match |= np.logical_xor(q_inf.any(axis=-1), q_inf.all(axis=-1))
+
     if mis_match.any():
         ids = data[component]["id"][mis_match].flatten().tolist()
-        errors.append(MultiFieldValidationError(component, ["p_sigma", "q_sigma"], ids))
+        errors.append(PQSigmaPairError(component, ["p_sigma", "q_sigma"], ids))
     return errors
 
 
@@ -912,51 +899,6 @@ def all_valid_fault_phases(
                 component=component,
                 fields=[fault_type_field, fault_phase_field],
                 ids=data[component]["id"][err].flatten().tolist(),
-            )
-        ]
-    return []
-
-
-def all_supported_tap_control_side(  # pylint: disable=too-many-arguments
-    data: SingleDataset,
-    component: ComponentType,
-    control_side_field: str,
-    regulated_object_field: str,
-    tap_side_fields: list[tuple[ComponentType, str]],
-    **filters: Any,
-) -> list[UnsupportedTransformerRegulationError]:
-    """
-    Args:
-        data (SingleDataset): The input/update data set for all components
-        component (ComponentType): The component of interest
-        control_side_field (str): The field of interest
-        regulated_object_field (str): The field that contains the regulated component ids
-        tap_side_fields (list[tuple[ComponentType, str]]): The fields of interest per regulated component,
-            formatted as [(component_1, field_1), (component_2, field_2)]
-        **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
-
-    Returns:
-        A list containing zero or more InvalidAssociatedEnumValueErrors; listing all the ids
-        of components where the field of interest was invalid, given the referenced object's field.
-    """
-    mask = _get_mask(data=data, component=component, field=control_side_field, **filters)
-    values = data[component][control_side_field][mask]
-
-    invalid = np.zeros_like(mask)
-
-    for ref_component, ref_field in tap_side_fields:
-        if ref_component in data:
-            indices = _get_indexer(data[ref_component]["id"], data[component][regulated_object_field], default_value=-1)
-            found = indices != -1
-            ref_comp_values = data[ref_component][ref_field][indices[found]]
-            invalid[found] = np.logical_or(invalid[found], values[found] == ref_comp_values)
-
-    if invalid.any():
-        return [
-            UnsupportedTransformerRegulationError(
-                component=component,
-                fields=[control_side_field, regulated_object_field],
-                ids=data[component]["id"][invalid].flatten().tolist(),
             )
         ]
     return []

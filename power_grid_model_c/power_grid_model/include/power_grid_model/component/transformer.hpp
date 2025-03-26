@@ -97,7 +97,7 @@ class Transformer : public Branch {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.from_status, update_data.to_status);
         bool const param_changed = set_tap(update_data.tap_pos) || topo_changed;
-        return {topo_changed, param_changed};
+        return {.topo = topo_changed, .param = param_changed};
     }
 
     TransformerUpdate inverse(TransformerUpdate update_data) const {
@@ -193,7 +193,7 @@ class Transformer : public Branch {
         y_series = (1.0 / z_series) / base_y_to;
         // shunt
         DoubleComplex y_shunt;
-        // Y = I0_2 / (U2/sqrt(3)) = i0 * (S / sqrt(3) / U2) / (U2/sqrt(3)) = i0 * S * / U2 / U2
+        // Y = I0_2 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);

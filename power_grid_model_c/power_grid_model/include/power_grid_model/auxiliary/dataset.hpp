@@ -40,6 +40,11 @@ struct ComponentInfo {
     // for non-uniform component, this is -1, we use indptr to describe the elements per scenario
     Idx elements_per_scenario{};
     Idx total_elements{};
+    // whether there is a subset of meaningful attributes that was deduced from the dataset
+    bool has_attribute_indications{false};
+    // this is not redundant as we use them for aggregate intialization
+    // NOLINTNEXTLINE(readability-redundant-member-init)
+    std::vector<MetaAttribute const*> attribute_indications{};
 };
 
 struct DatasetInfo {
@@ -336,6 +341,21 @@ template <dataset_type_tag dataset_type_> class Dataset {
         add_component_info_impl(component, elements_per_scenario, total_elements);
     }
 
+    void enable_attribute_indications(std::string_view component)
+        requires is_indptr_mutable_v<dataset_type>
+    {
+        Idx const idx = find_component(component, true);
+        dataset_info_.component_info[idx].has_attribute_indications = true;
+    }
+
+    void set_attribute_indications(std::string_view component, std::span<MetaAttribute const*> attribute_indications)
+        requires is_indptr_mutable_v<dataset_type>
+    {
+        Idx const idx = find_component(component, true);
+        dataset_info_.component_info[idx].attribute_indications = {attribute_indications.begin(),
+                                                                   attribute_indications.end()};
+    }
+
     void add_buffer(std::string_view component, std::integral auto elements_per_scenario_,
                     std::integral auto total_elements_, Indptr* indptr, Data* data)
         requires(!is_indptr_mutable_v<dataset_type>)
@@ -515,8 +535,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
             throw DatasetError{"Cannot have duplicated components!\n"};
         }
         check_uniform_integrity(elements_per_scenario, total_elements);
-        dataset_info_.component_info.push_back(
-            {&dataset_info_.dataset->get_component(component), elements_per_scenario, total_elements});
+        dataset_info_.component_info.push_back({.component = &dataset_info_.dataset->get_component(component),
+                                                .elements_per_scenario = elements_per_scenario,
+                                                .total_elements = total_elements});
         buffers_.push_back(Buffer{});
     }
 

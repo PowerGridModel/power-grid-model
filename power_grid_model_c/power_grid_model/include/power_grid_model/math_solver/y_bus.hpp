@@ -35,7 +35,7 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
         return;
     }
     // add
-    vec.push_back({{first_bus, second_bus}, {element_type, idx}});
+    vec.push_back({.pos = {first_bus, second_bus}, .element = {.element_type = element_type, .idx = idx}});
 }
 
 // counting sort element
@@ -54,7 +54,7 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
         count_vec[--counter[it_element->pos.second]] = *it_element;
     }
     // sort row
-    std::fill(counter.begin(), counter.end(), 0);
+    std::ranges::fill(counter, 0);
     for (YBusElementMap const& element : count_vec) {
         ++counter[element.pos.first];
     }
@@ -527,12 +527,12 @@ template <symmetry_tag sym> class YBus {
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
 
     // cache the branch and shunt parameters in sequence_idx_map
-    IdxVector branch_param_idx_{};
-    IdxVector shunt_param_idx_{};
+    IdxVector branch_param_idx_;
+    IdxVector shunt_param_idx_;
 
     // map index between admittance entries and parameter entries
-    std::vector<IdxVector> map_admittance_param_branch_{};
-    std::vector<IdxVector> map_admittance_param_shunt_{};
+    std::vector<IdxVector> map_admittance_param_branch_;
+    std::vector<IdxVector> map_admittance_param_shunt_;
 
     std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
 
@@ -542,9 +542,6 @@ template <symmetry_tag sym> class YBus {
         });
     }
 };
-
-template class YBus<symmetric_t>;
-template class YBus<asymmetric_t>;
 
 } // namespace math_solver
 

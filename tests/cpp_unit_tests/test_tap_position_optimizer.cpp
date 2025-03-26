@@ -24,11 +24,12 @@ using TestComponentContainer =
               ThreeWindingTransformer, TransformerTapRegulator, Source>;
 using TestState = main_core::MainModelState<TestComponentContainer>;
 
-TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side, IntS tap_pos = na_IntS) {
+TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side, IntS tap_pos = na_IntS,
+                                 IntS from_status = 1) {
     return TransformerInput{.id = id,
                             .from_node = from,
                             .to_node = to,
-                            .from_status = 1,
+                            .from_status = from_status,
                             .to_status = 1,
                             .u1 = nan,
                             .u2 = nan,
@@ -56,7 +57,8 @@ TransformerInput get_transformer(ID id, ID from, ID to, BranchSide tap_side, Int
                             .x_grounding_to = nan};
 }
 
-ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3, IntS tap_pos = 0) {
+ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID node_3,
+                                               Branch3Side tap_side = Branch3Side::side_1, IntS tap_pos = 0) {
     return ThreeWindingTransformerInput{
         .id = id,
         .node_1 = node_1,
@@ -84,7 +86,7 @@ ThreeWindingTransformerInput get_transformer3w(ID id, ID node_1, ID node_2, ID n
         .winding_3 = WindingType::wye_n,
         .clock_12 = 0,
         .clock_13 = 0,
-        .tap_side = Branch3Side::side_1,
+        .tap_side = tap_side,
         .tap_pos = tap_pos,
         .tap_min = std::numeric_limits<IntS>::min(),
         .tap_max = std::numeric_limits<IntS>::max(),
@@ -156,7 +158,7 @@ TEST_CASE("Test Transformer ranking") {
         auto const get_state = [](ID source, ID node_a, ID node_b, ID trafo, ID regulator) {
             TestState state;
 
-            std::vector<NodeInput> nodes{{node_a, 10e3}, {node_b, 400}};
+            std::vector<NodeInput> nodes{{.id = node_a, .u_rated = 10e3}, {.id = node_b, .u_rated = 400}};
             main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
             std::vector const sources{SourceInput{.id = source, .node = node_a, .status = IntS{1}, .u_ref = 1.0}};
@@ -183,34 +185,124 @@ TEST_CASE("Test Transformer ranking") {
         CHECK_NOTHROW(pgm_tap::build_transformer_graph(get_state(6, 2, 1, 4, 5)));
     }
 
-    SUBCASE("Full grid") {
+    SUBCASE("Process edge weights") {
+        using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
+
+        // Dummy graph
+        pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
+        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{-1, -1}, 0}, {{2, 3}, 1}};
+        std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
+
+        pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
+                                    edge_prop.cbegin(), 4};
+
+        // Vertex properties can not be set during graph creation
+        vertex_iterator vi;
+        vertex_iterator vi_end;
+        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+            g[*vi].is_source = vertex_props[*vi].is_source;
+        }
+
+        pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
+        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 1}, {{2, 3}, 1}};
+        CHECK(regulated_edge_weights == ref_regulated_edge_weights);
+    }
+
+    SUBCASE("Sorting transformer edges") {
+        pgm_tap::TrafoGraphEdgeProperties const trafoList{
+            {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
+
+        pgm_tap::RankedTransformerGroups const referenceList{{Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
+
+        pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
+        REQUIRE(sortedTrafoList.size() == referenceList.size());
+        for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
+            CAPTURE(idx);
+            CHECK(sortedTrafoList[idx] == referenceList[idx]);
+        }
+    }
+
+    SUBCASE("Multiple source grid") {
+        using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
+
+        // Grid with multiple sources and symetric graph
+        pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
+        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}};
+        std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
+
+        pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
+                                    edge_prop.cbegin(), 5};
+
+        // Vertex properties can not be set during graph creation
+        vertex_iterator vi;
+        vertex_iterator vi_end;
+        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+            g[*vi].is_source = vertex_props[*vi].is_source;
+        }
+
+        pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
+        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{
+            {{0, 1}, 1}, {{1, 2}, 2}, {{2, 3}, 2}, {{3, 4}, 1}};
+        CHECK(regulated_edge_weights == ref_regulated_edge_weights);
+    }
+
+    SUBCASE("Full grid 1 - For graph construction steps") {
+        // =====Test Grid=====
+        // ________[0]________
+        // ||           |    |
+        // [1]         [4]--[5]
+        //  |           |    |
+        // [2]          |   [7]
+        //  |          [6]   |
+        // [3]----------|   [8]
+        //  |                |
+        //  L---------------[9] -----x- [100]
+        //
+        // [101] ---- [102]
+
         TestState state;
-        std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}, {4, 10e3},
-                                     {5, 50e3},  {6, 10e3}, {7, 10e3}, {8, 10e3}, {9, 10e3}};
+        std::vector<NodeInput> nodes{
+            {.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3},   {.id = 2, .u_rated = 10e3},
+            {.id = 3, .u_rated = 10e3},  {.id = 4, .u_rated = 10e3},   {.id = 5, .u_rated = 50e3},
+            {.id = 6, .u_rated = 10e3},  {.id = 7, .u_rated = 10e3},   {.id = 8, .u_rated = 10e3},
+            {.id = 9, .u_rated = 10e3},  {.id = 100, .u_rated = 10e3}, {.id = 101, .u_rated = 10e3},
+            {.id = 102, .u_rated = 10e3}};
         main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
 
         std::vector<TransformerInput> transformers{
-            get_transformer(11, 0, 1, BranchSide::from), get_transformer(12, 0, 1, BranchSide::from),
-            get_transformer(13, 5, 7, BranchSide::from), get_transformer(14, 2, 3, BranchSide::from),
-            get_transformer(15, 8, 9, BranchSide::from)};
+            get_transformer(11, 0, 1, BranchSide::from),     get_transformer(12, 0, 1, BranchSide::from),
+            get_transformer(13, 5, 7, BranchSide::from),     get_transformer(14, 2, 3, BranchSide::from),
+            get_transformer(15, 8, 9, BranchSide::from),     get_transformer(103, 9, 100, BranchSide::from, na_IntS, 0),
+            get_transformer(104, 101, 102, BranchSide::from)};
         main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
 
-        std::vector<ThreeWindingTransformerInput> transformers3w{get_transformer3w(16, 0, 4, 5)};
+        std::vector<ThreeWindingTransformerInput> transformers3w{
+            get_transformer3w(16, 0, 4, 5, Branch3Side::side_1, 0)};
         main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
 
         std::vector<LineInput> lines{get_line_input(17, 3, 6), get_line_input(18, 3, 9)};
         main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
 
-        std::vector<LinkInput> links{{19, 2, 1, 1, 1}, {20, 6, 4, 1, 1}, {21, 8, 7, 1, 1}};
+        std::vector<LinkInput> links{{.id = 19, .from_node = 2, .to_node = 1, .from_status = 1, .to_status = 1},
+                                     {.id = 20, .from_node = 6, .to_node = 4, .from_status = 1, .to_status = 1},
+                                     {.id = 21, .from_node = 8, .to_node = 7, .from_status = 1, .to_status = 1}};
         main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
 
-        std::vector<SourceInput> sources{{22, 0, 1, 1.0, 0, nan, nan, nan}};
+        std::vector<SourceInput> sources{{.id = 22,
+                                          .node = 0,
+                                          .status = 1,
+                                          .u_ref = 1.0,
+                                          .u_ref_angle = 0,
+                                          .sk = nan,
+                                          .rx_ratio = nan,
+                                          .z01_ratio = nan}};
         main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
 
         std::vector<TransformerTapRegulatorInput> regulators{
-            get_regulator(23, 11, ControlSide::from), get_regulator(24, 12, ControlSide::from),
-            get_regulator(25, 13, ControlSide::from), get_regulator(26, 14, ControlSide::from),
-            get_regulator(27, 15, ControlSide::from), get_regulator(28, 16, ControlSide::side_1)};
+            get_regulator(23, 11, ControlSide::to),     get_regulator(24, 12, ControlSide::to),
+            get_regulator(25, 13, ControlSide::to),     get_regulator(26, 14, ControlSide::to),
+            get_regulator(27, 15, ControlSide::to),     get_regulator(28, 16, ControlSide::side_2),
+            get_regulator(105, 103, ControlSide::from), get_regulator(106, 104, ControlSide::from)};
         main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
 
         state.components.set_construction_complete();
@@ -221,22 +313,21 @@ TEST_CASE("Test Transformer ranking") {
             using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
             // reference graph creation
-            // Inserted in order of transformer, transformer3w, line and link
-            std::vector<std::pair<Idx, Idx>> expected_edges;
-            expected_edges.insert(expected_edges.end(), {{0, 1}, {0, 1}, {5, 7}, {2, 3}, {8, 9}});
-            expected_edges.insert(expected_edges.end(), {{0, 4}, {4, 5}, {5, 4}, {0, 5}});
-            expected_edges.insert(expected_edges.end(), {{3, 6}, {6, 3}, {3, 9}, {9, 3}});
-            expected_edges.insert(expected_edges.end(), {{2, 1}, {1, 2}, {6, 4}, {4, 6}, {8, 7}, {7, 8}});
-
             pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
-            expected_edges_prop.insert(expected_edges_prop.end(),
-                                       {{{3, 0}, 1}, {{3, 1}, 1}, {{3, 2}, 1}, {{3, 3}, 1}, {{3, 4}, 1}});
-            expected_edges_prop.insert(expected_edges_prop.end(),
-                                       {{{4, 0}, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}, {unregulated_idx, 1}});
+            expected_edges_prop.insert(expected_edges_prop.end(), {{{.group = 3, .pos = 0}, 1},
+                                                                   {{.group = 3, .pos = 1}, 1},
+                                                                   {{.group = 3, .pos = 2}, 1},
+                                                                   {{.group = 3, .pos = 3}, 1},
+                                                                   {{.group = 3, .pos = 4}, 1},
+                                                                   {{.group = 3, .pos = 6}, 1}});
+            expected_edges_prop.insert(
+                expected_edges_prop.end(),
+                {{{.group = 4, .pos = 0}, 1}, {{.group = 4, .pos = 0}, 1}, {unregulated_idx, 0}, {unregulated_idx, 0}});
             expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0});
 
             std::vector<pgm_tap::TrafoGraphVertex> const expected_vertex_props{
-                {true}, {false}, {false}, {false}, {false}, {false}, {false}, {false}, {false}, {false}};
+                {true},  {false}, {false}, {false}, {false}, {false}, {false},
+                {false}, {false}, {false}, {false}, {false}, {false}};
 
             pgm_tap::TransformerGraph actual_graph = pgm_tap::build_transformer_graph(state);
             pgm_tap::TrafoGraphEdgeProperties actual_edges_prop;
@@ -251,24 +342,9 @@ TEST_CASE("Test Transformer ranking") {
                 actual_edges_prop.push_back(actual_graph[e]);
             }
 
-            std::sort(actual_edges_prop.begin(), actual_edges_prop.end());
-            std::sort(expected_edges_prop.begin(), expected_edges_prop.end());
+            std::ranges::sort(actual_edges_prop);
+            std::ranges::sort(expected_edges_prop);
             CHECK(actual_edges_prop == expected_edges_prop);
-        }
-
-        SUBCASE("Automatic tap unsupported tap side at LV") {
-            TestState bad_state;
-            std::vector<NodeInput> bad_nodes{{0, 50e3}, {1, 10e3}};
-            main_core::add_component<Node>(bad_state, bad_nodes.begin(), bad_nodes.end(), 50.0);
-
-            std::vector<TransformerInput> bad_trafo{get_transformer(2, 0, 1, BranchSide::to)};
-            main_core::add_component<Transformer>(bad_state, bad_trafo.begin(), bad_trafo.end(), 50.0);
-
-            std::vector<TransformerTapRegulatorInput> bad_regulators{get_regulator(3, 2, ControlSide::from)};
-
-            CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(bad_state, bad_regulators.begin(),
-                                                                              bad_regulators.end(), 50.0),
-                            AutomaticTapCalculationError);
         }
 
         SUBCASE("Process edge weights") {
@@ -276,7 +352,8 @@ TEST_CASE("Test Transformer ranking") {
 
             // Dummy graph
             pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{-1, -1}, 2}, {{2, 3}, 3}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{
+                {{.group = 0, .pos = 1}, 1}, {{.group = -1, .pos = -1}, 0}, {{.group = 2, .pos = 3}, 1}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -290,16 +367,21 @@ TEST_CASE("Test Transformer ranking") {
             }
 
             pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 0}, {{2, 3}, 2}};
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
+                                                                               {{.group = 2, .pos = 3}, 1}};
             CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
 
         SUBCASE("Sorting transformer edges") {
-            pgm_tap::TrafoGraphEdgeProperties const trafoList{
-                {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
+            pgm_tap::TrafoGraphEdgeProperties const trafoList{{Idx2D{.group = 1, .pos = 1}, pgm_tap::infty},
+                                                              {Idx2D{.group = 1, .pos = 2}, 5},
+                                                              {Idx2D{.group = 1, .pos = 3}, 4},
+                                                              {Idx2D{.group = 2, .pos = 1}, 4}};
 
             pgm_tap::RankedTransformerGroups const referenceList{
-                {Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
+                {Idx2D{.group = 1, .pos = 3}, Idx2D{.group = 2, .pos = 1}},
+                {Idx2D{.group = 1, .pos = 2}},
+                {Idx2D{.group = 1, .pos = 1}}};
 
             pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
             REQUIRE(sortedTrafoList.size() == referenceList.size());
@@ -313,13 +395,15 @@ TEST_CASE("Test Transformer ranking") {
             using vertex_iterator = boost::graph_traits<pgm_tap::TransformerGraph>::vertex_iterator;
 
             // Grid with multiple sources and symetric graph
-            pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{
-                {{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}, {{4, 5}, 1}};
-            std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {false}, {true}};
+            pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1},
+                                                              {{.group = 1, .pos = 2}, 1},
+                                                              {{.group = 2, .pos = 3}, 1},
+                                                              {{.group = 3, .pos = 4}, 1}};
+            std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
-                                        edge_prop.cbegin(), 6};
+                                        edge_prop.cbegin(), 5};
 
             // Vertex properties can not be set during graph creation
             vertex_iterator vi;
@@ -329,17 +413,99 @@ TEST_CASE("Test Transformer ranking") {
             }
 
             pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{
-                {{0, 1}, 0}, {{1, 2}, 1}, {{2, 3}, 2}, {{3, 4}, 1}, {{4, 5}, 0}};
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
+                                                                               {{.group = 1, .pos = 2}, 2},
+                                                                               {{.group = 2, .pos = 3}, 2},
+                                                                               {{.group = 3, .pos = 4}, 1}};
             CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
 
         SUBCASE("Ranking complete the graph") {
-            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-            pgm_tap::RankedTransformerGroups const ref_order{{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}},
-                                                             {Idx2D{3, 3}, Idx2D{3, 2}, Idx2D{3, 4}}};
-            CHECK(order == ref_order);
+            // The test grid 1 is not compatible with the updated logic for step up transformers
+            CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapInputError);
         }
+    }
+
+    // The test grid 2 is compatible with the updated logic for step up transformers
+    SUBCASE("Full grid 2 - For transformer ranking only") {
+        // =====Test Grid=====
+        // ________[0]________
+        // ||           |    |
+        // [1]         [4]--[5]
+        //  |           |    |
+        // [2]          |   [8]
+        //  |          [6]   |
+        // [3]----[7]---|   [9] ----x- [100]
+        //  |                |
+        //  L--------------[10]
+        //
+        // [101] ---- [102]
+        TestState state;
+        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3},
+                                     {.id = 1, .u_rated = 10e3},
+                                     {.id = 2, .u_rated = 10e3},
+                                     {.id = 3, .u_rated = 10e3},
+                                     {4, 10e3},
+                                     {.id = 5, .u_rated = 50e3},
+                                     {.id = 6, .u_rated = 10e3},
+                                     {.id = 7, .u_rated = 10e3},
+                                     {.id = 8, .u_rated = 10e3},
+                                     {9, 10e3},
+                                     {.id = 10, .u_rated = 10e3},
+                                     {.id = 100, .u_rated = 10e3},
+                                     {.id = 101, .u_rated = 10e3},
+                                     {.id = 102, .u_rated = 10e3}};
+
+        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+
+        std::vector<TransformerInput> transformers{get_transformer(11, 0, 1, BranchSide::to),
+                                                   get_transformer(12, 0, 1, BranchSide::from),
+                                                   get_transformer(13, 2, 3, BranchSide::from),
+                                                   get_transformer(14, 6, 7, BranchSide::from),
+                                                   get_transformer(15, 5, 8, BranchSide::from),
+                                                   get_transformer(16, 9, 10, BranchSide::from),
+                                                   get_transformer(103, 9, 100, BranchSide::from, na_IntS, 0),
+                                                   get_transformer(104, 101, 102, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+
+        std::vector<ThreeWindingTransformerInput> transformers3w{
+            get_transformer3w(17, 0, 4, 5, Branch3Side::side_2, 0)};
+        main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+
+        std::vector<LineInput> lines{get_line_input(18, 4, 6), get_line_input(19, 3, 10)};
+        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+
+        std::vector<LinkInput> links{{.id = 20, .from_node = 1, .to_node = 2, .from_status = 1, .to_status = 1},
+                                     {.id = 21, .from_node = 3, .to_node = 7, .from_status = 1, .to_status = 1},
+                                     {.id = 22, .from_node = 8, .to_node = 9, .from_status = 1, .to_status = 1}};
+        main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
+
+        std::vector<SourceInput> sources{{.id = 23,
+                                          .node = 0,
+                                          .status = 1,
+                                          .u_ref = 1.0,
+                                          .u_ref_angle = 0,
+                                          .sk = nan,
+                                          .rx_ratio = nan,
+                                          .z01_ratio = nan}};
+        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> regulators{
+            get_regulator(24, 11, ControlSide::to),     get_regulator(25, 12, ControlSide::to),
+            get_regulator(26, 13, ControlSide::to),     get_regulator(27, 14, ControlSide::to),
+            get_regulator(28, 15, ControlSide::to),     get_regulator(29, 16, ControlSide::to),
+            get_regulator(30, 17, ControlSide::side_2), get_regulator(105, 103, ControlSide::from),
+            get_regulator(106, 104, ControlSide::from)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
+        state.components.set_construction_complete();
+
+        pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+        pgm_tap::RankedTransformerGroups const ref_order{
+            {{Idx2D{.group = 3, .pos = 0}, Idx2D{.group = 3, .pos = 1}, Idx2D{.group = 4, .pos = 0},
+              Idx2D{.group = 3, .pos = 4}},
+             {Idx2D{.group = 3, .pos = 2}, Idx2D{.group = 3, .pos = 3}, Idx2D{.group = 3, .pos = 5}}}};
+        CHECK(order == ref_order);
     }
 }
 
@@ -535,7 +701,7 @@ inline auto get_topo_node(State const& /*state*/, Idx /*topology_index*/, Contro
 
 template <typename ComponentType, typename State>
 inline auto get_math_id(State const& /*state*/, Idx /*topology_index*/) {
-    return Idx2D{0, 0};
+    return Idx2D{.group = 0, .pos = 0};
 }
 
 template <typename ContainerType>
@@ -584,26 +750,151 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
     }
 };
 
-using TapPositionCheckFunc = std::function<void(IntS, OptimizerStrategy)>;
+using TapPositionCheckFunc = std::function<void(IntS, OptimizerStrategy, bool)>;
+using TapPositionCheckFuncGeneric = std::function<void(IntS, OptimizerStrategy, ControlSide)>;
 
 auto check_exact(IntS tap_pos) -> TapPositionCheckFunc {
-    return [tap_pos](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == tap_pos); };
+    return [tap_pos](IntS value, OptimizerStrategy /*strategy*/, bool /*control_at_tap_side*/) {
+        CHECK(value == tap_pos);
+    };
 };
-auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_pos_min, IntS tap_pos_max) -> TapPositionCheckFunc {
-    return [tap_pos_any, tap_pos_min, tap_pos_max](IntS value, OptimizerStrategy strategy) {
+auto check_exact_generic(IntS tap_pos) -> TapPositionCheckFuncGeneric {
+    return
+        [tap_pos](IntS value, OptimizerStrategy /*strategy*/, ControlSide /*at_tap_side*/) { CHECK(value == tap_pos); };
+};
+
+auto check_exact_per_strategy(IntS tap_pos_any, IntS tap_range_min, IntS tap_range_max) -> TapPositionCheckFunc {
+    return
+        [tap_pos_any, tap_range_min, tap_range_max](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
+            using enum OptimizerStrategy;
+
+            switch (strategy) {
+            case any:
+            case fast_any:
+                CHECK(value == tap_pos_any);
+                break;
+            case local_maximum:
+            case global_maximum:
+                CHECK(value == (control_at_tap_side ? tap_range_min : tap_range_max));
+                break;
+            case local_minimum:
+            case global_minimum:
+                CHECK(value == (control_at_tap_side ? tap_range_max : tap_range_min));
+                break;
+            default:
+                FAIL("Unreachable");
+            }
+        };
+}
+struct CompensatedResultPerStrategy {
+    IntS tap_pos_any;
+    IntS tap_pos_any_comp;
+    IntS tap_range_min;
+    IntS tap_range_max;
+    IntS tap_range_min_comp;
+    IntS tap_range_max_comp;
+    IntS get_any(bool control_at_tap_side) const { return control_at_tap_side ? tap_pos_any_comp : tap_pos_any; }
+    IntS get_min(bool control_at_tap_side) const {
+        return control_at_tap_side ? tap_range_max_comp : tap_range_min_comp;
+    }
+    IntS get_max(bool control_at_tap_side) const { return control_at_tap_side ? tap_range_min : tap_range_max; }
+};
+auto check_compensated_exact_per_strategy(CompensatedResultPerStrategy const& comp_result) -> TapPositionCheckFunc {
+    return [comp_result](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
         using enum OptimizerStrategy;
 
         switch (strategy) {
         case any:
-            CHECK(value == tap_pos_any);
+        case fast_any:
+            CHECK(value == comp_result.get_any(control_at_tap_side));
             break;
         case local_maximum:
         case global_maximum:
-            CHECK(value == tap_pos_max);
+            CHECK(value == comp_result.get_max(control_at_tap_side));
             break;
         case local_minimum:
         case global_minimum:
-            CHECK(value == tap_pos_min);
+            CHECK(value == comp_result.get_min(control_at_tap_side));
+            break;
+        default:
+            FAIL("Unreachable");
+        }
+    };
+}
+struct GenericResultPerStrategy {
+    IntS tap_pos_any_1;
+    IntS tap_pos_any_2;
+    IntS tap_pos_any_3;
+    IntS tap_range_min_1;
+    IntS tap_range_min_2;
+    IntS tap_range_min_3;
+    IntS tap_range_max_1;
+    IntS tap_range_max_2;
+    IntS tap_range_max_3;
+
+    IntS get_any(ControlSide const& tap_side) const {
+        using enum ControlSide;
+
+        switch (tap_side) {
+        case side_1:
+            return tap_pos_any_1;
+        case side_2:
+            return tap_pos_any_2;
+        case side_3:
+            return tap_pos_any_3;
+        default:
+            FAIL("Unreachable in get_any");
+            return 0;
+        }
+    }
+
+    IntS get_min(ControlSide const& tap_side) const {
+        using enum ControlSide;
+
+        switch (tap_side) {
+        case side_1:
+            return tap_range_min_1;
+        case side_2:
+            return tap_range_min_2;
+        case side_3:
+            return tap_range_min_3;
+        default:
+            FAIL("Unreachable in get_min");
+            return 0;
+        }
+    }
+    IntS get_max(ControlSide const& tap_side) const {
+        using enum ControlSide;
+
+        switch (tap_side) {
+        case side_1:
+            return tap_range_max_1;
+        case side_2:
+            return tap_range_max_2;
+        case side_3:
+            return tap_range_max_3;
+        default:
+            FAIL("Unreachable in get_max");
+            return 0;
+        }
+    }
+};
+auto check_generic_exact_per_strategy(GenericResultPerStrategy const& generic_result) -> TapPositionCheckFuncGeneric {
+    return [generic_result](IntS value, OptimizerStrategy strategy, ControlSide tap_side) {
+        using enum OptimizerStrategy;
+
+        switch (strategy) {
+        case any:
+        case fast_any:
+            CHECK(value == generic_result.get_any(tap_side));
+            break;
+        case local_maximum:
+        case global_maximum:
+            CHECK(value == generic_result.get_max(tap_side));
+            break;
+        case local_minimum:
+        case global_minimum:
+            CHECK(value == generic_result.get_min(tap_side));
             break;
         default:
             FAIL("Unreachable");
@@ -678,7 +969,9 @@ TEST_CASE("Test Tap position optimizer") {
         size_t idx{};
         for (auto strategy_method : test::strategies_and_methods) {
             for (auto search_method : test::search_methods) {
-                result[idx++] = {strategy_method.strategy, strategy_method.method, search_method}; // NOSONAR
+                result[idx] = {
+                    .strategy = strategy_method.strategy, .method = strategy_method.method, .search = search_method};
+                ++idx;
             }
         }
         return result;
@@ -695,7 +988,7 @@ TEST_CASE("Test Tap position optimizer") {
             state, transformers_dataset.begin(), transformers_dataset.end(), std::back_inserter(changed_components));
     };
 
-    auto twoStatesEqual = [](const MockState& state1, const MockState& state2) {
+    auto twoStatesEqual = [](MockState const& state1, MockState const& state2) {
         if (state1.components.template size<MockTransformer>() != state2.components.template size<MockTransformer>()) {
             return false;
         }
@@ -712,8 +1005,9 @@ TEST_CASE("Test Tap position optimizer") {
     };
 
     auto const get_optimizer = [&](OptimizerStrategy strategy, SearchMethod tap_search) {
-        return pgm_tap::TapPositionOptimizer<MockStateCalculator, decltype(updater), MockState, MockTransformerRanker>{
-            test::mock_state_calculator, updater, strategy, meta_data, tap_search};
+        return pgm_tap::TapPositionOptimizer<MockStateCalculator, std::remove_const_t<decltype(updater)>, MockState,
+                                             MockTransformerRanker>{test::mock_state_calculator, updater, strategy,
+                                                                    meta_data, tap_search};
     };
 
     SUBCASE("empty state") {
@@ -754,9 +1048,9 @@ TEST_CASE("Test Tap position optimizer") {
 
     SUBCASE("optimization") {
         main_core::emplace_component<test::MockTransformer>(
-            state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
+            state, 1, MockTransformerState{.id = 1, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 0}});
         main_core::emplace_component<test::MockTransformer>(
-            state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
+            state, 2, MockTransformerState{.id = 2, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 1}});
 
         auto& transformer_a = main_core::get_component<MockTransformer>(state, 1);
         auto& transformer_b = main_core::get_component<MockTransformer>(state, 2);
@@ -801,7 +1095,9 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_min = 1;
                 state_b.tap_max = 1;
                 state_b.rank = MockTransformerState::unregulated;
-                check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/) { CHECK(value == state_b.tap_pos); };
+                check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/, bool /*control_at_tap_side*/) {
+                    CHECK(value == state_b.tap_pos);
+                };
                 auto const control_side = main_core::get_component<TransformerTapRegulator>(state, 4).control_side();
 
                 SUBCASE("not regulated") {}
@@ -833,26 +1129,26 @@ TEST_CASE("Test Tap position optimizer") {
 
             SUBCASE("multipe valid values") {
                 state_b.rank = 0;
-                check_b = [&state_b](IntS value, OptimizerStrategy strategy) {
+                check_b = [&state_b](IntS value, OptimizerStrategy strategy, bool control_at_tap_side) {
                     switch (strategy) {
                         using enum OptimizerStrategy;
                     case any:
+                    case fast_any:
                         CHECK(value == state_b.tap_pos);
                         break;
                     case local_maximum:
                     case global_maximum:
-                        // max voltage => min tap pos
-                        CHECK(value == state_b.tap_min);
+                        CHECK(value == (control_at_tap_side ? state_b.tap_max : state_b.tap_min));
                         break;
                     case local_minimum:
                     case global_minimum:
-                        // min voltage => max tap pos
-                        CHECK(value == state_b.tap_max);
+                        CHECK(value == (control_at_tap_side ? state_b.tap_min : state_b.tap_max));
                         break;
                     default:
                         FAIL("unreachable");
                     }
                 };
+
                 SUBCASE("normal tap range") {
                     state_b.tap_min = 1;
                     state_b.tap_max = 3;
@@ -885,12 +1181,12 @@ TEST_CASE("Test Tap position optimizer") {
 
             SUBCASE("voltage band") {
                 state_b.rank = 0;
-                state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
-                    CHECK(side == regulator_b.control_side());
-
-                    // tap pos closer to tap_max at tap side <=> lower voltage at control side
-                    return static_cast<DoubleComplex>(
-                        test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+                state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
+                    return state_b.tap_side == regulator_b.control_side()
+                               ? static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max))
+                               : static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
                 };
 
                 auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.5, .u_band = 0.0};
@@ -903,16 +1199,19 @@ TEST_CASE("Test Tap position optimizer") {
 
             SUBCASE("line drop compensation") {
                 state_b.rank = 0;
-                state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
-                    CHECK(side == regulator_b.control_side());
-
-                    // tap pos closer to tap_max at tap side <=> lower voltage at control side
-                    return static_cast<DoubleComplex>(
-                        test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+                state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
+                    return state_b.tap_side == regulator_b.control_side()
+                               ? static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max))
+                               : static_cast<DoubleComplex>(
+                                     test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
                 };
                 state_b.i_pu = [&state_b, &regulator_b](ControlSide side) {
-                    CHECK(side == regulator_b.control_side());
-                    auto const value = test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max);
+                    bool const control_at_tap = side == regulator_b.control_side();
+
+                    auto const value = control_at_tap
+                                           ? test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min)
+                                           : test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max);
                     return DoubleComplex{value, value};
                 };
 
@@ -925,15 +1224,30 @@ TEST_CASE("Test Tap position optimizer") {
                 SUBCASE("no line drop compensation") { check_b = test::check_exact_per_strategy(3, 4, 2); }
                 SUBCASE("resistance") {
                     update_data.line_drop_compensation_r = 0.5 / base_power_3p;
-                    check_b = test::check_exact_per_strategy(3, 5, 3);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 3,
+                                                                          .tap_pos_any_comp = 3,
+                                                                          .tap_range_min = 3,
+                                                                          .tap_range_max = 3,
+                                                                          .tap_range_min_comp = 4,
+                                                                          .tap_range_max_comp = 1});
                 }
                 SUBCASE("positive reactance") {
                     update_data.line_drop_compensation_x = 0.125 / base_power_3p;
-                    check_b = test::check_exact_per_strategy(3, 5, 2);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 3,
+                                                                          .tap_pos_any_comp = 3,
+                                                                          .tap_range_min = 4,
+                                                                          .tap_range_max = 2,
+                                                                          .tap_range_min_comp = 4,
+                                                                          .tap_range_max_comp = 1});
                 }
                 SUBCASE("negative reactance") {
                     update_data.line_drop_compensation_x = -0.5 / base_power_3p;
-                    check_b = test::check_exact_per_strategy(3, 5, 3);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 3,
+                                                                          .tap_pos_any_comp = 3,
+                                                                          .tap_range_min = 3,
+                                                                          .tap_range_max = 3,
+                                                                          .tap_range_min_comp = 4,
+                                                                          .tap_range_max_comp = 1});
                 }
 
                 regulator_b.update(update_data);
@@ -952,10 +1266,13 @@ TEST_CASE("Test Tap position optimizer") {
 
                     // u_2a = f(tap_pos_a) when rank is 0
                     // u_2a = (u_1a * n_1) / (1.0 + relative_tap_pos_a)
+                    // u_2a = 1.0 + relative_tap_pos_a, when control side is at tap side
                     // consider u_1a = n_1 = 1.0
                     // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_a = 0.1 * (tap_pos_a - 0)
                     auto const relative_tap_a = static_cast<double>(state_a.tap_pos) * 0.1;
-                    return static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
+                    return state_a.tap_side == regulator_a.control_side()
+                               ? static_cast<DoubleComplex>(1.0 + relative_tap_a)
+                               : static_cast<DoubleComplex>(1.0 / (1.0 + relative_tap_a));
                 };
 
                 state_b.u_pu = [&state_a, &regulator_a, &state_b, &regulator_b](ControlSide side) {
@@ -963,82 +1280,42 @@ TEST_CASE("Test Tap position optimizer") {
 
                     // u_2b = f(tap_pos_a, tap_pos_b) when rank is 1
                     // u_2b = (u_1b * n_2) / (1.0 + relative_tap_pos_b)
+                    // u_2b = (1.0 + relative_tap_pos_b) / (u_1b * n_2), when control side is at tap side
                     // consider n_2 = 1. Also u_1a = u_2b
                     // For a tap_size of 0.1 and tap_nom of 0, tap_pos_relative_b = 0.1 * (tap_pos_b - 0)
                     auto const relative_tap_b = static_cast<double>(state_b.tap_pos) * 0.1;
-                    return state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
+                    return state_b.tap_side == regulator_b.control_side()
+                               ? (1.0 + relative_tap_b) * state_a.u_pu(regulator_a.control_side())
+                               : state_a.u_pu(regulator_a.control_side()) / (1.0 + relative_tap_b);
                 };
 
                 SUBCASE("Situation 1") {
                     regulator_a.update({.id = 3, .u_set = 1.25, .u_band = 0.01});
-                    regulator_b.update({.id = 4, .u_set = 1.13636, .u_band = 0.01});
+                    regulator_b.update({.id = 4, .u_set = 0.9, .u_band = 0.5});
                     check_a = test::check_exact(-2);
-                    check_b = test::check_exact(1);
+                    check_b = test::check_compensated_exact_per_strategy({.tap_pos_any = 1,
+                                                                          .tap_pos_any_comp = -1,
+                                                                          .tap_range_min = -1,
+                                                                          .tap_range_max = 1,
+                                                                          .tap_range_min_comp = 5,
+                                                                          .tap_range_max_comp = -4});
                 }
                 SUBCASE("Situation 2") {
                     regulator_a.update({.id = 3, .u_set = 1.1111, .u_band = 0.01});
-                    regulator_b.update({.id = 4, .u_set = 1.5873, .u_band = 0.01});
+                    regulator_b.update({.id = 4, .u_set = 1.0873, .u_band = 0.1});
                     check_a = test::check_exact(-1);
-                    check_b = test::check_exact(-3);
+                    check_b = test::check_exact(0);
                 }
                 SUBCASE("Situation 3") {
                     regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.01});
-                    regulator_b.update({.id = 4, .u_set = 0.7142, .u_band = 0.01});
+                    regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.01});
                     check_a = test::check_exact(0);
-                    check_b = test::check_exact(4);
+                    check_b = test::check_exact(0);
                 }
             }
 
-            SUBCASE("multiple transformers with generic control function") {
-                state_a.tap_min = 0;
-                state_a.tap_max = 2;
-                state_b.tap_min = 0;
-                state_b.tap_max = 2;
-                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.2});
-                regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.2});
-
-                // Both control side voltages have a function which follows this table
-                // t_a \ t_b |  0   |  1   |  2   |  3
-                // --------- | ---- | ---- | ---- | ----
-                // 0         | 1.5  | 1.25 | 1.0  | 0.75
-                // 1         | 1.25 | 1.0  | 0.75 | 0.5
-                // 2         | 1.0  | 0.75 | 0.5  | 0.25
-                // 3         | 0.75 | 0.5  | 0.25 | 0.0
-
-                state_a.u_pu = [&state_a, &state_b, &regulator_a](ControlSide side) {
-                    CHECK(side == regulator_a.control_side());
-                    auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
-                    return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
-                };
-
-                state_b.u_pu = [&state_a, &state_b, &regulator_b](ControlSide side) {
-                    CHECK(side == regulator_b.control_side());
-                    auto const tap_sum = static_cast<double>(state_a.tap_pos + state_b.tap_pos);
-                    return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
-                };
-
-                SUBCASE("Rank a < Rank b") {
-                    state_a.rank = 0;
-                    state_b.rank = 1;
-                    check_a = test::check_exact_per_strategy(2, 0, 2);
-                    check_b = test::check_exact_per_strategy(0, 2, 0);
-                }
-                SUBCASE("Rank a > Rank b") {
-                    state_a.rank = 1;
-                    state_b.rank = 0;
-                    check_a = test::check_exact_per_strategy(0, 2, 0);
-                    check_b = test::check_exact_per_strategy(2, 0, 2);
-                }
-                SUBCASE("Rank a == Rank b") {
-                    state_a.rank = 0;
-                    state_b.rank = 0;
-                    check_a = test::check_exact(1);
-                    check_b = test::check_exact(1);
-                }
-            }
-
-            auto const initial_a{transformer_a.tap_pos()};
-            auto const initial_b{transformer_b.tap_pos()};
+            auto const initial_tap_pos_a{transformer_a.tap_pos()};
+            auto const initial_tap_pos_b{transformer_b.tap_pos()};
 
             for (auto strategy_search_side : test::strategy_search_and_sides) {
                 auto strategy = strategy_search_side.strategy;
@@ -1049,7 +1326,7 @@ TEST_CASE("Test Tap position optimizer") {
                 CAPTURE(tap_side);
 
                 state_b.tap_side = tap_side;
-                state_a.tap_side = tap_side;
+                state_a.tap_side = ControlSide::to; // no need to make tap side of a a variable
 
                 auto optimizer = get_optimizer(strategy, search);
                 auto const result = optimizer.optimize(state, CalculationMethod::default_method);
@@ -1069,31 +1346,185 @@ TEST_CASE("Test Tap position optimizer") {
 
                 // check optimal state
                 CHECK(result.solver_output.size() == 1);
-                check_a(get_state_tap_pos(state_a.id), strategy);
-                check_b(get_state_tap_pos(state_b.id), strategy);
+                auto const control_at_tap_side_a = regulator_a.control_side() == state_a.tap_side;
+                auto const control_at_tap_side_b = regulator_b.control_side() == state_b.tap_side;
+                check_a(get_state_tap_pos(state_a.id), strategy, control_at_tap_side_a);
+                check_b(get_state_tap_pos(state_b.id), strategy, control_at_tap_side_b);
 
                 // check optimal output
                 if (state_a.rank != MockTransformerState::unregulated) {
-                    check_a(get_output_tap_pos(state_a.id), strategy);
+                    check_a(get_output_tap_pos(state_a.id), strategy, control_at_tap_side_a);
                 }
                 if (state_b.rank != MockTransformerState::unregulated) {
-                    check_b(get_output_tap_pos(state_b.id), strategy);
+                    check_b(get_output_tap_pos(state_b.id), strategy, control_at_tap_side_b);
                 }
 
                 // reset
-                CHECK(transformer_a.tap_pos() == initial_a);
-                CHECK(transformer_b.tap_pos() == initial_b);
+                CHECK(transformer_a.tap_pos() == initial_tap_pos_a);
+                CHECK(transformer_b.tap_pos() == initial_tap_pos_b);
+            }
+        }
+
+        SUBCASE("multiple transformers with generic control function") {
+            auto check_a = test::check_exact_generic(0);
+            auto check_b = test::check_exact_generic(0);
+
+            state_a.tap_min = 0;
+            state_a.tap_max = 3;
+            state_b.tap_min = 0;
+            state_b.tap_max = 3;
+            regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.2});
+            regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.2});
+
+            // Both control side voltages have a function which follows this table
+            // t_a \ t_b |  0   |  1   |  2   |  3
+            // --------- | ---- | ---- | ---- | ----
+            // 0         | 1.5  | 1.25 | 1.0  | 0.75
+            // 1         | 1.25 | 1.0  | 0.75 | 0.5
+            // 2         | 1.0  | 0.75 | 0.5  | 0.25
+            // 3         | 0.75 | 0.5  | 0.25 | 0.0
+
+            state_a.u_pu = [&state_a, &state_b, &regulator_a, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_a.control_side());
+                auto const tap_a_sign = state_a.tap_side == regulator_a.control_side() ? -1.0 : 1.0;
+                auto const tap_b_sign = state_b.tap_side == regulator_b.control_side() ? -1.0 : 1.0;
+                auto const tap_sum = tap_a_sign * state_a.tap_pos + tap_b_sign * state_b.tap_pos;
+                return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+            };
+
+            state_b.u_pu = [&state_a, &state_b, &regulator_a, &regulator_b](ControlSide side) {
+                CHECK(side == regulator_b.control_side());
+                auto const tap_a_sign = state_a.tap_side == regulator_a.control_side() ? -1.0 : 1.0;
+                auto const tap_b_sign = state_b.tap_side == regulator_b.control_side() ? -1.0 : 1.0;
+                auto const tap_sum = tap_a_sign * state_a.tap_pos + tap_b_sign * state_b.tap_pos;
+                return static_cast<DoubleComplex>(1.5 - tap_sum / 4.0);
+            };
+
+            SUBCASE("Rank a < Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 1;
+                check_a = test::check_generic_exact_per_strategy({
+                    .tap_pos_any_1 = 0,
+                    .tap_pos_any_2 = 2,
+                    .tap_pos_any_3 = 2,
+                    .tap_range_min_1 = 1,
+                    .tap_range_min_2 = 2,
+                    .tap_range_min_3 = 0,
+                    .tap_range_max_1 = 0,
+                    .tap_range_max_2 = 3,
+                    .tap_range_max_3 = 2,
+                });
+                check_b = test::check_generic_exact_per_strategy({
+                    .tap_pos_any_1 = 2,
+                    .tap_pos_any_2 = 0,
+                    .tap_pos_any_3 = 0,
+                    .tap_range_min_1 = 3,
+                    .tap_range_min_2 = 0,
+                    .tap_range_min_3 = 2,
+                    .tap_range_max_1 = 2,
+                    .tap_range_max_2 = 1,
+                    .tap_range_max_3 = 0,
+                });
+            }
+
+            SUBCASE("Rank a > Rank b") {
+                state_a.rank = 1;
+                state_b.rank = 0;
+                check_a = test::check_generic_exact_per_strategy({
+                    .tap_pos_any_1 = 0,
+                    .tap_pos_any_2 = 2,
+                    .tap_pos_any_3 = 0,
+                    .tap_range_min_1 = 0,
+                    .tap_range_min_2 = 3,
+                    .tap_range_min_3 = 2,
+                    .tap_range_max_1 = 1,
+                    .tap_range_max_2 = 2,
+                    .tap_range_max_3 = 0,
+                });
+                check_b = test::check_generic_exact_per_strategy({
+                    .tap_pos_any_1 = 2,
+                    .tap_pos_any_2 = 0,
+                    .tap_pos_any_3 = 2,
+                    .tap_range_min_1 = 2,
+                    .tap_range_min_2 = 1,
+                    .tap_range_min_3 = 0,
+                    .tap_range_max_1 = 3,
+                    .tap_range_max_2 = 0,
+                    .tap_range_max_3 = 2,
+                });
+            }
+
+            SUBCASE("Rank a == Rank b") {
+                state_a.rank = 0;
+                state_b.rank = 0;
+                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.5}); // u_band enlarged
+                regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.5}); // u_band enlarged
+                check_a = test::check_generic_exact_per_strategy({
+                    .tap_pos_any_1 = 0,
+                    .tap_pos_any_2 = 1,
+                    .tap_pos_any_3 = 1,
+                    .tap_range_min_1 = 0,
+                    .tap_range_min_2 = 3,
+                    .tap_range_min_3 = 1,
+                    .tap_range_max_1 = 1,
+                    .tap_range_max_2 = 2,
+                    .tap_range_max_3 = 1,
+                });
+                check_b = test::check_generic_exact_per_strategy({
+                    .tap_pos_any_1 = 1,
+                    .tap_pos_any_2 = 0,
+                    .tap_pos_any_3 = 1,
+                    .tap_range_min_1 = 3,
+                    .tap_range_min_2 = 0,
+                    .tap_range_min_3 = 1,
+                    .tap_range_max_1 = 2,
+                    .tap_range_max_2 = 1,
+                    .tap_range_max_3 = 1,
+                });
+            }
+
+            auto const initial_tap_pos_a{transformer_a.tap_pos()};
+            auto const initial_tap_pos_b{transformer_b.tap_pos()};
+
+            for (auto strategy_search_side : test::strategy_search_and_sides) {
+                auto strategy = strategy_search_side.strategy;
+                auto search = strategy_search_side.search;
+                auto tap_side = strategy_search_side.side;
+                CAPTURE(strategy);
+                CAPTURE(search);
+                CAPTURE(tap_side);
+
+                state_b.tap_side = tap_side;
+                state_a.tap_side = tap_side;
+                auto optimizer = get_optimizer(strategy, search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                auto const get_state_tap_pos = [&](ID const id) {
+                    REQUIRE(!result.solver_output.empty());
+                    return result.solver_output.front().state_tap_positions.at(id);
+                };
+
+                // check optimal state
+                CHECK(result.solver_output.size() == 1);
+                check_a(get_state_tap_pos(state_a.id), strategy, tap_side);
+                check_b(get_state_tap_pos(state_b.id), strategy, tap_side);
+
+                // reset
+                CHECK(transformer_a.tap_pos() == initial_tap_pos_a);
+                CHECK(transformer_b.tap_pos() == initial_tap_pos_b);
             }
         }
 
         SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
             state_b.rank = 0;
-            state_b.u_pu = [&state_b, &regulator_b](ControlSide side) {
-                CHECK(side == regulator_b.control_side());
-
-                // tap pos closer to tap_max at tap side <=> lower voltage at control side
-                return static_cast<DoubleComplex>(
-                    test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
+            state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
+                return state_b.tap_side == regulator_b.control_side()
+                           ? static_cast<DoubleComplex>(
+                                 test::normalized_lerp(state_b.tap_pos, state_b.tap_min, state_b.tap_max))
+                           :
+                           // tap pos closer to tap_max at tap side <=> lower voltage at control side
+                           static_cast<DoubleComplex>(
+                               test::normalized_lerp(state_b.tap_pos, state_b.tap_max, state_b.tap_min));
             };
 
             auto update_data = TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0};
@@ -1126,7 +1557,10 @@ TEST_CASE("Test Tap position optimizer") {
 TEST_CASE("Test tap position optmizer I/O") {
     SUBCASE("transformer duplicatively regulated") {
         test::TestState state_mini;
-        std::vector<NodeInput> nodes{{0, 150e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}};
+        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3},
+                                     {.id = 1, .u_rated = 10e3},
+                                     {.id = 2, .u_rated = 10e3},
+                                     {.id = 3, .u_rated = 10e3}};
         main_core::add_component<Node>(state_mini, nodes.begin(), nodes.end(), 50.0);
 
         std::vector<TransformerInput> transformers{test::get_transformer(4, 0, 1, BranchSide::from, 0),
@@ -1181,17 +1615,18 @@ TEST_CASE("Test RankIterator") {
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
+        CHECK_FALSE(tap_changed);
         CHECK(iterations_per_rank[0] == 2);
         CHECK(iterations_per_rank[1] == 4);
         CHECK(iterations_per_rank[2] == 6);
         CHECK(rank_index == 2);
-        CHECK(tap_changed == false);
     }
     SUBCASE("Test tap changed") {
         update = true;
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
+        CHECK(tap_changed);
         CHECK(iterations_per_rank[0] == 3);
         CHECK(iterations_per_rank[1] == 0);
         CHECK(iterations_per_rank[2] == 0);
@@ -1203,6 +1638,7 @@ TEST_CASE("Test RankIterator") {
         tap_changed = rank_iterator.iterate_ranks(regulator_order, mock_lambda, tap_changed);
         iterations_per_rank = rank_iterator.iterations_per_rank();
         rank_index = rank_iterator.rank_index();
+        CHECK(tap_changed);
         CHECK(iterations_per_rank[0] == 2);
         CHECK(iterations_per_rank[1] == 4);
         CHECK(iterations_per_rank[2] == 7);

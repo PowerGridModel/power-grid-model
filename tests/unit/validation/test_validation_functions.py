@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import copy
 from itertools import product
 from unittest.mock import ANY, MagicMock, patch
 
@@ -13,6 +14,15 @@ from power_grid_model._core.dataset_definitions import ComponentType, DatasetTyp
 from power_grid_model._utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, ComponentAttributeFilterOptions, FaultType
 from power_grid_model.validation import assert_valid_input_data
+from power_grid_model.validation._validation import (
+    assert_valid_data_structure,
+    validate_generic_power_sensor,
+    validate_ids,
+    validate_input_data,
+    validate_required_values,
+    validate_unique_ids_across_components,
+    validate_values,
+)
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InfinityError,
@@ -21,17 +31,8 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
-    MultiFieldValidationError,
     NotUniqueError,
-    UnsupportedTransformerRegulationError,
-)
-from power_grid_model.validation.validation import (
-    assert_valid_data_structure,
-    validate_generic_power_sensor,
-    validate_ids,
-    validate_required_values,
-    validate_unique_ids_across_components,
-    validate_values,
+    PQSigmaPairError,
 )
 
 NaN = power_grid_meta_data[DatasetType.input][ComponentType.node].nans["id"]
@@ -479,67 +480,96 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
     [
         (
             "sym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[np.nan, np.nan], [], []],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "sym_power_sensor",
-            [[0.1, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [[0.1, np.nan], [], []],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "sym_power_sensor",
-            [[np.nan, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [[np.nan, 0.1], [], []],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "sym_power_sensor",
-            [[0.1, 0.1], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[0.1, 0.1], [], []],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]],
+            [[], [[np.nan, np.nan, np.nan]] * 3, [[np.nan, np.nan, np.nan]] * 3],
             [InvalidIdError, NotUniqueError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, np.nan, 0.1], [np.nan, 0.1, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [
+                [],
+                [[0.1, np.nan, 0.1], [0.1, np.nan, 0.1], [0.1, 0.1, 0.1]],
+                [[np.nan, 0.1, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, np.nan, np.nan], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [[], [[0.1, np.nan, np.nan]] * 3, [[np.nan, np.nan, np.nan]] * 3],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [[], [[np.nan, np.nan, np.nan]] * 3, [[0.1, np.nan, np.nan]] * 3],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, 0.1, 0.1], [np.nan, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [
+                [],
+                [[0.1, 0.1, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[np.nan, np.nan, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, 0.1, 0.1]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [
+                [],
+                [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [np.nan, np.nan, np.nan], [0.1, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [
+                [],
+                [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, np.nan, np.nan], [0.1, np.nan, np.nan]],
-            [InvalidIdError, NotUniqueError, MultiFieldValidationError],
+            [
+                [],
+                [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
         ),
         (
             "asym_power_sensor",
-            [[np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            [
+                [],
+                [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+                [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
+            ],
+            [InvalidIdError, NotUniqueError, PQSigmaPairError],
+        ),
+        (
+            "asym_power_sensor",
+            [[], [[0.1, 0.1, 0.1]] * 3, [[0.1, 0.1, 0.1]] * 3],
             [InvalidIdError, NotUniqueError],
         ),
     ],
@@ -573,19 +603,19 @@ def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
         ([[np.nan, np.nan], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]], [InvalidIdError]),
         (
             [[0.1, np.nan], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         (
             [[np.nan, np.nan], [[np.nan, 0.1, np.nan], [np.nan, np.nan, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         (
             [[np.nan, np.nan], [[np.nan, 0.1, np.nan], [np.nan, 0.1, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         (
             [[0.1, 0.1], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]],
-            [InvalidIdError, MultiFieldValidationError],
+            [InvalidIdError, PQSigmaPairError],
         ),
         ([[0.1, 0.1], [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]]], [InvalidIdError]),
         ([[np.nan, np.nan], [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]], [InvalidIdError]),
@@ -635,16 +665,16 @@ def test_validate_values__bad_p_q_sigma_single_component_twice():
     data = single_component_twice_data()
     all_errors = validate_values(data)
     for error in all_errors:
-        assert any(isinstance(error, error_type) for error_type in [InvalidIdError, MultiFieldValidationError])
-        if isinstance(error, MultiFieldValidationError):
+        assert any(isinstance(error, error_type) for error_type in [InvalidIdError, PQSigmaPairError])
+        if isinstance(error, PQSigmaPairError):
             assert error.ids[0] == 789
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
-@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_greater_than_zero", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_enum_values", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_ids")
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_power_sensor__all_terminal_types(
     _all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
 ):
@@ -672,10 +702,10 @@ def test_validate_generic_power_sensor__all_terminal_types(
         ("node", MeasuredTerminalType.node),
     ],
 )
-@patch("power_grid_model.validation.validation.validate_base", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_greater_than_zero", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_enum_values", new=MagicMock())
-@patch("power_grid_model.validation.validation._all_valid_ids")
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_power_sensor__terminal_types(
     _all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
 ):
@@ -745,6 +775,22 @@ def test_power_sigma_or_p_q_sigma():
     sym_power_sensor["p_sigma"] = [1e4, np.nan, 1e4]
     sym_power_sensor["q_sigma"] = [1e9, np.nan, 1e9]
 
+    # power sensor
+    asym_power_sensor = initialize_array("input", "asym_power_sensor", 4)
+    asym_power_sensor["id"] = [66, 77, 88, 99]
+    asym_power_sensor["measured_object"] = [2, 4, 9, 9]
+    asym_power_sensor["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.load,
+        MeasuredTerminalType.load,
+        MeasuredTerminalType.load,
+    ]
+    asym_power_sensor["p_measured"] = [[1e6, 1e6, 1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6]]
+    asym_power_sensor["q_measured"] = [[1e6, 1e6, 1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6]]
+    asym_power_sensor["power_sigma"] = [np.nan, 1e9, 1e9, 1e9]
+    asym_power_sensor["p_sigma"] = [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]]
+    asym_power_sensor["q_sigma"] = [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]]
+
     # all
     input_data = {
         "node": node,
@@ -753,9 +799,71 @@ def test_power_sigma_or_p_q_sigma():
         "source": source,
         "sym_voltage_sensor": voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
+        "asym_power_sensor": asym_power_sensor,
     }
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
+
+    np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9])
+    np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [1e4, np.nan, 1e4])
+    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [1e9, np.nan, 1e9])
+    np.testing.assert_array_equal(asym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9, 1e9])
+    np.testing.assert_array_equal(
+        asym_power_sensor["p_sigma"], [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]]
+    )
+    np.testing.assert_array_equal(
+        asym_power_sensor["q_sigma"], [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]]
+    )
+
+    # bad weather
+    bad_input_data = copy.deepcopy(input_data)
+    bad_sym_power_sensor = bad_input_data["sym_power_sensor"]
+    bad_sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
+    bad_sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
+    bad_sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
+    errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
+    assert len(errors) == 2
+    assert errors == [
+        MissingValueError("sym_power_sensor", "power_sigma", [6]),
+        PQSigmaPairError("sym_power_sensor", ("p_sigma", "q_sigma"), [7, 8]),
+    ]
+
+    np.testing.assert_array_equal(bad_sym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9])
+    np.testing.assert_array_equal(bad_sym_power_sensor["p_sigma"], [np.nan, np.nan, 1e4])
+    np.testing.assert_array_equal(bad_sym_power_sensor["q_sigma"], [np.nan, 1e9, np.nan])
+
+    # bad weather
+    bad_input_data = copy.deepcopy(input_data)
+    bad_asym_power_sensor = bad_input_data["asym_power_sensor"]
+    bad_asym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9, np.nan]
+    bad_asym_power_sensor["p_sigma"] = [
+        [np.nan, np.nan, np.nan],
+        [np.nan, np.nan, np.nan],
+        [1e4, np.nan, np.nan],
+        [1e4, np.nan, np.nan],
+    ]
+    bad_asym_power_sensor["q_sigma"] = [
+        [np.nan, np.nan, np.nan],
+        [1e9, 1e9, 1e9],
+        [np.nan, 1e4, 1e4],
+        [np.nan, 1e4, 1e4],
+    ]
+    errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
+    assert len(errors) == 2
+    assert errors == [
+        MissingValueError("asym_power_sensor", "power_sigma", [66]),
+        PQSigmaPairError("asym_power_sensor", ("p_sigma", "q_sigma"), [77, 88, 99]),
+    ]
+
+    np.testing.assert_array_equal(bad_asym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9, np.nan])
+    np.testing.assert_array_equal(
+        bad_asym_power_sensor["p_sigma"],
+        [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan], [1e4, np.nan, np.nan], [1e4, np.nan, np.nan]],
+    )
+    np.testing.assert_array_equal(
+        bad_asym_power_sensor["q_sigma"],
+        [[np.nan, np.nan, np.nan], [1e9, 1e9, 1e9], [np.nan, 1e4, 1e4], [np.nan, 1e4, 1e4]],
+    )
 
 
 def test_all_default_values():
@@ -842,8 +950,8 @@ def test_all_default_values():
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
 
 
-@patch("power_grid_model.validation.validation.validate_transformer", new=MagicMock(return_value=[]))
-@patch("power_grid_model.validation.validation.validate_three_winding_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_three_winding_transformer", new=MagicMock(return_value=[]))
 def test_validate_values__tap_regulator_control_side():
     # Create valid transformer
     transformer = initialize_array("input", "transformer", 4)
@@ -862,11 +970,11 @@ def test_validate_values__tap_regulator_control_side():
     transformer_tap_regulator["regulated_object"] = np.arange(7)
     transformer_tap_regulator["control_side"] = [
         BranchSide.to_side,  # OK
-        BranchSide.from_side,  # control side is same as tap side (unsupported)
+        BranchSide.from_side,  # OK
         Branch3Side.side_3,  # branch3 provided but it is a 2-winding transformer (invalid)
         10,  # control side entirely out of range (invalid)
         Branch3Side.side_3,  # OK
-        Branch3Side.side_1,  # control side is same as tap side (unsupported)
+        Branch3Side.side_1,  # OK
         10,  # control side entirely out of range (invalid)
     ]
 
@@ -882,7 +990,7 @@ def test_validate_values__tap_regulator_control_side():
     assert power_flow_errors == all_errors
     assert not state_estimation_errors
 
-    assert len(all_errors) == 4
+    assert len(all_errors) == 3
     assert (
         InvalidEnumValueError("transformer_tap_regulator", "control_side", [10, 13], [BranchSide, Branch3Side])
         in all_errors
@@ -902,14 +1010,6 @@ def test_validate_values__tap_regulator_control_side():
             ["control_side", "regulated_object"],
             [13],
             [Branch3Side],
-        )
-        in all_errors
-    )
-    assert (
-        UnsupportedTransformerRegulationError(
-            "transformer_tap_regulator",
-            ["control_side", "regulated_object"],
-            [8, 12],
         )
         in all_errors
     )

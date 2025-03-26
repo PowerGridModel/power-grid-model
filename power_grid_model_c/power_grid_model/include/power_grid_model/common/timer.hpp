@@ -29,9 +29,9 @@ class Timer {
     Timer(CalculationInfo& info, int code, std::string name)
         : info_(&info), code_(code), name_(std::move(name)), start_(Clock::now()) {}
 
-    Timer(const Timer&) = delete;
+    Timer(Timer const&) = delete;
     Timer(Timer&&) = default;
-    Timer& operator=(const Timer&) = delete;
+    Timer& operator=(Timer const&) = delete;
 
     Timer& operator=(Timer&& timer) noexcept {
         // Stop the current timer
