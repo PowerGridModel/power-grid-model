@@ -1078,7 +1078,7 @@ TEST_CASE("API Model") {
       {"id": 3, "from_node": 1, "to_node": 2, "from_status": 0, "to_status": 0, "r1": 0.000416, "x1": 0.000136, "c1": 1e-09, "tan1": 0}
     ],
     "sym_current_sensor": [
-      {"id": 7, "measured_object": 3, "measured_terminal_type": 0, "angle_measurement_type": 0, "i_sigma": 1, "i_angle_sigma": 0.05, "i_measured": 10, "i_angle_measured": 0.3}
+      {"id": 4, "measured_object": 3, "measured_terminal_type": 0, "angle_measurement_type": 0, "i_sigma": 1, "i_angle_sigma": 0.05, "i_measured": 10, "i_angle_measured": 0.3}
     ]
   }
 })json";

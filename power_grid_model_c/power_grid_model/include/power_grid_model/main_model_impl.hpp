@@ -333,6 +333,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
         main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
         main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
+        main_core::register_topology_components<GenericCurrentSensor>(state_, comp_topo);
         main_core::register_topology_components<Regulator>(state_, comp_topo);
         state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
     }
