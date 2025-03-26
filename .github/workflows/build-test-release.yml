@@ -44,8 +44,7 @@ jobs:
           python set_pypi_version.py
 
       - name: Build SDist
-        run: | 
-          python -m build --sdist --outdir wheelhouse .
+        run: python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
         uses: actions/upload-artifact@v4
@@ -91,8 +90,7 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Build and test
-        run: |
-          ./build.sh -p ${{ env.PRESET }} -e -i -t
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
     runs-on: windows-latest
@@ -171,8 +169,7 @@ jobs:
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
-        run: |
-          ./build.sh -p ${{ env.PRESET }} -e -i -t
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-and-test-python:
     strategy:
@@ -276,12 +273,10 @@ jobs:
           cmake --install build/
 
       - name: Build python
-        run: |
-          python -m pip install . -vv --no-build-isolation --no-deps  
+        run: python -m pip install . -vv --no-build-isolation --no-deps  
 
       - name: Test
-        run: | 
-          pytest
+        run: pytest
 
   publish-wheels:
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
@@ -327,8 +322,7 @@ jobs:
         run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Display tag
-        run: |
-          echo "${{ steps.tag.outputs.tag }}"
+        run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
         if: (inputs.create_release)
