@@ -13,6 +13,11 @@ on:
         type: boolean
         description: Create a (pre-)release when CI passes
         required: true
+    secrets:
+      PYPI_USER:
+        required: true
+      PYPI_PASS:
+        required: true
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
