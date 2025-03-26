@@ -20,7 +20,8 @@ on:
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
-        required: true
+        default: false
+        required: false
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -29,7 +30,6 @@ on:
         description: Create a (pre-)release when CI passes
         default: false
         required: true
-
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
@@ -54,9 +54,7 @@ jobs:
           python set_pypi_version.py
 
       - name: Build SDist
-        run: | 
-          # python -m build --sdist --outdir wheelhouse .
-          echo "build sdist reached"
+        run:  python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
         uses: actions/upload-artifact@v4
@@ -88,26 +86,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install packages
         run: |
-          # sudo apt-get update
-          # sudo apt-get install -y ninja-build gcc-13 g++-13 clang-18
-          # sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
-          # sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
-          # sudo ln -s /usr/bin/gcc-13 /usr/local/bin/gcc
-          # sudo ln -s /usr/bin/g++-13 /usr/local/bin/g++
-          echo "clang, gcc packages installed"
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-13 g++-13 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-13 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-13 /usr/local/bin/g++
 
       - name: Enable brew
         run: |
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
-          # brew install boost eigen nlohmann-json msgpack-cxx doctest
-          echo "brew would install boost eigen nlohmann-json msgpack-cxx doctest"
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Build and test
-        run: |
-          # ./build.sh -p ${{ env.PRESET }} -e -i -t
-          echo "build and test reached"
-
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-cpp-test-windows:
     runs-on: windows-latest
@@ -136,35 +129,33 @@ jobs:
 
       - name: Install conda environment
         run: |
-          # conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
-          echo "installing conda env"
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 
       - name: Build and test
         run: |
-          # $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
-          # Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
-          # Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+          Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
 
-          # # Resolve dirty PATH environment
-          # # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
-          # $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
+          # Resolve dirty PATH environment
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
 
-          # # generate cmake cache
-          # cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
-          # # build
-          # cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-          # # test
-          # ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
-          # # install
-          # cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          # generate cmake cache
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          # build
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          # test
+          ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
+          # install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
 
-          # # build and run integration test
-          # cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
-          # cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
-          # cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-          # cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-          # install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
-          echo "build and test reached"
+          # build and run integration test
+          cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
     runs-on: macos-14
@@ -185,13 +176,10 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
-          # brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
-          echo "install cpp dependencies reached"
+          brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
-        run: |
-          # ./build.sh -p ${{ env.PRESET }} -e -i -t
-          echo "Build and test reached"
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-and-test-python:
     strategy:
@@ -254,6 +242,7 @@ jobs:
             shell: bash -el {0}
           - os: windows
             shell: powershell
+    
     env:
       POWER_GRID_MODEL_NO_BINARY_BUILD: 1
 
@@ -280,31 +269,26 @@ jobs:
       - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'
         run: |          
-          # $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
-          # Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
-          # Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          # cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
-          # cmake --build build/ --verbose -j1
-          # cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
-          echo "Build and install cmake target for Windows reached"
+          $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+          Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
+          cmake --build build/ --verbose -j1
+          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
 
       - name: Build and install cmake target for Linux
         if: matrix.os == 'ubuntu'
         run: |
-          # cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
-          # cmake --build build/ --verbose -j1
-          # cmake --install build/
-          echo "Build and install cmake target for Linux reached"
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+          cmake --build build/ --verbose -j1
+          cmake --install build/      
 
       - name: Build python
-        run: |
-          # python -m pip install . -vv --no-build-isolation --no-deps  
-          echo "Build python reached" 
+        run: python -m pip install . -vv --no-build-isolation --no-deps   
 
       - name: Test
-        run: | 
-          # pytest
-          echo "pytest reached"
+        run: pytest
 
   publish-wheels:
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
@@ -340,41 +324,32 @@ jobs:
           path: .
 
       - name: Combine wheelhouses
-        run: echo "combine wheelhouses reached"
+        run: mv wheelhouse-*/* wheelhouse
 
       - name: List assets
-        run: echo "List assets reached"
+        run: ls ./wheelhouse/ -al
 
       - name: Get tag
         id: tag
         run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Display tag
-        run: |
-          echo "${{ steps.tag.outputs.tag }}"
-          echo "${{ inputs.create_release }}"
+        run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (inputs.create_release)
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
         run: |
-          echo "upload wheels reached"
-          # pip install twine
-          # echo "Publish to PyPI..."
-          # twine upload --verbose wheelhouse/*
-          
+          pip install twine
+          echo "Publish to PyPI..."
+          twine upload --verbose wheelhouse/*
 
       - name: Release
-        # uses: softprops/action-gh-release@v2
-        if: (inputs.create_release)
-        run: |
-          echo "Release was reached"
-          echo "${{ steps.tag.outputs.tag }}"
-          echo "${{ github.ref }}"
-          echo "${{ github.sha }}"
-        # with:
-        #   files: |
-        #     ./wheelhouse/*
-        #   tag_name: ${{ steps.tag.outputs.tag }}
-        #   prerelease: ${{ github.ref != 'refs/heads/main'}}
-        #   generate_release_notes: true
-        #   target_commitish: ${{ github.sha }}
+        uses: softprops/action-gh-release@v2
+        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        with:
+          files: |
+            ./wheelhouse/*
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ github.ref != 'refs/heads/main'}}
+          generate_release_notes: true
+          target_commitish: ${{ github.sha }}

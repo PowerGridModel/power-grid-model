@@ -260,7 +260,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
-    se_input.measured_voltage = {{1.0, 1.0}};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
     SolverType solver{y_bus_sym, topo_ptr};
     CalculationInfo info;
@@ -309,7 +309,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
     se_input.load_gen_status = {1};
-    se_input.measured_voltage = {{1.0, 0.1}};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 0.1}};
 
     CalculationInfo info;
     SolverOutput<symmetric_t> output;

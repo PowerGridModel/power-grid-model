@@ -605,10 +605,17 @@ TEST_CASE("Test power sensor") {
         constexpr auto q_measured = 3.0;
         constexpr auto p_sigma = 4.0;
         constexpr auto q_sigma = 5.0;
-        PowerSensor<symmetric_t> const power_sensor{
-            {1, 1, MeasuredTerminalType::branch3_1, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
+        PowerSensor<symmetric_t> const power_sensor{{.id = 1,
+                                                     .measured_object = 1,
+                                                     .measured_terminal_type = MeasuredTerminalType::branch3_1,
+                                                     .power_sigma = power_sigma,
+                                                     .p_measured = p_measured,
+                                                     .q_measured = q_measured,
+                                                     .p_sigma = p_sigma,
+                                                     .q_sigma = q_sigma}};
 
-        PowerSensorUpdate<symmetric_t> ps_update{1, nan, nan, nan, nan, nan};
+        PowerSensorUpdate<symmetric_t> ps_update{
+            .id = 1, .power_sigma = nan, .p_measured = nan, .q_measured = nan, .p_sigma = nan, .q_sigma = nan};
         auto expected = ps_update;
 
         SUBCASE("Identical") {
@@ -674,7 +681,8 @@ TEST_CASE("Test power sensor") {
         RealValue<asymmetric_t> const p_sigma{7.0, 8.0, 9.0};
         RealValue<asymmetric_t> const q_sigma{10.0, 11.0, 12.0};
 
-        PowerSensorUpdate<asymmetric_t> ps_update{1, nan, r_nan, r_nan, r_nan, r_nan};
+        PowerSensorUpdate<asymmetric_t> ps_update{
+            .id = 1, .power_sigma = nan, .p_measured = r_nan, .q_measured = r_nan, .p_sigma = r_nan, .q_sigma = r_nan};
         auto expected = ps_update;
 
         SUBCASE("Identical") {
@@ -737,8 +745,14 @@ TEST_CASE("Test power sensor") {
 
         for (auto const measured_terminal_type :
              {MeasuredTerminalType::branch_from, MeasuredTerminalType::generator, MeasuredTerminalType::load}) {
-            PowerSensor<asymmetric_t> const power_sensor{
-                {1, 1, measured_terminal_type, power_sigma, p_measured, q_measured, p_sigma, q_sigma}};
+            PowerSensor<asymmetric_t> const power_sensor{{.id = 1,
+                                                          .measured_object = 1,
+                                                          .measured_terminal_type = measured_terminal_type,
+                                                          .power_sigma = power_sigma,
+                                                          .p_measured = p_measured,
+                                                          .q_measured = q_measured,
+                                                          .p_sigma = p_sigma,
+                                                          .q_sigma = q_sigma}};
             auto const inv = power_sensor.inverse(ps_update);
 
             CHECK(inv.id == expected.id);
