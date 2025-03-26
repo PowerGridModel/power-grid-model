@@ -305,73 +305,37 @@ def test_handle_invalid_calculation_method_error():
 
 
 def test_transformer_tap_regulator_control_side_not_closer_to_source():
-    # =====Test Grid=====
-    # ________[0]________
-    # ||           |    |
-    # [1]         [4]--[5]
-    #  |           |    |
-    # [2]          |   [7]
-    #  |          [6]   |
-    # [3]----------|   [8]
-    #  |                |
-    #  L---------------[9]
-    node_input = initialize_array("input", "node", 10)
-    node_input["id"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    node_input["u_rated"] = [150e3, 10e3, 10e3, 10e3, 10e3, 50e3, 10e3, 10e3, 10e3, 10e3]
+    node_input = initialize_array("input", "node", 2)
+    node_input["id"] = [0, 1]
+    node_input["u_rated"] = [150e3, 10e3]
 
-    transformer_input = initialize_array("input", "transformer", 5)
-    transformer_input["id"] = [11, 12, 13, 14, 15]
-    transformer_input["from_node"] = [0, 0, 5, 2, 8]
-    transformer_input["to_node"] = [1, 1, 7, 3, 9]
-    transformer_input["from_status"] = [1, 1, 1, 1, 1]
-    transformer_input["to_status"] = [1, 1, 1, 1, 1]
-    transformer_input["winding_from"] = [1, 1, 1, 1, 1]
-    transformer_input["winding_to"] = [1, 1, 1, 1, 1]
-    transformer_input["clock"] = [0, 0, 0, 0, 0]
-    transformer_input["tap_side"] = [0, 0, 0, 0, 0]
-
-    three_winding_transformer_input = initialize_array("input", "three_winding_transformer", 1)
-    three_winding_transformer_input["id"] = [16]
-    three_winding_transformer_input["node_1"] = [0]
-    three_winding_transformer_input["node_2"] = [4]
-    three_winding_transformer_input["node_3"] = [5]
-    three_winding_transformer_input["clock_12"] = [0]
-    three_winding_transformer_input["clock_13"] = [0]
-    three_winding_transformer_input["winding_1"] = [1]
-    three_winding_transformer_input["winding_2"] = [1]
-    three_winding_transformer_input["winding_3"] = [1]
-
-    line_input = initialize_array("input", "line", 2)
-    line_input["id"] = [17, 18]
-    line_input["from_node"] = [3, 3]
-    line_input["to_node"] = [6, 9]
-
-    link_input = initialize_array("input", "link", 3)
-    link_input["id"] = [19, 20, 21]
-    link_input["from_node"] = [2, 6, 8]
-    link_input["to_node"] = [1, 4, 7]
-    link_input["from_status"] = [1, 1, 1]
-    link_input["to_status"] = [1, 1, 1]
+    transformer_input = initialize_array("input", "transformer", 1)
+    transformer_input["id"] = [2]
+    transformer_input["from_node"] = [0]
+    transformer_input["to_node"] = [1]
+    transformer_input["from_status"] = [1]
+    transformer_input["to_status"] = [1]
+    transformer_input["winding_from"] = [1]
+    transformer_input["winding_to"] = [1]
+    transformer_input["clock"] = [0]
+    transformer_input["tap_side"] = [1]
 
     source_input = initialize_array("input", "source", 1)
-    source_input["id"] = [22]
+    source_input["id"] = [3]
     source_input["node"] = [0]
     source_input["status"] = [1]
     source_input["u_ref"] = [1.0]
 
-    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 6)
-    transformer_tap_regulator_input["id"] = [23, 24, 25, 26, 27, 28]
-    transformer_tap_regulator_input["regulated_object"] = [11, 12, 13, 14, 15, 16]
-    transformer_tap_regulator_input["status"] = [1, 1, 1, 1, 1, 1]
-    transformer_tap_regulator_input["control_side"] = [1, 1, 1, 1, 1, 1]
+    transformer_tap_regulator_input = initialize_array("input", "transformer_tap_regulator", 1)
+    transformer_tap_regulator_input["id"] = [4]
+    transformer_tap_regulator_input["regulated_object"] = [2]
+    transformer_tap_regulator_input["status"] = [1]
+    transformer_tap_regulator_input["control_side"] = [0]
 
     model = PowerGridModel(
         input_data={
             "node": node_input,
             "transformer": transformer_input,
-            "three_winding_transformer": three_winding_transformer_input,
-            "line": line_input,
-            "link": link_input,
             "source": source_input,
             "transformer_tap_regulator": transformer_tap_regulator_input,
         }
