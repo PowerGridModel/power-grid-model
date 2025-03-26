@@ -1074,7 +1074,7 @@ TEST_CASE("API Model") {
       {"id": 1, "u_rated": 10000},
       {"id": 2, "u_rated": 10000}
     ],
-      "line": [
+    "line": [
       {"id": 3, "from_node": 1, "to_node": 2, "r": 0.1, "x": 0.2}
     ],
     "sym_current_sensor": [
