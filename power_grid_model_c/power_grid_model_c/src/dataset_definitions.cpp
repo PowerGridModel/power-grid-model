@@ -250,6 +250,28 @@ PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_p_measured = PGM_
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_q_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "q_measured");
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_p_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "p_sigma");
 PGM_MetaAttribute const* const PGM_def_input_asym_power_sensor_q_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_power_sensor", "q_sigma");
+// component sym_current_sensor
+PGM_MetaComponent const* const PGM_def_input_sym_current_sensor = PGM_meta_get_component_by_name(nullptr, "input", "sym_current_sensor");
+// attributes of input sym_current_sensor
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_measured_object = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "measured_object");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_measured_terminal_type = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "measured_terminal_type");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_angle_measurement_type = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "angle_measurement_type");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_i_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "i_sigma");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_i_angle_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "i_angle_sigma");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_i_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "i_measured");
+PGM_MetaAttribute const* const PGM_def_input_sym_current_sensor_i_angle_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_current_sensor", "i_angle_measured");
+// component asym_current_sensor
+PGM_MetaComponent const* const PGM_def_input_asym_current_sensor = PGM_meta_get_component_by_name(nullptr, "input", "asym_current_sensor");
+// attributes of input asym_current_sensor
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_measured_object = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "measured_object");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_measured_terminal_type = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "measured_terminal_type");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_angle_measurement_type = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "angle_measurement_type");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_i_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "i_sigma");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_i_angle_sigma = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "i_angle_sigma");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_i_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "i_measured");
+PGM_MetaAttribute const* const PGM_def_input_asym_current_sensor_i_angle_measured = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_current_sensor", "i_angle_measured");
 // component fault
 PGM_MetaComponent const* const PGM_def_input_fault = PGM_meta_get_component_by_name(nullptr, "input", "fault");
 // attributes of input fault
@@ -441,6 +463,20 @@ PGM_MetaAttribute const* const PGM_def_sym_output_asym_power_sensor_id = PGM_met
 PGM_MetaAttribute const* const PGM_def_sym_output_asym_power_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_power_sensor", "energized");
 PGM_MetaAttribute const* const PGM_def_sym_output_asym_power_sensor_p_residual = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_power_sensor", "p_residual");
 PGM_MetaAttribute const* const PGM_def_sym_output_asym_power_sensor_q_residual = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_power_sensor", "q_residual");
+// component sym_current_sensor
+PGM_MetaComponent const* const PGM_def_sym_output_sym_current_sensor = PGM_meta_get_component_by_name(nullptr, "sym_output", "sym_current_sensor");
+// attributes of sym_output sym_current_sensor
+PGM_MetaAttribute const* const PGM_def_sym_output_sym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "sym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_sym_current_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "sym_current_sensor", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_sym_current_sensor_i_residual = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "sym_current_sensor", "i_residual");
+PGM_MetaAttribute const* const PGM_def_sym_output_sym_current_sensor_i_angle_residual = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "sym_current_sensor", "i_angle_residual");
+// component asym_current_sensor
+PGM_MetaComponent const* const PGM_def_sym_output_asym_current_sensor = PGM_meta_get_component_by_name(nullptr, "sym_output", "asym_current_sensor");
+// attributes of sym_output asym_current_sensor
+PGM_MetaAttribute const* const PGM_def_sym_output_asym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_asym_current_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_current_sensor", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_asym_current_sensor_i_residual = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_current_sensor", "i_residual");
+PGM_MetaAttribute const* const PGM_def_sym_output_asym_current_sensor_i_angle_residual = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "asym_current_sensor", "i_angle_residual");
 // component fault
 PGM_MetaComponent const* const PGM_def_sym_output_fault = PGM_meta_get_component_by_name(nullptr, "sym_output", "fault");
 // attributes of sym_output fault
@@ -627,6 +663,20 @@ PGM_MetaAttribute const* const PGM_def_asym_output_asym_power_sensor_id = PGM_me
 PGM_MetaAttribute const* const PGM_def_asym_output_asym_power_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_power_sensor", "energized");
 PGM_MetaAttribute const* const PGM_def_asym_output_asym_power_sensor_p_residual = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_power_sensor", "p_residual");
 PGM_MetaAttribute const* const PGM_def_asym_output_asym_power_sensor_q_residual = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_power_sensor", "q_residual");
+// component sym_current_sensor
+PGM_MetaComponent const* const PGM_def_asym_output_sym_current_sensor = PGM_meta_get_component_by_name(nullptr, "asym_output", "sym_current_sensor");
+// attributes of asym_output sym_current_sensor
+PGM_MetaAttribute const* const PGM_def_asym_output_sym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "sym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_sym_current_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "sym_current_sensor", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_sym_current_sensor_i_residual = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "sym_current_sensor", "i_residual");
+PGM_MetaAttribute const* const PGM_def_asym_output_sym_current_sensor_i_angle_residual = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "sym_current_sensor", "i_angle_residual");
+// component asym_current_sensor
+PGM_MetaComponent const* const PGM_def_asym_output_asym_current_sensor = PGM_meta_get_component_by_name(nullptr, "asym_output", "asym_current_sensor");
+// attributes of asym_output asym_current_sensor
+PGM_MetaAttribute const* const PGM_def_asym_output_asym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_asym_current_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_current_sensor", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_asym_current_sensor_i_residual = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_current_sensor", "i_residual");
+PGM_MetaAttribute const* const PGM_def_asym_output_asym_current_sensor_i_angle_residual = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "asym_current_sensor", "i_angle_residual");
 // component fault
 PGM_MetaComponent const* const PGM_def_asym_output_fault = PGM_meta_get_component_by_name(nullptr, "asym_output", "fault");
 // attributes of asym_output fault
@@ -747,6 +797,22 @@ PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_p_measured = PGM
 PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_q_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "q_measured");
 PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_p_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "p_sigma");
 PGM_MetaAttribute const* const PGM_def_update_asym_power_sensor_q_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_power_sensor", "q_sigma");
+// component sym_current_sensor
+PGM_MetaComponent const* const PGM_def_update_sym_current_sensor = PGM_meta_get_component_by_name(nullptr, "update", "sym_current_sensor");
+// attributes of update sym_current_sensor
+PGM_MetaAttribute const* const PGM_def_update_sym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_update_sym_current_sensor_i_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_current_sensor", "i_sigma");
+PGM_MetaAttribute const* const PGM_def_update_sym_current_sensor_i_angle_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_current_sensor", "i_angle_sigma");
+PGM_MetaAttribute const* const PGM_def_update_sym_current_sensor_i_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_current_sensor", "i_measured");
+PGM_MetaAttribute const* const PGM_def_update_sym_current_sensor_i_angle_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "sym_current_sensor", "i_angle_measured");
+// component asym_current_sensor
+PGM_MetaComponent const* const PGM_def_update_asym_current_sensor = PGM_meta_get_component_by_name(nullptr, "update", "asym_current_sensor");
+// attributes of update asym_current_sensor
+PGM_MetaAttribute const* const PGM_def_update_asym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_update_asym_current_sensor_i_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_current_sensor", "i_sigma");
+PGM_MetaAttribute const* const PGM_def_update_asym_current_sensor_i_angle_sigma = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_current_sensor", "i_angle_sigma");
+PGM_MetaAttribute const* const PGM_def_update_asym_current_sensor_i_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_current_sensor", "i_measured");
+PGM_MetaAttribute const* const PGM_def_update_asym_current_sensor_i_angle_measured = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_current_sensor", "i_angle_measured");
 // component fault
 PGM_MetaComponent const* const PGM_def_update_fault = PGM_meta_get_component_by_name(nullptr, "update", "fault");
 // attributes of update fault
@@ -868,6 +934,16 @@ PGM_MetaComponent const* const PGM_def_sc_output_asym_power_sensor = PGM_meta_ge
 // attributes of sc_output asym_power_sensor
 PGM_MetaAttribute const* const PGM_def_sc_output_asym_power_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_power_sensor", "id");
 PGM_MetaAttribute const* const PGM_def_sc_output_asym_power_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_power_sensor", "energized");
+// component sym_current_sensor
+PGM_MetaComponent const* const PGM_def_sc_output_sym_current_sensor = PGM_meta_get_component_by_name(nullptr, "sc_output", "sym_current_sensor");
+// attributes of sc_output sym_current_sensor
+PGM_MetaAttribute const* const PGM_def_sc_output_sym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_sc_output_sym_current_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "sym_current_sensor", "energized");
+// component asym_current_sensor
+PGM_MetaComponent const* const PGM_def_sc_output_asym_current_sensor = PGM_meta_get_component_by_name(nullptr, "sc_output", "asym_current_sensor");
+// attributes of sc_output asym_current_sensor
+PGM_MetaAttribute const* const PGM_def_sc_output_asym_current_sensor_id = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_current_sensor", "id");
+PGM_MetaAttribute const* const PGM_def_sc_output_asym_current_sensor_energized = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "asym_current_sensor", "energized");
 // component fault
 PGM_MetaComponent const* const PGM_def_sc_output_fault = PGM_meta_get_component_by_name(nullptr, "sc_output", "fault");
 // attributes of sc_output fault

@@ -103,15 +103,19 @@ template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
 };
 
 template <typename T>
-concept sensor_calc_param_type =
-    std::derived_from<T, VoltageSensorCalcParam<symmetric_t>> ||
-    std::derived_from<T, VoltageSensorCalcParam<asymmetric_t>> ||
-    std::derived_from<T, PowerSensorCalcParam<symmetric_t>> || std::derived_from<T, PowerSensorCalcParam<asymmetric_t>>;
+concept sensor_calc_param_type = std::derived_from<T, VoltageSensorCalcParam<symmetric_t>> ||
+                                 std::derived_from<T, VoltageSensorCalcParam<asymmetric_t>> ||
+                                 std::derived_from<T, PowerSensorCalcParam<symmetric_t>> ||
+                                 std::derived_from<T, PowerSensorCalcParam<asymmetric_t>> ||
+                                 std::derived_from<T, CurrentSensorCalcParam<symmetric_t>> ||
+                                 std::derived_from<T, CurrentSensorCalcParam<asymmetric_t>>;
 
 static_assert(sensor_calc_param_type<VoltageSensorCalcParam<symmetric_t>>);
 static_assert(sensor_calc_param_type<VoltageSensorCalcParam<asymmetric_t>>);
 static_assert(sensor_calc_param_type<PowerSensorCalcParam<symmetric_t>>);
 static_assert(sensor_calc_param_type<PowerSensorCalcParam<asymmetric_t>>);
+static_assert(sensor_calc_param_type<CurrentSensorCalcParam<symmetric_t>>);
+static_assert(sensor_calc_param_type<CurrentSensorCalcParam<asymmetric_t>>);
 
 struct TransformerTapRegulatorCalcParam {
     double u_set{};
@@ -150,6 +154,8 @@ struct MathModelTopology {
     DenseGroupedIdxVector power_sensors_per_branch_from;
     DenseGroupedIdxVector power_sensors_per_branch_to;
     DenseGroupedIdxVector power_sensors_per_bus;
+    DenseGroupedIdxVector current_sensors_per_branch_from;
+    DenseGroupedIdxVector current_sensors_per_branch_to;
     DenseGroupedIdxVector tap_regulators_per_branch;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
@@ -359,6 +365,8 @@ struct ComponentTopology {
     IdxVector voltage_sensor_node_idx;
     IdxVector power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
     std::vector<MeasuredTerminalType> power_sensor_terminal_type;
+    IdxVector current_sensor_object_idx; // the index is relative to branch
+    std::vector<MeasuredTerminalType> current_sensor_terminal_type;
     std::vector<ComponentType> regulator_type;
     IdxVector regulated_object_idx; // the index is relative to branch or branch3
     std::vector<ComponentType> regulated_object_type;
@@ -418,7 +426,8 @@ struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> load_gen;
     std::vector<Idx2D> source;
     std::vector<Idx2D> voltage_sensor;
-    std::vector<Idx2D> power_sensor; // can be coupled to branch-from/to, source, load_gen, or shunt sensor
+    std::vector<Idx2D> power_sensor;   // can be coupled to branch-from/to, source, load_gen, or shunt sensor
+    std::vector<Idx2D> current_sensor; // can be coupled to branch-from/to
     std::vector<Idx2D> regulator;
 };
 

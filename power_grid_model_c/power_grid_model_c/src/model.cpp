@@ -56,8 +56,11 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 }
 
 namespace {
-void check_calculate_experimental_features(PGM_Options const& /* opt */) {
+void check_no_experimental_features_used(MainModel const& model, MainModel::Options const& opt) {
     // optionally add experimental feature checks here
+    using namespace std::string_literals;
+
+    model.check_no_experimental_features_used(opt);
 }
 
 void check_calculate_valid_options(PGM_Options const& opt) {
@@ -66,10 +69,6 @@ void check_calculate_valid_options(PGM_Options const& opt) {
         throw InvalidArguments{"PGM_calculate",
                                InvalidArguments::TypeValuePair{.name = "PGM_TapChangingStrategy",
                                                                .value = std::to_string(opt.tap_changing_strategy)}};
-    }
-
-    if (opt.experimental_features == PGM_experimental_features_disabled) {
-        check_calculate_experimental_features(opt);
     }
 }
 
@@ -160,8 +159,12 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     // call calculation
     try {
         check_calculate_valid_options(*opt);
-
         auto const options = extract_calculation_options(*opt);
+
+        if (opt->experimental_features == PGM_experimental_features_disabled) {
+            check_no_experimental_features_used(*model, options);
+        }
+
         model->calculate(options, *output_dataset, exported_update_dataset);
     } catch (BatchCalculationError& e) {
         handle->err_code = PGM_batch_error;

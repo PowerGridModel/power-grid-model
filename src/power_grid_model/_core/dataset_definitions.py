@@ -71,6 +71,8 @@ class ComponentType(str, Enum, metaclass=_MetaEnum):
     asym_voltage_sensor = "asym_voltage_sensor"
     sym_power_sensor = "sym_power_sensor"
     asym_power_sensor = "asym_power_sensor"
+    sym_current_sensor = "sym_current_sensor"
+    asym_current_sensor = "asym_current_sensor"
     fault = "fault"
 
 

@@ -163,6 +163,7 @@ class Topology {
         comp_coup_.source.resize(comp_topo_.source_node_idx.size(), unknown_idx2d);
         comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(), unknown_idx2d);
         comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), unknown_idx2d);
+        comp_coup_.current_sensor.resize(comp_topo_.current_sensor_object_idx.size(), unknown_idx2d);
     }
 
     void build_sparse_graph() {
@@ -452,7 +453,7 @@ class Topology {
         Idx size() const { return static_cast<Idx>(sensor_obj_idx.size()); }
         Idx2D find_math_object(Idx component_i) const {
             Idx const obj_idx = sensor_obj_idx[component_i];
-            switch (power_sensor_terminal_type[component_i]) {
+            switch (sensor_terminal_type[component_i]) {
                 using enum MeasuredTerminalType;
 
             case branch_from:
@@ -472,7 +473,7 @@ class Topology {
 
         // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
         IdxVector const& sensor_obj_idx;
-        std::vector<MeasuredTerminalType> const& power_sensor_terminal_type;
+        std::vector<MeasuredTerminalType> const& sensor_terminal_type;
         std::vector<Idx2D> const& branch_coupling;
         std::vector<Idx2DBranch3> const& branch3_coupling;
         // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -600,7 +601,7 @@ class Topology {
 
         // branch 'from' power sensors
         // include all branch3 sensors
-        auto const predicate_from_sensor = [this](Idx i) {
+        auto const predicate_from_power_sensor = [this](Idx i) {
             using enum MeasuredTerminalType;
 
             return comp_topo_.power_sensor_terminal_type[i] == branch_from ||
@@ -609,16 +610,16 @@ class Topology {
                    comp_topo_.power_sensor_terminal_type[i] == branch3_2 ||
                    comp_topo_.power_sensor_terminal_type[i] == branch3_3;
         };
-        SensorBranchObjectFinder const object_finder_from_sensor{.sensor_obj_idx = comp_topo_.power_sensor_object_idx,
-                                                                 .power_sensor_terminal_type =
-                                                                     comp_topo_.power_sensor_terminal_type,
-                                                                 .branch_coupling = comp_coup_.branch,
-                                                                 .branch3_coupling = comp_coup_.branch3};
+        SensorBranchObjectFinder const object_finder_from_power_sensor{
+            .sensor_obj_idx = comp_topo_.power_sensor_object_idx,
+            .sensor_terminal_type = comp_topo_.power_sensor_terminal_type,
+            .branch_coupling = comp_coup_.branch,
+            .branch3_coupling = comp_coup_.branch3};
 
         // branch 'from' power sensors
         couple_object_components<&MathModelTopology::n_branch>(
             [](MathModelTopology& math_topo) -> auto& { return math_topo.power_sensors_per_branch_from; },
-            object_finder_from_sensor, comp_coup_.power_sensor, predicate_from_sensor);
+            object_finder_from_power_sensor, comp_coup_.power_sensor, predicate_from_power_sensor);
 
         // branch 'to' power sensors
         couple_object_components<&MathModelTopology::n_branch>(
@@ -633,6 +634,35 @@ class Topology {
             {.component_obj_idx = comp_topo_.power_sensor_object_idx, .objects_coupling = comp_coup_.node},
             comp_coup_.power_sensor,
             [this](Idx i) { return comp_topo_.power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
+
+        // branch 'from' current sensors
+        // include all branch3 sensors
+        auto const predicate_from_current_sensor = [this](Idx i) {
+            using enum MeasuredTerminalType;
+
+            return comp_topo_.current_sensor_terminal_type[i] == branch_from ||
+                   // all branch3 sensors are at from side in the mathemtical model
+                   comp_topo_.current_sensor_terminal_type[i] == branch3_1 ||
+                   comp_topo_.current_sensor_terminal_type[i] == branch3_2 ||
+                   comp_topo_.current_sensor_terminal_type[i] == branch3_3;
+        };
+        SensorBranchObjectFinder const object_finder_from_current_sensor{
+            .sensor_obj_idx = comp_topo_.current_sensor_object_idx,
+            .sensor_terminal_type = comp_topo_.current_sensor_terminal_type,
+            .branch_coupling = comp_coup_.branch,
+            .branch3_coupling = comp_coup_.branch3};
+
+        // branch 'from' current sensors
+        couple_object_components<&MathModelTopology::n_branch>(
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.current_sensors_per_branch_from; },
+            object_finder_from_current_sensor, comp_coup_.current_sensor, predicate_from_current_sensor);
+
+        // branch 'to' current sensors
+        couple_object_components<&MathModelTopology::n_branch>(
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.current_sensors_per_branch_to; },
+            {.component_obj_idx = comp_topo_.current_sensor_object_idx, .objects_coupling = comp_coup_.branch},
+            comp_coup_.current_sensor,
+            [this](Idx i) { return comp_topo_.current_sensor_terminal_type[i] == MeasuredTerminalType::branch_to; });
     }
 };
 

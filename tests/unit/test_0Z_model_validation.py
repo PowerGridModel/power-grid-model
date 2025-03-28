@@ -72,8 +72,8 @@ def get_kwargs(sym: bool, calculation_type: str, calculation_method: str, params
             elif calculation_method in value:
                 base_kwargs[key] = value[calculation_method]
 
-    for key, value in extra_kwargs.items():
-        base_kwargs[key] = value
+    base_kwargs.update(params.get("extra_params", {}).get(calculation_method, {}))
+    base_kwargs.update(extra_kwargs)
 
     if calculation_method == "iec60909":
         base_kwargs["short_circuit_voltage_scaling"] = params["short_circuit_voltage_scaling"]

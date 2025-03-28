@@ -136,6 +136,35 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
 }
 
+template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
+                                            ComponentTopology& comp_topo) {
+    detail::register_topo_components<Component>(
+        state, comp_topo.current_sensor_object_idx, [&state](GenericCurrentSensor const& current_sensor) {
+            using enum MeasuredTerminalType;
+
+            auto const measured_object = current_sensor.measured_object();
+
+            switch (current_sensor.get_terminal_type()) {
+            case branch_from:
+            case branch_to:
+                return get_component_sequence_idx<Branch>(state, measured_object);
+            case branch3_1:
+            case branch3_2:
+            case branch3_3:
+                return get_component_sequence_idx<Branch3>(state, measured_object);
+            default:
+                throw MissingCaseForEnumError("Current sensor idx to seq transformation",
+                                              current_sensor.get_terminal_type());
+            }
+        });
+
+    detail::register_topo_components<Component>(
+        state, comp_topo.current_sensor_terminal_type,
+        [](GenericCurrentSensor const& current_sensor) { return current_sensor.get_terminal_type(); });
+}
+
 template <std::derived_from<Regulator> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void register_topology_components(MainModelState<ComponentContainer> const& state,
