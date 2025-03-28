@@ -21,6 +21,9 @@ jobs:
       contents: write
     with:
       create_release: false
+    secrets:
+      PYPI_USER: ${{ secrets.PYPI_USER }}
+      PYPI_PASS: ${{ secrets.PYPI_PASS }}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
