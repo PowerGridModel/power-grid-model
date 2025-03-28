@@ -1,0 +1,29 @@
+Results for Actor ID # 1
+CPU selected : -1
+Status = SOLVED
+Solution Mode = Snap
+Number = 100
+Load Mult = 1.000
+Devices = 6
+Buses = 3
+Nodes = 12
+Control Mode =STATIC
+Total Iterations = 13
+Control Iterations = 1
+Max Sol Iter = 13
+ 
+ - Circuit Summary -
+ 
+Year = 0 
+Hour = 0 
+Max pu. voltage = -0.001 
+Min pu. voltage = -1 
+Total Active Power:   2.50865 MW
+Total Reactive Power: 0.00102225 Mvar
+Total Active Losses:   0.00869303 MW, (0.3465 %)
+Total Reactive Losses: 0.00102225 Mvar
+Frequency = 50 Hz
+Mode = Snap
+Control Mode = STATIC
+Load Model = PowerFlow
+------------------------
