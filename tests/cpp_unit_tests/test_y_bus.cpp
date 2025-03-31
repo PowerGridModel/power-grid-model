@@ -403,16 +403,16 @@ TEST_CASE("Incremental update y-bus") {
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto branch_param_to_change_views =
-            boost::irange(0, static_cast<int>(param_sym_update.branch_param.size())) |
-            boost::adaptors::filtered([&param_sym_update](Idx i) {
+            IdxRange{static_cast<int>(param_sym_update.branch_param.size())} |
+            std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.branch_param[i].yff() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].yft() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytf() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytt() != ComplexTensor<symmetric_t>{0.0};
             });
         auto shunt_param_to_change_views =
-            boost::irange(0, static_cast<int>(param_sym_update.shunt_param.size())) |
-            boost::adaptors::filtered([&param_sym_update](Idx i) {
+            IdxRange{static_cast<int>(param_sym_update.shunt_param.size())} |
+            std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.shunt_param[i] != ComplexTensor<symmetric_t>{0.0};
             });
 
