@@ -81,92 +81,83 @@ class SparseGroupedIdxVector {
   private:
     class GroupIterator {
       public:
+        using iterator = IdxRange;
         using difference_type = Idx;
-        using iterator = std::add_const_t<IdxRange>::iterator;
-        using value_type = std::ranges::subrange<iterator>;
-        using IndexPtrIt = std::span<Idx const>::iterator;
+        using value_type = iterator;
 
         GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxRange const& all, IndexPtrIt group_begin)
-            : all_{&all}, group_begin_{group_begin}, latest_dereference_{} {}
+        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
 
         constexpr auto operator*() const -> value_type const& {
             // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
             // setting this here
-            assert(all_ != nullptr);
-            assert(0 <= *group_begin_);
-            assert(*group_begin_ <= *(group_begin_ + 1));
-            assert(all_->begin() + *(group_begin_ + 1) <= all_->end());
-            latest_dereference_ = value_type{all_->begin() + *group_begin_, all_->begin() + *(group_begin_ + 1)};
-
+            assert(indptr_ != nullptr);
+            latest_dereference_ = IdxRange{(*indptr_)[group_], (*indptr_)[group_ + 1]};
             return latest_dereference_;
         }
         constexpr bool operator==(GroupIterator const& other) const {
-            assert(all_ != nullptr);
-            assert(all_ == other.all_);
-            return group_begin_ == other.group_begin_;
+            assert(indptr_ != nullptr);
+            assert(indptr_ == other.indptr_);
+            return group_ == other.group_;
         }
         constexpr std::strong_ordering operator<=>(GroupIterator const& other) const {
-            assert(all_ != nullptr);
-            assert(all_ == other.all_);
-            return group_begin_ <=> other.group_begin_;
+            assert(indptr_ != nullptr);
+            assert(indptr_ == other.indptr_);
+            return group_ <=> other.group_;
         }
         constexpr auto operator++() -> GroupIterator& {
-            ++group_begin_;
+            ++group_;
             return *this;
         }
         constexpr auto operator--() -> GroupIterator& {
-            --group_begin_;
+            --group_;
             return *this;
         }
         constexpr auto operator++(std::integral auto idx) -> GroupIterator {
             GroupIterator result{*this};
-            group_begin_++;
+            group_++;
             return result;
         }
         constexpr auto operator--(std::integral auto idx) -> GroupIterator {
             GroupIterator result{*this};
-            group_begin_--;
+            group_--;
             return result;
         }
         constexpr auto operator+=(std::integral auto offset) -> GroupIterator& {
-            group_begin_ += offset;
+            group_ += offset;
             return *this;
         }
         constexpr auto operator-=(std::integral auto idx) -> GroupIterator& {
-            group_begin_ -= idx;
+            group_ -= idx;
             return *this;
         }
         constexpr auto operator+(Idx offset) const -> GroupIterator {
-            assert(all_ != nullptr);
-            return GroupIterator{*all_, group_begin_ + offset};
+            assert(indptr_ != nullptr);
+            return GroupIterator{*indptr_, group_ + offset};
         }
         friend constexpr auto operator+(const Idx offset, GroupIterator it) -> GroupIterator {
             it += offset;
             return it;
         }
         constexpr auto operator-(Idx idx) const -> GroupIterator {
-            assert(all_ != nullptr);
-            return GroupIterator{*all_, group_begin_ - idx};
+            assert(indptr_ != nullptr);
+            return GroupIterator{*indptr_, group_ - idx};
         }
         constexpr auto operator-(GroupIterator const& other) const -> Idx {
-            assert(all_ != nullptr);
-            assert(all_ == other.all_);
-            return group_begin_ - other.group_begin_;
+            assert(indptr_ != nullptr);
+            assert(indptr_ == other.indptr_);
+            return group_ - other.group_;
         }
         constexpr auto operator[](Idx idx) const -> value_type const& { return *(*this + idx); }
 
       private:
-        IndexPtrIt group_begin_{};
-        IdxRange const* all_{};
-        mutable value_type latest_dereference_{}; // making this mutable allows us to delay out-of-bounds checks until
-                                                  // dereferencing instead of update methods
+        IdxVector const* indptr_{};
+        Idx group_{};
+        mutable IdxRange latest_dereference_{}; // making this mutable allows us to delay out-of-bounds checks until
+                                                // dereferencing instead of update methods
     };
 
-    auto group_iterator(Idx group) const {
-        assert(0 <= group && group < indptr_.size());
-        return GroupIterator{all_, std::span{indptr_}.begin() + group};
-    }
+    auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
 
   public:
     using iterator = GroupIterator;
@@ -182,10 +173,9 @@ class SparseGroupedIdxVector {
         return std::distance(std::begin(indptr_), std::ranges::upper_bound(indptr_, element)) - 1;
     }
 
-    SparseGroupedIdxVector() : indptr_{0}, all_{} {};
+    SparseGroupedIdxVector() : indptr_{0} {};
     explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
-        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)},
-          all_{indptr_.front(), indptr_.back()} {
+        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
         assert(std::ranges::is_sorted(indptr_));

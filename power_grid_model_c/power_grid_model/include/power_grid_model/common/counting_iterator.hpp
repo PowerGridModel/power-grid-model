@@ -14,10 +14,10 @@ namespace power_grid_model {
 struct IdxRange : public std::ranges::iota_view<Idx, Idx> {
     using iterator = decltype(std::ranges::iota_view<Idx, Idx>{}.begin());
 
-    IdxRange() = default;
-    IdxRange(Idx stop) : std::ranges::iota_view<Idx, Idx>{Idx{0}, stop} {}
-    IdxRange(Idx start, Idx stop) : std::ranges::iota_view<Idx, Idx>{start, stop} {}
-    IdxRange(iterator start, iterator stop) : std::ranges::iota_view<Idx, Idx>{start, stop} {}
+    constexpr IdxRange() = default;
+    constexpr IdxRange(Idx stop) : std::ranges::iota_view<Idx, Idx>{Idx{0}, stop} {}
+    constexpr IdxRange(Idx start, Idx stop) : std::ranges::iota_view<Idx, Idx>{start, stop} {}
+    constexpr IdxRange(iterator start, iterator stop) : std::ranges::iota_view<Idx, Idx>{start, stop} {}
 };
 using IdxCount = typename IdxRange::iterator;
 
