@@ -62,6 +62,7 @@ jobs:
         id: set-target
         run: |
           echo "target=power_grid_model_api_tests" >> "$GITHUB_OUTPUT"
+          # overwrite the target if the event that triggered this workflow is PR
           if [ ${{ github.event_name }} = "pull_request" ]; then
             echo "target=all" >> "$GITHUB_OUTPUT"
           fi
