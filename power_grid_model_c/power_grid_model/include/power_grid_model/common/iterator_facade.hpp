@@ -74,12 +74,12 @@ template <class Impl, typename ValueType, typename DifferenceType> class Iterato
         static_cast<iterator*>(this)->decrement();
         return *static_cast<iterator*>(this);
     }
-    constexpr auto operator++(std::integral auto idx) -> iterator {
+    constexpr auto operator++(std::integral auto /*idx*/) -> iterator {
         iterator result{*static_cast<iterator*>(this)};
         ++(*this);
         return result;
     }
-    constexpr auto operator--(std::integral auto idx) -> iterator {
+    constexpr auto operator--(std::integral auto /*idx*/) -> iterator {
         iterator result{*static_cast<iterator*>(this)};
         --(*this);
         return result;
