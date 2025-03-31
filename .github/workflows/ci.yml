@@ -63,7 +63,7 @@ jobs:
         run: |
           echo "target=power_grid_model_api_tests" >> "$GITHUB_OUTPUT"
           if [ ${{ github.event_name }} = "pull_request" ]; then
-            echo "target=power_grid_model_api_tests" >> "$GITHUB_OUTPUT"
+            echo "target=all" >> "$GITHUB_OUTPUT"
           fi
 
   debug-clang-tidy-target:
