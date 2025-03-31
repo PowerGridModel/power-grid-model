@@ -417,10 +417,10 @@ TEST_CASE("Incremental update y-bus") {
             });
 
         MathModelParamIncrement math_model_param_incrmt;
-        math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
-                                                          branch_param_to_change_views.end()};
-        math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
-                                                         shunt_param_to_change_views.end()};
+        std::ranges::copy(branch_param_to_change_views,
+                          std::back_inserter(math_model_param_incrmt.branch_param_to_change));
+        std::ranges::copy(shunt_param_to_change_views,
+                          std::back_inserter(math_model_param_incrmt.shunt_param_to_change));
 
         auto param_update_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sym_update);
 

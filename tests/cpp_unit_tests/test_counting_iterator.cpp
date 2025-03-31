@@ -22,7 +22,7 @@ TEST_CASE("Counting Iterator") {
     CHECK(*IdxCount{0} == 0);
     CHECK(*IdxCount{2} == 2);
     CHECK(*(++IdxCount{0}) == 1);
-    CHECK(*(IdxCount{0} ++) == 0);
+    CHECK(*(IdxCount { 0 } ++) == 0);
     CHECK(*(IdxCount{0} + 1) == 1);
 }
 } // namespace power_grid_model
