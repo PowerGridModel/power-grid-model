@@ -14,21 +14,21 @@ concept iterator_like = requires(T const t) {
     { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
 };
 
-template <typename T, typename ElementType>
-concept forward_iterator_like = std::regular<T> && iterator_like<T, ElementType> && requires(T t) {
+template <typename T>
+concept forward_iterator_like = std::regular<T> && std::input_iterator<T> && requires(T t) {
     { t++ } -> std::same_as<T>;  // NOLINT(bugprone-inc-dec-in-conditions)
     { ++t } -> std::same_as<T&>; // NOLINT(bugprone-inc-dec-in-conditions)
 };
 
-template <typename T, typename ElementType>
-concept bidirectional_iterator_like = forward_iterator_like<T, ElementType> && requires(T t) {
+template <typename T>
+concept bidirectional_iterator_like = std::forward_iterator<T> && requires(T t) {
     { t-- } -> std::same_as<T>;  // NOLINT(bugprone-inc-dec-in-conditions)
     { --t } -> std::same_as<T&>; // NOLINT(bugprone-inc-dec-in-conditions)
 };
 
-template <typename T, typename ElementType>
+template <typename T>
 concept random_access_iterator_like =
-    bidirectional_iterator_like<T, ElementType> && std::totally_ordered<T> && requires(T t, Idx n) {
+    std::bidirectional_iterator<T> && std::totally_ordered<T> && requires(T t, Idx n) {
         { t + n } -> std::same_as<T>;
         { t - n } -> std::same_as<T>;
         { t += n } -> std::same_as<T&>;
@@ -36,13 +36,13 @@ concept random_access_iterator_like =
     };
 
 template <typename T, typename ElementType>
-concept random_access_iterable_like = requires(T const t) {
-    { t.begin() } -> random_access_iterator_like<ElementType>;
-    { t.end() } -> random_access_iterator_like<ElementType>;
+concept random_access_iterable_like = std::ranges::random_access_range<T> && requires(T const t) {
+    { t.begin() } -> iterator_like<ElementType>;
+    { t.end() } -> iterator_like<ElementType>;
 };
 
 template <typename T>
-concept index_range_iterator = random_access_iterator_like<T, typename T::iterator> && requires(T const t) {
+concept index_range_iterator = random_access_iterator_like<T> && requires(T const t) {
     typename T::iterator;
     { *t } -> random_access_iterable_like<Idx>;
 };

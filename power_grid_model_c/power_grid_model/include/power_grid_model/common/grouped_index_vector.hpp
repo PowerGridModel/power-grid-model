@@ -34,13 +34,7 @@ The input, ie. [0, 1, 3] should be strictly increasing
 
 namespace power_grid_model {
 
-using IdxRange = boost::iterator_range<IdxCount>;
-
 namespace detail {
-// TODO(mgovers): replace the below relevant iterator concepts with the STD equivalent when we have index ranges.
-// boost::counting_iterator does not satisfy all requirements std::*_iterator concepts:
-static_assert(!std::random_access_iterator<IdxCount>);
-
 inline auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     auto next_group = std::begin(element_groups);
@@ -85,33 +79,94 @@ constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator
-        : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag, IdxRange, Idx> {
+    class GroupIterator {
       public:
-        using iterator = IdxRange;
+        using difference_type = Idx;
+        using iterator = std::add_const_t<IdxRange>::iterator;
+        using value_type = std::ranges::subrange<iterator>;
+        using IndexPtrIt = std::span<Idx const>::iterator;
 
         GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
+        explicit constexpr GroupIterator(IdxRange const& all, IndexPtrIt group_begin)
+            : all_{&all}, group_begin_{group_begin}, latest_dereference_{} {}
+
+        constexpr auto operator*() const -> value_type const& {
+            // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
+            // setting this here
+            assert(all_ != nullptr);
+            assert(0 <= *group_begin_);
+            assert(*group_begin_ <= *(group_begin_ + 1));
+            assert(all_->begin() + *(group_begin_ + 1) <= all_->end());
+            latest_dereference_ = value_type{all_->begin() + *group_begin_, all_->begin() + *(group_begin_ + 1)};
+
+            return latest_dereference_;
+        }
+        constexpr bool operator==(GroupIterator const& other) const {
+            assert(all_ != nullptr);
+            assert(all_ == other.all_);
+            return group_begin_ == other.group_begin_;
+        }
+        constexpr std::strong_ordering operator<=>(GroupIterator const& other) const {
+            assert(all_ != nullptr);
+            assert(all_ == other.all_);
+            return group_begin_ <=> other.group_begin_;
+        }
+        constexpr auto operator++() -> GroupIterator& {
+            ++group_begin_;
+            return *this;
+        }
+        constexpr auto operator--() -> GroupIterator& {
+            --group_begin_;
+            return *this;
+        }
+        constexpr auto operator++(std::integral auto idx) -> GroupIterator {
+            GroupIterator result{*this};
+            group_begin_++;
+            return result;
+        }
+        constexpr auto operator--(std::integral auto idx) -> GroupIterator {
+            GroupIterator result{*this};
+            group_begin_--;
+            return result;
+        }
+        constexpr auto operator+=(std::integral auto offset) -> GroupIterator& {
+            group_begin_ += offset;
+            return *this;
+        }
+        constexpr auto operator-=(std::integral auto idx) -> GroupIterator& {
+            group_begin_ -= idx;
+            return *this;
+        }
+        constexpr auto operator+(Idx offset) const -> GroupIterator {
+            assert(all_ != nullptr);
+            return GroupIterator{*all_, group_begin_ + offset};
+        }
+        friend constexpr auto operator+(const Idx offset, GroupIterator it) -> GroupIterator {
+            it += offset;
+            return it;
+        }
+        constexpr auto operator-(Idx idx) const -> GroupIterator {
+            assert(all_ != nullptr);
+            return GroupIterator{*all_, group_begin_ - idx};
+        }
+        constexpr auto operator-(GroupIterator const& other) const -> Idx {
+            assert(all_ != nullptr);
+            assert(all_ == other.all_);
+            return group_begin_ - other.group_begin_;
+        }
+        constexpr auto operator[](Idx idx) const -> value_type const& { return *(*this + idx); }
 
       private:
-        IdxVector const* indptr_{};
-        Idx group_{};
-
-        friend class boost::iterator_core_access;
-
-        auto dereference() const -> iterator {
-            assert(indptr_ != nullptr);
-            return boost::counting_range((*indptr_)[group_], (*indptr_)[group_ + 1]);
-        }
-        constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
-        constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
-
-        constexpr void increment() { ++group_; }
-        constexpr void decrement() { --group_; }
-        constexpr void advance(Idx n) { group_ += n; }
+        IndexPtrIt group_begin_{};
+        IdxRange const* all_{};
+        mutable value_type latest_dereference_{}; // making this mutable allows us to delay out-of-bounds checks until
+                                                  // dereferencing instead of update methods
     };
 
-    auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
+    auto group_iterator(Idx group) const {
+        assert(0 <= group && group < indptr_.size());
+        return GroupIterator{all_, std::span{indptr_}.begin() + group};
+    }
 
   public:
     using iterator = GroupIterator;
@@ -127,9 +182,10 @@ class SparseGroupedIdxVector {
         return std::distance(std::begin(indptr_), std::ranges::upper_bound(indptr_, element)) - 1;
     }
 
-    SparseGroupedIdxVector() : indptr_{0} {};
+    SparseGroupedIdxVector() : indptr_{0}, all_{} {};
     explicit SparseGroupedIdxVector(IdxVector sparse_group_elements)
-        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)} {
+        : indptr_{sparse_group_elements.empty() ? IdxVector{0} : std::move(sparse_group_elements)},
+          all_{indptr_.front(), indptr_.back()} {
         assert(size() >= 0);
         assert(element_size() >= 0);
         assert(std::ranges::is_sorted(indptr_));
@@ -141,12 +197,16 @@ class SparseGroupedIdxVector {
 
   private:
     IdxVector indptr_;
+    IdxRange all_;
 };
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator
-        : public boost::iterator_facade<GroupIterator, Idx, boost::random_access_traversal_tag, IdxRange, Idx> {
+    struct ram_input_iterator_tag : public std::random_access_iterator_tag {
+        operator boost::random_access_traversal_tag() const { return {}; }
+    };
+
+    class GroupIterator : public boost::iterator_facade<GroupIterator, Idx, ram_input_iterator_tag, IdxRange, Idx> {
       public:
         using iterator = IdxRange;
 
@@ -167,9 +227,8 @@ class DenseGroupedIdxVector {
 
         auto dereference() const -> iterator {
             assert(dense_vector_ != nullptr);
-            return boost::counting_range(
-                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.begin())),
-                narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end())));
+            return IdxRange{narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.begin())),
+                            narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end()))};
         }
         constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }

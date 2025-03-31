@@ -462,15 +462,18 @@ template <symmetry_tag sym> class MeasuredValues {
         RealValue<sym> accumulated_inverse_q_variance{};
         RealValue<sym> accumulated_p_value{};
         RealValue<sym> accumulated_q_value{};
-        for (auto pos : sensors) {
-            auto const& measurement = data[pos];
+        auto sensor_data =
+            std::views::transform(sensors,
+                                  [&data](auto pos) -> DecomposedComplexRandVar<sym> const& { return data[pos]; }) |
+            std::views::transform([&accumulated_inverse_p_variance, &accumulated_inverse_q_variance,
+                                   &accumulated_p_value,
+                                   &accumulated_q_value](DecomposedComplexRandVar<sym> const& measurement) {
+                accumulated_inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
+                accumulated_inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
 
-            accumulated_inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
-            accumulated_inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
-
-            accumulated_p_value += measurement.real_component.value / measurement.real_component.variance;
-            accumulated_q_value += measurement.imag_component.value / measurement.imag_component.variance;
-        }
+                accumulated_p_value += measurement.real_component.value / measurement.real_component.variance;
+                accumulated_q_value += measurement.imag_component.value / measurement.imag_component.variance;
+            });
 
         if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
             return PowerSensorCalcParam<sym>{
