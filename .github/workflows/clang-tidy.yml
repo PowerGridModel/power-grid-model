@@ -78,4 +78,4 @@ jobs:
       - name: Build
         run: |
           cmake --preset ${{ env.PRESET }}
-          cmake --build --preset ${{ env.PRESET }} --target ${{ env.TARGET }}
+          cmake --build --preset ${{ env.PRESET }} --target ${{ env.TARGET }} -- -k 0

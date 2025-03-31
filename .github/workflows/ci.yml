@@ -53,10 +53,32 @@ jobs:
   reuse-compliance:
     uses: "./.github/workflows/reuse-compliance.yml"
 
+  obtain-clang-tidy-target:
+    runs-on: ubuntu-24.04
+    outputs:
+      target: ${{ steps.set-target.outputs.target }}
+    steps:
+      - name: set target depending on event
+        id: set-target
+        run: |
+          echo "target=power_grid_model_api_tests" >> "$GITHUB_OUTPUT"
+          if [ ${{ github.event_name }} = "pull_request" ]; then
+            echo "target=power_grid_model_api_tests" >> "$GITHUB_OUTPUT"
+          fi
+
+  debug-clang-tidy-target:
+    needs: obtain-clang-tidy-target
+    runs-on: ubuntu-24.04
+    steps:
+      - name: debug target
+        run: |
+          echo ${{ needs.obtain-clang-tidy-target.outputs.target }}
+
   clang-tidy:
+    needs: obtain-clang-tidy-target
     uses: "./.github/workflows/clang-tidy.yml"
     with:
-      target: "power_grid_model_api_tests"
+      target: ${{ needs.obtain-clang-tidy-target.outputs.target }}
 
   ci-passed:
     runs-on: ubuntu-latest
