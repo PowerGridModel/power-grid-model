@@ -6,6 +6,7 @@ set(PROJECT_SOURCES
     "test_entry_point.cpp"
     "test_all_components.cpp"
     "test_common.cpp"
+    "test_counting_iterator.cpp"
     "test_exceptions.cpp"
     "test_component_list.cpp"
     "test_component_input.cpp"

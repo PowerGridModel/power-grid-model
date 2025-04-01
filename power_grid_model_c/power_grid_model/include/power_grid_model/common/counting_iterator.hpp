@@ -18,6 +18,8 @@ struct IdxRange : public std::ranges::iota_view<Idx, Idx> {
 
     // this overloads the iota_view constructor
     constexpr IdxRange(Idx stop) : std::ranges::iota_view<Idx, Idx>{Idx{0}, stop} {}
+    constexpr IdxRange(Idx start, Idx stop) : std::ranges::iota_view<Idx, Idx>{start, stop} {}
+    // constexpr IdxRange(iterator start, iterator stop) : std::ranges::iota_view<Idx, Idx>{start, stop} {}
 };
 using IdxCount = typename IdxRange::iterator;
 
