@@ -478,44 +478,47 @@ template <symmetry_tag sym> class MeasuredValues {
     // Since p and q are entirely decoupled, the real and imaginary components accumulate separately
     template <bool only_magnitude = false>
         requires(!only_magnitude)
+    static IndependentRealRandVar<sym> combine_measurements(std::ranges::range auto const& measurements)
+        requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, IndependentRealRandVar<sym>>
+    {
+        RealValue<sym> accumulated_inverse_variance{};
+        RealValue<sym> accumulated_value{};
+
+        std::ranges::for_each(measurements,
+                              [&accumulated_inverse_variance, &accumulated_value](auto const& measurement) {
+                                  accumulated_inverse_variance += RealValue<sym>{1.0} / measurement.variance;
+                                  accumulated_value += measurement.value / measurement.variance;
+                              });
+
+        if (is_normal(accumulated_inverse_variance)) {
+            return IndependentRealRandVar<sym>{.value = accumulated_value / accumulated_inverse_variance,
+                                               .variance = RealValue<sym>{1.0} / accumulated_inverse_variance};
+        }
+        return {.value = accumulated_value, .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}};
+    }
+    template <bool only_magnitude = false>
+        requires(!only_magnitude)
     static DecomposedComplexRandVar<sym> combine_measurements(std::ranges::range auto const& measurements)
         requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, DecomposedComplexRandVar<sym>>
     {
-        struct AccumulatedValues {
-            RealValue<sym> inverse_p_variance{};
-            RealValue<sym> inverse_q_variance{};
-            RealValue<sym> p_value{};
-            RealValue<sym> q_value{};
-        };
+        auto result = DecomposedComplexRandVar<sym>{
+            .real_component = combine_measurements(
+                std::views::transform(measurements, [](auto const& x) -> auto& { return x.real_component; })),
+            .imag_component = combine_measurements(
+                std::views::transform(measurements, [](auto const& x) -> auto& { return x.imag_component; }))};
 
-        AccumulatedValues accumulated;
-        std::ranges::for_each(measurements, [&accumulated](auto const& measurement) {
-            accumulated.inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
-            accumulated.inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
-
-            accumulated.p_value += measurement.real_component.value / measurement.real_component.variance;
-            accumulated.q_value += measurement.imag_component.value / measurement.imag_component.variance;
-        });
-
-        if (is_normal(accumulated.inverse_p_variance) && is_normal(accumulated.inverse_q_variance)) {
-            return DecomposedComplexRandVar<sym>{
-                .real_component = {.value = accumulated.p_value / accumulated.inverse_p_variance,
-                                   .variance = RealValue<sym>{1.0} / accumulated.inverse_p_variance},
-                .imag_component = {.value = accumulated.q_value / accumulated.inverse_q_variance,
-                                   .variance = RealValue<sym>{1.0} / accumulated.inverse_q_variance}};
+        if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
+            result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+            result.imag_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
         }
-        return DecomposedComplexRandVar<sym>{
-            .real_component = {.value = accumulated.p_value,
-                               .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}},
-            .imag_component = {.value = accumulated.q_value,
-                               .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}}};
+        return result;
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        return combine_measurements<only_magnitude>(
-            std::views::transform(sensors, [&](Idx pos) -> auto& { return data[pos]; }));
+        return combine_measurements<only_magnitude>(sensors |
+                                                    std::views::transform([&](Idx pos) -> auto& { return data[pos]; }));
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
@@ -524,7 +527,7 @@ template <symmetry_tag sym> class MeasuredValues {
         return {.angle_measurement_type =
                     data[sensors.front()].angle_measurement_type, // TODO(mgovers): this should be fixed
                 .measurement = combine_measurements<only_magnitude>(
-                    std::views::transform(sensors, [&](Idx pos) -> auto& { return data[pos].measurement; }))};
+                    sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos].measurement; }))};
     }
 
     template <sensor_calc_param_type CalcParam, bool only_magnitude = false>
