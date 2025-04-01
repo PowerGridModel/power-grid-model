@@ -276,7 +276,7 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
         case node:
             return state.topo_comp_coup->node[obj_seq];
         default:
-            throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()", terminal_type);
+            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
         }
     }();
 
@@ -289,8 +289,11 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
 
     case branch_from:
         // all power sensors in branch3 are at from side in the mathematical model
+        [[fallthrough]];
     case branch3_1:
+        [[fallthrough]];
     case branch3_2:
+        [[fallthrough]];
     case branch3_3:
         return power_or_current_sensor.template get_output<sym>(
             solver_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
@@ -312,7 +315,7 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
         return power_or_current_sensor.template get_output<sym>(
             solver_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
     default:
-        throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " output_result()", terminal_type);
+        throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
     }
 }
 template <power_or_current_sensor_c Component, class ComponentContainer,
@@ -464,5 +467,4 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
     res_it = output_result<Shunt>(state, math_output, res_it);
     return res_it;
 }
-
 } // namespace power_grid_model::main_core

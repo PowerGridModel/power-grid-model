@@ -74,7 +74,9 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 get_component<Branch>(state, measured_object);
                 break;
             case branch3_1:
+                [[fallthrough]];
             case branch3_2:
+                [[fallthrough]];
             case branch3_3:
                 get_component<Branch3>(state, measured_object);
                 break;
@@ -156,7 +158,9 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     auto const& regulated_object = get_component<ThreeWindingTransformer>(state, regulated_object_idx);
                     switch (input.control_side) {
                     case side_1:
+                        [[fallthrough]];
                     case side_2:
+                        [[fallthrough]];
                     case side_3:
                         return regulated_object.node(static_cast<Branch3Side>(input.control_side));
                     default:

@@ -120,7 +120,9 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
             case generator:
                 return get_component_sequence_idx<GenericLoadGen>(state, measured_object);
             case branch3_1:
+                [[fallthrough]];
             case branch3_2:
+                [[fallthrough]];
             case branch3_3:
                 return get_component_sequence_idx<Branch3>(state, measured_object);
             case node:
@@ -148,10 +150,13 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
 
             switch (current_sensor.get_terminal_type()) {
             case branch_from:
+                [[fallthrough]];
             case branch_to:
                 return get_component_sequence_idx<Branch>(state, measured_object);
             case branch3_1:
+                [[fallthrough]];
             case branch3_2:
+                [[fallthrough]];
             case branch3_3:
                 return get_component_sequence_idx<Branch3>(state, measured_object);
             default:
