@@ -72,8 +72,12 @@ template <symmetry_tag sym> class MeasuredValues {
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
     constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }
     constexpr bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
-    constexpr bool has_branch_from(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
-    constexpr bool has_branch_to(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
+    constexpr bool has_branch_from(Idx branch) const {
+        return idx_branch_from_power_[branch] >= 0 || idx_branch_from_current_[branch];
+    }
+    constexpr bool has_branch_to(Idx branch) const {
+        return idx_branch_to_power_[branch] >= 0 || idx_branch_to_current_[branch] >= 0;
+    }
     constexpr bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
     constexpr bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
     constexpr bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
@@ -91,6 +95,12 @@ template <symmetry_tag sym> class MeasuredValues {
         return power_main_value_[idx_branch_from_power_[branch]];
     }
     constexpr auto const& branch_to_power(Idx branch) const { return power_main_value_[idx_branch_to_power_[branch]]; }
+    constexpr auto const& branch_from_current(Idx branch) const {
+        return current_main_value_[idx_branch_from_current_[branch]];
+    }
+    constexpr auto const& branch_to_current(Idx branch) const {
+        return current_main_value_[idx_branch_to_current_[branch]];
+    }
     constexpr auto const& shunt_power(Idx shunt) const { return power_main_value_[idx_shunt_power_[shunt]]; }
     constexpr auto const& load_gen_power(Idx load_gen) const { return extra_value_[idx_load_gen_power_[load_gen]]; }
     constexpr auto const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
@@ -177,6 +187,7 @@ template <symmetry_tag sym> class MeasuredValues {
     // branch/shunt flow, bus voltage, injection flow
     std::vector<VoltageSensorCalcParam<sym>> voltage_main_value_;
     std::vector<PowerSensorCalcParam<sym>> power_main_value_;
+    std::vector<CurrentSensorCalcParam<sym>> current_main_value_;
 
     // flat array of all the load_gen/source measurement
     // not relevant for the main calculation, as extra data for load_gen/source calculation
@@ -197,6 +208,9 @@ template <symmetry_tag sym> class MeasuredValues {
     // relevant for extra value
     IdxVector idx_load_gen_power_;
     IdxVector idx_source_power_;
+    // current measurement
+    IdxVector idx_branch_from_current_;
+    IdxVector idx_branch_to_current_;
 
     Idx n_voltage_measurements_{};
     Idx n_voltage_angle_measurements_{};
@@ -211,7 +225,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     void process_bus_related_measurements(StateEstimationInput<sym> const& input) {
         /*
-        The main purpose of this function is to aggregate all voltage and power sensor values to
+        The main purpose of this function is to aggregate all voltage and power/current sensor values to
             one voltage sensor value per bus.
             one injection power sensor value per bus.
             one power sensor value per shunt (in injection reference direction, note shunt itself is not considered as
@@ -383,36 +397,44 @@ template <symmetry_tag sym> class MeasuredValues {
 
     void process_branch_measurements(StateEstimationInput<sym> const& input) {
         /*
-        The main purpose of this function is to aggregate all power sensor values to one power sensor value per branch
-        side.
+        The main purpose of this function is to aggregate all power/current sensor values to one power/current sensor
+        value per branch side.
 
         This function loops through all branches.
         The branch_bus_idx contains the from and to bus indexes of the branch, or disconnected if the branch is not
         connected at that side. For each branch the checker checks if the from and to side are connected by checking if
         branch_bus_idx = disconnected.
 
-        If the branch_bus_idx = disconnected, idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
+        If the branch_bus_idx = disconnected, idx_branch_(to|from)_(power|current)_ is set to disconnected.
         If the side is connected, but there are no measurements in this branch side
-        idx_branch_to_power_/idx_branch_from_power_ is set to disconnected.
-        Else, idx_branch_to_power_/idx_branch_from_power_ is set to the index of the aggregated data in
-        power_main_value_.
+        idx_branch_(to|from)_(power|current)_ is set to disconnected.
+        Else, idx_branch_(to|from)_(power|current)_ is set to the index of the aggregated data in
+        power/current_main_value_.
 
         All measurement values for a single side of a branch are combined in a weighted average, which is appended to
-        power_main_value_. The values in power_main_value_ can be found using
-        idx_branch_to_power_/idx_branch_from_power_.
+        power/current_main_value_. The values in power/current_main_value_ can be found using
+        idx_branch_(to|from)_(power|current)_.
         */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
         static constexpr auto branch_to_checker = [](BranchIdx x) { return x[1] != -1; };
         for (Idx const branch : IdxRange{topo.n_branch()}) {
-            // from side
+            // from side power
             idx_branch_from_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_from, topo.branch_bus_idx,
                                    input.measured_branch_from_power, power_main_value_, branch_from_checker);
-            // to side
+            // to side current
             idx_branch_to_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_to, topo.branch_bus_idx,
                                    input.measured_branch_to_power, power_main_value_, branch_to_checker);
+            // from side power
+            idx_branch_from_current_[branch] =
+                process_one_object(branch, topo.current_sensors_per_branch_from, topo.branch_bus_idx,
+                                   input.measured_branch_from_current, current_main_value_, branch_from_checker);
+            // to side current
+            idx_branch_to_current_[branch] =
+                process_one_object(branch, topo.current_sensors_per_branch_to, topo.branch_bus_idx,
+                                   input.measured_branch_to_current, current_main_value_, branch_to_checker);
         }
     }
 
@@ -456,8 +478,9 @@ template <symmetry_tag sym> class MeasuredValues {
     // Since p and q are entirely decoupled, the real and imaginary components accumulate separately
     template <bool only_magnitude = false>
         requires(!only_magnitude)
-    static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
-                                                          IdxRange const& sensors) {
+    static DecomposedComplexRandVar<sym> combine_measurements(std::ranges::range auto const& measurements)
+        requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, DecomposedComplexRandVar<sym>>
+    {
         struct AccumulatedValues {
             RealValue<sym> inverse_p_variance{};
             RealValue<sym> inverse_q_variance{};
@@ -466,8 +489,7 @@ template <symmetry_tag sym> class MeasuredValues {
         };
 
         AccumulatedValues accumulated;
-        std::ranges::for_each(sensors, [&data, &accumulated](auto pos) {
-            DecomposedComplexRandVar<sym> const& measurement = data[pos];
+        std::ranges::for_each(measurements, [&accumulated](auto const& measurement) {
             accumulated.inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
             accumulated.inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
 
@@ -476,17 +498,33 @@ template <symmetry_tag sym> class MeasuredValues {
         });
 
         if (is_normal(accumulated.inverse_p_variance) && is_normal(accumulated.inverse_q_variance)) {
-            return PowerSensorCalcParam<sym>{
+            return DecomposedComplexRandVar<sym>{
                 .real_component = {.value = accumulated.p_value / accumulated.inverse_p_variance,
                                    .variance = RealValue<sym>{1.0} / accumulated.inverse_p_variance},
                 .imag_component = {.value = accumulated.q_value / accumulated.inverse_q_variance,
                                    .variance = RealValue<sym>{1.0} / accumulated.inverse_q_variance}};
         }
-        return PowerSensorCalcParam<sym>{
+        return DecomposedComplexRandVar<sym>{
             .real_component = {.value = accumulated.p_value,
                                .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}},
             .imag_component = {.value = accumulated.q_value,
                                .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}}};
+    }
+    template <bool only_magnitude = false>
+        requires(!only_magnitude)
+    static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
+                                                          IdxRange const& sensors) {
+        return combine_measurements<only_magnitude>(
+            std::views::transform(sensors, [&](Idx pos) -> auto& { return data[pos]; }));
+    }
+    template <bool only_magnitude = false>
+        requires(!only_magnitude)
+    static CurrentSensorCalcParam<sym> combine_measurements(std::vector<CurrentSensorCalcParam<sym>> const& data,
+                                                            IdxRange const& sensors) {
+        return {.angle_measurement_type =
+                    data[sensors.front()].angle_measurement_type, // TODO(mgovers): this should be fixed
+                .measurement = combine_measurements<only_magnitude>(
+                    std::views::transform(sensors, [&](Idx pos) -> auto& { return data[pos].measurement; }))};
     }
 
     template <sensor_calc_param_type CalcParam, bool only_magnitude = false>
@@ -512,11 +550,10 @@ template <symmetry_tag sym> class MeasuredValues {
 
     static constexpr DefaultStatusChecker default_status_checker{};
 
-    template <class TS, class StatusChecker = DefaultStatusChecker>
+    template <class TS, sensor_calc_param_type CalcParam, class StatusChecker = DefaultStatusChecker>
     static Idx process_one_object(Idx const object, grouped_idx_vector_type auto const& sensors_per_object,
-                                  std::vector<TS> const& object_status,
-                                  std::vector<PowerSensorCalcParam<sym>> const& input_data,
-                                  std::vector<PowerSensorCalcParam<sym>>& result_data,
+                                  std::vector<TS> const& object_status, std::vector<CalcParam> const& input_data,
+                                  std::vector<CalcParam>& result_data,
                                   StatusChecker status_checker = default_status_checker) {
         if (!status_checker(object_status[object])) {
             return disconnected;
