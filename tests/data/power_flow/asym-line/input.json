@@ -80,30 +80,30 @@
           "i_n" : 115.0
         }
     ],
-    "sym_load": [
+    "asym_load": [
       {
         "id": 6,
         "node": 1,
         "status": 1,
-        "type": 0,
-        "p_specified": 1000.0,
-        "q_specified": 1000.0
+        "type": 1,
+        "p_specified": [1000.0, 1000.0, 1000.0],
+        "q_specified": [1000.0, 1000.0, 1000.0]
       },
       {
         "id": 7,
         "node": 2,
         "status": 1,
-        "type": 0,
-        "p_specified": 1000.0,
-        "q_specified": 1000.0
+        "type": 1,
+        "p_specified": [1000.0, 1000.0, 1000.0],
+        "q_specified": [1000.0, 1000.0, 1000.0]
       },
       {
         "id": 8,
         "node": 3,
         "status": 1,
-        "type": 0,
-        "p_specified": 1000.0,
-        "q_specified": 1000.0
+        "type": 1,
+        "p_specified": [1000.0, 1000.0, 1000.0],
+        "q_specified": [1000.0, 1000.0, 1000.0]
       }
     ]
   }
