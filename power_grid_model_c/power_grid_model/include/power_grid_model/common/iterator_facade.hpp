@@ -79,8 +79,8 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     }
     friend constexpr auto operator+(difference_type offset, iterator it) -> iterator { return (it += offset); }
     friend constexpr auto operator-(iterator const& it, difference_type idx) -> iterator { return it + (-idx); }
-    friend constexpr auto operator-(iterator const& it, iterator const& other) -> difference_type {
-        return other.distance_to(it);
+    friend constexpr auto operator-(IteratorFacade const& first, IteratorFacade const& second) -> difference_type {
+        return second.distance_to(first);
     }
     constexpr auto operator[](difference_type idx) const -> value_type const& { return *(*this + idx); }
 
@@ -92,6 +92,10 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     }
     constexpr std::strong_ordering three_way_compare(IteratorFacade const& other) const {
         return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).three_way_compare(
+            static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
+    }
+    constexpr auto distance_to(IteratorFacade const& other) const -> difference_type {
+        return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).distance_to(
             static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
     }
 };
