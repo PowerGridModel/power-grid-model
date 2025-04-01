@@ -6,22 +6,18 @@ name: Build and Test C++ and Python
 
 # Controls when the workflow will run
 on:
-  # run pipeline on push event of main branch
-  push:
-    branches:
-      - main
-  # run pipeline on pull request
-  pull_request:
-  # run pipeline on merge queue
-  merge_group:
   # run pipeline from another workflow
   workflow_call:
     inputs:
       create_release:
         type: boolean
         description: Create a (pre-)release when CI passes
-        default: false
-        required: false
+        required: true
+    secrets:
+      PYPI_USER:
+        required: true
+      PYPI_PASS:
+        required: true
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -31,13 +27,12 @@ on:
         default: false
         required: true
 
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
-
 jobs:
-
   acquire-python-version-build-sdist:
     name: Build sdist and set version
     runs-on: ubuntu-24.04
@@ -54,7 +49,7 @@ jobs:
           python set_pypi_version.py
 
       - name: Build SDist
-        run:  python -m build --sdist --outdir wheelhouse .
+        run: python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
         uses: actions/upload-artifact@v4
@@ -217,7 +212,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.1
+        uses: pypa/cibuildwheel@v2.23.2
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -242,7 +237,6 @@ jobs:
             shell: bash -el {0}
           - os: windows
             shell: powershell
-    
     env:
       POWER_GRID_MODEL_NO_BINARY_BUILD: 1
 
@@ -272,7 +266,6 @@ jobs:
           $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
           Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
           cmake --build build/ --verbose -j1
           cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
@@ -282,10 +275,10 @@ jobs:
         run: |
           cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
           cmake --build build/ --verbose -j1
-          cmake --install build/      
+          cmake --install build/
 
       - name: Build python
-        run: python -m pip install . -vv --no-build-isolation --no-deps   
+        run: python -m pip install . -vv --no-build-isolation --no-deps  
 
       - name: Test
         run: pytest
@@ -337,7 +330,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        if: (inputs.create_release)
         run: |
           pip install twine
           echo "Publish to PyPI..."
@@ -345,7 +338,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (inputs.create_release == 'true'))
+        if: (inputs.create_release)
         with:
           files: |
             ./wheelhouse/*
