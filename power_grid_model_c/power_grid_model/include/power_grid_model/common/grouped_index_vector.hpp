@@ -52,6 +52,23 @@ inline auto sparse_decode(IdxVector const& indptr) {
     return result;
 }
 
+template <typename T, typename ElementType>
+concept iterator_of = std::input_or_output_iterator<T> && requires(T const t) {
+    { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
+};
+
+template <typename T, typename ElementType>
+concept random_access_range_of = std::ranges::random_access_range<T> && requires(T const t) {
+    { std::ranges::begin(t) } -> iterator_of<ElementType>;
+    { std::ranges::end(t) } -> iterator_of<ElementType>;
+};
+
+template <typename T>
+concept index_range_iterator = std::random_access_iterator<T> && requires(T const t) {
+    typename T::iterator;
+    { *t } -> random_access_range_of<Idx>;
+};
+
 template <typename T>
 concept grouped_index_vector_type = std::default_initializable<T> && requires(T const t, Idx const idx) {
     typename T::iterator;
@@ -60,7 +77,7 @@ concept grouped_index_vector_type = std::default_initializable<T> && requires(T 
 
     { t.begin() } -> index_range_iterator;
     { t.end() } -> index_range_iterator;
-    { t.get_element_range(idx) } -> random_access_iterable_like<Idx>;
+    { t.get_element_range(idx) } -> random_access_range_of<Idx>;
 
     { t.element_size() } -> std::same_as<Idx>;
     { t.get_group(idx) } -> std::same_as<Idx>;
@@ -79,8 +96,8 @@ constexpr auto from_dense = from_dense_t{};
 class SparseGroupedIdxVector {
   private:
     class GroupIterator : public IteratorFacade<GroupIterator, IdxRange, Idx> {
-        using Base = IteratorFacade<GroupIterator, IdxRange, Idx>;
         friend class IteratorFacade<GroupIterator, IdxRange, Idx>;
+        using Base = IteratorFacade<GroupIterator, IdxRange, Idx>;
 
       public:
         using value_type = typename Base::value_type;
@@ -110,7 +127,7 @@ class SparseGroupedIdxVector {
             assert(indptr_ == other.indptr_);
             return group_ == other.group_;
         }
-        constexpr std::strong_ordering cmp(GroupIterator const& other) const {
+        constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
             assert(indptr_ == other.indptr_);
             return group_ <=> other.group_;
         }
@@ -158,8 +175,8 @@ class SparseGroupedIdxVector {
 class DenseGroupedIdxVector {
   private:
     class GroupIterator : public IteratorFacade<GroupIterator, IdxRange, Idx> {
-        using Base = IteratorFacade<GroupIterator, IdxRange, Idx>;
         friend class IteratorFacade<GroupIterator, IdxRange, Idx>;
+        using Base = IteratorFacade<GroupIterator, IdxRange, Idx>;
 
       public:
         using value_type = typename Base::value_type;
@@ -192,7 +209,9 @@ class DenseGroupedIdxVector {
             return latest_value_;
         }
         constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
-        constexpr std::strong_ordering cmp(GroupIterator const& other) const { return group_ <=> other.group_; }
+        constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
+            return group_ <=> other.group_;
+        }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
 
         constexpr void increment() {

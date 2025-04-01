@@ -313,7 +313,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             assert(container_ptr_ == other.container_ptr_);
             return idx_ == other.idx_;
         }
-        constexpr auto cmp(Iterator const& other) const {
+        constexpr auto three_way_compare(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
             return idx_ <=> other.idx_;
         }
@@ -332,37 +332,13 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     };
 
   public:
-    template <typename Gettable>
-        requires supported_type_c<std::remove_const_t<Gettable>, GettableTypes...>
-    class View : public std::ranges::view_interface<View<Gettable>> {
-      public:
-        View(Iterator<Gettable> begin, Iterator<Gettable> end) : begin_{begin}, end_{end} {}
-
-        auto begin() const { return begin_; }
-        auto end() const { return end_; }
-        auto begin()
-            requires(!std::is_const_v<Gettable>)
-        {
-            return begin_;
-        }
-        auto end()
-            requires(!std::is_const_v<Gettable>)
-        {
-            return end_;
-        }
-
-      private:
-        Iterator<Gettable> begin_;
-        Iterator<Gettable> end_;
-    };
-
     template <supported_type_c<GettableTypes...> Gettable> auto iter() {
-        return View<Gettable>{Iterator<Gettable>{this, 0},
-                              Iterator<Gettable>{this, this->template size<std::remove_cv_t<Gettable>>()}};
+        return std::ranges::subrange{Iterator<Gettable>{this, 0},
+                                     Iterator<Gettable>{this, this->template size<std::remove_cv_t<Gettable>>()}};
     }
     template <supported_type_c<GettableTypes...> Gettable> auto iter() const {
-        return View<Gettable const>{Iterator<Gettable const>{this, 0},
-                                    Iterator<Gettable const>{this, this->template size<std::remove_cv_t<Gettable>>()}};
+        return std::ranges::subrange{Iterator<Gettable const>{this, 0},
+                                     Iterator<Gettable const>{this, this->template size<std::remove_cv_t<Gettable>>()}};
     }
     template <supported_type_c<GettableTypes...> Gettable> auto citer() const { return iter<Gettable>(); }
 };

@@ -10,26 +10,9 @@
 #include <ranges>
 
 namespace power_grid_model {
-template <typename T, typename ElementType>
-concept iterator_like = requires(T const t) {
-    { *t } -> std::convertible_to<std::remove_cvref_t<ElementType> const&>;
-};
-
-template <typename T, typename ElementType>
-concept random_access_iterable_like = std::ranges::random_access_range<T> && requires(T const t) {
-    { t.begin() } -> iterator_like<ElementType>;
-    { t.end() } -> iterator_like<ElementType>;
-};
-
-template <typename T>
-concept index_range_iterator = std::random_access_iterator<T> && requires(T const t) {
-    typename T::iterator;
-    { *t } -> random_access_iterable_like<Idx>;
-};
-
 template <class Impl, typename ValueType, typename DifferenceType> class IteratorFacade {
   public:
-    using iterator = Impl;
+    using iterator = Impl; // CRTP
     using const_iterator = std::add_const_t<iterator>;
     using value_type = ValueType;
     using difference_type = DifferenceType;
@@ -61,10 +44,10 @@ template <class Impl, typename ValueType, typename DifferenceType> class Iterato
     }
     friend constexpr std::strong_ordering operator<=>(IteratorFacade const& first, IteratorFacade const& second)
         requires requires(const_iterator it) {
-            { it.cmp(it) } -> std::convertible_to<std::strong_ordering>;
+            { it.three_way_compare(it) } -> std::convertible_to<std::strong_ordering>;
         }
     {
-        return first.cmp(second);
+        return first.three_way_compare(second);
     }
     constexpr auto operator++() -> iterator& {
         static_cast<iterator*>(this)->increment();
@@ -107,8 +90,8 @@ template <class Impl, typename ValueType, typename DifferenceType> class Iterato
         return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).equal(
             static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
     }
-    constexpr std::strong_ordering cmp(IteratorFacade const& other) const {
-        return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).cmp(
+    constexpr std::strong_ordering three_way_compare(IteratorFacade const& other) const {
+        return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).three_way_compare(
             static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
     }
 };

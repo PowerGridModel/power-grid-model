@@ -124,9 +124,8 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
             }
         }
         CHECK(actual_elements == expected_elements);
-        CHECK(std::ranges::equal(actual_ranges, expected_ranges, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
+        CHECK(std::ranges::equal(actual_ranges, expected_ranges,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 }
 
@@ -177,9 +176,8 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
             CHECK(index == current_index++);
         }
-        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
+        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 
     SUBCASE("2 inputs") {
@@ -203,12 +201,10 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
         CHECK(actual_idx_counts_a == expected_elements_a);
         CHECK(actual_idx_counts_b == expected_elements_b);
-        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
-        CHECK(std::ranges::equal(actual_ranges_b, expected_ranges_b, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
+        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+        CHECK(std::ranges::equal(actual_ranges_b, expected_ranges_b,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 
     SUBCASE("3 inputs") {
@@ -225,15 +221,12 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
             CHECK(index == current_index++);
         }
-        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
-        CHECK(std::ranges::equal(actual_ranges_b, expected_ranges_b, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
-        CHECK(std::ranges::equal(actual_ranges_c, expected_ranges_c, [](auto const& lhs, auto const& rhs) {
-            return (lhs.empty() && rhs.empty()) || (lhs.front() == rhs.front() && lhs.back() == rhs.back());
-        }));
+        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+        CHECK(std::ranges::equal(actual_ranges_b, expected_ranges_b,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+        CHECK(std::ranges::equal(actual_ranges_c, expected_ranges_c,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 }
 
