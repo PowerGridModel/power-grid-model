@@ -10,7 +10,7 @@
 #include <ranges>
 
 namespace power_grid_model {
-template <class Impl, typename ValueType, typename DifferenceType> class IteratorFacade {
+template <class Impl, typename ValueType, std::integral DifferenceType> class IteratorFacade {
   public:
     using iterator = Impl; // CRTP
     using const_iterator = std::add_const_t<iterator>;
