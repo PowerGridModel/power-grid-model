@@ -72,15 +72,15 @@ template <class Impl, typename ValueType, typename DifferenceType> class Iterato
         return *static_cast<iterator*>(this);
     }
     constexpr auto operator-=(std::integral auto idx) -> iterator& { return ((*this) += (-idx)); }
-    constexpr auto operator+(difference_type offset) const -> iterator {
-        iterator result{*static_cast<const_iterator*>(this)};
+    friend constexpr auto operator+(iterator const& it, difference_type offset) -> iterator {
+        iterator result{it};
         result += offset;
         return result;
     }
-    friend constexpr auto operator+(const difference_type offset, iterator it) -> iterator { return (it += offset); }
-    constexpr auto operator-(difference_type idx) const -> iterator { return (*this) + (-idx); }
-    constexpr auto operator-(iterator const& other) const -> difference_type {
-        return other.distance_to(*static_cast<const_iterator*>(this));
+    friend constexpr auto operator+(difference_type offset, iterator it) -> iterator { return (it += offset); }
+    friend constexpr auto operator-(iterator const& it, difference_type idx) -> iterator { return it + (-idx); }
+    friend constexpr auto operator-(iterator const& it, iterator const& other) -> difference_type {
+        return other.distance_to(it);
     }
     constexpr auto operator[](difference_type idx) const -> value_type const& { return *(*this + idx); }
 

@@ -463,7 +463,9 @@ template <symmetry_tag sym> class MeasuredValues {
             RealValue<sym> inverse_q_variance{};
             RealValue<sym> p_value{};
             RealValue<sym> q_value{};
-        } accumulated;
+        };
+
+        AccumulatedValues accumulated;
         std::ranges::for_each(sensors, [&data, &accumulated](auto pos) {
             DecomposedComplexRandVar<sym> const& measurement = data[pos];
             accumulated.inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
