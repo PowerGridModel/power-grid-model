@@ -243,7 +243,7 @@ TEST_CASE("API Serialization and Deserialization") {
 
 TEST_CASE("API Serialization and Deserialization with float precision") {
     // dataset with one double value
-    std::vector<double> const u_rated_ref{8845.023450000001};
+    std::vector<double> const u_rated_ref{1.8014398509481982e+16};
     DatasetConst dataset{"input", true, 1};
     dataset.add_buffer("node", 1, 1, nullptr, nullptr);
     dataset.add_attribute_buffer("node", "u_rated", u_rated_ref.data());
