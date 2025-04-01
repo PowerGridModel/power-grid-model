@@ -79,7 +79,8 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
 
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
     Idx const num_groups{6};
-    IdxRanges expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
+    IdxRanges expected_ranges{IdxRange{0, 0}, IdxRange{0, 3}, IdxRange{3, 3},
+                              IdxRange{3, 6}, IdxRange{6, 7}, IdxRange{7, 7}};
     std::vector<Idx> const expected_elements{0, 1, 2, 3, 4, 5, 6};
 
     auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
@@ -143,12 +144,14 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
     // First grouped idx vector and its expeceted elements and groups
     IdxVector const groups_a{1, 1, 1, 3, 3, 3, 4};
-    IdxRanges expected_ranges_a{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
+    IdxRanges expected_ranges_a{IdxRange{0, 0}, IdxRange{0, 3}, IdxRange{3, 3},
+                                IdxRange{3, 6}, IdxRange{6, 7}, IdxRange{7, 7}};
     std::vector<Idx> const expected_elements_a{0, 1, 2, 3, 4, 5, 6};
 
     // Second grouped idx vector and its expeceted elements and groups
     IdxVector const groups_b{0, 1, 1, 3, 3, 4, 5, 5};
-    IdxRanges expected_ranges_b{{0, 1}, {1, 3}, {3, 3}, {3, 5}, {5, 6}, {6, 8}};
+    IdxRanges expected_ranges_b{IdxRange{0, 1}, IdxRange{1, 3}, IdxRange{3, 3},
+                                IdxRange{3, 5}, IdxRange{5, 6}, IdxRange{6, 8}};
     std::vector<Idx> const expected_elements_b{0, 1, 2, 3, 4, 5, 6, 7};
 
     // reuse for brevity
