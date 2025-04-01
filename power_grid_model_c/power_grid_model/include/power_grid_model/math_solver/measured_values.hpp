@@ -503,9 +503,9 @@ template <symmetry_tag sym> class MeasuredValues {
     {
         auto result = DecomposedComplexRandVar<sym>{
             .real_component = combine_measurements(
-                std::views::transform(measurements, [](auto const& x) -> auto& { return x.real_component; })),
+                measurements | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
             .imag_component = combine_measurements(
-                std::views::transform(measurements, [](auto const& x) -> auto& { return x.imag_component; }))};
+                measurements | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
 
         if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
             result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
