@@ -12,6 +12,7 @@
 #include <cmath>
 #include <limits>
 #include <string>
+#include <vector>
 
 namespace power_grid_model_cpp {
 
@@ -240,4 +241,26 @@ TEST_CASE("API Serialization and Deserialization") {
     }
 }
 
+TEST_CASE("API Serialization and Deserialization with float precision") {
+    // dataset with one double value
+    std::vector<double> const u_rated_ref{1.8014398509481982e+16};
+    DatasetConst dataset{"input", true, 1};
+    dataset.add_buffer("node", 1, 1, nullptr, nullptr);
+    dataset.add_attribute_buffer("node", "u_rated", u_rated_ref.data());
+
+    // serialize
+    Serializer json_serializer{dataset, PGM_json};
+    std::string const json_result = json_serializer.get_to_zero_terminated_string(0, -1);
+
+    // deserialize
+    std::vector<double> u_rated(1);
+    Deserializer deserializer{json_result, PGM_json};
+    auto& deserialized_dataset = deserializer.get_dataset();
+    deserialized_dataset.set_buffer("node", nullptr, nullptr);
+    deserialized_dataset.set_attribute_buffer("node", "u_rated", u_rated.data());
+    deserializer.parse_to_buffer();
+
+    // check
+    CHECK(u_rated_ref[0] == u_rated[0]);
+}
 } // namespace power_grid_model_cpp
