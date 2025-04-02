@@ -37,7 +37,7 @@ class UnsupportedValidationCase : public PowerGridError {
 
 using nlohmann::json;
 
-auto read_file(std::filesystem::path const& path) { // NOLINT(clang-diagnostic-unused-function)
+auto read_file(std::filesystem::path const& path) {
     std::ifstream const f{path};
     std::ostringstream buffer;
     buffer << f.rdbuf();
