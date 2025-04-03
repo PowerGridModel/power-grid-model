@@ -8,7 +8,7 @@
 #include "state_queries.hpp"
 
 #include "../all_components.hpp"
-#include "../common/iterator_like_concepts.hpp"
+#include "../common/iterator_facade.hpp"
 
 #include <unordered_set>
 
@@ -20,8 +20,7 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer,
-          forward_iterator_like<typename Component::InputType> ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
                           double system_frequency) {

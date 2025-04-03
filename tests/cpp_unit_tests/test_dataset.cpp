@@ -702,8 +702,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     std::ranges::fill(id_buffer, 1);
                     check_all_spans();
 
-                    std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
-                                   id_buffer.begin(), [](ID value) { return value * 2; });
+                    std::ranges::transform(std::ranges::iota_view{ID{0}, total_elements}, id_buffer.begin(),
+                                           [](ID value) { return value * 2; });
 
                     check_all_spans();
                     std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -774,9 +774,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                 std::ranges::fill(id_buffer, 1);
                                 check_all_spans(scenario);
 
-                                std::transform(boost::counting_iterator<ID>{0},
-                                               boost::counting_iterator<ID>{total_elements}, id_buffer.begin(),
-                                               [](ID value) { return value * 2; });
+                                std::ranges::transform(std::ranges::iota_view{ID{0}, total_elements}, id_buffer.begin(),
+                                                       [](ID value) { return value * 2; });
                                 check_all_spans(scenario);
 
                                 std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -843,8 +842,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     std::ranges::fill(id_buffer, 1);
                     check_all_spans();
 
-                    std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
-                                   id_buffer.begin(), [](ID value) { return value * 2; });
+                    std::ranges::transform(std::ranges::iota_view{ID{0}, total_elements}, id_buffer.begin(),
+                                           [](ID value) { return value * 2; });
                     check_all_spans();
 
                     std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -928,9 +927,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             std::ranges::fill(id_buffer, 1);
                             check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
-                            std::transform(boost::counting_iterator<ID>{0},
-                                           boost::counting_iterator<ID>{static_cast<ID>(total_elements)},
-                                           id_buffer.begin(), [](ID value) { return value * 2; });
+                            std::ranges::transform(std::ranges::iota_view{ID{0}, static_cast<ID>(total_elements)},
+                                                   id_buffer.begin(), [](ID value) { return value * 2; });
                             check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
                             std::ranges::transform(id_buffer, a1_buffer.begin(),

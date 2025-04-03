@@ -8,7 +8,7 @@
 #include "state.hpp"
 
 #include "../all_components.hpp"
-#include "../common/iterator_like_concepts.hpp"
+#include "../common/iterator_facade.hpp"
 #include "../container.hpp"
 
 #include <map>
@@ -16,7 +16,7 @@
 namespace power_grid_model::main_core::update {
 
 namespace detail {
-template <component_c Component, forward_iterator_like<typename Component::UpdateType> ForwardIterator, typename Func>
+template <component_c Component, std::forward_iterator ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func func, ForwardIterator begin, ForwardIterator end,
                                        std::span<Idx2D const> sequence_idx) {
@@ -163,8 +163,7 @@ UpdateIndependence<ComponentTypes...> check_update_independence(MainModelState<C
 
 namespace detail {
 
-template <component_c Component, class ComponentContainer,
-          forward_iterator_like<typename Component::UpdateType> ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void get_component_sequence_impl(MainModelState<ComponentContainer> const& state, ForwardIterator begin,
@@ -185,8 +184,7 @@ inline void get_component_sequence_impl(MainModelState<ComponentContainer> const
     }
 }
 
-template <component_c Component, class ComponentContainer,
-          forward_iterator_like<typename Component::UpdateType> ForwardIterator>
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence_by_iter(MainModelState<ComponentContainer> const& state,
                                                          ForwardIterator begin, ForwardIterator end,
@@ -242,8 +240,7 @@ get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstD
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <component_c Component, class ComponentContainer,
-          forward_iterator_like<typename Component::UpdateType> ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
@@ -268,8 +265,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 
     return state_changed;
 }
-template <component_c Component, class ComponentContainer,
-          forward_iterator_like<typename Component::UpdateType> ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline UpdateChange update_component(MainModelState<ComponentContainer>& state, ForwardIterator begin,
@@ -282,8 +278,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <component_c Component, class ComponentContainer,
-          forward_iterator_like<typename Component::UpdateType> ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
@@ -297,8 +292,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Forw
         },
         begin, end, sequence_idx);
 }
-template <component_c Component, class ComponentContainer,
-          forward_iterator_like<typename Component::UpdateType> ForwardIterator,
+template <component_c Component, class ComponentContainer, std::forward_iterator ForwardIterator,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void update_inverse(MainModelState<ComponentContainer> const& state, ForwardIterator begin, ForwardIterator end,
