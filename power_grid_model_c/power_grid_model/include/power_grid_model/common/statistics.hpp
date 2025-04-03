@@ -7,6 +7,8 @@
 #include "common.hpp"
 #include "three_phase_tensor.hpp"
 
+#include <ranges>
+
 /**
  * @file statistics.hpp
  * @brief This file contains various structures and functions for handling statistical representations of
@@ -204,4 +206,47 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                             9.0}};
     }
 };
+
+namespace statistics {
+// combine multiple measurements of one quantity using Kalman filter
+constexpr auto combine_measurements(std::ranges::view auto measurements)
+    requires std::same_as<std::ranges::range_value_t<decltype(measurements)>,
+                          IndependentRealRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
+{
+    using sym = std::ranges::range_value_t<decltype(measurements)>::sym;
+
+    RealValue<sym> accumulated_inverse_variance{};
+    RealValue<sym> accumulated_value{};
+
+    std::ranges::for_each(measurements, [&accumulated_inverse_variance, &accumulated_value](auto const& measurement) {
+        accumulated_inverse_variance += RealValue<sym>{1.0} / measurement.variance;
+        accumulated_value += measurement.value / measurement.variance;
+    });
+
+    if (is_normal(accumulated_inverse_variance)) {
+        return IndependentRealRandVar<sym>{.value = accumulated_value / accumulated_inverse_variance,
+                                           .variance = RealValue<sym>{1.0} / accumulated_inverse_variance};
+    }
+    return IndependentRealRandVar<sym>{.value = accumulated_value,
+                                       .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}};
+}
+constexpr auto combine_measurements(std::ranges::view auto measurements)
+    requires std::same_as<std::ranges::range_value_t<decltype(measurements)>,
+                          DecomposedComplexRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
+{
+    using sym = std::ranges::range_value_t<decltype(measurements)>::sym;
+
+    DecomposedComplexRandVar<sym> result{
+        .real_component = combine_measurements(
+            measurements | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
+        .imag_component = combine_measurements(
+            measurements | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
+
+    if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
+        result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+        result.imag_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+    }
+    return result;
+}
+} // namespace statistics
 } // namespace power_grid_model

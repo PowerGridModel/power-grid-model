@@ -469,56 +469,12 @@ template <symmetry_tag sym> class MeasuredValues {
         return VoltageSensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
                                            1.0 / accumulated_inverse_variance};
     }
-
-    // combine multiple measurements of one quantity
-    // using Kalman filter
-    // if only_magnitude = true, combine the abs value of the individual data
-    //      set imag part to nan, to signal this is a magnitude only measurement
-    //
-    // Since p and q are entirely decoupled, the real and imaginary components accumulate separately
-    template <bool only_magnitude = false>
-        requires(!only_magnitude)
-    static IndependentRealRandVar<sym> combine_measurements(std::ranges::view auto measurements)
-        requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, IndependentRealRandVar<sym>>
-    {
-        RealValue<sym> accumulated_inverse_variance{};
-        RealValue<sym> accumulated_value{};
-
-        std::ranges::for_each(measurements,
-                              [&accumulated_inverse_variance, &accumulated_value](auto const& measurement) {
-                                  accumulated_inverse_variance += RealValue<sym>{1.0} / measurement.variance;
-                                  accumulated_value += measurement.value / measurement.variance;
-                              });
-
-        if (is_normal(accumulated_inverse_variance)) {
-            return IndependentRealRandVar<sym>{.value = accumulated_value / accumulated_inverse_variance,
-                                               .variance = RealValue<sym>{1.0} / accumulated_inverse_variance};
-        }
-        return {.value = accumulated_value, .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}};
-    }
-    template <bool only_magnitude = false>
-        requires(!only_magnitude)
-    static DecomposedComplexRandVar<sym> combine_measurements(std::ranges::view auto measurements)
-        requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, DecomposedComplexRandVar<sym>>
-    {
-        auto result = DecomposedComplexRandVar<sym>{
-            .real_component = combine_measurements(
-                measurements | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
-            .imag_component = combine_measurements(
-                measurements | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
-
-        if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
-            result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
-            result.imag_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
-        }
-        return result;
-    }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        return combine_measurements<only_magnitude>(sensors |
-                                                    std::views::transform([&](Idx pos) -> auto& { return data[pos]; }));
+        return statistics::combine_measurements(sensors |
+                                                std::views::transform([&](Idx pos) -> auto& { return data[pos]; }));
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
@@ -526,7 +482,7 @@ template <symmetry_tag sym> class MeasuredValues {
                                                             IdxRange const& sensors) {
         return {.angle_measurement_type =
                     data[sensors.front()].angle_measurement_type, // TODO(mgovers): this should be fixed
-                .measurement = combine_measurements<only_magnitude>(
+                .measurement = statistics::combine_measurements(
                     sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos].measurement; }))};
     }
 
