@@ -54,6 +54,8 @@ template <symmetry_tag sym> class MeasuredValues {
           idx_shunt_power_(math_topology().n_shunt()),
           idx_load_gen_power_(math_topology().n_load_gen()),
           idx_source_power_(math_topology().n_source()),
+          idx_branch_from_current_(math_topology().n_branch()),
+          idx_branch_to_current_(math_topology().n_branch()),
           // default angle shift
           // sym: 0
           // asym: 0, -120deg, -240deg
@@ -73,7 +75,7 @@ template <symmetry_tag sym> class MeasuredValues {
     constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }
     constexpr bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
     constexpr bool has_branch_from(Idx branch) const {
-        return idx_branch_from_power_[branch] >= 0 || idx_branch_from_current_[branch];
+        return idx_branch_from_power_[branch] >= 0 || idx_branch_from_current_[branch] >= 0;
     }
     constexpr bool has_branch_to(Idx branch) const {
         return idx_branch_to_power_[branch] >= 0 || idx_branch_to_current_[branch] >= 0;
@@ -445,29 +447,24 @@ template <symmetry_tag sym> class MeasuredValues {
     template <bool only_magnitude = false>
     static VoltageSensorCalcParam<sym> combine_measurements(std::vector<VoltageSensorCalcParam<sym>> const& data,
                                                             IdxRange const& sensors) {
-        double accumulated_inverse_variance{};
-        ComplexValue<sym> accumulated_value{};
-        for (auto pos : sensors) {
-            auto const& measurement = data[pos];
-            auto const inv_variance = 1.0 / measurement.variance;
-
-            accumulated_inverse_variance += inv_variance;
-            if constexpr (only_magnitude) {
-                ComplexValue<sym> abs_value = piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                abs_value += detail::cabs_or_real<sym>(measurement.value);
-                accumulated_value += abs_value * inv_variance;
-            } else {
-                // accumulate value
-                accumulated_value += measurement.value * inv_variance;
-            }
+        auto complex_measurements = sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; });
+        if constexpr (only_magnitude) {
+            auto const combined_magnitude_measurement = statistics::combine_measurements(
+                complex_measurements | std::views::transform([](auto const& measurement) {
+                    return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
+                                                   .variance = measurement.variance};
+                }));
+            return UniformComplexRandVar<sym>{.value =
+                                                  [&combined_magnitude_measurement]() {
+                                                      ComplexValue<sym> abs_value =
+                                                          piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
+                                                      abs_value += combined_magnitude_measurement.value;
+                                                      return abs_value;
+                                                  }(),
+                                              .variance = combined_magnitude_measurement.variance};
+        } else {
+            return statistics::combine_measurements(complex_measurements);
         }
-
-        if (!is_normal(accumulated_inverse_variance)) {
-            return VoltageSensorCalcParam<sym>{accumulated_value, std::numeric_limits<double>::infinity()};
-        }
-
-        return VoltageSensorCalcParam<sym>{accumulated_value / accumulated_inverse_variance,
-                                           1.0 / accumulated_inverse_variance};
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
@@ -480,8 +477,7 @@ template <symmetry_tag sym> class MeasuredValues {
         requires(!only_magnitude)
     static CurrentSensorCalcParam<sym> combine_measurements(std::vector<CurrentSensorCalcParam<sym>> const& data,
                                                             IdxRange const& sensors) {
-        return {.angle_measurement_type =
-                    data[sensors.front()].angle_measurement_type, // TODO(mgovers): this should be fixed
+        return {.angle_measurement_type = AngleMeasurementType::local, // TODO(mgovers): this should be fixed
                 .measurement = statistics::combine_measurements(
                     sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos].measurement; }))};
     }

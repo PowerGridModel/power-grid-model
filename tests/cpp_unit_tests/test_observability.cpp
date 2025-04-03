@@ -121,11 +121,17 @@ TEST_CASE("Necessary observability check") {
     SUBCASE("Power sensor and current sensor are equivalent") {
         // remove the power sensor -> not observable
         topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0}};
+        se_input.measured_branch_from_power = {};
         check_not_observable(topo, param, se_input);
+
         // add the current sensor -> observable
         topo.current_sensors_per_branch_from = {from_sparse, {0, 1, 1, 1}};
+        se_input.measured_branch_from_current = {{.angle_measurement_type = AngleMeasurementType::local,
+                                                  .measurement = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                                  .imag_component = {.value = 0.0, .variance = 1.0}}}};
+
         check_observable(topo, param, se_input);
-    }
+    } // namespace power_grid_model
 }
 
 } // namespace power_grid_model

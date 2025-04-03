@@ -211,24 +211,30 @@ namespace statistics {
 // combine multiple measurements of one quantity using Kalman filter
 constexpr auto combine_measurements(std::ranges::view auto measurements)
     requires std::same_as<std::ranges::range_value_t<decltype(measurements)>,
-                          IndependentRealRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
+                          UniformRealRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>> ||
+             std::same_as<std::ranges::range_value_t<decltype(measurements)>,
+                          IndependentRealRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>> ||
+             std::same_as<std::ranges::range_value_t<decltype(measurements)>,
+                          UniformComplexRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
 {
-    using sym = std::ranges::range_value_t<decltype(measurements)>::sym;
+    using RandVarType = std::ranges::range_value_t<decltype(measurements)>;
+    using ValueType = decltype(RandVarType::value);
+    using VarianceType = decltype(RandVarType::variance);
+    using sym = RandVarType::sym;
 
-    RealValue<sym> accumulated_inverse_variance{};
-    RealValue<sym> accumulated_value{};
+    VarianceType accumulated_inverse_variance{};
+    ValueType accumulated_value{};
 
     std::ranges::for_each(measurements, [&accumulated_inverse_variance, &accumulated_value](auto const& measurement) {
-        accumulated_inverse_variance += RealValue<sym>{1.0} / measurement.variance;
+        accumulated_inverse_variance += VarianceType{1.0} / measurement.variance;
         accumulated_value += measurement.value / measurement.variance;
     });
 
     if (is_normal(accumulated_inverse_variance)) {
-        return IndependentRealRandVar<sym>{.value = accumulated_value / accumulated_inverse_variance,
-                                           .variance = RealValue<sym>{1.0} / accumulated_inverse_variance};
+        return RandVarType{.value = accumulated_value / accumulated_inverse_variance,
+                           .variance = VarianceType{1.0} / accumulated_inverse_variance};
     }
-    return IndependentRealRandVar<sym>{.value = accumulated_value,
-                                       .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}};
+    return RandVarType{.value = accumulated_value, .variance = VarianceType{std::numeric_limits<double>::infinity()}};
 }
 constexpr auto combine_measurements(std::ranges::view auto measurements)
     requires std::same_as<std::ranges::range_value_t<decltype(measurements)>,
