@@ -333,6 +333,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
         main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
         main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
+        main_core::register_topology_components<GenericCurrentSensor>(state_, comp_topo);
         main_core::register_topology_components<Regulator>(state_, comp_topo);
         state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
     }
@@ -800,6 +801,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
+
+    void check_no_experimental_features_used(Options const& options) const {
+        if (options.calculation_type == CalculationType::state_estimation &&
+            state_.components.template size<GenericCurrentSensor>() > 0) {
+            throw ExperimentalFeature{"State estimation", "current sensors"};
+        }
+    }
 
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
