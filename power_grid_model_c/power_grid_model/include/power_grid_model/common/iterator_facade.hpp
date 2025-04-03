@@ -14,30 +14,23 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
   public:
     using iterator = Impl; // CRTP
     using const_iterator = std::add_const_t<iterator>;
-    using value_type = ValueType;
+    using value_type = std::remove_cvref_t<ValueType>;
     using difference_type = DifferenceType;
     using iterator_category = std::random_access_iterator_tag;
     using pointer = std::add_pointer_t<ValueType>;
-    using reference = std::add_lvalue_reference_t<std::add_const_t<ValueType>>;
+    using reference = std::add_lvalue_reference_t<ValueType>;
 
-    constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
-        return static_cast<const_iterator*>(this)->dereference();
-    }
-    constexpr auto operator*() -> std::add_lvalue_reference_t<value_type>
+    constexpr auto operator*() const -> decltype(auto) { return static_cast<const_iterator*>(this)->dereference(); }
+    constexpr auto operator*() -> reference
         requires requires(iterator it) {
-            { it.dereference() } -> std::same_as<std::add_lvalue_reference_t<value_type>>;
+            { it.dereference() } -> std::same_as<reference>;
         }
     {
         return static_cast<iterator*>(this)->dereference();
     }
-    constexpr auto operator->() const -> value_type const* { return &*(*this); }
-    constexpr auto operator->() -> value_type*
-        requires requires(iterator it) {
-            { it.dereference() } -> std::convertible_to<std::add_pointer_t<std::remove_cvref_t<value_type>>>;
-        }
-    {
-        return &*(*this);
-    }
+    constexpr auto operator->() const -> decltype(auto) { return &*(*this); }
+    constexpr auto operator->() -> decltype(auto) { return &*(*this); }
+
     friend constexpr bool operator==(IteratorFacade const& first, IteratorFacade const& second) {
         return first.equal(second);
     }
@@ -48,6 +41,7 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     {
         return first.three_way_compare(second);
     }
+
     constexpr auto operator++() -> iterator& {
         static_cast<iterator*>(this)->increment();
         return *static_cast<iterator*>(this);
@@ -71,6 +65,7 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
         return *static_cast<iterator*>(this);
     }
     constexpr auto operator-=(std::integral auto idx) -> iterator& { return ((*this) += (-idx)); }
+
     friend constexpr auto operator+(iterator const& it, difference_type offset) -> iterator {
         iterator result{it};
         result += offset;
@@ -81,6 +76,7 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     friend constexpr auto operator-(IteratorFacade const& first, IteratorFacade const& second) -> difference_type {
         return second.distance_to(first);
     }
+
     constexpr auto operator[](difference_type idx) const -> value_type const& { return *(*this + idx); }
 
   private:

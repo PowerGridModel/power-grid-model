@@ -13,8 +13,6 @@
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
 
-#include <boost/range.hpp>
-
 #include <span>
 #include <string_view>
 
@@ -135,7 +133,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
             : current_{idx, attribute_buffers} {}
 
       private:
-        friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx>;
+        friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
+                                    Idx>;
 
         constexpr auto dereference() -> value_type& { return current_; }
         constexpr auto dereference() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
@@ -164,7 +163,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     constexpr bool empty() const { return size_ == 0; }
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
-    auto iter() const { return boost::make_iterator_range(begin(), end()); }
+    auto iter() const { return std::ranges::subrange{begin(), end()}; }
     auto operator[](Idx idx) const { return *get(idx); }
 
   private:

@@ -95,13 +95,14 @@ constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange, Idx> {
-        friend class IteratorFacade<GroupIterator, IdxRange, Idx>;
-        using Base = IteratorFacade<GroupIterator, IdxRange, Idx>;
+    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange const, Idx> {
+        friend class IteratorFacade<GroupIterator, IdxRange const, Idx>;
+        using Base = IteratorFacade<GroupIterator, IdxRange const, Idx>;
 
       public:
         using value_type = typename Base::value_type;
         using difference_type = typename Base::difference_type;
+        using reference = typename Base::reference;
 
         constexpr GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
@@ -113,7 +114,7 @@ class SparseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr auto dereference() const -> value_type const& {
+        constexpr auto dereference() const -> reference {
             assert(indptr_ != nullptr);
             assert(0 <= group_);
             assert(group_ < static_cast<Idx>(indptr_->size() - 1));
@@ -174,13 +175,14 @@ class SparseGroupedIdxVector {
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange, Idx> {
-        friend class IteratorFacade<GroupIterator, IdxRange, Idx>;
-        using Base = IteratorFacade<GroupIterator, IdxRange, Idx>;
+    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange const, Idx> {
+        friend class IteratorFacade<GroupIterator, IdxRange const, Idx>;
+        using Base = IteratorFacade<GroupIterator, IdxRange const, Idx>;
 
       public:
         using value_type = typename Base::value_type;
         using difference_type = typename Base::difference_type;
+        using reference = typename Base::reference;
 
         constexpr GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
@@ -198,7 +200,7 @@ class DenseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr auto dereference() const -> value_type const& {
+        constexpr auto dereference() const -> reference {
             assert(dense_vector_ != nullptr);
 
             // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
