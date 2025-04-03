@@ -478,7 +478,7 @@ template <symmetry_tag sym> class MeasuredValues {
     // Since p and q are entirely decoupled, the real and imaginary components accumulate separately
     template <bool only_magnitude = false>
         requires(!only_magnitude)
-    static IndependentRealRandVar<sym> combine_measurements(std::ranges::range auto const& measurements)
+    static IndependentRealRandVar<sym> combine_measurements(std::ranges::view auto measurements)
         requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, IndependentRealRandVar<sym>>
     {
         RealValue<sym> accumulated_inverse_variance{};
@@ -498,7 +498,7 @@ template <symmetry_tag sym> class MeasuredValues {
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
-    static DecomposedComplexRandVar<sym> combine_measurements(std::ranges::range auto const& measurements)
+    static DecomposedComplexRandVar<sym> combine_measurements(std::ranges::view auto measurements)
         requires std::same_as<std::ranges::range_value_t<decltype(measurements)>, DecomposedComplexRandVar<sym>>
     {
         auto result = DecomposedComplexRandVar<sym>{
