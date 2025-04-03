@@ -28,8 +28,8 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     {
         return static_cast<iterator*>(this)->dereference();
     }
-    constexpr auto operator->() const -> decltype(auto) { return &*(*this); }
-    constexpr auto operator->() -> decltype(auto) { return &*(*this); }
+    constexpr auto operator->() const -> decltype(auto) { return &(*(*this)); }
+    constexpr auto operator->() -> decltype(auto) { return &(*(*this)); }
 
     friend constexpr bool operator==(IteratorFacade const& first, IteratorFacade const& second) {
         return first.equal(second);
