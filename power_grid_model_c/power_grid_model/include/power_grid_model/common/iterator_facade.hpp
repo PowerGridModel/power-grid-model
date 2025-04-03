@@ -17,27 +17,26 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     using value_type = ValueType;
     using difference_type = DifferenceType;
     using iterator_category = std::random_access_iterator_tag;
-    using reference = value_type const&;
+    using pointer = std::add_pointer_t<ValueType>;
+    using reference = std::add_lvalue_reference_t<std::add_const_t<ValueType>>;
 
     constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
         return static_cast<const_iterator*>(this)->dereference();
     }
-    constexpr auto operator*() -> std::add_lvalue_reference_t<value_type&>
+    constexpr auto operator*() -> std::add_lvalue_reference_t<value_type>
         requires requires(iterator it) {
             { it.dereference() } -> std::same_as<std::add_lvalue_reference_t<value_type>>;
         }
     {
         return static_cast<iterator*>(this)->dereference();
     }
-    constexpr auto operator->() const -> value_type const* {
-        return &static_cast<const_iterator*>(this)->dereference();
-    }
+    constexpr auto operator->() const -> value_type const* { return &*(*this); }
     constexpr auto operator->() -> value_type*
         requires requires(iterator it) {
             { it.dereference() } -> std::convertible_to<std::add_pointer_t<std::remove_cvref_t<value_type>>>;
         }
     {
-        return &static_cast<iterator*>(this)->dereference();
+        return &*(*this);
     }
     friend constexpr bool operator==(IteratorFacade const& first, IteratorFacade const& second) {
         return first.equal(second);

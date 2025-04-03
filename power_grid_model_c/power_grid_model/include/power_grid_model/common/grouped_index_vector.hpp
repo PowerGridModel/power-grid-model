@@ -277,9 +277,9 @@ inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
     auto const indices = boost::counting_range(Idx{}, first.size());
 
     auto const zip_begin =
-        boost::make_zip_iterator(boost::make_tuple(std::begin(indices), std::begin(first), std::begin(rest)...));
+        boost::make_zip_iterator(boost::make_tuple(std::cbegin(indices), std::cbegin(first), std::cbegin(rest)...));
     auto const zip_end =
-        boost::make_zip_iterator(boost::make_tuple(std::end(indices), std::end(first), std::end(rest)...));
+        boost::make_zip_iterator(boost::make_tuple(std::cend(indices), std::cend(first), std::cend(rest)...));
     return boost::make_iterator_range(zip_begin, zip_end);
 }
 

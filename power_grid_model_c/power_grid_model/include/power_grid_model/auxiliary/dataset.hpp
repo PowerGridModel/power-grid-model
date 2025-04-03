@@ -127,7 +127,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         : public IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
                                 Idx> {
       public:
-        using value_type = std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>;
+        using value_type = Proxy;
         using difference_type = Idx;
 
         iterator() = default;
@@ -135,7 +135,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
             : current_{idx, attribute_buffers} {}
 
       private:
-        friend class IteratorFacade<iterator, value_type, Idx>;
+        friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx>;
 
         constexpr auto dereference() -> value_type& { return current_; }
         constexpr auto dereference() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
