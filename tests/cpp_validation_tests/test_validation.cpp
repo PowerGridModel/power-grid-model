@@ -37,13 +37,6 @@ class UnsupportedValidationCase : public PowerGridError {
 
 using nlohmann::json;
 
-auto read_file(std::filesystem::path const& path) {
-    std::ifstream const f{path};
-    std::ostringstream buffer;
-    buffer << f.rdbuf();
-    return buffer.str();
-}
-
 auto read_json(std::filesystem::path const& path) {
     json j;
     std::ifstream f{path};
@@ -77,6 +70,13 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
 // Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
+    auto read_file = [](std::filesystem::path const& read_file_path) {
+        std::ifstream const f{read_file_path};
+        std::ostringstream buffer;
+        buffer << f.rdbuf();
+        return buffer.str();
+    };
+
     Deserializer deserializer{read_file(path), PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
     auto dataset = create_owning_dataset(writable_dataset);
