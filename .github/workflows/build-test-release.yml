@@ -322,10 +322,11 @@ jobs:
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
 
-      - name: Upload to PyPI
+      - name: Upload to TestPyPI
         if: (inputs.create_release)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          repository-url: https://test.pypi.org/project/power-grid-model/
           packages-dir: wheelhouse
           skip-existing: true
           print-hash: true
