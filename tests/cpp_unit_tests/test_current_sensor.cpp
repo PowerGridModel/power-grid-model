@@ -38,7 +38,7 @@ TEST_CASE("Test current sensor") {
             sym_current_sensor_input.id = 0;
             sym_current_sensor_input.measured_object = 1;
             sym_current_sensor_input.measured_terminal_type = terminal_type;
-            sym_current_sensor_input.angle_measurement_type = AngleMeasurementType::local;
+            sym_current_sensor_input.angle_measurement_type = AngleMeasurementType::local_angle;
             sym_current_sensor_input.i_sigma = 1.0;
             sym_current_sensor_input.i_measured = 1.0 * 1e3;
             sym_current_sensor_input.i_angle_measured = 0.0;
@@ -65,7 +65,7 @@ TEST_CASE("Test current sensor") {
                 sym_current_sensor.get_output<asymmetric_t>(i_asym);
 
             // Check symmetric sensor output for symmetric parameters
-            CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::local);
+            CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::local_angle);
             CHECK(sym_sensor_param.measurement.real_component.variance == doctest::Approx(i_variance_pu));
             CHECK(sym_sensor_param.measurement.imag_component.variance ==
                   doctest::Approx(i_angle_variance_pu * i_pu * i_pu));
@@ -92,14 +92,14 @@ TEST_CASE("Test current sensor") {
 
             CHECK(sym_current_sensor.get_terminal_type() == terminal_type);
 
-            CHECK(sym_current_sensor.get_angle_measurement_type() == AngleMeasurementType::local);
+            CHECK(sym_current_sensor.get_angle_measurement_type() == AngleMeasurementType::local_angle);
         }
         SUBCASE("Wrong measured terminal type") {
             for (auto const terminal_type :
                  {MeasuredTerminalType::source, MeasuredTerminalType::shunt, MeasuredTerminalType::load,
                   MeasuredTerminalType::generator, MeasuredTerminalType::node}) {
                 CHECK_THROWS_AS((CurrentSensor<symmetric_t>{
-                                    {1, 1, terminal_type, AngleMeasurementType::local, 1.0, 1.0, 1.0, 1.0}, 1.0}),
+                                    {1, 1, terminal_type, AngleMeasurementType::local_angle, 1.0, 1.0, 1.0, 1.0}, 1.0}),
                                 InvalidMeasuredTerminalType);
             }
         }
@@ -110,7 +110,7 @@ TEST_CASE("Test current sensor") {
             CurrentSensor<symmetric_t> sym_current_sensor{{.id = 1,
                                                            .measured_object = 1,
                                                            .measured_terminal_type = MeasuredTerminalType::branch3_1,
-                                                           .angle_measurement_type = AngleMeasurementType::local},
+                                                           .angle_measurement_type = AngleMeasurementType::local_angle},
                                                           u_rated};
 
             SUBCASE("No phase shift") {
@@ -118,7 +118,7 @@ TEST_CASE("Test current sensor") {
                     {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = 0.0});
                 auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
-                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
+                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local_angle);
                 CHECK(sym_param.measurement.real_component.variance == doctest::Approx(pow(1.0 / base_current, 2)));
                 CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(pow(0.2 / base_current, 2)));
                 CHECK(real(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
@@ -130,7 +130,7 @@ TEST_CASE("Test current sensor") {
                     {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = pi / 2});
                 auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
-                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
+                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local_angle);
                 CHECK(sym_param.measurement.real_component.variance == doctest::Approx(pow(0.2 / base_current, 2)));
                 CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(pow(1.0 / base_current, 2)));
                 CHECK(real(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
@@ -145,7 +145,7 @@ TEST_CASE("Test current sensor") {
                     {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = pi / 4});
                 auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
-                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local);
+                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::local_angle);
                 CHECK(sym_param.measurement.real_component.variance ==
                       doctest::Approx(1.04 / 2.0 / (base_current * base_current)));
                 CHECK(sym_param.measurement.imag_component.variance ==
@@ -164,7 +164,7 @@ TEST_CASE("Test current sensor") {
         CurrentSensor<symmetric_t> const current_sensor{{.id = 1,
                                                          .measured_object = 1,
                                                          .measured_terminal_type = MeasuredTerminalType::branch3_1,
-                                                         .angle_measurement_type = AngleMeasurementType::local,
+                                                         .angle_measurement_type = AngleMeasurementType::local_angle,
                                                          .i_sigma = i_sigma,
                                                          .i_angle_sigma = i_angle_sigma,
                                                          .i_measured = i_measured,
@@ -289,7 +289,7 @@ TEST_CASE("Test current sensor") {
         CurrentSensor<asymmetric_t> const current_sensor{{.id = 1,
                                                           .measured_object = 1,
                                                           .measured_terminal_type = measured_terminal_type,
-                                                          .angle_measurement_type = AngleMeasurementType::local,
+                                                          .angle_measurement_type = AngleMeasurementType::local_angle,
                                                           .i_sigma = i_sigma,
                                                           .i_angle_sigma = i_angle_sigma,
                                                           .i_measured = i_measured,
