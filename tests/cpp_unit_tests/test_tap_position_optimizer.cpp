@@ -216,7 +216,7 @@ TEST_CASE("Test Transformer ranking") {
 
         pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         REQUIRE(sortedTrafoList.size() == referenceList.size());
-        for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
+        for (Idx idx : IdxRange{static_cast<Idx>(sortedTrafoList.size())}) {
             CAPTURE(idx);
             CHECK(sortedTrafoList[idx] == referenceList[idx]);
         }
@@ -385,7 +385,7 @@ TEST_CASE("Test Transformer ranking") {
 
             pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
             REQUIRE(sortedTrafoList.size() == referenceList.size());
-            for (Idx idx : boost::counting_range(Idx{0}, static_cast<Idx>(sortedTrafoList.size()))) {
+            for (Idx idx : IdxRange{static_cast<Idx>(sortedTrafoList.size())}) {
                 CAPTURE(idx);
                 CHECK(sortedTrafoList[idx] == referenceList[idx]);
             }
@@ -718,8 +718,7 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
     template <typename ComponentType> struct Impl<ComponentType> {
         void operator()(State const& state, RankedTransformerGroups& ranking) const {
             if constexpr (std::derived_from<ComponentType, MockTransformer>) {
-                for (Idx const idx :
-                     boost::counting_range(Idx{0}, main_core::get_component_size<ComponentType>(state))) {
+                for (Idx const idx : IdxRange{main_core::get_component_size<ComponentType>(state)}) {
                     auto const& comp = main_core::get_component_by_sequence<ComponentType>(state, idx);
                     auto const rank = comp.state.rank;
                     if (rank == MockTransformerState::unregulated) {

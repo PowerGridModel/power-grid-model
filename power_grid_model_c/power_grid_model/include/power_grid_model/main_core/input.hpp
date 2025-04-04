@@ -8,7 +8,7 @@
 #include "state_queries.hpp"
 
 #include "../all_components.hpp"
-#include "../common/iterator_like_concepts.hpp"
+#include "../common/iterator_facade.hpp"
 
 #include <unordered_set>
 
@@ -20,8 +20,7 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer,
-          forward_iterator_like<typename Component::InputType> ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
                           double system_frequency) {
@@ -74,7 +73,9 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 get_component<Branch>(state, measured_object);
                 break;
             case branch3_1:
+                [[fallthrough]];
             case branch3_2:
+                [[fallthrough]];
             case branch3_3:
                 get_component<Branch3>(state, measured_object);
                 break;
@@ -94,11 +95,42 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 get_component<Node>(state, measured_object);
                 break;
             default:
-                throw MissingCaseForEnumError(std::string(GenericPowerSensor::name) + " item retrieval",
-                                              input.measured_terminal_type);
+                throw MissingCaseForEnumError{std::format("{} item retrieval", GenericPowerSensor::name),
+                                              input.measured_terminal_type};
             }
 
             emplace_component<Component>(state, id, input);
+        } else if constexpr (std::derived_from<Component, GenericCurrentSensor>) {
+            // it is not allowed to place a sensor at a link
+            if (get_component_idx_by_id(state, input.measured_object).group == get_component_type_index<Link>(state)) {
+                throw InvalidMeasuredObject("Link", "CurrentSensor");
+            }
+            // check correctness and get node based on measured terminal type
+            ID const node = [&state, measured_object = input.measured_object,
+                             measured_terminal_type = input.measured_terminal_type] {
+                switch (measured_terminal_type) {
+                    using enum MeasuredTerminalType;
+                    using enum Branch3Side;
+
+                case branch_from:
+                    return get_component<Branch>(state, measured_object).node(BranchSide::from);
+                case branch_to:
+                    return get_component<Branch>(state, measured_object).node(BranchSide::to);
+                case branch3_1:
+                    return get_component<Branch3>(state, measured_object).node(side_1);
+                case branch3_2:
+                    return get_component<Branch3>(state, measured_object).node(side_2);
+                case branch3_3:
+                    return get_component<Branch3>(state, measured_object).node(side_2);
+                default:
+                    throw MissingCaseForEnumError{std::format("{} item retrieval", GenericCurrentSensor::name),
+                                                  measured_terminal_type};
+                }
+            }();
+
+            double const u_rated = get_component<Node>(state, node).u_rated();
+
+            emplace_component<Component>(state, id, input, u_rated);
         } else if constexpr (std::derived_from<Component, Fault>) {
             // check that fault object exists (currently, only faults at nodes are supported)
             get_component<Node>(state, input.fault_object);
@@ -118,18 +150,20 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                     case from:
                         return regulated_object.node(static_cast<BranchSide>(input.control_side));
                     default:
-                        throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
+                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
                                                       input.control_side};
                     }
                 } else if (regulated_object_idx.group == get_component_type_index<ThreeWindingTransformer>(state)) {
                     auto const& regulated_object = get_component<ThreeWindingTransformer>(state, regulated_object_idx);
                     switch (input.control_side) {
                     case side_1:
+                        [[fallthrough]];
                     case side_2:
+                        [[fallthrough]];
                     case side_3:
                         return regulated_object.node(static_cast<Branch3Side>(input.control_side));
                     default:
-                        throw MissingCaseForEnumError{std::string{Component::name} + " item retrieval",
+                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
                                                       input.control_side};
                     }
                 } else {

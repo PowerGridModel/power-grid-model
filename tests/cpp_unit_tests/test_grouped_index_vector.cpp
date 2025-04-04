@@ -79,8 +79,9 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
 
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
     Idx const num_groups{6};
-    IdxRanges expected_ranges{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
-    std::vector<IdxCount> const expected_elements{0, 1, 2, 3, 4, 5, 6};
+    IdxRanges expected_ranges{IdxRange{0, 0}, IdxRange{0, 3}, IdxRange{3, 3},
+                              IdxRange{3, 6}, IdxRange{6, 7}, IdxRange{7, 7}};
+    std::vector<Idx> const expected_elements{0, 1, 2, 3, 4, 5, 6};
 
     auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
 
@@ -97,9 +98,9 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
     }
 
     SUBCASE("Element range") {
-        std::vector<IdxCount> const actual_idx_counts{};
+        std::vector<Idx> const actual_idx_counts{};
         for (size_t group_number = 0; group_number < num_groups; group_number++) {
-            CHECK(idx_vector.get_element_range(group_number) == expected_ranges[group_number]);
+            CHECK(std::ranges::equal(idx_vector.get_element_range(group_number), expected_ranges[group_number]));
         }
     }
 
@@ -115,16 +116,17 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
     }
 
     SUBCASE("iteration") {
-        std::vector<IdxCount> actual_elements{};
+        std::vector<Idx> actual_elements{};
         IdxRanges actual_ranges{};
         for (auto const& element_range : idx_vector) {
-            actual_ranges.push_back(element_range);
-            for (auto& element : element_range) {
-                actual_elements.push_back(element);
+            actual_ranges.emplace_back(element_range.begin(), element_range.end());
+            for (auto element : element_range) {
+                actual_elements.emplace_back(element);
             }
         }
         CHECK(actual_elements == expected_elements);
-        CHECK(actual_ranges == expected_ranges);
+        CHECK(std::ranges::equal(actual_ranges, expected_ranges,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 }
 
@@ -142,13 +144,15 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
 
     // First grouped idx vector and its expeceted elements and groups
     IdxVector const groups_a{1, 1, 1, 3, 3, 3, 4};
-    IdxRanges expected_ranges_a{{0, 0}, {0, 3}, {3, 3}, {3, 6}, {6, 7}, {7, 7}};
-    std::vector<IdxCount> const expected_elements_a{0, 1, 2, 3, 4, 5, 6};
+    IdxRanges expected_ranges_a{IdxRange{0, 0}, IdxRange{0, 3}, IdxRange{3, 3},
+                                IdxRange{3, 6}, IdxRange{6, 7}, IdxRange{7, 7}};
+    std::vector<Idx> const expected_elements_a{0, 1, 2, 3, 4, 5, 6};
 
     // Second grouped idx vector and its expeceted elements and groups
     IdxVector const groups_b{0, 1, 1, 3, 3, 4, 5, 5};
-    IdxRanges expected_ranges_b{{0, 1}, {1, 3}, {3, 3}, {3, 5}, {5, 6}, {6, 8}};
-    std::vector<IdxCount> const expected_elements_b{0, 1, 2, 3, 4, 5, 6, 7};
+    IdxRanges expected_ranges_b{IdxRange{0, 1}, IdxRange{1, 3}, IdxRange{3, 3},
+                                IdxRange{3, 5}, IdxRange{5, 6}, IdxRange{6, 8}};
+    std::vector<Idx> const expected_elements_b{0, 1, 2, 3, 4, 5, 6, 7};
 
     // reuse for brevity
     auto const& groups_c = groups_a;
@@ -171,36 +175,39 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
         IdxRanges actual_ranges_a{};
         Idx current_index{};
         for (auto const& [index, element_range] : enumerated_zip_sequence(idx_vector_a)) {
-            actual_ranges_a.push_back(element_range);
+            actual_ranges_a.emplace_back(element_range.begin(), element_range.end());
 
             CHECK(index == current_index++);
         }
-        CHECK(actual_ranges_a == expected_ranges_a);
+        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 
     SUBCASE("2 inputs") {
-        std::vector<IdxCount> actual_idx_counts_a{};
-        std::vector<IdxCount> actual_idx_counts_b{};
+        std::vector<Idx> actual_idx_counts_a{};
+        std::vector<Idx> actual_idx_counts_b{};
         IdxRanges actual_ranges_a{};
         IdxRanges actual_ranges_b{};
         Idx current_index{};
         for (auto const& [index, first_group, second_group] : enumerated_zip_sequence(idx_vector_a, idx_vector_b)) {
-            for (auto& element : first_group) {
+            for (auto const& element : first_group) {
                 actual_idx_counts_a.push_back(element);
             }
-            for (auto& element : second_group) {
+            for (auto const& element : second_group) {
                 actual_idx_counts_b.push_back(element);
             }
-            actual_ranges_a.push_back(first_group);
-            actual_ranges_b.push_back(second_group);
+            actual_ranges_a.emplace_back(first_group.begin(), first_group.end());
+            actual_ranges_b.emplace_back(second_group.begin(), second_group.end());
 
             CHECK(index == current_index++);
         }
 
         CHECK(actual_idx_counts_a == expected_elements_a);
         CHECK(actual_idx_counts_b == expected_elements_b);
-        CHECK(actual_ranges_a == expected_ranges_a);
-        CHECK(actual_ranges_b == expected_ranges_b);
+        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+        CHECK(std::ranges::equal(actual_ranges_b, expected_ranges_b,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 
     SUBCASE("3 inputs") {
@@ -211,15 +218,18 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
         Idx current_index{};
         for (auto const& [index, element_range_1, element_range_2, element_range_3] :
              enumerated_zip_sequence(idx_vector_a, idx_vector_b, idx_vector_c)) {
-            actual_ranges_a.push_back(element_range_1);
-            actual_ranges_b.push_back(element_range_2);
-            actual_ranges_c.push_back(element_range_3);
+            actual_ranges_a.emplace_back(element_range_1.begin(), element_range_1.end());
+            actual_ranges_b.emplace_back(element_range_2.begin(), element_range_2.end());
+            actual_ranges_c.emplace_back(element_range_3.begin(), element_range_3.end());
 
             CHECK(index == current_index++);
         }
-        CHECK(actual_ranges_a == expected_ranges_a);
-        CHECK(actual_ranges_b == expected_ranges_b);
-        CHECK(actual_ranges_c == expected_ranges_c);
+        CHECK(std::ranges::equal(actual_ranges_a, expected_ranges_a,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+        CHECK(std::ranges::equal(actual_ranges_b, expected_ranges_b,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+        CHECK(std::ranges::equal(actual_ranges_c, expected_ranges_c,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
     }
 }
 

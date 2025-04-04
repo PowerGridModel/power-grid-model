@@ -404,7 +404,7 @@ template <symmetry_tag sym> class MeasuredValues {
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
         static constexpr auto branch_to_checker = [](BranchIdx x) { return x[1] != -1; };
-        for (Idx const branch : boost::counting_range(Idx{}, topo.n_branch())) {
+        for (Idx const branch : IdxRange{topo.n_branch()}) {
             // from side
             idx_branch_from_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_from, topo.branch_bus_idx,
@@ -458,37 +458,40 @@ template <symmetry_tag sym> class MeasuredValues {
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        RealValue<sym> accumulated_inverse_p_variance{};
-        RealValue<sym> accumulated_inverse_q_variance{};
-        RealValue<sym> accumulated_p_value{};
-        RealValue<sym> accumulated_q_value{};
-        for (auto pos : sensors) {
-            auto const& measurement = data[pos];
+        struct AccumulatedValues {
+            RealValue<sym> inverse_p_variance{};
+            RealValue<sym> inverse_q_variance{};
+            RealValue<sym> p_value{};
+            RealValue<sym> q_value{};
+        };
 
-            accumulated_inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
-            accumulated_inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
+        AccumulatedValues accumulated;
+        std::ranges::for_each(sensors, [&data, &accumulated](auto pos) {
+            DecomposedComplexRandVar<sym> const& measurement = data[pos];
+            accumulated.inverse_p_variance += RealValue<sym>{1.0} / measurement.real_component.variance;
+            accumulated.inverse_q_variance += RealValue<sym>{1.0} / measurement.imag_component.variance;
 
-            accumulated_p_value += measurement.real_component.value / measurement.real_component.variance;
-            accumulated_q_value += measurement.imag_component.value / measurement.imag_component.variance;
-        }
+            accumulated.p_value += measurement.real_component.value / measurement.real_component.variance;
+            accumulated.q_value += measurement.imag_component.value / measurement.imag_component.variance;
+        });
 
-        if (is_normal(accumulated_inverse_p_variance) && is_normal(accumulated_inverse_q_variance)) {
+        if (is_normal(accumulated.inverse_p_variance) && is_normal(accumulated.inverse_q_variance)) {
             return PowerSensorCalcParam<sym>{
-                .real_component = {.value = accumulated_p_value / accumulated_inverse_p_variance,
-                                   .variance = RealValue<sym>{1.0} / accumulated_inverse_p_variance},
-                .imag_component = {.value = accumulated_q_value / accumulated_inverse_q_variance,
-                                   .variance = RealValue<sym>{1.0} / accumulated_inverse_q_variance}};
+                .real_component = {.value = accumulated.p_value / accumulated.inverse_p_variance,
+                                   .variance = RealValue<sym>{1.0} / accumulated.inverse_p_variance},
+                .imag_component = {.value = accumulated.q_value / accumulated.inverse_q_variance,
+                                   .variance = RealValue<sym>{1.0} / accumulated.inverse_q_variance}};
         }
         return PowerSensorCalcParam<sym>{
-            .real_component = {.value = accumulated_p_value,
+            .real_component = {.value = accumulated.p_value,
                                .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}},
-            .imag_component = {.value = accumulated_q_value,
+            .imag_component = {.value = accumulated.q_value,
                                .variance = RealValue<sym>{std::numeric_limits<double>::infinity()}}};
     }
 
     template <sensor_calc_param_type CalcParam, bool only_magnitude = false>
     static auto combine_measurements(std::vector<CalcParam> const& data) {
-        return combine_measurements<only_magnitude>(data, boost::counting_range(Idx{}, static_cast<Idx>(data.size())));
+        return combine_measurements<only_magnitude>(data, IdxRange{static_cast<Idx>(data.size())});
     }
 
     // process objects in batch for shunt, load_gen, source
@@ -519,7 +522,7 @@ template <symmetry_tag sym> class MeasuredValues {
             return disconnected;
         }
         auto const sensors = sensors_per_object.get_element_range(object);
-        if (boost::empty(sensors)) {
+        if (std::empty(sensors)) {
             return unmeasured;
         }
         result_data.push_back(combine_measurements(input_data, sensors));

@@ -203,7 +203,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, forward_iterator_like<typename CompType::InputType> ForwardIterator>
+    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
@@ -224,8 +224,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType,
-              forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
+    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
@@ -333,6 +332,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
         main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
         main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
+        main_core::register_topology_components<GenericCurrentSensor>(state_, comp_topo);
         main_core::register_topology_components<Regulator>(state_, comp_topo);
         state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
     }
@@ -800,6 +800,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
+
+    void check_no_experimental_features_used(Options const& options) const {
+        if (options.calculation_type == CalculationType::state_estimation &&
+            state_.components.template size<GenericCurrentSensor>() > 0) {
+            throw ExperimentalFeature{"State estimation", "current sensors"};
+        }
+    }
 
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
