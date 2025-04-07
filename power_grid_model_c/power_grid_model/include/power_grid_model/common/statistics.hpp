@@ -209,13 +209,15 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
 
 namespace statistics {
 // combine multiple measurements of one quantity using Kalman filter
-constexpr auto combine_measurements(std::ranges::view auto measurements)
+constexpr auto accumulate(std::ranges::view auto measurements)
     requires std::same_as<std::ranges::range_value_t<decltype(measurements)>,
                           UniformRealRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>> ||
              std::same_as<std::ranges::range_value_t<decltype(measurements)>,
                           IndependentRealRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>> ||
              std::same_as<std::ranges::range_value_t<decltype(measurements)>,
-                          UniformComplexRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
+                          UniformComplexRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>> ||
+             std::same_as<std::ranges::range_value_t<decltype(measurements)>,
+                          IndependentComplexRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
 {
     using RandVarType = std::ranges::range_value_t<decltype(measurements)>;
     using ValueType = decltype(RandVarType::value);
@@ -236,17 +238,17 @@ constexpr auto combine_measurements(std::ranges::view auto measurements)
     }
     return RandVarType{.value = accumulated_value, .variance = VarianceType{std::numeric_limits<double>::infinity()}};
 }
-constexpr auto combine_measurements(std::ranges::view auto measurements)
+constexpr auto accumulate(std::ranges::view auto measurements)
     requires std::same_as<std::ranges::range_value_t<decltype(measurements)>,
                           DecomposedComplexRandVar<typename std::ranges::range_value_t<decltype(measurements)>::sym>>
 {
     using sym = std::ranges::range_value_t<decltype(measurements)>::sym;
 
     DecomposedComplexRandVar<sym> result{
-        .real_component = combine_measurements(
-            measurements | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
-        .imag_component = combine_measurements(
-            measurements | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
+        .real_component =
+            accumulate(measurements | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
+        .imag_component =
+            accumulate(measurements | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
 
     if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
         result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};

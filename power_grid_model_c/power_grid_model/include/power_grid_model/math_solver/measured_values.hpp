@@ -457,7 +457,7 @@ template <symmetry_tag sym> class MeasuredValues {
                                                             IdxRange const& sensors) {
         auto complex_measurements = sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; });
         if constexpr (only_magnitude) {
-            auto const combined_magnitude_measurement = statistics::combine_measurements(
+            auto const combined_magnitude_measurement = statistics::accumulate(
                 complex_measurements | std::views::transform([](auto const& measurement) {
                     return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
                                                    .variance = measurement.variance};
@@ -471,15 +471,14 @@ template <symmetry_tag sym> class MeasuredValues {
                                                   }(),
                                               .variance = combined_magnitude_measurement.variance};
         } else {
-            return statistics::combine_measurements(complex_measurements);
+            return statistics::accumulate(complex_measurements);
         }
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        return statistics::combine_measurements(sensors |
-                                                std::views::transform([&](Idx pos) -> auto& { return data[pos]; }));
+        return statistics::accumulate(sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; }));
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
@@ -496,7 +495,7 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         return {.angle_measurement_type = angle_measurement_type,
-                .measurement = statistics::combine_measurements(
+                .measurement = statistics::accumulate(
                     params | std::views::transform([&](auto const& params) -> auto& { return params.measurement; }))};
     }
 
