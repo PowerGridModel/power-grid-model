@@ -75,12 +75,10 @@ template <symmetry_tag sym> class MeasuredValues {
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
     constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }
     constexpr bool has_bus_injection(Idx bus) const { return bus_injection_[bus].idx_bus_injection >= 0; }
-    constexpr bool has_branch_from(Idx branch) const {
-        return idx_branch_from_power_[branch] >= 0 || idx_branch_from_current_[branch] >= 0;
-    }
-    constexpr bool has_branch_to(Idx branch) const {
-        return idx_branch_to_power_[branch] >= 0 || idx_branch_to_current_[branch] >= 0;
-    }
+    constexpr bool has_branch_from_power(Idx branch) const { return idx_branch_from_power_[branch] >= 0; }
+    constexpr bool has_branch_to_power(Idx branch) const { return idx_branch_to_power_[branch] >= 0; }
+    constexpr bool has_branch_from_current(Idx branch) const { return idx_branch_from_current_[branch] >= 0; }
+    constexpr bool has_branch_to_current(Idx branch) const { return idx_branch_to_current_[branch] >= 0; }
     constexpr bool has_shunt(Idx shunt) const { return idx_shunt_power_[shunt] >= 0; }
     constexpr bool has_load_gen(Idx load_gen) const { return idx_load_gen_power_[load_gen] >= 0; }
     constexpr bool has_source(Idx source) const { return idx_source_power_[source] >= 0; }
@@ -564,6 +562,16 @@ template <symmetry_tag sym> class MeasuredValues {
                 }
             }
         }
+        for (auto const& x : current_main_value_) {
+            auto const variance = x.measurement.real_component.variance + x.measurement.imag_component.variance;
+            if constexpr (is_symmetric_v<sym>) {
+                unconstrained_min(variance);
+            } else {
+                for (Idx const phase : {0, 1, 2}) {
+                    unconstrained_min(variance[phase]);
+                }
+            }
+        }
 
         // scale
         auto const inv_norm_var = 1.0 / min_var;
@@ -571,6 +579,10 @@ template <symmetry_tag sym> class MeasuredValues {
         std::ranges::for_each(power_main_value_, [inv_norm_var](auto& x) {
             x.real_component.variance *= inv_norm_var;
             x.imag_component.variance *= inv_norm_var;
+        });
+        std::ranges::for_each(current_main_value_, [inv_norm_var](auto& x) {
+            x.measurement.real_component.variance *= inv_norm_var;
+            x.measurement.imag_component.variance *= inv_norm_var;
         });
     }
 

@@ -304,14 +304,14 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                         [[fallthrough]];
                     case YBusElementType::btf: {
                         auto const& y_branch = param.branch_param[obj];
-                        if (measured_values.has_branch_from(obj)) {
+                        if (measured_values.has_branch_from_power(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::bft) ? Order::row_major : Order::column_major;
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
                                                        u_state, ij_voltage_order,
                                                        measured_values.branch_from_power(obj));
                         }
-                        if (measured_values.has_branch_to(obj)) {
+                        if (measured_values.has_branch_to_power(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::btf) ? Order::row_major : Order::column_major;
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),

@@ -63,7 +63,8 @@ std::pair<std::vector<int8_t>, bool> count_flow_sensors(MeasuredValues<sym> cons
                 // we only need one flow sensor, so the loop will break
                 if (element.element_type != YBusElementType::shunt) {
                     Idx const branch = element.idx;
-                    if ((measured_values.has_branch_from(branch) || measured_values.has_branch_to(branch)) &&
+                    if ((measured_values.has_branch_from_power(branch) ||
+                         measured_values.has_branch_to_power(branch)) &&
                         topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1) {
                         flow_sensors[ybus_index] = 1;
                         has_at_least_one_sensor = true;
