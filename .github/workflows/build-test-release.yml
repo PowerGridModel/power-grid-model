@@ -278,14 +278,14 @@ jobs:
       - name: Test
         run: pytest
 
-  publish-wheels:
+  github-release:
+    name: Create and release assets to GitHub
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
 
     steps:
       - name: Fail fast
@@ -322,16 +322,7 @@ jobs:
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
 
-      - name: Upload to TestPyPI
-        if: (inputs.create_release)
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/project/power-grid-model/
-          packages-dir: wheelhouse
-          skip-existing: true
-          print-hash: true
-
-      - name: Release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         if: (inputs.create_release)
         with:
