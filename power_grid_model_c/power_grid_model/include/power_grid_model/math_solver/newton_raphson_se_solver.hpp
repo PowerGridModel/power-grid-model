@@ -91,6 +91,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
+    static constexpr auto has_current_sensor_implemented =
+        false; // TODO(mgovers): for testing purposes; remove after NRSE has current sensor implemented
 
   private:
     enum class Order : IntS { row_major = 0, column_major = 1 };

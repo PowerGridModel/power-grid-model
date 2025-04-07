@@ -66,6 +66,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
+    static constexpr auto has_current_sensor_implemented =
+        true; // TODO(mgovers): for testing purposes; remove after NRSE has current sensor implemented
 
   private:
     // block size 2 for symmetric, 6 for asym
