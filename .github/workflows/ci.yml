@@ -66,11 +66,11 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: [ci-passed]
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release == 'true' }}
+    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
     permissions:
       contents: write
       id-token: write  # Required for Trusted Publishing
-      
+
     steps:
       - name: Download assets from GitHub release
         uses: robinraju/release-downloader@v1
@@ -78,7 +78,7 @@ jobs:
           repository: ${{ github.repository }}
           # also download assets from pre-releases
           preRelease: true
-          tag: ${{ github.event.release.tag_name }}
+          tag: ${{ github.event_name == 'release' && github.event.release.tag_name }}
           fileName: "*"
           # don't download GitHub-generated source tar and zip files
           tarBall: false
