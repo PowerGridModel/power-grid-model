@@ -5,6 +5,8 @@
 # This file works as a placeholder for new workflows to be tested
 # in the GitHub actions tab before being merged.
 # It is not intended to be used in the main branch, but rather in PRs.
+# After testing, this workflow should be returned to the original state;
+# this is checked by the check-code-quality workflow.
 name: Test workflow
 
 on:
