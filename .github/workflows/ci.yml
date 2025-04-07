@@ -38,7 +38,6 @@ jobs:
     uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
-      id-token: write
     with: 
       # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
       # create_release becomes true if the event that triggered this workflow is "push" on main

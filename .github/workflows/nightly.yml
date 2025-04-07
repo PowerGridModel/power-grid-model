@@ -19,7 +19,6 @@ jobs:
     uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
-      id-token: write
     with:
       create_release: false
 
