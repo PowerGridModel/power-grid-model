@@ -9,6 +9,7 @@ Collect all measured Values
 */
 
 #include "../calculation_parameters.hpp"
+#include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <memory>
@@ -425,11 +426,11 @@ template <symmetry_tag sym> class MeasuredValues {
             idx_branch_from_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_from, topo.branch_bus_idx,
                                    input.measured_branch_from_power, power_main_value_, branch_from_checker);
-            // to side current
+            // to side power
             idx_branch_to_power_[branch] =
                 process_one_object(branch, topo.power_sensors_per_branch_to, topo.branch_bus_idx,
                                    input.measured_branch_to_power, power_main_value_, branch_to_checker);
-            // from side power
+            // from side current
             idx_branch_from_current_[branch] =
                 process_one_object(branch, topo.current_sensors_per_branch_from, topo.branch_bus_idx,
                                    input.measured_branch_from_current, current_main_value_, branch_from_checker);
@@ -437,6 +438,13 @@ template <symmetry_tag sym> class MeasuredValues {
             idx_branch_to_current_[branch] =
                 process_one_object(branch, topo.current_sensors_per_branch_to, topo.branch_bus_idx,
                                    input.measured_branch_to_current, current_main_value_, branch_to_checker);
+
+            if ((!has_angle()) && std::ranges::any_of(current_main_value_, [](auto const& measurement) {
+                    return measurement.angle_measurement_type == AngleMeasurementType::global_angle;
+                })) {
+                throw ConflictingAngleMeasurementType{
+                    "Global angle current measurements require a voltage angle measurement in the connected subgrid."};
+            }
         }
     }
 
@@ -477,9 +485,19 @@ template <symmetry_tag sym> class MeasuredValues {
         requires(!only_magnitude)
     static CurrentSensorCalcParam<sym> combine_measurements(std::vector<CurrentSensorCalcParam<sym>> const& data,
                                                             IdxRange const& sensors) {
-        return {.angle_measurement_type = AngleMeasurementType::local, // TODO(mgovers): this should be fixed
+        auto const params = sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; });
+        auto const angle_measurement_type = sensors.empty() ? AngleMeasurementType::local_angle // fallback
+                                                            : params.front().angle_measurement_type;
+        if (std::ranges::any_of(params, [angle_measurement_type](auto const& params) {
+                return params.angle_measurement_type != angle_measurement_type;
+            })) {
+            throw ConflictingAngleMeasurementType{
+                "Cannot mix local and global angle current measurements on the same terminal."};
+        }
+
+        return {.angle_measurement_type = angle_measurement_type,
                 .measurement = statistics::combine_measurements(
-                    sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos].measurement; }))};
+                    params | std::views::transform([&](auto const& params) -> auto& { return params.measurement; }))};
     }
 
     template <sensor_calc_param_type CalcParam, bool only_magnitude = false>

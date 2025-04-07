@@ -126,7 +126,7 @@ TEST_CASE("Necessary observability check") {
 
         // add the current sensor -> observable
         topo.current_sensors_per_branch_from = {from_sparse, {0, 1, 1, 1}};
-        se_input.measured_branch_from_current = {{.angle_measurement_type = AngleMeasurementType::local,
+        se_input.measured_branch_from_current = {{.angle_measurement_type = AngleMeasurementType::local_angle,
                                                   .measurement = {.real_component = {.value = 1.0, .variance = 1.0},
                                                                   .imag_component = {.value = 0.0, .variance = 1.0}}}};
 
