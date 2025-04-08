@@ -138,7 +138,7 @@ TEST_CASE("Necessary observability check") {
 
             check_observable(topo, param, se_input);
         }
-    } // namespace power_grid_model
+    }
 }
 
 } // namespace power_grid_model
