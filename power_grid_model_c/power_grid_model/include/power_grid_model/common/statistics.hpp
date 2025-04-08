@@ -222,7 +222,6 @@ constexpr auto accumulate(std::ranges::view auto measurements)
     using RandVarType = std::ranges::range_value_t<decltype(measurements)>;
     using ValueType = decltype(RandVarType::value);
     using VarianceType = decltype(RandVarType::variance);
-    using sym = RandVarType::sym;
 
     VarianceType accumulated_inverse_variance{};
     ValueType accumulated_value{};
