@@ -182,6 +182,10 @@ struct MathModelTopology {
 
     Idx n_bus_power_sensor() const { return power_sensors_per_bus.element_size(); }
 
+    Idx n_branch_from_current_sensor() const { return current_sensors_per_branch_from.element_size(); }
+
+    Idx n_branch_to_current_sensor() const { return current_sensors_per_branch_to.element_size(); }
+
     Idx n_transformer_tap_regulator() const { return tap_regulators_per_branch.element_size(); }
 };
 
