@@ -77,7 +77,8 @@ jobs:
           repository: ${{ github.repository }}
           # also download assets from pre-releases
           preRelease: true
-          tag: ${{ github.event_name == 'release' && github.event.release.tag_name }}
+          # tag is changed in favor of latest: true as release items can't be used here
+          latest: true
           fileName: "*"
           # don't download GitHub-generated source tar and zip files
           tarBall: false
