@@ -119,18 +119,25 @@ TEST_CASE("Necessary observability check") {
         check_not_observable(topo, param, se_input);
     }
     SUBCASE("Power sensor and current sensor are equivalent") {
+        auto const branch_sensor_topo = topo.power_sensors_per_branch_from;
+        auto const branch_sensor_measurement = se_input.measured_branch_from_power;
+        check_observable(topo, param, se_input);
+
         // remove the power sensor -> not observable
-        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0}};
+        topo.power_sensors_per_branch_from = {from_dense, {}, 3};
         se_input.measured_branch_from_power = {};
         check_not_observable(topo, param, se_input);
 
         // add the current sensor -> observable
-        topo.current_sensors_per_branch_from = {from_sparse, {0, 1, 1, 1}};
-        se_input.measured_branch_from_current = {{.angle_measurement_type = AngleMeasurementType::local_angle,
-                                                  .measurement = {.real_component = {.value = 1.0, .variance = 1.0},
-                                                                  .imag_component = {.value = 0.0, .variance = 1.0}}}};
+        topo.current_sensors_per_branch_from = branch_sensor_topo;
+        for (auto angle_measurement_type : {AngleMeasurementType::local_angle, AngleMeasurementType::global_angle}) {
+            CAPTURE(angle_measurement_type);
+            REQUIRE(branch_sensor_measurement.size() == 1);
+            se_input.measured_branch_from_current = {
+                {.angle_measurement_type = angle_measurement_type, .measurement = branch_sensor_measurement.front()}};
 
-        check_observable(topo, param, se_input);
+            check_observable(topo, param, se_input);
+        }
     } // namespace power_grid_model
 }
 
