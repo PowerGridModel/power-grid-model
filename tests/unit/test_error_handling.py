@@ -9,6 +9,7 @@ import pytest
 from power_grid_model import PowerGridModel
 from power_grid_model._core.power_grid_meta import initialize_array
 from power_grid_model.enum import (
+    AngleMeasurementType,
     CalculationMethod,
     LoadGenType,
     MeasuredTerminalType,
@@ -361,7 +362,7 @@ def test_conflicting_angle_measurement_type():
     node_input["id"] = [0, 1]
     node_input["u_rated"] = [10e3, 10e3]
 
-    line_input = initialize_array("input", "transformer", 1)
+    line_input = initialize_array("input", "line", 1)
     line_input["id"] = [2]
     line_input["from_node"] = [0]
     line_input["to_node"] = [1]
@@ -372,16 +373,22 @@ def test_conflicting_angle_measurement_type():
     source_input["status"] = [1]
     source_input["u_ref"] = [1.0]
 
-    sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 1)
+    sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 2)
     sym_current_sensor_input["id"] = [4, 5]
     sym_current_sensor_input["measured_object"] = [2, 2]
-    sym_current_sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from, MeasuredTerminalType.branch_from]
-    sym_current_sensor_input["angle_measurement_type"] = [AngleMeasurementType.local, AngleMeasurementType.global]
-    sym_current_sensor_input["status"] = [1, 1]
+    sym_current_sensor_input["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.branch_from,
+    ]
+    sym_current_sensor_input["angle_measurement_type"] = [
+        AngleMeasurementType.local_angle,
+        AngleMeasurementType.global_angle,
+    ]
     sym_current_sensor_input["i_sigma"] = [1.0, 1.0]
     sym_current_sensor_input["i_angle_sigma"] = [1.0, 1.0]
     sym_current_sensor_input["i_measured"] = [0.0, 0.0]
     sym_current_sensor_input["i_angle_measured"] = [0.0, 0.0]
+    repr(sym_current_sensor_input)
 
     model = PowerGridModel(
         input_data={
@@ -391,7 +398,7 @@ def test_conflicting_angle_measurement_type():
             "sym_current_sensor": sym_current_sensor_input,
         }
     )
-    
+
     with pytest.raises(ConflictingAngleMeasurementType):
         model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
 
