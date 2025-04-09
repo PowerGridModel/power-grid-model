@@ -815,6 +815,249 @@ TEST_CASE("Test statistics") {
     }
 }
 
+TEST_CASE("Test statistics - scale") {
+    using statistics::scale;
+
+    SUBCASE("UniformRealRandVar<symmetric_t> | IndependentRealRandVar<symmetric_t>") {
+        auto const check = []<typename RandVar> {
+            RandVar const var{.value = 1.0, .variance = 2.0};
+            auto const scaled = scale(var, 3.0);
+            CHECK(scaled.value == doctest::Approx(3.0));
+            CHECK(scaled.variance == doctest::Approx(18.0));
+        };
+
+        SUBCASE("UniformRealRandVar<symmetric_t>") { check.template operator()<UniformRealRandVar<symmetric_t>>(); }
+        SUBCASE("IndependentRealRandVar<symmetric_t>") {
+            check.template operator()<IndependentRealRandVar<symmetric_t>>();
+        }
+    }
+    SUBCASE("UniformRealRandVar<asymmetric_t>") {
+        UniformRealRandVar<asymmetric_t> const var{.value = {1.0, 2.0, 3.0}, .variance = 2.0};
+        SUBCASE("Scalar scale") {
+            auto const scaled = scale(var, 3.0);
+            CHECK(scaled.value(0) == doctest::Approx(3.0));
+            CHECK(scaled.value(1) == doctest::Approx(6.0));
+            CHECK(scaled.value(2) == doctest::Approx(9.0));
+            CHECK(scaled.variance == doctest::Approx(18.0));
+        }
+        // scaling asymmetrically would promote the UniformRealRandVar to an IndependentRealRandVar, because the
+        // individual phases scale differently
+    }
+    SUBCASE("IndependentRealRandVar<asymmetric_t>") {
+        auto const var = IndependentRealRandVar<asymmetric_t>{.value = {1.0, 2.0, 3.0}, .variance = {2.0, 3.0, 4.0}};
+        SUBCASE("Scalar scale") {
+            auto const scaled = scale(var, 3.0);
+            CHECK(scaled.value(0) == doctest::Approx(3.0));
+            CHECK(scaled.value(1) == doctest::Approx(6.0));
+            CHECK(scaled.value(2) == doctest::Approx(9.0));
+            CHECK(scaled.variance(0) == doctest::Approx(18.0));
+            CHECK(scaled.variance(1) == doctest::Approx(27.0));
+            CHECK(scaled.variance(2) == doctest::Approx(36.0));
+        }
+        SUBCASE("Asymmetric scale") {
+            auto const scaled = scale(var, RealValue<asymmetric_t>{1.0, 2.0, 3.0});
+            CHECK(scaled.value(0) == doctest::Approx(1.0));
+            CHECK(scaled.value(1) == doctest::Approx(4.0));
+            CHECK(scaled.value(2) == doctest::Approx(9.0));
+            CHECK(scaled.variance(0) == doctest::Approx(2.0));
+            CHECK(scaled.variance(1) == doctest::Approx(12.0));
+            CHECK(scaled.variance(2) == doctest::Approx(36.0));
+        }
+    }
+    SUBCASE("UniformComplexRandVar<symmetric_t> | IndependentComplexRandVar<symmetric_t>") {
+        auto const check = []<typename RandVar> {
+            RandVar const var{.value = {1.0, 2.0}, .variance = 2.0};
+
+            SUBCASE("Real scalar scale") {
+                auto const scaled = scale(var, 3.0);
+                CHECK(real(scaled.value) == doctest::Approx(3.0));
+                CHECK(imag(scaled.value) == doctest::Approx(6.0));
+                CHECK(scaled.variance == doctest::Approx(18.0));
+            }
+            SUBCASE("Complex scalar scale") {
+                auto const scaled = scale(var, DoubleComplex{3.0, 4.0});
+                CHECK(real(scaled.value) == doctest::Approx(3.0 * 1.0 - 4.0 * 2.0));
+                CHECK(imag(scaled.value) == doctest::Approx(3.0 * 2.0 + 4.0 * 1.0));
+                CHECK(scaled.variance == doctest::Approx(2.0 * (3.0 * 3.0 + 4.0 * 4.0)));
+            }
+        };
+        SUBCASE("UniformComplexRandVar<symmetric_t>") {
+            check.template operator()<UniformComplexRandVar<symmetric_t>>();
+        }
+        SUBCASE("IndependentComplexRandVar<symmetric_t>") {
+            check.template operator()<IndependentComplexRandVar<symmetric_t>>();
+        }
+    }
+    SUBCASE("UniformComplexRandVar<asymmetric_t>") {
+        UniformComplexRandVar<asymmetric_t> const var{
+            .value = {RealValue<asymmetric_t>{1.0, 2.0, 3.0}, RealValue<asymmetric_t>{4.0, 5.0, 6.0}}, .variance = 2.0};
+        SUBCASE("Real scalar scale") {
+            auto const scaled = scale(var, 3.0);
+            CHECK(real(scaled.value(0)) == doctest::Approx(3.0));
+            CHECK(real(scaled.value(1)) == doctest::Approx(6.0));
+            CHECK(real(scaled.value(2)) == doctest::Approx(9.0));
+            CHECK(imag(scaled.value(0)) == doctest::Approx(12.0));
+            CHECK(imag(scaled.value(1)) == doctest::Approx(15.0));
+            CHECK(imag(scaled.value(2)) == doctest::Approx(18.0));
+            CHECK(scaled.variance == doctest::Approx(18.0));
+        }
+        SUBCASE("Complex scalar scale") {
+            DoubleComplex const scale_factor{3.0, 4.0};
+            auto const scaled = scale(var, scale_factor);
+            for (auto i = 0; i < 3; ++i) {
+                CHECK(real(scaled.value(i)) ==
+                      real(scale(UniformComplexRandVar<symmetric_t>{.value = var.value(i), .variance = var.variance},
+                                 scale_factor)
+                               .value));
+                CHECK(real(scaled.value(i)) ==
+                      real(scale(UniformComplexRandVar<symmetric_t>{.value = var.value(i), .variance = var.variance},
+                                 scale_factor)
+                               .value));
+            }
+            CHECK(scaled.variance == doctest::Approx(2.0 * (3.0 * 3.0 + 4.0 * 4.0)));
+        }
+        // scaling asymmetrically would promote the UniformComplexRandVar to an IndependentComplexRandVar, because the
+        // individual phases scale differently
+    }
+    SUBCASE("IndependentComplexRandVar<asymmetric_t>") {
+        auto const var = IndependentComplexRandVar<asymmetric_t>{
+            .value = {RealValue<asymmetric_t>{1.0, 2.0, 3.0}, RealValue<asymmetric_t>{4.0, 5.0, 6.0}},
+            .variance = {2.0, 3.0, 4.0}};
+        auto const individual_phases = [&var] {
+            std::array<UniformComplexRandVar<symmetric_t>, 3> result;
+            for (auto i = 0; i < 3; ++i) {
+                result[i] = {.value = var.value(i), .variance = var.variance(i)};
+            }
+            return result;
+        }();
+        SUBCASE("Real scalar scale") {
+            auto const scale_factor = 3.0;
+            auto const scaled = scale(var, scale_factor);
+            for (auto i = 0; i < 3; ++i) {
+                auto const expected = scale(individual_phases[i], scale_factor);
+                CHECK(real(scaled.value(i)) == doctest::Approx(real(expected.value)));
+                CHECK(imag(scaled.value(i)) == doctest::Approx(imag(expected.value)));
+                CHECK(scaled.variance(i) == doctest::Approx(expected.variance));
+            }
+        }
+        SUBCASE("Complex scalar scale") {
+            DoubleComplex const scale_factor{3.0, 4.0};
+            auto const scaled = scale(var, scale_factor);
+            for (auto i = 0; i < 3; ++i) {
+                auto const expected = scale(individual_phases[i], scale_factor);
+                CHECK(real(scaled.value(i)) == doctest::Approx(real(expected.value)));
+                CHECK(imag(scaled.value(i)) == doctest::Approx(imag(expected.value)));
+                CHECK(scaled.variance(i) == doctest::Approx(expected.variance));
+            }
+        }
+        SUBCASE("Real asymmetric scale") {
+            RealValue<asymmetric_t> const scale_factor{3.0, 4.0, 5.0};
+            auto const scaled = scale(var, scale_factor);
+            for (auto i = 0; i < 3; ++i) {
+                auto const expected = scale(individual_phases[i], scale_factor[i]);
+                CHECK(real(scaled.value(i)) == doctest::Approx(real(expected.value)));
+                CHECK(imag(scaled.value(i)) == doctest::Approx(imag(expected.value)));
+                CHECK(scaled.variance(i) == doctest::Approx(expected.variance));
+            }
+        }
+        SUBCASE("Complex asymmetric scale") {
+            ComplexValue<asymmetric_t> const scale_factor{RealValue<asymmetric_t>{3.0, 4.0, 5.0},
+                                                          RealValue<asymmetric_t>{6.0, 7.0, 8.0}};
+            auto const scaled = scale(var, scale_factor);
+            for (auto i = 0; i < 3; ++i) {
+                auto const expected = scale(individual_phases[i], scale_factor(i));
+                CHECK(real(scaled.value(i)) == doctest::Approx(real(expected.value)));
+                CHECK(imag(scaled.value(i)) == doctest::Approx(imag(expected.value)));
+                CHECK(scaled.variance(i) == doctest::Approx(expected.variance));
+            }
+        }
+    }
+    SUBCASE("DecomposedComplexRandVar<symmetric_t>") {
+        DecomposedComplexRandVar<symmetric_t> const var{.real_component = {.value = 1.0, .variance = 2.0},
+                                                        .imag_component = {.value = 4.0, .variance = 5.0}};
+
+        SUBCASE("Real scalar scale") {
+            auto const scale_factor = 3.0;
+            auto const scaled = scale(var, scale_factor);
+            CHECK(scaled.real_component.value == scale(var.real_component, scale_factor).value);
+            CHECK(scaled.imag_component.value == scale(var.imag_component, scale_factor).value);
+            CHECK(scaled.real_component.variance == scale(var.real_component, scale_factor).variance);
+            CHECK(scaled.imag_component.variance == scale(var.imag_component, scale_factor).variance);
+        }
+        SUBCASE("Complex scalar scale") {
+            auto const scale_factor = DoubleComplex{3.0, 4.0};
+            auto const scaled = scale(var, scale_factor);
+            CHECK(scaled.real_component.value == real(var.value() * scale_factor));
+            CHECK(scaled.imag_component.value == imag(var.value() * scale_factor));
+            CHECK(scaled.real_component.variance ==
+                  real(scale_factor) * real(scale_factor) * var.real_component.variance +
+                      imag(scale_factor) * imag(scale_factor) * var.imag_component.variance);
+            CHECK(scaled.imag_component.variance ==
+                  real(scale_factor) * real(scale_factor) * var.imag_component.variance +
+                      imag(scale_factor) * imag(scale_factor) * var.real_component.variance);
+        }
+    }
+    SUBCASE("DecomposedComplexRandVar<asymmetric_t>") {
+        DecomposedComplexRandVar<asymmetric_t> const var{
+            .real_component = {.value = {1.0, 2.0, 3.0}, .variance = {2.0, 3.0, 4.0}},
+            .imag_component = {.value = {4.0, 5.0, 6.0}, .variance = {5.0, 6.0, 7.0}}};
+
+        SUBCASE("Real scalar scale") {
+            auto const scale_factor = 3.0;
+            auto const scaled = scale(var, scale_factor);
+
+            for (int i = 0; i < 3; ++i) {
+                CHECK(scaled.real_component.value(i) == scale(var.real_component, scale_factor).value(i));
+                CHECK(scaled.imag_component.value(i) == scale(var.imag_component, scale_factor).value(i));
+                CHECK(scaled.real_component.variance(i) == scale(var.real_component, scale_factor).variance(i));
+                CHECK(scaled.imag_component.variance(i) == scale(var.imag_component, scale_factor).variance(i));
+            }
+        }
+        SUBCASE("Real asymmetric scale") {
+            auto const scale_factor = RealValue<asymmetric_t>{3.0, 4.0, 5.0};
+            auto const scaled = scale(var, scale_factor);
+
+            for (int i = 0; i < 3; ++i) {
+                CHECK(scaled.real_component.value(i) == scale(var.real_component, scale_factor).value(i));
+                CHECK(scaled.imag_component.value(i) == scale(var.imag_component, scale_factor).value(i));
+                CHECK(scaled.real_component.variance(i) == scale(var.real_component, scale_factor).variance(i));
+                CHECK(scaled.imag_component.variance(i) == scale(var.imag_component, scale_factor).variance(i));
+            }
+        }
+        SUBCASE("Complex scalar scale") {
+            auto const scale_factor = DoubleComplex{3.0, 4.0};
+            auto const scaled = scale(var, scale_factor);
+
+            for (int i = 0; i < 3; ++i) {
+                CHECK(scaled.real_component.value(i) == real(var.value()(i) * scale_factor));
+                CHECK(scaled.imag_component.value(i) == imag(var.value()(i) * scale_factor));
+                CHECK(scaled.real_component.variance(i) ==
+                      real(scale_factor) * real(scale_factor) * var.real_component.variance(i) +
+                          imag(scale_factor) * imag(scale_factor) * var.imag_component.variance(i));
+                CHECK(scaled.imag_component.variance(i) ==
+                      real(scale_factor) * real(scale_factor) * var.imag_component.variance(i) +
+                          imag(scale_factor) * imag(scale_factor) * var.real_component.variance(i));
+            }
+        }
+        SUBCASE("Complex asymmetric scale") {
+            auto const scale_factor = ComplexValue<asymmetric_t>{RealValue<asymmetric_t>{3.0, 4.0, 5.0},
+                                                                 RealValue<asymmetric_t>{6.0, 7.0, 8.0}};
+            auto const scaled = scale(var, scale_factor);
+
+            for (int i = 0; i < 3; ++i) {
+                CHECK(scaled.real_component.value(i) == real(var.value()(i) * scale_factor(i)));
+                CHECK(scaled.imag_component.value(i) == imag(var.value()(i) * scale_factor(i)));
+                CHECK(scaled.real_component.variance(i) ==
+                      real(scale_factor(i)) * real(scale_factor(i)) * var.real_component.variance(i) +
+                          imag(scale_factor(i)) * imag(scale_factor(i)) * var.imag_component.variance(i));
+                CHECK(scaled.imag_component.variance(i) ==
+                      real(scale_factor(i)) * real(scale_factor(i)) * var.imag_component.variance(i) +
+                          imag(scale_factor(i)) * imag(scale_factor(i)) * var.real_component.variance(i));
+            }
+        }
+    }
+}
+
 TEST_SUITE_END();
 
 } // namespace power_grid_model

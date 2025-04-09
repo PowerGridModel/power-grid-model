@@ -204,4 +204,50 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                             9.0}};
     }
 };
+
+namespace statistics {
+template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
+    requires is_in_list_c<RandVarType<sym>, UniformRealRandVar<sym>, IndependentRealRandVar<sym>,
+                          UniformComplexRandVar<sym>, IndependentComplexRandVar<sym>>
+inline auto scale(RandVarType<sym> const& var, double scale_factor) {
+    return RandVarType<sym>{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
+}
+
+template <typename RandVarType>
+    requires is_in_list_c<RandVarType, IndependentRealRandVar<asymmetric_t>, IndependentComplexRandVar<asymmetric_t>>
+inline auto scale(RandVarType const& var, RealValue<asymmetric_t> const& scale_factor) {
+    return RandVarType{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
+}
+
+template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
+    requires is_in_list_c<RandVarType<sym>, UniformComplexRandVar<sym>, IndependentComplexRandVar<sym>>
+inline auto scale(RandVarType<sym> const& var, DoubleComplex const& scale_factor) {
+    return RandVarType<sym>{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
+}
+
+inline auto scale(IndependentComplexRandVar<asymmetric_t> const& var, ComplexValue<asymmetric_t> const& scale_factor) {
+    return IndependentComplexRandVar<asymmetric_t>{.value = var.value * scale_factor,
+                                                   .variance = var.variance * abs2(scale_factor)};
+}
+
+template <symmetry_tag sym, typename ScaleType>
+    requires is_in_list_c<ScaleType, RealValue<symmetric_t>, RealValue<asymmetric_t>>
+inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& scale_factor) {
+    return DecomposedComplexRandVar<sym>{.real_component = scale(var.real_component, scale_factor),
+                                         .imag_component = scale(var.imag_component, scale_factor)};
+}
+
+template <symmetry_tag sym, typename ScaleType>
+    requires is_in_list_c<ScaleType, ComplexValue<symmetric_t>, ComplexValue<asymmetric_t>>
+inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& scale_factor) {
+    auto const scaled_value = var.value() * scale_factor;
+    return DecomposedComplexRandVar<sym>{
+        .real_component = {.value = real(scaled_value),
+                           .variance = var.real_component.variance * abs2(real(scale_factor)) +
+                                       var.imag_component.variance * abs2(imag(scale_factor))},
+        .imag_component = {.value = imag(scaled_value),
+                           .variance = var.real_component.variance * abs2(imag(scale_factor)) +
+                                       var.imag_component.variance * abs2(real(scale_factor))}};
+}
+} // namespace statistics
 } // namespace power_grid_model
