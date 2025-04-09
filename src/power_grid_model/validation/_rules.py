@@ -66,6 +66,7 @@ from power_grid_model.validation.errors import (
     SameValueError,
     TransformerClockError,
     TwoValuesZeroError,
+    MultiFieldValidationError,
     ValidationError,
 )
 from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
@@ -773,20 +774,23 @@ def no_strict_subset_missing(data: SingleDataset, fields : list[str], component_
 
         ids = component_data["id"][instances_with_invalid_data]
         if len(ids) > 0:
-            errors.append(MissingValueError(component_type, ",".join(fields), ids))
+            errors.append(MultiFieldValidationError(component_type, fields, ids))
 
     return errors
 
 
 def not_all_missing(data: SingleDataset, fields : list[str], component_type : ComponentType):
     """
-    Helper function that generates a missing value error if all values specified by the fields parameters are missing.
+    Helper function that generates a multi field validation error if all values specified by the fields parameters are missing, or, a missing value error if only one field is specified by the fields parameter.
 
     Args:
         data: SingleDataset, pgm data
         fields: List of fields
         component_type: component type to check
     """
+    if len(fields) < 2:
+        raise ValueError("The fields parameter must contain at least 2 fields. Otherwise use the none_missing function.")
+    
     errors = []
     if component_type in data:
         component_data = data[component_type]
@@ -799,7 +803,7 @@ def not_all_missing(data: SingleDataset, fields : list[str], component_type : Co
 
         ids = component_data["id"][instances_with_all_nan_data].flatten().tolist()
         if len(ids) > 0:
-            errors.append(MissingValueError(component_type, ",".join(fields), ids))
+            errors.append(MultiFieldValidationError(component_type, fields, ids))
 
     return errors
 

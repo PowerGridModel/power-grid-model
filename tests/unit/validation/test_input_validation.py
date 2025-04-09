@@ -24,7 +24,7 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
-    MissingValueError,
+    MultiFieldValidationError,
     MultiComponentNotUniqueError,
     NotBetweenError,
     NotBetweenOrAtError,
@@ -765,7 +765,7 @@ def test_asym_line_input_data(input_data):
     assert NotGreaterThanError(ComponentType.asym_line, "c_nn", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "c0", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "c1", [55], 0) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "r_na,r_nb,r_nc,r_nn", [56]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_aa,c_ba,c_bb,c_ca,c_cb,c_cc,c0,c1", [56]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "x_na,x_nb,x_nc,x_nn", [57]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c_aa,c_ba,c_bb,c_ca,c_cb,c_cc", [58]) in validation_errors
+    assert MultiFieldValidationError(ComponentType.asym_line, ["r_na","r_nb","r_nc","r_nn"], [56]) in validation_errors
+    assert MultiFieldValidationError(ComponentType.asym_line, ["c_aa","c_ba","c_bb","c_ca","c_cb","c_cc","c0","c1"], [56]) in validation_errors
+    assert MultiFieldValidationError(ComponentType.asym_line, ["x_na","x_nb","x_nc","x_nn"], [57]) in validation_errors
+    assert MultiFieldValidationError(ComponentType.asym_line, ["c_aa","c_ba","c_bb","c_ca","c_cb","c_cc"], [58]) in validation_errors

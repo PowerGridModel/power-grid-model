@@ -33,7 +33,9 @@ from power_grid_model.validation._rules import (
     all_valid_fault_phases,
     all_valid_ids,
     none_match_comparison,
-    none_missing,
+    none_missing,    
+    not_all_missing,
+    no_strict_subset_missing
 )
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -54,34 +56,7 @@ from power_grid_model.validation.errors import (
     NotUniqueError,
     SameValueError,
     TwoValuesZeroError,
-    UnsupportedTransformerRegulationError,
-)
-from power_grid_model.validation.rules import (
-    all_between,
-    all_between_or_at,
-    all_boolean,
-    all_cross_unique,
-    all_enabled_identical,
-    all_finite,
-    all_greater_or_equal,
-    all_greater_than,
-    all_greater_than_or_equal_to_zero,
-    all_greater_than_zero,
-    all_identical,
-    all_less_or_equal,
-    all_less_than,
-    all_not_two_values_equal,
-    all_not_two_values_zero,
-    all_supported_tap_control_side,
-    all_unique,
-    all_valid_clocks,
-    all_valid_enum_values,
-    all_valid_fault_phases,
-    all_valid_ids,
-    none_match_comparison,
-    none_missing,
-    not_all_missing,
-    no_strict_subset_missing
+    MultiFieldValidationError,
 )
 
 
@@ -606,7 +581,7 @@ def test_no_strict_subset_missing():
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
         }[component][field]
 
-    with mock.patch("power_grid_model.validation.rules._nan_type", _mock_nan_type):
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
         valid = {
             "foo_test": np.array(
                 [
@@ -633,11 +608,11 @@ def test_no_strict_subset_missing():
 
         errors = no_strict_subset_missing(invalid, ["foo", "bar", "baz"], "foo_test")
         assert len(errors) == 1
-        assert errors == [MissingValueError("foo_test", "foo,bar,baz", [2, 3])]
+        assert errors == [MultiFieldValidationError("foo_test", ["foo", "bar" , "baz"], [2, 3])]
 
         errors = no_strict_subset_missing(invalid, ["foo", "bar"], "foo_test")
         assert len(errors) == 1
-        assert errors == [MissingValueError("foo_test", "foo,bar", [2])]
+        assert errors == [MultiFieldValidationError("foo_test", ["foo", "bar"], [2])]
 
         errors = no_strict_subset_missing(invalid, ["bar"], "foo_test")
         assert len(errors) == 0
@@ -656,7 +631,7 @@ def test_not_all_missing():
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
         }[component][field]
 
-    with mock.patch("power_grid_model.validation.rules._nan_type", _mock_nan_type):
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
         valid = {
             "foo_test": np.array(
                 [
@@ -683,15 +658,13 @@ def test_not_all_missing():
 
         errors = not_all_missing(invalid, ["foo", "bar", "baz"], "foo_test")
         assert len(errors) == 1
-        assert errors == [MissingValueError("foo_test", "foo,bar,baz", [1])]
+        assert errors == [MultiFieldValidationError("foo_test", ["foo","bar","baz"], [1])]
 
-        errors = not_all_missing(invalid, ["bar"], "foo_test", )
-        assert len(errors) == 1
-        assert errors == [MissingValueError("foo_test", "bar", [1, 3])]
-
-        errors = not_all_missing(invalid, ["baz"], "foo_test")
-        assert len(errors) == 1
-        assert errors == [MissingValueError("foo_test", "baz", [1])]
+        with pytest.raises(ValueError) as excinfo:
+            not_all_missing(invalid, ["bar"], "foo_test" )
+        
+        assert excinfo.type == ValueError
+        assert str(excinfo.value) == "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."
 
 
 @pytest.mark.skip("No unit tests available for all_valid_clocks")
