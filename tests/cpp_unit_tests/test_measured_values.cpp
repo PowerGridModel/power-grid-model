@@ -261,8 +261,8 @@ TEST_CASE("Measured Values") {
                 {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = measurement_a},
                 {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = measurement_b}};
 
-            auto const create_measured_values = [topo_ = std::move(topo), &input] {
-                return MeasuredValues<symmetric_t>{std::make_shared<MathModelTopology const>(std::move(topo_)), input};
+            auto const create_measured_values = [&topo, &input] {
+                return MeasuredValues<symmetric_t>{std::make_shared<MathModelTopology const>(topo), input};
             };
             CHECK_THROWS_AS(create_measured_values(), ConflictingAngleMeasurementType);
         }

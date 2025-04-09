@@ -453,7 +453,7 @@ template <symmetry_tag sym> class MeasuredValues {
     template <bool only_magnitude = false>
     static VoltageSensorCalcParam<sym> combine_measurements(std::vector<VoltageSensorCalcParam<sym>> const& data,
                                                             IdxRange const& sensors) {
-        auto complex_measurements = sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; });
+        auto complex_measurements = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         if constexpr (only_magnitude) {
             auto const combined_magnitude_measurement = statistics::accumulate(
                 complex_measurements | std::views::transform([](auto const& measurement) {
@@ -476,13 +476,13 @@ template <symmetry_tag sym> class MeasuredValues {
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        return statistics::accumulate(sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; }));
+        return statistics::accumulate(sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; }));
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
     static CurrentSensorCalcParam<sym> combine_measurements(std::vector<CurrentSensorCalcParam<sym>> const& data,
                                                             IdxRange const& sensors) {
-        auto const params = sensors | std::views::transform([&](Idx pos) -> auto& { return data[pos]; });
+        auto const params = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         auto const angle_measurement_type = sensors.empty() ? AngleMeasurementType::local_angle // fallback
                                                             : params.front().angle_measurement_type;
         if (std::ranges::any_of(params, [angle_measurement_type](auto const& params) {
@@ -494,7 +494,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
         return {.angle_measurement_type = angle_measurement_type,
                 .measurement = statistics::accumulate(
-                    params | std::views::transform([&](auto const& params) -> auto& { return params.measurement; }))};
+                    params | std::views::transform([](auto const& param) -> auto& { return param.measurement; }))};
     }
 
     template <sensor_calc_param_type CalcParam, bool only_magnitude = false>
