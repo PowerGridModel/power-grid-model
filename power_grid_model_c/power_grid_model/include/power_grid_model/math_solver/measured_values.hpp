@@ -71,6 +71,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     constexpr bool has_angle() const { return n_voltage_angle_measurements_ > 0; }
     constexpr bool has_voltage_measurements() const { return n_voltage_measurements_ > 0; }
+    constexpr bool has_global_angle_current() const { return n_global_angle_current_measurements_ >= 0; }
 
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
     constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }
@@ -215,6 +216,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     Idx n_voltage_measurements_{};
     Idx n_voltage_angle_measurements_{};
+    Idx n_global_angle_current_measurements_{};
 
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
@@ -437,12 +439,10 @@ template <symmetry_tag sym> class MeasuredValues {
                 process_one_object(branch, topo.current_sensors_per_branch_to, topo.branch_bus_idx,
                                    input.measured_branch_to_current, current_main_value_, branch_to_checker);
 
-            if ((!has_angle()) && std::ranges::any_of(current_main_value_, [](auto const& measurement) {
+            n_global_angle_current_measurements_ =
+                std::ranges::count_if(current_main_value_, [](auto const& measurement) {
                     return measurement.angle_measurement_type == AngleMeasurementType::global_angle;
-                })) {
-                throw ConflictingAngleMeasurementType{
-                    "Global angle current measurements require a voltage angle measurement in the connected subgrid."};
-            }
+                });
         }
     }
 

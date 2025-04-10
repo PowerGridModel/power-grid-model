@@ -169,6 +169,11 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
         result.is_sufficiently_observable = true;
     }
 
+    if (measured_values.has_global_angle_current() && n_voltage_phasor_sensor == 0) {
+        throw NotObservableError{
+            "Global angle current sensors require at least one voltage angle measurement as a reference point.\n"};
+    }
+
     return result;
 }
 
