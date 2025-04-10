@@ -238,8 +238,8 @@ inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& sca
 }
 
 template <symmetry_tag sym, typename ScaleType>
-    requires std::is_same<ScaleType, ComplexValue<symmetric_t>> ||
-             (is_asymmetric_v<sym> && std::same_as<ScaleType, ComplexValue<asymmetric_t>>)
+    requires(std::same_as<ScaleType, ComplexValue<symmetric_t>> ||
+             (is_asymmetric_v<sym> && std::same_as<ScaleType, ComplexValue<asymmetric_t>>))
 inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& scale_factor) {
     ComplexValue<sym> const scaled_value = var.value() * scale_factor;
     return DecomposedComplexRandVar<sym>{
