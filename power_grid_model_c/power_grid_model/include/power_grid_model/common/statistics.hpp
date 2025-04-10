@@ -224,18 +224,20 @@ constexpr auto accumulate(RandVarsView rand_vars) {
     using VarianceType = decltype(RandVarType::variance);
 
     VarianceType accumulated_inverse_variance{};
-    ValueType accumulated_value{};
+    ValueType weighted_accumulated_value{};
 
-    std::ranges::for_each(rand_vars, [&accumulated_inverse_variance, &accumulated_value](auto const& measurement) {
-        accumulated_inverse_variance += VarianceType{1.0} / measurement.variance;
-        accumulated_value += measurement.value / measurement.variance;
-    });
+    std::ranges::for_each(rand_vars,
+                          [&accumulated_inverse_variance, &weighted_accumulated_value](auto const& measurement) {
+                              accumulated_inverse_variance += VarianceType{1.0} / measurement.variance;
+                              weighted_accumulated_value += measurement.value / measurement.variance;
+                          });
 
-    if (is_normal(accumulated_inverse_variance)) {
-        return RandVarType{.value = accumulated_value / accumulated_inverse_variance,
-                           .variance = VarianceType{1.0} / accumulated_inverse_variance};
+    if (!is_normal(accumulated_inverse_variance)) {
+        return RandVarType{.value = weighted_accumulated_value,
+                           .variance = VarianceType{std::numeric_limits<double>::infinity()}};
     }
-    return RandVarType{.value = accumulated_value, .variance = VarianceType{std::numeric_limits<double>::infinity()}};
+    return RandVarType{.value = weighted_accumulated_value / accumulated_inverse_variance,
+                       .variance = VarianceType{1.0} / accumulated_inverse_variance};
 }
 
 template <std::ranges::view RandVarsView>

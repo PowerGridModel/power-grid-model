@@ -408,15 +408,15 @@ template <symmetry_tag sym> class MeasuredValues {
         connected at that side. For each branch the checker checks if the from and to side are connected by checking if
         branch_bus_idx = disconnected.
 
-        If the branch_bus_idx = disconnected, idx_branch_(to|from)_(power|current)_ is set to disconnected.
+        If the branch_bus_idx = disconnected, idx_branch_(to/from)_(power/current)_ is set to disconnected.
         If the side is connected, but there are no measurements in this branch side
-        idx_branch_(to|from)_(power|current)_ is set to disconnected.
-        Else, idx_branch_(to|from)_(power|current)_ is set to the index of the aggregated data in
+        idx_branch_(to/from)_(power/current)_ is set to disconnected.
+        Else, idx_branch_(to/from)_(power/current)_ is set to the index of the aggregated data in
         power/current_main_value_.
 
         All measurement values for a single side of a branch are combined in a weighted average, which is appended to
         power/current_main_value_. The values in power/current_main_value_ can be found using
-        idx_branch_(to|from)_(power|current)_.
+        idx_branch_(to/from)_(power/current)_.
         */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
@@ -455,19 +455,19 @@ template <symmetry_tag sym> class MeasuredValues {
                                                             IdxRange const& sensors) {
         auto complex_measurements = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         if constexpr (only_magnitude) {
-            auto const combined_magnitude_measurement = statistics::accumulate(
+            auto const weighted_average_magnitude_measurement = statistics::accumulate(
                 complex_measurements | std::views::transform([](auto const& measurement) {
                     return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
                                                    .variance = measurement.variance};
                 }));
             return UniformComplexRandVar<sym>{.value =
-                                                  [&combined_magnitude_measurement]() {
+                                                  [&weighted_average_magnitude_measurement]() {
                                                       ComplexValue<sym> abs_value =
                                                           piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                                                      abs_value += combined_magnitude_measurement.value;
+                                                      abs_value += weighted_average_magnitude_measurement.value;
                                                       return abs_value;
                                                   }(),
-                                              .variance = combined_magnitude_measurement.variance};
+                                              .variance = weighted_average_magnitude_measurement.variance};
         } else {
             return statistics::accumulate(complex_measurements);
         }
