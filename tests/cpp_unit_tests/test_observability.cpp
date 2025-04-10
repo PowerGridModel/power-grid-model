@@ -118,27 +118,57 @@ TEST_CASE("Necessary observability check") {
         // this will throw NotObservableError
         check_not_observable(topo, param, se_input);
     }
-    SUBCASE("Power sensor and current sensor are equivalent") {
-        auto const branch_sensor_topo = topo.power_sensors_per_branch_from;
-        auto const branch_sensor_measurement = se_input.measured_branch_from_power;
-        check_observable(topo, param, se_input);
-
-        // remove the power sensor -> not observable
+    SUBCASE("Current sensors also measure branch flow") {
         topo.power_sensors_per_branch_from = {from_dense, {}, 3};
         se_input.measured_branch_from_power = {};
-        check_not_observable(topo, param, se_input);
+        topo.current_sensors_per_branch_from = {from_dense, {2}, 3};
 
-        // add the current sensor -> observable
-        topo.current_sensors_per_branch_from = branch_sensor_topo;
-        for (auto angle_measurement_type : {AngleMeasurementType::local_angle, AngleMeasurementType::global_angle}) {
-            CAPTURE(angle_measurement_type);
-            REQUIRE(branch_sensor_measurement.size() == 1);
-            se_input.measured_branch_from_current = {
-                {.angle_measurement_type = angle_measurement_type, .measurement = branch_sensor_measurement.front()}};
+        DecomposedComplexRandVar<symmetric_t> const current_measurement{
+            .real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}};
 
-            check_observable(topo, param, se_input);
+        SUBCASE("With voltage phasor measurement") {
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+        }
+        SUBCASE("No voltage phasor measurement and single current sensor") {
+            se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
+
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement}};
+                check_not_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement}};
+                check_not_observable(topo, param, se_input);
+            }
+        }
+        SUBCASE("No voltage phasor measurement and two current sensors") {
+            se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
+            topo.current_sensors_per_branch_from = {from_dense, {0, 2}, 3};
+
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement}};
+                check_not_observable(topo, param, se_input);
+            }
         }
     }
 }
-
 } // namespace power_grid_model

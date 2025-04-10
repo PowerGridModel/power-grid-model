@@ -219,39 +219,6 @@ TEST_CASE("Measured Values") {
             check_accumulated(values.branch_from_current(0).measurement);
         }
 
-        SUBCASE("Cannot accumulate global angle current sensors if there is no voltage angle measurement") {
-            auto topo = get_single_branch_topology();
-            topo.current_sensors_per_branch_from = {from_dense, {0, 0}, 1};
-
-            StateEstimationInput<symmetric_t> input{};
-            input.measured_branch_from_current = {
-                {.angle_measurement_type = global_angle, .measurement = measurement_a},
-                {.angle_measurement_type = global_angle, .measurement = measurement_b}};
-
-            auto const create_measured_values = [&topo, &input] {
-                return MeasuredValues<symmetric_t>{std::make_shared<MathModelTopology const>(topo), input};
-            };
-
-            SUBCASE("No voltage measurement in topo") {
-                CHECK_THROWS_AS(create_measured_values(), ConflictingAngleMeasurementType);
-            }
-            SUBCASE("No voltage measurement values") {
-                topo.voltage_sensors_per_bus = {from_dense, {0}, 2};
-                input.measured_voltage = {{.value = DoubleComplex{nan, nan}, .variance = nan}};
-                CHECK_THROWS_AS(create_measured_values(), ConflictingAngleMeasurementType);
-            }
-            SUBCASE("No voltage angle measurement") {
-                topo.voltage_sensors_per_bus = {from_dense, {0}, 2};
-                input.measured_voltage = {{.value = DoubleComplex{1.0, nan}, .variance = 0.1}};
-                CHECK_THROWS_AS(create_measured_values(), ConflictingAngleMeasurementType);
-            }
-            SUBCASE("No voltage angle measurement") {
-                topo.voltage_sensors_per_bus = {from_dense, {0}, 2};
-                input.measured_voltage = {{.value = DoubleComplex{1.0, 1.0}, .variance = 0.1}};
-                CHECK_NOTHROW(create_measured_values());
-            }
-        }
-
         SUBCASE("Cannot accumulate different angle measurement types on same terminal") {
             auto topo = get_single_branch_topology();
             topo.current_sensors_per_branch_from = {from_dense, {0, 0}, 1};
